@@ -27,6 +27,18 @@ resources/petit-planet-extraction/<version>/items/
 
 产物、日志、索引文件与客户端不纳入 Git，也不会自动接入网站。`resources/temp/` 用于存储临时文件；维护中的实现以本目录为准。提取任务依赖 Git 忽略的本地输入，执行时关闭任务缓存。
 
+## 有效内容
+
+[提取原理](tasks/content/docs/extraction-method.md)说明根字段 93 的收录范围、分类、属性及素材关联；[执行手册](tasks/content/docs/current-version.md)说明当前实现的命令、产物和未确认信息。
+
+```powershell
+vp run --no-cache extraction#content
+```
+
+默认交付目录为 `resources/petit-planet-extraction/<version>/content/`，仅包含 `content.json` 和 `assets/`。JSON 按英文大类、子类分组，显示值使用中文；只包含指定基础字段和分类属性。未确认信息为 `null`。
+
+该任务从客户端重新读取输入，不依赖 items 产物或历史调查快照。中间数据、日志、来源证据、字段覆盖率和缺失原因存入 `resources/temp/content/`，按版本及输出目录标识隔离。实际工作目录会显示在运行结果中。新版本必须重新确认表 93 的范围和关联字段。
+
 ## 扩展任务
 
 新任务使用 `tasks/<任务名>/docs/` 和 `tasks/<任务名>/scripts/`；例如菜谱使用 `tasks/recipes/`。每个任务分别提供原理文档、执行手册、当前配置和入口，并把产物写到 `resources/petit-planet-extraction/<version>/<任务名>/`，读取同版本 index 内的共用索引。
