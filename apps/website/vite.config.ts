@@ -7,7 +7,7 @@ import { lazyPlugins } from "vite-plus";
 
 const config = defineConfig({
   resolve: { tsconfigPaths: true },
-  plugins: lazyPlugins(() => [tailwindcss(), tanstackStart(), viteReact()]),
+  plugins: lazyPlugins(() => [tailwindcss(), tanstackStart(), viteReact({ compiler: true })]),
 });
 
 export default config;
