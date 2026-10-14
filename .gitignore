@@ -42,3 +42,6 @@ dist-ssr
 
 # Temporary investigations are fully ignored, including any directory markers
 /resources/temp/
+
+# Local website data and extracted assets
+/apps/website/public/resources/
