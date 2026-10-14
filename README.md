@@ -9,6 +9,8 @@
 ├── apps/
 │   ├── website/             # Wiki 网站应用（页面、路由与样式）
 │   └── extraction/          # 客户端提取文档和脚本（按任务组织）
+├── packages/
+│   └── content-schema/      # extraction 与网站共用的内容契约
 ├── resources/
 │   ├── anime-studio/             # 本地 AnimeStudio 工具
 │   ├── petit-planet-game/        # 按客户端版本保存游戏副本
@@ -25,6 +27,8 @@
 ├── tsconfig.json             # TypeScript 根配置
 └── vite.config.ts            # Vite+ 仓库级配置
 ```
+
+`@petit-orbit/content-schema` 提供当前 content JSON 的严格 schema、推导类型及成员引用校验。extraction 和 website 通过 workspace 依赖共享契约，直接引用 TypeScript 源码，无需前置构建；数据格式与提取产物保持不变。
 
 网站页面和路由主要位于 `apps/website/src/`。
 

@@ -185,12 +185,18 @@ catalogs:
     tw-animate-css:
       specifier: ^1.4.0
       version: 1.4.0
+    typescript:
+      specifier: ^7.0.2
+      version: 7.0.2
     vite:
       specifier: npm:@voidzero-dev/vite-plus-core@1.0.0-rc.0
       version: 1.0.0-rc.0
     vite-plus:
       specifier: 1.0.0-rc.0
       version: 1.0.0-rc.0
+    zod:
+      specifier: ^4.6.5
+      version: 4.6.5
 
 overrides:
   vite@*: npm:@voidzero-dev/vite-plus-core@1.0.0-rc.0
@@ -205,12 +211,18 @@ importers:
 
   apps/extraction:
     dependencies:
+      '@petit-orbit/content-schema':
+        specifier: workspace:*
+        version: link:../../packages/content-schema
       pngjs:
         specifier: 7.0.0
         version: 7.0.0
 
   apps/website:
     dependencies:
+      '@petit-orbit/content-schema':
+        specifier: workspace:*
+        version: link:../../packages/content-schema
       '@base-ui/react':
         specifier: 'catalog:'
         version: 1.8.0(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -275,6 +287,19 @@ importers:
       vite-plus:
         specifier: 'catalog:'
         version: 1.0.0-rc.0(@types/node@22.20.4)(@vitest/ui@5.0.1)(jiti@2.7.0)(typescript@6.0.3)(yaml@2.9.1)
+
+  packages/content-schema:
+    dependencies:
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.5
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+      vite-plus:
+        specifier: 'catalog:'
+        version: 1.0.0-rc.0(@types/node@26.6.2)(@vitest/ui@5.0.1)(jiti@2.7.0)(typescript@7.0.2)(yaml@2.9.1)
 
   packages/utils:
     devDependencies:

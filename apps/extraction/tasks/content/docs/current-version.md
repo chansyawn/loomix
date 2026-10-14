@@ -28,7 +28,7 @@ vp run --no-cache extraction#content
 vp run --no-cache extraction#test
 ```
 
-直接调用并指定输出：
+共享内容契约直接引用 TypeScript 源码，无需构建。也可直接调用 Node 入口：
 
 ```powershell
 vp exec node apps/extraction/tasks/content/scripts/run.mjs --help

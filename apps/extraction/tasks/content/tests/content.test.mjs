@@ -74,11 +74,14 @@ test("field whitelist and same-category member references are strict", () => {
     componentIds: [1101],
   });
   assert.equal(validateModel(content, [3, 1101], null, new Set([0, 2])).all.length, 2);
+  assert.throws(() => validateModel(content, [3]), /Exact root 93 membership/);
+  assert.throws(() => validateModel(content, [3, 1101], { "furniture.sets": 2 }), /count/);
+  assert.throws(() => validateModel(content, [3, 1101], null, new Set([0])), /quality/);
   item.source = "extra";
-  assert.throws(() => validateModel(content, [3, 1101]), /whitelist/);
+  assert.throws(() => validateModel(content, [3, 1101]), { name: "ZodError" });
   delete item.source;
   content.furniture.sets[0].componentIds = [999];
-  assert.throws(() => validateModel(content, [3, 1101]), /member/);
+  assert.throws(() => validateModel(content, [3, 1101]), { name: "ZodError" });
   content.furniture.sets[0].componentIds = null;
   content.clothing.items.push({ ...item });
   assert.throws(() => validateModel(content, [3, 1101]));

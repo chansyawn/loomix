@@ -6,14 +6,15 @@
     "#/*": "./src/*"
   },
   "scripts": {
-    "dev": "vp dev --port 3000",
     "generate-routes": "tsr generate",
-    "build": "vp build",
-    "preview": "vp preview"
+    "preview": "vp preview",
+    "dev": "vp dev --port 3000",
+    "build": "vp build"
   },
   "dependencies": {
     "@base-ui/react": "catalog:",
     "@fontsource-variable/inter": "catalog:",
+    "@petit-orbit/content-schema": "workspace:*",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-router": "latest",
     "@tanstack/react-start": "latest",
