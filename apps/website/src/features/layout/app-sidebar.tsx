@@ -1,5 +1,13 @@
 import * as React from "react";
-import { BookOpenIcon, MapIcon, PackageIcon, UsersIcon } from "lucide-react";
+import {
+  HomeIcon,
+  ArmchairIcon,
+  SproutIcon,
+  BugIcon,
+  PackageIcon,
+  ShirtIcon,
+  CookingPotIcon,
+} from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import {
   Sidebar,
@@ -12,18 +20,36 @@ import {
 } from "@/ui/components/sidebar";
 
 const navItems = [
-  { title: "Wiki 总览", to: "/", icon: BookOpenIcon },
-  { title: "物品", to: "/items", icon: PackageIcon },
-  { title: "角色", to: "/characters", icon: UsersIcon },
-  { title: "地点", to: "/locations", icon: MapIcon },
+  { title: "家具", to: "/collection/furniture", icon: ArmchairIcon },
+  { title: "植物", to: "/collection/plants", icon: SproutIcon },
+  { title: "生物", to: "/collection/creatures", icon: BugIcon },
+  { title: "杂物", to: "/collection/miscellany", icon: PackageIcon },
+  { title: "服饰", to: "/collection/clothing", icon: ShirtIcon },
+  { title: "菜肴", to: "/collection/dishes", icon: CookingPotIcon },
 ] as const;
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar className="top-(--header-height) h-[calc(100svh-var(--header-height))]!" {...props}>
       <SidebarContent>
+        <SidebarMenu className="px-2 pt-2">
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              render={
+                <Link
+                  to="/"
+                  activeOptions={{ exact: true }}
+                  activeProps={{ "data-active": true }}
+                />
+              }
+            >
+              <HomeIcon />
+              <span>首页</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
         <SidebarGroup>
-          <SidebarGroupLabel>探索</SidebarGroupLabel>
+          <SidebarGroupLabel>万象收藏</SidebarGroupLabel>
           <SidebarMenu>
             {navItems.map((item) => {
               const Icon = item.icon;

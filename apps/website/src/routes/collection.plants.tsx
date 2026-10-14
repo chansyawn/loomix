@@ -2,11 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { WikiLayout } from "@/features/layout/wiki-layout";
 import { WikiPage } from "@/features/layout/wiki-page";
 
-export const Route = createFileRoute("/items")({ component: ItemsPage });
-function ItemsPage() {
+export const Route = createFileRoute("/collection/plants")({ component: PlantsPage });
+
+function PlantsPage() {
   return (
     <WikiLayout>
-      <WikiPage eyebrow="资料分类" title="物品" description="浏览星布谷地中的道具与收藏品。" />
+      <WikiPage eyebrow="万象收藏" title="植物" description="浏览星布谷地中的植物收藏。" />
     </WikiLayout>
   );
 }

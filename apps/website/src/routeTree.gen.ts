@@ -10,63 +10,115 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as CharactersRouteImport } from './routes/characters'
-import { Route as ItemsRouteImport } from './routes/items'
-import { Route as LocationsRouteImport } from './routes/locations'
+import { Route as CollectionClothingRouteImport } from './routes/collection.clothing'
+import { Route as CollectionCreaturesRouteImport } from './routes/collection.creatures'
+import { Route as CollectionDishesRouteImport } from './routes/collection.dishes'
+import { Route as CollectionFurnitureRouteImport } from './routes/collection.furniture'
+import { Route as CollectionMiscellanyRouteImport } from './routes/collection.miscellany'
+import { Route as CollectionPlantsRouteImport } from './routes/collection.plants'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CharactersRoute = CharactersRouteImport.update({
-  id: '/characters',
-  path: '/characters',
+const CollectionClothingRoute = CollectionClothingRouteImport.update({
+  id: '/collection/clothing',
+  path: '/collection/clothing',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ItemsRoute = ItemsRouteImport.update({
-  id: '/items',
-  path: '/items',
+const CollectionCreaturesRoute = CollectionCreaturesRouteImport.update({
+  id: '/collection/creatures',
+  path: '/collection/creatures',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LocationsRoute = LocationsRouteImport.update({
-  id: '/locations',
-  path: '/locations',
+const CollectionDishesRoute = CollectionDishesRouteImport.update({
+  id: '/collection/dishes',
+  path: '/collection/dishes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CollectionFurnitureRoute = CollectionFurnitureRouteImport.update({
+  id: '/collection/furniture',
+  path: '/collection/furniture',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CollectionMiscellanyRoute = CollectionMiscellanyRouteImport.update({
+  id: '/collection/miscellany',
+  path: '/collection/miscellany',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CollectionPlantsRoute = CollectionPlantsRouteImport.update({
+  id: '/collection/plants',
+  path: '/collection/plants',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/characters': typeof CharactersRoute
-  '/items': typeof ItemsRoute
-  '/locations': typeof LocationsRoute
+  '/collection/clothing': typeof CollectionClothingRoute
+  '/collection/creatures': typeof CollectionCreaturesRoute
+  '/collection/dishes': typeof CollectionDishesRoute
+  '/collection/furniture': typeof CollectionFurnitureRoute
+  '/collection/miscellany': typeof CollectionMiscellanyRoute
+  '/collection/plants': typeof CollectionPlantsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/characters': typeof CharactersRoute
-  '/items': typeof ItemsRoute
-  '/locations': typeof LocationsRoute
+  '/collection/clothing': typeof CollectionClothingRoute
+  '/collection/creatures': typeof CollectionCreaturesRoute
+  '/collection/dishes': typeof CollectionDishesRoute
+  '/collection/furniture': typeof CollectionFurnitureRoute
+  '/collection/miscellany': typeof CollectionMiscellanyRoute
+  '/collection/plants': typeof CollectionPlantsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/characters': typeof CharactersRoute
-  '/items': typeof ItemsRoute
-  '/locations': typeof LocationsRoute
+  '/collection/clothing': typeof CollectionClothingRoute
+  '/collection/creatures': typeof CollectionCreaturesRoute
+  '/collection/dishes': typeof CollectionDishesRoute
+  '/collection/furniture': typeof CollectionFurnitureRoute
+  '/collection/miscellany': typeof CollectionMiscellanyRoute
+  '/collection/plants': typeof CollectionPlantsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/characters' | '/items' | '/locations'
+  fullPaths:
+    | '/'
+    | '/collection/clothing'
+    | '/collection/creatures'
+    | '/collection/dishes'
+    | '/collection/furniture'
+    | '/collection/miscellany'
+    | '/collection/plants'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/characters' | '/items' | '/locations'
-  id: '__root__' | '/' | '/characters' | '/items' | '/locations'
+  to:
+    | '/'
+    | '/collection/clothing'
+    | '/collection/creatures'
+    | '/collection/dishes'
+    | '/collection/furniture'
+    | '/collection/miscellany'
+    | '/collection/plants'
+  id:
+    | '__root__'
+    | '/'
+    | '/collection/clothing'
+    | '/collection/creatures'
+    | '/collection/dishes'
+    | '/collection/furniture'
+    | '/collection/miscellany'
+    | '/collection/plants'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  CharactersRoute: typeof CharactersRoute
-  ItemsRoute: typeof ItemsRoute
-  LocationsRoute: typeof LocationsRoute
+  CollectionClothingRoute: typeof CollectionClothingRoute
+  CollectionCreaturesRoute: typeof CollectionCreaturesRoute
+  CollectionDishesRoute: typeof CollectionDishesRoute
+  CollectionFurnitureRoute: typeof CollectionFurnitureRoute
+  CollectionMiscellanyRoute: typeof CollectionMiscellanyRoute
+  CollectionPlantsRoute: typeof CollectionPlantsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -78,25 +130,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/characters': {
-      id: '/characters'
-      path: '/characters'
-      fullPath: '/characters'
-      preLoaderRoute: typeof CharactersRouteImport
+    '/collection/clothing': {
+      id: '/collection/clothing'
+      path: '/collection/clothing'
+      fullPath: '/collection/clothing'
+      preLoaderRoute: typeof CollectionClothingRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/items': {
-      id: '/items'
-      path: '/items'
-      fullPath: '/items'
-      preLoaderRoute: typeof ItemsRouteImport
+    '/collection/creatures': {
+      id: '/collection/creatures'
+      path: '/collection/creatures'
+      fullPath: '/collection/creatures'
+      preLoaderRoute: typeof CollectionCreaturesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/locations': {
-      id: '/locations'
-      path: '/locations'
-      fullPath: '/locations'
-      preLoaderRoute: typeof LocationsRouteImport
+    '/collection/dishes': {
+      id: '/collection/dishes'
+      path: '/collection/dishes'
+      fullPath: '/collection/dishes'
+      preLoaderRoute: typeof CollectionDishesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/collection/furniture': {
+      id: '/collection/furniture'
+      path: '/collection/furniture'
+      fullPath: '/collection/furniture'
+      preLoaderRoute: typeof CollectionFurnitureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/collection/miscellany': {
+      id: '/collection/miscellany'
+      path: '/collection/miscellany'
+      fullPath: '/collection/miscellany'
+      preLoaderRoute: typeof CollectionMiscellanyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/collection/plants': {
+      id: '/collection/plants'
+      path: '/collection/plants'
+      fullPath: '/collection/plants'
+      preLoaderRoute: typeof CollectionPlantsRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -104,9 +177,12 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  CharactersRoute: CharactersRoute,
-  ItemsRoute: ItemsRoute,
-  LocationsRoute: LocationsRoute,
+  CollectionClothingRoute: CollectionClothingRoute,
+  CollectionCreaturesRoute: CollectionCreaturesRoute,
+  CollectionDishesRoute: CollectionDishesRoute,
+  CollectionFurnitureRoute: CollectionFurnitureRoute,
+  CollectionMiscellanyRoute: CollectionMiscellanyRoute,
+  CollectionPlantsRoute: CollectionPlantsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

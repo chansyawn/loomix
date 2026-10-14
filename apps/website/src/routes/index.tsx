@@ -11,7 +11,7 @@ function App() {
       <WikiPage
         eyebrow="星布谷地 Wiki"
         title="探索星布谷地"
-        description="这里将整理游戏中的物品、角色、地点和冒险资料。"
+        description="浏览万象收藏中的家具、植物、生物、杂物、服饰和菜肴。"
       />
     </WikiLayout>
   );
