@@ -9,6 +9,6 @@
   },
   "dependencies": {
     "@petit-orbit/content-schema": "workspace:*",
-    "pngjs": "7.0.0"
+    "pngjs": "catalog:"
   }
 }
