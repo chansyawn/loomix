@@ -8,8 +8,9 @@
   "scripts": {
     "generate-routes": "tsr generate",
     "preview": "vp preview",
-    "dev": "vp dev --port 3000",
-    "build": "vp build"
+    "dev": "vp dev --port 3250",
+    "build": "vp build",
+    "test": "vp test"
   },
   "dependencies": {
     "@base-ui/react": "catalog:",
