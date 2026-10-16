@@ -1,57 +1,56 @@
 import * as React from "react";
-import {
-  HomeIcon,
-  ArmchairIcon,
-  SproutIcon,
-  BugIcon,
-  PackageIcon,
-  ShirtIcon,
-  CookingPotIcon,
-} from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { collectionNavigation, homeItem } from "@/features/layout/navigation";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupLabel,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/ui/components/sidebar";
 
-const navItems = [
-  { title: "家具", to: "/collection/furniture", icon: ArmchairIcon },
-  { title: "植物", to: "/collection/plants", icon: SproutIcon },
-  { title: "生物", to: "/collection/creatures", icon: BugIcon },
-  { title: "杂物", to: "/collection/miscellany", icon: PackageIcon },
-  { title: "服饰", to: "/collection/clothing", icon: ShirtIcon },
-  { title: "菜肴", to: "/collection/dishes", icon: CookingPotIcon },
-] as const;
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar className="top-(--header-height) h-[calc(100svh-var(--header-height))]!" {...props}>
+    <Sidebar variant="inset" {...props}>
+      <SidebarHeader>
+        <Link
+          to={homeItem.to}
+          className="flex h-12 min-w-0 items-center gap-2 rounded-lg px-2 text-[15px] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+        >
+          <img
+            src="/logo.png"
+            alt=""
+            width={24}
+            height={24}
+            className="size-6 shrink-0 rounded-full object-cover"
+          />
+          <span className="whitespace-nowrap">星布谷地 Wiki</span>
+        </Link>
+      </SidebarHeader>
       <SidebarContent>
         <SidebarMenu className="px-2 pt-2">
           <SidebarMenuItem>
             <SidebarMenuButton
               render={
                 <Link
-                  to="/"
+                  to={homeItem.to}
                   activeOptions={{ exact: true }}
                   activeProps={{ "data-active": true }}
                 />
               }
             >
-              <HomeIcon />
-              <span>首页</span>
+              <homeItem.icon />
+              <span>{homeItem.title}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
         <SidebarGroup>
-          <SidebarGroupLabel>万象收藏</SidebarGroupLabel>
+          <SidebarGroupLabel>{collectionNavigation.title}</SidebarGroupLabel>
           <SidebarMenu>
-            {navItems.map((item) => {
+            {collectionNavigation.items.map((item) => {
               const Icon = item.icon;
               return (
                 <SidebarMenuItem key={item.to}>

@@ -4,14 +4,17 @@ import { SidebarInset, SidebarProvider } from "@/ui/components/sidebar";
 
 export function WikiLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="[--header-height:calc(--spacing(14))]">
-      <SidebarProvider className="flex flex-col">
+    <SidebarProvider className="h-svh overflow-hidden">
+      <AppSidebar />
+      <SidebarInset className="min-h-0 min-w-0 overflow-hidden">
         <SiteHeader />
-        <div className="flex flex-1">
-          <AppSidebar />
-          <SidebarInset>{children}</SidebarInset>
+        <div
+          className="container mx-auto min-h-0 flex-1 overflow-y-auto px-4 md:px-6"
+          data-scroll-restoration-id="wiki-content"
+        >
+          {children}
         </div>
-      </SidebarProvider>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

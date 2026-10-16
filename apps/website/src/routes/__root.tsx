@@ -1,4 +1,4 @@
-import { HeadContent, Link, Scripts, createRootRoute } from "@tanstack/react-router";
+import { HeadContent, Link, Outlet, Scripts, createRootRoute } from "@tanstack/react-router";
 import { WikiLayout } from "@/features/layout/wiki-layout";
 import appCss from "../styles.css?url";
 
@@ -24,28 +24,35 @@ export const Route = createRootRoute({
     ],
   }),
   shellComponent: RootDocument,
+  component: RootLayout,
   notFoundComponent: NotFoundPage,
 });
 
-function NotFoundPage() {
+function RootLayout() {
   return (
     <WikiLayout>
-      <main className="flex min-h-[calc(100svh-var(--header-height))] flex-1 items-center justify-center p-6 md:p-8">
-        <section className="w-full max-w-lg space-y-6 text-center">
-          <p className="text-7xl font-semibold tracking-tight text-primary">404</p>
-          <div className="space-y-2">
-            <h1 className="text-3xl font-semibold tracking-tight">页面未找到</h1>
-            <p className="text-muted-foreground">你访问的页面不存在，或者已经被移动。</p>
-          </div>
-          <Link
-            className="inline-flex h-9 items-center justify-center rounded-4xl bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
-            to="/"
-          >
-            返回首页
-          </Link>
-        </section>
-      </main>
+      <Outlet />
     </WikiLayout>
+  );
+}
+
+function NotFoundPage() {
+  return (
+    <div className="flex flex-1 items-center justify-center">
+      <section className="w-full max-w-lg space-y-6 text-center">
+        <p className="text-7xl font-semibold tracking-tight text-primary">404</p>
+        <div className="space-y-2">
+          <h1 className="text-3xl font-semibold tracking-tight">页面未找到</h1>
+          <p className="text-muted-foreground">你访问的页面不存在，或者已经被移动。</p>
+        </div>
+        <Link
+          className="inline-flex h-9 items-center justify-center rounded-4xl bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
+          to="/"
+        >
+          返回首页
+        </Link>
+      </section>
+    </div>
   );
 }
 

@@ -1,29 +1,43 @@
-import { MenuIcon, SearchIcon } from "lucide-react";
+import { useRouterState } from "@tanstack/react-router";
 
-import { Button } from "@/ui/components/button";
-import { Input } from "@/ui/components/input";
-import { useSidebar } from "@/ui/components/sidebar";
+import { collectionNavigation, homeItem } from "@/features/layout/navigation";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/ui/components/breadcrumb";
+import { Separator } from "@/ui/components/separator";
+import { SidebarTrigger } from "@/ui/components/sidebar";
 
 export function SiteHeader() {
-  const { toggleSidebar } = useSidebar();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const collectionItem = collectionNavigation.items.find((item) => item.to === pathname);
+  const title = pathname === homeItem.to ? homeItem.title : (collectionItem?.title ?? "页面未找到");
+
   return (
-    <header className="sticky top-0 z-50 flex h-(--header-height) w-full items-center border-b bg-[#352f2b]">
-      <div className="flex w-full items-center px-4">
-        <Button className="size-8 text-accent" variant="ghost" size="icon" onClick={toggleSidebar}>
-          <span className="sr-only">切换侧栏</span>
-          <MenuIcon />
-        </Button>
-        <div className="flex items-center">
-          <img src="/logo.webp" alt="星布谷地 Wiki" className="h-12 w-auto mt-1" />
-        </div>
-        <form className="relative ml-auto w-full max-w-sm">
-          <label htmlFor="header-search" className="sr-only">
-            搜索 Wiki
-          </label>
-          <SearchIcon className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input id="header-search" placeholder="搜索 Wiki..." className="h-8 pl-8" />
-        </form>
-      </div>
+    <header className="flex h-16 shrink-0 items-center gap-2 px-4">
+      <SidebarTrigger className="-ml-1" aria-label="切换侧栏" />
+      <Separator
+        orientation="vertical"
+        className="mr-2 data-vertical:h-4 data-vertical:self-center"
+      />
+      <Breadcrumb aria-label="页面导航">
+        <BreadcrumbList>
+          {collectionItem && (
+            <>
+              <BreadcrumbItem className="hidden md:inline-flex">
+                {collectionNavigation.title}
+              </BreadcrumbItem>
+              <BreadcrumbSeparator className="hidden md:block" />
+            </>
+          )}
+          <BreadcrumbItem>
+            <BreadcrumbPage>{title}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
     </header>
   );
 }
