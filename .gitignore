@@ -45,3 +45,6 @@ dist-ssr
 
 # Local website data and extracted assets
 /apps/website/public/resources/
+
+# Vitest cache
+.vitest/
