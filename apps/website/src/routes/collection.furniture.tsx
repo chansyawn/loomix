@@ -23,9 +23,9 @@ function FurnitureRoute() {
     <FurniturePage
       data={data}
       search={search}
-      onSearchChange={(update, replace = false) => {
-        void navigate({ search: update, replace, resetScroll: false });
-      }}
+      onSearchChange={(update, replace = false) =>
+        navigate({ search: update, replace, resetScroll: false })
+      }
     />
   );
 }

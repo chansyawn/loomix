@@ -1,5 +1,4 @@
 import { ArmchairIcon, ArrowDownUpIcon, LayersIcon, SearchIcon, XIcon } from "lucide-react";
-import { useRef } from "react";
 import { Button } from "@/ui/components/button";
 import { Badge } from "@/ui/components/badge";
 import {
@@ -19,8 +18,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/components/tabs";
 import type { FurnitureData } from "./data";
 import { FilterPanel } from "./filter-panel";
-import { FurnitureCard, FurnitureSetCard } from "./furniture-card";
-import { FurniturePagination } from "./pagination";
+import { FurnitureVirtualGrid } from "./virtual-grid";
 import { emptyQuery, filterGroups, queryFurniture, sortOptions, updateViewQuery } from "./query";
 import type { FurnitureSearch, ViewQuery } from "./query";
 import { FurnitureEmpty } from "./states";
@@ -34,18 +32,17 @@ export function FurniturePage({
 }: {
   data: FurnitureData;
   search: FurnitureSearch;
-  onSearchChange: (update: SearchUpdate, replace?: boolean) => void;
+  onSearchChange: (update: SearchUpdate, replace?: boolean) => Promise<void>;
 }) {
-  const top = useRef<HTMLDivElement>(null);
   const query = search[search.view];
   const result = queryFurniture(data, search.view, query);
   const groups = filterGroups(data).filter(
     (group) => search.view === "items" || group.key === "qualities",
   );
   const update = (patch: Partial<ViewQuery>, replace = false) =>
-    onSearchChange((previous) => updateViewQuery(previous, patch), replace);
+    void onSearchChange((previous) => updateViewQuery(previous, patch), replace);
   const clear = () =>
-    onSearchChange((previous) => ({ ...previous, [previous.view]: emptyQuery() }));
+    void onSearchChange((previous) => ({ ...previous, [previous.view]: emptyQuery() }));
   const chips = groups.flatMap((group) =>
     query[group.key].map((value) => ({
       key: `${group.key}-${value}`,
@@ -58,7 +55,7 @@ export function FurniturePage({
     chips.unshift({ key: "q", label: `搜索：${query.q}`, remove: () => update({ q: "" }) });
   return (
     <section className="@container">
-      <div ref={top} className="scroll-mt-4">
+      <div>
         <div className="mb-7">
           <h1 className="text-3xl font-semibold tracking-tight">家具</h1>
         </div>
@@ -66,7 +63,7 @@ export function FurniturePage({
           value={search.view}
           onValueChange={(value) => {
             if (value === "items" || value === "sets")
-              onSearchChange((previous) => ({ ...previous, view: value }));
+              void onSearchChange((previous) => ({ ...previous, view: value }));
           }}
           className="gap-6"
         >
@@ -170,27 +167,11 @@ export function FurniturePage({
                     )}
                   </div>
                   {result.total > 0 ? (
-                    <>
-                      <div
-                        className={`mb-8 grid grid-cols-1 gap-4 ${search.view === "items" ? "@[336px]:grid-cols-2 @[540px]:grid-cols-3 @[740px]:grid-cols-4 @[940px]:grid-cols-5 @[1140px]:grid-cols-6" : "@[600px]:grid-cols-2 @[960px]:grid-cols-3"}`}
-                      >
-                        {result.rows.map((row) =>
-                          "category" in row ? (
-                            <FurnitureCard key={row.id} item={row} />
-                          ) : (
-                            <FurnitureSetCard key={row.id} set={row} />
-                          ),
-                        )}
-                      </div>
-                      <FurniturePagination
-                        page={result.page}
-                        pages={result.pages}
-                        onChange={(page) => {
-                          update({ page });
-                          top.current?.scrollIntoView({ block: "start" });
-                        }}
-                      />
-                    </>
+                    <FurnitureVirtualGrid
+                      key={JSON.stringify([search.view, query])}
+                      rows={result.rows}
+                      view={search.view}
+                    />
                   ) : (
                     <FurnitureEmpty onClear={clear} />
                   )}

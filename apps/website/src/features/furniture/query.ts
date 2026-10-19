@@ -25,7 +25,7 @@ export const filterKeys = [
 ] as const;
 export type FilterKey = (typeof filterKeys)[number];
 export type Filters = Record<FilterKey, string[]>;
-export type ViewQuery = Filters & { q: string; sort: Sort; page: number };
+export type ViewQuery = Filters & { q: string; sort: Sort };
 export type FurnitureSearch = { view: View; items: ViewQuery; sets: ViewQuery };
 export type Option = { value: string; label: string };
 export type FilterGroup = { key: FilterKey; label: string; options: Option[] };
@@ -35,7 +35,6 @@ export function emptyQuery(): ViewQuery {
     q: "",
     categories: [],
     sort: "original",
-    page: 1,
     types: [],
     qualities: [],
     sets: [],
@@ -59,8 +58,6 @@ function parseQuery(input: unknown, view: View): ViewQuery {
     typeof raw.sort === "string" && Object.hasOwn(sortOptions, raw.sort)
       ? (raw.sort as Sort)
       : "original";
-  result.page =
-    typeof raw.page === "number" && Number.isSafeInteger(raw.page) && raw.page > 0 ? raw.page : 1;
   for (const key of filterKeys) {
     const value = raw[key];
     result[key] =
@@ -98,7 +95,7 @@ export function updateViewQuery(
   search: FurnitureSearch,
   patch: Partial<ViewQuery>,
 ): FurnitureSearch {
-  return { ...search, [search.view]: { ...search[search.view], ...patch, page: patch.page ?? 1 } };
+  return { ...search, [search.view]: { ...search[search.view], ...patch } };
 }
 
 export function splitValues(value: string | null): string[] {
@@ -196,14 +193,9 @@ export function queryFurniture(data: FurnitureData, view: View, query: ViewQuery
       if (b.quality === null) return -1;
       return direction * (a.quality - b.quality);
     });
-  const pageSize = view === "items" ? 48 : 12;
-  const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const page = Math.min(query.page, pages);
   return {
-    rows: filtered.slice((page - 1) * pageSize, page * pageSize),
+    rows: filtered,
     total: filtered.length,
-    pages,
-    page,
     memberships,
   };
 }

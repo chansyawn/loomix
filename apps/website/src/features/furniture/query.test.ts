@@ -19,14 +19,11 @@ const data = parseContent(
 ).furniture;
 
 describe("furniture catalog", () => {
-  it("paginates the real catalog without changing resource order", () => {
+  it("returns the complete catalog without changing resource order", () => {
     const result = queryFurniture(data, "items", emptyQuery());
     expect(result.total).toBe(887);
-    expect(result.rows).toEqual(data.items.slice(0, 48));
-    expect(queryFurniture(data, "sets", emptyQuery()).rows).toEqual(data.sets.slice(0, 12));
-    const last = queryFurniture(data, "items", { ...emptyQuery(), page: 999 });
-    expect(last.page).toBe(last.pages);
-    expect(last.rows.length).toBeGreaterThan(0);
+    expect(result.rows).toEqual(data.items);
+    expect(queryFurniture(data, "sets", emptyQuery()).rows).toEqual(data.sets);
   });
 
   it("combines choices within a group with OR and different groups with AND", () => {
@@ -44,7 +41,7 @@ describe("furniture catalog", () => {
         item.colors?.split("，").some((color) => ["白色", "黄色"].includes(color)),
     );
     expect(result.total).toBe(expected.length);
-    expect(result.rows).toEqual(expected.slice(0, 48));
+    expect(result.rows).toEqual(expected);
   });
 
   it("searches names and matches sources as complete text", () => {
@@ -104,11 +101,25 @@ describe("furniture catalog", () => {
     expect(descending.rows[0].quality).toBe(4);
     const ascending = queryFurniture(data, "items", { ...emptyQuery(), sort: "quality-asc" });
     expect(ascending.rows[0].quality).toBe(0);
+    for (const result of [ascending, descending]) {
+      expect(result.rows).toHaveLength(data.items.length);
+      expect(result.rows.filter((row) => row.quality === 2)).toEqual(
+        data.items.filter((row) => row.quality === 2),
+      );
+    }
     expect(data.items[0].name).toBe("手工图桌");
   });
 });
 
 describe("furniture URL state", () => {
+  it("ignores obsolete page parameters in both views", () => {
+    const search = parseFurnitureSearch({ items: { page: 8 }, sets: { page: 3 } });
+    expect(search.items).toEqual(emptyQuery());
+    expect(search.sets).toEqual(emptyQuery());
+    expect(queryFurniture(data, "items", search.items).rows).toEqual(data.items);
+    expect(queryFurniture(data, "sets", search.sets).rows).toEqual(data.sets);
+  });
+
   it("restores separate views through a JSON round trip", () => {
     const search = parseFurnitureSearch({
       view: "sets",
@@ -117,19 +128,17 @@ describe("furniture URL state", () => {
     });
     expect(parseFurnitureSearch(JSON.parse(JSON.stringify(search)))).toEqual(search);
     const updated = updateViewQuery(search, { q: "麦田" });
-    expect(updated.sets.page).toBe(1);
+    expect(updated.sets.q).toBe("麦田");
     expect(updated.items).toEqual(search.items);
-    expect(updateViewQuery(updated, { page: 2 }).sets.page).toBe(2);
   });
 
-  it("updates categories without clearing types and resets the page", () => {
+  it("updates categories without clearing types", () => {
     const search = parseFurnitureSearch({
       items: { page: 4, types: ["基础家具·桌"] },
     });
     const updated = updateViewQuery(search, { categories: ["起居", "装饰物"] });
     expect(updated.items.categories).toEqual(["起居", "装饰物"]);
     expect(updated.items.types).toEqual(["基础家具·桌"]);
-    expect(updated.items.page).toBe(1);
   });
 
   it("normalizes malformed URL input and strips unsupported set filters", () => {
@@ -146,13 +155,11 @@ describe("furniture URL state", () => {
       sets: { types: ["基础家具·床"], page: Infinity },
     });
     expect(state.view).toBe("items");
-    expect(state.items.page).toBe(1);
     expect(state.items.categories).toEqual(["起居"]);
     expect(state.items.sort).toBe("original");
     expect(state.items.colors).toEqual(["白色"]);
     expect(state.items.qualities).toEqual(["0"]);
     expect(state.sets.types).toEqual([]);
     expect(state.sets.categories).toEqual([]);
-    expect(state.sets.page).toBe(1);
   });
 });
