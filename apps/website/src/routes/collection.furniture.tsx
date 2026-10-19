@@ -2,12 +2,16 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 
 import { loadFurniture } from "@/features/furniture/data";
 import { FurniturePage } from "@/features/furniture/furniture-page";
-import { parseFurnitureSearch } from "@/features/furniture/query";
+import {
+  furnitureSearchSchema,
+  compactFurnitureSearchMiddleware,
+} from "@/features/furniture/search";
 import { FurnitureLoading, FurnitureLoadError } from "@/features/furniture/states";
 
 export const Route = createFileRoute("/collection/furniture")({
   ssr: false,
-  validateSearch: parseFurnitureSearch,
+  validateSearch: furnitureSearchSchema,
+  search: { middlewares: [compactFurnitureSearchMiddleware] },
   loader: () => loadFurniture(),
   pendingComponent: FurnitureLoading,
   errorComponent: FurnitureError,

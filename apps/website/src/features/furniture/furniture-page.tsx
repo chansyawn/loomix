@@ -19,8 +19,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/components/tabs";
 import type { FurnitureData } from "./data";
 import { FilterPanel } from "./filter-panel";
 import { FurnitureVirtualGrid } from "./virtual-grid";
-import { emptyQuery, filterGroups, queryFurniture, sortOptions, updateViewQuery } from "./query";
-import type { FurnitureSearch, ViewQuery } from "./query";
+import { filterGroups, queryFurniture } from "./query";
+import { emptyQuery, sortOptions, updateViewQuery } from "./search";
+import type { FurnitureSearch, ViewQuery } from "./search";
 import { FurnitureEmpty } from "./states";
 
 type SearchUpdate = FurnitureSearch | ((previous: FurnitureSearch) => FurnitureSearch);

@@ -3,7 +3,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { useLayoutEffect, useRef, useState } from "react";
 import type { FurnitureItem, FurnitureSet } from "@petit-orbit/content-schema";
 import { FurnitureCard, FurnitureSetCard } from "./furniture-card";
-import type { View } from "./query";
+import type { View } from "./search";
 
 type GridProps = {
   rows: (FurnitureItem | FurnitureSet)[];

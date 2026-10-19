@@ -1,102 +1,11 @@
 import type { FurnitureItem, FurnitureSet } from "@petit-orbit/content-schema";
 import type { FurnitureData } from "./data";
+import { categories, missing, ungrouped } from "./search";
+import type { FilterKey, View, ViewQuery } from "./search";
 
-export const categories = ["起居", "装饰物", "功能家具", "硬装", "绿植", "户外布设", "其他"];
 export const qualityNames = ["普通", "优质", "珍稀", "特等", "奇迹"];
-export const missing = "__missing";
-export const ungrouped = "__ungrouped";
-export const sortOptions = {
-  original: "默认顺序",
-  "name-asc": "名称：升序",
-  "name-desc": "名称：降序",
-  "quality-asc": "品阶：从低到高",
-  "quality-desc": "品阶：从高到低",
-};
-export type Sort = keyof typeof sortOptions;
-export type View = "items" | "sets";
-export const filterKeys = [
-  "categories",
-  "types",
-  "qualities",
-  "sets",
-  "colors",
-  "materials",
-  "sources",
-] as const;
-export type FilterKey = (typeof filterKeys)[number];
-export type Filters = Record<FilterKey, string[]>;
-export type ViewQuery = Filters & { q: string; sort: Sort };
-export type FurnitureSearch = { view: View; items: ViewQuery; sets: ViewQuery };
 export type Option = { value: string; label: string };
 export type FilterGroup = { key: FilterKey; label: string; options: Option[] };
-
-export function emptyQuery(): ViewQuery {
-  return {
-    q: "",
-    categories: [],
-    sort: "original",
-    types: [],
-    qualities: [],
-    sets: [],
-    colors: [],
-    materials: [],
-    sources: [],
-  };
-}
-
-function object(value: unknown): Record<string, unknown> {
-  return value !== null && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {};
-}
-
-function parseQuery(input: unknown, view: View): ViewQuery {
-  const raw = object(input);
-  const result = emptyQuery();
-  result.q = typeof raw.q === "string" ? raw.q : "";
-  result.sort =
-    typeof raw.sort === "string" && Object.hasOwn(sortOptions, raw.sort)
-      ? (raw.sort as Sort)
-      : "original";
-  for (const key of filterKeys) {
-    const value = raw[key];
-    result[key] =
-      (view === "items" || key === "qualities") && Array.isArray(value)
-        ? [
-            ...new Set(
-              value.filter(
-                (entry): entry is string => typeof entry === "string" && entry.length > 0,
-              ),
-            ),
-          ]
-        : [];
-  }
-  const legacyCategory = typeof raw.category === "string" ? [raw.category] : [];
-  const selectedCategories = Array.isArray(raw.categories) ? raw.categories : legacyCategory;
-  result.categories =
-    view === "items"
-      ? [...new Set(selectedCategories)].filter(
-          (value): value is string => typeof value === "string" && categories.includes(value),
-        )
-      : [];
-  result.qualities = result.qualities.filter((value) => value === missing || /^[0-4]$/.test(value));
-  return result;
-}
-
-export function parseFurnitureSearch(input: Record<string, unknown>): FurnitureSearch {
-  return {
-    view: input.view === "sets" ? "sets" : "items",
-    items: parseQuery(input.items, "items"),
-    sets: parseQuery(input.sets, "sets"),
-  };
-}
-
-export function updateViewQuery(
-  search: FurnitureSearch,
-  patch: Partial<ViewQuery>,
-): FurnitureSearch {
-  return { ...search, [search.view]: { ...search[search.view], ...patch } };
-}
 
 export function splitValues(value: string | null): string[] {
   return value

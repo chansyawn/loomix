@@ -13,7 +13,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/ui/components/sheet";
-import type { FilterGroup, FilterKey, ViewQuery } from "./query";
+import type { FilterGroup } from "./query";
+import type { FilterKey, ViewQuery } from "./search";
 
 function FilterOptions({
   group,
