@@ -8,7 +8,6 @@ import { Label } from "@/ui/components/label";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetFooter,
   SheetHeader,
   SheetTitle,
@@ -30,12 +29,15 @@ function FilterOptions({
   const options = group.options.filter((option) => option.label.includes(term.trim()));
   return (
     <fieldset className="space-y-3 border-b border-border/70 pb-6">
-      <legend className="mb-3 text-sm font-semibold">
-        {group.label}
+      <legend className="mb-3 flex min-h-6 w-full items-center justify-between gap-3 text-sm font-semibold">
+        <span className="flex min-w-0 items-center gap-2">
+          <span>{group.label}</span>
+          {selected.length > 0 && <Badge variant="secondary">已选 {selected.length}</Badge>}
+        </span>
         {selected.length > 0 && (
-          <Badge variant="secondary" className="ml-2">
-            已选 {selected.length}
-          </Badge>
+          <Button type="button" variant="ghost" size="xs" onClick={() => onChange([])}>
+            清除
+          </Button>
         )}
       </legend>
       {group.options.length > 10 && (
@@ -100,7 +102,6 @@ export function FilterPanel({
       <SheetContent className="data-[side=right]:w-full data-[side=right]:sm:max-w-md">
         <SheetHeader className="border-b">
           <SheetTitle>筛选家具</SheetTitle>
-          <SheetDescription>组合条件，找到适合你的那一件。</SheetDescription>
         </SheetHeader>
         <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6">
           {groups.map((group) => (
