@@ -63,8 +63,7 @@ export function QualityBadge({ quality }: { quality: number | null }) {
   );
 }
 
-export function FurnitureCard({ item, sets }: { item: FurnitureItem; sets: FurnitureSet[] }) {
-  const setNames = sets.map((set) => set.name).join("、");
+export function FurnitureCard({ item }: { item: FurnitureItem }) {
   return (
     <Card size="sm" role="article" className="min-w-0 pt-0">
       <FurnitureImage key={item.image} image={item.image} name={item.name} />
@@ -83,19 +82,6 @@ export function FurnitureCard({ item, sets }: { item: FurnitureItem; sets: Furni
           <QualityBadge quality={item.quality} />
         </CardDescription>
       </CardHeader>
-      <CardFooter className="mt-auto min-h-10 flex-col items-start gap-1 text-xs text-muted-foreground">
-        {item.sources && (
-          <p className="max-w-full truncate" title={item.sources}>
-            {item.sources}
-          </p>
-        )}
-        {setNames && (
-          <p className="flex max-w-full items-center gap-1" title={setNames}>
-            <LayersIcon className="size-3 shrink-0" />
-            <span className="truncate">{setNames}</span>
-          </p>
-        )}
-      </CardFooter>
     </Card>
   );
 }

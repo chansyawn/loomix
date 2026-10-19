@@ -60,20 +60,8 @@ export function FurniturePage({
   return (
     <section className="furniture-page pb-6 pt-5 sm:pt-8">
       <div ref={top} className="scroll-mt-4">
-        <div className="mb-7 flex items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-semibold tracking-tight">家具</h1>
-              <Badge variant="secondary">{data[search.view].length}</Badge>
-            </div>
-            <p className="mt-2 text-sm text-muted-foreground">
-              从一件心仪的家具，开始布置理想生活。
-            </p>
-          </div>
-          <ArmchairIcon
-            className="mt-1 hidden size-9 text-amber-500/60 sm:block"
-            strokeWidth={1.3}
-          />
+        <div className="mb-7">
+          <h1 className="text-3xl font-semibold tracking-tight">家具</h1>
         </div>
         <Tabs
           value={search.view}
@@ -148,8 +136,11 @@ export function FurniturePage({
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 py-5">
-                    <p role="status" className="mr-2 text-xs text-muted-foreground">
+                  <div className="flex h-16 flex-nowrap items-center gap-2 overflow-x-auto">
+                    <p
+                      role="status"
+                      className="mr-2 shrink-0 whitespace-nowrap text-xs text-muted-foreground"
+                    >
                       共{" "}
                       <span className="font-medium tabular-nums text-foreground">
                         {result.total}
@@ -160,7 +151,7 @@ export function FurniturePage({
                       <Badge
                         key={chip.key}
                         variant="secondary"
-                        className="h-auto max-w-full gap-1 pr-1"
+                        className="h-auto max-w-full shrink-0 gap-1 pr-1"
                       >
                         <span className="truncate">{chip.label}</span>
                         <Button
@@ -174,7 +165,7 @@ export function FurniturePage({
                       </Badge>
                     ))}
                     {chips.length > 0 && (
-                      <Button variant="ghost" size="sm" onClick={clear}>
+                      <Button variant="ghost" size="sm" className="shrink-0" onClick={clear}>
                         清空筛选
                       </Button>
                     )}
@@ -186,11 +177,7 @@ export function FurniturePage({
                       >
                         {result.rows.map((row) =>
                           "category" in row ? (
-                            <FurnitureCard
-                              key={row.id}
-                              item={row}
-                              sets={result.memberships.get(row.id) ?? []}
-                            />
+                            <FurnitureCard key={row.id} item={row} />
                           ) : (
                             <FurnitureSetCard key={row.id} set={row} />
                           ),
