@@ -6,13 +6,10 @@ export function WikiLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider className="h-svh overflow-hidden">
       <AppSidebar />
-      <SidebarInset className="min-h-0 min-w-0 overflow-hidden">
+      <SidebarInset className="min-h-0 min-w-0 overflow-clip">
         <SiteHeader />
-        <div
-          className="container mx-auto min-h-0 flex-1 overflow-y-auto p-4 md:px-6"
-          data-scroll-restoration-id="wiki-content"
-        >
-          {children}
+        <div className="min-h-0 flex-1 overflow-y-auto" data-scroll-restoration-id="wiki-content">
+          <div className="container mx-auto p-4 md:px-6">{children}</div>
         </div>
       </SidebarInset>
     </SidebarProvider>
