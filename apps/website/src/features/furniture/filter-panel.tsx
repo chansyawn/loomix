@@ -1,7 +1,10 @@
 import { SlidersHorizontalIcon } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
+import { Badge } from "@/ui/components/badge";
 import { Button } from "@/ui/components/button";
+import { Checkbox } from "@/ui/components/checkbox";
 import { Input } from "@/ui/components/input";
+import { Label } from "@/ui/components/label";
 import {
   Sheet,
   SheetContent,
@@ -23,13 +26,16 @@ function FilterOptions({
   onChange: (values: string[]) => void;
 }) {
   const [term, setTerm] = useState("");
+  const id = useId();
   const options = group.options.filter((option) => option.label.includes(term.trim()));
   return (
     <fieldset className="space-y-3 border-b border-border/70 pb-6">
       <legend className="mb-3 text-sm font-semibold">
         {group.label}
         {selected.length > 0 && (
-          <span className="ml-2 text-xs text-muted-foreground">已选 {selected.length}</span>
+          <Badge variant="secondary" className="ml-2">
+            已选 {selected.length}
+          </Badge>
         )}
       </legend>
       {group.options.length > 10 && (
@@ -42,24 +48,26 @@ function FilterOptions({
       )}
       <div className="grid max-h-56 grid-cols-2 gap-x-3 gap-y-3 overflow-y-auto py-1">
         {options.map((option) => (
-          <label
+          <div
             key={option.value}
-            className={`flex cursor-pointer items-start gap-2 text-sm leading-5 ${group.key === "sources" ? "col-span-2" : ""}`}
+            className={`flex items-start gap-2 ${group.key === "sources" ? "col-span-2" : ""}`}
           >
-            <input
-              type="checkbox"
+            <Checkbox
+              id={`${id}-${option.value}`}
               checked={selected.includes(option.value)}
-              onChange={(event) =>
+              onCheckedChange={(checked) =>
                 onChange(
-                  event.target.checked
+                  checked
                     ? [...selected, option.value]
                     : selected.filter((value) => value !== option.value),
                 )
               }
-              className="mt-0.5 size-4 shrink-0 accent-amber-400"
+              className="mt-0.5"
             />
-            <span>{option.label}</span>
-          </label>
+            <Label htmlFor={`${id}-${option.value}`} className="cursor-pointer leading-5">
+              {option.label}
+            </Label>
+          </div>
         ))}
       </div>
       {options.length === 0 && <p className="text-xs text-muted-foreground">没有匹配的选项</p>}
@@ -84,14 +92,10 @@ export function FilterPanel({
   const count = groups.reduce((sum, group) => sum + query[group.key].length, 0);
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger render={<Button variant="outline" className="h-10 rounded-lg" />}>
+      <SheetTrigger render={<Button variant="outline" />}>
         <SlidersHorizontalIcon />
         筛选
-        {count > 0 && (
-          <span className="rounded-full bg-primary px-1.5 text-xs text-primary-foreground">
-            {count}
-          </span>
-        )}
+        {count > 0 && <Badge>{count}</Badge>}
       </SheetTrigger>
       <SheetContent className="data-[side=right]:w-full data-[side=right]:sm:max-w-md">
         <SheetHeader className="border-b">

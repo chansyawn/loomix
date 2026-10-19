@@ -1,5 +1,13 @@
-import { SearchXIcon } from "lucide-react";
+import { SearchXIcon, WifiOffIcon } from "lucide-react";
 import { Button } from "@/ui/components/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/ui/components/empty";
 import { Skeleton } from "@/ui/components/skeleton";
 
 export function FurnitureLoading() {
@@ -9,7 +17,7 @@ export function FurnitureLoading() {
       <Skeleton className="h-10 w-64" />
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {Array.from({ length: 8 }, (_, index) => (
-          <Skeleton key={index} className="aspect-3/4 rounded-xl" />
+          <Skeleton key={index} className="aspect-3/4 rounded-4xl" />
         ))}
       </div>
     </section>
@@ -18,15 +26,40 @@ export function FurnitureLoading() {
 
 export function FurnitureEmpty({ onClear }: { onClear: () => void }) {
   return (
-    <div className="flex min-h-80 flex-col items-center justify-center gap-4 text-center">
-      <div className="rounded-full bg-muted p-5">
-        <SearchXIcon className="size-7 text-muted-foreground" />
-      </div>
-      <h2 className="font-semibold">没有找到匹配的家具</h2>
-      <p className="text-sm text-muted-foreground">试试其他关键词，或减少一些筛选条件。</p>
-      <Button variant="outline" onClick={onClear}>
-        清空筛选
-      </Button>
-    </div>
+    <Empty className="min-h-80">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <SearchXIcon />
+        </EmptyMedia>
+        <EmptyTitle>
+          <h2>没有找到匹配的家具</h2>
+        </EmptyTitle>
+        <EmptyDescription>试试其他关键词，或减少一些筛选条件。</EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent>
+        <Button variant="outline" onClick={onClear}>
+          清空筛选
+        </Button>
+      </EmptyContent>
+    </Empty>
+  );
+}
+
+export function FurnitureLoadError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <Empty className="min-h-80">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <WifiOffIcon />
+        </EmptyMedia>
+        <EmptyTitle>
+          <h1>家具图鉴暂时无法加载</h1>
+        </EmptyTitle>
+        <EmptyDescription>请检查网络连接，然后再试一次。</EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent>
+        <Button onClick={onRetry}>重新加载</Button>
+      </EmptyContent>
+    </Empty>
   );
 }

@@ -1,6 +1,15 @@
 import { ImageOffIcon, LayersIcon } from "lucide-react";
 import { useState } from "react";
 import type { FurnitureItem, FurnitureSet } from "@petit-orbit/content-schema";
+import { Badge } from "@/ui/components/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/ui/components/card";
 import { qualityNames } from "./query";
 
 const qualityColors = [
@@ -23,7 +32,7 @@ function FurnitureImage({
   const [failed, setFailed] = useState(false);
   return (
     <div
-      className={`relative flex items-center justify-center overflow-hidden bg-[#f6f5f1] dark:bg-muted ${scene ? "aspect-2/1" : "aspect-square"}`}
+      className={`relative flex items-center justify-center overflow-hidden bg-muted ${scene ? "aspect-2/1" : "aspect-square"}`}
     >
       {image && !failed ? (
         <img
@@ -47,65 +56,71 @@ function FurnitureImage({
 export function QualityBadge({ quality }: { quality: number | null }) {
   if (quality === null) return null;
   return (
-    <span className="inline-flex shrink-0 items-center gap-1.5 text-[11px] text-muted-foreground">
+    <Badge variant="outline">
       <span className={`size-1.5 rounded-full ${qualityColors[quality]}`} />
       {qualityNames[quality]}
-    </span>
+    </Badge>
   );
 }
 
 export function FurnitureCard({ item, sets }: { item: FurnitureItem; sets: FurnitureSet[] }) {
   const setNames = sets.map((set) => set.name).join("、");
   return (
-    <article className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card">
+    <Card size="sm" role="article" className="min-w-0 pt-0">
       <FurnitureImage key={item.image} image={item.image} name={item.name} />
-      <div className="space-y-2.5 p-3.5">
-        <h2 className="truncate text-sm font-semibold" title={item.name}>
-          {item.name}
-        </h2>
-        <div className="flex min-w-0 items-center justify-between gap-2">
-          <span className="truncate text-xs text-muted-foreground" title={item.type ?? undefined}>
-            {item.type ?? ""}
-          </span>
+      <CardHeader>
+        <CardTitle>
+          <h2 className="truncate" title={item.name}>
+            {item.name}
+          </h2>
+        </CardTitle>
+        <CardDescription className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+          {item.type && (
+            <span className="min-w-0 truncate text-xs" title={item.type}>
+              {item.type}
+            </span>
+          )}
           <QualityBadge quality={item.quality} />
-        </div>
-        <div className="min-h-10 space-y-1 border-t border-border/50 pt-2.5 text-[11px] leading-4 text-muted-foreground">
-          {item.sources && (
-            <p className="truncate" title={item.sources}>
-              {item.sources}
-            </p>
-          )}
-          {setNames && (
-            <p className="flex items-center gap-1" title={setNames}>
-              <LayersIcon className="size-3 shrink-0 opacity-60" />
-              <span className="truncate">{setNames}</span>
-            </p>
-          )}
-        </div>
-      </div>
-    </article>
+        </CardDescription>
+      </CardHeader>
+      <CardFooter className="mt-auto min-h-10 flex-col items-start gap-1 text-xs text-muted-foreground">
+        {item.sources && (
+          <p className="max-w-full truncate" title={item.sources}>
+            {item.sources}
+          </p>
+        )}
+        {setNames && (
+          <p className="flex max-w-full items-center gap-1" title={setNames}>
+            <LayersIcon className="size-3 shrink-0" />
+            <span className="truncate">{setNames}</span>
+          </p>
+        )}
+      </CardFooter>
+    </Card>
   );
 }
 
 export function FurnitureSetCard({ set }: { set: FurnitureSet }) {
   return (
-    <article className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card">
+    <Card size="sm" role="article" className="min-w-0 pt-0">
       <FurnitureImage key={set.image} image={set.image} name={set.name} scene />
-      <div className="space-y-3 p-4">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="truncate font-semibold" title={set.name}>
-            {set.name}
-          </h2>
+      <CardHeader>
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+          <CardTitle className="min-w-0">
+            <h2 className="truncate" title={set.name}>
+              {set.name}
+            </h2>
+          </CardTitle>
           <QualityBadge quality={set.quality} />
         </div>
-        <p className="line-clamp-2 min-h-10 text-sm leading-5 text-muted-foreground">
-          {set.description}
-        </p>
-        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <LayersIcon className="size-3.5" />
-          {set.componentIds === null ? "成员信息未提供" : `${set.componentIds.length} 件家具`}
-        </p>
-      </div>
-    </article>
+      </CardHeader>
+      <CardContent>
+        <CardDescription className="line-clamp-2 min-h-10">{set.description}</CardDescription>
+      </CardContent>
+      <CardFooter className="mt-auto gap-1.5 text-xs text-muted-foreground">
+        <LayersIcon className="size-3.5" />
+        {set.componentIds === null ? "成员信息未提供" : `${set.componentIds.length} 件家具`}
+      </CardFooter>
+    </Card>
   );
 }

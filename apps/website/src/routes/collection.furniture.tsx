@@ -3,8 +3,7 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { loadFurniture } from "@/features/furniture/data";
 import { FurniturePage } from "@/features/furniture/furniture-page";
 import { parseFurnitureSearch } from "@/features/furniture/query";
-import { FurnitureLoading } from "@/features/furniture/states";
-import { Button } from "@/ui/components/button";
+import { FurnitureLoading, FurnitureLoadError } from "@/features/furniture/states";
 
 export const Route = createFileRoute("/collection/furniture")({
   ssr: false,
@@ -33,11 +32,5 @@ function FurnitureRoute() {
 
 function FurnitureError() {
   const router = useRouter();
-  return (
-    <section className="flex min-h-80 flex-col items-center justify-center gap-4 text-center">
-      <h1 className="text-xl font-semibold">家具图鉴暂时无法加载</h1>
-      <p className="text-sm text-muted-foreground">请检查网络连接，然后再试一次。</p>
-      <Button onClick={() => void router.invalidate()}>重新加载</Button>
-    </section>
-  );
+  return <FurnitureLoadError onRetry={() => void router.invalidate()} />;
 }

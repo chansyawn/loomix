@@ -1,7 +1,23 @@
 import { ArmchairIcon, ArrowDownUpIcon, LayersIcon, SearchIcon, XIcon } from "lucide-react";
 import { useRef } from "react";
 import { Button } from "@/ui/components/button";
-import { Input } from "@/ui/components/input";
+import { Badge } from "@/ui/components/badge";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/ui/components/input-group";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/ui/components/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/components/tabs";
+import { ToggleGroup, ToggleGroupItem } from "@/ui/components/toggle-group";
 import type { FurnitureData } from "./data";
 import { FilterPanel } from "./filter-panel";
 import { FurnitureCard, FurnitureSetCard } from "./furniture-card";
@@ -14,7 +30,7 @@ import {
   sortOptions,
   updateViewQuery,
 } from "./query";
-import type { FurnitureSearch, Sort, View, ViewQuery } from "./query";
+import type { FurnitureSearch, ViewQuery } from "./query";
 import { FurnitureEmpty } from "./states";
 import "./furniture.css";
 
@@ -71,9 +87,7 @@ export function FurniturePage({
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-semibold tracking-tight">家具</h1>
-              <span className="rounded-full bg-muted px-2.5 py-1 text-xs tabular-nums text-muted-foreground">
-                {data[search.view].length}
-              </span>
+              <Badge variant="secondary">{data[search.view].length}</Badge>
             </div>
             <p className="mt-2 text-sm text-muted-foreground">
               从一件心仪的家具，开始布置理想生活。
@@ -84,144 +98,164 @@ export function FurniturePage({
             strokeWidth={1.3}
           />
         </div>
-        <div className="mb-6 flex gap-6 border-b" aria-label="家具视图">
-          {(["items", "sets"] as const).map((view: View) => (
-            <button
-              key={view}
-              type="button"
-              aria-pressed={search.view === view}
-              onClick={() => onSearchChange((previous) => ({ ...previous, view }))}
-              className={`-mb-px flex items-center gap-2 border-b-2 px-1 pb-3 text-sm font-medium outline-offset-4 ${search.view === view ? "border-amber-400 text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
-            >
-              {view === "items" ? (
-                <ArmchairIcon className="size-4" />
-              ) : (
-                <LayersIcon className="size-4" />
-              )}
-              {view === "items" ? "家具单件" : "家具套装"}
-              <span className="text-xs tabular-nums text-muted-foreground">
-                {data[view].length}
-              </span>
-            </button>
-          ))}
-        </div>
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="relative min-w-48 flex-1 sm:max-w-sm">
-            <SearchIcon className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" />
-            <Input
-              aria-label="搜索家具名称"
-              placeholder={search.view === "items" ? "搜索家具名称…" : "搜索套装名称…"}
-              value={query.q}
-              onChange={(event) => update({ q: event.target.value }, true)}
-              className="h-10 rounded-lg border-border/70 bg-background pl-9 pr-9"
-            />
-            {query.q && (
-              <button
-                type="button"
-                aria-label="清除搜索"
-                onClick={() => update({ q: "" })}
-                className="absolute right-2 top-2 rounded p-1 text-muted-foreground"
-              >
-                <XIcon className="size-4" />
-              </button>
-            )}
-          </div>
-          <FilterPanel
-            groups={groups}
-            query={query}
-            total={result.total}
-            onFilter={(key, values) => update({ [key]: values })}
-            onClear={clear}
-          />
-          <div className="relative ml-auto">
-            <ArrowDownUpIcon className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" />
-            <select
-              aria-label="家具排序"
-              value={query.sort}
-              onChange={(event) => update({ sort: event.target.value as Sort })}
-              className="h-10 max-w-full rounded-lg border border-border/70 bg-background pl-9 pr-3 text-sm outline-offset-4"
-            >
-              {Object.entries(sortOptions).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-        {search.view === "items" && (
-          <div className="mt-5 flex gap-2 overflow-x-auto pb-2" aria-label="家具分类">
-            {["", ...categories].map((category) => (
-              <Button
-                key={category}
-                size="sm"
-                variant={query.category === category ? "default" : "ghost"}
-                aria-pressed={query.category === category}
-                onClick={() => changeCategory(category)}
-                className="shrink-0 text-xs"
-              >
-                {category || "全部"}
-              </Button>
+        <Tabs
+          value={search.view}
+          onValueChange={(value) => {
+            if (value === "items" || value === "sets")
+              onSearchChange((previous) => ({ ...previous, view: value }));
+          }}
+          className="gap-6"
+        >
+          <TabsList aria-label="家具视图">
+            {(["items", "sets"] as const).map((view) => (
+              <TabsTrigger key={view} value={view}>
+                {view === "items" ? <ArmchairIcon /> : <LayersIcon />}
+                {view === "items" ? "家具单件" : "家具套装"}
+                <Badge variant="secondary">{data[view].length}</Badge>
+              </TabsTrigger>
             ))}
-          </div>
-        )}
-        <div className="flex flex-wrap items-center gap-2 py-5">
-          <p role="status" className="mr-2 text-xs text-muted-foreground">
-            共 <span className="font-medium tabular-nums text-foreground">{result.total}</span>{" "}
-            {search.view === "items" ? "件家具" : "个套装"}
-          </p>
-          {chips.map((chip) => (
-            <button
-              type="button"
-              key={chip.key}
-              aria-label={`移除${chip.label}`}
-              onClick={chip.remove}
-              className="inline-flex max-w-full items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
-            >
-              <span className="truncate">{chip.label}</span>
-              <XIcon className="size-3 shrink-0" />
-            </button>
+          </TabsList>
+          {(["items", "sets"] as const).map((view) => (
+            <TabsContent key={view} value={view}>
+              {search.view === view && (
+                <>
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <InputGroup className="min-w-48 flex-1 sm:max-w-sm">
+                      <InputGroupInput
+                        aria-label={search.view === "items" ? "搜索家具名称" : "搜索套装名称"}
+                        placeholder={search.view === "items" ? "搜索家具名称…" : "搜索套装名称…"}
+                        value={query.q}
+                        onChange={(event) => update({ q: event.target.value }, true)}
+                      />
+                      <InputGroupAddon>
+                        <SearchIcon />
+                      </InputGroupAddon>
+                      {query.q && (
+                        <InputGroupAddon align="inline-end">
+                          <InputGroupButton
+                            aria-label="清除搜索"
+                            size="icon-xs"
+                            onClick={() => update({ q: "" })}
+                          >
+                            <XIcon />
+                          </InputGroupButton>
+                        </InputGroupAddon>
+                      )}
+                    </InputGroup>
+                    <FilterPanel
+                      groups={groups}
+                      query={query}
+                      total={result.total}
+                      onFilter={(key, values) => update({ [key]: values })}
+                      onClear={clear}
+                    />
+                    <Select
+                      items={sortOptions}
+                      value={query.sort}
+                      onValueChange={(sort) => {
+                        if (sort) update({ sort });
+                      }}
+                    >
+                      <SelectTrigger aria-label="家具排序" className="ml-auto">
+                        <ArrowDownUpIcon />
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {Object.entries(sortOptions).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {search.view === "items" && (
+                    <div className="mt-5 overflow-x-auto pb-2">
+                      <ToggleGroup
+                        aria-label="家具分类"
+                        value={[query.category || "all"]}
+                        onValueChange={(values) => {
+                          const category = values[0];
+                          if (typeof category === "string")
+                            changeCategory(category === "all" ? "" : category);
+                        }}
+                      >
+                        {["", ...categories].map((category) => (
+                          <ToggleGroupItem key={category} value={category || "all"}>
+                            {category || "全部"}
+                          </ToggleGroupItem>
+                        ))}
+                      </ToggleGroup>
+                    </div>
+                  )}
+                  <div className="flex flex-wrap items-center gap-2 py-5">
+                    <p role="status" className="mr-2 text-xs text-muted-foreground">
+                      共{" "}
+                      <span className="font-medium tabular-nums text-foreground">
+                        {result.total}
+                      </span>{" "}
+                      {search.view === "items" ? "件家具" : "个套装"}
+                    </p>
+                    {chips.map((chip) => (
+                      <Badge
+                        key={chip.key}
+                        variant="secondary"
+                        className="h-auto max-w-full gap-1 pr-1"
+                      >
+                        <span className="truncate">{chip.label}</span>
+                        <Button
+                          size="icon-xs"
+                          variant="ghost"
+                          aria-label={`移除${chip.label}`}
+                          onClick={chip.remove}
+                        >
+                          <XIcon />
+                        </Button>
+                      </Badge>
+                    ))}
+                    {chips.length > 0 && (
+                      <Button variant="ghost" size="sm" onClick={clear}>
+                        清空筛选
+                      </Button>
+                    )}
+                  </div>
+                  {result.total > 0 ? (
+                    <>
+                      <div
+                        className={`${search.view === "items" ? "furniture-grid" : "furniture-set-grid"} mb-8`}
+                      >
+                        {result.rows.map((row) =>
+                          "category" in row ? (
+                            <FurnitureCard
+                              key={row.id}
+                              item={row}
+                              sets={result.memberships.get(row.id) ?? []}
+                            />
+                          ) : (
+                            <FurnitureSetCard key={row.id} set={row} />
+                          ),
+                        )}
+                      </div>
+                      <FurniturePagination
+                        page={result.page}
+                        pages={result.pages}
+                        onChange={(page) => {
+                          update({ page });
+                          top.current?.scrollIntoView({ block: "start" });
+                        }}
+                      />
+                    </>
+                  ) : (
+                    <FurnitureEmpty onClear={clear} />
+                  )}
+                </>
+              )}
+            </TabsContent>
           ))}
-          {chips.length > 0 && (
-            <button
-              type="button"
-              onClick={clear}
-              className="text-xs text-muted-foreground underline underline-offset-4"
-            >
-              清空筛选
-            </button>
-          )}
-        </div>
+        </Tabs>
       </div>
-      {result.total > 0 ? (
-        <>
-          <div
-            className={`${search.view === "items" ? "furniture-grid" : "furniture-set-grid"} mb-8`}
-          >
-            {result.rows.map((row) =>
-              "category" in row ? (
-                <FurnitureCard
-                  key={row.id}
-                  item={row}
-                  sets={result.memberships.get(row.id) ?? []}
-                />
-              ) : (
-                <FurnitureSetCard key={row.id} set={row} />
-              ),
-            )}
-          </div>
-          <FurniturePagination
-            page={result.page}
-            pages={result.pages}
-            onChange={(page) => {
-              update({ page });
-              top.current?.scrollIntoView({ block: "start" });
-            }}
-          />
-        </>
-      ) : (
-        <FurnitureEmpty onClear={clear} />
-      )}
     </section>
   );
 }
