@@ -17,19 +17,11 @@ import {
   SelectValue,
 } from "@/ui/components/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/components/tabs";
-import { ToggleGroup, ToggleGroupItem } from "@/ui/components/toggle-group";
 import type { FurnitureData } from "./data";
 import { FilterPanel } from "./filter-panel";
 import { FurnitureCard, FurnitureSetCard } from "./furniture-card";
 import { FurniturePagination } from "./pagination";
-import {
-  categories,
-  emptyQuery,
-  filterGroups,
-  queryFurniture,
-  sortOptions,
-  updateViewQuery,
-} from "./query";
+import { emptyQuery, filterGroups, queryFurniture, sortOptions, updateViewQuery } from "./query";
 import type { FurnitureSearch, ViewQuery } from "./query";
 import { FurnitureEmpty } from "./states";
 import "./furniture.css";
@@ -48,7 +40,7 @@ export function FurniturePage({
   const top = useRef<HTMLDivElement>(null);
   const query = search[search.view];
   const result = queryFurniture(data, search.view, query);
-  const groups = filterGroups(data, query.category).filter(
+  const groups = filterGroups(data).filter(
     (group) => search.view === "items" || group.key === "qualities",
   );
   const update = (patch: Partial<ViewQuery>, replace = false) =>
@@ -65,21 +57,6 @@ export function FurniturePage({
   );
   if (query.q)
     chips.unshift({ key: "q", label: `搜索：${query.q}`, remove: () => update({ q: "" }) });
-  if (query.category)
-    chips.unshift({
-      key: "category",
-      label: `分类：${query.category}`,
-      remove: () => update({ category: "" }),
-    });
-
-  function changeCategory(category: string) {
-    const validTypes =
-      filterGroups(data, category)
-        .find((group) => group.key === "types")
-        ?.options.map((option) => option.value) ?? [];
-    update({ category, types: query.types.filter((type) => validTypes.includes(type)) });
-  }
-
   return (
     <section className="furniture-page pb-6 pt-5 sm:pt-8">
       <div ref={top} className="scroll-mt-4">
@@ -171,25 +148,6 @@ export function FurniturePage({
                       </SelectContent>
                     </Select>
                   </div>
-                  {search.view === "items" && (
-                    <div className="mt-5 overflow-x-auto pb-2">
-                      <ToggleGroup
-                        aria-label="家具分类"
-                        value={[query.category || "all"]}
-                        onValueChange={(values) => {
-                          const category = values[0];
-                          if (typeof category === "string")
-                            changeCategory(category === "all" ? "" : category);
-                        }}
-                      >
-                        {["", ...categories].map((category) => (
-                          <ToggleGroupItem key={category} value={category || "all"}>
-                            {category || "全部"}
-                          </ToggleGroupItem>
-                        ))}
-                      </ToggleGroup>
-                    </div>
-                  )}
                   <div className="flex flex-wrap items-center gap-2 py-5">
                     <p role="status" className="mr-2 text-xs text-muted-foreground">
                       共{" "}

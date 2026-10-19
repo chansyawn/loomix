@@ -14,10 +14,18 @@ export const sortOptions = {
 };
 export type Sort = keyof typeof sortOptions;
 export type View = "items" | "sets";
-export const filterKeys = ["types", "qualities", "sets", "colors", "materials", "sources"] as const;
+export const filterKeys = [
+  "categories",
+  "types",
+  "qualities",
+  "sets",
+  "colors",
+  "materials",
+  "sources",
+] as const;
 export type FilterKey = (typeof filterKeys)[number];
 export type Filters = Record<FilterKey, string[]>;
-export type ViewQuery = Filters & { q: string; category: string; sort: Sort; page: number };
+export type ViewQuery = Filters & { q: string; sort: Sort; page: number };
 export type FurnitureSearch = { view: View; items: ViewQuery; sets: ViewQuery };
 export type Option = { value: string; label: string };
 export type FilterGroup = { key: FilterKey; label: string; options: Option[] };
@@ -25,7 +33,7 @@ export type FilterGroup = { key: FilterKey; label: string; options: Option[] };
 export function emptyQuery(): ViewQuery {
   return {
     q: "",
-    category: "",
+    categories: [],
     sort: "original",
     page: 1,
     types: [],
@@ -47,10 +55,6 @@ function parseQuery(input: unknown, view: View): ViewQuery {
   const raw = object(input);
   const result = emptyQuery();
   result.q = typeof raw.q === "string" ? raw.q : "";
-  result.category =
-    view === "items" && typeof raw.category === "string" && categories.includes(raw.category)
-      ? raw.category
-      : "";
   result.sort =
     typeof raw.sort === "string" && Object.hasOwn(sortOptions, raw.sort)
       ? (raw.sort as Sort)
@@ -70,6 +74,14 @@ function parseQuery(input: unknown, view: View): ViewQuery {
           ]
         : [];
   }
+  const legacyCategory = typeof raw.category === "string" ? [raw.category] : [];
+  const selectedCategories = Array.isArray(raw.categories) ? raw.categories : legacyCategory;
+  result.categories =
+    view === "items"
+      ? [...new Set(selectedCategories)].filter(
+          (value): value is string => typeof value === "string" && categories.includes(value),
+        )
+      : [];
   result.qualities = result.qualities.filter((value) => value === missing || /^[0-4]$/.test(value));
   return result;
 }
@@ -111,10 +123,14 @@ function options(values: (string | null)[]): Option[] {
     .map((value) => ({ value, label: value === missing ? "未提供" : value }));
 }
 
-export function filterGroups(data: FurnitureData, category = ""): FilterGroup[] {
-  const rows = category ? data.items.filter((item) => item.category === category) : data.items;
+export function filterGroups(data: FurnitureData): FilterGroup[] {
   return [
-    { key: "types", label: "类型", options: options(rows.map((row) => row.type)) },
+    {
+      key: "categories",
+      label: "分类",
+      options: categories.map((value) => ({ value, label: value })),
+    },
+    { key: "types", label: "类型", options: options(data.items.map((row) => row.type)) },
     {
       key: "qualities",
       label: "品阶",
@@ -164,7 +180,7 @@ export function queryFurniture(data: FurnitureData, view: View, query: ViewQuery
     if (!("category" in row)) return true;
     const memberSets = memberships.get(row.id);
     return (
-      (!query.category || row.category === query.category) &&
+      matches(query.categories, [row.category ?? missing]) &&
       matches(query.types, [row.type ?? missing]) &&
       matches(query.sets, memberSets?.map((set) => String(set.id)) ?? [ungrouped]) &&
       matches(query.colors, splitValues(row.colors)) &&

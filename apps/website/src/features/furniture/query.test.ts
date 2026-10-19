@@ -34,12 +34,12 @@ describe("furniture catalog", () => {
       ...emptyQuery(),
       colors: ["白色", "黄色"],
       materials: ["木制"],
-      category: "起居",
+      categories: ["起居", "装饰物"],
     };
     const result = queryFurniture(data, "items", query);
     const expected = data.items.filter(
       (item) =>
-        item.category === "起居" &&
+        ["起居", "装饰物"].includes(item.category ?? "") &&
         item.materials?.split("，").includes("木制") &&
         item.colors?.split("，").some((color) => ["白色", "黄色"].includes(color)),
     );
@@ -76,20 +76,26 @@ describe("furniture catalog", () => {
     ).toContain(set.id);
   });
 
-  it("makes missing attributes filterable and limits types to the category", () => {
+  it("makes missing attributes filterable and keeps category and type options independent", () => {
     const result = queryFurniture(data, "items", { ...emptyQuery(), colors: [missing] });
     expect(result.total).toBe(data.items.filter((item) => item.colors === null).length);
     expect(filterGroups(data).find((group) => group.key === "colors")?.options).toContainEqual({
       value: missing,
       label: "未提供",
     });
-    const types = filterGroups(data, "起居").find((group) => group.key === "types")!.options;
+    const categoryGroup = filterGroups(data).find((group) => group.key === "categories")!;
+    expect(categoryGroup.options.map((option) => option.value)).toEqual([
+      "起居",
+      "装饰物",
+      "功能家具",
+      "硬装",
+      "绿植",
+      "户外布设",
+      "其他",
+    ]);
+    const types = filterGroups(data).find((group) => group.key === "types")!.options;
     expect(
-      types.every((option) =>
-        data.items.some(
-          (item) => item.category === "起居" && (item.type ?? missing) === option.value,
-        ),
-      ),
+      types.every((option) => data.items.some((item) => (item.type ?? missing) === option.value)),
     ).toBe(true);
   });
 
@@ -116,12 +122,23 @@ describe("furniture URL state", () => {
     expect(updateViewQuery(updated, { page: 2 }).sets.page).toBe(2);
   });
 
+  it("updates categories without clearing types and resets the page", () => {
+    const search = parseFurnitureSearch({
+      items: { page: 4, types: ["基础家具·桌"] },
+    });
+    const updated = updateViewQuery(search, { categories: ["起居", "装饰物"] });
+    expect(updated.items.categories).toEqual(["起居", "装饰物"]);
+    expect(updated.items.types).toEqual(["基础家具·桌"]);
+    expect(updated.items.page).toBe(1);
+  });
+
   it("normalizes malformed URL input and strips unsupported set filters", () => {
     const state = parseFurnitureSearch({
       view: "bad",
       items: {
         page: -2,
         category: "未知",
+        categories: ["起居", "起居", "未知"],
         sort: "toString",
         colors: ["白色", null, "白色"],
         qualities: ["9", "0"],
@@ -130,11 +147,12 @@ describe("furniture URL state", () => {
     });
     expect(state.view).toBe("items");
     expect(state.items.page).toBe(1);
-    expect(state.items.category).toBe("");
+    expect(state.items.categories).toEqual(["起居"]);
     expect(state.items.sort).toBe("original");
     expect(state.items.colors).toEqual(["白色"]);
     expect(state.items.qualities).toEqual(["0"]);
     expect(state.sets.types).toEqual([]);
+    expect(state.sets.categories).toEqual([]);
     expect(state.sets.page).toBe(1);
   });
 });
