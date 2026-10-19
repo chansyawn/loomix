@@ -1,5 +1,7 @@
-import { ImageOffIcon, LayersIcon } from "lucide-react";
-import { useState } from "react";
+import { LayersIcon } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { FurnitureImage } from "./furniture-image";
+import { useFurnitureOrigin } from "./detail-navigation";
 import type { FurnitureItem, FurnitureSet } from "@petit-orbit/content-schema";
 import { Badge } from "@/ui/components/badge";
 import {
@@ -20,39 +22,6 @@ const qualityColors = [
   "bg-amber-500",
 ];
 
-function FurnitureImage({
-  image,
-  name,
-  scene = false,
-}: {
-  image: string | null;
-  name: string;
-  scene?: boolean;
-}) {
-  const [failed, setFailed] = useState(false);
-  return (
-    <div
-      className={`relative flex items-center justify-center overflow-hidden bg-muted ${scene ? "aspect-2/1" : "aspect-square"}`}
-    >
-      {image && !failed ? (
-        <img
-          src={`/resources/${image}`}
-          alt={name}
-          loading="lazy"
-          decoding="async"
-          onError={() => setFailed(true)}
-          className={`h-full w-full ${scene ? "object-cover" : "object-contain p-5"}`}
-        />
-      ) : (
-        <div className="flex flex-col items-center gap-2 text-muted-foreground">
-          <ImageOffIcon className="size-7 opacity-40" />
-          <span className="text-xs">暂无图片</span>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function QualityBadge({ quality }: { quality: number | null }) {
   if (quality === null) return null;
   return (
@@ -64,13 +33,25 @@ export function QualityBadge({ quality }: { quality: number | null }) {
 }
 
 export function FurnitureCard({ item }: { item: FurnitureItem }) {
+  const origin = useFurnitureOrigin();
   return (
-    <Card size="sm" role="article" className="min-w-0 pt-0">
+    <Card
+      size="sm"
+      role="article"
+      className="relative min-w-0 pt-0 transition-shadow hover:ring-2 hover:ring-primary/30 focus-within:ring-2 focus-within:ring-ring"
+    >
       <FurnitureImage key={item.image} image={item.image} name={item.name} />
       <CardHeader>
         <CardTitle>
           <h2 className="truncate" title={item.name}>
-            {item.name}
+            <Link
+              to="/collection/furniture/items/$id"
+              params={{ id: String(item.id) }}
+              state={{ furnitureOrigin: origin }}
+              className="outline-none after:absolute after:inset-0 after:rounded-4xl"
+            >
+              {item.name}
+            </Link>
           </h2>
         </CardTitle>
         <CardDescription className="flex min-w-0 flex-wrap items-center justify-between gap-2">
@@ -87,14 +68,26 @@ export function FurnitureCard({ item }: { item: FurnitureItem }) {
 }
 
 export function FurnitureSetCard({ set }: { set: FurnitureSet }) {
+  const origin = useFurnitureOrigin();
   return (
-    <Card size="sm" role="article" className="min-w-0 pt-0">
+    <Card
+      size="sm"
+      role="article"
+      className="relative min-w-0 pt-0 transition-shadow hover:ring-2 hover:ring-primary/30 focus-within:ring-2 focus-within:ring-ring"
+    >
       <FurnitureImage key={set.image} image={set.image} name={set.name} scene />
       <CardHeader>
         <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
           <CardTitle className="min-w-0">
             <h2 className="truncate" title={set.name}>
-              {set.name}
+              <Link
+                to="/collection/furniture/sets/$id"
+                params={{ id: String(set.id) }}
+                state={{ furnitureOrigin: origin }}
+                className="outline-none after:absolute after:inset-0 after:rounded-4xl"
+              >
+                {set.name}
+              </Link>
             </h2>
           </CardTitle>
           <QualityBadge quality={set.quality} />
