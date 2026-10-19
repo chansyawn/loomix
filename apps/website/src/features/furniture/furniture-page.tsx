@@ -24,7 +24,6 @@ import { FurniturePagination } from "./pagination";
 import { emptyQuery, filterGroups, queryFurniture, sortOptions, updateViewQuery } from "./query";
 import type { FurnitureSearch, ViewQuery } from "./query";
 import { FurnitureEmpty } from "./states";
-import "./furniture.css";
 
 type SearchUpdate = FurnitureSearch | ((previous: FurnitureSearch) => FurnitureSearch);
 
@@ -58,7 +57,7 @@ export function FurniturePage({
   if (query.q)
     chips.unshift({ key: "q", label: `搜索：${query.q}`, remove: () => update({ q: "" }) });
   return (
-    <section className="furniture-page pb-6 pt-5 sm:pt-8">
+    <section className="@container">
       <div ref={top} className="scroll-mt-4">
         <div className="mb-7">
           <h1 className="text-3xl font-semibold tracking-tight">家具</h1>
@@ -173,7 +172,7 @@ export function FurniturePage({
                   {result.total > 0 ? (
                     <>
                       <div
-                        className={`${search.view === "items" ? "furniture-grid" : "furniture-set-grid"} mb-8`}
+                        className={`mb-8 grid grid-cols-1 gap-4 ${search.view === "items" ? "@[336px]:grid-cols-2 @[540px]:grid-cols-3 @[740px]:grid-cols-4 @[940px]:grid-cols-5 @[1140px]:grid-cols-6" : "@[600px]:grid-cols-2 @[960px]:grid-cols-3"}`}
                       >
                         {result.rows.map((row) =>
                           "category" in row ? (
