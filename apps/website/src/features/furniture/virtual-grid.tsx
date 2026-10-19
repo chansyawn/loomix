@@ -80,7 +80,7 @@ function VirtualRows({ rows, view, geometry }: GridProps & { geometry: Geometry 
   useLayoutEffect(() => {
     if (measuredWidth.current === width) return;
     measuredWidth.current = width;
-    // Row refs reattach on the next commit to refill the cleared size cache.
+    // 行引用会在下一次提交时重新绑定，以重新填充已清空的尺寸缓存。
     virtualizer.measure();
   }, [virtualizer, width]);
 

@@ -21,7 +21,7 @@ export function imageBatches(selected) {
     for (const a of assets) counts.set(a.resourceName, (counts.get(a.resourceName) ?? 0) + 1);
     const normal = assets.filter((a) => counts.get(a.resourceName) === 1);
     if (normal.length) batches.push(normal);
-    // Separate equal names; AnimeStudio's exported filenames do not contain the container.
+    // 同名素材需分开导出，因为 AnimeStudio 导出的文件名不包含容器信息。
     for (const a of assets.filter((a) => counts.get(a.resourceName) > 1)) batches.push([a]);
   }
   return batches;

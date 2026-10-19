@@ -4,7 +4,7 @@ import { parseArgs } from "node:util";
 
 export const repoRoot = fileURLToPath(new URL("../../../../../", import.meta.url));
 
-// One verified client snapshot. Re-identify fields before changing this profile.
+// 此配置对应一个已验证的客户端快照；修改前需重新确认字段。
 export const profile = {
   gameVersion: "0.95.2",
   branch: "live_0.95",
@@ -65,7 +65,7 @@ Object.assign(profile.paths, {
   output: `${extractionDirectory}/items`,
 });
 
-// CLI paths are absolute or relative to the repository, never to process.cwd().
+// 命令行路径使用绝对路径或相对于仓库的路径，不以 process.cwd() 为基准。
 export function getOptions(args = process.argv.slice(2)) {
   const { values } = parseArgs({
     args: args[0] === "--" ? args.slice(1) : args,

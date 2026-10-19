@@ -2,8 +2,8 @@ import fs from "node:fs";
 import { profile } from "./config.mjs";
 const utf8 = new TextDecoder("utf-8", { fatal: true });
 
-// This client's byte arrays are reversed and XORed with a mirrored mask.
-// Scalar storage uses the same transform for its own byte width.
+// 此客户端的字节数组经过逆序处理，并与镜像掩码进行异或运算。
+// 标量存储按其自身字节宽度使用相同的变换。
 export function decodeBytes(bytes) {
   const n = bytes.length,
     out = Buffer.allocUnsafe(n),
@@ -80,7 +80,7 @@ export class ObbReader {
     if (!data || !data.length) return null;
     try {
       const text = utf8.decode(data.bytes);
-      // Descriptions permit tab/CR/LF, but other control bytes indicate a false string candidate.
+      // 说明文本允许制表符和回车、换行符；其他控制字节表明此候选值并非有效字符串。
       // oxlint-disable-next-line no-control-regex
       return /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(text)
         ? null

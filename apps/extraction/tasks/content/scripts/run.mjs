@@ -48,7 +48,7 @@ export async function publish(options) {
   const staging = path.join(options.work, "staging");
   const result = readJson(path.join(options.work, "validation.json"));
   if (!result.passed) throw new Error("Validation has not passed");
-  // Revalidate the actual staging bytes, even when --step publish is used later.
+  // 即使稍后单独使用 --step publish，也要重新校验暂存文件的实际字节内容。
   await (await import("./validate.mjs")).validate(options);
   fs.mkdirSync(options.output, { recursive: true });
   const at = (name) => path.join(options.output, name);
@@ -114,7 +114,7 @@ export async function main(args) {
     status: "running",
     steps: [],
   };
-  // Invalidate old validation before rebuilding any inputs or output.
+  // 重建任何输入或产物前，先使旧的验证结果失效。
   if (!options.step || ["prepare", "structure", "assets", "audit"].includes(options.step)) {
     fs.rmSync(path.join(options.work, "validation.json"), { force: true });
   }

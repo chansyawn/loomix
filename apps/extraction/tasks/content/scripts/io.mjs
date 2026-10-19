@@ -31,7 +31,7 @@ export function removeWithin(file, parent) {
   const relative = path.relative(root, absolute);
   if (!relative || relative.startsWith("..") || path.isAbsolute(relative))
     throw new Error(`Unsafe cleanup path: ${absolute}`);
-  // Never follow a junction or symlink during recursive cleanup.
+  // 递归清理时禁止跟随目录联接或符号链接。
   function check(current) {
     if (!fs.existsSync(current)) return;
     const stat = fs.lstatSync(current);

@@ -18,8 +18,8 @@ import { createIconResolver } from "../../items/scripts/icon-resolver.mjs";
 
 export function selectImageReferences(group, tables, ui) {
   if (group.endsWith(".series")) {
-    // These 67 themes reuse unrelated furniture reward/placeholder pictures.
-    // A configured path alone does not establish that it depicts the series.
+    // 这 67 个主题复用了无关家具的奖励图或占位图。
+    // 仅有配置路径不足以证明图片展示的是该系列。
     return [];
   }
   const f = profile.fields.ui;
@@ -154,7 +154,7 @@ export async function structure(options) {
     categories.set(id, category);
   }
 
-  // Only explicit, typed back-references establish series membership.
+  // 仅通过显式且类型明确的反向引用确定系列成员关系。
   const memberships = new Map();
   const recordMember = (series, id, from) => {
     if (!series) return;
@@ -230,7 +230,7 @@ export async function structure(options) {
       "name_textmap_missing",
     );
     if (!record.name) throw new Error(`Unresolved item name ${id}`);
-    // Root 93's biological introduction is localized; it supersedes the short item blurb.
+    // 根字段 93 的生物介绍已本地化，优先于物品的简短说明。
     const description =
       tables.text(row, 4) ?? tables.string(creature.get(id), 6) ?? tables.text(u, uf.description);
     put(
@@ -384,7 +384,7 @@ export async function structure(options) {
         const scale = scales.get(id);
         const min = tables.uint(scale, 4),
           max = tables.uint(scale, 5);
-        // Numeric endpoints are retained as candidates until their display unit/scale is confirmed.
+        // 显示单位或换算比例确认前，仅将数值范围的端点保留为候选值。
         candidateFields.push({
           id,
           field: "sizeRange",

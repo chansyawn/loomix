@@ -21,7 +21,7 @@ for (const i of items) {
   assert.ok(i.nameZh);
   assert.equal(types.get(i.typeId)?.name, i.typeName);
 }
-// Known in-game labels from independent filename and table evidence.
+// 通过独立的文件名与数据表证据确认的游戏内标签。
 const samples = profile.expected.samples;
 for (const [id, name] of Object.entries(samples)) {
   assert.equal(byId.get(Number(id)).nameZh, name);
@@ -62,7 +62,7 @@ const koi = creatures.find(
 assert.ok(long.length > 256);
 assert.ok(long.text.startsWith(profile.expected.longStringStart));
 assert.ok(long.text.endsWith(profile.expected.longStringEnd));
-// The odd-length theme icon path caught a previous mirror-mask center error.
+// 此前通过此奇数长度的主题图标路径发现了镜像掩码的中心位置错误。
 const theme = byId.get(profile.expected.oddStringItem),
   themeFields = reader.fields(theme.source.uiRowOffset);
 assert.equal(

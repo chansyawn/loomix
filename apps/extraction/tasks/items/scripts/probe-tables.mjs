@@ -23,7 +23,7 @@ const root = u32(0),
   fields = table(root),
   counts = [];
 for (let i = 0; i < fields.length; i++) {
-  if (i === profile.roots.textmap) continue; // TextMap is a dictionary, not a row-vector wrapper.
+  if (i === profile.roots.textmap) continue; // TextMap 使用字典结构，不使用行向量包装结构。
   const f = fields[i];
   if (!f) continue;
   const t = ref(f),

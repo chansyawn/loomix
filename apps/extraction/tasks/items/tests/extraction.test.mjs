@@ -122,7 +122,7 @@ test("runner rejects unknown steps and reports a failed missing-input step", () 
       /run select-config-source first/,
     );
   } finally {
-    // Only these known generated files are removed; no recursive deletion.
+    // 仅删除这些已知的生成文件，避免递归删除。
     fs.rmSync(path.join(directory, "logs/decode-textmap.log"), { force: true });
     fs.rmSync(path.join(directory, "run-report.json"), { force: true });
     fs.rmdirSync(path.join(directory, "logs"));

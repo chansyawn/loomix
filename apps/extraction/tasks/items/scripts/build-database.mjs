@@ -28,7 +28,7 @@ metadata.iconPolicy =
   "Prefer configured small icon, otherwise large icon; use exact path and exact Sprite name for atlas assets";
 const db = new DatabaseSync(`${dest}/petit-planet.sqlite`);
 db.exec("PRAGMA foreign_keys=ON;");
-// Refuse to overwrite an unrelated database. This file belongs to this exporter.
+// 仅允许覆盖此导出器创建的数据库，避免覆盖无关文件。
 const appId = db.prepare("PRAGMA application_id").get().application_id;
 if (appId !== 0 && appId !== 1347447892) throw new Error("Unexpected database application_id");
 if (appId === 0 && db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table'").get().n)
