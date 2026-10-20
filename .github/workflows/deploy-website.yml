@@ -1,0 +1,44 @@
+name: Deploy website
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-website-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: voidzero-dev/setup-vp@v1.21.2
+        with:
+          node-version: "24"
+          run-install: false
+          cache: true
+      - name: Install locked dependencies
+        run: vp install --frozen-lockfile
+      - name: Verify resource release
+        run: vp run --no-cache website#verify-release
+      - name: Check code
+        run: vp check
+      - name: Run tests
+        run: vp run --no-cache -r test
+      - name: Build website
+        run: vp run --no-cache website#build
+      - name: Verify static asset boundary
+        run: vp run --no-cache website#verify-build
+      - name: Validate Worker deployment
+        run: vp run --no-cache website#deploy:check
+      - name: Deploy website
+        run: vp run --no-cache website#deploy
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

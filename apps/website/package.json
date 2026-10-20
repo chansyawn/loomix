@@ -31,6 +31,8 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "catalog:",
+    "@loomix/resource-publisher": "workspace:*",
     "@tanstack/router-cli": "catalog:",
     "@types/node": "catalog:website",
     "@types/react": "catalog:",
@@ -39,6 +41,7 @@
     "oxc-transform-react": "catalog:",
     "typescript": "catalog:website",
     "vite": "catalog:",
-    "vite-plus": "catalog:"
+    "vite-plus": "catalog:",
+    "wrangler": "catalog:"
   }
 }

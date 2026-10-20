@@ -1,5 +1,6 @@
 import { ImageOffIcon } from "lucide-react";
 import { useState } from "react";
+import { resourceUrl } from "@/infrastructure/resources";
 
 export function FurnitureImage({
   image,
@@ -19,7 +20,7 @@ export function FurnitureImage({
     >
       {image && !failed ? (
         <img
-          src={`/resources/${image}`}
+          src={resourceUrl(image)}
           alt={name}
           loading={eager ? "eager" : "lazy"}
           decoding="async"
