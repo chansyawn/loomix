@@ -14,19 +14,19 @@ import {
 } from "@/ui/components/card";
 import { qualityNames } from "./query";
 
-const qualityColors = [
-  "bg-stone-400",
-  "bg-lime-600",
-  "bg-sky-500",
-  "bg-violet-400",
-  "bg-amber-500",
+const qualityBackgrounds = [
+  "var(--quality-common)",
+  "var(--quality-fine)",
+  "var(--quality-rare)",
+  "var(--quality-excellent)",
+  "var(--quality-miracle)",
 ];
 
 export function QualityBadge({ quality }: { quality: number | null }) {
   if (quality === null) return null;
   return (
     <Badge variant="outline">
-      <span className={`size-1.5 rounded-full ${qualityColors[quality]}`} />
+      <span className="size-1.5 rounded-full" style={{ background: qualityBackgrounds[quality] }} />
       {qualityNames[quality]}
     </Badge>
   );
