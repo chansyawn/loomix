@@ -1,6 +1,6 @@
 import { getPaths } from "./config.mjs";
 import fs from "node:fs";
-import { ObbReader } from "./obb-reader.mjs";
+import { ObbReader } from "../obb-reader.mjs";
 import { getConfigFile } from "./game-resource-paths.mjs";
 const r = new ObbReader(getConfigFile("cs.obb"));
 const t = r.ref(r.fields(r.u32(0))[0]),

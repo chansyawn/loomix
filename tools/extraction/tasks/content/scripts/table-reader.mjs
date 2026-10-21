@@ -1,5 +1,5 @@
 import path from "node:path";
-import { ObbReader } from "../../items/scripts/obb-reader.mjs";
+import { ObbReader } from "./obb-reader.mjs";
 import { readJson } from "./io.mjs";
 import { profile } from "./config.mjs";
 

@@ -1,7 +1,7 @@
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { buildAssetMap } from "../lib/anime-studio/index.mjs";
-import { profile, repoRoot } from "../tasks/items/scripts/config.mjs";
+import { profile, repoRoot } from "../lib/client-profile.mjs";
 
 try {
   const args = process.argv.slice(2);

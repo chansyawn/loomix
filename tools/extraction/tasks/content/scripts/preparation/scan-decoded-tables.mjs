@@ -1,6 +1,6 @@
 import { getPaths, profile } from "./config.mjs";
 import fs from "node:fs";
-import { ObbReader } from "./obb-reader.mjs";
+import { ObbReader } from "../obb-reader.mjs";
 import { getConfigFile } from "./game-resource-paths.mjs";
 const { out } = getPaths();
 const r = new ObbReader(getConfigFile("ed.obb"));

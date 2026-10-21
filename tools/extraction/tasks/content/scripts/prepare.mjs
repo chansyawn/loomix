@@ -20,11 +20,7 @@ export async function prepare(options) {
     console.log(`  ${step}`);
     await runProcess(
       process.execPath,
-      [
-        fileURLToPath(new URL(`../../items/scripts/${step}.mjs`, import.meta.url)),
-        "--output",
-        prepared,
-      ],
+      [fileURLToPath(new URL(`./preparation/${step}.mjs`, import.meta.url)), "--output", prepared],
       path.join(options.work, "logs", `${step}.log`),
     );
   }

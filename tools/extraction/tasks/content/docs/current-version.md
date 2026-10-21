@@ -16,9 +16,9 @@ resources/petit-planet-extraction/0.95.2/index/assets_map.xml
 
 CLI 由统一提取模块自动初始化和调用，缓存位于 `resources/extraction-tools/`；可用 `vp run --no-cache '@loomix/extraction#tools:init'` 提前准备，见[提取入口说明](../../../README.md#统一提取工具)。工具初始化不改变本任务的 revision 和验收约束。
 
-客户端必须包含 StreamingAssets 和 Persistent 更新包及版本清单。Asset Map 包含 Texture2D、Sprite 和 MiHoYoBinData，已有 Source 的绝对路径可以不同，运行时会重定位。任务只读共用 index，不依赖已有 items 目录或 resources/temp 中的旧调查数据。
+客户端必须包含 StreamingAssets 和 Persistent 更新包及版本清单。Asset Map 包含 Texture2D、Sprite 和 MiHoYoBinData，已有 Source 的绝对路径可以不同，运行时会重定位。任务只读共用 index，不依赖 resources/temp 中的旧调查数据。
 
-版本、表位置、字段、BinData 对象名和验收数量集中在 scripts/config.mjs；当前基础读取复用 items 的版本核对、索引与 TextMap 解码步骤，新版本需同时复核基础 profile 与 content 的扩展配置。
+版本、表位置、字段、BinData 对象名和验收数量集中在 scripts/config.mjs；基础客户端配置位于 lib/client-profile.mjs，版本核对、索引与 TextMap 解码步骤位于 scripts/preparation/；新版本需同时复核基础 profile 与 content 配置。
 
 ## 命令与步骤
 
@@ -68,7 +68,7 @@ vp exec node tools/extraction/tasks/content/scripts/run.mjs --step structure
 | 家具类型 / 尺寸                    |                   881 / 289（分母均为 887） |
 | 作物产物收获茬数                   |             85 / 85；其余植物尚无已确认关联 |
 
-全部 PNG 完整解码、ID 集合、成员引用和字段白名单检查通过。详细逐字段覆盖率以 coverage.json 为准，不能把 null 当成已确认不存在。原有 items 测试与新增 content 测试一起运行；若 Vite+ 缓存客户端在当前受限环境报权限错误，使用上面的 `--no-cache` 命令。
+全部 PNG 完整解码、ID 集合、成员引用和字段白名单检查通过。详细逐字段覆盖率以 coverage.json 为准，不能把 null 当成已确认不存在。解码、内容和统一提取工具测试一起运行；若 Vite+ 缓存客户端在当前受限环境报权限错误，使用上面的 `--no-cache` 命令。
 
 JSON 使用英文分组和字段名，显示内容为中文。`image` 相对 JSON 文件解析；如为空则展示缺图状态。成员数组保存单品 id，可建立 ID 索引后查询。未知成员关系为 null，不应当成空集合。系列名称与基础 name 分别保留。
 
@@ -81,7 +81,7 @@ JSON 使用英文分组和字段名，显示内容为中文。`image` 相对 JSO
 - 67 个生物、植物、菜肴系列的图片：显示配置复用家具图像，未确认用途，不进入素材文件夹。
 - 部分介绍、颜色、尺寸、原产星系和风味等未在已确认配置中提供，或对应文本不在当前 TextMap。未写区域标签不默认解释为“全地区”或“通行风味”。
 
-生物介绍优先使用表 93 的长介绍；主物品名字始终使用表 318，不用图鉴别名替换。外观实际包括眉毛、面饰，没有肤色记录。完整 JSON 字段清单与关联见原理文档；SQLite 属于 items 任务，本任务不创建数据库，也不自动接入网站。
+生物介绍优先使用表 93 的长介绍；主物品名字始终使用表 318，不用图鉴别名替换。外观实际包括眉毛、面饰，没有肤色记录。完整 JSON 字段清单与关联见原理文档；本任务不创建数据库，也不自动接入网站。
 
 ## 排查与更新
 

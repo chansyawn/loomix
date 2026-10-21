@@ -14,7 +14,7 @@ import {
   expandTags,
   validateModel,
 } from "./model.mjs";
-import { createIconResolver } from "../../items/scripts/icon-resolver.mjs";
+import { createIconResolver } from "./icon-resolver.mjs";
 
 export function selectImageReferences(group, tables, ui) {
   if (group.endsWith(".series")) {

@@ -22,7 +22,6 @@
 │   ├── petit-planet-extraction/  # 按版本保存共用索引和任务产物
 │   │   └── <version>/
 │   │       ├── index/           # Asset Map 等共用索引
-│   │       ├── items/           # 全物品提取产物、日志和验证结果
 │   │       └── content/         # 根字段 93 的有效内容 JSON 和素材
 │   └── temp/                   # 临时文件
 ├── .vscode/                  # VS Code 工作区配置
@@ -41,12 +40,12 @@
 - `resources/extraction-tools/`：统一提取模块自动下载或构建的工具、SDK 和运行时缓存；可删除后重新初始化。AnimeStudio 上游项目：[Escartem/AnimeStudio](https://github.com/Escartem/AnimeStudio)。
 - `resources/petit-planet-game/<version>/`：保存完整客户端副本，作为资源读取来源。
 - `resources/petit-planet-extraction/<version>/index/`：保存对应客户端的 Asset Map 等共用索引，供各提取任务读取。
-- `resources/petit-planet-extraction/<version>/<任务>/`：保存该版本的任务产物；`items` 为全物品调查库，`content` 为根字段 93 收录的有效内容 JSON 和素材。content 的日志、来源证据和缺失报告存入临时目录。
+- `resources/petit-planet-extraction/<version>/<任务>/`：保存该版本的任务产物；`content` 为根字段 93 收录的有效内容 JSON 和素材。content 的日志、来源证据和缺失报告存入临时目录。
 - `resources/temp/`：用于存储临时文件。
 
 `resources/` 下的本地资源文件由根目录 `.gitignore` 忽略，`resources/temp/` 整体忽略。
 
-维护中的提取脚本与文档位于 [tools/extraction](tools/extraction/README.md)，各任务分别提供不依赖脚本的原理指南和对应当前实现的执行手册。安装仓库依赖并准备本地输入后，使用 `vp run --no-cache '@loomix/extraction#items'` 提取全物品，使用 `vp run --no-cache '@loomix/extraction#content'` 提取有效内容，使用 `vp run '@loomix/extraction#test'` 运行不依赖客户端的测试。
+维护中的提取脚本与文档位于 [tools/extraction](tools/extraction/README.md)，各任务分别提供不依赖脚本的原理指南和对应当前实现的执行手册。安装仓库依赖并准备本地输入后，使用 `vp run --no-cache '@loomix/extraction#content'` 提取有效内容，使用 `vp run '@loomix/extraction#test'` 运行不依赖客户端的测试。
 
 目录中的 `<version>` 为客户端版本号，配置与资源 revision 保留在脚本配置和产物元数据中。提取任务使用仓库 Node 环境，不需要 Python。
 

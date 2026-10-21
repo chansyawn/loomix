@@ -5,8 +5,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import test from "node:test";
-import { ObbReader } from "../../items/scripts/obb-reader.mjs";
-import { createIconResolver } from "../../items/scripts/icon-resolver.mjs";
+import { ObbReader } from "../scripts/obb-reader.mjs";
+import { createIconResolver } from "../scripts/icon-resolver.mjs";
 import { getOptions, profile, repoRoot } from "../scripts/config.mjs";
 import { hashTextKey, readUIntVector, Tables } from "../scripts/table-reader.mjs";
 import {
