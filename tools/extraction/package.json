@@ -3,13 +3,19 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "tools:init": "node scripts/init-tools.mjs",
-    "index": "node scripts/build-index.mjs",
-    "content": "node tasks/content/scripts/run.mjs",
-    "test": "node --test lib/anime-studio/tests/*.test.mjs tasks/content/tests/*.test.mjs"
+    "tools:init": "node scripts/init-tools.ts",
+    "index": "node scripts/build-index.ts",
+    "content": "node tasks/content/scripts/run.ts",
+    "test": "node --test lib/anime-studio/tests/*.test.ts tasks/content/tests/*.test.ts"
   },
   "dependencies": {
     "@loomix/content-schema": "workspace:*",
-    "pngjs": "catalog:"
+    "pngjs": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/pngjs": "catalog:",
+    "typescript": "catalog:"
   }
 }

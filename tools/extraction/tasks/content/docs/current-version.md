@@ -18,7 +18,7 @@ CLI 由统一提取模块自动初始化和调用，缓存位于 `resources/extr
 
 客户端必须包含 StreamingAssets 和 Persistent 更新包及版本清单。Asset Map 包含 Texture2D、Sprite 和 MiHoYoBinData，已有 Source 的绝对路径可以不同，运行时会重定位。任务只读共用 index，不依赖 resources/temp 中的旧调查数据。
 
-版本、表位置、字段、BinData 对象名和验收数量集中在 scripts/config.mjs；基础客户端配置位于 lib/client-profile.mjs，版本核对、索引与 TextMap 解码步骤位于 scripts/preparation/；新版本需同时复核基础 profile 与 content 配置。
+版本、表位置、字段、BinData 对象名和验收数量集中在 scripts/config.ts；基础客户端配置位于 lib/client-profile.ts，版本核对、索引与 TextMap 解码步骤位于 scripts/preparation/；新版本需同时复核基础 profile 与 content 配置。
 
 ## 命令与步骤
 
@@ -32,9 +32,9 @@ vp run --no-cache '@loomix/extraction#test'
 共享内容契约直接引用 TypeScript 源码，无需构建。也可直接调用 Node 入口：
 
 ```powershell
-vp exec node tools/extraction/tasks/content/scripts/run.mjs --help
-vp exec node tools/extraction/tasks/content/scripts/run.mjs --output resources/temp/content-acceptance
-vp exec node tools/extraction/tasks/content/scripts/run.mjs --step structure
+vp exec node tools/extraction/tasks/content/scripts/run.ts --help
+vp exec node tools/extraction/tasks/content/scripts/run.ts --output resources/temp/content-acceptance
+vp exec node tools/extraction/tasks/content/scripts/run.ts --step structure
 ```
 
 路径为绝对路径或仓库相对路径，与当前工作目录无关。`--step` 只执行指定步骤，不自动补齐依赖；更换 `--output` 会使用不同的临时工作目录，需要先完整准备。任务没有 baseline 参数。

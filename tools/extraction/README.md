@@ -2,7 +2,7 @@
 
 这里保存星布谷地客户端提取任务的文档和当前有效脚本。客户端实现变化较快，各任务直接维护自己的模块与配置，历史版本由 Git 保存。
 
-客户端保存于 `resources/game-client/`，共用索引保存于 `resources/temp/extraction/index/`。产物、日志、索引和客户端不纳入 Git。提取任务依赖本地输入，执行时关闭任务缓存。使用仓库 Node 环境，无需 Python。
+客户端保存于 `resources/game-client/`，共用索引保存于 `resources/temp/extraction/index/`。产物、日志、索引和客户端不纳入 Git。提取任务依赖本地输入，执行时关闭任务缓存。脚本与测试统一使用 TypeScript，由 Node >=22.18.0 直接执行，无需编译或 Python；`tsconfig.json` 开启严格类型检查，使用 `vp check` 验证。
 
 ## 统一提取工具
 
@@ -21,14 +21,14 @@ vp run --no-cache '@loomix/extraction#index'
 - macOS arm64/x64：检出同一固定提交，应用维护中的 macOS 补丁，使用固定 SDK 编译包含运行时的原生 CLI。需要 Git、tar 和网络；无需系统级安装 .NET。Intel Mac 尚未实机验证。
 - 其他平台或架构明确报错。首次准备需要联网；初始化成功后可离线复用缓存。
 
-工具版本集中在 `lib/anime-studio/config.mjs`。当前固定 AnimeStudio 提交 `e616e3f824f47dd68cfbd44977bf8584756ac446`、SDK `10.0.402` 和 Windows Runtime `10.0.13`。Windows Actions 产物有保留期限；固定下载失效时需要显式更新版本与校验值，不自动使用最新构建。
+工具版本集中在 `lib/anime-studio/config.ts`。当前固定 AnimeStudio 提交 `e616e3f824f47dd68cfbd44977bf8584756ac446`、SDK `10.0.402` 和 Windows Runtime `10.0.13`。Windows Actions 产物有保留期限；固定下载失效时需要显式更新版本与校验值，不自动使用最新构建。
 
 源码、SDK、运行时、产物和初始化日志集中保存在 `resources/extraction-tools/anime-studio/`，按平台、架构和版本区分；macOS 缓存同时考虑补丁摘要。同一缓存的并发初始化会串行执行，失败重试不会复用半成品。该目录可删除后重新初始化，旧 `resources/anime-studio/` 已移除。
 
 公共接口为 `ensureAnimeStudio()`、`exportAssets(options)` 和 `buildAssetMap(options)`，全部异步。导出参数包含 `input`、`output`、`game`、`types`，可选 `names`、`containers`（正则字符串数组）和 `logFile`。索引接口使用 `input`、`output`、`game` 与可选 `logFile`。例如任务脚本可以调用：
 
 ```js
-import { exportAssets } from "../../../lib/anime-studio/index.mjs";
+import { exportAssets } from "../../../lib/anime-studio/index.ts";
 
 await exportAssets({
   input: source,
