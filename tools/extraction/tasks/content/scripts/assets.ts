@@ -10,6 +10,22 @@ import { exportAssets } from "../../../lib/anime-studio/index.ts";
 import { groupAt } from "./model.ts";
 
 const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const assetKey = (a: SelectedImage) => `${a.source}|${a.assetType}|${a.pathId}`;
+
+export function highestResolutionImages(candidates: SelectedImage[], images: ImageManifest[]) {
+  const dimensions = new Map(images.map((image) => [assetKey(image), image]));
+  const selected = new Map<number, SelectedImage>();
+  for (const candidate of candidates) {
+    const image = dimensions.get(assetKey(candidate));
+    if (!image) throw new Error(`Missing candidate image: ${candidate.reference}`);
+    const previous = selected.get(candidate.id);
+    const priorImage = previous ? dimensions.get(assetKey(previous))! : null;
+    if (!priorImage || image.width * image.height > priorImage.width * priorImage.height)
+      selected.set(candidate.id, candidate);
+  }
+  return [...selected.values()];
+}
+
 export function imageBatches(selected: SelectedImage[]) {
   const unique = new Map(selected.map((a) => [`${a.source}|${a.assetType}|${a.pathId}`, a]));
   const byPackage = new Map<string, SelectedImage[]>();
@@ -31,8 +47,8 @@ export function imageBatches(selected: SelectedImage[]) {
 }
 
 export async function assets(options: WorkOptions, extract = exportAssets) {
-  const selected = readJson<SelectedImage[]>(path.join(options.work, "selected-images.json"));
-  const batches = imageBatches(selected),
+  const candidates = readJson<SelectedImage[]>(path.join(options.work, "candidate-images.json"));
+  const batches = imageBatches(candidates),
     manifest: ImageManifest[] = [];
   const staging = path.join(options.work, "staging"),
     destination = path.join(staging, "assets");
@@ -78,8 +94,17 @@ export async function assets(options: WorkOptions, extract = exportAssets) {
     done++;
     if (done % 5 === 0 || done === batches.length)
       console.log(`  Image batches ${done}/${batches.length}`);
-    writeJson(path.join(options.work, "image-manifest.json"), manifest);
+    writeJson(path.join(options.work, "image-candidates.json"), manifest);
   }
+  const selected = highestResolutionImages(candidates, manifest);
+  const selectedKeys = new Set(selected.map(assetKey));
+  const selectedManifest = manifest.filter((a) => selectedKeys.has(assetKey(a)));
+  const used = new Set(selectedManifest.map((a) => a.file));
+  for (const file of fs.readdirSync(destination)) {
+    if (!used.has(`assets/${file}`)) fs.unlinkSync(path.join(destination, file));
+  }
+  writeJson(path.join(options.work, "selected-images.json"), selected);
+  writeJson(path.join(options.work, "image-manifest.json"), selectedManifest);
   const evidence = readJson<EvidenceRecord[]>(
     path.join(options.work, "field-evidence.json"),
   ).filter((p) => p.field !== "image");
@@ -104,6 +129,6 @@ export async function assets(options: WorkOptions, extract = exportAssets) {
   writeJson(path.join(options.work, "field-evidence.json"), evidence);
   writeJson(path.join(staging, "content.json"), content);
   console.log(
-    `Exported ${manifest.length} indexed assets, ${fs.readdirSync(destination).length} unique PNGs`,
+    `Compared ${manifest.length} indexed assets; selected ${selectedManifest.length} assets, ${fs.readdirSync(destination).length} unique PNGs`,
   );
 }

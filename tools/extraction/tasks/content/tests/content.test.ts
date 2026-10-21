@@ -18,7 +18,7 @@ import {
   expandTags,
   furnitureSize,
 } from "../scripts/model.ts";
-import { imageBatches, assets } from "../scripts/assets.ts";
+import { imageBatches, assets, highestResolutionImages } from "../scripts/assets.ts";
 import { safeOutput } from "../scripts/run.ts";
 import { removeWithin } from "../scripts/io.ts";
 
@@ -159,6 +159,27 @@ await test("same-name sprites use precise containers and isolated export batches
   assert.equal(batches.length, 2);
   assert.ok(batches.every((b) => b.length === 1));
 });
+await test("image selection compares native pixels and preserves large-icon order on ties", () => {
+  const base = {
+    id: 1,
+    group: "miscellaneous" as const,
+    reference: "UISprite/Large",
+    source: "current.blk",
+    assetType: "Texture2D",
+    resourceName: "Large",
+    container: "large.png",
+    pathId: "1",
+  };
+  const small = { ...base, reference: "UISprite/Small", pathId: "2" };
+  const images = [
+    { ...base, file: "large.png", sha256: "a", width: 256, height: 256 },
+    { ...small, file: "small.png", sha256: "b", width: 512, height: 512 },
+  ];
+  assert.deepEqual(highestResolutionImages([base, small], images), [small]);
+  images[0].width = images[0].height = 512;
+  assert.deepEqual(highestResolutionImages([base, small], images), [base]);
+  assert.throws(() => highestResolutionImages([base], []), /Missing candidate/);
+});
 await test("paths are independent of cwd and protect shared inputs", () => {
   const options = getOptions([]);
   assert.equal(options.output, path.join(repoRoot, "resources/website"));
@@ -224,7 +245,7 @@ await test("export failures and missing selected PNGs stop with logs", async () 
       fs.mkdirSync(path.join(work, "staging", "assets"), { recursive: true });
       fs.writeFileSync(path.join(work, "staging", "content.json"), JSON.stringify(emptyContent()));
       fs.writeFileSync(
-        path.join(work, "selected-images.json"),
+        path.join(work, "candidate-images.json"),
         JSON.stringify([
           {
             id: 1101,

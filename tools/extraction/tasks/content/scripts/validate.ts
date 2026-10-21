@@ -17,6 +17,7 @@ import { profile } from "./config.ts";
 import { Tables } from "./table-reader.ts";
 import { readJson, writeJson } from "./io.ts";
 import { additionalFields, basicFields, groupAt, validateModel } from "./model.ts";
+import { highestResolutionImages } from "./assets.ts";
 
 function fieldValue(row: ContentRecord, field: string): FieldValue | undefined {
   const values: Record<string, FieldValue> = row;
@@ -38,6 +39,14 @@ export async function validate(options: WorkOptions) {
   const { all, counts } = validateModel(content, scope, profile.expectedContent, qualities);
   const manifest = readJson<ImageManifest[]>(path.join(options.work, "image-manifest.json"));
   const selected = readJson<SelectedImage[]>(path.join(options.work, "selected-images.json"));
+  assert.deepEqual(
+    selected,
+    highestResolutionImages(
+      readJson<SelectedImage[]>(path.join(options.work, "candidate-images.json")),
+      readJson<ImageManifest[]>(path.join(options.work, "image-candidates.json")),
+    ),
+    "Highest native resolution for every image",
+  );
   const records = new Map(all.map((r) => [r.id, r]));
   for (const a of selected) {
     const exported = manifest.find(
@@ -80,6 +89,10 @@ export async function validate(options: WorkOptions) {
     const sha256 = crypto.createHash("sha256").update(bytes).digest("hex");
     assert.equal(image, `assets/${sha256}.png`, "Image content hash");
     assert.equal(png.data.length, png.width * png.height * 4, "Full PNG decoding");
+    for (const entry of manifest.filter((a) => a.file === image)) {
+      assert.equal(png.width, entry.width, "Native image width");
+      assert.equal(png.height, entry.height, "Native image height");
+    }
   }
   const proofs = readJson<EvidenceRecord[]>(path.join(options.work, "field-evidence.json"));
   const missing = readJson<EvidenceRecord[]>(path.join(options.work, "missing-fields.json"));

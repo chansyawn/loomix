@@ -43,7 +43,7 @@ await exportAssets({
 
 模块处理启动错误、非零退出和 CLI 错误日志；任务继续检查预期 JSON、PNG 等产物。默认导出目录为 `MiHoYoBinData/*.json`、`Texture2D/*.png` 和 `Sprite/*.png`。当前支持范围为 HYG_CB1 的配置、XML 索引、Texture2D 与 Sprite 图标；模型、动画、音频和 Shader 转换未适配。
 
-工具初始化不改变任务的 revision 约束。2026-10-21 的本地客户端为 data revision **1449213**、resource revision **1391927**；完整 content 任务仍锁定执行手册中的旧 revision，需要另行完成新版本字段和验收验证。
+工具初始化不改变任务的 revision 约束。当前 content 任务使用 2026-10-21 的本地客户端：data revision **1449213**、resource revision **1391927**。
 
 ## 有效内容
 

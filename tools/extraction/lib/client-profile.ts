@@ -6,8 +6,8 @@ export const repoRoot = fileURLToPath(new URL("../../../", import.meta.url));
 export const profile = {
   gameVersion: "0.95.2",
   branch: "live_0.95",
-  dataRevision: 1379138,
-  resourceRevision: 1359983,
+  dataRevision: 1449213,
+  resourceRevision: 1391927,
   manifestId: "5662883",
   animeGame: "HYG_CB1",
   paths: {

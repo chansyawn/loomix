@@ -1,6 +1,6 @@
 # 当前版本有效内容提取执行手册
 
-当前客户端 **0.95.2**，配置 revision **1379138**，资源 revision **1359983**，清单目录 **5662883**。本地快照不代表当前线上最新版本。
+当前客户端 **0.95.2**，配置 revision **1449213**，资源 revision **1391927**，清单目录 **5662883**。本地快照不代表当前线上最新版本。
 
 ## 输入与环境
 
@@ -39,14 +39,14 @@ vp exec node tools/extraction/tasks/content/scripts/run.ts --step structure
 
 路径为绝对路径或仓库相对路径，与当前工作目录无关。`--step` 只执行指定步骤，不自动补齐依赖；更换 `--output` 会使用不同的临时工作目录，需要先完整准备。任务没有 baseline 参数。
 
-| 步骤      | 依赖                           | 工作目录产物                                                                                                                                                                               |
-| --------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| prepare   | 客户端、Asset Map、AnimeStudio | prepared/ 中的版本核对、对象索引、表索引、TextMap、表扫描和文件索引；bindata/ 和 bindata-manifest.json                                                                                     |
-| structure | prepare                        | staging/content.json、scope.json、quality-enum.json、selected-images.json、field-evidence.json、missing-fields.json、outside-members.json、field-candidates.json、field-investigation.json |
-| assets    | structure                      | staging/assets/、更新的 staging/content.json、exports/、image-manifest.json、图片导出日志                                                                                                  |
-| audit     | assets、prepare                | source-audit.json；核对全部图像与 BinData 来源包以及 ed.obb、cs.obb                                                                                                                        |
-| validate  | audit、assets                  | coverage.json、validation.json；严格字段、成员、图片和来源检查                                                                                                                             |
-| publish   | validate                       | 重新核验暂存数据后，将 content.json 与 assets/ 发布到指定目录                                                                                                                              |
+| 步骤      | 依赖                           | 工作目录产物                                                                                                                                                                                |
+| --------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| prepare   | 客户端、Asset Map、AnimeStudio | prepared/ 中的版本核对、对象索引、表索引、TextMap、表扫描和文件索引；bindata/ 和 bindata-manifest.json                                                                                      |
+| structure | prepare                        | staging/content.json、scope.json、quality-enum.json、candidate-images.json、field-evidence.json、missing-fields.json、outside-members.json、field-candidates.json、field-investigation.json |
+| assets    | structure                      | staging/assets/、更新的 staging/content.json、exports/、image-candidates.json、selected-images.json、image-manifest.json、图片导出日志                                                      |
+| audit     | assets、prepare                | source-audit.json；核对全部图像与 BinData 来源包以及 ed.obb、cs.obb                                                                                                                         |
+| validate  | audit、assets                  | coverage.json、validation.json；严格字段、成员、图片和来源检查                                                                                                                              |
+| publish   | validate                       | 重新核验暂存数据后，将 content.json 与 assets/ 发布到指定目录                                                                                                                               |
 
 中间文件位于 `resources/temp/extraction/content/<输出路径标识>/`，标识是绝对输出路径小写后的 SHA256 前 16 位，实际目录会在运行结果中显示。run-report.json 保存步骤、状态和失败堆栈，logs/ 保存子进程输出。重新构建会使旧验证结果失效，避免使用上一轮成功状态。
 
@@ -62,13 +62,15 @@ vp exec node tools/extraction/tasks/content/scripts/run.ts --step structure
 | 已解析成员的集合                   |                                   143 / 143 |
 | 独立 PNG / 图片覆盖记录            |                               2,244 / 2,255 |
 | 无图记录                           | 72（67 个主题系列、2 件家具、3 个家具套组） |
-| 来源包清单校验                     |                     98 / 98，另核对两份 OBB |
+| 来源包清单校验                     |                   109 / 109，另核对两份 OBB |
 | 生物地区、出没地、季节、时间、天气 |                                各 317 / 317 |
 | 菜肴难度、食用效果                 |                                各 121 / 121 |
 | 家具类型 / 尺寸                    |                   881 / 289（分母均为 887） |
 | 作物产物收获茬数                   |             85 / 85；其余植物尚无已确认关联 |
 
 全部 PNG 完整解码、ID 集合、成员引用和字段白名单检查通过。详细逐字段覆盖率以 coverage.json 为准，不能把 null 当成已确认不存在。解码、内容和统一提取工具测试一起运行；若 Vite+ 缓存客户端在当前受限环境报权限错误，使用上面的 `--no-cache` 命令。
+
+本次比较 4,413 个独立图片候选，按实际原生像素数选择最高分辨率，覆盖 2,255 条记录。最终 PNG 包括 2,048 张 512×512、159 张 256×256、15 张 1024×512、21 张 2037×1019 和 1 张 2048×1095。不缩放、不重新编码，来源校验包括未选中的大小图候选包。纯图片或配置导出禁用无关 Shader 解析，避免当前工具尚未支持的 Shader 布局阻断图片提取。
 
 JSON 使用英文分组和字段名，显示内容为中文。`image` 相对 JSON 文件解析；如为空则展示缺图状态。成员数组保存单品 id，可建立 ID 索引后查询。未知成员关系为 null，不应当成空集合。系列名称与基础 name 分别保留。
 

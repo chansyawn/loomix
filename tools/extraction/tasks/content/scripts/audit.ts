@@ -35,7 +35,7 @@ export async function audit(options: WorkOptions) {
   const data = manifestAt(
     path.join(root, `Persistent/versions/${profile.manifestId}/data_versions.json`),
   );
-  const images = readJson<ImageManifest[]>(path.join(options.work, "image-manifest.json"));
+  const images = readJson<ImageManifest[]>(path.join(options.work, "image-candidates.json"));
   const bindata = readJson<BinDataAsset[]>(path.join(options.work, "bindata-manifest.json"));
   const sourceFiles = new Set([...images.map((a) => a.source), ...bindata.map((a) => a.Source)]);
   const records: SourceCheck[] = [];

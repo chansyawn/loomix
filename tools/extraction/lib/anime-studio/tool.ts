@@ -140,6 +140,9 @@ export function createAnimeStudio({
       const { types, names = [], containers = [] } = options;
       if (!Array.isArray(types) || !types.length) throw new Error("Export types are required");
       const flags = ["--types", ...types];
+      // 非模型任务无需解析 Shader；当前客户端的 Shader 布局尚未适配。
+      if (types.every((type) => ["Texture2D", "Sprite", "MiHoYoBinData"].includes(type)))
+        flags.push("Shader:None");
       if (names.length) flags.push("--names", ...names);
       if (containers.length) flags.push("--containers", ...containers);
       await execute(options, flags);

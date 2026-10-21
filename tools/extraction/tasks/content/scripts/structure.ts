@@ -294,8 +294,9 @@ export async function structure(options: WorkOptions) {
     );
     const references = selectImageReferences(group, tables, u);
     const resolved = references.map(resolveIcon);
-    const chosen = resolved.find((a) => a?.matched) ?? null;
-    if (chosen) {
+    const matches = resolved.filter((a) => a?.matched);
+    for (const chosen of matches) {
+      if (!chosen) continue;
       if (!chosen.resourceName || !chosen.source || !chosen.container || !chosen.pathId)
         throw new Error(`Incomplete selected image ${id}`);
       candidateImages.push({
@@ -307,7 +308,8 @@ export async function structure(options: WorkOptions) {
         container: chosen.container,
         pathId: chosen.pathId,
       });
-    } else
+    }
+    if (!matches.length)
       diagnostics.push({
         id,
         group,
@@ -550,7 +552,7 @@ export async function structure(options: WorkOptions) {
     [...scope].sort((a, b) => a - b),
   );
   writeJson(path.join(options.work, "quality-enum.json"), Object.fromEntries(qualityLabels));
-  writeJson(path.join(options.work, "selected-images.json"), candidateImages);
+  writeJson(path.join(options.work, "candidate-images.json"), candidateImages);
   writeJson(path.join(options.work, "field-evidence.json"), proofs);
   writeJson(path.join(options.work, "missing-fields.json"), diagnostics);
   writeJson(path.join(options.work, "outside-members.json"), outsideMembers);
@@ -589,6 +591,6 @@ export async function structure(options: WorkOptions) {
     ],
   });
   console.log(
-    `Structured ${scope.size} records; selected ${candidateImages.length} image references`,
+    `Structured ${scope.size} records; found ${candidateImages.length} candidate image references`,
   );
 }

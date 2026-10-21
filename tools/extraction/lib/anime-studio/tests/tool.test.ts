@@ -135,6 +135,7 @@ await test("export preserves exact filters and paths with spaces without shell i
     "--types",
     "Sprite",
     "Texture2D",
+    "Shader:None",
     "--names",
     "^(A|B)$",
     "--containers",
