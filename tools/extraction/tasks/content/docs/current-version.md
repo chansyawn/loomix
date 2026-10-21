@@ -9,9 +9,9 @@
 输入位置：
 
 ```text
-resources/petit-planet-game/0.95.2/config.ini
-resources/petit-planet-game/0.95.2/PetitPlanet_Data/
-resources/petit-planet-extraction/0.95.2/index/assets_map.xml
+resources/game-client/config.ini
+resources/game-client/PetitPlanet_Data/
+resources/temp/extraction/index/assets_map.xml
 ```
 
 CLI 由统一提取模块自动初始化和调用，缓存位于 `resources/extraction-tools/`；可用 `vp run --no-cache '@loomix/extraction#tools:init'` 提前准备，见[提取入口说明](../../../README.md#统一提取工具)。工具初始化不改变本任务的 revision 和验收约束。
@@ -33,7 +33,7 @@ vp run --no-cache '@loomix/extraction#test'
 
 ```powershell
 vp exec node tools/extraction/tasks/content/scripts/run.mjs --help
-vp exec node tools/extraction/tasks/content/scripts/run.mjs --output resources/temp/content-acceptance/0.95.2/content
+vp exec node tools/extraction/tasks/content/scripts/run.mjs --output resources/temp/content-acceptance
 vp exec node tools/extraction/tasks/content/scripts/run.mjs --step structure
 ```
 
@@ -48,9 +48,9 @@ vp exec node tools/extraction/tasks/content/scripts/run.mjs --step structure
 | validate  | audit、assets                  | coverage.json、validation.json；严格字段、成员、图片和来源检查                                                                                                                             |
 | publish   | validate                       | 重新核验暂存数据后，将 content.json 与 assets/ 发布到指定目录                                                                                                                              |
 
-中间文件位于 `resources/temp/content/0.95.2/<输出路径标识>/`，标识是绝对输出路径小写后的 SHA256 前 16 位，实际目录会在运行结果中显示。run-report.json 保存步骤、状态和失败堆栈，logs/ 保存子进程输出。重新构建会使旧验证结果失效，避免使用上一轮成功状态。
+中间文件位于 `resources/temp/extraction/content/<输出路径标识>/`，标识是绝对输出路径小写后的 SHA256 前 16 位，实际目录会在运行结果中显示。run-report.json 保存步骤、状态和失败堆栈，logs/ 保存子进程输出。重新构建会使旧验证结果失效，避免使用上一轮成功状态。
 
-默认交付目录为 `resources/petit-planet-extraction/0.95.2/content/`，仅含 content.json 和 assets/。产物只在全部检查通过后发布；重跑替换旧素材，不留下未引用图。发布使用暂存副本与旧产物备份，失败时恢复旧产物。目标目录包含其他文件时拒绝覆盖，客户端、版本根和 index 不可作为输出。
+默认交付目录为 `resources/website/`，包含 content.json 和 assets/，允许保留 .gitkeep 目录占位文件。产物只在全部检查通过后发布；重跑替换旧素材，不留下未引用图。发布使用暂存副本与旧产物备份，失败时恢复旧产物。目标目录包含其他文件时拒绝覆盖，客户端、工具缓存、共用索引和提取工作目录及其父目录不可作为输出。
 
 ## 数据使用与边界
 
@@ -81,7 +81,7 @@ JSON 使用英文分组和字段名，显示内容为中文。`image` 相对 JSO
 - 67 个生物、植物、菜肴系列的图片：显示配置复用家具图像，未确认用途，不进入素材文件夹。
 - 部分介绍、颜色、尺寸、原产星系和风味等未在已确认配置中提供，或对应文本不在当前 TextMap。未写区域标签不默认解释为“全地区”或“通行风味”。
 
-生物介绍优先使用表 93 的长介绍；主物品名字始终使用表 318，不用图鉴别名替换。外观实际包括眉毛、面饰，没有肤色记录。完整 JSON 字段清单与关联见原理文档；本任务不创建数据库，也不自动接入网站。
+生物介绍优先使用表 93 的长介绍；主物品名字始终使用表 318，不用图鉴别名替换。外观实际包括眉毛、面饰，没有肤色记录。完整 JSON 字段清单与关联见原理文档；本任务不创建数据库；验证通过后直接更新网站本地资源。
 
 ## 排查与更新
 

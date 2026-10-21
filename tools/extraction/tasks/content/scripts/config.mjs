@@ -85,11 +85,8 @@ export function getOptions(args = process.argv.slice(2)) {
       output: { type: "string" },
     },
   });
-  const output = path.resolve(
-    repoRoot,
-    values.output ?? `resources/petit-planet-extraction/${profile.gameVersion}/content`,
-  );
+  const output = path.resolve(repoRoot, values.output ?? "resources/website");
   const key = crypto.createHash("sha256").update(output.toLowerCase()).digest("hex").slice(0, 16);
-  const work = path.resolve(repoRoot, `resources/temp/content/${profile.gameVersion}/${key}`);
+  const work = path.resolve(repoRoot, `resources/temp/extraction/content/${key}`);
   return { ...values, output, work };
 }

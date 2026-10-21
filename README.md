@@ -16,14 +16,10 @@
 │   ├── extraction/          # 客户端提取文档和脚本（按任务组织）
 │   └── resource-publisher/  # 资源发布工具
 ├── resources/
-│   ├── extraction-tools/         # 自动准备的提取工具、SDK 和运行时缓存
-│   ├── petit-planet-game/        # 按客户端版本保存游戏副本
-│   │   └── <version>/           # config.ini、可执行文件与 PetitPlanet_Data
-│   ├── petit-planet-extraction/  # 按版本保存共用索引和任务产物
-│   │   └── <version>/
-│   │       ├── index/           # Asset Map 等共用索引
-│   │       └── content/         # 根字段 93 的有效内容 JSON 和素材
-│   └── temp/                   # 临时文件
+│   ├── extraction-tools/     # 自动准备的提取工具、SDK 和运行时缓存
+│   ├── game-client/    # 当前客户端：config.ini、PetitPlanet_Data 等
+│   ├── website/              # 网站数据 content.json 和 assets/
+│   └── temp/extraction/      # 共用索引、中间文件、日志与迁移旧产物
 ├── .vscode/                  # VS Code 工作区配置
 ├── package.json              # 仓库级脚本和工具配置
 ├── pnpm-workspace.yaml       # pnpm workspace 与依赖版本配置
@@ -38,16 +34,16 @@
 ## 本地资源处理
 
 - `resources/extraction-tools/`：统一提取模块自动下载或构建的工具、SDK 和运行时缓存；可删除后重新初始化。AnimeStudio 上游项目：[Escartem/AnimeStudio](https://github.com/Escartem/AnimeStudio)。
-- `resources/petit-planet-game/<version>/`：保存完整客户端副本，作为资源读取来源。
-- `resources/petit-planet-extraction/<version>/index/`：保存对应客户端的 Asset Map 等共用索引，供各提取任务读取。
-- `resources/petit-planet-extraction/<version>/<任务>/`：保存该版本的任务产物；`content` 为根字段 93 收录的有效内容 JSON 和素材。content 的日志、来源证据和缺失报告存入临时目录。
+- `resources/game-client/`：保存完整客户端副本，作为资源读取来源。
+- `resources/temp/extraction/index/`：保存当前客户端的 Asset Map 等共用索引，供各提取任务读取。
+- `resources/website/`：验证通过的 content.json 和 assets/，供网站本地开发直接读取。
 - `resources/temp/`：用于存储临时文件。
 
 `resources/` 下的本地资源文件由根目录 `.gitignore` 忽略，`resources/temp/` 整体忽略。
 
 维护中的提取脚本与文档位于 [tools/extraction](tools/extraction/README.md)，各任务分别提供不依赖脚本的原理指南和对应当前实现的执行手册。安装仓库依赖并准备本地输入后，使用 `vp run --no-cache '@loomix/extraction#content'` 提取有效内容，使用 `vp run '@loomix/extraction#test'` 运行不依赖客户端的测试。
 
-目录中的 `<version>` 为客户端版本号，配置与资源 revision 保留在脚本配置和产物元数据中。提取任务使用仓库 Node 环境，不需要 Python。
+目录只保留当前客户端，游戏版本、配置与资源 revision 保留在脚本配置和产物元数据中。提取任务使用仓库 Node 环境，不需要 Python。
 
 ## 本地开发
 

@@ -2,7 +2,7 @@
 
 这里保存星布谷地客户端提取任务的文档和当前有效脚本。客户端实现变化较快，各任务直接维护自己的模块与配置，历史版本由 Git 保存。
 
-客户端保存于 `resources/petit-planet-game/<version>/`，共用索引保存于 `resources/petit-planet-extraction/<version>/index/`。产物、日志、索引和客户端不纳入 Git。提取任务依赖本地输入，执行时关闭任务缓存。使用仓库 Node 环境，无需 Python。
+客户端保存于 `resources/game-client/`，共用索引保存于 `resources/temp/extraction/index/`。产物、日志、索引和客户端不纳入 Git。提取任务依赖本地输入，执行时关闭任务缓存。使用仓库 Node 环境，无需 Python。
 
 ## 统一提取工具
 
@@ -15,7 +15,7 @@ vp run --no-cache '@loomix/extraction#tools:init'
 vp run --no-cache '@loomix/extraction#index'
 ```
 
-`index` 默认读取当前 profile 的完整客户端目录，覆盖基础和 Persistent 更新资源，生成对应版本的 `index/assets_map.xml`。可用 `--input`、`--output` 和 `--game` 指定其他输入；路径相对于仓库根目录。新索引在生成完整且非空后替换目标，失败保留已有索引。使用 `--help` 查看参数，帮助命令不会初始化工具。
+`index` 默认读取当前 profile 的完整客户端目录，覆盖基础和 Persistent 更新资源，生成 `resources/temp/extraction/index/assets_map.xml`。可用 `--input`、`--output` 和 `--game` 指定其他输入；路径相对于仓库根目录。新索引在生成完整且非空后替换目标，失败保留已有索引。使用 `--help` 查看参数，帮助命令不会初始化工具。
 
 - Windows x64：下载固定提交的官方 .NET 10 构建并验证 SHA256，保留 CLI 与依赖布局；自动下载并校验局部标准 .NET Runtime。
 - macOS arm64/x64：检出同一固定提交，应用维护中的 macOS 补丁，使用固定 SDK 编译包含运行时的原生 CLI。需要 Git、tar 和网络；无需系统级安装 .NET。Intel Mac 尚未实机验证。
@@ -55,12 +55,12 @@ vp run --no-cache '@loomix/extraction#content'
 
 共享包 `@loomix/content-schema` 约定交付 JSON 的格式、类型、ID 唯一性和成员引用；客户端范围、数量与来源证据仍由本任务验收。Node >=22.18.0 直接加载契约的 TypeScript 源码，无需前置构建。
 
-默认交付目录为 `resources/petit-planet-extraction/<version>/content/`，仅包含 `content.json` 和 `assets/`。JSON 按英文大类、子类分组，显示值使用中文；只包含指定基础字段和分类属性。未确认信息为 `null`。
+默认交付目录为 `resources/website/`，包含 `content.json` 和 `assets/`，允许保留 `.gitkeep` 目录占位文件。JSON 按英文大类、子类分组，显示值使用中文；只包含指定基础字段和分类属性。未确认信息为 `null`。
 
-该任务从客户端重新读取输入。中间数据、日志、来源证据、字段覆盖率和缺失原因存入 `resources/temp/content/`，按版本及输出目录标识隔离。实际工作目录会显示在运行结果中。新版本必须重新确认表 93 的范围和关联字段。
+该任务从客户端重新读取输入。中间数据、日志、来源证据、字段覆盖率和缺失原因存入 `resources/temp/extraction/content/`，按输出目录标识隔离。实际工作目录会显示在运行结果中。更新客户端后应重建索引和中间数据，并重新确认表 93 的范围和关联字段。
 
 ## 扩展任务
 
-新任务使用 `tasks/<任务名>/docs/` 和 `tasks/<任务名>/scripts/`；例如菜谱使用 `tasks/recipes/`。每个任务分别提供原理文档、执行手册、当前配置和入口，并把产物写到 `resources/petit-planet-extraction/<version>/<任务名>/`，读取同版本 index 内的共用索引。
+新任务使用 `tasks/<任务名>/docs/` 和 `tasks/<任务名>/scripts/`；例如菜谱使用 `tasks/recipes/`。每个任务分别提供原理文档、执行手册、当前配置和入口，中间数据写到 `resources/temp/extraction/`，读取其中 index 内的共用索引；面向网站的内容由 content 任务统一交付到 `resources/website/`。
 
 更新客户端时，先重新确认数据布局、字段含义和版本一致性，再修改配置或重写脚本，同步更新两份文档与验证样例。只有实际出现重复需求时才提取共用模块。测试只保存小型字节样例，不提交完整游戏文件、索引或生成数据库。

@@ -140,3 +140,16 @@ test("requires an immutable HTTPS release base", () => {
     expect(() => parseReleaseBase(value)).toThrow();
   }
 });
+
+test("allows a regular directory placeholder without publishing it", async () => {
+  const directory = await fixture();
+  await writeFile(path.join(directory, ".gitkeep"), "");
+  const content = await validateContent(directory);
+  expect(content.assets.map((asset) => asset.key)).toEqual([imageKey]);
+  const { store, objects } = memoryStore();
+  await publishRelease(directory, "placeholder", store);
+  expect([...objects.keys()].some((key) => key.endsWith(".gitkeep"))).toBe(false);
+  await rm(path.join(directory, ".gitkeep"));
+  await mkdir(path.join(directory, ".gitkeep"));
+  await expect(validateContent(directory)).rejects.toThrow("regular file");
+});

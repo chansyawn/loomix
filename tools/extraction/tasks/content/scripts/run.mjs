@@ -1,55 +1,21 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { getOptions, steps, profile, repoRoot } from "./config.mjs";
+import { getOptions, steps, profile } from "./config.mjs";
 import { writeJson, readJson, removeWithin } from "./io.mjs";
 
-export function safeOutput(output) {
-  const resource = path.resolve(repoRoot, "resources");
-  const relative = path.relative(resource, output).toLowerCase().split(path.sep);
-  const repoRelative = path.relative(repoRoot, output).toLowerCase().split(path.sep);
-  if (
-    relative[0] === "petit-planet-game" ||
-    relative.includes("index") ||
-    output === resource ||
-    output === repoRoot ||
-    ["apps", "packages", ".git", ".agents", ".codex"].includes(repoRelative[0]) ||
-    (relative[0] === "petit-planet-extraction" && relative.length <= 2)
-  )
-    throw new Error(`Unsafe output directory: ${output}`);
-  if (fs.existsSync(output)) {
-    if (fs.lstatSync(output).isSymbolicLink()) throw new Error("Output cannot be a link");
-    const json = path.join(output, "content.json");
-    if (
-      fs.existsSync(json) &&
-      (!fs.lstatSync(json).isFile() || fs.lstatSync(json).isSymbolicLink())
-    )
-      throw new Error("Output JSON must be a regular file");
-    if (fs.existsSync(path.join(output, "assets"))) {
-      const assets = path.join(output, "assets");
-      if (!fs.lstatSync(assets).isDirectory() || fs.lstatSync(assets).isSymbolicLink())
-        throw new Error("Output assets must be a regular directory");
-      for (const name of fs.readdirSync(assets)) {
-        const stat = fs.lstatSync(path.join(assets, name));
-        if (!stat.isFile() || stat.isSymbolicLink())
-          throw new Error("Output assets contain a link or subdirectory");
-      }
-    }
-    const unexpected = fs
-      .readdirSync(output)
-      .filter((s) => !["content.json", "assets"].includes(s));
-    if (unexpected.length)
-      throw new Error(`Output contains unrelated files: ${unexpected.join(", ")}`);
-  }
-}
+import { safeOutput } from "./output.mjs";
+import { validate } from "./validate.mjs";
 
-export async function publish(options) {
+export { safeOutput };
+
+export async function publish(options, validateStaging = validate) {
   safeOutput(options.output);
   const staging = path.join(options.work, "staging");
   const result = readJson(path.join(options.work, "validation.json"));
   if (!result.passed) throw new Error("Validation has not passed");
   // 即使稍后单独使用 --step publish，也要重新校验暂存文件的实际字节内容。
-  await (await import("./validate.mjs")).validate(options);
+  await validateStaging(options);
   fs.mkdirSync(options.output, { recursive: true });
   const at = (name) => path.join(options.output, name);
   let oldAssets = false,
@@ -96,8 +62,8 @@ export async function main(args) {
       `有效内容提取（${profile.gameVersion}, revision ${profile.dataRevision}）\n` +
         `node run.mjs [--step NAME] [--output DIR]\n步骤：${steps.join(", ")}\n` +
         "--step 只执行指定步骤，不补跑依赖。路径相对仓库解析。\n" +
-        `默认输出：resources/petit-planet-extraction/${profile.gameVersion}/content/\n` +
-        "输出仅含 content.json 和 assets/；日志和核对报告位于 resources/temp/content/。",
+        "默认输出：resources/website/\n" +
+        "输出仅含 content.json 和 assets/；日志和核对报告位于 resources/temp/extraction/content/。",
     );
     return;
   }

@@ -140,28 +140,34 @@ test("same-name sprites use precise containers and isolated export batches", () 
 });
 test("paths are independent of cwd and protect shared inputs", () => {
   const options = getOptions([]);
+  assert.equal(options.output, path.join(repoRoot, "resources/website"));
   assert.equal(
-    options.output,
-    path.join(repoRoot, "resources/petit-planet-extraction/0.95.2/content"),
+    path.dirname(options.work),
+    path.join(repoRoot, "resources/temp/extraction/content"),
   );
+  assert.equal(profile.paths.gameRoot, "resources/game-client/PetitPlanet_Data");
+  assert.equal(profile.paths.assetMap, "resources/temp/extraction/index/assets_map.xml");
   assert.equal(
     getOptions(["--output", "resources/temp/sample-content"]).output,
     path.join(repoRoot, "resources/temp/sample-content"),
   );
-  assert.throws(
-    () => safeOutput(path.join(repoRoot, "resources/petit-planet-extraction/0.95.2/index")),
-    /Unsafe/,
-  );
-  assert.throws(
-    () => safeOutput(path.join(repoRoot, "resources/PETIT-PLANET-GAME/0.95.2")),
-    /Unsafe/,
-  );
+  assert.throws(() => safeOutput(path.join(repoRoot, "resources/temp/extraction/index")), /Unsafe/);
+  assert.throws(() => safeOutput(path.join(repoRoot, "resources/GAME-CLIENT")), /Unsafe/);
+  for (const relative of [
+    "resources/extraction-tools",
+    "resources/temp/extraction",
+    "resources/temp/extraction/content/unused",
+    "resources/temp",
+    "tools",
+  ])
+    assert.throws(() => safeOutput(path.join(repoRoot, relative)), /Unsafe/);
   const result = spawnSync(process.execPath, [runner, "--help"], {
     cwd: os.tmpdir(),
     encoding: "utf8",
   });
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /prepare, structure, assets, audit, validate, publish/);
+  assert.match(result.stdout, /默认输出：resources\/website\//);
   const unknown = spawnSync(process.execPath, [runner, "--step", "unknown"], { encoding: "utf8" });
   assert.notEqual(unknown.status, 0);
 });

@@ -13,10 +13,9 @@ export const profile = {
   paths: {},
 };
 
-const clientDirectory = `resources/petit-planet-game/${profile.gameVersion}`;
-const extractionDirectory = `resources/petit-planet-extraction/${profile.gameVersion}`;
+const clientDirectory = "resources/game-client";
 Object.assign(profile.paths, {
   gameRoot: `${clientDirectory}/PetitPlanet_Data`,
   clientIni: `${clientDirectory}/config.ini`,
-  assetMap: `${extractionDirectory}/index/assets_map.xml`,
+  assetMap: "resources/temp/extraction/index/assets_map.xml",
 });

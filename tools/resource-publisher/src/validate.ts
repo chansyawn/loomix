@@ -22,7 +22,13 @@ export async function readRegularFile(file: string): Promise<Buffer> {
 }
 
 export async function validateContent(directory: string): Promise<ValidatedContent> {
-  const entries = await readdir(directory);
+  const entries = (await readdir(directory)).filter((entry) => entry !== ".gitkeep");
+  try {
+    if (!(await lstat(path.join(directory, ".gitkeep"))).isFile())
+      throw new Error(".gitkeep must be a regular file");
+  } catch (error) {
+    if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
+  }
   if (entries.length !== 2 || !entries.includes("content.json") || !entries.includes("assets")) {
     throw new Error("Content directory must contain only content.json and assets/");
   }
