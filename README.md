@@ -9,10 +9,12 @@
 ```text
 .
 ├── apps/
-│   ├── website/             # 玩家社区网站应用（页面、路由与样式）
-│   └── extraction/          # 客户端提取文档和脚本（按任务组织）
+│   └── website/             # 玩家社区网站应用（页面、路由与样式）
 ├── packages/
 │   └── content-schema/      # extraction 与网站共用的内容契约
+├── tools/
+│   ├── extraction/          # 客户端提取文档和脚本（按任务组织）
+│   └── resource-publisher/  # 资源发布工具
 ├── resources/
 │   ├── anime-studio/             # 本地 AnimeStudio 工具
 │   ├── petit-planet-game/        # 按客户端版本保存游戏副本
@@ -30,7 +32,7 @@
 └── vite.config.ts            # Vite+ 仓库级配置
 ```
 
-`@loomix/content-schema` 提供当前 content JSON 的严格 schema、推导类型及成员引用校验。extraction 和 website 通过 workspace 依赖共享契约，直接引用 TypeScript 源码，无需前置构建；数据格式与提取产物保持不变。
+`@loomix/content-schema` 提供当前 content JSON 的严格 schema、推导类型及成员引用校验。`@loomix/extraction` 和 website 通过 workspace 依赖共享契约，直接引用 TypeScript 源码，无需前置构建；数据格式与提取产物保持不变。
 
 网站页面和路由主要位于 `apps/website/src/`。
 
@@ -44,7 +46,7 @@
 
 `resources/` 下的本地资源文件由根目录 `.gitignore` 忽略，`resources/temp/` 整体忽略。
 
-维护中的提取脚本与文档位于 [apps/extraction](apps/extraction/README.md)，各任务分别提供不依赖脚本的原理指南和对应当前实现的执行手册。安装仓库依赖并准备本地输入后，使用 `vp run --no-cache extraction#items` 提取全物品，使用 `vp run --no-cache extraction#content` 提取有效内容，使用 `vp run extraction#test` 运行不依赖客户端的测试。
+维护中的提取脚本与文档位于 [tools/extraction](tools/extraction/README.md)，各任务分别提供不依赖脚本的原理指南和对应当前实现的执行手册。安装仓库依赖并准备本地输入后，使用 `vp run --no-cache '@loomix/extraction#items'` 提取全物品，使用 `vp run --no-cache '@loomix/extraction#content'` 提取有效内容，使用 `vp run '@loomix/extraction#test'` 运行不依赖客户端的测试。
 
 目录中的 `<version>` 为客户端版本号，配置与资源 revision 保留在脚本配置和产物元数据中。提取任务使用仓库 Node 环境，不需要 Python。
 

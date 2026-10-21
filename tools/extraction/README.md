@@ -13,8 +13,8 @@
 
 ```powershell
 vp install
-vp run --no-cache extraction#items
-vp run extraction#test
+vp run --no-cache '@loomix/extraction#items'
+vp run '@loomix/extraction#test'
 ```
 
 客户端、Asset Map 和 AnimeStudio 需另行准备，位置见执行手册。全部提取脚本使用 Node；无需 Python。默认物品产物目录为：
@@ -32,7 +32,7 @@ resources/petit-planet-extraction/<version>/items/
 [提取原理](tasks/content/docs/extraction-method.md)说明根字段 93 的收录范围、分类、属性及素材关联；[执行手册](tasks/content/docs/current-version.md)说明当前实现的命令、产物和未确认信息。
 
 ```powershell
-vp run --no-cache extraction#content
+vp run --no-cache '@loomix/extraction#content'
 ```
 
 共享包 `@loomix/content-schema` 约定交付 JSON 的格式、类型、ID 唯一性和成员引用；客户端范围、数量与来源证据仍由本任务验收。Node >=22.18.0 直接加载契约的 TypeScript 源码，无需前置构建。

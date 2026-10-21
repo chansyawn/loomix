@@ -1,5 +1,5 @@
 {
-  "name": "extraction",
+  "name": "@loomix/extraction",
   "private": true,
   "type": "module",
   "scripts": {

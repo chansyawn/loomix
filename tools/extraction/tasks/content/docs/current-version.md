@@ -24,16 +24,16 @@ resources/anime-studio/AnimeStudio.CLI.exe
 从仓库根目录完整运行：
 
 ```powershell
-vp run --no-cache extraction#content
-vp run --no-cache extraction#test
+vp run --no-cache '@loomix/extraction#content'
+vp run --no-cache '@loomix/extraction#test'
 ```
 
 共享内容契约直接引用 TypeScript 源码，无需构建。也可直接调用 Node 入口：
 
 ```powershell
-vp exec node apps/extraction/tasks/content/scripts/run.mjs --help
-vp exec node apps/extraction/tasks/content/scripts/run.mjs --output resources/temp/content-acceptance/0.95.2/content
-vp exec node apps/extraction/tasks/content/scripts/run.mjs --step structure
+vp exec node tools/extraction/tasks/content/scripts/run.mjs --help
+vp exec node tools/extraction/tasks/content/scripts/run.mjs --output resources/temp/content-acceptance/0.95.2/content
+vp exec node tools/extraction/tasks/content/scripts/run.mjs --step structure
 ```
 
 路径为绝对路径或仓库相对路径，与当前工作目录无关。`--step` 只执行指定步骤，不自动补齐依赖；更换 `--output` 会使用不同的临时工作目录，需要先完整准备。任务没有 baseline 参数。

@@ -28,22 +28,22 @@
 在仓库根目录执行：
 
 ```powershell
-vp run --no-cache extraction#items
-vp run --no-cache extraction#items -- --help
-vp run extraction#test
+vp run --no-cache '@loomix/extraction#items'
+vp run --no-cache '@loomix/extraction#items' -- --help
+vp run '@loomix/extraction#test'
 ```
 
 提取输入和输出都被 Git 忽略，务必使用 `--no-cache`，防止 workspace 任务缓存跳过本地数据重建。也可直接使用仓库 Node 运行入口：
 
 ```powershell
-node apps/extraction/tasks/items/scripts/run.mjs --help
-node apps/extraction/tasks/items/scripts/run.mjs
+node tools/extraction/tasks/items/scripts/run.mjs --help
+node tools/extraction/tasks/items/scripts/run.mjs
 ```
 
 默认产物目录：`resources/petit-planet-extraction/0.95.2/items/`。覆盖输出示例：
 
 ```powershell
-node apps/extraction/tasks/items/scripts/run.mjs --output resources/temp/items-check-run
+node tools/extraction/tasks/items/scripts/run.mjs --output resources/temp/items-check-run
 ```
 
 `--output` 和 `--baseline` 均接受绝对路径或仓库相对路径，含空格时按 shell 规则加引号。输出目录用于本任务生成文件，不应指定客户端、版本内的 index 或其他应用的数据目录。原客户端与旧调查目录不会修改。
@@ -67,7 +67,7 @@ node apps/extraction/tasks/items/scripts/run.mjs --output resources/temp/items-c
 例如在任务目录中单步验证已有产物：
 
 ```powershell
-cd apps/extraction/tasks/items
+cd tools/extraction/tasks/items
 node scripts/run.mjs --step validate-catalog
 ```
 
@@ -82,7 +82,7 @@ node scripts/run.mjs --step validate-catalog
 基线需为含 `items` 数组的已提取 JSON，可使用完整 `catalog/items.json` 或早期 resolved-items.json。例如：
 
 ```powershell
-node apps/extraction/tasks/items/scripts/run.mjs --step build-database --baseline resources/temp/petit-planet-extraction/baseline-revision-1217551/resolved-items.json
+node tools/extraction/tasks/items/scripts/run.mjs --step build-database --baseline resources/temp/petit-planet-extraction/baseline-revision-1217551/resolved-items.json
 ```
 
 对比 ID 增删以及名称、类型、标签、中英文说明；来源路径、行偏移、图标缓存和本地文件位置不作为这份对比的业务字段。旧文件没有 revision 元数据时 fromRevision 为 null，不猜测它来自哪个版本。提供的基线不存在、不可解析或没有 items 数组时提前失败。
