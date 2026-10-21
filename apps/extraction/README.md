@@ -35,7 +35,7 @@ resources/petit-planet-extraction/<version>/items/
 vp run --no-cache extraction#content
 ```
 
-共享包 `@petit-orbit/content-schema` 约定交付 JSON 的格式、类型、ID 唯一性和成员引用；客户端范围、数量与来源证据仍由本任务验收。Node >=22.18.0 直接加载契约的 TypeScript 源码，无需前置构建。
+共享包 `@loomix/content-schema` 约定交付 JSON 的格式、类型、ID 唯一性和成员引用；客户端范围、数量与来源证据仍由本任务验收。Node >=22.18.0 直接加载契约的 TypeScript 源码，无需前置构建。
 
 默认交付目录为 `resources/petit-planet-extraction/<version>/content/`，仅包含 `content.json` 和 `assets/`。JSON 按英文大类、子类分组，显示值使用中文；只包含指定基础字段和分类属性。未确认信息为 `null`。
 

@@ -8,7 +8,7 @@
     "test": "node --test tasks/items/tests/*.test.mjs tasks/content/tests/*.test.mjs"
   },
   "dependencies": {
-    "@petit-orbit/content-schema": "workspace:*",
+    "@loomix/content-schema": "workspace:*",
     "pngjs": "catalog:"
   }
 }

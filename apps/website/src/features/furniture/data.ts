@@ -1,5 +1,5 @@
-import { parseContent } from "@petit-orbit/content-schema";
-import type { Content } from "@petit-orbit/content-schema";
+import { parseContent } from "@loomix/content-schema";
+import type { Content } from "@loomix/content-schema";
 import { resourceUrl } from "@/infrastructure/resources";
 
 export type FurnitureData = Content["furniture"];

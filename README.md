@@ -1,13 +1,15 @@
-# petit-orbit
+# loomix 络米小站
 
-「星布谷地」游戏 Wiki 项目，旨在整理游戏相关资料，并通过网站提供便于浏览和查阅的内容。
+「星布谷地」非官方玩家社区，当前提供游戏资料整理与图鉴检索，未来计划扩展玩家分享和在售商品信息等社区功能。
+
+网站域名：`loomix.fun`。
 
 ## 目录结构
 
 ```text
 .
 ├── apps/
-│   ├── website/             # Wiki 网站应用（页面、路由与样式）
+│   ├── website/             # 玩家社区网站应用（页面、路由与样式）
 │   └── extraction/          # 客户端提取文档和脚本（按任务组织）
 ├── packages/
 │   └── content-schema/      # extraction 与网站共用的内容契约
@@ -28,7 +30,7 @@
 └── vite.config.ts            # Vite+ 仓库级配置
 ```
 
-`@petit-orbit/content-schema` 提供当前 content JSON 的严格 schema、推导类型及成员引用校验。extraction 和 website 通过 workspace 依赖共享契约，直接引用 TypeScript 源码，无需前置构建；数据格式与提取产物保持不变。
+`@loomix/content-schema` 提供当前 content JSON 的严格 schema、推导类型及成员引用校验。extraction 和 website 通过 workspace 依赖共享契约，直接引用 TypeScript 源码，无需前置构建；数据格式与提取产物保持不变。
 
 网站页面和路由主要位于 `apps/website/src/`。
 

@@ -105,7 +105,7 @@ test("runner rejects unknown steps and reports a failed missing-input step", () 
   });
   assert.equal(bad.status, 1);
   assert.match(bad.stderr, /Unknown step/);
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "petit-orbit-extraction-test-"));
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-extraction-test-"));
   try {
     const result = spawnSync(
       process.execPath,

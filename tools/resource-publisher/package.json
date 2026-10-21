@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "catalog:",
-    "@petit-orbit/content-schema": "workspace:*",
+    "@loomix/content-schema": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import type { FurnitureItem, FurnitureSet } from "@petit-orbit/content-schema";
+import type { FurnitureItem, FurnitureSet } from "@loomix/content-schema";
 import { filterGroups, membershipIndex, queryFurniture } from "./query";
 import { emptyQuery, missing, ungrouped } from "./search";
 

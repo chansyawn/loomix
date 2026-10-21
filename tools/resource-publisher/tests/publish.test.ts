@@ -2,7 +2,7 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, expect, test } from "vite-plus/test";
-import { emptyContent } from "@petit-orbit/content-schema";
+import { emptyContent } from "@loomix/content-schema";
 import { publishRelease } from "../src/publish.ts";
 import { parseReleaseBase, sha256 } from "../src/release.ts";
 import type { ReleaseStore } from "../src/store.ts";

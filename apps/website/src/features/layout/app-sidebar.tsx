@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
+import { site } from "@/site";
 import { collectionNavigation, homeItem } from "@/features/layout/navigation";
 import {
   Sidebar,
@@ -27,7 +28,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             height={24}
             className="size-6 shrink-0 rounded-full object-cover"
           />
-          <span className="whitespace-nowrap">星布谷地 Wiki</span>
+          <span className="whitespace-nowrap">{site.name}</span>
         </Link>
       </SidebarHeader>
       <SidebarContent>

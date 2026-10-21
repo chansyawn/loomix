@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { contentGroups, groupAt, parseContent } from "@petit-orbit/content-schema";
+import { contentGroups, groupAt, parseContent } from "@loomix/content-schema";
 
 export {
   basicFields,
@@ -7,7 +7,7 @@ export {
   memberTargets,
   emptyContent,
   groupAt,
-} from "@petit-orbit/content-schema";
+} from "@loomix/content-schema";
 
 export function plainText(value) {
   return typeof value === "string"

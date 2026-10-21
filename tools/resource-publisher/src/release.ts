@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
-import { contentGroups, groupAt, parseContent } from "@petit-orbit/content-schema";
-import type { Content } from "@petit-orbit/content-schema";
+import { contentGroups, groupAt, parseContent } from "@loomix/content-schema";
+import type { Content } from "@loomix/content-schema";
 
 export const releaseIdSchema = z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/);
 export const releaseMarkerSchema = z.strictObject({

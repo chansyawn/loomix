@@ -1,5 +1,6 @@
 import { HeadContent, Link, Outlet, Scripts, createRootRoute } from "@tanstack/react-router";
 import { WikiLayout } from "@/features/layout/wiki-layout";
+import { site } from "@/site";
 import appCss from "../styles.css?url";
 
 export const Route = createRootRoute({
@@ -13,7 +14,11 @@ export const Route = createRootRoute({
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "星布谷地 Wiki",
+        title: site.title,
+      },
+      {
+        name: "description",
+        content: site.description,
       },
     ],
     links: [

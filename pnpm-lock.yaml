@@ -270,7 +270,7 @@ importers:
 
   apps/extraction:
     dependencies:
-      '@petit-orbit/content-schema':
+      '@loomix/content-schema':
         specifier: workspace:*
         version: link:../../packages/content-schema
       pngjs:
@@ -285,7 +285,7 @@ importers:
       '@fontsource-variable/inter':
         specifier: 'catalog:'
         version: 5.3.0
-      '@petit-orbit/content-schema':
+      '@loomix/content-schema':
         specifier: workspace:*
         version: link:../../packages/content-schema
       '@tailwindcss/vite':
@@ -383,7 +383,7 @@ importers:
       '@aws-sdk/client-s3':
         specifier: 'catalog:'
         version: 3.1153.0
-      '@petit-orbit/content-schema':
+      '@loomix/content-schema':
         specifier: workspace:*
         version: link:../../packages/content-schema
       zod:

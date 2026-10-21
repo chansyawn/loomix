@@ -1,5 +1,5 @@
 import { expect, test } from "vite-plus/test";
-import { emptyContent } from "@petit-orbit/content-schema";
+import { emptyContent } from "@loomix/content-schema";
 import { downloadRelease, sha256 } from "../src/release.ts";
 
 const base = "https://assets.loomix.fun/releases/r1/";

@@ -1,4 +1,4 @@
-import type { FurnitureItem, FurnitureSet } from "@petit-orbit/content-schema";
+import type { FurnitureItem, FurnitureSet } from "@loomix/content-schema";
 import type { FurnitureData } from "./data";
 import { categories, missing, ungrouped } from "./search";
 import type { FilterKey, View, ViewQuery } from "./search";

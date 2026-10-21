@@ -1,6 +1,6 @@
 import { lstat, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
-import { parseContent } from "@petit-orbit/content-schema";
+import { parseContent } from "@loomix/content-schema";
 import { referencedImages, sha256 } from "./release.ts";
 
 export interface AssetFile {

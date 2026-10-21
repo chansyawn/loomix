@@ -2,7 +2,7 @@ import { LayersIcon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { FurnitureImage } from "./furniture-image";
 import { useFurnitureOrigin } from "./detail-navigation";
-import type { FurnitureItem, FurnitureSet } from "@petit-orbit/content-schema";
+import type { FurnitureItem, FurnitureSet } from "@loomix/content-schema";
 import { Badge } from "@/ui/components/badge";
 import {
   Card,
