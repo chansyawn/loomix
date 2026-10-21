@@ -16,7 +16,7 @@
 │   ├── extraction/          # 客户端提取文档和脚本（按任务组织）
 │   └── resource-publisher/  # 资源发布工具
 ├── resources/
-│   ├── anime-studio/             # 本地 AnimeStudio 工具
+│   ├── extraction-tools/         # 自动准备的提取工具、SDK 和运行时缓存
 │   ├── petit-planet-game/        # 按客户端版本保存游戏副本
 │   │   └── <version>/           # config.ini、可执行文件与 PetitPlanet_Data
 │   ├── petit-planet-extraction/  # 按版本保存共用索引和任务产物
@@ -38,7 +38,7 @@
 
 ## 本地资源处理
 
-- `resources/anime-studio/`：AnimeStudio 本地工具，用于浏览、预览和导出 Unity 游戏资源；上游项目：[Escartem/AnimeStudio](https://github.com/Escartem/AnimeStudio)。
+- `resources/extraction-tools/`：统一提取模块自动下载或构建的工具、SDK 和运行时缓存；可删除后重新初始化。AnimeStudio 上游项目：[Escartem/AnimeStudio](https://github.com/Escartem/AnimeStudio)。
 - `resources/petit-planet-game/<version>/`：保存完整客户端副本，作为资源读取来源。
 - `resources/petit-planet-extraction/<version>/index/`：保存对应客户端的 Asset Map 等共用索引，供各提取任务读取。
 - `resources/petit-planet-extraction/<version>/<任务>/`：保存该版本的任务产物；`items` 为全物品调查库，`content` 为根字段 93 收录的有效内容 JSON 和素材。content 的日志、来源证据和缺失报告存入临时目录。

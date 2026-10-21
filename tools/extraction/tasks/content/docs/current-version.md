@@ -12,8 +12,9 @@
 resources/petit-planet-game/0.95.2/config.ini
 resources/petit-planet-game/0.95.2/PetitPlanet_Data/
 resources/petit-planet-extraction/0.95.2/index/assets_map.xml
-resources/anime-studio/AnimeStudio.CLI.exe
 ```
+
+CLI 由统一提取模块自动初始化和调用，缓存位于 `resources/extraction-tools/`；可用 `vp run --no-cache '@loomix/extraction#tools:init'` 提前准备，见[提取入口说明](../../../README.md#统一提取工具)。工具初始化不改变本任务的 revision 和验收约束。
 
 客户端必须包含 StreamingAssets 和 Persistent 更新包及版本清单。Asset Map 包含 Texture2D、Sprite 和 MiHoYoBinData，已有 Source 的绝对路径可以不同，运行时会重定位。任务只读共用 index，不依赖已有 items 目录或 resources/temp 中的旧调查数据。
 

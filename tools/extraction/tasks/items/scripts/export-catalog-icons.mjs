@@ -2,7 +2,7 @@ import { getPaths, profile } from "./config.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
-import { spawnSync } from "node:child_process";
+import { exportAssets } from "../../../lib/anime-studio/index.mjs";
 const { out } = getPaths();
 const items = JSON.parse(fs.readFileSync(`${out}/resolved-items.json`)).items;
 const chosen = new Map();
@@ -38,28 +38,15 @@ for (const [, assets] of groups) {
     fs.existsSync(path.join(dest, assetType, a.resourceName + ".png")),
   );
   if (!existing) {
-    const proc = spawnSync(
-      getPaths().animeStudio,
-      [
-        source,
-        dest,
-        "--game",
-        profile.animeGame,
-        "--types",
-        assetType,
-        "--names",
-        names,
-        "--containers",
-        containers,
-      ],
-      { encoding: "utf8", windowsHide: true, maxBuffer: 32 * 1024 * 1024 },
-    );
-    fs.writeFileSync(
-      `${out}/logs/icon-batch-${key}-${assetType}.log`,
-      (proc.stdout ?? "") + (proc.stderr ?? "") + (proc.error?.message ?? ""),
-    );
-    if (proc.error || proc.status !== 0)
-      throw new Error(`AnimeStudio failed: ${source}; ${proc.error?.message ?? proc.status}`);
+    await exportAssets({
+      input: source,
+      output: dest,
+      game: profile.animeGame,
+      types: [assetType],
+      names: [names],
+      containers: [containers],
+      logFile: `${out}/logs/icon-batch-${key}-${assetType}.log`,
+    });
   }
   for (const asset of assets) {
     const from = path.join(dest, assetType, asset.resourceName + ".png");

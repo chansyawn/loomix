@@ -188,16 +188,13 @@ test("failed single step preserves existing deliverables and retains report", ()
   }
 });
 
-test("export process errors and missing selected PNGs stop with logs", async () => {
+test("export failures and missing selected PNGs stop with logs", async () => {
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), "petit-export-test-"));
-  const previous = profile.paths.animeStudio;
-  profile.paths.animeStudio = process.execPath;
   try {
     for (const code of [7, 0]) {
       const work = path.join(temp, String(code)),
         source = path.join(temp, `export-${code}.mjs`);
       fs.mkdirSync(path.join(work, "staging", "assets"), { recursive: true });
-      fs.writeFileSync(source, `console.error('export fixture'); process.exit(${code});`);
       fs.writeFileSync(path.join(work, "staging", "content.json"), JSON.stringify(emptyContent()));
       fs.writeFileSync(
         path.join(work, "selected-images.json"),
@@ -213,12 +210,22 @@ test("export process errors and missing selected PNGs stop with logs", async () 
           },
         ]),
       );
-      await assert.rejects(assets({ work }), code ? /Process failed/ : /not exported/);
+      await assert.rejects(
+        assets({ work }, async (request) => {
+          assert.equal(request.input, source);
+          assert.deepEqual(request.types, ["Sprite"]);
+          assert.deepEqual(request.names, ["^(?:Expected)$"]);
+          assert.deepEqual(request.containers, ["^(?:exact/path)$"]);
+          fs.mkdirSync(path.dirname(request.logFile), { recursive: true });
+          fs.writeFileSync(request.logFile, "export fixture");
+          if (code) throw new Error("Extraction failed");
+        }),
+        code ? /Extraction failed/ : /not exported/,
+      );
       const log = fs.readdirSync(path.join(work, "logs"))[0];
       assert.match(fs.readFileSync(path.join(work, "logs", log), "utf8"), /export fixture/);
     }
   } finally {
-    profile.paths.animeStudio = previous;
     removeWithin(temp, os.tmpdir());
   }
 });

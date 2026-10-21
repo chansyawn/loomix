@@ -13,9 +13,9 @@
 | 客户端版本标记  | resources/petit-planet-game/0.95.2/config.ini                 |
 | 游戏数据目录    | resources/petit-planet-game/0.95.2/PetitPlanet_Data           |
 | Asset Map XML   | resources/petit-planet-extraction/0.95.2/index/assets_map.xml |
-| AnimeStudio CLI | resources/anime-studio/AnimeStudio.CLI.exe                    |
+| AnimeStudio CLI | 统一模块自动初始化，缓存于 resources/extraction-tools/        |
 
-当前 CLI 是 Windows 可执行文件，其依赖文件须与现有工具目录一起保留；配置中的游戏模式为 HYG_CB1。Asset Map 必须由匹配客户端的基础与更新资源生成，不能只保留 item 目录或 Texture2D。
+CLI 由统一提取模块自动初始化和调用，Windows 下载固定构建，macOS 本地构建；也可运行 `vp run --no-cache '@loomix/extraction#tools:init'` 提前准备，见[提取入口说明](../../../README.md#统一提取工具)。配置中的游戏模式为 HYG_CB1。Asset Map 必须由匹配客户端的基础与更新资源生成，不能只保留 item 目录或 Texture2D。
 
 配置选择会检查 game_version、两个 revision，并扫描基础、Persistent/GenerateAssets 和 Persistent/Temp/5662883/GenerateAssets；只有 cs.obb、ed.obb 大小和 MD5 同时匹配 data_versions 清单才继续。当前选中 Temp 中的更新配置。data 包也必须匹配清单。失败时应核对输入，不要取消检查或静默回落到基础配置。
 

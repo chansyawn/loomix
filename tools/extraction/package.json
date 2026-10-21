@@ -3,9 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "tools:init": "node scripts/init-tools.mjs",
+    "index": "node scripts/build-index.mjs",
     "items": "node tasks/items/scripts/run.mjs",
     "content": "node tasks/content/scripts/run.mjs",
-    "test": "node --test tasks/items/tests/*.test.mjs tasks/content/tests/*.test.mjs"
+    "test": "node --test lib/anime-studio/tests/*.test.mjs tasks/items/tests/*.test.mjs tasks/content/tests/*.test.mjs"
   },
   "dependencies": {
     "@loomix/content-schema": "workspace:*",

@@ -1,1 +1,2 @@
 * text=auto eol=lf
+tools/extraction/lib/anime-studio/*.patch -whitespace

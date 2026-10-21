@@ -2,8 +2,9 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { PNG } from "pngjs";
-import { profile, repoRoot } from "./config.mjs";
-import { readJson, writeJson, runProcess, removeWithin } from "./io.mjs";
+import { profile } from "./config.mjs";
+import { readJson, writeJson, removeWithin } from "./io.mjs";
+import { exportAssets } from "../../../lib/anime-studio/index.mjs";
 import { groupAt } from "./model.mjs";
 
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -27,7 +28,7 @@ export function imageBatches(selected) {
   return batches;
 }
 
-export async function assets(options) {
+export async function assets(options, extract = exportAssets) {
   const selected = readJson(path.join(options.work, "selected-images.json"));
   const batches = imageBatches(selected),
     manifest = [];
@@ -47,22 +48,17 @@ export async function assets(options) {
     const exported = path.join(options.work, "exports", key),
       { source, assetType } = batch[0];
     removeWithin(exported, options.work);
-    await runProcess(
-      path.resolve(repoRoot, profile.paths.animeStudio),
-      [
-        source,
-        exported,
-        "--game",
-        profile.animeGame,
-        "--types",
-        assetType,
-        "--names",
-        `^(?:${[...new Set(batch.map((a) => a.resourceName))].map(escapeRegex).join("|")})$`,
-        "--containers",
+    await extract({
+      input: source,
+      output: exported,
+      game: profile.animeGame,
+      types: [assetType],
+      names: [`^(?:${[...new Set(batch.map((a) => a.resourceName))].map(escapeRegex).join("|")})$`],
+      containers: [
         `^(?:${[...new Set(batch.map((a) => a.container))].map(escapeRegex).join("|")})$`,
       ],
-      path.join(options.work, "logs", `assets-${key}.log`),
-    );
+      logFile: path.join(options.work, "logs", `assets-${key}.log`),
+    });
     for (const a of batch) {
       const file = path.join(exported, assetType, `${a.resourceName}.png`);
       if (!fs.existsSync(file)) throw new Error(`Selected image was not exported: ${a.reference}`);

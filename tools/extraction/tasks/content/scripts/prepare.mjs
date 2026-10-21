@@ -4,6 +4,7 @@ import readline from "node:readline";
 import { fileURLToPath } from "node:url";
 import { profile, repoRoot } from "./config.mjs";
 import { readJson, writeJson, runProcess } from "./io.mjs";
+import { exportAssets } from "../../../lib/anime-studio/index.mjs";
 
 export async function prepare(options) {
   const prepared = path.join(options.work, "prepared");
@@ -63,20 +64,14 @@ export async function prepare(options) {
     if (preferred.length !== 1) throw new Error(`Missing/ambiguous BinData ${name}`);
     const a = preferred[0];
     const destination = path.join(options.work, "bindata", name);
-    await runProcess(
-      path.resolve(repoRoot, profile.paths.animeStudio),
-      [
-        a.Source,
-        destination,
-        "--game",
-        profile.animeGame,
-        "--types",
-        "MiHoYoBinData",
-        "--names",
-        `^${name}$`,
-      ],
-      path.join(options.work, "logs", `bindata-${name}.log`),
-    );
+    await exportAssets({
+      input: a.Source,
+      output: destination,
+      game: profile.animeGame,
+      types: ["MiHoYoBinData"],
+      names: [`^${name}$`],
+      logFile: path.join(options.work, "logs", `bindata-${name}.log`),
+    });
     const file = path.join(destination, "MiHoYoBinData", `${name}.json`);
     readJson(file);
     selected.push({ ...a, file });

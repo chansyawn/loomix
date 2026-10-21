@@ -24,9 +24,7 @@ export const profile = {
     creatures: { id: 0, name: 1, description: 6, galleryIcon: 11 },
     textmap: { wrapper: 0, count: 0, buckets: 3, values: 4, en: 0, zh: 1 },
   },
-  paths: {
-    animeStudio: "resources/anime-studio/AnimeStudio.CLI.exe",
-  },
+  paths: {},
   expected: {
     records: 6002,
     types: 101,
@@ -90,6 +88,5 @@ export function getPaths(options = getOptions()) {
     gameRoot: path.resolve(repoRoot, profile.paths.gameRoot),
     clientIni: path.resolve(repoRoot, profile.paths.clientIni),
     assetMap: path.resolve(repoRoot, profile.paths.assetMap),
-    animeStudio: path.resolve(repoRoot, profile.paths.animeStudio),
   };
 }

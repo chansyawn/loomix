@@ -1,0 +1,132 @@
+diff --git a/AnimeStudio.CLI/AnimeStudio.CLI.csproj b/AnimeStudio.CLI/AnimeStudio.CLI.csproj
+index e7edc4a..480300f 100644
+--- a/AnimeStudio.CLI/AnimeStudio.CLI.csproj
++++ b/AnimeStudio.CLI/AnimeStudio.CLI.csproj
+@@ -1,10 +1,10 @@
+ <Project Sdk="Microsoft.NET.Sdk">
+   <PropertyGroup>
+     <OutputType>Exe</OutputType>
+-	<TargetFrameworks>net9.0-windows;net10.0-windows</TargetFrameworks>
++	<TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+ 	<ApplicationIcon>Resources\as.ico</ApplicationIcon>
+ 	<Copyright>Copyright © Escartem 2024-2026; Copyright © Razmoth 2022-2024; Copyright © Perfare 2018-2022</Copyright>
+-	<RuntimeIdentifier>win-x64</RuntimeIdentifier>
++	<RuntimeIdentifier Condition="$([MSBuild]::IsOSPlatform('Windows'))">win-x64</RuntimeIdentifier>
+ 	<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+   </PropertyGroup>
+ 
+diff --git a/AnimeStudio.CLI/Components/CommandLine.cs b/AnimeStudio.CLI/Components/CommandLine.cs
+index dc678a3..56b7fd9 100644
+--- a/AnimeStudio.CLI/Components/CommandLine.cs
++++ b/AnimeStudio.CLI/Components/CommandLine.cs
+@@ -14,7 +14,8 @@ namespace AnimeStudio.CLI
+         {
+             var rootCommand = RegisterOptions();
+             var parseResult = CommandLineParser.Parse(rootCommand, args, new ParserConfiguration());
+-            parseResult.Invoke(new InvocationConfiguration());
++            var exitCode = parseResult.Invoke(new InvocationConfiguration());
++            if (exitCode != 0) Environment.ExitCode = exitCode;
+         }
+         public static RootCommand RegisterOptions()
+         {
+diff --git a/AnimeStudio.CLI/Program.cs b/AnimeStudio.CLI/Program.cs
+index 9729aef..dceeae6 100644
+--- a/AnimeStudio.CLI/Program.cs
++++ b/AnimeStudio.CLI/Program.cs
+@@ -201,7 +201,8 @@ namespace AnimeStudio.CLI
+             }
+             catch (Exception e)
+             {
+-                Console.WriteLine(e);
++                Console.Error.WriteLine(e);
++                Environment.ExitCode = 1;
+             }
+         }
+     }
+diff --git a/AnimeStudio.Utility/AnimeStudio.Utility.csproj b/AnimeStudio.Utility/AnimeStudio.Utility.csproj
+index 6bd5e0f..ec05e6a 100644
+--- a/AnimeStudio.Utility/AnimeStudio.Utility.csproj
++++ b/AnimeStudio.Utility/AnimeStudio.Utility.csproj
+@@ -11,7 +11,8 @@
+   </PropertyGroup>
+ 
+   <ItemGroup>
+-    <PackageReference Include="Kyaru.Texture2DDecoder.Windows" Version="0.2.0" />
++    <PackageReference Include="Kyaru.Texture2DDecoder.Windows" Version="0.2.0" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
++    <PackageReference Include="Kyaru.Texture2DDecoder.macOS" Version="0.2.0" Condition="$([MSBuild]::IsOSPlatform('OSX'))" />
+     <PackageReference Include="Mono.Cecil" Version="0.11.6" />
+     <PackageReference Include="SkiaSharp" Version="3.119.4" />
+     <PackageReference Include="Vortice.D3DCompiler" Version="3.8.3" />
+@@ -24,7 +25,7 @@
+   </ItemGroup>
+ 
+   <ItemGroup>
+-    <ContentWithTargetPath Include="..\AnimeStudio.Libraries\AnimeStudio.HLSLDecompiler.dll">
++    <ContentWithTargetPath Include="..\AnimeStudio.Libraries\AnimeStudio.HLSLDecompiler.dll" Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+       <TargetPath>AnimeStudio.HLSLDecompiler.dll</TargetPath>
+     </ContentWithTargetPath>
+@@ -32,23 +33,23 @@
+ 
+   <!-- Likewise for ACL.cs; built by hand from the AnimeStudio.ACL.* projects. -->
+   <ItemGroup>
+-    <ContentWithTargetPath Include="..\AnimeStudio.Libraries\AnimeStudio.ACL.DB.dll">
++    <ContentWithTargetPath Include="..\AnimeStudio.Libraries\AnimeStudio.ACL.DB.dll" Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+       <TargetPath>AnimeStudio.ACL.DB.dll</TargetPath>
+     </ContentWithTargetPath>
+-    <ContentWithTargetPath Include="..\AnimeStudio.Libraries\AnimeStudio.ACL.ZZZ.dll">
++    <ContentWithTargetPath Include="..\AnimeStudio.Libraries\AnimeStudio.ACL.ZZZ.dll" Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+       <TargetPath>AnimeStudio.ACL.ZZZ.dll</TargetPath>
+     </ContentWithTargetPath>
+-    <ContentWithTargetPath Include="..\AnimeStudio.Libraries\AnimeStudio.ACL.SR.dll">
++    <ContentWithTargetPath Include="..\AnimeStudio.Libraries\AnimeStudio.ACL.SR.dll" Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+       <TargetPath>AnimeStudio.ACL.SR.dll</TargetPath>
+     </ContentWithTargetPath>
+-    <ContentWithTargetPath Include="..\AnimeStudio.Libraries\AnimeStudio.ACL.MHY.dll">
++    <ContentWithTargetPath Include="..\AnimeStudio.Libraries\AnimeStudio.ACL.MHY.dll" Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+       <TargetPath>AnimeStudio.ACL.MHY.dll</TargetPath>
+     </ContentWithTargetPath>
+-    <ContentWithTargetPath Include="..\AnimeStudio.Libraries\AnimeStudio.ACL.ZZZV2.dll">
++    <ContentWithTargetPath Include="..\AnimeStudio.Libraries\AnimeStudio.ACL.ZZZV2.dll" Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+       <TargetPath>AnimeStudio.ACL.ZZZV2.dll</TargetPath>
+     </ContentWithTargetPath>
+diff --git a/AnimeStudio/AnimeStudio.csproj b/AnimeStudio/AnimeStudio.csproj
+index 8d476f2..218a10b 100644
+--- a/AnimeStudio/AnimeStudio.csproj
++++ b/AnimeStudio/AnimeStudio.csproj
+@@ -5,13 +5,14 @@
+ 		<Copyright>Copyright © Escartem 2024-2026; Copyright © yarik0chka 2024-2025; Copyright © Hashblen 2024-2025; Copyright © Razmoth 2022-2024; Copyright © Perfare 2018-2022</Copyright>
+ 		<DebugType>embedded</DebugType>
+ 		<SelfContained>false</SelfContained>
+-		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
++		<RuntimeIdentifier Condition="$([MSBuild]::IsOSPlatform('Windows'))">win-x64</RuntimeIdentifier>
+ 	</PropertyGroup>
+ 
+ 	<ItemGroup>
+ 		<PackageReference Include="K4os.Hash.xxHash" Version="1.0.8" />
+ 		<PackageReference Include="Kyaru.Texture2DDecoder" Version="0.17.1" />
+-		<PackageReference Include="Kyaru.Texture2DDecoder.Windows" Version="0.2.0" />
++		<PackageReference Include="Kyaru.Texture2DDecoder.Windows" Version="0.2.0" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
++    <PackageReference Include="Kyaru.Texture2DDecoder.macOS" Version="0.2.0" Condition="$([MSBuild]::IsOSPlatform('OSX'))" />
+ 		<PackageReference Include="MessagePack" Version="3.1.4" />
+ 		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+     <PackageReference Include="Portable.BouncyCastle" Version="1.9.0" />
+@@ -26,11 +27,11 @@
+ 	</ItemGroup>
+ 
+ 	<ItemGroup>
+-		<ContentWithTargetPath Include="..\AnimeStudio.Libraries\AnimeStudio.Ooz.dll">
++		<ContentWithTargetPath Include="..\AnimeStudio.Libraries\AnimeStudio.Ooz.dll" Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+ 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+ 			<TargetPath>AnimeStudio.Ooz.dll</TargetPath>
+ 		</ContentWithTargetPath>
+-		<ContentWithTargetPath Include="..\AnimeStudio.Libraries\AnimeStudio.FBXNative.dll">
++		<ContentWithTargetPath Include="..\AnimeStudio.Libraries\AnimeStudio.FBXNative.dll" Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+ 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+ 			<TargetPath>AnimeStudio.FBXNative.dll</TargetPath>
+ 		</ContentWithTargetPath>
