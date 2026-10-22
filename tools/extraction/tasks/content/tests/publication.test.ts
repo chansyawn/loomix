@@ -15,7 +15,7 @@ function fixture() {
   fs.writeFileSync(path.join(output, "assets", "old.png"), "old image");
   fs.mkdirSync(path.join(work, "staging", "assets"), { recursive: true });
   fs.writeFileSync(path.join(work, "staging", "content.json"), "new");
-  fs.writeFileSync(path.join(work, "staging", "assets", "new.png"), "new image");
+  fs.writeFileSync(path.join(work, "staging", "assets", "new.webp"), "new image");
   fs.writeFileSync(path.join(work, "validation.json"), '{"passed":true}');
   return { root, output, work };
 }
@@ -31,7 +31,7 @@ await test("publication replaces validated deliverables and preserves the placeh
     });
     assert.equal(verified, true);
     assert.equal(fs.readFileSync(path.join(options.output, "content.json"), "utf8"), "new");
-    assert.deepEqual(fs.readdirSync(path.join(options.output, "assets")), ["new.png"]);
+    assert.deepEqual(fs.readdirSync(path.join(options.output, "assets")), ["new.webp"]);
     assert.deepEqual(fs.readdirSync(options.output).sort(), [".gitkeep", "assets", "content.json"]);
   } finally {
     fs.rmSync(options.root, { recursive: true });

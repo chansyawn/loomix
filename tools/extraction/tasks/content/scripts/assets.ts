@@ -1,4 +1,10 @@
-import type { WorkOptions, SelectedImage, ImageManifest, EvidenceRecord } from "./types.ts";
+import type {
+  WorkOptions,
+  SelectedImage,
+  ImageManifest,
+  ProcessedImage,
+  EvidenceRecord,
+} from "./types.ts";
 import type { Content } from "@loomix/content-schema";
 import fs from "node:fs";
 import path from "node:path";
@@ -8,6 +14,7 @@ import { profile } from "./config.ts";
 import { readJson, writeJson, removeWithin } from "./io.ts";
 import { exportAssets } from "../../../lib/anime-studio/index.ts";
 import { groupAt } from "./model.ts";
+import { processImage, imageDimensions } from "./image-processing.ts";
 
 const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const assetKey = (a: SelectedImage) => `${a.source}|${a.assetType}|${a.pathId}`;
@@ -55,7 +62,7 @@ export async function assets(options: WorkOptions, extract = exportAssets) {
   const content = readJson<Content>(path.join(staging, "content.json"));
   removeWithin(destination, staging);
   fs.mkdirSync(destination, { recursive: true });
-  const byAsset = new Map<string, string>();
+
   let done = 0;
   for (const batch of batches) {
     const key = crypto
@@ -85,11 +92,8 @@ export async function assets(options: WorkOptions, extract = exportAssets) {
       if (!png.width || !png.height || png.data.length !== png.width * png.height * 4)
         throw new Error(`Invalid complete PNG: ${a.reference}`);
       const sha256 = crypto.createHash("sha256").update(bytes).digest("hex");
-      const image = `assets/${sha256}.png`;
-      fs.writeFileSync(path.join(staging, image), bytes);
-      const record = { ...a, file: image, sha256, width: png.width, height: png.height };
+      const record = { ...a, file, sha256, width: png.width, height: png.height };
       manifest.push(record);
-      byAsset.set(`${a.source}|${a.assetType}|${a.pathId}`, image);
     }
     done++;
     if (done % 5 === 0 || done === batches.length)
@@ -97,11 +101,37 @@ export async function assets(options: WorkOptions, extract = exportAssets) {
     writeJson(path.join(options.work, "image-candidates.json"), manifest);
   }
   const selected = highestResolutionImages(candidates, manifest);
-  const selectedKeys = new Set(selected.map(assetKey));
-  const selectedManifest = manifest.filter((a) => selectedKeys.has(assetKey(a)));
-  const used = new Set(selectedManifest.map((a) => a.file));
-  for (const file of fs.readdirSync(destination)) {
-    if (!used.has(`assets/${file}`)) fs.unlinkSync(path.join(destination, file));
+  const selectedManifest: ProcessedImage[] = [];
+  const processed = new Map<
+    string,
+    Awaited<ReturnType<typeof processImage>> & { file: string; sha256: string }
+  >();
+  for (const a of selected) {
+    const original = manifest.find((entry) => assetKey(entry) === assetKey(a))!;
+    const { width, height } = imageDimensions(a.group);
+    const key = `${original.sha256}|${width}x${height}`;
+    let result = processed.get(key);
+    if (!result) {
+      const image = await processImage(fs.readFileSync(original.file), a.group);
+      const sha256 = crypto.createHash("sha256").update(image.bytes).digest("hex");
+      const file = `assets/${sha256}.webp`;
+      fs.writeFileSync(path.join(staging, file), image.bytes);
+      result = { ...image, file, sha256 };
+      processed.set(key, result);
+    }
+    selectedManifest.push({
+      ...a,
+      file: result.file,
+      sha256: result.sha256,
+      width,
+      height,
+      original: {
+        file: original.file,
+        sha256: original.sha256,
+        width: original.width,
+        height: original.height,
+      },
+    });
   }
   writeJson(path.join(options.work, "selected-images.json"), selected);
   writeJson(path.join(options.work, "image-manifest.json"), selectedManifest);
@@ -110,7 +140,7 @@ export async function assets(options: WorkOptions, extract = exportAssets) {
   ).filter((p) => p.field !== "image");
   for (const a of selected) {
     const record = groupAt(content, a.group).find((r) => r.id === a.id);
-    const image = byAsset.get(`${a.source}|${a.assetType}|${a.pathId}`);
+    const image = selectedManifest.find((entry) => entry.id === a.id)?.file;
     if (!record || !image) throw new Error(`No exported image for ${a.id}`);
     record.image = image;
     evidence.push({
@@ -129,6 +159,6 @@ export async function assets(options: WorkOptions, extract = exportAssets) {
   writeJson(path.join(options.work, "field-evidence.json"), evidence);
   writeJson(path.join(staging, "content.json"), content);
   console.log(
-    `Compared ${manifest.length} indexed assets; selected ${selectedManifest.length} assets, ${fs.readdirSync(destination).length} unique PNGs`,
+    `Compared ${manifest.length} indexed assets; selected ${selectedManifest.length} assets, ${fs.readdirSync(destination).length} unique WebPs`,
   );
 }

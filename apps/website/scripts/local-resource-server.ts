@@ -21,7 +21,7 @@ async function serveResource(
     return;
   }
   const key = pathname.slice("/resources/".length);
-  if (key !== "content.json" && !/^assets\/[a-f0-9]{64}\.png$/.test(key)) {
+  if (key !== "content.json" && !/^assets\/[a-f0-9]{64}\.webp$/.test(key)) {
     response.writeHead(404).end();
     return;
   }
@@ -49,7 +49,7 @@ async function serveResource(
     throw error;
   }
   response.writeHead(200, {
-    "Content-Type": key === "content.json" ? "application/json; charset=utf-8" : "image/png",
+    "Content-Type": key === "content.json" ? "application/json; charset=utf-8" : "image/webp",
     "Content-Length": size,
     "Cache-Control": "no-cache",
     "X-Content-Type-Options": "nosniff",

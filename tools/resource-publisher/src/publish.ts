@@ -26,7 +26,7 @@ export async function publishRelease(
         const bytes = await readRegularFile(asset.path);
         if (sha256(bytes) !== asset.sha256)
           throw new Error(`Image changed during publication: ${asset.key}`);
-        await store.put(`${prefix}${asset.key}`, bytes, "image/png", asset.sha256);
+        await store.put(`${prefix}${asset.key}`, bytes, "image/webp", asset.sha256);
         await store.verify(`${prefix}${asset.key}`, asset.size, asset.sha256);
       }),
     );

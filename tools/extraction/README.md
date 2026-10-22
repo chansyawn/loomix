@@ -55,7 +55,7 @@ vp run --no-cache '@loomix/extraction#content'
 
 共享包 `@loomix/content-schema` 约定交付 JSON 的格式、类型、ID 唯一性和成员引用；客户端范围、数量与来源证据仍由本任务验收。Node >=22.18.0 直接加载契约的 TypeScript 源码，无需前置构建。
 
-默认交付目录为 `resources/website/`，包含 `content.json` 和 `assets/`，允许保留 `.gitkeep` 目录占位文件。JSON 按英文大类、子类分组，显示值使用中文；只包含指定基础字段和分类属性。未确认信息为 `null`。
+默认交付目录为 `resources/website/`，包含 `content.json` 和 `assets/`，允许保留 `.gitkeep` 目录占位文件。图片交付为 WebP：家具套组 1024×512，其他有图记录 256×256，等比缩放、居中裁切，质量 85 并保留透明通道；原始 PNG 保留在临时导出目录。JSON 按英文大类、子类分组，显示值使用中文；只包含指定基础字段和分类属性。未确认信息为 `null`。
 
 该任务从客户端重新读取输入。中间数据、日志、来源证据、字段覆盖率和缺失原因存入 `resources/temp/extraction/content/`，按输出目录标识隔离。实际工作目录会显示在运行结果中。更新客户端后应重建索引和中间数据，并重新确认表 93 的范围和关联字段。
 

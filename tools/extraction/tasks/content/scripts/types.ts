@@ -46,6 +46,9 @@ export interface ImageManifest extends SelectedImage {
   width: number;
   height: number;
 }
+export interface ProcessedImage extends ImageManifest {
+  original: Pick<ImageManifest, "file" | "sha256" | "width" | "height">;
+}
 export interface ConfigFile {
   file: string;
   exists?: boolean;

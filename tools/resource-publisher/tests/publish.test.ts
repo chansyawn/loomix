@@ -9,11 +9,11 @@ import type { ReleaseStore } from "../src/store.ts";
 import { validateContent } from "../src/validate.ts";
 
 const directories: string[] = [];
-const png = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aSAAAAABJRU5ErkJggg==",
+const webp = Buffer.from(
+  "UklGRuYAAABXRUJQVlA4WAoAAAAQAAAA/wAA/wAAQUxQSBIAAAABB1DAiAgAKNL//xTR/9T//gNWUDggrgAAADARAJ0BKgABAAE+bTaZSaQjIqEgKACADYlpbuF2sR7cAAAWlsnIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32rAAP7/XGb//ztbDEFS//+tt383sqAAAAAAAAAAAA==",
   "base64",
 );
-const imageKey = `assets/${sha256(png)}.png`;
+const imageKey = `assets/${sha256(webp)}.webp`;
 
 async function fixture(): Promise<string> {
   const directory = await mkdtemp(path.join(tmpdir(), "loomix-publisher-"));
@@ -27,7 +27,7 @@ async function fixture(): Promise<string> {
     image: imageKey,
   });
   await mkdir(path.join(directory, "assets"));
-  await writeFile(path.join(directory, imageKey), png);
+  await writeFile(path.join(directory, imageKey), webp);
   await writeFile(path.join(directory, "content.json"), JSON.stringify(content));
   return directory;
 }
@@ -46,7 +46,8 @@ function memoryStore(failKey?: string): { store: ReleaseStore; objects: Map<stri
       async hasObjects(prefix) {
         return [...objects.keys()].some((key) => key.startsWith(prefix));
       },
-      async put(key, bytes) {
+      async put(key, bytes, contentType) {
+        if (key.endsWith(".webp")) expect(contentType).toBe("image/webp");
         if (key === failKey || objects.has(key)) throw new Error(`Write rejected: ${key}`);
         objects.set(key, bytes);
       },
@@ -113,12 +114,31 @@ test("rejects missing, extra, corrupt, and invalidly referenced assets before pu
   await expect(validateContent(directory)).rejects.toThrow("SHA-256 mismatch");
   await rm(path.join(directory, imageKey));
   await expect(validateContent(directory)).rejects.toThrow("exactly the images referenced");
-  await writeFile(path.join(directory, imageKey), png);
-  await writeFile(path.join(directory, "assets/extra.png"), png);
+  await writeFile(path.join(directory, imageKey), webp);
+  await writeFile(path.join(directory, "assets/extra.webp"), webp);
   await expect(validateContent(directory)).rejects.toThrow("exactly the images referenced");
-  await rm(path.join(directory, "assets/extra.png"));
+  await rm(path.join(directory, "assets/extra.webp"));
   await writeFile(path.join(directory, "content.json"), "{}");
   await expect(validateContent(directory)).rejects.toThrow();
+});
+
+test("rejects a non-WebP or truncated container even when its content hash matches", async () => {
+  for (const bytes of [Buffer.from("not a WebP image"), webp.subarray(0, webp.length - 2)]) {
+    const directory = await fixture();
+    const key = `assets/${sha256(bytes)}.webp`;
+    const content = emptyContent();
+    content.miscellaneous.push({
+      id: 1,
+      name: "Invalid",
+      description: null,
+      quality: 0,
+      image: key,
+    });
+    await rm(path.join(directory, imageKey));
+    await writeFile(path.join(directory, key), bytes);
+    await writeFile(path.join(directory, "content.json"), JSON.stringify(content));
+    await expect(validateContent(directory)).rejects.toThrow("Invalid WebP container");
+  }
 });
 
 test.each(["../escape", "r1/path", "", ".", ".."])(

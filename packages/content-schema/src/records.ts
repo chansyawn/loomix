@@ -8,7 +8,7 @@ export const BasicRecordSchema = z.strictObject({
   name: z.string().min(1),
   image: z
     .string()
-    .regex(/^assets\/[a-f0-9]{64}\.png$/)
+    .regex(/^assets\/[a-f0-9]{64}\.webp$/)
     .nullable(),
   description: text,
   id,

@@ -48,9 +48,14 @@ export async function validateContent(directory: string): Promise<ValidatedConte
     const file = path.join(directory, key);
     const bytes = await readRegularFile(file);
     const hash = sha256(bytes);
-    if (key !== `assets/${hash}.png`) throw new Error(`Image SHA-256 mismatch: ${key}`);
-    if (!bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) {
-      throw new Error(`Invalid PNG signature: ${key}`);
+    if (key !== `assets/${hash}.webp`) throw new Error(`Image SHA-256 mismatch: ${key}`);
+    if (
+      bytes.length < 20 ||
+      bytes.toString("ascii", 0, 4) !== "RIFF" ||
+      bytes.toString("ascii", 8, 12) !== "WEBP" ||
+      bytes.readUInt32LE(4) !== bytes.length - 8
+    ) {
+      throw new Error(`Invalid WebP container: ${key}`);
     }
     assets.push({ key, path: file, sha256: hash, size: bytes.length });
   }

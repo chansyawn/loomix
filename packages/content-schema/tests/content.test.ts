@@ -84,7 +84,7 @@ function fixture(): Content {
       ],
       appearances: [{ ...base, id: 12, category: null }],
     },
-    miscellaneous: [{ ...base, id: 13, image: `assets/${"a".repeat(64)}.png` }],
+    miscellaneous: [{ ...base, id: 13, image: `assets/${"a".repeat(64)}.webp` }],
   };
 }
 
@@ -203,7 +203,14 @@ const invalidCases: [string, (content: Content) => void, (string | number)[]][] 
   [
     "invalid image",
     (c) => {
-      c.miscellaneous[0].image = `assets/${"A".repeat(64)}.png`;
+      c.miscellaneous[0].image = `assets/${"A".repeat(64)}.webp`;
+    },
+    ["miscellaneous", 0, "image"],
+  ],
+  [
+    "legacy PNG image",
+    (c) => {
+      c.miscellaneous[0].image = `assets/${"a".repeat(64)}.png`;
     },
     ["miscellaneous", 0, "image"],
   ],
