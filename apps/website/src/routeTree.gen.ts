@@ -19,6 +19,8 @@ import { Route as CollectionPlantsRouteImport } from './routes/collection.plants
 import { Route as CollectionClothingAppearancesIdRouteImport } from './routes/collection.clothing_.appearances.$id'
 import { Route as CollectionClothingItemsIdRouteImport } from './routes/collection.clothing_.items.$id'
 import { Route as CollectionClothingSetsIdRouteImport } from './routes/collection.clothing_.sets.$id'
+import { Route as CollectionCreaturesItemsIdRouteImport } from './routes/collection.creatures_.items.$id'
+import { Route as CollectionCreaturesSeriesIdRouteImport } from './routes/collection.creatures_.series.$id'
 import { Route as CollectionFurnitureItemsIdRouteImport } from './routes/collection.furniture_.items.$id'
 import { Route as CollectionFurnitureSetsIdRouteImport } from './routes/collection.furniture_.sets.$id'
 
@@ -75,6 +77,18 @@ const CollectionClothingSetsIdRoute =
     path: '/collection/clothing/sets/$id',
     getParentRoute: () => rootRouteImport,
   } as any)
+const CollectionCreaturesItemsIdRoute =
+  CollectionCreaturesItemsIdRouteImport.update({
+    id: '/collection/creatures_/items/$id',
+    path: '/collection/creatures/items/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CollectionCreaturesSeriesIdRoute =
+  CollectionCreaturesSeriesIdRouteImport.update({
+    id: '/collection/creatures_/series/$id',
+    path: '/collection/creatures/series/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const CollectionFurnitureItemsIdRoute =
   CollectionFurnitureItemsIdRouteImport.update({
     id: '/collection/furniture_/items/$id',
@@ -99,6 +113,8 @@ export interface FileRoutesByFullPath {
   '/collection/clothing/appearances/$id': typeof CollectionClothingAppearancesIdRoute
   '/collection/clothing/items/$id': typeof CollectionClothingItemsIdRoute
   '/collection/clothing/sets/$id': typeof CollectionClothingSetsIdRoute
+  '/collection/creatures/items/$id': typeof CollectionCreaturesItemsIdRoute
+  '/collection/creatures/series/$id': typeof CollectionCreaturesSeriesIdRoute
   '/collection/furniture/items/$id': typeof CollectionFurnitureItemsIdRoute
   '/collection/furniture/sets/$id': typeof CollectionFurnitureSetsIdRoute
 }
@@ -113,6 +129,8 @@ export interface FileRoutesByTo {
   '/collection/clothing/appearances/$id': typeof CollectionClothingAppearancesIdRoute
   '/collection/clothing/items/$id': typeof CollectionClothingItemsIdRoute
   '/collection/clothing/sets/$id': typeof CollectionClothingSetsIdRoute
+  '/collection/creatures/items/$id': typeof CollectionCreaturesItemsIdRoute
+  '/collection/creatures/series/$id': typeof CollectionCreaturesSeriesIdRoute
   '/collection/furniture/items/$id': typeof CollectionFurnitureItemsIdRoute
   '/collection/furniture/sets/$id': typeof CollectionFurnitureSetsIdRoute
 }
@@ -128,6 +146,8 @@ export interface FileRoutesById {
   '/collection/clothing_/appearances/$id': typeof CollectionClothingAppearancesIdRoute
   '/collection/clothing_/items/$id': typeof CollectionClothingItemsIdRoute
   '/collection/clothing_/sets/$id': typeof CollectionClothingSetsIdRoute
+  '/collection/creatures_/items/$id': typeof CollectionCreaturesItemsIdRoute
+  '/collection/creatures_/series/$id': typeof CollectionCreaturesSeriesIdRoute
   '/collection/furniture_/items/$id': typeof CollectionFurnitureItemsIdRoute
   '/collection/furniture_/sets/$id': typeof CollectionFurnitureSetsIdRoute
 }
@@ -144,6 +164,8 @@ export interface FileRouteTypes {
     | '/collection/clothing/appearances/$id'
     | '/collection/clothing/items/$id'
     | '/collection/clothing/sets/$id'
+    | '/collection/creatures/items/$id'
+    | '/collection/creatures/series/$id'
     | '/collection/furniture/items/$id'
     | '/collection/furniture/sets/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -158,6 +180,8 @@ export interface FileRouteTypes {
     | '/collection/clothing/appearances/$id'
     | '/collection/clothing/items/$id'
     | '/collection/clothing/sets/$id'
+    | '/collection/creatures/items/$id'
+    | '/collection/creatures/series/$id'
     | '/collection/furniture/items/$id'
     | '/collection/furniture/sets/$id'
   id:
@@ -172,6 +196,8 @@ export interface FileRouteTypes {
     | '/collection/clothing_/appearances/$id'
     | '/collection/clothing_/items/$id'
     | '/collection/clothing_/sets/$id'
+    | '/collection/creatures_/items/$id'
+    | '/collection/creatures_/series/$id'
     | '/collection/furniture_/items/$id'
     | '/collection/furniture_/sets/$id'
   fileRoutesById: FileRoutesById
@@ -187,6 +213,8 @@ export interface RootRouteChildren {
   CollectionClothingAppearancesIdRoute: typeof CollectionClothingAppearancesIdRoute
   CollectionClothingItemsIdRoute: typeof CollectionClothingItemsIdRoute
   CollectionClothingSetsIdRoute: typeof CollectionClothingSetsIdRoute
+  CollectionCreaturesItemsIdRoute: typeof CollectionCreaturesItemsIdRoute
+  CollectionCreaturesSeriesIdRoute: typeof CollectionCreaturesSeriesIdRoute
   CollectionFurnitureItemsIdRoute: typeof CollectionFurnitureItemsIdRoute
   CollectionFurnitureSetsIdRoute: typeof CollectionFurnitureSetsIdRoute
 }
@@ -263,6 +291,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CollectionClothingSetsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/collection/creatures_/items/$id': {
+      id: '/collection/creatures_/items/$id'
+      path: '/collection/creatures/items/$id'
+      fullPath: '/collection/creatures/items/$id'
+      preLoaderRoute: typeof CollectionCreaturesItemsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/collection/creatures_/series/$id': {
+      id: '/collection/creatures_/series/$id'
+      path: '/collection/creatures/series/$id'
+      fullPath: '/collection/creatures/series/$id'
+      preLoaderRoute: typeof CollectionCreaturesSeriesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/collection/furniture_/items/$id': {
       id: '/collection/furniture_/items/$id'
       path: '/collection/furniture/items/$id'
@@ -291,6 +333,8 @@ const rootRouteChildren: RootRouteChildren = {
   CollectionClothingAppearancesIdRoute: CollectionClothingAppearancesIdRoute,
   CollectionClothingItemsIdRoute: CollectionClothingItemsIdRoute,
   CollectionClothingSetsIdRoute: CollectionClothingSetsIdRoute,
+  CollectionCreaturesItemsIdRoute: CollectionCreaturesItemsIdRoute,
+  CollectionCreaturesSeriesIdRoute: CollectionCreaturesSeriesIdRoute,
   CollectionFurnitureItemsIdRoute: CollectionFurnitureItemsIdRoute,
   CollectionFurnitureSetsIdRoute: CollectionFurnitureSetsIdRoute,
 }
