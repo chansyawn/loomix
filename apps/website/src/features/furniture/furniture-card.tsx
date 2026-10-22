@@ -32,6 +32,18 @@ export function QualityBadge({ quality }: { quality: number | null }) {
   );
 }
 
+function QualityBar({ quality }: { quality: number | null }) {
+  if (quality === null) return null;
+  return (
+    <span
+      role="img"
+      aria-label={`品阶：${qualityNames[quality]}`}
+      className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-1"
+      style={{ background: qualityBackgrounds[quality] }}
+    />
+  );
+}
+
 export function FurnitureCard({ item }: { item: FurnitureItem }) {
   const origin = useFurnitureOrigin();
   return (
@@ -40,7 +52,10 @@ export function FurnitureCard({ item }: { item: FurnitureItem }) {
       role="article"
       className="relative min-w-0 pt-0 transition-shadow hover:ring-2 hover:ring-primary/30 focus-within:ring-2 focus-within:ring-ring"
     >
-      <FurnitureImage key={item.image} image={item.image} name={item.name} />
+      <div className="relative">
+        <FurnitureImage key={item.image} image={item.image} name={item.name} />
+        <QualityBar quality={item.quality} />
+      </div>
       <CardHeader>
         <CardTitle>
           <h2 className="truncate" title={item.name}>
@@ -54,13 +69,12 @@ export function FurnitureCard({ item }: { item: FurnitureItem }) {
             </Link>
           </h2>
         </CardTitle>
-        <CardDescription className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+        <CardDescription className="min-w-0">
           {item.type && (
             <span className="min-w-0 truncate text-xs" title={item.type}>
               {item.type}
             </span>
           )}
-          <QualityBadge quality={item.quality} />
         </CardDescription>
       </CardHeader>
     </Card>
@@ -75,23 +89,23 @@ export function FurnitureSetCard({ set }: { set: FurnitureSet }) {
       role="article"
       className="relative min-w-0 pt-0 transition-shadow hover:ring-2 hover:ring-primary/30 focus-within:ring-2 focus-within:ring-ring"
     >
-      <FurnitureImage key={set.image} image={set.image} name={set.name} scene />
+      <div className="relative">
+        <FurnitureImage key={set.image} image={set.image} name={set.name} scene />
+        <QualityBar quality={set.quality} />
+      </div>
       <CardHeader>
-        <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
-          <CardTitle className="min-w-0">
-            <h2 className="truncate" title={set.name}>
-              <Link
-                to="/collection/furniture/sets/$id"
-                params={{ id: String(set.id) }}
-                state={{ furnitureOrigin: origin }}
-                className="outline-none after:absolute after:inset-0 after:rounded-4xl"
-              >
-                {set.name}
-              </Link>
-            </h2>
-          </CardTitle>
-          <QualityBadge quality={set.quality} />
-        </div>
+        <CardTitle className="min-w-0">
+          <h2 className="truncate" title={set.name}>
+            <Link
+              to="/collection/furniture/sets/$id"
+              params={{ id: String(set.id) }}
+              state={{ furnitureOrigin: origin }}
+              className="outline-none after:absolute after:inset-0 after:rounded-4xl"
+            >
+              {set.name}
+            </Link>
+          </h2>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <CardDescription className="line-clamp-2 min-h-10">{set.description}</CardDescription>

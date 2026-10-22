@@ -82,11 +82,11 @@ body {
   --quality-fine: #5a9aa2;
   --quality-rare: #8e66a1;
   --quality-excellent: #fac827;
-  --quality-miracle: conic-gradient(
-    from 210deg,
+  --quality-miracle: linear-gradient(
+    90deg,
     #787cde 0%,
-    #f5ddae 25%,
-    #95ccdd 50%,
+    #95ccdd 25%,
+    #f5ddae 50%,
     #d9b9b0 75%,
     #787cde 100%
   );
