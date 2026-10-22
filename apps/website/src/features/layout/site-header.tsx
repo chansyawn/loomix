@@ -4,6 +4,7 @@ import { CreaturesReturnLink } from "@/features/creatures/detail-navigation";
 import { FurnitureReturnLink } from "@/features/furniture/detail-navigation";
 import { ClothingReturnLink } from "@/features/clothing/detail-navigation";
 import { PlantsReturnLink } from "@/features/plants/detail-navigation";
+import { DishesReturnLink } from "@/features/dishes/detail-navigation";
 import { collectionNavigation, homeItem } from "@/features/layout/navigation";
 import {
   Breadcrumb,
@@ -27,7 +28,10 @@ export function SiteHeader() {
   const isCreaturesDetail = creaturesView !== undefined;
   const plantsView = /^\/collection\/plants\/(items|series)\/[^/]+\/?$/.exec(pathname)?.[1];
   const isPlantsDetail = plantsView !== undefined;
-  const isDetail = isFurnitureDetail || isClothingDetail || isCreaturesDetail || isPlantsDetail;
+  const dishesView = /^\/collection\/dishes\/(items|series)\/[^/]+\/?$/.exec(pathname)?.[1];
+  const isDishesDetail = dishesView !== undefined;
+  const isDetail =
+    isFurnitureDetail || isClothingDetail || isCreaturesDetail || isPlantsDetail || isDishesDetail;
   const detailTitle = useRouterState({
     select: (state) => {
       const data: unknown = state.matches.at(-1)?.loaderData;
@@ -50,7 +54,8 @@ export function SiteHeader() {
       (isFurnitureDetail && item.to === "/collection/furniture") ||
       (isClothingDetail && item.to === "/collection/clothing") ||
       (isCreaturesDetail && item.to === "/collection/creatures") ||
-      (isPlantsDetail && item.to === "/collection/plants"),
+      (isPlantsDetail && item.to === "/collection/plants") ||
+      (isDishesDetail && item.to === "/collection/dishes"),
   );
   const title = pathname === homeItem.to ? homeItem.title : (collectionItem?.title ?? "页面未找到");
 
@@ -133,6 +138,18 @@ export function SiteHeader() {
               <BreadcrumbSeparator />
             </>
           )}
+          {isDishesDetail && (
+            <>
+              <BreadcrumbItem>
+                <BreadcrumbLink
+                  render={<DishesReturnLink view={dishesView === "series" ? "series" : "items"} />}
+                >
+                  菜肴
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+            </>
+          )}
           <BreadcrumbItem className="min-w-0">
             <BreadcrumbPage className="line-clamp-1">
               {isDetail
@@ -143,7 +160,9 @@ export function SiteHeader() {
                       ? "植物详情"
                       : isClothingDetail
                         ? "服饰详情"
-                        : "家具详情"))
+                        : isDishesDetail
+                          ? "菜肴详情"
+                          : "家具详情"))
                 : title}
             </BreadcrumbPage>
           </BreadcrumbItem>
