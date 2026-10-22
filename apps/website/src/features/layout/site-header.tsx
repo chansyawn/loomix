@@ -5,6 +5,7 @@ import { FurnitureReturnLink } from "@/features/furniture/detail-navigation";
 import { ClothingReturnLink } from "@/features/clothing/detail-navigation";
 import { PlantsReturnLink } from "@/features/plants/detail-navigation";
 import { DishesReturnLink } from "@/features/dishes/detail-navigation";
+import { MiscellanyReturnLink } from "@/features/miscellany/detail-navigation";
 import { collectionNavigation, homeItem } from "@/features/layout/navigation";
 import {
   Breadcrumb,
@@ -30,8 +31,14 @@ export function SiteHeader() {
   const isPlantsDetail = plantsView !== undefined;
   const dishesView = /^\/collection\/dishes\/(items|series)\/[^/]+\/?$/.exec(pathname)?.[1];
   const isDishesDetail = dishesView !== undefined;
+  const isMiscellanyDetail = /^\/collection\/miscellany\/items\/[^/]+\/?$/.test(pathname);
   const isDetail =
-    isFurnitureDetail || isClothingDetail || isCreaturesDetail || isPlantsDetail || isDishesDetail;
+    isFurnitureDetail ||
+    isClothingDetail ||
+    isCreaturesDetail ||
+    isPlantsDetail ||
+    isDishesDetail ||
+    isMiscellanyDetail;
   const detailTitle = useRouterState({
     select: (state) => {
       const data: unknown = state.matches.at(-1)?.loaderData;
@@ -45,6 +52,8 @@ export function SiteHeader() {
         typeof data.record.name === "string"
       )
         return data.record.name;
+      if (data && typeof data === "object" && "name" in data && typeof data.name === "string")
+        return data.name;
       return undefined;
     },
   });
@@ -55,7 +64,8 @@ export function SiteHeader() {
       (isClothingDetail && item.to === "/collection/clothing") ||
       (isCreaturesDetail && item.to === "/collection/creatures") ||
       (isPlantsDetail && item.to === "/collection/plants") ||
-      (isDishesDetail && item.to === "/collection/dishes"),
+      (isDishesDetail && item.to === "/collection/dishes") ||
+      (isMiscellanyDetail && item.to === "/collection/miscellany"),
   );
   const title = pathname === homeItem.to ? homeItem.title : (collectionItem?.title ?? "页面未找到");
 
@@ -150,6 +160,14 @@ export function SiteHeader() {
               <BreadcrumbSeparator />
             </>
           )}
+          {isMiscellanyDetail && (
+            <>
+              <BreadcrumbItem>
+                <BreadcrumbLink render={<MiscellanyReturnLink />}>杂物</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+            </>
+          )}
           <BreadcrumbItem className="min-w-0">
             <BreadcrumbPage className="line-clamp-1">
               {isDetail
@@ -162,7 +180,9 @@ export function SiteHeader() {
                         ? "服饰详情"
                         : isDishesDetail
                           ? "菜肴详情"
-                          : "家具详情"))
+                          : isMiscellanyDetail
+                            ? "杂物详情"
+                            : "家具详情"))
                 : title}
             </BreadcrumbPage>
           </BreadcrumbItem>
