@@ -5,6 +5,8 @@ import { publishRelease } from "./publish.ts";
 import { releaseIdSchema } from "./release.ts";
 import { createR2Store } from "./store.ts";
 import { validateContent } from "./validate.ts";
+import { loadEnvironment } from "./environment.ts";
+import { createUploadProgress } from "./progress.ts";
 
 function requiredEnv(name: string): string {
   const value = process.env[name];
@@ -24,7 +26,7 @@ async function main(): Promise<void> {
   });
   if (values.help) {
     console.log(
-      "Usage: vp run --no-cache @loomix/resource-publisher#publish --content <directory> --release <id> [--bucket loomix-resources] [--dry-run]\nRelative content paths resolve from the repository root.\nCredentials: CLOUDFLARE_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY.",
+      "Usage: vp run --no-cache @loomix/resource-publisher#publish --content <directory> --release <id> [--bucket loomix-resources] [--dry-run]\nRelative content paths resolve from the repository root.\nCredentials: CLOUDFLARE_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY.\nAutomatically loads tools/resource-publisher/.env; existing environment variables take precedence. Copy .env.example in that directory to get started.\nProgress is written to stderr; the final JSON is written to stdout. --help and --dry-run do not require credentials.",
     );
     return;
   }
@@ -45,6 +47,7 @@ async function main(): Promise<void> {
     );
     return;
   }
+  loadEnvironment();
   const accountId = requiredEnv("CLOUDFLARE_ACCOUNT_ID");
   if (!/^[a-f0-9]{32}$/.test(accountId)) throw new Error("Invalid CLOUDFLARE_ACCOUNT_ID");
   const store = createR2Store(
@@ -53,8 +56,14 @@ async function main(): Promise<void> {
     requiredEnv("R2_ACCESS_KEY_ID"),
     requiredEnv("R2_SECRET_ACCESS_KEY"),
   );
-  const marker = await publishRelease(directory, values.release, store);
-  console.log(JSON.stringify({ bucket: values.bucket, ...marker }));
+  const progress = createUploadProgress();
+  try {
+    const marker = await publishRelease(directory, values.release, store, progress.update);
+    console.log(JSON.stringify({ bucket: values.bucket, ...marker }));
+  } catch (error) {
+    progress.fail();
+    throw error;
+  }
 }
 
 try {

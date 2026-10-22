@@ -4,6 +4,7 @@ import path from "node:path";
 import { afterEach, expect, test } from "vite-plus/test";
 import { emptyContent } from "@loomix/content-schema";
 import { publishRelease } from "../src/publish.ts";
+import type { UploadProgress } from "../src/publish.ts";
 import { parseReleaseBase, sha256 } from "../src/release.ts";
 import type { ReleaseStore } from "../src/store.ts";
 import { validateContent } from "../src/validate.ts";
@@ -15,19 +16,21 @@ const webp = Buffer.from(
 );
 const imageKey = `assets/${sha256(webp)}.webp`;
 
-async function fixture(): Promise<string> {
+async function fixture(imageCount = 1): Promise<string> {
   const directory = await mkdtemp(path.join(tmpdir(), "loomix-publisher-"));
   directories.push(directory);
   const content = emptyContent();
-  content.miscellaneous.push({
-    id: 1,
-    name: "Image",
-    description: null,
-    quality: 0,
-    image: imageKey,
-  });
   await mkdir(path.join(directory, "assets"));
-  await writeFile(path.join(directory, imageKey), webp);
+  for (let i = 0; i < imageCount; i++) {
+    const chunk = Buffer.alloc(8 + i * 2);
+    chunk.write("JUNK");
+    chunk.writeUInt32LE(i * 2, 4);
+    const bytes = i === 0 ? webp : Buffer.concat([webp, chunk]);
+    if (i) bytes.writeUInt32LE(bytes.length - 8, 4);
+    const image = `assets/${sha256(bytes)}.webp`;
+    content.miscellaneous.push({ id: i + 1, name: "Image", description: null, quality: 0, image });
+    await writeFile(path.join(directory, image), bytes);
+  }
   await writeFile(path.join(directory, "content.json"), JSON.stringify(content));
   return directory;
 }
@@ -172,4 +175,114 @@ test("allows a regular directory placeholder without publishing it", async () =>
   await rm(path.join(directory, ".gitkeep"));
   await mkdir(path.join(directory, ".gitkeep"));
   await expect(validateContent(directory)).rejects.toThrow("regular file");
+});
+
+function deferred() {
+  let resolve = () => {};
+  const promise = new Promise<void>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
+
+test("progress counts remotely verified images and bytes in concurrent completion order", async () => {
+  const directory = await fixture(3);
+  const content = await validateContent(directory);
+  const { store } = memoryStore();
+  const verify = store.verify.bind(store);
+  const gate = deferred();
+  const otherImages = deferred();
+  const updates: UploadProgress[] = [];
+  const held = content.assets[0];
+  store.verify = async (key, size, hash) => {
+    await verify(key, size, hash);
+    if (key.endsWith(held.key)) await gate.promise;
+  };
+  const publication = publishRelease(directory, "progress", store, (progress) => {
+    updates.push(progress);
+    if (progress.completed === 2) otherImages.resolve();
+  });
+  try {
+    await otherImages.promise;
+    expect(updates.map((p) => p.completed)).toEqual([0, 1, 2]);
+    expect(updates.at(-1)?.completedBytes).toBe(
+      content.assets.slice(1).reduce((sum, a) => sum + a.size, 0),
+    );
+  } finally {
+    gate.resolve();
+    await publication;
+  }
+  expect(updates.map((p) => p.phase)).toEqual([
+    "images",
+    "images",
+    "images",
+    "images",
+    "finalizing",
+    "complete",
+  ]);
+  expect(updates.at(-1)).toEqual({
+    phase: "complete",
+    completed: 3,
+    total: 3,
+    completedBytes: content.assets.reduce((sum, a) => sum + a.size, 0),
+    totalBytes: content.assets.reduce((sum, a) => sum + a.size, 0),
+  });
+});
+
+test("a failed upload suppresses progress from in-flight images and never completes", async () => {
+  const directory = await fixture(2);
+  const content = await validateContent(directory);
+  const { store, objects } = memoryStore();
+  const verify = store.verify.bind(store);
+  const ready = deferred();
+  const gate = deferred();
+  const late = deferred();
+  const updates: UploadProgress[] = [];
+  store.verify = async (key, size, hash) => {
+    await verify(key, size, hash);
+    if (key.endsWith(content.assets[0].key)) {
+      await ready.promise;
+      throw new Error("Image verification failed");
+    }
+    ready.resolve();
+    await gate.promise;
+    late.resolve();
+  };
+  try {
+    await expect(
+      publishRelease(directory, "failed", store, (p) => updates.push(p)),
+    ).rejects.toThrow("Image verification failed");
+  } finally {
+    gate.resolve();
+    await late.promise;
+  }
+  expect(updates).toHaveLength(1);
+  expect(updates[0].completed).toBe(0);
+  expect(objects.has("releases/failed/_complete.json")).toBe(false);
+});
+
+test("zero-image versions report finalization and completion without invalid totals", async () => {
+  const updates: UploadProgress[] = [];
+  await publishRelease(await fixture(0), "empty", memoryStore().store, (p) => updates.push(p));
+  expect(updates.map((p) => p.phase)).toEqual(["images", "finalizing", "complete"]);
+  expect(
+    updates.every(
+      (p) => p.total === 0 && p.completed === 0 && p.totalBytes === 0 && p.completedBytes === 0,
+    ),
+  ).toBe(true);
+});
+
+test("failure to verify the completion marker never reports successful publication", async () => {
+  const directory = await fixture();
+  const { store } = memoryStore();
+  const verify = store.verify.bind(store);
+  const updates: UploadProgress[] = [];
+  store.verify = async (key, size, hash) => {
+    if (key.endsWith("/_complete.json")) throw new Error("Completion verification failed");
+    await verify(key, size, hash);
+  };
+  await expect(publishRelease(directory, "marker", store, (p) => updates.push(p))).rejects.toThrow(
+    "Completion verification failed",
+  );
+  expect(updates.at(-1)?.phase).toBe("finalizing");
 });
