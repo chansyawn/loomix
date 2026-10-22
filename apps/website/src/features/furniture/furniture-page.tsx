@@ -105,6 +105,7 @@ export function FurniturePage({
                       )}
                     </InputGroup>
                     <FilterPanel
+                      title="筛选家具"
                       groups={groups}
                       query={query}
                       total={result.total}

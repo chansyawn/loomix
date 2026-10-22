@@ -2,10 +2,12 @@ import type { FurnitureItem, FurnitureSet } from "@loomix/content-schema";
 import type { FurnitureData } from "./data";
 import { categories, missing, ungrouped } from "./search";
 import type { FilterKey, View, ViewQuery } from "./search";
+import type { FilterGroup as CollectionFilterGroup } from "@/ui/collection/filter-panel";
 
-export const qualityNames = ["普通", "优质", "珍稀", "特等", "奇迹"];
+import { qualityNames } from "@/ui/collection/quality";
+export { qualityNames } from "@/ui/collection/quality";
 export type Option = { value: string; label: string };
-export type FilterGroup = { key: FilterKey; label: string; options: Option[] };
+export type FilterGroup = CollectionFilterGroup<FilterKey>;
 
 export function splitValues(value: string | null): string[] {
   return value
@@ -65,7 +67,12 @@ export function filterGroups(data: FurnitureData): FilterGroup[] {
       label: "材质",
       options: options(data.items.flatMap((row) => splitValues(row.materials))),
     },
-    { key: "sources", label: "获取途径", options: options(data.items.map((row) => row.sources)) },
+    {
+      key: "sources",
+      label: "获取途径",
+      fullWidth: true,
+      options: options(data.items.map((row) => row.sources)),
+    },
   ];
 }
 

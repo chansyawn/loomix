@@ -73,7 +73,7 @@ describe("compact furniture URLs", () => {
     const location = router.buildLocation({
       to: "/collection/furniture",
       from: "/collection/furniture",
-      search: (previous) => previous,
+      search: (previous) => ({ ...previous, ...furnitureSearchSchema.parse(previous) }),
     });
     expect(defaultParseSearch(location.searchStr)).toEqual({
       lang: "zh",

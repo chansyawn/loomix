@@ -3,7 +3,6 @@ import { Link } from "@tanstack/react-router";
 import { FurnitureImage } from "./furniture-image";
 import { useFurnitureOrigin } from "./detail-navigation";
 import type { FurnitureItem, FurnitureSet } from "@loomix/content-schema";
-import { Badge } from "@/ui/components/badge";
 import {
   Card,
   CardContent,
@@ -12,37 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/ui/components/card";
-import { qualityNames } from "./query";
-
-const qualityBackgrounds = [
-  "var(--quality-common)",
-  "var(--quality-fine)",
-  "var(--quality-rare)",
-  "var(--quality-excellent)",
-  "var(--quality-miracle)",
-];
-
-export function QualityBadge({ quality }: { quality: number | null }) {
-  if (quality === null) return null;
-  return (
-    <Badge variant="outline">
-      <span className="size-1.5 rounded-full" style={{ background: qualityBackgrounds[quality] }} />
-      {qualityNames[quality]}
-    </Badge>
-  );
-}
-
-function QualityBar({ quality }: { quality: number | null }) {
-  if (quality === null) return null;
-  return (
-    <span
-      role="img"
-      aria-label={`品阶：${qualityNames[quality]}`}
-      className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-1"
-      style={{ background: qualityBackgrounds[quality] }}
-    />
-  );
-}
+import { QualityBar } from "@/ui/collection/quality";
+export { QualityBadge } from "@/ui/collection/quality";
 
 export function FurnitureCard({ item }: { item: FurnitureItem }) {
   const origin = useFurnitureOrigin();

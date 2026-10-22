@@ -1,6 +1,7 @@
 import { useRouterState } from "@tanstack/react-router";
 
 import { FurnitureReturnLink } from "@/features/furniture/detail-navigation";
+import { ClothingReturnLink } from "@/features/clothing/detail-navigation";
 import { collectionNavigation, homeItem } from "@/features/layout/navigation";
 import {
   Breadcrumb,
@@ -16,6 +17,11 @@ import { SidebarTrigger } from "@/ui/components/sidebar";
 export function SiteHeader() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const isFurnitureDetail = /^\/collection\/furniture\/(items|sets)\/[^/]+\/?$/.test(pathname);
+  const clothingView = /^\/collection\/clothing\/(items|sets|appearances)\/[^/]+\/?$/.exec(
+    pathname,
+  )?.[1];
+  const isClothingDetail = clothingView !== undefined;
+  const isDetail = isFurnitureDetail || isClothingDetail;
   const detailTitle = useRouterState({
     select: (state) => {
       const data: unknown = state.matches.at(-1)?.loaderData;
@@ -33,7 +39,10 @@ export function SiteHeader() {
     },
   });
   const collectionItem = collectionNavigation.items.find(
-    (item) => item.to === pathname || (isFurnitureDetail && item.to === "/collection/furniture"),
+    (item) =>
+      item.to === pathname ||
+      (isFurnitureDetail && item.to === "/collection/furniture") ||
+      (isClothingDetail && item.to === "/collection/clothing"),
   );
   const title = pathname === homeItem.to ? homeItem.title : (collectionItem?.title ?? "页面未找到");
 
@@ -68,9 +77,31 @@ export function SiteHeader() {
               <BreadcrumbSeparator />
             </>
           )}
+          {isClothingDetail && (
+            <>
+              <BreadcrumbItem>
+                <BreadcrumbLink
+                  render={
+                    <ClothingReturnLink
+                      view={
+                        clothingView === "sets"
+                          ? "sets"
+                          : clothingView === "appearances"
+                            ? "appearances"
+                            : "items"
+                      }
+                    />
+                  }
+                >
+                  服饰
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+            </>
+          )}
           <BreadcrumbItem className="min-w-0">
             <BreadcrumbPage className="line-clamp-1">
-              {isFurnitureDetail ? (detailTitle ?? "家具详情") : title}
+              {isDetail ? (detailTitle ?? (isClothingDetail ? "服饰详情" : "家具详情")) : title}
             </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
