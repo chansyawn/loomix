@@ -1,11 +1,13 @@
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { afterEach, expect, test } from "vite-plus/test";
+import { S3Client } from "@aws-sdk/client-s3";
+import { afterEach, expect, test, vi } from "vite-plus/test";
 import { emptyContent } from "@loomix/content-schema";
 import { publishRelease } from "../src/publish.ts";
 import type { UploadProgress } from "../src/publish.ts";
 import { parseReleaseBase, sha256 } from "../src/release.ts";
+import { createR2Store } from "../src/store.ts";
 import type { ReleaseStore } from "../src/store.ts";
 import { validateContent } from "../src/validate.ts";
 
@@ -36,6 +38,7 @@ async function fixture(imageCount = 1): Promise<string> {
 }
 
 afterEach(async () => {
+  vi.restoreAllMocks();
   await Promise.all(
     directories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })),
   );
@@ -46,8 +49,11 @@ function memoryStore(failKey?: string): { store: ReleaseStore; objects: Map<stri
   return {
     objects,
     store: {
-      async hasObjects(prefix) {
-        return [...objects.keys()].some((key) => key.startsWith(prefix));
+      async tryReserve(key, bytes) {
+        if (key === failKey) throw new Error(`Write rejected: ${key}`);
+        if (objects.has(key)) return false;
+        objects.set(key, bytes);
+        return true;
       },
       async put(key, bytes, contentType) {
         if (key.endsWith(".webp")) expect(contentType).toBe("image/webp");
@@ -91,6 +97,43 @@ test("an interrupted upload cannot produce a completion marker or reuse its rele
   await expect(publishRelease(directory, "r1", store)).rejects.toThrow("Release already exists");
 });
 
+test("a reservation storage error is not reported as an existing release", async () => {
+  const directory = await fixture();
+  const { store } = memoryStore("releases/r1/_upload.json");
+  await expect(publishRelease(directory, "r1", store)).rejects.toThrow("Write rejected");
+});
+
+test.each([
+  { name: "PreconditionFailed", status: undefined, reserved: false },
+  { name: "S3ServiceException", status: 412, reserved: false },
+  { name: "ConditionalRequestConflict", status: 409, reserved: false },
+  { name: "AccessDenied", status: 403, reserved: true },
+  { name: "NetworkingError", status: undefined, reserved: true },
+])(
+  "R2 reservation maps only conditional conflicts to existing objects: $name",
+  async (testCase) => {
+    const error = new Error(testCase.name);
+    error.name = testCase.name;
+    if (testCase.status !== undefined) {
+      Object.assign(error, { $metadata: { httpStatusCode: testCase.status } });
+    }
+    vi.spyOn(S3Client.prototype, "send").mockRejectedValue(error);
+    const store = createR2Store("a".repeat(32), "bucket", "key", "secret");
+    const reservation = store.tryReserve(
+      "releases/r1/_upload.json",
+      Buffer.from("{}"),
+      "application/json",
+      "hash",
+    );
+
+    if (testCase.reserved) {
+      await expect(reservation).rejects.toBe(error);
+    } else {
+      await expect(reservation).resolves.toBe(false);
+    }
+  },
+);
+
 test("concurrent publishers cannot mix content under the same release", async () => {
   const directory = await fixture();
   const { store } = memoryStore();
@@ -99,6 +142,13 @@ test("concurrent publishers cannot mix content under the same release", async ()
     publishRelease(directory, "r1", store),
   ]);
   expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+  const rejected = results.find((result) => result.status === "rejected");
+  expect(rejected?.status).toBe("rejected");
+  if (rejected?.status === "rejected") {
+    expect(rejected.reason).toMatchObject({
+      message: "Release already exists: r1. Use a new release ID.",
+    });
+  }
 });
 
 test("a failed remote integrity check prevents completion", async () => {

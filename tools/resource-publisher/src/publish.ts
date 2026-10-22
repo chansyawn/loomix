@@ -20,14 +20,20 @@ export async function publishRelease(
   releaseIdSchema.parse(release);
   const content = await validateContent(directory);
   const prefix = `releases/${release}/`;
-  if (await store.hasObjects(prefix))
-    throw new Error(`Release already exists: ${release}. Use a new release ID.`);
 
-  // A conditional reservation prevents concurrent publishers from sharing a release prefix.
   const reservation = Buffer.from(
     JSON.stringify({ release, contentSha256: content.contentSha256 }),
   );
-  await store.put(`${prefix}_upload.json`, reservation, "application/json", sha256(reservation));
+  if (
+    !(await store.tryReserve(
+      `${prefix}_upload.json`,
+      reservation,
+      "application/json",
+      sha256(reservation),
+    ))
+  ) {
+    throw new Error(`Release already exists: ${release}. Use a new release ID.`);
+  }
   const progress: UploadProgress = {
     phase: "images",
     completed: 0,

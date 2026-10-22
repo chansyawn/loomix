@@ -26,7 +26,7 @@ async function main(): Promise<void> {
   });
   if (values.help) {
     console.log(
-      "Usage: vp run --no-cache @loomix/resource-publisher#publish --content <directory> --release <id> [--bucket loomix-assets] [--dry-run]\nRelative content paths resolve from the repository root.\nCredentials: CLOUDFLARE_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY.\nAutomatically loads tools/resource-publisher/.env; existing environment variables take precedence. Copy .env.example in that directory to get started.\nProgress is written to stderr; the final JSON is written to stdout. --help and --dry-run do not require credentials.",
+      "Usage: vp run @loomix/resource-publisher#publish --content <directory> --release <id> [--bucket loomix-assets] [--dry-run]\nRelative content paths resolve from the repository root.\nCredentials: CLOUDFLARE_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY.\nAutomatically loads tools/resource-publisher/.env; existing environment variables take precedence. Copy .env.example in that directory to get started.\nProgress is written to stderr; the final JSON is written to stdout. --help and --dry-run do not require credentials.",
     );
     return;
   }
