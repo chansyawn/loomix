@@ -46,7 +46,7 @@ dist-ssr
 !/resources/**/
 !/resources/**/.gitkeep
 
-# 工具缓存包含第三方源码、SDK 和本地构建产物
+# 旧版工具缓存仅作本机迁移保留，不再读取；新版缓存统一在 resources/temp/extraction/tool-cache
 /resources/extraction-tools/
 
 # 完全忽略临时调查文件，包括目录占位文件

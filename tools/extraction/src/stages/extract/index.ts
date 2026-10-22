@@ -1,0 +1,155 @@
+import fs from "node:fs";
+import path from "node:path";
+import { identityDirectory } from "../../infrastructure/paths.ts";
+import { readManifest, publishManifest, atomicJson } from "../../infrastructure/manifests.ts";
+import type { Manifest } from "../../infrastructure/manifests.ts";
+import { digest, filesWithin, inventory } from "../../infrastructure/hashing.ts";
+import {
+  implementationRevision,
+  profileHash,
+  toolIdentity,
+} from "../../infrastructure/identity.ts";
+import { runCheckpoints } from "../../infrastructure/checkpoints.ts";
+import { ensureAnimeStudio } from "../../infrastructure/anime-studio/index.ts";
+import { withLock } from "../../infrastructure/anime-studio/lock.ts";
+import { validateClient } from "../init/index.ts";
+import { prepare } from "../../tasks/content/prepare.ts";
+import { structure } from "../../tasks/content/structure.ts";
+import { assets } from "../../tasks/content/assets.ts";
+import { audit } from "../../tasks/content/audit.ts";
+import { validate } from "../../tasks/content/validate.ts";
+import { finalizeEvidence } from "./evidence.ts";
+import { profile } from "../../tasks/content/config.ts";
+
+export async function extract(environmentId: string): Promise<string> {
+  const environmentDirectory = identityDirectory("environments", environmentId);
+  const environment = await readManifest(environmentDirectory, "environment");
+  if (
+    environment.profileHash !== profileHash ||
+    environment.tools.animeStudioInput !== digest(toolIdentity())
+  )
+    throw new Error("Environment profile/tool changed; run init");
+  if (environment.tools.animeStudio !== (await ensureAnimeStudio()))
+    throw new Error("Initialized tool bytes changed; run init again");
+  await validateClient(environment);
+  const implementation = await implementationRevision();
+  const inputs = await inventory(environmentDirectory, [
+    "environment-manifest.json",
+    ...environment.outputs.map((file) => file.path),
+  ]);
+  const id = digest({ environmentId, inputs: digest(inputs), profileHash, implementation });
+  const work = identityDirectory("runs", id);
+  process.env.LOOMIX_ASSET_MAP = path.join(environmentDirectory, "asset-map.xml");
+  profile.paths.assetMap = process.env.LOOMIX_ASSET_MAP;
+  await withLock(`${work}.lock`, async () => {
+    fs.mkdirSync(work, { recursive: true });
+    const manifestFile = path.join(work, "extraction-manifest.json");
+    fs.rmSync(manifestFile, { force: true });
+    const tree = (directory: string) =>
+      filesWithin(path.join(work, directory)).map((file) => `${directory}/${file}`);
+    const options = { work };
+    try {
+      await runCheckpoints(work, id, [
+        {
+          name: "decode",
+          dependencies: [],
+          run: () => prepare(options),
+          outputs: () => [...tree("prepared"), ...tree("bindata"), "bindata-manifest.json"],
+        },
+        {
+          name: "structure",
+          dependencies: ["decode"],
+          run: () => structure(options),
+          outputs: () => [
+            "raw/content.json",
+            "scope.json",
+            "quality-enum.json",
+            "candidate-images.json",
+            "field-evidence.json",
+            "missing-fields.json",
+            "outside-members.json",
+            "field-candidates.json",
+            "field-investigation.json",
+          ],
+        },
+        {
+          name: "raw-assets",
+          dependencies: ["structure"],
+          run: () => assets(options),
+          outputs: () => [
+            ...tree("exports"),
+            "raw/images-content.json",
+            "image-candidates.json",
+            "selected-images.json",
+            "image-manifest.json",
+            "image-field-evidence.json",
+          ],
+        },
+        {
+          name: "source-audit",
+          dependencies: ["raw-assets"],
+          run: () => audit(options),
+          outputs: () => ["source-audit.json"],
+        },
+        {
+          name: "extraction-verify",
+          dependencies: ["source-audit"],
+          run: async () => {
+            finalizeEvidence(work);
+            await validate(options, work, true);
+          },
+          outputs: () => [...tree("evidence"), "coverage.json", "validation.json"],
+        },
+      ]);
+      await validateClient(environment);
+      // Verification is repeated on reuse, independently of checkpoint markers.
+      await validate(options, work, true);
+      atomicJson(path.join(work, "run-report.json"), {
+        passed: true,
+        environmentId,
+        extractionId: id,
+        checkpoints: ["decode", "structure", "raw-assets", "source-audit", "extraction-verify"],
+      });
+      const manifest: Manifest = {
+        schemaVersion: 1,
+        kind: "extraction",
+        id,
+        status: "verified",
+        createdAt: new Date().toISOString(),
+        inputs: { id: environmentId, sha256: digest(inputs), files: inputs },
+        implementation,
+        profileHash,
+        tools: environment.tools,
+        outputs: await inventory(
+          work,
+          filesWithin(work).filter(
+            (file) => !file.startsWith("logs/") && file !== "extraction-manifest.json",
+          ),
+        ),
+        result: { passed: true, validation: "passed", failures: [] },
+      };
+      // Keep creation time stable when rebuilding an identical bundle.
+      const created = path.join(work, "created.json");
+      if (!fs.existsSync(created)) atomicJson(created, { createdAt: manifest.createdAt });
+      manifest.createdAt = JSON.parse(fs.readFileSync(created, "utf8")).createdAt;
+      manifest.outputs = await inventory(
+        work,
+        filesWithin(work).filter(
+          (file) => !file.startsWith("logs/") && file !== "extraction-manifest.json",
+        ),
+      );
+      if ((await implementationRevision()) !== implementation)
+        throw new Error("Implementation changed during extract; rerun extract");
+      await publishManifest(work, manifest);
+    } catch (error) {
+      atomicJson(path.join(work, "run-report.json"), {
+        passed: false,
+        environmentId,
+        extractionId: id,
+        failure: String(error),
+      });
+      throw error;
+    }
+  });
+  return id;
+}

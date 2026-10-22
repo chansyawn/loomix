@@ -3,10 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "tools:init": "node scripts/init-tools.ts",
-    "index": "node scripts/build-index.ts",
-    "content": "node tasks/content/scripts/run.ts",
-    "test": "node --test lib/anime-studio/tests/*.test.ts tasks/content/tests/*.test.ts"
+    "init": "node src/cli.ts init",
+    "extract": "node src/cli.ts extract",
+    "postprocess": "node src/cli.ts postprocess",
+    "verify": "node src/cli.ts verify",
+    "test": "vp test run"
   },
   "dependencies": {
     "@loomix/content-schema": "workspace:*",
@@ -17,6 +18,7 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@types/pngjs": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vite-plus": "catalog:"
   }
 }

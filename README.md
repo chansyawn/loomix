@@ -16,10 +16,9 @@
 │   ├── extraction/          # 客户端提取文档和脚本（按任务组织）
 │   └── resource-publisher/  # 资源发布工具
 ├── resources/
-│   ├── extraction-tools/     # 自动准备的提取工具、SDK 和运行时缓存
-│   ├── game-client/    # 当前客户端：config.ini、PetitPlanet_Data 等
+│   ├── game-client/          # 当前客户端：config.ini、PetitPlanet_Data 等
 │   ├── website/              # 网站数据 content.json 和 assets/
-│   └── temp/extraction/      # 共用索引、中间文件、日志与迁移旧产物
+│   └── temp/extraction/      # 版本化环境、工具缓存、提取与交付 bundle
 ├── .vscode/                  # VS Code 工作区配置
 ├── package.json              # 仓库级脚本和工具配置
 ├── pnpm-workspace.yaml       # pnpm workspace 与依赖版本配置
@@ -33,15 +32,14 @@
 
 ## 本地资源处理
 
-- `resources/extraction-tools/`：统一提取模块自动下载或构建的工具、SDK 和运行时缓存；可删除后重新初始化。AnimeStudio 上游项目：[Escartem/AnimeStudio](https://github.com/Escartem/AnimeStudio)。
 - `resources/game-client/`：保存完整客户端副本，作为资源读取来源。
-- `resources/temp/extraction/index/`：保存当前客户端的 Asset Map 等共用索引，供各提取任务读取。
+- `resources/temp/extraction/`：工具缓存位于 `tool-cache/`，环境、提取与交付证据分别位于 `environments/`、`runs/` 和 `deliveries/`。
 - `resources/website/`：验证通过的 content.json 和 assets/，供网站本地开发直接读取。
 - `resources/temp/`：用于存储临时文件。
 
 `resources/` 下的本地资源文件由根目录 `.gitignore` 忽略，`resources/temp/` 整体忽略。
 
-维护中的提取脚本与文档位于 [tools/extraction](tools/extraction/README.md)，各任务分别提供不依赖脚本的原理指南和对应当前实现的执行手册。安装仓库依赖并准备本地输入后，使用 `vp run --no-cache '@loomix/extraction#content'` 提取有效内容，使用 `vp run '@loomix/extraction#test'` 运行不依赖客户端的测试。
+维护中的提取实现和文档位于 [tools/extraction](tools/extraction/README.md)。准备本地输入后，按该文档依次运行 init、extract、postprocess 和 verify。入口使用 `vp run --no-cache '@loomix/extraction#<入口>'`；提取与后处理需传入前一阶段打印的身份 ID。用 `vp run --no-cache '@loomix/extraction#test'` 运行不依赖客户端的测试。
 
 目录只保留当前客户端，游戏版本、配置与资源 revision 保留在脚本配置和产物元数据中。提取任务使用仓库 Node 环境，不需要 Python。
 
