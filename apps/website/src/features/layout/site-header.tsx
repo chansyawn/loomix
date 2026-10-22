@@ -3,6 +3,7 @@ import { useRouterState } from "@tanstack/react-router";
 import { CreaturesReturnLink } from "@/features/creatures/detail-navigation";
 import { FurnitureReturnLink } from "@/features/furniture/detail-navigation";
 import { ClothingReturnLink } from "@/features/clothing/detail-navigation";
+import { PlantsReturnLink } from "@/features/plants/detail-navigation";
 import { collectionNavigation, homeItem } from "@/features/layout/navigation";
 import {
   Breadcrumb,
@@ -24,7 +25,9 @@ export function SiteHeader() {
   const isClothingDetail = clothingView !== undefined;
   const creaturesView = /^\/collection\/creatures\/(items|series)\/[^/]+\/?$/.exec(pathname)?.[1];
   const isCreaturesDetail = creaturesView !== undefined;
-  const isDetail = isFurnitureDetail || isClothingDetail || isCreaturesDetail;
+  const plantsView = /^\/collection\/plants\/(items|series)\/[^/]+\/?$/.exec(pathname)?.[1];
+  const isPlantsDetail = plantsView !== undefined;
+  const isDetail = isFurnitureDetail || isClothingDetail || isCreaturesDetail || isPlantsDetail;
   const detailTitle = useRouterState({
     select: (state) => {
       const data: unknown = state.matches.at(-1)?.loaderData;
@@ -46,7 +49,8 @@ export function SiteHeader() {
       item.to === pathname ||
       (isFurnitureDetail && item.to === "/collection/furniture") ||
       (isClothingDetail && item.to === "/collection/clothing") ||
-      (isCreaturesDetail && item.to === "/collection/creatures"),
+      (isCreaturesDetail && item.to === "/collection/creatures") ||
+      (isPlantsDetail && item.to === "/collection/plants"),
   );
   const title = pathname === homeItem.to ? homeItem.title : (collectionItem?.title ?? "页面未找到");
 
@@ -117,11 +121,29 @@ export function SiteHeader() {
               <BreadcrumbSeparator />
             </>
           )}
+          {isPlantsDetail && (
+            <>
+              <BreadcrumbItem>
+                <BreadcrumbLink
+                  render={<PlantsReturnLink view={plantsView === "series" ? "series" : "items"} />}
+                >
+                  植物
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+            </>
+          )}
           <BreadcrumbItem className="min-w-0">
             <BreadcrumbPage className="line-clamp-1">
               {isDetail
                 ? (detailTitle ??
-                  (isCreaturesDetail ? "生物详情" : isClothingDetail ? "服饰详情" : "家具详情"))
+                  (isCreaturesDetail
+                    ? "生物详情"
+                    : isPlantsDetail
+                      ? "植物详情"
+                      : isClothingDetail
+                        ? "服饰详情"
+                        : "家具详情"))
                 : title}
             </BreadcrumbPage>
           </BreadcrumbItem>
