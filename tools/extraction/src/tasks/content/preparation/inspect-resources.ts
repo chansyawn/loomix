@@ -2,7 +2,7 @@ import type { IndexedAsset } from "../types.ts";
 import { getPaths } from "./config.ts";
 import fs from "node:fs";
 import path from "node:path";
-import readline from "node:readline";
+import { readAssetMap } from "../../../infrastructure/anime-studio/asset-map.ts";
 
 const { out, assetMap: xml } = getPaths();
 fs.mkdirSync(out, { recursive: true });
@@ -12,7 +12,6 @@ const types: Record<string, number> = {},
   icons: IndexedAsset[] = [],
   textures: IndexedAsset[] = [],
   sprites: IndexedAsset[] = [];
-let asset: Record<string, string> | null = null;
 let count = 0;
 const remapSource = (source: string) => {
   const m = source.replaceAll("\\", "/").match(/PetitPlanet_Data\/(.*)$/);
@@ -20,24 +19,7 @@ const remapSource = (source: string) => {
     throw new Error(`Unrecognized Asset Map source: ${source}`);
   return path.join(getPaths().gameRoot, m[1]);
 };
-const unescape = (s: string) =>
-  s
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'");
-for await (const line of readline.createInterface({
-  input: fs.createReadStream(xml),
-  crlfDelay: Infinity,
-})) {
-  if (line.trim() === "<Asset>") asset = {};
-  if (!asset) continue;
-  const m = line.match(/<(Name|Container|Type|PathID|Source)(?: [^>]*)?>(.*?)<\//);
-  if (m) asset[m[1]] = unescape(m[2]);
-  if (line.trim() !== "</Asset>") continue;
-  for (const field of ["Type", "PathID", "Source"])
-    if (!(field in asset)) throw new Error(`Missing Asset Map field: ${field}`);
+for await (const asset of readAssetMap(xml)) {
   const indexed: IndexedAsset = {
     Name: asset.Name,
     Container: asset.Container,
@@ -64,7 +46,6 @@ for await (const line of readline.createInterface({
     )
   )
     candidates.push(indexed);
-  asset = null;
 }
 for (const [name, data] of Object.entries({ textAssets, icons, candidates, textures, sprites }))
   fs.writeFileSync(path.join(out, `${name}.json`), JSON.stringify(data, null, 2));

@@ -1,29 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
-import { spawn } from "node:child_process";
 
 export const readJson = <T = unknown>(file: string): T =>
   JSON.parse(fs.readFileSync(file, "utf8")) as T;
 export function writeJson(file: string, value: unknown) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, JSON.stringify(value, null, 2) + "\n");
-}
-
-export async function runProcess(executable: string, args: string[], logFile: string) {
-  fs.mkdirSync(path.dirname(logFile), { recursive: true });
-  const fd = fs.openSync(logFile, "w");
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const child = spawn(executable, args, { windowsHide: true, stdio: ["ignore", fd, fd] });
-      child.once("error", reject);
-      child.once("exit", (code, signal) => {
-        if (code === 0) resolve();
-        else reject(new Error(`Process failed (${code ?? signal}); see ${logFile}`));
-      });
-    });
-  } finally {
-    fs.closeSync(fd);
-  }
 }
 
 export function removeWithin(file: string, parent: string) {

@@ -8,7 +8,7 @@ import { setTimeout } from "node:timers/promises";
 import { spawnSync } from "node:child_process";
 import { test } from "vite-plus/test";
 import { createAnimeStudio } from "./tool.ts";
-import { runProcess } from "./process.ts";
+import { runProcess } from "../process.ts";
 import { withLock } from "./lock.ts";
 
 const fixture = `
@@ -23,7 +23,7 @@ if (args[0] === '--version') {
   fs.mkdirSync(args[1], {recursive:true});
   fs.writeFileSync(path.join(args[1], 'arguments.json'), JSON.stringify({args, runtime:process.env.DOTNET_ROOT_X64}));
   if (args.includes('--map_op') && !input.skipMap)
-    fs.writeFileSync(path.join(args[1], 'assets_map.xml'), input.map ?? '<Assets>\\n<Asset>\\n</Asset>\\n</Assets>');
+    fs.writeFileSync(path.join(args[1], 'assets_map.xml'), input.map ?? '<Assets>\\n<Asset><Type>Texture2D</Type><PathID>7</PathID><Source>StreamingAssets/test.blk</Source></Asset>\\n</Assets>');
   process.exitCode = input.exit ?? 0;
 }
 `;
@@ -232,16 +232,6 @@ test("lock timeouts explain where to inspect a blocked initialization", async (t
     withLock(directory, () => assert.fail(), { timeout: 10, interval: 5 }),
     /Timed out.*cache.lock/,
   );
-});
-
-test("process startup failure writes the reason to its log", async (t) => {
-  const env = environment(t),
-    logFile = path.join(env.root, "spawn.log");
-  await assert.rejects(
-    runProcess(path.join(env.root, "no executable"), [], { logFile }),
-    /Unable to start/,
-  );
-  assert.match(fs.readFileSync(logFile, "utf8"), /ENOENT/);
 });
 
 test("an interrupted process does not leave an unrecoverable initialization lock", async (t) => {

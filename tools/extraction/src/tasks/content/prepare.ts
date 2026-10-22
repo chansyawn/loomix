@@ -1,10 +1,11 @@
 import type { WorkOptions, IndexedAsset, BinDataAsset } from "./types.ts";
 import fs from "node:fs";
 import path from "node:path";
-import readline from "node:readline";
 import { fileURLToPath } from "node:url";
 import { profile, repoRoot } from "./config.ts";
-import { readJson, writeJson, runProcess, removeWithin } from "./io.ts";
+import { readJson, writeJson, removeWithin } from "./io.ts";
+import { runProcess } from "../../infrastructure/process.ts";
+import { readAssetMap } from "../../infrastructure/anime-studio/asset-map.ts";
 import { exportAssets } from "../../infrastructure/anime-studio/index.ts";
 
 export async function prepare(options: WorkOptions) {
@@ -24,7 +25,7 @@ export async function prepare(options: WorkOptions) {
     await runProcess(
       process.execPath,
       [fileURLToPath(new URL(`./preparation/${step}.ts`, import.meta.url)), "--output", prepared],
-      path.join(options.work, "logs", `${step}.log`),
+      { logFile: path.join(options.work, "logs", `${step}.log`), logMode: "truncate" },
     );
   }
   const sourceFile = path.join(prepared, "active-config-source.json");
@@ -37,24 +38,8 @@ export async function prepare(options: WorkOptions) {
   writeJson(sourceFile, source);
   const wanted = new Set(Object.values(profile.binData));
   const candidates: IndexedAsset[] = [];
-  let asset: Record<string, string> | null = null;
-  const unescape = (s: string) =>
-    s
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/&quot;/g, '"')
-      .replace(/&apos;/g, "'");
-  for await (const line of readline.createInterface({
-    input: fs.createReadStream(path.resolve(repoRoot, profile.paths.assetMap)),
-    crlfDelay: Infinity,
-  })) {
-    if (line.trim() === "<Asset>") asset = {};
-    if (!asset) continue;
-    const match = line.match(/<(Name|Container|Type|PathID|Source)(?: [^>]*)?>(.*?)<\//);
-    if (match) asset[match[1]] = unescape(match[2]);
-    if (line.trim() !== "</Asset>") continue;
-    if (asset.Type === "MiHoYoBinData" && wanted.has(asset.Name)) {
+  for await (const asset of readAssetMap(path.resolve(repoRoot, profile.paths.assetMap))) {
+    if (asset.Type === "MiHoYoBinData" && asset.Name && wanted.has(asset.Name)) {
       const relative = asset.Source.replaceAll("\\", "/").match(/PetitPlanet_Data\/(.*)$/)?.[1];
       if (!relative || relative.split("/").includes(".."))
         throw new Error("Invalid BinData source");
@@ -67,7 +52,6 @@ export async function prepare(options: WorkOptions) {
         Source: asset.Source,
       });
     }
-    asset = null;
   }
   const selected: BinDataAsset[] = [];
   for (const name of wanted) {

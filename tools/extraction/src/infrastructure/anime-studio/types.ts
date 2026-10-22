@@ -1,8 +1,5 @@
-export interface ProcessOptions {
-  logFile?: string;
-  cwd?: string;
-  env?: NodeJS.ProcessEnv;
-}
+import type { ProcessOptions } from "../process.ts";
+
 export type RunProcess = (
   executable: string,
   args: string[],

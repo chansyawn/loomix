@@ -1,4 +1,5 @@
-import type { ToolOptions, AnimeStudio, ExtractionOptions, ProcessOptions } from "./types.ts";
+import type { ToolOptions, AnimeStudio, ExtractionOptions } from "./types.ts";
+import type { ProcessOptions } from "../process.ts";
 import { errorCode, errorMessage } from "../errors.ts";
 import fs from "node:fs";
 import path from "node:path";
@@ -6,11 +7,12 @@ import crypto from "node:crypto";
 import readline from "node:readline";
 import { cacheRoot, patchFile, repoRoot, runtimeIdentifier, version } from "./config.ts";
 import { preparePlatform } from "./platforms.ts";
-import { runProcess } from "./process.ts";
+import { runProcess } from "../process.ts";
 import { withLock } from "./lock.ts";
 import { inventory, filesWithin, digest } from "../hashing.ts";
 import { verifyFiles, atomicJson } from "../manifests.ts";
 import { z } from "zod";
+import { inspectAssetMap } from "./asset-map.ts";
 
 // 平台准备与进程执行的替换点仅供模块测试使用，任务通过 index.ts 调用。
 export function createAnimeStudio({
@@ -184,16 +186,7 @@ export function createAnimeStudio({
           "XML",
         ]);
         const file = path.join(staging, "assets_map.xml");
-        let count = 0,
-          closed = false;
-        for await (const line of readline.createInterface({
-          input: fs.createReadStream(file),
-          crlfDelay: Infinity,
-        })) {
-          if (line.trim() === "<Asset>") count++;
-          if (line.trim() === "</Assets>") closed = true;
-        }
-        if (!count || !closed) throw new Error(`Incomplete or empty Asset Map: ${file}`);
+        await inspectAssetMap(file);
         const destination = path.join(output, "assets_map.xml");
         fs.renameSync(file, destination);
         return destination;

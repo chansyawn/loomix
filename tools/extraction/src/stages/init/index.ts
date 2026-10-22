@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { profile, repoRoot } from "../../tasks/content/config.ts";
-import { runProcess } from "../../tasks/content/io.ts";
+import { runProcess } from "../../infrastructure/process.ts";
 import { buildAssetMap, ensureAnimeStudio } from "../../infrastructure/anime-studio/index.ts";
 import { withLock } from "../../infrastructure/anime-studio/lock.ts";
 import { digest, inventory } from "../../infrastructure/hashing.ts";
@@ -69,7 +69,7 @@ export async function init(): Promise<string> {
           "--output",
           staging,
         ],
-        path.join(staging, "logs/preflight.log"),
+        { logFile: path.join(staging, "logs/preflight.log"), logMode: "truncate" },
       );
       const resourceAudit = await validateResourceManifests(
         path.resolve(repoRoot, profile.paths.gameRoot),

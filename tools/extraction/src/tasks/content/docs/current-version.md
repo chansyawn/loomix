@@ -30,7 +30,7 @@ vp run --no-cache -r build
 
 失败后重复执行相同命令；输入及输出哈希正确的 checkpoint 才可复用，改变输入、profile、实现或产物会使依赖链失效。客户端变化须重新 init，不能将旧环境强行绑定到新输入。未知字段为 null，具体原因见 evidence/missing-fields.json，不能推断值不存在。
 
-## 本次重构验证（2026-10-22）
+## 初始重构验证（2026-10-22）
 
 - `vp check`：通过严格类型、lint 与格式检查。
 - `vp run --no-cache -r test`：全仓 231 项通过，其中 extraction 的 Vitest 测试为 13 个文件、51 项。
@@ -46,13 +46,29 @@ vp run --no-cache -r build
 - 使用完整真实交付副本注入第二次目录重命名失败，原 JSON 和图片共 2,246 个文件全部恢复，未遗留发布暂存目录。实际修改客户端 config.ini 和 profile 时旧环境均被拒绝；修改实现源码字节时提取 ID 改变，恢复后回到原 ID。所有探测文件已逐字节恢复；checkpoint 测试另确认输入身份变化会重跑全部下游。
 - 本地机器验收报告：`resources/temp/extraction/acceptance/acceptance-report.json`，`passed: true`；首次及重复运行完整文件 hash 清单分别为同目录的 `first-pass.json` 和 `repeat-pass.json`，重复阶段日志也保留在此。临时验收脚本已清理，仅保留报告与证据；这些生成文件全部忽略。
 
-本次成功身份（本地生成文件不提交）：
+初始重构成功身份（本地生成文件不提交）：
 
 | 类型        | SHA256 ID                                                          |
 | ----------- | ------------------------------------------------------------------ |
 | environment | `e44b2dfa5207185992e883299953343e0c4407d190d019bc31f5a485a23cede9` |
 | extraction  | `198ce989865a62d47675f0208e6adce0bbab1fa720ad0c82a10c2d58ed8b4005` |
 | delivery    | `bdb27492690f523250f3fb4a04e70ddd025c8707a1caf3dbefe8b84b853aff1c` |
+
+## execa / sax 简化验证（2026-10-22）
+
+统一使用 execa 10.2.0 执行子进程、sax 1.6.1 流式解析 Asset Map；保留日志追加/覆盖、原样参数传递、来源路径检查、字段协议和发布约束。新增测试覆盖进程双通道完整日志、启动/退出失败、XML 实体单次解码、CDATA、跨块中文、重复字段及不完整 XML。
+
+- `vp check`、全仓 237 项测试（extraction 为 15 个文件、57 项）、全仓构建和 `website#verify-build` 通过；构建仍仅有前述 sourcemap warning。
+- 本机 macOS arm64 重新执行 `init → extract → postprocess → verify` 全部通过，客户端输入清单与初始重构验收相同。Asset Map 为 533,128 个对象；2,327 条记录、4,413 个原始图片候选、2,244 张唯一 WebP 和 109 个来源包全部通过验证。
+- 纹理、Sprite、TextAsset、候选及物品图标索引、ID 范围和原始内容 JSON 与初始重构结果逐字节一致。归一化 bundle 路径后，图片候选、选图、图片 manifest、含图原始内容及来源审计也逐字节一致。
+- 发布目录全部 2,246 个文件与初始重构交付逐字节一致，最终 content.json SHA256 仍为 `0910ddcb10e060ea6bf85c3a209a82cee919544013146093f157810f8ab22329`。
+- 新 manifest 身份由实现和锁文件变化产生。本地机器报告为 `resources/temp/extraction/execa-sax-acceptance/acceptance-report.json`，`passed: true`；同目录保留阶段日志、构建日志与比较证据，均不提交。
+
+| 类型        | SHA256 ID                                                          |
+| ----------- | ------------------------------------------------------------------ |
+| environment | `2859633736ad4af5530075f94c946df447de1d4d6a15033281055ea386df2ae3` |
+| extraction  | `7f771682949e002bc415ec462e0233e881c92f3be1d286f43a998b2083f09d64` |
+| delivery    | `89c19e45fc27f80c3ab47a21233feb829ce44024792bfc3ef0d318c1ce522bf2` |
 
 ## 数据使用与边界
 

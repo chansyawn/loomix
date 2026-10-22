@@ -2,6 +2,8 @@
 
 所有维护代码、配置、文档和相邻的 Vitest 测试都在 `src/`。当前 profile 对应客户端 0.95.2，data revision 1449213、resource revision 1391927、清单 5662883。更新版本须先重新确认解码布局、范围和关联规则。
 
+`src/infrastructure/process.ts` 通过 execa 统一执行 AnimeStudio、构建工具和准备脚本，直接将 stdout/stderr 写入同一日志，支持追加或覆盖，不缓冲完整进程输出。`src/infrastructure/anime-studio/asset-map.ts` 通过 sax 流式读取 Asset Map，统一处理 XML 实体、CDATA、跨块文本和必需字段验证；消费者不再依赖 XML 的换行与缩进。工具退出码为 0 但日志报错时仍判定失败。
+
 ## 三阶段入口
 
 需要 Node >=22.18.0、仓库锁定的 Vite Plus 1.3.0，以及 `vp install` 安装的依赖。在仓库根目录运行：
