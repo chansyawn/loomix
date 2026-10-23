@@ -22,7 +22,7 @@ import { profile } from "./config.ts";
 import { Tables } from "../../extraction/decode/tables.ts";
 import { readJson, writeJson } from "./io.ts";
 import { additionalFields, basicFields, groupAt, validateModel } from "./model.ts";
-import { highestResolutionImages } from "./assets.ts";
+import { highestResolutionImages } from "../../extraction/images/select.ts";
 import { decodeWebp, imageDimensions } from "./image-processing.ts";
 
 function fieldValue(row: ContentRecord, field: string): FieldValue | undefined {

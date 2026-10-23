@@ -6,7 +6,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "vite-plus/test";
 import { ObbReader } from "../../extraction/decode/obb.ts";
-import { createIconResolver } from "./icon-resolver.ts";
+import { createIconResolver } from "../../extraction/images/resolve.ts";
 import { profile, repoRoot } from "./config.ts";
 import { hashTextKey, readUIntVector, Tables } from "../../extraction/decode/tables.ts";
 import {
@@ -16,7 +16,8 @@ import {
   expandTags,
   furnitureSize,
 } from "./model.ts";
-import { imageBatches, assets, highestResolutionImages } from "./assets.ts";
+import { exportImages, imageBatches } from "../../extraction/images/export.ts";
+import { highestResolutionImages } from "../../extraction/images/select.ts";
 import { safeOutput } from "./publication.ts";
 import { removeWithin } from "./io.ts";
 
@@ -214,7 +215,7 @@ test("export failures and missing selected PNGs stop with logs", async () => {
         ]),
       );
       await assert.rejects(
-        assets({ work }, async (request) => {
+        exportImages({ work }, async (request) => {
           assert.equal(request.input, source);
           assert.deepEqual(request.types, ["Sprite"]);
           assert.deepEqual(request.names, ["^(?:Expected)$"]);

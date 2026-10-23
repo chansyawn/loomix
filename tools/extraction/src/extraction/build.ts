@@ -1,20 +1,20 @@
 import fs from "node:fs";
 import path from "node:path";
-import { identityDirectory } from "../../paths.ts";
-import { readManifest, publishManifest, atomicJson } from "../../workflow/manifest.ts";
-import type { Manifest } from "../../workflow/manifest.ts";
-import { digest, filesWithin, inventory } from "../../workflow/hashing.ts";
-import { implementationRevision, profileHash, toolIdentity } from "../../workflow/identity.ts";
-import { runCheckpoints } from "../../workflow/checkpoint.ts";
-import { ensureAnimeStudio } from "../../client/anime-studio/index.ts";
-import { withLock } from "../../workflow/lock.ts";
-import { assertClientUnchanged } from "../../client/snapshot.ts";
-import { prepareSource } from "../../extraction/source.ts";
-import { structure } from "../../extraction/content/assemble.ts";
-import { assets } from "../../tasks/content/assets.ts";
-import { audit } from "../../tasks/content/audit.ts";
-import { validate } from "../../tasks/content/validate.ts";
-import { finalizeEvidence } from "../../extraction/evidence/build.ts";
+import { identityDirectory } from "../paths.ts";
+import { readManifest, publishManifest, atomicJson } from "../workflow/manifest.ts";
+import type { Manifest } from "../workflow/manifest.ts";
+import { digest, filesWithin, inventory } from "../workflow/hashing.ts";
+import { implementationRevision, profileHash, toolIdentity } from "../workflow/identity.ts";
+import { runCheckpoints } from "../workflow/checkpoint.ts";
+import { ensureAnimeStudio } from "../client/anime-studio/index.ts";
+import { withLock } from "../workflow/lock.ts";
+import { assertClientUnchanged } from "../client/snapshot.ts";
+import { prepareSource } from "./source.ts";
+import { structure } from "./content/assemble.ts";
+import { exportImages } from "./images/export.ts";
+import { audit } from "./audit.ts";
+import { validate } from "../tasks/content/validate.ts";
+import { finalizeEvidence } from "./evidence/build.ts";
 
 export async function extract(environmentId: string): Promise<string> {
   const environmentDirectory = identityDirectory("environments", environmentId);
@@ -37,6 +37,9 @@ export async function extract(environmentId: string): Promise<string> {
   await withLock(`${work}.lock`, async () => {
     fs.mkdirSync(work, { recursive: true });
     const manifestFile = path.join(work, "extraction-manifest.json");
+    const previous = fs.existsSync(manifestFile)
+      ? (JSON.parse(fs.readFileSync(manifestFile, "utf8")) as Manifest)
+      : undefined;
     fs.rmSync(manifestFile, { force: true });
     const tree = (directory: string) =>
       filesWithin(path.join(work, directory)).map((file) => `${directory}/${file}`);
@@ -68,7 +71,7 @@ export async function extract(environmentId: string): Promise<string> {
         {
           name: "raw-assets",
           dependencies: ["structure"],
-          run: () => assets(options),
+          run: () => exportImages(options),
           outputs: () => [
             ...tree("exports"),
             "raw/images-content.json",
@@ -108,7 +111,7 @@ export async function extract(environmentId: string): Promise<string> {
         kind: "extraction",
         id,
         status: "verified",
-        createdAt: new Date().toISOString(),
+        createdAt: previous?.createdAt ?? new Date().toISOString(),
         inputs: { id: environmentId, sha256: digest(inputs), files: inputs },
         implementation,
         profileHash,
@@ -116,21 +119,14 @@ export async function extract(environmentId: string): Promise<string> {
         outputs: await inventory(
           work,
           filesWithin(work).filter(
-            (file) => !file.startsWith("logs/") && file !== "extraction-manifest.json",
+            (file) =>
+              !file.startsWith("logs/") &&
+              !file.startsWith("checkpoints/") &&
+              !["run-report.json", "extraction-manifest.json", "created.json"].includes(file),
           ),
         ),
         result: { passed: true, validation: "passed", failures: [] },
       };
-      // Keep creation time stable when rebuilding an identical bundle.
-      const created = path.join(work, "created.json");
-      if (!fs.existsSync(created)) atomicJson(created, { createdAt: manifest.createdAt });
-      manifest.createdAt = JSON.parse(fs.readFileSync(created, "utf8")).createdAt;
-      manifest.outputs = await inventory(
-        work,
-        filesWithin(work).filter(
-          (file) => !file.startsWith("logs/") && file !== "extraction-manifest.json",
-        ),
-      );
       if ((await implementationRevision()) !== implementation)
         throw new Error("Implementation changed during extract; rerun extract");
       await publishManifest(work, manifest);

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { test } from "vite-plus/test";
 import { decodeBytes, decodeTextMapBucket, ObbReader } from "./obb.ts";
-import { createIconResolver } from "../../tasks/content/icon-resolver.ts";
+import { createIconResolver } from "../images/resolve.ts";
 import { profile } from "../../profile.ts";
 
 const fixtures: {

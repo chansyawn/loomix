@@ -7,7 +7,7 @@ import crypto from "node:crypto";
 import sharp from "sharp";
 import { emptyContent } from "@loomix/content-schema";
 import { processImage, decodeWebp } from "./image-processing.ts";
-import { assets } from "./assets.ts";
+import { exportImages } from "../../extraction/images/export.ts";
 import { postprocessImages } from "./postprocess-images.ts";
 import type { ProcessedImage, SelectedImage } from "./types.ts";
 
@@ -105,7 +105,7 @@ test("asset delivery deduplicates identical outputs and separates target dimensi
     const png = await sharp({ create: { width: 512, height: 512, channels: 4, background: "red" } })
       .png()
       .toBuffer();
-    await assets({ work }, async (request) => {
+    await exportImages({ work }, async (request) => {
       fs.mkdirSync(path.join(request.output, "Texture2D"), { recursive: true });
       fs.writeFileSync(path.join(request.output, "Texture2D/fixture.png"), png);
     });

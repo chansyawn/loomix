@@ -5,13 +5,14 @@ import type {
   ConfigSource,
   SourceCheck,
   SourceAudit,
-} from "./types.ts";
+} from "../tasks/content/types.ts";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
-import { profile, repoRoot } from "./config.ts";
-import { readJson, writeJson } from "./io.ts";
-import { manifestEntry, readManifestMaps } from "../../client/versions.ts";
+import { profile } from "../profile.ts";
+import { repoRoot } from "../paths.ts";
+import { readJson, writeJson } from "../workflow/json.ts";
+import { manifestEntry, readManifestMaps } from "../client/versions.ts";
 
 export async function audit(options: WorkOptions) {
   const root = path.resolve(repoRoot, profile.paths.gameRoot);

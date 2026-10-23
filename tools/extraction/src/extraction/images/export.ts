@@ -1,33 +1,24 @@
-import type { WorkOptions, SelectedImage, ImageManifest, EvidenceRecord } from "./types.ts";
+import type {
+  WorkOptions,
+  SelectedImage,
+  ImageManifest,
+  EvidenceRecord,
+} from "../../tasks/content/types.ts";
 import type { Content } from "@loomix/content-schema";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { PNG } from "pngjs";
-import { profile } from "./config.ts";
-import { readJson, writeJson, removeWithin } from "./io.ts";
+import { profile } from "../../profile.ts";
+import { readJson, writeJson } from "../../workflow/json.ts";
+import { removeWithin } from "../../workflow/fs.ts";
 import { exportAssets } from "../../client/anime-studio/index.ts";
-import { groupAt } from "./model.ts";
+import { assetKey, highestResolutionImages } from "./select.ts";
+import { groupAt } from "@loomix/content-schema";
 
 const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-const assetKey = (a: SelectedImage) => `${a.source}|${a.assetType}|${a.pathId}`;
-
-export function highestResolutionImages(candidates: SelectedImage[], images: ImageManifest[]) {
-  const dimensions = new Map(images.map((image) => [assetKey(image), image]));
-  const selected = new Map<number, SelectedImage>();
-  for (const candidate of candidates) {
-    const image = dimensions.get(assetKey(candidate));
-    if (!image) throw new Error(`Missing candidate image: ${candidate.reference}`);
-    const previous = selected.get(candidate.id);
-    const priorImage = previous ? dimensions.get(assetKey(previous))! : null;
-    if (!priorImage || image.width * image.height > priorImage.width * priorImage.height)
-      selected.set(candidate.id, candidate);
-  }
-  return [...selected.values()];
-}
-
 export function imageBatches(selected: SelectedImage[]) {
-  const unique = new Map(selected.map((a) => [`${a.source}|${a.assetType}|${a.pathId}`, a]));
+  const unique = new Map(selected.map((asset) => [assetKey(asset), asset]));
   const byPackage = new Map<string, SelectedImage[]>();
   for (const a of unique.values()) {
     const key = `${a.source}|${a.assetType}`;
@@ -46,7 +37,7 @@ export function imageBatches(selected: SelectedImage[]) {
   return batches;
 }
 
-export async function assets(options: WorkOptions, extract = exportAssets) {
+export async function exportImages(options: WorkOptions, extract = exportAssets) {
   const candidates = readJson<SelectedImage[]>(path.join(options.work, "candidate-images.json"));
   removeWithin(path.join(options.work, "exports"), options.work);
   fs.mkdirSync(path.join(options.work, "exports"), { recursive: true });
@@ -97,10 +88,12 @@ export async function assets(options: WorkOptions, extract = exportAssets) {
   }
   writeJson(path.join(options.work, "image-candidates.json"), manifest);
   const selected = highestResolutionImages(candidates, manifest);
-  const selectedManifest = selected.map((a) => ({
-    ...manifest.find((entry) => assetKey(entry) === assetKey(a))!,
-    ...a,
+  const byKey = new Map(manifest.map((entry) => [assetKey(entry), entry]));
+  const selectedManifest = selected.map((asset) => ({
+    ...byKey.get(assetKey(asset))!,
+    ...asset,
   }));
+  const imageByRecord = new Map(selectedManifest.map((entry) => [entry.id, entry]));
   writeJson(path.join(options.work, "selected-images.json"), selected);
   writeJson(path.join(options.work, "image-manifest.json"), selectedManifest);
   const evidence = readJson<EvidenceRecord[]>(
@@ -108,7 +101,7 @@ export async function assets(options: WorkOptions, extract = exportAssets) {
   ).filter((p) => p.field !== "image");
   for (const a of selected) {
     const record = groupAt(content, a.group).find((r) => r.id === a.id);
-    const image = selectedManifest.find((entry) => entry.id === a.id)?.file;
+    const image = imageByRecord.get(a.id)?.file;
     if (!record || !image) throw new Error(`No exported image for ${a.id}`);
     record.image = path.relative(options.work, image).split(path.sep).join("/");
     evidence.push({

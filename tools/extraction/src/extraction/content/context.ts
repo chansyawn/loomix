@@ -4,7 +4,7 @@ import { readJson } from "../../workflow/json.ts";
 import { profile } from "../../profile.ts";
 import { Tables } from "../decode/tables.ts";
 import { parseBinData } from "../decode/bindata.ts";
-import { createIconResolver } from "../../tasks/content/icon-resolver.ts";
+import { createIconResolver } from "../images/resolve.ts";
 import { createVocabulary } from "./vocabulary.ts";
 import type { Vocabulary } from "./vocabulary.ts";
 import { classify, resolveMemberships } from "./scope.ts";

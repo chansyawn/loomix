@@ -1,5 +1,5 @@
-import type { IndexedAsset, IconMatch } from "./types.ts";
-import { profile } from "./config.ts";
+import type { IndexedAsset, IconMatch } from "../../tasks/content/types.ts";
+import { profile } from "../../profile.ts";
 import { normalizeAssetPath, preferOverlay } from "../../client/asset-map.ts";
 
 export function createIconResolver(textures: IndexedAsset[], sprites: IndexedAsset[]) {
