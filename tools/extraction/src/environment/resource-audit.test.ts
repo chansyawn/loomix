@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "vite-plus/test";
-import { parseResourceManifest } from "./resource-manifests.ts";
+import { parseResourceManifest } from "./resource-audit.ts";
 
 test("resource manifests reject traversal, duplicates and invalid metadata", () => {
   const row = "AssetBundle/a.blk,0123456789abcdef0123456789abcdef,12";
@@ -22,7 +22,7 @@ test("data manifest overrides resource metadata for the same installed package",
   const os = await import("node:os");
   const path = await import("node:path");
   const { createHash } = await import("node:crypto");
-  const { validateResourceManifests } = await import("./resource-manifests.ts");
+  const { validateResourceManifests } = await import("./resource-audit.ts");
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-resource-manifest-"));
   t.onTestFinished(() => fs.rmSync(root, { recursive: true, force: true }));
   fs.mkdirSync(path.join(root, "StreamingAssets"));

@@ -5,8 +5,7 @@ import path from "node:path";
 import type { TestContext } from "vite-plus/test";
 import { test } from "vite-plus/test";
 import type { AssetMapAsset } from "./asset-map.ts";
-import { inspectAssetMap, readAssetMap } from "./asset-map.ts";
-import { verifyAssetMap } from "../stages/init/asset-map.ts";
+import { assertAssetMapCoverage, inspectAssetMap, readAssetMap } from "./asset-map.ts";
 
 function fixture(t: TestContext, xml: string): string {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-map-"));
@@ -40,7 +39,9 @@ test("Asset Map is independent of line formatting and decodes entities exactly o
     Source: "/game/StreamingAssets/a&b.blk",
   });
   assert.equal(records[1].PathID, "-9223372036854775808");
-  assert.deepEqual(await verifyAssetMap(file), { assets: 2, baseSources: 1, persistentSources: 1 });
+  const coverage = await inspectAssetMap(file);
+  assertAssetMapCoverage(coverage);
+  assert.deepEqual(coverage, { assets: 2, baseSources: 1, persistentSources: 1 });
 });
 
 test("Asset Map preserves text across stream chunk boundaries", async (t) => {
@@ -69,8 +70,8 @@ test("malformed, incomplete and ambiguous Asset Maps are rejected", async (t) =>
 
 test("map verification requires nonempty assets and both resource scopes", async (t) => {
   await assert.rejects(inspectAssetMap(fixture(t, "<Assets/>")), /empty Asset Map/);
-  await assert.rejects(
-    verifyAssetMap(fixture(t, `<Assets>${asset("/StreamingAssets/a.blk")}</Assets>`)),
+  assert.throws(
+    () => assertAssetMapCoverage({ assets: 1, baseSources: 1, persistentSources: 0 }),
     /base and Persistent/,
   );
 });

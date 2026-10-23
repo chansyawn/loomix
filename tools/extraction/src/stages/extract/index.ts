@@ -35,8 +35,8 @@ export async function extract(environmentId: string): Promise<string> {
   ]);
   const id = digest({ environmentId, inputs: digest(inputs), profileHash, implementation });
   const work = identityDirectory("runs", id);
-  process.env.LOOMIX_ASSET_MAP = path.join(environmentDirectory, "asset-map.xml");
-  profile.paths.assetMap = process.env.LOOMIX_ASSET_MAP;
+  process.env.LOOMIX_ASSET_INDEX = path.join(environmentDirectory, "asset-index.json");
+  profile.paths.assetIndex = process.env.LOOMIX_ASSET_INDEX;
   await withLock(`${work}.lock`, async () => {
     fs.mkdirSync(work, { recursive: true });
     const manifestFile = path.join(work, "extraction-manifest.json");

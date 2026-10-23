@@ -5,7 +5,6 @@ import { fileURLToPath } from "node:url";
 import { profile, repoRoot } from "./config.ts";
 import { readJson, writeJson, removeWithin } from "./io.ts";
 import { runProcess } from "../../workflow/process.ts";
-import { readAssetMap, resolveAssetSource } from "../../client/asset-map.ts";
 import { exportAssets } from "../../client/anime-studio/index.ts";
 
 export async function prepare(options: WorkOptions) {
@@ -38,12 +37,8 @@ export async function prepare(options: WorkOptions) {
   writeJson(sourceFile, source);
   const wanted = new Set(Object.values(profile.binData));
   const candidates: IndexedAsset[] = [];
-  for await (const asset of readAssetMap(path.resolve(repoRoot, profile.paths.assetMap))) {
+  for (const asset of readJson<IndexedAsset[]>(path.resolve(repoRoot, profile.paths.assetIndex))) {
     if (asset.Type === "MiHoYoBinData" && asset.Name && wanted.has(asset.Name)) {
-      asset.Source = resolveAssetSource(
-        asset.Source,
-        path.resolve(repoRoot, profile.paths.gameRoot),
-      );
       candidates.push({
         Name: asset.Name,
         Type: asset.Type,

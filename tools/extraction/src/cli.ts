@@ -1,5 +1,5 @@
 import { parseArgs } from "node:util";
-import { init } from "./stages/init/index.ts";
+import { init } from "./environment/build.ts";
 import { extract } from "./stages/extract/index.ts";
 import { postprocess } from "./stages/postprocess/index.ts";
 import { verify } from "./stages/verify/index.ts";

@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import sax from "sax";
+import { repoRoot } from "../paths.ts";
 
 export interface AssetMapAsset {
   Name?: string;
@@ -102,3 +103,49 @@ export const normalizeAssetPath = (value: string) =>
     .toLowerCase()
     .replaceAll("\\", "/")
     .replace(/\.(png|jpe?g|tga|psd)$/, "");
+
+export interface AssetMapAudit {
+  assets: number;
+  indexed: number;
+  types: Record<string, number>;
+  baseSources: number;
+  persistentSources: number;
+}
+
+const INDEXED_TYPES = new Set(["Texture2D", "Sprite", "MiHoYoBinData"]);
+
+export async function buildAssetIndex(
+  xml: string,
+  gameRoot: string,
+): Promise<{ entries: AssetMapAsset[]; audit: AssetMapAudit }> {
+  const entries: AssetMapAsset[] = [];
+  const types: Record<string, number> = {};
+  let assets = 0;
+  let baseSources = 0;
+  let persistentSources = 0;
+  for await (const asset of readAssetMap(xml)) {
+    assets++;
+    types[asset.Type] = (types[asset.Type] ?? 0) + 1;
+    if (/[\\/]StreamingAssets[\\/]/i.test(asset.Source)) baseSources++;
+    if (/[\\/]Persistent[\\/]/i.test(asset.Source)) persistentSources++;
+    if (!INDEXED_TYPES.has(asset.Type)) continue;
+    const absolute = resolveAssetSource(asset.Source, gameRoot);
+    entries.push({
+      ...asset,
+      Source: path.relative(repoRoot, absolute).split(path.sep).join("/"),
+    });
+  }
+  const audit = { assets, indexed: entries.length, types, baseSources, persistentSources };
+  assertAssetMapCoverage(audit);
+  return { entries, audit };
+}
+
+export function assertAssetMapCoverage(coverage: {
+  assets: number;
+  baseSources: number;
+  persistentSources: number;
+}): void {
+  if (!coverage.assets) throw new Error("Incomplete or empty Asset Map");
+  if (!coverage.baseSources || !coverage.persistentSources)
+    throw new Error("Asset Map must contain base and Persistent resources");
+}

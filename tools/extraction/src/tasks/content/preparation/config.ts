@@ -9,6 +9,6 @@ export function getPaths() {
     out: options.output,
     gameRoot: path.resolve(repoRoot, profile.paths.gameRoot),
     clientIni: path.resolve(repoRoot, profile.paths.clientIni),
-    assetMap: path.resolve(repoRoot, profile.paths.assetMap),
+    assetIndex: path.resolve(repoRoot, profile.paths.assetIndex),
   };
 }

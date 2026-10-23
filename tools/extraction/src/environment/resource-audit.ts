@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
-import { within } from "../../paths.ts";
-import { parseVersionManifest } from "../../client/versions.ts";
-import type { VersionEntry } from "../../client/versions.ts";
+import { within } from "../paths.ts";
+import { parseVersionManifest } from "../client/versions.ts";
+import type { VersionEntry } from "../client/versions.ts";
 
 export { parseVersionManifest as parseResourceManifest };
 
