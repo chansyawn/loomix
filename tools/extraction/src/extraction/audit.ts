@@ -49,10 +49,11 @@ export async function audit(options: WorkOptions) {
     if (!relative || (scope !== "StreamingAssets" && scope !== "Persistent"))
       throw new Error(`Invalid package source: ${source}`);
     const expected = manifestEntry(manifests, scope, relative);
+    const absolute = path.resolve(repoRoot, source);
     const hash = crypto.createHash("md5");
-    for await (const bytes of fs.createReadStream(source)) hash.update(bytes);
+    for await (const bytes of fs.createReadStream(absolute)) hash.update(bytes);
     const md5 = hash.digest("hex"),
-      size = fs.statSync(source).size;
+      size = fs.statSync(absolute).size;
     records.push({
       source,
       expected,
