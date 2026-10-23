@@ -1,10 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import { z } from "zod";
-import { atomicJson, verifyFiles } from "./manifests.ts";
+import { atomicJson, verifyFiles } from "./manifest.ts";
 import { digest, inventory } from "./hashing.ts";
 import type { FileHash } from "./hashing.ts";
-import { within } from "./paths.ts";
+import { within } from "../paths.ts";
 
 const checkpointSchema = z.object({
   schemaVersion: z.literal(1),

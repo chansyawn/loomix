@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 import { z } from "zod";
 import { digest, hashFile } from "./hashing.ts";
 import type { FileHash } from "./hashing.ts";
-import { within } from "./paths.ts";
+import { within } from "../paths.ts";
 
 const hash = z.string().regex(/^[a-f0-9]{64}$/);
 const fileHash = z

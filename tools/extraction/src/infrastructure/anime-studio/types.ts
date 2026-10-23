@@ -1,4 +1,4 @@
-import type { ProcessOptions } from "../process.ts";
+import type { ProcessOptions } from "../../workflow/process.ts";
 
 export type RunProcess = (
   executable: string,

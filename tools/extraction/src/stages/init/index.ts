@@ -2,24 +2,19 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { profile, repoRoot } from "../../tasks/content/config.ts";
-import { runProcess } from "../../infrastructure/process.ts";
+import { runProcess } from "../../workflow/process.ts";
 import { buildAssetMap, ensureAnimeStudio } from "../../infrastructure/anime-studio/index.ts";
-import { withLock } from "../../infrastructure/anime-studio/lock.ts";
-import { digest, inventory } from "../../infrastructure/hashing.ts";
-import {
-  atomicJson,
-  publishManifest,
-  readManifest,
-  verifyFiles,
-} from "../../infrastructure/manifests.ts";
-import type { Manifest } from "../../infrastructure/manifests.ts";
-import { identityDirectory } from "../../infrastructure/paths.ts";
+import { withLock } from "../../workflow/lock.ts";
+import { digest, inventory } from "../../workflow/hashing.ts";
+import { atomicJson, publishManifest, readManifest, verifyFiles } from "../../workflow/manifest.ts";
+import type { Manifest } from "../../workflow/manifest.ts";
+import { identityDirectory } from "../../paths.ts";
 import {
   implementationRevision,
   profileHash,
   toolIdentity,
   gitRevision,
-} from "../../infrastructure/identity.ts";
+} from "../../workflow/identity.ts";
 
 import { verifyAssetMap } from "./asset-map.ts";
 import { validateResourceManifests } from "./resource-manifests.ts";

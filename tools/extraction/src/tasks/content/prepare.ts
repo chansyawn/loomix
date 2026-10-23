@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { profile, repoRoot } from "./config.ts";
 import { readJson, writeJson, removeWithin } from "./io.ts";
-import { runProcess } from "../../infrastructure/process.ts";
+import { runProcess } from "../../workflow/process.ts";
 import { readAssetMap } from "../../infrastructure/anime-studio/asset-map.ts";
 import { exportAssets } from "../../infrastructure/anime-studio/index.ts";
 

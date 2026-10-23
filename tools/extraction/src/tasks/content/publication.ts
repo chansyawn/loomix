@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { readJson, removeWithin } from "./io.ts";
-import { filesWithin, inventory, digest } from "../../infrastructure/hashing.ts";
+import { filesWithin, inventory, digest } from "../../workflow/hashing.ts";
 import { safeOutput } from "./output.ts";
 import { validate } from "./validate.ts";
 

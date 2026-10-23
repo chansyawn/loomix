@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { execa, ExecaError } from "execa";
-import { repoRoot } from "./client-profile.ts";
+import { repoRoot } from "../paths.ts";
 
 export interface ProcessOptions {
   logFile?: string;

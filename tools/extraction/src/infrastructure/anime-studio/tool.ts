@@ -1,16 +1,16 @@
 import type { ToolOptions, AnimeStudio, ExtractionOptions } from "./types.ts";
-import type { ProcessOptions } from "../process.ts";
-import { errorCode, errorMessage } from "../errors.ts";
+import type { ProcessOptions } from "../../workflow/process.ts";
+import { errorCode, errorMessage } from "../../workflow/errors.ts";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import readline from "node:readline";
 import { cacheRoot, patchFile, repoRoot, runtimeIdentifier, version } from "./config.ts";
 import { preparePlatform } from "./platforms.ts";
-import { runProcess } from "../process.ts";
-import { withLock } from "./lock.ts";
-import { inventory, filesWithin, digest } from "../hashing.ts";
-import { verifyFiles, atomicJson } from "../manifests.ts";
+import { runProcess } from "../../workflow/process.ts";
+import { withLock } from "../../workflow/lock.ts";
+import { inventory, filesWithin, digest } from "../../workflow/hashing.ts";
+import { verifyFiles, atomicJson } from "../../workflow/manifest.ts";
 import { z } from "zod";
 import { inspectAssetMap } from "./asset-map.ts";
 

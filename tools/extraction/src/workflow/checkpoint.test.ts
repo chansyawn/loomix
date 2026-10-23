@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import assert from "node:assert/strict";
 import { test } from "vite-plus/test";
-import { runCheckpoints } from "./checkpoints.ts";
+import { runCheckpoints } from "./checkpoint.ts";
 import { digest } from "./hashing.ts";
 
 test("checkpoints verify bytes, inputs and dependent outputs before reuse", async (t) => {

@@ -1,17 +1,13 @@
 import fs from "node:fs";
 import path from "node:path";
-import { identityDirectory } from "../../infrastructure/paths.ts";
-import { readManifest, publishManifest, atomicJson } from "../../infrastructure/manifests.ts";
-import type { Manifest } from "../../infrastructure/manifests.ts";
-import { digest, filesWithin, inventory } from "../../infrastructure/hashing.ts";
-import {
-  implementationRevision,
-  profileHash,
-  toolIdentity,
-} from "../../infrastructure/identity.ts";
-import { runCheckpoints } from "../../infrastructure/checkpoints.ts";
+import { identityDirectory } from "../../paths.ts";
+import { readManifest, publishManifest, atomicJson } from "../../workflow/manifest.ts";
+import type { Manifest } from "../../workflow/manifest.ts";
+import { digest, filesWithin, inventory } from "../../workflow/hashing.ts";
+import { implementationRevision, profileHash, toolIdentity } from "../../workflow/identity.ts";
+import { runCheckpoints } from "../../workflow/checkpoint.ts";
 import { ensureAnimeStudio } from "../../infrastructure/anime-studio/index.ts";
-import { withLock } from "../../infrastructure/anime-studio/lock.ts";
+import { withLock } from "../../workflow/lock.ts";
 import { validateClient } from "../init/index.ts";
 import { prepare } from "../../tasks/content/prepare.ts";
 import { structure } from "../../tasks/content/structure.ts";

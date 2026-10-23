@@ -16,7 +16,7 @@ import assert from "node:assert/strict";
 import { fieldCandidateSchema } from "./schemas/field-candidates.ts";
 import { parseRawContent } from "./schemas/raw-content.ts";
 import { fieldEvidenceSchema } from "./schemas/evidence.ts";
-import { within } from "../../infrastructure/paths.ts";
+import { within } from "../../paths.ts";
 import { PNG } from "pngjs";
 import { profile } from "./config.ts";
 import { Tables } from "./table-reader.ts";

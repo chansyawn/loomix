@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
-import { repoRoot } from "./client-profile.ts";
+import { fileURLToPath } from "node:url";
+
+export const repoRoot = fileURLToPath(new URL("../../../", import.meta.url));
 
 export const extractionRoot = path.join(repoRoot, "resources/temp/extraction");
 

@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import type { TestContext } from "vite-plus/test";
 import { test } from "vite-plus/test";
-import { runProcess } from "./process.ts";
+import { runProcess } from "../workflow/process.ts";
 
 function fixture(t: TestContext): { root: string; logFile: string } {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "loomix process's "));

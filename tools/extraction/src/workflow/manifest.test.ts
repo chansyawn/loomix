@@ -3,10 +3,10 @@ import os from "node:os";
 import path from "node:path";
 import assert from "node:assert/strict";
 import { test } from "vite-plus/test";
-import { atomicJson, publishManifest, readManifest } from "./manifests.ts";
-import type { Manifest } from "./manifests.ts";
+import { atomicJson, publishManifest, readManifest } from "./manifest.ts";
+import type { Manifest } from "./manifest.ts";
 import { digest, inventory } from "./hashing.ts";
-import { within, identityDirectory } from "./paths.ts";
+import { within, identityDirectory } from "../paths.ts";
 
 test("manifests reject corrupt outputs, unsupported schema and unsafe paths", async (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-manifest-"));

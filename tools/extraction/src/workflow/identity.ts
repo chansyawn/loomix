@@ -2,10 +2,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
-import { profile } from "../tasks/content/config.ts";
-import { version, patchFile, runtimeIdentifier } from "./anime-studio/config.ts";
+import { profile } from "../profile.ts";
+import { version, patchFile, runtimeIdentifier } from "../infrastructure/anime-studio/config.ts";
 import { digest, inventory, filesWithin } from "./hashing.ts";
-import { repoRoot } from "./client-profile.ts";
+import { repoRoot } from "../paths.ts";
 
 export const sourceRoot = fileURLToPath(new URL("../", import.meta.url));
 export const profileHash = digest({ ...profile, paths: { ...profile.paths, assetMap: null } });

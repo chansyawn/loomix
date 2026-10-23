@@ -8,8 +8,8 @@ import { setTimeout } from "node:timers/promises";
 import { spawnSync } from "node:child_process";
 import { test } from "vite-plus/test";
 import { createAnimeStudio } from "./tool.ts";
-import { runProcess } from "../process.ts";
-import { withLock } from "./lock.ts";
+import { runProcess } from "../../workflow/process.ts";
+import { withLock } from "../../workflow/lock.ts";
 
 const fixture = `
 const fs = require('node:fs');

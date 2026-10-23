@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
-import { readManifest, verifyFiles } from "../../infrastructure/manifests.ts";
-import { digest, inventory } from "../../infrastructure/hashing.ts";
-import { identityDirectory } from "../../infrastructure/paths.ts";
+import { readManifest, verifyFiles } from "../../workflow/manifest.ts";
+import { digest, inventory } from "../../workflow/hashing.ts";
+import { identityDirectory } from "../../paths.ts";
 import { validateClient } from "../init/index.ts";
 import { websiteDirectory } from "../postprocess/index.ts";
 import { safeOutput } from "../../tasks/content/output.ts";

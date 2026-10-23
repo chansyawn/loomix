@@ -1,4 +1,4 @@
-import { errorCode } from "../errors.ts";
+import { errorCode } from "./errors.ts";
 import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
@@ -60,7 +60,7 @@ export async function withLock<T>(
       if (errorCode(error) !== "EEXIST") throw error;
       await removeAbandonedLock(directory);
       if (Date.now() - started >= timeout)
-        throw new Error(`Timed out waiting for AnimeStudio initialization; check ${directory}`);
+        throw new Error(`Timed out waiting for lock; check ${directory}`);
       await setTimeout(interval);
     }
   }
