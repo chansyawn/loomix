@@ -1,5 +1,5 @@
 import type { ContentGroup } from "@loomix/content-schema";
-import type { Row, TableRow } from "../../../tasks/content/types.ts";
+import type { Row, TableRow } from "../../types.ts";
 
 export interface RecordContext {
   id: number;

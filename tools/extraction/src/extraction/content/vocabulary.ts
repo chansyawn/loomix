@@ -1,9 +1,9 @@
 import type { ContentGroup } from "@loomix/content-schema";
-import type { TagNode, Row, TableRow } from "../../tasks/content/types.ts";
+import type { TagNode, Row, TableRow } from "../types.ts";
 import type { Tables } from "../decode/tables.ts";
 import type { TagDisplay, CreatureDisplayMap } from "../decode/bindata.ts";
 import { profile } from "../../profile.ts";
-import { splitTags } from "../../tasks/content/model.ts";
+import { splitTags } from "./model.ts";
 
 export interface Subgroup {
   group: number;

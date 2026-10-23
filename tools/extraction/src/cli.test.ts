@@ -11,7 +11,7 @@ test("CLI help works outside the repository without initializing client or tool"
     encoding: "utf8",
   });
   assert.equal(help.status, 0, help.stderr);
-  assert.match(help.stdout, /init.*extract.*postprocess.*verify/);
+  assert.match(help.stdout, /init.*extract.*deliver.*verify/);
   assert.match(help.stdout, /resources\/website/);
   assert.doesNotMatch(help.stdout, /Hashing|Preparing/);
   const legacy = spawnSync(process.execPath, [entry, "extract", "--step", "structure"], {

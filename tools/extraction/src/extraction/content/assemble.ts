@@ -1,11 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { contentGroups, emptyContent, groupAt, recordSchemas } from "@loomix/content-schema";
-import type { WorkOptions, EvidenceRecord, SelectedImage } from "../../tasks/content/types.ts";
+import type { WorkOptions, EvidenceRecord, SelectedImage } from "../types.ts";
 import { profile } from "../../profile.ts";
 import { writeJson } from "../../workflow/json.ts";
 import { removeWithin } from "../../workflow/fs.ts";
-import { validateModel } from "../../tasks/content/model.ts";
+import { validateModel } from "./model.ts";
 import { fieldCandidateSchema } from "../evidence/schema.ts";
 import type { FieldCandidate } from "../evidence/schema.ts";
 import { createContentContext } from "./context.ts";

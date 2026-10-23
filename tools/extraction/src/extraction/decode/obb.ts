@@ -1,4 +1,4 @@
-import type { ScalarMethod, TableIndex } from "../../tasks/content/types.ts";
+import type { ScalarMethod, TableIndex } from "../types.ts";
 import fs from "node:fs";
 import { profile } from "../../profile.ts";
 const utf8 = new TextDecoder("utf-8", { fatal: true });

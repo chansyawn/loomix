@@ -39,6 +39,6 @@ test("manifests reject corrupt outputs, unsupported schema and unsafe paths", as
     assert.throws(() => within(root, relative), /Unsafe/);
   fs.symlinkSync(directory, path.join(root, "alias"));
   assert.throws(() => within(root, "alias/output.json"), /link/);
-  assert.throws(() => identityDirectory("runs", "../outside"), /identity/);
+  assert.throws(() => identityDirectory("extractions", "../outside"), /identity/);
   assert.ok(fs.readdirSync(directory).every((file) => !file.endsWith(".tmp")));
 });

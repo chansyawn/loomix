@@ -4,8 +4,8 @@ import type {
   TableEvidence,
   TagNode,
   BinDataAsset,
-} from "../../tasks/content/types.ts";
-import { plainText } from "../../tasks/content/model.ts";
+} from "../types.ts";
+import { plainText } from "../content/model.ts";
 import { Tables } from "../decode/tables.ts";
 import { profile } from "../../profile.ts";
 import { relatedRows } from "./rows.ts";

@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "vite-plus/test";
-import { publish, safeOutput } from "./publication.ts";
+import { publish, safeOutput } from "./publish.ts";
 
 function fixture() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-publication-"));

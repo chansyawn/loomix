@@ -114,9 +114,14 @@ export interface AssetMapAudit {
 
 const INDEXED_TYPES = new Set(["Texture2D", "Sprite", "MiHoYoBinData"]);
 
+export interface AssetIndexOptions {
+  binDataNames?: Set<string>;
+}
+
 export async function buildAssetIndex(
   xml: string,
   gameRoot: string,
+  options: AssetIndexOptions = {},
 ): Promise<{ entries: AssetMapAsset[]; audit: AssetMapAudit }> {
   const entries: AssetMapAsset[] = [];
   const types: Record<string, number> = {};
@@ -129,6 +134,12 @@ export async function buildAssetIndex(
     if (/[\\/]StreamingAssets[\\/]/i.test(asset.Source)) baseSources++;
     if (/[\\/]Persistent[\\/]/i.test(asset.Source)) persistentSources++;
     if (!INDEXED_TYPES.has(asset.Type)) continue;
+    if (
+      asset.Type === "MiHoYoBinData" &&
+      options.binDataNames &&
+      (!asset.Name || !options.binDataNames.has(asset.Name))
+    )
+      continue;
     const absolute = resolveAssetSource(asset.Source, gameRoot);
     entries.push({
       ...asset,

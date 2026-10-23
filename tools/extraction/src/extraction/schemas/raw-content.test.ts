@@ -2,7 +2,7 @@ import { test } from "vite-plus/test";
 import assert from "node:assert/strict";
 import { emptyContent, parseContent } from "@loomix/content-schema";
 import { parseRawContent } from "./raw-content.ts";
-import { validateModel } from "../model.ts";
+import { validateModel } from "../content/model.ts";
 
 test("raw PNG references retain shared field and member constraints without weakening delivery schema", () => {
   const content = emptyContent();

@@ -1,8 +1,8 @@
-import { errorCode } from "../../workflow/errors.ts";
+import { errorCode } from "../workflow/errors.ts";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { repoRoot } from "./config.ts";
+import { repoRoot } from "../paths.ts";
 
 function contains(parent: string, child: string) {
   const relative = path.relative(parent.toLowerCase(), child.toLowerCase());

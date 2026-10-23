@@ -1,4 +1,4 @@
-import type { SelectedImage, ImageManifest } from "../../tasks/content/types.ts";
+import type { SelectedImage, ImageManifest } from "../types.ts";
 
 export const assetKey = (asset: SelectedImage | ImageManifest) =>
   `${asset.source}|${asset.assetType}|${asset.pathId}`;

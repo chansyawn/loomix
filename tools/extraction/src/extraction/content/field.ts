@@ -1,12 +1,7 @@
 import type { ContentGroup } from "@loomix/content-schema";
-import type {
-  Evidence,
-  EvidenceRecord,
-  FieldValue,
-  SelectedImage,
-} from "../../tasks/content/types.ts";
+import type { Evidence, EvidenceRecord, FieldValue, SelectedImage } from "../types.ts";
 import type { FieldCandidate } from "../evidence/schema.ts";
-import { additionalFields } from "../../tasks/content/model.ts";
+import { additionalFields } from "./model.ts";
 
 export interface Field<T extends FieldValue = FieldValue> {
   value: T;

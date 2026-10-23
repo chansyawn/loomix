@@ -1,5 +1,4 @@
 // 各提取入口共用的客户端快照、解码布局与验收期望。
-// paths.assetIndex 是尚未消除的运行时覆盖，后续阶段会改为显式参数。
 export const profile = {
   gameVersion: "0.95.2",
   branch: "live_0.95",
@@ -10,7 +9,6 @@ export const profile = {
   paths: {
     gameRoot: "resources/game-client/PetitPlanet_Data",
     clientIni: "resources/game-client/config.ini",
-    assetIndex: process.env.LOOMIX_ASSET_INDEX ?? "",
   },
   // 解码布局和验收数量对应此客户端快照；更新版本时需重新核对。
   byteMask: 0x01350257,

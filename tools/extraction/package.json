@@ -5,7 +5,7 @@
   "scripts": {
     "init": "node src/cli.ts init",
     "extract": "node src/cli.ts extract",
-    "postprocess": "node src/cli.ts postprocess",
+    "deliver": "node src/cli.ts deliver",
     "verify": "node src/cli.ts verify",
     "test": "vp test run"
   },

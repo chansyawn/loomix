@@ -8,12 +8,12 @@ import type {
   ImageManifest,
   ProcessedImage,
   EvidenceRecord,
-} from "./types.ts";
-import { readJson, writeJson } from "./io.ts";
-import { processImage, imageDimensions } from "./image-processing.ts";
-import { groupAt } from "./model.ts";
-const assetKey = (a: SelectedImage) => `${a.source}|${a.assetType}|${a.pathId}`;
-export async function postprocessImages(options: WorkOptions, extraction: string) {
+} from "../extraction/types.ts";
+import { readJson, writeJson } from "../workflow/json.ts";
+import { processImage, imageDimensions } from "./image.ts";
+import { groupAt } from "@loomix/content-schema";
+import { assetKey } from "../extraction/images/select.ts";
+export async function renderImages(options: WorkOptions, extraction: string) {
   const selected = readJson<SelectedImage[]>(path.join(extraction, "selected-images.json"));
   const manifest = readJson<ImageManifest[]>(path.join(extraction, "image-candidates.json"));
   const content = readJson<Content>(path.join(extraction, "raw/content.json"));

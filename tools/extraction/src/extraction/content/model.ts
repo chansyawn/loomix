@@ -1,5 +1,5 @@
 import type { ContentGroup, ContentRecord } from "@loomix/content-schema";
-import type { TagNode } from "./types.ts";
+import type { TagNode } from "../types.ts";
 import assert from "node:assert/strict";
 import { contentGroups, groupAt, parseContent } from "@loomix/content-schema";
 

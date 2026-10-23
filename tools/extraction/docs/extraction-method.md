@@ -153,15 +153,15 @@ resources/game-client/ 中的客户端文件
   → 完整 PNG 导出、原生分辨率比较、稳定选图（raw-assets）
   → 字段证据、未知原因、未确认候选、范围外成员、来源包审计
   → extraction-verify、extraction-manifest.json
-  → 只读取 extraction bundle 的图片缩放、裁切、WebP 编码（postprocess）
+  → 只读取 extraction bundle 的图片缩放、裁切、WebP 编码（deliver）
   → 最终 JSON 与按最终字节 SHA256 去重的 WebP
   → 交付验证、delivery-manifest.json、目录发布与失败回滚
   → verify 对输入、整条 manifest 链及已发布字节进行验收
 ```
 
-版本化产物统一位于 `resources/temp/extraction/{environments,runs,deliveries}/<id>/`，工具位于同一临时根下独立的 `tool-cache/anime-studio/`；客户端输入和网站交付分别位于 `resources/game-client/`、`resources/website/`。不同版本或提取需求通过内容身份区分，不按交付路径创建工作区。
+版本化产物统一位于 `resources/temp/extraction/{environments,extractions,deliveries}/<id>/`，工具位于同一临时根下独立的 `tool-cache/anime-studio/`；客户端输入和网站交付分别位于 `resources/game-client/`、`resources/website/`。不同版本或提取需求通过内容身份区分，不按交付路径创建工作区。
 
-environment、extraction、delivery 的 manifest 均采用 schemaVersion 1。输出项使用相对 manifest 所在目录的 `path`、SHA256 和 `bytes`；输入清单也有整体 SHA256。实现摘要覆盖维护源码、共享契约、提取包配置和仓库 lockfile，profile 摘要不受环境中 Asset Map 绝对路径影响。状态只有全部验证成功后才写为 verified。manifest 使用临时文件加 rename 发布，不以 marker 存在代替字节验证。
+environment、extraction、delivery 的 manifest 均采用 schemaVersion 1。输出项使用相对 manifest 所在目录的 `path`、SHA256 和 `bytes`；输入清单也有整体 SHA256。实现摘要覆盖维护源码、共享契约、提取包配置和仓库 lockfile，profile 摘要不受资源索引路径影响。状态只有全部验证成功后才写为 verified。manifest 使用临时文件加 rename 发布，不以 marker 存在代替字节验证。
 
 每个内部 checkpoint 保存 `schemaVersion`、阶段名、输入摘要、依赖摘要和输出清单。每次恢复都检查原始输入、依赖、输出哈希和输出集合。一个 checkpoint 失效会在运行前删除它和下游 marker；上游成功但下游失败后，可以重用已核实的上游产物。最终 extraction manifest 在重新执行时先失效，避免旧成功状态掩盖失败。
 
@@ -169,4 +169,4 @@ environment、extraction、delivery 的 manifest 均采用 schemaVersion 1。输
 
 `evidence/missing-fields.json` 使用同一字段协议，状态 unconfirmed 且必须带 reason；字段未找到、文本缺失、用途未确认、冲突等均不等价于值不存在。`field-candidates.json` 保留实际候选参数，`outside-members.json` 解释被范围规则排除的关联；它们不回填交付字段。`source-audit.json` 将所有候选图片、BinData 和 OBB 来源绑定到版本清单，不能只审计最后选中的图片。
 
-raw/content.json 保留结构阶段结果；raw/images-content.json 在不修改结构 checkpoint 输出的情况下加入选中 PNG 的 bundle 相对路径。后处理从原始内容和选图 manifest 生成新的交付 JSON，图片字段改为 `assets/<SHA256>.webp`，并生成交付侧字段证据。最终验证从 bundle 中冻结的 OBB 重新核对表 93 集合、品阶及成员，不打开客户端；只有 init、extract 和完整链 verify 会核对实际客户端快照。
+raw/content.json 保留结构阶段结果；raw/images-content.json 在不修改结构 checkpoint 输出的情况下加入选中 PNG 的 bundle 相对路径。交付阶段从原始内容和选图 manifest 生成新的交付 JSON，图片字段改为 `assets/<SHA256>.webp`，并生成交付侧字段证据。最终验证从 bundle 中冻结的 OBB 重新核对表 93 集合、品阶及成员，不打开客户端；只有 init、extract 和完整链 verify 会核对实际客户端快照。

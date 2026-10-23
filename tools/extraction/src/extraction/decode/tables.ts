@@ -1,11 +1,4 @@
-import type {
-  ConfigSource,
-  TableIndex,
-  TableRow,
-  Row,
-  TextMap,
-  ScalarMethod,
-} from "../../tasks/content/types.ts";
+import type { ConfigSource, TableIndex, TableRow, Row, TextMap, ScalarMethod } from "../types.ts";
 import path from "node:path";
 import { ObbReader } from "./obb.ts";
 import { readJson } from "../../workflow/json.ts";

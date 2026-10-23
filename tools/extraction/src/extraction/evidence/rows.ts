@@ -1,11 +1,5 @@
-import type {
-  Evidence,
-  EvidenceRecord,
-  TableEvidence,
-  TagNode,
-  TableRow,
-} from "../../tasks/content/types.ts";
-import { expandTags, splitTags } from "../../tasks/content/model.ts";
+import type { Evidence, EvidenceRecord, TableEvidence, TagNode, TableRow } from "../types.ts";
+import { expandTags, splitTags } from "../content/model.ts";
 import { Tables } from "../decode/tables.ts";
 import { profile } from "../../profile.ts";
 function tableEvidence(evidence: Evidence): TableEvidence[] {

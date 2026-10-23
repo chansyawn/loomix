@@ -1,5 +1,5 @@
 import path from "node:path";
-import type { TableRow, BinDataAsset, IndexedAsset, IconMatch } from "../../tasks/content/types.ts";
+import type { TableRow, BinDataAsset, IndexedAsset, IconMatch } from "../types.ts";
 import { readJson } from "../../workflow/json.ts";
 import { profile } from "../../profile.ts";
 import { Tables } from "../decode/tables.ts";

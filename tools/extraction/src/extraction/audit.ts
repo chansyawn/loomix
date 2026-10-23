@@ -5,7 +5,7 @@ import type {
   ConfigSource,
   SourceCheck,
   SourceAudit,
-} from "../tasks/content/types.ts";
+} from "./types.ts";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";

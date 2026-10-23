@@ -1,14 +1,15 @@
 import { recordSchemas } from "@loomix/content-schema";
-import type { ScalarMethod, TableRow } from "./types.ts";
+import type { ScalarMethod, TableRow } from "../types.ts";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "vite-plus/test";
-import { ObbReader } from "../../extraction/decode/obb.ts";
-import { createIconResolver } from "../../extraction/images/resolve.ts";
-import { profile, repoRoot } from "./config.ts";
-import { hashTextKey, readUIntVector, Tables } from "../../extraction/decode/tables.ts";
+import { ObbReader } from "../decode/obb.ts";
+import { createIconResolver } from "../images/resolve.ts";
+import { profile } from "../../profile.ts";
+import { repoRoot } from "../../paths.ts";
+import { hashTextKey, readUIntVector, Tables } from "../decode/tables.ts";
 import {
   additionalFields,
   emptyContent,
@@ -16,19 +17,16 @@ import {
   expandTags,
   furnitureSize,
 } from "./model.ts";
-import { exportImages, imageBatches } from "../../extraction/images/export.ts";
-import { highestResolutionImages } from "../../extraction/images/select.ts";
-import { safeOutput } from "./publication.ts";
-import { removeWithin } from "./io.ts";
+import { exportImages, imageBatches } from "../images/export.ts";
+import { highestResolutionImages } from "../images/select.ts";
+import { safeOutput } from "../../delivery/output.ts";
+import { removeWithin } from "../../workflow/fs.ts";
 
 const fixtures: {
   scalars: { hex: string; method: ScalarMethod; expected: number }[];
   vector: { hex: string; expected: number[] };
 } = JSON.parse(
-  fs.readFileSync(
-    new URL("../../extraction/decode/fixtures/obb-samples.json", import.meta.url),
-    "utf8",
-  ),
+  fs.readFileSync(new URL("../decode/fixtures/obb-samples.json", import.meta.url), "utf8"),
 );
 test("actual client bytes preserve the appearance flag and float", () => {
   for (const sample of fixtures.scalars) {

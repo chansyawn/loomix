@@ -11,12 +11,7 @@ import { exportAssets } from "../client/anime-studio/index.ts";
 import { ObbReader } from "./decode/obb.ts";
 import { decodeTextMap } from "./decode/textmap.ts";
 import { indexTables, Tables } from "./decode/tables.ts";
-import type {
-  BinDataAsset,
-  ConfigFile,
-  ConfigSource,
-  IndexedAsset,
-} from "../tasks/content/types.ts";
+import type { BinDataAsset, ConfigFile, ConfigSource, IndexedAsset } from "./types.ts";
 
 export interface DecodeOptions {
   work: string;

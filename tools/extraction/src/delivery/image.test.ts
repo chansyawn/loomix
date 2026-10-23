@@ -6,10 +6,10 @@ import path from "node:path";
 import crypto from "node:crypto";
 import sharp from "sharp";
 import { emptyContent } from "@loomix/content-schema";
-import { processImage, decodeWebp } from "./image-processing.ts";
-import { exportImages } from "../../extraction/images/export.ts";
-import { postprocessImages } from "./postprocess-images.ts";
-import type { ProcessedImage, SelectedImage } from "./types.ts";
+import { processImage, decodeWebp } from "./image.ts";
+import { exportImages } from "../extraction/images/export.ts";
+import { renderImages } from "./images.ts";
+import type { ProcessedImage, SelectedImage } from "../extraction/types.ts";
 
 for (const size of [256, 512]) {
   test(`converts ${size}px icons to 256px WebP and preserves alpha`, async () => {
@@ -114,7 +114,7 @@ test("asset delivery deduplicates identical outputs and separates target dimensi
       path.join(work, "image-field-evidence.json"),
       path.join(work, "evidence/field-evidence.json"),
     );
-    await postprocessImages({ work }, work);
+    await renderImages({ work }, work);
     const manifest: ProcessedImage[] = JSON.parse(
       fs.readFileSync(path.join(work, "image-manifest.json"), "utf8"),
     );

@@ -1,20 +1,17 @@
 import fs from "node:fs";
 import path from "node:path";
-import { identityDirectory } from "../../paths.ts";
-import { readManifest, publishManifest, atomicJson } from "../../workflow/manifest.ts";
-import type { Manifest } from "../../workflow/manifest.ts";
-import { digest, inventory, filesWithin } from "../../workflow/hashing.ts";
-import { implementationRevision, profileHash } from "../../workflow/identity.ts";
-import { withLock } from "../../workflow/lock.ts";
-import { repoRoot } from "../../paths.ts";
-import { postprocessImages } from "../../tasks/content/postprocess-images.ts";
-import { validate } from "../../tasks/content/validate.ts";
-import { publish, safeOutput } from "../../tasks/content/publication.ts";
+import { identityDirectory, websiteDirectory } from "../paths.ts";
+import { readManifest, publishManifest, atomicJson } from "../workflow/manifest.ts";
+import type { Manifest } from "../workflow/manifest.ts";
+import { digest, inventory, filesWithin } from "../workflow/hashing.ts";
+import { implementationRevision, profileHash } from "../workflow/identity.ts";
+import { withLock } from "../workflow/lock.ts";
+import { renderImages } from "./images.ts";
+import { verifyDelivery } from "./verify.ts";
+import { publish, safeOutput } from "./publish.ts";
 
-export const websiteDirectory = path.join(repoRoot, "resources/website");
-
-export async function postprocess(extractionId: string): Promise<string> {
-  const bundle = identityDirectory("runs", extractionId);
+export async function deliver(extractionId: string): Promise<string> {
+  const bundle = identityDirectory("extractions", extractionId);
   const extraction = await readManifest(bundle, "extraction");
   if (extraction.profileHash !== profileHash)
     throw new Error("Extraction profile differs from the current profile; extract again");
@@ -39,8 +36,8 @@ export async function postprocess(extractionId: string): Promise<string> {
     fs.rmSync(path.join(work, "staging"), { recursive: true, force: true });
     const options = { work, output: websiteDirectory };
     try {
-      await postprocessImages(options, bundle);
-      await validate(options, bundle);
+      await renderImages(options, bundle);
+      await verifyDelivery(work, bundle);
       atomicJson(path.join(work, "run-report.json"), {
         passed: true,
         extractionId,
@@ -56,19 +53,23 @@ export async function postprocess(extractionId: string): Promise<string> {
         inputs: { id: extractionId, sha256: digest(inputs), files: inputs },
         implementation,
         profileHash,
-        tools: { ...extraction.tools, sharp: "0.35.5" },
+        tools: extraction.tools,
         outputs: await inventory(
           work,
-          filesWithin(work).filter((file) => file !== "delivery-manifest.json"),
+          filesWithin(work).filter(
+            (file) =>
+              !file.startsWith("logs/") &&
+              !["run-report.json", "delivery-manifest.json"].includes(file),
+          ),
         ),
         result: { passed: true, validation: "passed", failures: [] },
       };
       // Re-read the sealed extraction before publication in case it changed during image processing.
       await readManifest(bundle, "extraction");
       if ((await implementationRevision()) !== implementation)
-        throw new Error("Implementation changed during postprocess; rerun postprocess");
+        throw new Error("Implementation changed during delivery; rerun deliver");
       await publishManifest(work, manifest);
-      await publish(options, (request) => validate(request, bundle, false, false));
+      await publish(options);
     } catch (error) {
       fs.rmSync(path.join(work, "delivery-manifest.json"), { force: true });
       atomicJson(path.join(work, "run-report.json"), {

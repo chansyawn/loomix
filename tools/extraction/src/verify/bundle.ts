@@ -1,44 +1,50 @@
 import type {
-  WorkOptions,
   ImageManifest,
   ProcessedImage,
   SelectedImage,
   SourceAudit,
   EvidenceRecord,
   FieldValue,
-} from "./types.ts";
-import type { ContentRecord } from "@loomix/content-schema";
-import { parseContent, contentGroups } from "@loomix/content-schema";
+} from "../extraction/types.ts";
+import type { Content, ContentRecord } from "@loomix/content-schema";
+import { contentGroups } from "@loomix/content-schema";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import assert from "node:assert/strict";
-import { fieldCandidateSchema } from "../../extraction/evidence/schema.ts";
-import { parseRawContent } from "./schemas/raw-content.ts";
-import { fieldEvidenceSchema } from "../../extraction/evidence/schema.ts";
-import { within } from "../../paths.ts";
+import { fieldCandidateSchema, fieldEvidenceSchema } from "../extraction/evidence/schema.ts";
+
+import { within } from "../paths.ts";
 import { PNG } from "pngjs";
-import { profile } from "./config.ts";
-import { Tables } from "../../extraction/decode/tables.ts";
-import { readJson, writeJson } from "./io.ts";
-import { additionalFields, basicFields, groupAt, validateModel } from "./model.ts";
-import { highestResolutionImages } from "../../extraction/images/select.ts";
-import { decodeWebp, imageDimensions } from "./image-processing.ts";
+import { profile } from "../profile.ts";
+import { Tables } from "../extraction/decode/tables.ts";
+import { readJson, writeJson } from "../workflow/json.ts";
+import {
+  additionalFields,
+  basicFields,
+  groupAt,
+  validateModel,
+} from "../extraction/content/model.ts";
+import { highestResolutionImages } from "../extraction/images/select.ts";
+import { decodeWebp, imageDimensions } from "../delivery/image.ts";
 
 function fieldValue(row: ContentRecord, field: string): FieldValue | undefined {
   const values: Record<string, FieldValue> = row;
   return values[field];
 }
 
-export async function validate(
-  options: WorkOptions,
-  bundle = options.work,
-  raw = false,
-  writeReports = true,
-) {
-  const staging = path.join(options.work, raw ? "raw" : "staging"),
-    contentFile = path.join(staging, raw ? "images-content.json" : "content.json");
-  const parse = raw ? parseRawContent : parseContent;
+export interface BundleVerification {
+  reportRoot: string;
+  bundle: string;
+  staging: string;
+  contentFile: string;
+  raw: boolean;
+  parse: (input: unknown) => Content;
+  writeReports: boolean;
+}
+
+export async function verifyBundle(request: BundleVerification): Promise<void> {
+  const { reportRoot, bundle, staging, contentFile, raw, parse, writeReports } = request;
   const content = parse(readJson(contentFile)),
     tables = new Tables(path.join(bundle, "prepared"));
   const scope = tables.rows(profile.roots.content).map((r) => tables.id(r));
@@ -50,7 +56,7 @@ export async function validate(
   const qualities = new Set(tables.rows(profile.roots.qualities).map((r) => tables.uint(r, 1, 0)));
   const { all, counts } = validateModel(content, scope, profile.expectedContent, qualities, parse);
   const manifest = readJson<(ProcessedImage | ImageManifest)[]>(
-    path.join(options.work, "image-manifest.json"),
+    path.join(reportRoot, "image-manifest.json"),
   );
   const selected = readJson<SelectedImage[]>(path.join(bundle, "selected-images.json"));
   assert.deepEqual(
@@ -142,7 +148,7 @@ export async function validate(
     }
   }
   const proofs = readJson<EvidenceRecord[]>(
-    path.join(options.work, raw ? "evidence/field-evidence.json" : "field-evidence.json"),
+    path.join(reportRoot, raw ? "evidence/field-evidence.json" : "field-evidence.json"),
   );
   const missing = readJson<EvidenceRecord[]>(path.join(bundle, "evidence/missing-fields.json"));
   const recordGroups = new Map(
@@ -162,7 +168,7 @@ export async function validate(
     assert.ok(!evidenceKeys.has(key), `Duplicate/conflicting field evidence: ${key}`);
     evidenceKeys.add(key);
   }
-  const candidates = readJson<import("../../extraction/evidence/schema.ts").FieldCandidate[]>(
+  const candidates = readJson<import("../extraction/evidence/schema.ts").FieldCandidate[]>(
     path.join(bundle, "evidence/field-candidates.json"),
   );
   for (const input of candidates) {
@@ -205,9 +211,9 @@ export async function validate(
       }),
     );
   }
-  if (writeReports) writeJson(path.join(options.work, "coverage.json"), coverage);
+  if (writeReports) writeJson(path.join(reportRoot, "coverage.json"), coverage);
   if (writeReports)
-    writeJson(path.join(options.work, "validation.json"), {
+    writeJson(path.join(reportRoot, "validation.json"), {
       passed: true,
       gameVersion: profile.gameVersion,
       revision: profile.dataRevision,

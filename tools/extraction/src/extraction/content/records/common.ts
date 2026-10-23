@@ -1,6 +1,6 @@
 import type { ContentGroup } from "@loomix/content-schema";
-import type { IconMatch, Row, TableEvidence } from "../../../tasks/content/types.ts";
-import { plainText } from "../../../tasks/content/model.ts";
+import type { IconMatch, Row, TableEvidence } from "../../types.ts";
+import { plainText } from "../model.ts";
 import { profile } from "../../../profile.ts";
 import type { RecordBuilder } from "../field.ts";
 import type { ContentContext } from "../context.ts";

@@ -1,4 +1,4 @@
-import { plainText } from "../../../tasks/content/model.ts";
+import { plainText } from "../model.ts";
 import { profile } from "../../../profile.ts";
 import type { RecordBuilder } from "../field.ts";
 import type { ContentContext } from "../context.ts";

@@ -13,7 +13,7 @@ import { prepareSource } from "./source.ts";
 import { structure } from "./content/assemble.ts";
 import { exportImages } from "./images/export.ts";
 import { audit } from "./audit.ts";
-import { validate } from "../tasks/content/validate.ts";
+import { verifyExtraction } from "./verify.ts";
 import { finalizeEvidence } from "./evidence/build.ts";
 
 export async function extract(environmentId: string): Promise<string> {
@@ -33,7 +33,7 @@ export async function extract(environmentId: string): Promise<string> {
     ...environment.outputs.map((file) => file.path),
   ]);
   const id = digest({ environmentId, inputs: digest(inputs), profileHash, implementation });
-  const work = identityDirectory("runs", id);
+  const work = identityDirectory("extractions", id);
   await withLock(`${work}.lock`, async () => {
     fs.mkdirSync(work, { recursive: true });
     const manifestFile = path.join(work, "extraction-manifest.json");
@@ -92,14 +92,14 @@ export async function extract(environmentId: string): Promise<string> {
           dependencies: ["source-audit"],
           run: async () => {
             finalizeEvidence(work);
-            await validate(options, work, true);
+            await verifyExtraction(work);
           },
           outputs: () => [...tree("evidence"), "coverage.json", "validation.json"],
         },
       ]);
       await assertClientUnchanged(environment);
       // Verification is repeated on reuse, independently of checkpoint markers.
-      await validate(options, work, true);
+      await verifyExtraction(work);
       atomicJson(path.join(work, "run-report.json"), {
         passed: true,
         environmentId,

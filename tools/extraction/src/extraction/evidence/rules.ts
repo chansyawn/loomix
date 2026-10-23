@@ -1,5 +1,5 @@
 import { profile } from "../../profile.ts";
-import type { TableEvidence } from "../../tasks/content/types.ts";
+import type { TableEvidence } from "../types.ts";
 
 export function associationRule(field: string, hint: TableEvidence): string {
   const root = profile.roots;

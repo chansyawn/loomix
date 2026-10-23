@@ -1,7 +1,7 @@
 import path from "node:path";
 import fs from "node:fs";
-import type { EvidenceRecord, BinDataAsset } from "../../tasks/content/types.ts";
-import { readJson, writeJson } from "../../tasks/content/io.ts";
+import type { EvidenceRecord, BinDataAsset } from "../types.ts";
+import { readJson, writeJson } from "../../workflow/json.ts";
 import { fieldEvidenceSchema } from "./schema.ts";
 import { parseBinData } from "../decode/bindata.ts";
 import { Tables } from "../decode/tables.ts";

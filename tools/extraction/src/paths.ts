@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 export const repoRoot = fileURLToPath(new URL("../../../", import.meta.url));
 
 export const extractionRoot = path.join(repoRoot, "resources/temp/extraction");
+export const websiteDirectory = path.join(repoRoot, "resources/website");
 
 export function within(root: string, relative: string): string {
   if (path.isAbsolute(relative) || relative.includes("\\"))
@@ -26,7 +27,7 @@ export function within(root: string, relative: string): string {
 }
 
 export function identityDirectory(
-  kind: "environments" | "runs" | "deliveries",
+  kind: "environments" | "extractions" | "deliveries",
   id: string,
 ): string {
   if (!/^[a-f0-9]{64}$/.test(id)) throw new Error(`Invalid ${kind} identity: ${id}`);

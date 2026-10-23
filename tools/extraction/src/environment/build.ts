@@ -20,6 +20,7 @@ export async function init(): Promise<string> {
   console.log("Hashing client snapshot");
   const snapshot = await snapshotClient();
   const animeStudio = await ensureAnimeStudio();
+  const tool = toolIdentity();
   const implementation = await implementationRevision();
   const identity = { client: snapshot.sha256, profileHash, tool: animeStudio, implementation };
   const id = digest(identity);
@@ -63,7 +64,9 @@ export async function init(): Promise<string> {
         game: profile.animeGame,
         logFile: path.join(staging, "logs/asset-map.log"),
       });
-      const { entries, audit } = await buildAssetIndex(map, gameRoot);
+      const { entries, audit } = await buildAssetIndex(map, gameRoot, {
+        binDataNames: new Set(Object.values(profile.binData)),
+      });
       writeJson(path.join(staging, "asset-index.json"), entries);
       writeJson(path.join(staging, "asset-map-audit.json"), {
         schemaVersion: 1,
@@ -90,10 +93,10 @@ export async function init(): Promise<string> {
         profileHash,
         tools: {
           animeStudio,
-          animeStudioInput: digest(toolIdentity()),
-          animeStudioRevision: toolIdentity().revision,
-          dotnetSdk: toolIdentity().sdk,
-          dotnetRuntime: toolIdentity().runtime,
+          animeStudioInput: digest(tool),
+          animeStudioRevision: tool.revision,
+          dotnetSdk: tool.sdk,
+          dotnetRuntime: tool.runtime,
           node: process.version,
         },
         outputs,

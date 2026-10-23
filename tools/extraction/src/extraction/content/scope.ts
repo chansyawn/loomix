@@ -1,8 +1,8 @@
 import type { ContentGroup } from "@loomix/content-schema";
 import { memberTargets } from "@loomix/content-schema";
-import type { Evidence, TableRow } from "../../tasks/content/types.ts";
+import type { Evidence, TableRow } from "../types.ts";
 import type { Tables } from "../decode/tables.ts";
-import { expandTags } from "../../tasks/content/model.ts";
+import { expandTags } from "./model.ts";
 import { profile } from "../../profile.ts";
 import type { Vocabulary } from "./vocabulary.ts";
 

@@ -1,9 +1,4 @@
-import type {
-  WorkOptions,
-  SelectedImage,
-  ImageManifest,
-  EvidenceRecord,
-} from "../../tasks/content/types.ts";
+import type { WorkOptions, SelectedImage, ImageManifest, EvidenceRecord } from "../types.ts";
 import type { Content } from "@loomix/content-schema";
 import fs from "node:fs";
 import path from "node:path";

@@ -1,24 +1,24 @@
-import type { ContentOptions, ValidationReport } from "./types.ts";
+import type { ContentOptions, ValidationReport } from "../extraction/types.ts";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { readJson, removeWithin } from "./io.ts";
-import { filesWithin, inventory, digest } from "../../workflow/hashing.ts";
+import { readJson } from "../workflow/json.ts";
+import { removeWithin } from "../workflow/fs.ts";
+import { filesWithin, inventory, digest } from "../workflow/hashing.ts";
 import { safeOutput } from "./output.ts";
-import { validate } from "./validate.ts";
 
 export { safeOutput };
 
 export async function publish(
   options: ContentOptions,
-  validateStaging = validate,
+  validateStaging?: (options: ContentOptions) => Promise<void>,
   rename = fs.renameSync,
 ) {
   safeOutput(options.output);
   const staging = path.join(options.work, "staging");
   const result = readJson<ValidationReport>(path.join(options.work, "validation.json"));
   if (!result.passed) throw new Error("Validation has not passed");
-  await validateStaging(options);
+  if (validateStaging) await validateStaging(options);
   // Validate the complete tree before copying; cp must never follow a resource symlink.
   const expected = await inventory(staging, filesWithin(staging));
   const parent = path.dirname(options.output);

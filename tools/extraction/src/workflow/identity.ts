@@ -8,7 +8,7 @@ import { digest, inventory, filesWithin } from "./hashing.ts";
 import { repoRoot } from "../paths.ts";
 
 export const sourceRoot = fileURLToPath(new URL("../", import.meta.url));
-export const profileHash = digest({ ...profile, paths: { ...profile.paths, assetIndex: null } });
+export const profileHash = digest(profile);
 export const toolIdentity = () => ({
   ...version,
   rid: runtimeIdentifier(process.platform, process.arch),

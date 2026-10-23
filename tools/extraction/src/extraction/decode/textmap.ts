@@ -1,6 +1,6 @@
 import { decodeTextMapBucket } from "./obb.ts";
 import type { ObbReader } from "./obb.ts";
-import type { TextEntry, TextMap } from "../../tasks/content/types.ts";
+import type { TextEntry, TextMap } from "../types.ts";
 import { profile } from "../../profile.ts";
 
 export interface DecodedTextMap {
