@@ -1,4 +1,4 @@
-import { parseBinData } from "./bindata.ts";
+import { parseBinData } from "../../extraction/decode/bindata.ts";
 import { recordSchemas, contentGroups } from "@loomix/content-schema";
 import type { ContentGroup } from "@loomix/content-schema";
 import type {
@@ -15,7 +15,7 @@ import type {
 import fs from "node:fs";
 import path from "node:path";
 import { profile } from "./config.ts";
-import { Tables } from "./table-reader.ts";
+import { Tables } from "../../extraction/decode/tables.ts";
 import { readJson, writeJson, removeWithin } from "./io.ts";
 import {
   emptyContent,

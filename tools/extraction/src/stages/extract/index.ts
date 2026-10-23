@@ -9,13 +9,12 @@ import { runCheckpoints } from "../../workflow/checkpoint.ts";
 import { ensureAnimeStudio } from "../../client/anime-studio/index.ts";
 import { withLock } from "../../workflow/lock.ts";
 import { assertClientUnchanged } from "../../client/snapshot.ts";
-import { prepare } from "../../tasks/content/prepare.ts";
+import { prepareSource } from "../../extraction/source.ts";
 import { structure } from "../../tasks/content/structure.ts";
 import { assets } from "../../tasks/content/assets.ts";
 import { audit } from "../../tasks/content/audit.ts";
 import { validate } from "../../tasks/content/validate.ts";
 import { finalizeEvidence } from "./evidence.ts";
-import { profile } from "../../tasks/content/config.ts";
 
 export async function extract(environmentId: string): Promise<string> {
   const environmentDirectory = identityDirectory("environments", environmentId);
@@ -35,21 +34,19 @@ export async function extract(environmentId: string): Promise<string> {
   ]);
   const id = digest({ environmentId, inputs: digest(inputs), profileHash, implementation });
   const work = identityDirectory("runs", id);
-  process.env.LOOMIX_ASSET_INDEX = path.join(environmentDirectory, "asset-index.json");
-  profile.paths.assetIndex = process.env.LOOMIX_ASSET_INDEX;
   await withLock(`${work}.lock`, async () => {
     fs.mkdirSync(work, { recursive: true });
     const manifestFile = path.join(work, "extraction-manifest.json");
     fs.rmSync(manifestFile, { force: true });
     const tree = (directory: string) =>
       filesWithin(path.join(work, directory)).map((file) => `${directory}/${file}`);
-    const options = { work };
+    const options = { work, environment: environmentDirectory };
     try {
       await runCheckpoints(work, id, [
         {
           name: "decode",
           dependencies: [],
-          run: () => prepare(options),
+          run: () => prepareSource(options),
           outputs: () => [...tree("prepared"), ...tree("bindata"), "bindata-manifest.json"],
         },
         {

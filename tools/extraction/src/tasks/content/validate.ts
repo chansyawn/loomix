@@ -19,7 +19,7 @@ import { fieldEvidenceSchema } from "./schemas/evidence.ts";
 import { within } from "../../paths.ts";
 import { PNG } from "pngjs";
 import { profile } from "./config.ts";
-import { Tables } from "./table-reader.ts";
+import { Tables } from "../../extraction/decode/tables.ts";
 import { readJson, writeJson } from "./io.ts";
 import { additionalFields, basicFields, groupAt, validateModel } from "./model.ts";
 import { highestResolutionImages } from "./assets.ts";

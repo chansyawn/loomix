@@ -6,7 +6,7 @@ import type {
   BinDataAsset,
 } from "../../tasks/content/types.ts";
 import { plainText } from "../../tasks/content/model.ts";
-import { Tables } from "../../tasks/content/table-reader.ts";
+import { Tables } from "../../extraction/decode/tables.ts";
 import { profile } from "../../tasks/content/config.ts";
 import { relatedRows } from "./evidence-rows.ts";
 export function evidenceSources(

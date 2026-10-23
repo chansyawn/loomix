@@ -1,8 +1,15 @@
-import type { ConfigSource, TableIndex, TableRow, Row, TextMap, ScalarMethod } from "./types.ts";
+import type {
+  ConfigSource,
+  TableIndex,
+  TableRow,
+  Row,
+  TextMap,
+  ScalarMethod,
+} from "../../tasks/content/types.ts";
 import path from "node:path";
-import { ObbReader } from "./obb-reader.ts";
-import { readJson } from "./io.ts";
-import { profile } from "./config.ts";
+import { ObbReader } from "./obb.ts";
+import { readJson } from "../../workflow/json.ts";
+import { profile } from "../../profile.ts";
 
 export function hashTextKey(value: string) {
   let hash = 0;
@@ -134,4 +141,26 @@ export class Tables {
     }
     return map;
   }
+}
+
+export function indexTables(reader: ObbReader): TableIndex[] {
+  const root = reader.u32(0);
+  const fields = reader.requiredFields(root);
+  const indexes: TableIndex[] = [];
+  for (let field = 0; field < fields.length; field++) {
+    if (field === profile.roots.textmap) continue;
+    const reference = fields[field];
+    if (!reference) continue;
+    const table = reader.ref(reference);
+    const tableFields = reader.fields(table);
+    if (!tableFields || !tableFields[0]) continue;
+    const vector = reader.ref(tableFields[0]);
+    if (!reader.inRange(vector)) continue;
+    const count = reader.u32(vector);
+    if (count > 200_000 || !reader.inRange(vector + 4, count * 4)) continue;
+    indexes.push({ field, vector, count });
+  }
+  if (indexes.length !== profile.expected.tables)
+    throw new Error("Table count does not match the verified profile");
+  return indexes;
 }

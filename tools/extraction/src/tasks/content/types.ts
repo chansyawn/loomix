@@ -2,6 +2,7 @@ import type { ContentGroup } from "@loomix/content-schema";
 
 export interface WorkOptions {
   work: string;
+  environment?: string;
 }
 export interface ContentOptions extends WorkOptions {
   output: string;

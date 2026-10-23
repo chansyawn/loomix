@@ -5,7 +5,7 @@ import type {
   TagNode,
 } from "../../tasks/content/types.ts";
 import { expandTags, splitTags } from "../../tasks/content/model.ts";
-import { Tables } from "../../tasks/content/table-reader.ts";
+import { Tables } from "../../extraction/decode/tables.ts";
 import { profile } from "../../tasks/content/config.ts";
 function tableEvidence(evidence: Evidence): TableEvidence[] {
   if (Array.isArray(evidence))

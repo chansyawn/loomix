@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { test } from "vite-plus/test";
-import { decodeBytes, decodeTextMapBucket, ObbReader } from "./obb-reader.ts";
-import { createIconResolver } from "./icon-resolver.ts";
-import { profile } from "./config.ts";
+import { decodeBytes, decodeTextMapBucket, ObbReader } from "./obb.ts";
+import { createIconResolver } from "../../tasks/content/icon-resolver.ts";
+import { profile } from "../../profile.ts";
 
 const fixtures: {
   scalars: { encodedHex: string; expectedUnsigned?: number; expectedSigned?: number }[];

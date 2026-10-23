@@ -1,6 +1,6 @@
-import type { ScalarMethod, TableIndex } from "./types.ts";
+import type { ScalarMethod, TableIndex } from "../../tasks/content/types.ts";
 import fs from "node:fs";
-import { profile } from "./config.ts";
+import { profile } from "../../profile.ts";
 const utf8 = new TextDecoder("utf-8", { fatal: true });
 
 // 此客户端的字节数组经过逆序处理，并与镜像掩码进行异或运算。

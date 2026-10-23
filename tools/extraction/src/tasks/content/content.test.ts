@@ -5,10 +5,10 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "vite-plus/test";
-import { ObbReader } from "./obb-reader.ts";
+import { ObbReader } from "../../extraction/decode/obb.ts";
 import { createIconResolver } from "./icon-resolver.ts";
 import { profile, repoRoot } from "./config.ts";
-import { hashTextKey, readUIntVector, Tables } from "./table-reader.ts";
+import { hashTextKey, readUIntVector, Tables } from "../../extraction/decode/tables.ts";
 import {
   additionalFields,
   emptyContent,
@@ -23,7 +23,12 @@ import { removeWithin } from "./io.ts";
 const fixtures: {
   scalars: { hex: string; method: ScalarMethod; expected: number }[];
   vector: { hex: string; expected: number[] };
-} = JSON.parse(fs.readFileSync(new URL("./fixtures/obb-samples.json", import.meta.url), "utf8"));
+} = JSON.parse(
+  fs.readFileSync(
+    new URL("../../extraction/decode/fixtures/obb-samples.json", import.meta.url),
+    "utf8",
+  ),
+);
 test("actual client bytes preserve the appearance flag and float", () => {
   for (const sample of fixtures.scalars) {
     const b = Buffer.from(sample.hex, "hex"),
