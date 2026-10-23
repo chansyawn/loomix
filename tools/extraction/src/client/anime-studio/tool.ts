@@ -12,7 +12,7 @@ import { withLock } from "../../workflow/lock.ts";
 import { inventory, filesWithin, digest } from "../../workflow/hashing.ts";
 import { verifyFiles, atomicJson } from "../../workflow/manifest.ts";
 import { z } from "zod";
-import { inspectAssetMap } from "./asset-map.ts";
+import { inspectAssetMap } from "../asset-map.ts";
 
 // 平台准备与进程执行的替换点仅供模块测试使用，任务通过 index.ts 调用。
 export function createAnimeStudio({

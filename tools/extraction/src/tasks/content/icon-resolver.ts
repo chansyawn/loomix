@@ -1,13 +1,6 @@
 import type { IndexedAsset, IconMatch } from "./types.ts";
 import { profile } from "./config.ts";
-
-export const normalizeAssetPath = (value: string) =>
-  value
-    .toLowerCase()
-    .replaceAll("\\", "/")
-    .replace(/\.(png|jpe?g|tga|psd)$/, "");
-const preferOverlay = (variants: IndexedAsset[]) =>
-  variants.find((a) => /[\\/]Persistent[\\/]/i.test(a.Source)) ?? variants[0];
+import { normalizeAssetPath, preferOverlay } from "../../client/asset-map.ts";
 
 export function createIconResolver(textures: IndexedAsset[], sprites: IndexedAsset[]) {
   const assets = new Map<string, IndexedAsset[]>(),

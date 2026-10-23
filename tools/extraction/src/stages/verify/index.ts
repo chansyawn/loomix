@@ -3,7 +3,7 @@ import path from "node:path";
 import { readManifest, verifyFiles } from "../../workflow/manifest.ts";
 import { digest, inventory } from "../../workflow/hashing.ts";
 import { identityDirectory } from "../../paths.ts";
-import { validateClient } from "../init/index.ts";
+import { assertClientUnchanged } from "../../client/snapshot.ts";
 import { websiteDirectory } from "../postprocess/index.ts";
 import { safeOutput } from "../../tasks/content/output.ts";
 import { validate } from "../../tasks/content/validate.ts";
@@ -17,7 +17,7 @@ export async function verify(deliveryId: string): Promise<void> {
   const environmentDirectory = identityDirectory("environments", extraction.inputs.id);
   await verifyFiles(environmentDirectory, extraction.inputs.files);
   const environment = await readManifest(environmentDirectory, "environment");
-  await validateClient(environment);
+  await assertClientUnchanged(environment);
   await validate({ work: bundle }, bundle, true, false);
   await validate({ work: directory }, bundle, false, false);
   safeOutput(websiteDirectory);

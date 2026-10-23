@@ -11,30 +11,11 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { profile, repoRoot } from "./config.ts";
 import { readJson, writeJson } from "./io.ts";
-
-function manifestAt(file: string) {
-  return new Map(
-    fs
-      .readFileSync(file, "utf8")
-      .trim()
-      .split(/\r?\n/)
-      .slice(1)
-      .map((line) => {
-        const [name, md5, size] = line.split(",");
-        return [name, { md5, size: Number(size) }];
-      }),
-  );
-}
+import { manifestEntry, readManifestMaps } from "../../client/versions.ts";
 
 export async function audit(options: WorkOptions) {
   const root = path.resolve(repoRoot, profile.paths.gameRoot);
-  const base = manifestAt(path.join(root, "StreamingAssets/res_versions.json"));
-  const patch = manifestAt(
-    path.join(root, `Persistent/versions/${profile.manifestId}/res_versions.json`),
-  );
-  const data = manifestAt(
-    path.join(root, `Persistent/versions/${profile.manifestId}/data_versions.json`),
-  );
+  const manifests = readManifestMaps(root, profile.manifestId);
   const images = readJson<ImageManifest[]>(path.join(options.work, "image-candidates.json"));
   const bindata = readJson<BinDataAsset[]>(path.join(options.work, "bindata-manifest.json"));
   const sourceFiles = new Set([...images.map((a) => a.source), ...bindata.map((a) => a.Source)]);
@@ -46,7 +27,7 @@ export async function audit(options: WorkOptions) {
   for (const selected of configuration.files) {
     const original = path.join(root, configuration.relativeDirectory, path.basename(selected.file));
     const bytes = fs.readFileSync(original);
-    const expected = data.get(`GenerateAssets/${path.basename(selected.file)}`);
+    const expected = manifests.data.get(`GenerateAssets/${path.basename(selected.file)}`);
     const md5 = crypto.createHash("md5").update(bytes).digest("hex");
     configChecks.push({
       file: original,
@@ -55,7 +36,7 @@ export async function audit(options: WorkOptions) {
       matchesManifest:
         !!expected &&
         expected.md5 === md5 &&
-        expected.size === bytes.length &&
+        expected.bytes === bytes.length &&
         selected.md5 === md5,
     });
   }
@@ -64,9 +45,9 @@ export async function audit(options: WorkOptions) {
     const [, scope, relative] =
       source.replaceAll("\\", "/").match(/PetitPlanet_Data\/(StreamingAssets|Persistent)\/(.*)$/) ??
       [];
-    if (!relative) throw new Error(`Invalid package source: ${source}`);
-    const expected =
-      scope === "Persistent" ? (data.get(relative) ?? patch.get(relative)) : base.get(relative);
+    if (!relative || (scope !== "StreamingAssets" && scope !== "Persistent"))
+      throw new Error(`Invalid package source: ${source}`);
+    const expected = manifestEntry(manifests, scope, relative);
     const hash = crypto.createHash("md5");
     for await (const bytes of fs.createReadStream(source)) hash.update(bytes);
     const md5 = hash.digest("hex"),
@@ -76,7 +57,7 @@ export async function audit(options: WorkOptions) {
       expected,
       md5,
       size,
-      matchesManifest: !!expected && expected.md5 === md5 && expected.size === size,
+      matchesManifest: !!expected && expected.md5 === md5 && expected.bytes === size,
     });
     done++;
     if (done % 20 === 0 || done === sourceFiles.size)

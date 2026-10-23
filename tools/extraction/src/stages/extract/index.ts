@@ -6,9 +6,9 @@ import type { Manifest } from "../../workflow/manifest.ts";
 import { digest, filesWithin, inventory } from "../../workflow/hashing.ts";
 import { implementationRevision, profileHash, toolIdentity } from "../../workflow/identity.ts";
 import { runCheckpoints } from "../../workflow/checkpoint.ts";
-import { ensureAnimeStudio } from "../../infrastructure/anime-studio/index.ts";
+import { ensureAnimeStudio } from "../../client/anime-studio/index.ts";
 import { withLock } from "../../workflow/lock.ts";
-import { validateClient } from "../init/index.ts";
+import { assertClientUnchanged } from "../../client/snapshot.ts";
 import { prepare } from "../../tasks/content/prepare.ts";
 import { structure } from "../../tasks/content/structure.ts";
 import { assets } from "../../tasks/content/assets.ts";
@@ -27,7 +27,7 @@ export async function extract(environmentId: string): Promise<string> {
     throw new Error("Environment profile/tool changed; run init");
   if (environment.tools.animeStudio !== (await ensureAnimeStudio()))
     throw new Error("Initialized tool bytes changed; run init again");
-  await validateClient(environment);
+  await assertClientUnchanged(environment);
   const implementation = await implementationRevision();
   const inputs = await inventory(environmentDirectory, [
     "environment-manifest.json",
@@ -97,7 +97,7 @@ export async function extract(environmentId: string): Promise<string> {
           outputs: () => [...tree("evidence"), "coverage.json", "validation.json"],
         },
       ]);
-      await validateClient(environment);
+      await assertClientUnchanged(environment);
       // Verification is repeated on reuse, independently of checkpoint markers.
       await validate(options, work, true);
       atomicJson(path.join(work, "run-report.json"), {

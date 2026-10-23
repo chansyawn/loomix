@@ -3,12 +3,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { profile, repoRoot } from "../../tasks/content/config.ts";
 import { runProcess } from "../../workflow/process.ts";
-import { buildAssetMap, ensureAnimeStudio } from "../../infrastructure/anime-studio/index.ts";
+import { buildAssetMap, ensureAnimeStudio } from "../../client/anime-studio/index.ts";
 import { withLock } from "../../workflow/lock.ts";
 import { digest, inventory } from "../../workflow/hashing.ts";
-import { atomicJson, publishManifest, readManifest, verifyFiles } from "../../workflow/manifest.ts";
+import { atomicJson, publishManifest, readManifest } from "../../workflow/manifest.ts";
 import type { Manifest } from "../../workflow/manifest.ts";
 import { identityDirectory } from "../../paths.ts";
+import { clientRoot, snapshotClient } from "../../client/snapshot.ts";
 import {
   implementationRevision,
   profileHash,
@@ -19,22 +20,14 @@ import {
 import { verifyAssetMap } from "./asset-map.ts";
 import { validateResourceManifests } from "./resource-manifests.ts";
 
-export const clientRoot = path.resolve(repoRoot, "resources/game-client");
-
-export async function validateClient(environment: Manifest): Promise<void> {
-  await verifyFiles(clientRoot, environment.inputs.files);
-  const files = await inventory(clientRoot);
-  if (digest(files) !== environment.inputs.sha256)
-    throw new Error("Client snapshot changed; run init again");
-}
-
 export async function init(): Promise<string> {
   if (!fs.existsSync(clientRoot)) throw new Error(`Missing client snapshot: ${clientRoot}`);
   console.log("Hashing client snapshot");
-  const files = await inventory(clientRoot);
+  const snapshot = await snapshotClient();
+  const files = snapshot.files;
   const animeStudio = await ensureAnimeStudio();
   const implementation = await implementationRevision();
-  const identity = { client: digest(files), profileHash, tool: animeStudio, implementation };
+  const identity = { client: snapshot.sha256, profileHash, tool: animeStudio, implementation };
   const id = digest(identity),
     directory = identityDirectory("environments", id);
   await withLock(`${directory}.lock`, async () => {
@@ -97,7 +90,7 @@ export async function init(): Promise<string> {
         gitRevision: gitRevision(),
         identity,
       });
-      if (digest(await inventory(clientRoot)) !== identity.client)
+      if (digest((await snapshotClient()).files) !== identity.client)
         throw new Error("Client changed during initialization");
       const manifest: Manifest = {
         schemaVersion: 1,

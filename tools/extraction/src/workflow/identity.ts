@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { profile } from "../profile.ts";
-import { version, patchFile, runtimeIdentifier } from "../infrastructure/anime-studio/config.ts";
+import { version, patchFile, runtimeIdentifier } from "../client/anime-studio/config.ts";
 import { digest, inventory, filesWithin } from "./hashing.ts";
 import { repoRoot } from "../paths.ts";
 

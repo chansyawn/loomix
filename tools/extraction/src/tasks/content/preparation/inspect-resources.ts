@@ -2,7 +2,7 @@ import type { IndexedAsset } from "../types.ts";
 import { getPaths } from "./config.ts";
 import fs from "node:fs";
 import path from "node:path";
-import { readAssetMap } from "../../../infrastructure/anime-studio/asset-map.ts";
+import { readAssetMap, resolveAssetSource } from "../../../client/asset-map.ts";
 
 const { out, assetMap: xml } = getPaths();
 fs.mkdirSync(out, { recursive: true });
@@ -13,12 +13,7 @@ const types: Record<string, number> = {},
   textures: IndexedAsset[] = [],
   sprites: IndexedAsset[] = [];
 let count = 0;
-const remapSource = (source: string) => {
-  const m = source.replaceAll("\\", "/").match(/PetitPlanet_Data\/(.*)$/);
-  if (!m || m[1].split("/").includes("..") || path.isAbsolute(m[1]))
-    throw new Error(`Unrecognized Asset Map source: ${source}`);
-  return path.join(getPaths().gameRoot, m[1]);
-};
+const remapSource = (source: string) => resolveAssetSource(source, getPaths().gameRoot);
 for await (const asset of readAssetMap(xml)) {
   const indexed: IndexedAsset = {
     Name: asset.Name,

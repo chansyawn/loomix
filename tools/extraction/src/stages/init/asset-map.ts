@@ -1,4 +1,4 @@
-import { inspectAssetMap } from "../../infrastructure/anime-studio/asset-map.ts";
+import { inspectAssetMap } from "../../client/asset-map.ts";
 
 export async function verifyAssetMap(file: string): Promise<{
   assets: number;

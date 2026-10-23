@@ -4,13 +4,12 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { getPaths, profile } from "./config.ts";
+import { readClientVersion, readVersionManifest } from "../../../client/versions.ts";
+import type { VersionEntry } from "../../../client/versions.ts";
 
 const { out, gameRoot: root, clientIni } = getPaths();
 fs.mkdirSync(out, { recursive: true });
-const version = fs
-  .readFileSync(clientIni, "utf8")
-  .match(/^game_version=(.*)$/m)?.[1]
-  .trim();
+const version = readClientVersion(clientIni);
 if (version !== profile.gameVersion)
   throw new Error(
     `Client ${version} is not the verified ${profile.gameVersion}; update the profile and re-identify fields`,
@@ -27,16 +26,8 @@ if (
 ) {
   throw new Error("Manifest revisions do not match the verified profile");
 }
-const manifest = fs
-  .readFileSync(path.join(versions, "data_versions.json"), "utf8")
-  .trim()
-  .split(/\r?\n/)
-  .slice(1)
-  .map((line) => {
-    const [file, md5, size] = line.split(",");
-    return { file, md5, size: Number(size) };
-  });
-function inspect(file: string, expected: { md5: string; size: number } | undefined): ConfigFile {
+const manifest = readVersionManifest(path.join(versions, "data_versions.json"));
+function inspect(file: string, expected: VersionEntry | undefined): ConfigFile {
   if (!expected) throw new Error(`No manifest entry for ${file}`);
   if (!fs.existsSync(file)) return { file, exists: false };
   const bytes = fs.readFileSync(file),
@@ -47,7 +38,7 @@ function inspect(file: string, expected: { md5: string; size: number } | undefin
     size: bytes.length,
     md5,
     sha256: crypto.createHash("sha256").update(bytes).digest("hex"),
-    matchesManifest: bytes.length === expected.size && md5 === expected.md5,
+    matchesManifest: bytes.length === expected.bytes && md5 === expected.md5,
   };
 }
 const checks = [
@@ -59,7 +50,7 @@ const checks = [
   files: ["cs.obb", "ed.obb"].map((name) =>
     inspect(
       path.join(root, relativeDirectory, name),
-      manifest.find((x) => x.file === `GenerateAssets/${name}`),
+      manifest.find((x) => x.path === `GenerateAssets/${name}`),
     ),
   ),
 }));
@@ -74,7 +65,7 @@ const source = {
 };
 const dataBundle = inspect(
   path.join(root, "Persistent/AssetBundle/blocks/00/00000002.blk"),
-  manifest.find((x) => x.file === "AssetBundle/blocks/00/00000002.blk"),
+  manifest.find((x) => x.path === "AssetBundle/blocks/00/00000002.blk"),
 );
 if (!dataBundle.matchesManifest) throw new Error("Data bundle does not match data manifest");
 fs.writeFileSync(`${out}/active-config-source.json`, JSON.stringify(source, null, 2));

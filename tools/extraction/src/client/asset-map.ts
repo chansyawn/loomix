@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import path from "node:path";
 import sax from "sax";
 
 export interface AssetMapAsset {
@@ -84,3 +85,20 @@ export async function inspectAssetMap(file: string): Promise<{
   if (!assets) throw new Error("Incomplete or empty Asset Map");
   return { assets, baseSources, persistentSources };
 }
+
+export function resolveAssetSource(source: string, gameRoot: string): string {
+  const relative = source.replaceAll("\\", "/").match(/PetitPlanet_Data\/(.*)$/)?.[1];
+  if (!relative || relative.split("/").includes("..") || path.isAbsolute(relative))
+    throw new Error(`Invalid Asset Map source: ${source}`);
+  return path.join(gameRoot, relative);
+}
+
+export function preferOverlay<T extends { Source: string }>(variants: T[]): T | undefined {
+  return variants.find((asset) => /[\\/]Persistent[\\/]/i.test(asset.Source)) ?? variants[0];
+}
+
+export const normalizeAssetPath = (value: string) =>
+  value
+    .toLowerCase()
+    .replaceAll("\\", "/")
+    .replace(/\.(png|jpe?g|tga|psd)$/, "");

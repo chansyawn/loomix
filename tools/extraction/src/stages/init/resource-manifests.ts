@@ -2,61 +2,37 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { within } from "../../paths.ts";
+import { parseVersionManifest } from "../../client/versions.ts";
+import type { VersionEntry } from "../../client/versions.ts";
 
-interface ResourceEntry {
-  path: string;
-  md5: string;
-  bytes: number;
-}
-export function parseResourceManifest(text: string): ResourceEntry[] {
-  const lines = text.trim().split(/\r?\n/);
-  if (lines.shift() !== "FilePath,md5,FileSize")
-    throw new Error("Invalid resource manifest header");
-  const seen = new Set<string>();
-  return lines.map((line) => {
-    const [file, md5, size, extra] = line.split(",");
-    const bytes = Number(size);
-    if (
-      !file ||
-      file.startsWith("/") ||
-      file.includes("\\") ||
-      file.split("/").includes("..") ||
-      !(md5 === "0" || /^[a-f0-9]{32}$/.test(md5)) ||
-      !Number.isSafeInteger(bytes) ||
-      bytes < 0 ||
-      extra !== undefined ||
-      seen.has(file)
-    )
-      throw new Error(`Invalid resource manifest entry: ${line}`);
-    seen.add(file);
-    return { path: file, md5, bytes };
-  });
+export { parseVersionManifest as parseResourceManifest };
+
+interface ManifestReport {
+  manifest: string;
+  checked: number;
+  uninstalled: string[];
+  withoutChecksum: string[];
 }
 
 export async function validateResourceManifests(
   gameRoot: string,
   manifestId: string,
-): Promise<
-  { manifest: string; checked: number; uninstalled: string[]; withoutChecksum: string[] }[]
-> {
+): Promise<ManifestReport[]> {
   const dataManifest = `Persistent/versions/${manifestId}/data_versions.json`;
   const dataPaths = new Set(
-    parseResourceManifest(fs.readFileSync(within(gameRoot, dataManifest), "utf8")).map(
+    parseVersionManifest(fs.readFileSync(within(gameRoot, dataManifest), "utf8")).map(
       (entry) => entry.path,
     ),
   );
-  const reports: {
-    manifest: string;
-    checked: number;
-    uninstalled: string[];
-    withoutChecksum: string[];
-  }[] = [];
+  const reports: ManifestReport[] = [];
   for (const [scope, manifest] of [
     ["StreamingAssets", "StreamingAssets/res_versions.json"],
     ["Persistent", `Persistent/versions/${manifestId}/res_versions.json`],
     ["Persistent", `Persistent/versions/${manifestId}/data_versions.json`],
-  ]) {
-    const entries = parseResourceManifest(fs.readFileSync(within(gameRoot, manifest), "utf8"));
+  ] as const) {
+    const entries: VersionEntry[] = parseVersionManifest(
+      fs.readFileSync(within(gameRoot, manifest), "utf8"),
+    );
     let checked = 0;
     const uninstalled: string[] = [];
     const withoutChecksum: string[] = [];

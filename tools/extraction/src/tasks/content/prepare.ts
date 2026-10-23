@@ -5,8 +5,8 @@ import { fileURLToPath } from "node:url";
 import { profile, repoRoot } from "./config.ts";
 import { readJson, writeJson, removeWithin } from "./io.ts";
 import { runProcess } from "../../workflow/process.ts";
-import { readAssetMap } from "../../infrastructure/anime-studio/asset-map.ts";
-import { exportAssets } from "../../infrastructure/anime-studio/index.ts";
+import { readAssetMap, resolveAssetSource } from "../../client/asset-map.ts";
+import { exportAssets } from "../../client/anime-studio/index.ts";
 
 export async function prepare(options: WorkOptions) {
   const prepared = path.join(options.work, "prepared");
@@ -40,10 +40,10 @@ export async function prepare(options: WorkOptions) {
   const candidates: IndexedAsset[] = [];
   for await (const asset of readAssetMap(path.resolve(repoRoot, profile.paths.assetMap))) {
     if (asset.Type === "MiHoYoBinData" && asset.Name && wanted.has(asset.Name)) {
-      const relative = asset.Source.replaceAll("\\", "/").match(/PetitPlanet_Data\/(.*)$/)?.[1];
-      if (!relative || relative.split("/").includes(".."))
-        throw new Error("Invalid BinData source");
-      asset.Source = path.resolve(repoRoot, profile.paths.gameRoot, relative);
+      asset.Source = resolveAssetSource(
+        asset.Source,
+        path.resolve(repoRoot, profile.paths.gameRoot),
+      );
       candidates.push({
         Name: asset.Name,
         Type: asset.Type,

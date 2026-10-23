@@ -120,7 +120,7 @@ export interface TagNode {
   EnumName?: string;
 }
 export interface SourceCheck {
-  expected?: { md5: string; size: number };
+  expected?: { md5: string; bytes: number };
   source: string;
   md5: string;
   size: number;

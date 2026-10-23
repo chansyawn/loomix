@@ -6,7 +6,7 @@ import type { TestContext } from "vite-plus/test";
 import { test } from "vite-plus/test";
 import type { AssetMapAsset } from "./asset-map.ts";
 import { inspectAssetMap, readAssetMap } from "./asset-map.ts";
-import { verifyAssetMap } from "../../stages/init/asset-map.ts";
+import { verifyAssetMap } from "../stages/init/asset-map.ts";
 
 function fixture(t: TestContext, xml: string): string {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-map-"));

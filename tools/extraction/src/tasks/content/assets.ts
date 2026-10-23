@@ -6,7 +6,7 @@ import crypto from "node:crypto";
 import { PNG } from "pngjs";
 import { profile } from "./config.ts";
 import { readJson, writeJson, removeWithin } from "./io.ts";
-import { exportAssets } from "../../infrastructure/anime-studio/index.ts";
+import { exportAssets } from "../../client/anime-studio/index.ts";
 import { groupAt } from "./model.ts";
 
 const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
