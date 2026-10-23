@@ -14,6 +14,11 @@ const tagDisplayMap = z.record(
 );
 const creatureDisplayMap = z.record(z.string(), z.object({ textContent: textReference }));
 
+export type TagTree = z.infer<typeof tagTree>;
+export type TagDisplay = Record<string, { nameInGame?: { textId?: string | null } | null }>;
+export type TagDisplayMap = z.infer<typeof tagDisplayMap>;
+export type CreatureDisplayMap = z.infer<typeof creatureDisplayMap>;
+
 export function parseBinData(tags: unknown, tagDisplay: unknown, creatureDisplay: unknown) {
   const display = Object.values(tagDisplayMap.parse(tagDisplay))[0];
   if (!display) throw new Error("Missing TagUIData map");

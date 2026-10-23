@@ -6,19 +6,21 @@ import type {
   BinDataAsset,
 } from "../../tasks/content/types.ts";
 import { plainText } from "../../tasks/content/model.ts";
-import { Tables } from "../../extraction/decode/tables.ts";
-import { profile } from "../../tasks/content/config.ts";
-import { relatedRows } from "./evidence-rows.ts";
+import { Tables } from "../decode/tables.ts";
+import { profile } from "../../profile.ts";
+import { relatedRows } from "./rows.ts";
+import type { EvidenceIndex } from "./rows.ts";
 export function evidenceSources(
   proof: EvidenceRecord,
   hints: TableEvidence[],
   tables: Tables,
   tree: Record<string, TagNode>,
   bindata: BinDataAsset[],
+  index: EvidenceIndex,
 ): SourceReference[] {
   const sources: SourceReference[] = [];
   for (const hint of hints) {
-    const rows = relatedRows(proof, hint, tables, tree);
+    const rows = relatedRows(proof, hint, tables, tree, index);
     for (const row of rows) {
       sources.push({
         file: "prepared/ed.obb",

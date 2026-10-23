@@ -10,11 +10,11 @@ import { ensureAnimeStudio } from "../../client/anime-studio/index.ts";
 import { withLock } from "../../workflow/lock.ts";
 import { assertClientUnchanged } from "../../client/snapshot.ts";
 import { prepareSource } from "../../extraction/source.ts";
-import { structure } from "../../tasks/content/structure.ts";
+import { structure } from "../../extraction/content/assemble.ts";
 import { assets } from "../../tasks/content/assets.ts";
 import { audit } from "../../tasks/content/audit.ts";
 import { validate } from "../../tasks/content/validate.ts";
-import { finalizeEvidence } from "./evidence.ts";
+import { finalizeEvidence } from "../../extraction/evidence/build.ts";
 
 export async function extract(environmentId: string): Promise<string> {
   const environmentDirectory = identityDirectory("environments", environmentId);

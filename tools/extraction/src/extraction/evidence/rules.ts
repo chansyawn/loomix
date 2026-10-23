@@ -1,4 +1,4 @@
-import { profile } from "../../tasks/content/config.ts";
+import { profile } from "../../profile.ts";
 import type { TableEvidence } from "../../tasks/content/types.ts";
 
 export function associationRule(field: string, hint: TableEvidence): string {

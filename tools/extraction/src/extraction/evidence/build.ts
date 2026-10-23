@@ -2,13 +2,13 @@ import path from "node:path";
 import fs from "node:fs";
 import type { EvidenceRecord, BinDataAsset } from "../../tasks/content/types.ts";
 import { readJson, writeJson } from "../../tasks/content/io.ts";
-import { fieldEvidenceSchema } from "../../tasks/content/schemas/evidence.ts";
-import { parseBinData } from "../../extraction/decode/bindata.ts";
-import { Tables } from "../../extraction/decode/tables.ts";
-import { profile } from "../../tasks/content/config.ts";
-import { associationRule, transformationRule } from "./evidence-rules.ts";
-import { evidenceHints } from "./evidence-rows.ts";
-import { evidenceSources } from "./evidence-sources.ts";
+import { fieldEvidenceSchema } from "./schema.ts";
+import { parseBinData } from "../decode/bindata.ts";
+import { Tables } from "../decode/tables.ts";
+import { profile } from "../../profile.ts";
+import { associationRule, transformationRule } from "./rules.ts";
+import { createEvidenceIndex, evidenceHints } from "./rows.ts";
+import { evidenceSources } from "./sources.ts";
 
 export function finalizeEvidence(work: string): void {
   const tables = new Tables(path.join(work, "prepared"));
@@ -20,11 +20,12 @@ export function finalizeEvidence(work: string): void {
     bin(profile.binData.tagDisplay),
     bin(profile.binData.creatureDisplay),
   );
+  const index = createEvidenceIndex(tables);
   const enrich = (proof: EvidenceRecord) => {
     const hints = evidenceHints(proof);
     return fieldEvidenceSchema.parse({
       ...proof,
-      sources: evidenceSources(proof, hints, tables, tree, bindata),
+      sources: evidenceSources(proof, hints, tables, tree, bindata, index),
       association:
         hints.map((hint) => associationRule(proof.field, hint)).join("; ") ||
         "325 image configuration → exact resource Container/name; Persistent overlay; selected by native pixel count",

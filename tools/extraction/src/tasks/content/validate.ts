@@ -13,9 +13,9 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import assert from "node:assert/strict";
-import { fieldCandidateSchema } from "./schemas/field-candidates.ts";
+import { fieldCandidateSchema } from "../../extraction/evidence/schema.ts";
 import { parseRawContent } from "./schemas/raw-content.ts";
-import { fieldEvidenceSchema } from "./schemas/evidence.ts";
+import { fieldEvidenceSchema } from "../../extraction/evidence/schema.ts";
 import { within } from "../../paths.ts";
 import { PNG } from "pngjs";
 import { profile } from "./config.ts";
@@ -162,7 +162,7 @@ export async function validate(
     assert.ok(!evidenceKeys.has(key), `Duplicate/conflicting field evidence: ${key}`);
     evidenceKeys.add(key);
   }
-  const candidates = readJson<import("./schemas/field-candidates.ts").FieldCandidate[]>(
+  const candidates = readJson<import("../../extraction/evidence/schema.ts").FieldCandidate[]>(
     path.join(bundle, "evidence/field-candidates.json"),
   );
   for (const input of candidates) {

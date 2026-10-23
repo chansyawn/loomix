@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "vite-plus/test";
-import { fieldEvidenceSchema } from "./evidence.ts";
+import { fieldEvidenceSchema } from "./schema.ts";
 
 test("field evidence requires concrete provenance or an explicit unknown reason", () => {
   const proof = {
