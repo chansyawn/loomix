@@ -1,9 +1,9 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { repoRoot } from "../../paths.ts";
+import { repoRoot, varRoot } from "../../paths.ts";
 
 export { repoRoot };
-export const cacheRoot = path.join(repoRoot, "resources/temp/extraction/tool-cache/anime-studio");
+export const cacheRoot = path.join(varRoot, "cache/anime-studio");
 export const patchFile = fileURLToPath(new URL("./macos.patch", import.meta.url));
 
 export const version = {

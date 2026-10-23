@@ -43,8 +43,10 @@ function uiSignature(tables: Tables) {
 export function createContentContext(work: string): ContentContext {
   const tables = new Tables(path.join(work, "prepared"));
   const manifests = readJson<BinDataAsset[]>(path.join(work, "bindata-manifest.json"));
-  const bin = (name: string) =>
-    readJson(manifests.find((asset) => asset.Name === name)?.file ?? "missing-bindata");
+  const bin = (name: string) => {
+    const file = manifests.find((asset) => asset.Name === name)?.file ?? "missing-bindata";
+    return readJson(path.isAbsolute(file) ? file : path.join(work, file));
+  };
   const { tree, tagDisplay, display } = parseBinData(
     bin(profile.binData.tags),
     bin(profile.binData.tagDisplay),

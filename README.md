@@ -33,11 +33,10 @@
 ## 本地资源处理
 
 - `resources/game-client/`：保存完整客户端副本，作为资源读取来源。
-- `resources/temp/extraction/`：工具缓存位于 `tool-cache/`，环境、提取与交付证据分别位于 `environments/`、`extractions/` 和 `deliveries/`。
+- `var/`：提取运行时数据。`var/cache/anime-studio/` 为可重建工具缓存，`var/artifacts/{environments,extractions,deliveries}/` 为验收产物，`var/scratch/` 为失败运行、探针和一次性调查。
 - `resources/website/`：验证通过的 content.json 和 assets/，供网站本地开发直接读取。
-- `resources/temp/`：用于存储临时文件。
 
-`resources/` 下的本地资源文件由根目录 `.gitignore` 忽略，`resources/temp/` 整体忽略。
+`resources/` 与 `var/` 下的本地数据均由根目录 `.gitignore` 忽略。
 
 维护中的提取实现和文档位于 [tools/extraction](tools/extraction/README.md)。准备本地输入后，按该文档依次运行 init、extract、deliver 和 verify。入口使用 `vp run --no-cache '@loomix/extraction#<入口>'`；提取与交付需传入前一阶段打印的身份 ID。用 `vp run --no-cache '@loomix/extraction#test'` 运行不依赖客户端的测试。
 

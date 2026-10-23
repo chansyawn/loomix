@@ -26,11 +26,14 @@ export async function renderImages(options: WorkOptions, extraction: string) {
   >();
   for (const a of selected) {
     const original = manifest.find((entry) => assetKey(entry) === assetKey(a))!;
+    const originalFile = path.isAbsolute(original.file)
+      ? original.file
+      : path.join(extraction, original.file);
     const { width, height } = imageDimensions(a.group);
     const key = `${original.sha256}|${width}x${height}`;
     let result = processed.get(key);
     if (!result) {
-      const image = await processImage(fs.readFileSync(original.file), a.group);
+      const image = await processImage(fs.readFileSync(originalFile), a.group);
       const sha256 = crypto.createHash("sha256").update(image.bytes).digest("hex");
       const file = `assets/${sha256}.webp`;
       fs.writeFileSync(path.join(staging, file), image.bytes);

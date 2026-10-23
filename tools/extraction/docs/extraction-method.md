@@ -159,7 +159,7 @@ resources/game-client/ 中的客户端文件
   → verify 对输入、整条 manifest 链及已发布字节进行验收
 ```
 
-版本化产物统一位于 `resources/temp/extraction/{environments,extractions,deliveries}/<id>/`，工具位于同一临时根下独立的 `tool-cache/anime-studio/`；客户端输入和网站交付分别位于 `resources/game-client/`、`resources/website/`。不同版本或提取需求通过内容身份区分，不按交付路径创建工作区。
+版本化产物统一位于 `var/artifacts/{environments,extractions,deliveries}/<id>/`，工具缓存位于 `var/cache/anime-studio/`；客户端输入和网站交付分别位于 `resources/game-client/`、`resources/website/`。不同版本或提取需求通过内容身份区分，不按交付路径创建工作区。
 
 environment、extraction、delivery 的 manifest 均采用 schemaVersion 1。输出项使用相对 manifest 所在目录的 `path`、SHA256 和 `bytes`；输入清单也有整体 SHA256。实现摘要覆盖维护源码、共享契约、提取包配置和仓库 lockfile，profile 摘要不受资源索引路径影响。状态只有全部验证成功后才写为 verified。manifest 使用临时文件加 rename 发布，不以 marker 存在代替字节验证。
 

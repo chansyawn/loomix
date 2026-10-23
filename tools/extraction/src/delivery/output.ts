@@ -21,8 +21,7 @@ function assertSafeDestination(output: string) {
     ".agents",
     ".codex",
     "resources/game-client",
-    "resources/extraction-tools",
-    "resources/temp/extraction",
+    "var",
   ].map((relative) => path.resolve(repoRoot, relative));
   if (
     protectedPaths.some(

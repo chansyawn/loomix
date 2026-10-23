@@ -4,7 +4,9 @@ import { fileURLToPath } from "node:url";
 
 export const repoRoot = fileURLToPath(new URL("../../../", import.meta.url));
 
-export const extractionRoot = path.join(repoRoot, "resources/temp/extraction");
+export const varRoot = path.join(repoRoot, "var");
+export const artifactsRoot = path.join(varRoot, "artifacts");
+export const scratchRoot = path.join(varRoot, "scratch");
 export const websiteDirectory = path.join(repoRoot, "resources/website");
 
 export function within(root: string, relative: string): string {
@@ -31,5 +33,5 @@ export function identityDirectory(
   id: string,
 ): string {
   if (!/^[a-f0-9]{64}$/.test(id)) throw new Error(`Invalid ${kind} identity: ${id}`);
-  return within(extractionRoot, `${kind}/${id}`);
+  return within(artifactsRoot, `${kind}/${id}`);
 }

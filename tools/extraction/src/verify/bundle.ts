@@ -80,11 +80,7 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
         m.container === a.container,
     );
     assert.ok(exported, `Unexported selected asset ${a.id}`);
-    assert.equal(
-      records.get(a.id)?.image,
-      raw ? path.relative(bundle, exported.file).split(path.sep).join("/") : exported.file,
-      `Wrong image association ${a.id}`,
-    );
+    assert.equal(records.get(a.id)?.image, exported.file, `Wrong image association ${a.id}`);
     const native = nativeImages.find(
       (entry) =>
         entry.source === a.source &&
@@ -101,7 +97,8 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
       );
   }
   for (const native of nativeImages) {
-    const originalBytes = fs.readFileSync(within(bundle, path.relative(bundle, native.file)));
+    const nativeFile = path.isAbsolute(native.file) ? native.file : path.join(bundle, native.file);
+    const originalBytes = fs.readFileSync(within(bundle, path.relative(bundle, nativeFile)));
     const png = PNG.sync.read(originalBytes, { checkCRC: true });
     assert.equal(
       crypto.createHash("sha256").update(originalBytes).digest("hex"),

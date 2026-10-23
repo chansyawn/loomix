@@ -41,18 +41,19 @@ vp check
 resources/game-client/                          # 本地客户端快照（只读输入）
   config.ini
   PetitPlanet_Data/{StreamingAssets,Persistent}/
-resources/temp/extraction/
-  tool-cache/anime-studio/<rid>/<tool-key>/      # 已验证 CLI/runtime、ready.json
-  tool-cache/anime-studio/<rid>/<tool-key>.work/ # 下载、源码、补丁后源码、SDK
-  tool-cache/anime-studio/logs/                  # 初始化与默认工具日志
-  environments/<environment-id>/
+resources/website/{content.json,assets/}          # 固定默认交付目录
+var/                                              # 运行时数据，整体忽略
+  cache/anime-studio/<rid>/<tool-key>/            # 已验证 CLI/runtime、ready.json
+  cache/anime-studio/<rid>/<tool-key>.work/       # 下载、源码、补丁后源码、SDK
+  cache/anime-studio/logs/                        # 初始化与默认工具日志
+  artifacts/environments/<environment-id>/
     environment-manifest.json
     config-source.json                           # 选中的配置对、哈希与候选
     asset-index.json                             # Texture2D / Sprite / MiHoYoBinData
     asset-map-audit.json
     resource-manifest-audit.json
     logs/
-  extractions/<extraction-id>/
+  artifacts/extractions/<extraction-id>/
     extraction-manifest.json
     prepared/                                    # 冻结 OBB、表索引、TextMap、素材索引
     bindata/                                     # MiHoYoBinData 导出
@@ -62,7 +63,7 @@ resources/temp/extraction/
     checkpoints/
     logs/
     run-report.json
-  deliveries/<delivery-id>/
+  artifacts/deliveries/<delivery-id>/
     delivery-manifest.json
     staging/{content.json,assets/}
     image-manifest.json
@@ -70,7 +71,7 @@ resources/temp/extraction/
     coverage.json
     validation.json
     run-report.json
-resources/website/{content.json,assets/}          # 固定默认交付目录
+  scratch/                                        # 失败运行、探针、一次性调查
 ```
 
 快照保持在 `resources/game-client/`，environment 绑定其完整文件清单、大小与 SHA256，不复制整个客户端。输入新增、删除或字节变化会改变身份；旧 environment 的 extract/verify 会拒绝已变化的快照，须先重新 init。每次 extract 前后都核对，运行期间不要更新客户端。
@@ -83,7 +84,7 @@ manifest 使用 `schemaVersion: 1`，区分 environment、extraction、delivery�
 
 ## 证据与交付约束
 
-正式证据位于 `extractions/<id>/evidence/`：`field-evidence.json`、`missing-fields.json`、`field-candidates.json`、`outside-members.json`、`image-candidates.json`、`selected-images.json`、`image-manifest.json`、`source-audit.json`。字段证据包含记录 ID、group、field、value、来源文件、表/行/字段或资源 PathID、关联/转换说明和确认状态；未知值必须有 reason。`src/extraction/evidence/schema.ts` 与共享 `@loomix/content-schema` 验证证据、未确认候选和内容契约；中间 PNG 引用使用 `src/extraction/schemas/raw-content.ts`，保留同一组字段与成员约束，最终交付仍只接受 `assets/<SHA256>.webp`。
+正式证据位于 `var/artifacts/extractions/<id>/evidence/`：`field-evidence.json`、`missing-fields.json`、`field-candidates.json`、`outside-members.json`、`image-candidates.json`、`selected-images.json`、`image-manifest.json`、`source-audit.json`。字段证据包含记录 ID、group、field、value、来源文件、表/行/字段或资源 PathID、关联/转换说明和确认状态；未知值必须有 reason。`src/extraction/evidence/schema.ts` 与共享 `@loomix/content-schema` 验证证据、未确认候选和内容契约；中间 PNG 引用使用 `src/extraction/schemas/raw-content.ts`，保留同一组字段与成员约束，最终交付仍只接受 `assets/<SHA256>.webp`。
 
 图片规则保持不变：按实际像素面积选最高原生分辨率，平手保留大图优先顺序；家具套组 1024×512，其余有图记录 256×256；Lanczos3 等比缩放、居中裁切，WebP 质量 85、alphaQuality 100。原始 PNG 与最终 WebP 均完整解码，交付文件按最终字节 SHA256 命名和去重。
 
@@ -95,6 +96,6 @@ manifest 使用 `schemaVersion: 1`，区分 environment、extraction、delivery�
 
 Windows x64 使用固定下载和局部 runtime；macOS arm64/x64 使用相同源码提交、补丁和局部 SDK 构建。其他平台/架构明确报错。首次准备需要网络、Git 与归档解压工具。下载包校验摘要，生成内容在 `.staging` 完成探测和哈希验证后才发布；ready marker 和 `--version` 探测都通过后才复用。缓存版本同时考虑平台、架构和补丁。Windows Actions 下载过期须显式更新固定版本，不能自动跟随最新构建。
 
-客户端、缓存、run、环境、交付副本和日志均忽略，不提交游戏资源或大型生成文件。无运行任务时可以删除失败的 `.staging`、旧 environment/extraction/delivery 或整个 tool-cache；删除缓存后 init 会重新准备工具。删除 extraction 会使依赖它的 delivery 无法进行完整追溯验收。保留当前在用的整条链。旧 `resources/extraction-tools/`、旧 `resources/temp/extraction/{index,content,legacy}` 和旧 `runs/` 不再读取，可在核对所需历史资源后删除；目录仍被忽略以防误提交。
+客户端、`var/` 下的缓存/产物/临时文件和日志均忽略，不提交游戏资源或大型生成文件。无运行任务时可以删除失败的 `.staging`、旧 environment/extraction/delivery 或整个 `var/cache/anime-studio`；删除缓存后 init 会重新准备工具。删除 extraction 会使依赖它的 delivery 无法进行完整追溯验收。保留当前在用的整条链。旧 `resources/extraction-tools/`、`resources/temp/extraction/` 和旧 `runs/` 已不再读取，可直接删除。
 
 详细范围和关联规则见[提取原理](docs/extraction-method.md)。

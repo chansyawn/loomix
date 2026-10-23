@@ -73,7 +73,8 @@ export async function exportImages(options: WorkOptions, extract = exportAssets)
       if (!png.width || !png.height || png.data.length !== png.width * png.height * 4)
         throw new Error(`Invalid complete PNG: ${a.reference}`);
       const sha256 = crypto.createHash("sha256").update(bytes).digest("hex");
-      const record = { ...a, file, sha256, width: png.width, height: png.height };
+      const relative = path.relative(options.work, file).split(path.sep).join("/");
+      const record = { ...a, file: relative, sha256, width: png.width, height: png.height };
       manifest.push(record);
     }
     done++;
@@ -98,7 +99,7 @@ export async function exportImages(options: WorkOptions, extract = exportAssets)
     const record = groupAt(content, a.group).find((r) => r.id === a.id);
     const image = imageByRecord.get(a.id)?.file;
     if (!record || !image) throw new Error(`No exported image for ${a.id}`);
-    record.image = path.relative(options.work, image).split(path.sep).join("/");
+    record.image = image;
     evidence.push({
       id: a.id,
       group: a.group,

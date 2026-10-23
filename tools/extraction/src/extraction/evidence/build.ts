@@ -13,8 +13,10 @@ import { evidenceSources } from "./sources.ts";
 export function finalizeEvidence(work: string): void {
   const tables = new Tables(path.join(work, "prepared"));
   const bindata = readJson<BinDataAsset[]>(path.join(work, "bindata-manifest.json"));
-  const bin = (name: string) =>
-    readJson(bindata.find((asset) => asset.Name === name)?.file ?? "missing-bindata");
+  const bin = (name: string) => {
+    const file = bindata.find((asset) => asset.Name === name)?.file ?? "missing-bindata";
+    return readJson(path.isAbsolute(file) ? file : path.join(work, file));
+  };
   const { tree } = parseBinData(
     bin(profile.binData.tags),
     bin(profile.binData.tagDisplay),

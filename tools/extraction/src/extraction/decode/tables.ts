@@ -38,7 +38,10 @@ export class Tables {
       !source.files.every((f) => f.matchesManifest)
     )
       throw new Error("Unverified configuration");
-    this.reader = new ObbReader(source.files.find((f) => f.file.endsWith("ed.obb"))!.file);
+    const config = source.files.find((file) => file.file.endsWith("ed.obb"))!;
+    this.reader = new ObbReader(
+      path.isAbsolute(config.file) ? config.file : path.join(prepared, config.file),
+    );
     this.index = new Map(
       readJson<TableIndex[]>(path.join(prepared, "obb-table-index.json")).map((t) => [t.field, t]),
     );

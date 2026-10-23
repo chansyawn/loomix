@@ -29,7 +29,7 @@ function freezeConfig(environment: string, prepared: string): ConfigSource {
     const local = path.join(prepared, path.basename(file.path));
     fs.copyFileSync(original, local);
     return {
-      file: local,
+      file: path.basename(file.path),
       exists: true,
       size: bytes.length,
       md5: file.md5,
@@ -71,7 +71,11 @@ async function exportBinData(assets: AssetMapAsset[], work: string): Promise<Bin
     });
     const file = path.join(destination, "MiHoYoBinData", `${name}.json`);
     readJson(file);
-    selected.push({ ...asset, Name: name, file });
+    selected.push({
+      ...asset,
+      Name: name,
+      file: path.relative(work, file).split(path.sep).join("/"),
+    });
   }
   writeJson(path.join(work, "bindata-manifest.json"), selected);
   return selected;

@@ -182,12 +182,7 @@ test("image selection compares native pixels and preserves large-icon order on t
   assert.throws(() => highestResolutionImages([base], []), /Missing candidate/);
 });
 test("output protects shared client and caches", () => {
-  for (const relative of [
-    "resources/game-client",
-    "resources/temp/extraction",
-    "resources/temp",
-    "tools",
-  ])
+  for (const relative of ["resources/game-client", "var", "tools"])
     assert.throws(() => safeOutput(path.join(repoRoot, relative)), /Unsafe/);
 });
 test("export failures and missing selected PNGs stop with logs", async () => {
