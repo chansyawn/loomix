@@ -38,7 +38,7 @@
 
 `resources/` 与 `var/` 下的本地数据均由根目录 `.gitignore` 忽略。
 
-维护中的提取实现和文档位于 [tools/extraction](tools/extraction/README.md)。准备本地输入后，按该文档依次运行 init、extract、deliver 和 verify。入口使用 `vp run --no-cache '@loomix/extraction#<入口>'`；提取与交付需传入前一阶段打印的身份 ID。用 `vp run --no-cache '@loomix/extraction#test'` 运行不依赖客户端的测试。
+维护中的提取实现和文档位于 [tools/extraction](tools/extraction/README.md)。准备本地输入后，按该文档依次运行 init、extract、deliver 和 verify。入口使用 `vp run '@loomix/extraction#<入口>'`；提取与交付需传入前一阶段打印的身份 ID。用 `vp run '@loomix/extraction#test'` 运行不依赖客户端的测试。
 
 目录只保留当前客户端，游戏版本、配置与资源 revision 保留在脚本配置和产物元数据中。提取任务使用仓库 Node 环境，不需要 Python。
 

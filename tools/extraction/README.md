@@ -18,11 +18,11 @@
 需要 Node >=22.18.0、仓库锁定的 Vite Plus 1.3.0，以及 `vp install` 安装的依赖。在仓库根目录运行：
 
 ```sh
-vp run --no-cache '@loomix/extraction#init'
-vp run --no-cache '@loomix/extraction#extract' --environment <environment-id>
-vp run --no-cache '@loomix/extraction#deliver' --extraction <extraction-id>
-vp run --no-cache '@loomix/extraction#verify' --delivery <delivery-id>
-vp run --no-cache '@loomix/extraction#test'
+vp run '@loomix/extraction#init'
+vp run '@loomix/extraction#extract' --environment <environment-id>
+vp run '@loomix/extraction#deliver' --extraction <extraction-id>
+vp run '@loomix/extraction#verify' --delivery <delivery-id>
+vp run '@loomix/extraction#test'
 vp check
 ```
 
@@ -33,7 +33,7 @@ vp check
 - `deliver` 只读已验证 extraction bundle，使用其中冻结的 OBB、表、证据和 PNG，不重新扫描客户端。处理图片、按最终字节 SHA256 去重，验证后发布 `resources/website/`。
 - `verify` 核对整个 manifest 依赖链、实际客户端输入、表范围、字段证据、图片及已发布文件的完整集合和字节。
 
-必须使用 `--no-cache`，避免仓库根配置的 Vite Task 缓存跳过真实输入验证。内部 checkpoint 是提取恢复协议，与 Vite Task 缓存无关；`logs/`、`checkpoints/` 和 `run-report.json` 不属于 manifest 的语义输出。
+仓库根配置默认不缓存 package scripts，因此每次都会执行入口并重新验证真实输入。内部 checkpoint 是提取恢复协议，与 Vite Task 缓存无关；`logs/`、`checkpoints/` 和 `run-report.json` 不属于 manifest 的语义输出。
 
 ## 输入、缓存与产物
 
@@ -84,7 +84,7 @@ manifest 使用 `schemaVersion: 1`，区分 environment、extraction、delivery�
 
 ## 证据与交付约束
 
-正式证据位于 `var/artifacts/extractions/<id>/evidence/`：`field-evidence.json`、`missing-fields.json`、`field-candidates.json`、`outside-members.json`、`image-candidates.json`、`selected-images.json`、`image-manifest.json`、`source-audit.json`。字段证据包含记录 ID、group、field、value、来源文件、表/行/字段或资源 PathID、关联/转换说明和确认状态；未知值必须有 reason。`src/extraction/evidence/schema.ts` 与共享 `@loomix/content-schema` 验证证据、未确认候选和内容契约；中间 PNG 引用使用 `src/extraction/schemas/raw-content.ts`，保留同一组字段与成员约束，最终交付仍只接受 `assets/<SHA256>.webp`。
+字段证据包含记录 ID、group、field、value、来源文件、表/行/字段或资源 PathID、关联/转换说明和确认状态；未知值必须有 reason。`src/extraction/evidence/schema.ts` 与共享 `@loomix/content-schema` 验证证据、未确认候选和内容契约；中间 PNG 引用使用 `src/extraction/schemas/raw-content.ts`，保留同一组字段与成员约束，最终交付仍只接受 `assets/<SHA256>.webp`。
 
 图片规则保持不变：按实际像素面积选最高原生分辨率，平手保留大图优先顺序；家具套组 1024×512，其余有图记录 256×256；Lanczos3 等比缩放、居中裁切，WebP 质量 85、alphaQuality 100。原始 PNG 与最终 WebP 均完整解码，交付文件按最终字节 SHA256 命名和去重。
 
