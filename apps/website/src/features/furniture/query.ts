@@ -1,4 +1,4 @@
-import type { FurnitureItem, FurnitureSet } from "@loomix/content-schema";
+import type { FurnitureItem, FurnitureSet } from "../collection-view.ts";
 import type { FurnitureData } from "./data";
 import { categories, missing, ungrouped } from "./search";
 import type { FilterKey, View, ViewQuery } from "./search";

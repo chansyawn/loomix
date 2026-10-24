@@ -1,8 +1,8 @@
-import type { ContentGroup } from "@loomix/content-schema";
+import type { RecordType } from "@loomix/content-schema";
 import sharp from "sharp";
 
-export function imageDimensions(group: ContentGroup) {
-  return group === "furniture.sets" ? { width: 1024, height: 512 } : { width: 256, height: 256 };
+export function imageDimensions(group: RecordType) {
+  return group === "furniture.set" ? { width: 1024, height: 512 } : { width: 256, height: 256 };
 }
 
 export async function decodeWebp(bytes: Buffer) {
@@ -14,7 +14,7 @@ export async function decodeWebp(bytes: Buffer) {
   return info;
 }
 
-export async function processImage(bytes: Buffer, group: ContentGroup) {
+export async function processImage(bytes: Buffer, group: RecordType) {
   const dimensions = imageDimensions(group);
   const output = await sharp(bytes, { failOn: "warning" })
     .resize({ ...dimensions, fit: "cover", position: "centre", kernel: "lanczos3" })

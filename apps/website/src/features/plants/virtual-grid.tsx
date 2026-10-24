@@ -1,7 +1,7 @@
 import { useElementScrollRestoration } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useLayoutEffect, useRef, useState } from "react";
-import type { PlantItem, PlantSeries } from "@loomix/content-schema";
+import type { PlantItem, PlantSeries } from "../collection-view.ts";
 import { PlantsCard, PlantSeriesCard } from "./plants-card";
 
 type GridProps = {

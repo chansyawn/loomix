@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { contentGroups } from "@loomix/content-schema";
+import { recordTypes } from "@loomix/content-schema";
 
 const tableEvidence = z
   .object({
@@ -19,15 +19,26 @@ const sourceReference = z
     rowOffset: z.number().int().optional(),
     fields: z.array(z.number().int()).optional(),
     pathId: z.string().optional(),
+    pointer: z.string().optional(),
+    sha256: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/)
+      .optional(),
   })
   .strict();
 export const fieldEvidenceSchema = z
   .object({
     id: z.number().int(),
-    group: z.enum(contentGroups),
+    group: z.enum(recordTypes),
     field: z.string().min(1),
     value: z.union([z.string(), z.number(), z.array(z.number()), z.null()]),
     evidence: z.union([
+      z.strictObject({
+        kind: z.literal("manual"),
+        file: z.string(),
+        pointer: z.string(),
+        sha256: z.string().regex(/^[a-f0-9]{64}$/),
+      }),
       tableEvidence,
       z.array(tableEvidence),
       resourceEvidence,
@@ -51,7 +62,11 @@ export const fieldEvidenceSchema = z
       (proof.status !== "confirmed" ||
         !proof.sources.some(
           (source) =>
-            (source.table !== undefined && source.rowOffset !== undefined) || source.pathId,
+            (source.table !== undefined && source.rowOffset !== undefined) ||
+            source.pathId ||
+            (["category", "kind", "subcategory"].includes(proof.field) &&
+              source.pointer &&
+              source.sha256),
         ))
     )
       context.addIssue({
@@ -63,7 +78,7 @@ export type FieldEvidence = z.infer<typeof fieldEvidenceSchema>;
 
 const common = {
   id: z.number().int(),
-  group: z.enum(contentGroups),
+  group: z.enum(recordTypes),
   value: z.null(),
   table: z.number().int(),
   status: z.literal("unconfirmed"),
@@ -85,7 +100,7 @@ export const fieldCandidateSchema = z.discriminatedUnion("field", [
   z
     .object({
       ...common,
-      field: z.literal("sizeRange"),
+      field: z.literal("attributes.sizeRange"),
       fields: z.array(z.number().int()),
       min: z.number().nullable(),
       max: z.number().nullable(),
@@ -97,7 +112,7 @@ export const fieldCandidateSchema = z.discriminatedUnion("field", [
   z
     .object({
       ...common,
-      field: z.literal("maturityPeriod"),
+      field: z.literal("attributes.maturityPeriod"),
       seedId: z.number().nullable(),
       mode: z.string().nullable(),
       stages: z.array(z.number()).nullable(),

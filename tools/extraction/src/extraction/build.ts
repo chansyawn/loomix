@@ -14,6 +14,7 @@ import { structure } from "./content/assemble.ts";
 import { exportImages } from "./images/export.ts";
 import { audit } from "./audit.ts";
 import { verifyExtraction } from "./verify.ts";
+import { admissionsFile, parseAdmissions } from "./content/admissions.ts";
 import { finalizeEvidence } from "./evidence/build.ts";
 
 export async function extract(environmentId: string): Promise<string> {
@@ -32,7 +33,17 @@ export async function extract(environmentId: string): Promise<string> {
     "environment-manifest.json",
     ...environment.outputs.map((file) => file.path),
   ]);
-  const id = digest({ environmentId, inputs: digest(inputs), profileHash, implementation });
+  const admissionsBytes = fs.readFileSync(
+    new URL("./content/supplemental-admissions.json", import.meta.url),
+  );
+  const admissions = parseAdmissions(admissionsBytes);
+  const id = digest({
+    environmentId,
+    inputs: digest(inputs),
+    profileHash,
+    implementation,
+    admissions: admissions.sha256,
+  });
   const work = identityDirectory("extractions", id);
   await withLock(`${work}.lock`, async () => {
     fs.mkdirSync(work, { recursive: true });
@@ -47,6 +58,14 @@ export async function extract(environmentId: string): Promise<string> {
     try {
       await runCheckpoints(work, id, [
         {
+          name: "admissions",
+          dependencies: [],
+          run: async () => {
+            fs.writeFileSync(path.join(work, admissionsFile), admissionsBytes);
+          },
+          outputs: () => [admissionsFile],
+        },
+        {
           name: "decode",
           dependencies: [],
           run: () => prepareSource(options),
@@ -54,11 +73,12 @@ export async function extract(environmentId: string): Promise<string> {
         },
         {
           name: "structure",
-          dependencies: ["decode"],
+          dependencies: ["decode", "admissions"],
           run: () => structure(options),
           outputs: () => [
             "raw/content.json",
             "scope.json",
+            "record-evidence.json",
             "quality-enum.json",
             "candidate-images.json",
             "field-evidence.json",
@@ -104,7 +124,14 @@ export async function extract(environmentId: string): Promise<string> {
         passed: true,
         environmentId,
         extractionId: id,
-        checkpoints: ["decode", "structure", "raw-assets", "source-audit", "extraction-verify"],
+        checkpoints: [
+          "admissions",
+          "decode",
+          "structure",
+          "raw-assets",
+          "source-audit",
+          "extraction-verify",
+        ],
       });
       const manifest: Manifest = {
         schemaVersion: 1,

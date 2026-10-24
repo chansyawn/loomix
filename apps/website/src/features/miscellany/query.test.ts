@@ -1,4 +1,4 @@
-import type { MiscellaneousItem } from "@loomix/content-schema";
+import type { MiscellaneousItem } from "../collection-view.ts";
 import { describe, expect, it } from "vite-plus/test";
 import type { MiscellanyData } from "./data";
 import { filterGroups, queryMiscellany } from "./query";

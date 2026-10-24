@@ -13,8 +13,8 @@ export function buildFurnitureItem(
   const { tables, vocabulary } = context;
   const { main, ui } = record;
   for (const [field, index] of [
-    ["colors", 9],
-    ["materials", 11],
+    ["attributes.colors", 9],
+    ["attributes.materials", 11],
   ] as const)
     builder.put(
       field,
@@ -26,7 +26,7 @@ export function buildFurnitureItem(
   const sourceIds = tables.vector(ui, profile.fields.ui.sources);
   const sourceLabels = sourceIds?.map((code) => tables.text(vocabulary.sources.get(code), 1));
   builder.put(
-    "sources",
+    "attributes.sources",
     sourceLabels?.length && sourceLabels.every(Boolean)
       ? [...new Set(sourceLabels)].join("，")
       : null,
@@ -54,7 +54,7 @@ export function buildFurnitureItem(
     ),
   ];
   builder.put(
-    "type",
+    "attributes.type",
     labels.length === 1 ? labels[0] : null,
     evidence(profile.roots.furnitureTypes, [2, 4, 5]),
     "type_filter_unmatched_or_ambiguous",
@@ -69,7 +69,7 @@ export function buildFurnitureItem(
     ),
   ];
   builder.put(
-    "size",
+    "attributes.size",
     sizes.length === 1 ? sizes[0] : null,
     evidence(profile.roots.items, 14),
     "size_tag_missing_or_ambiguous",

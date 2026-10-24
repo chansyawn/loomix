@@ -1,4 +1,4 @@
-import type { PlantItem, PlantSeries } from "@loomix/content-schema";
+import type { PlantItem, PlantSeries } from "../collection-view.ts";
 import type { PlantsData } from "./data";
 import { missing, ungrouped } from "./search";
 import type { FilterKey, View, ViewQuery } from "./search";

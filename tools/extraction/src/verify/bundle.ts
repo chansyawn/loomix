@@ -4,10 +4,9 @@ import type {
   SelectedImage,
   SourceAudit,
   EvidenceRecord,
-  FieldValue,
 } from "../extraction/types.ts";
-import type { Content, ContentRecord } from "@loomix/content-schema";
-import { contentGroups } from "@loomix/content-schema";
+import type { Catalog } from "@loomix/content-schema";
+import { recordTypes, recordType, recordFields, recordField } from "@loomix/content-schema";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
@@ -16,22 +15,13 @@ import { fieldCandidateSchema, fieldEvidenceSchema } from "../extraction/evidenc
 
 import { within } from "../paths.ts";
 import { PNG } from "pngjs";
-import { profile } from "../profile.ts";
+import { profile, expectedCatalog } from "../profile.ts";
 import { Tables } from "../extraction/decode/tables.ts";
 import { readJson, writeJson } from "../workflow/json.ts";
-import {
-  additionalFields,
-  basicFields,
-  groupAt,
-  validateModel,
-} from "../extraction/content/model.ts";
+import { validateModel } from "../extraction/content/model.ts";
+import { verifyAdmissions } from "./admissions.ts";
 import { highestResolutionImages } from "../extraction/images/select.ts";
 import { decodeWebp, imageDimensions } from "../delivery/image.ts";
-
-function fieldValue(row: ContentRecord, field: string): FieldValue | undefined {
-  const values: Record<string, FieldValue> = row;
-  return values[field];
-}
 
 export interface BundleVerification {
   reportRoot: string;
@@ -39,7 +29,7 @@ export interface BundleVerification {
   staging: string;
   contentFile: string;
   raw: boolean;
-  parse: (input: unknown) => Content;
+  parse: (input: unknown) => Catalog;
   writeReports: boolean;
 }
 
@@ -47,14 +37,9 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
   const { reportRoot, bundle, staging, contentFile, raw, parse, writeReports } = request;
   const content = parse(readJson(contentFile)),
     tables = new Tables(path.join(bundle, "prepared"));
-  const scope = tables.rows(profile.roots.content).map((r) => tables.id(r));
-  assert.deepEqual(
-    scope.slice().sort((a, b) => a - b),
-    readJson(path.join(bundle, "scope.json")),
-    "Fresh root 93 ID set",
-  );
+  const scope = verifyAdmissions(content, bundle);
   const qualities = new Set(tables.rows(profile.roots.qualities).map((r) => tables.uint(r, 1, 0)));
-  const { all, counts } = validateModel(content, scope, profile.expectedContent, qualities, parse);
+  const { all, counts } = validateModel(content, scope, expectedCatalog, qualities, parse);
   const manifest = readJson<(ProcessedImage | ImageManifest)[]>(
     path.join(reportRoot, "image-manifest.json"),
   );
@@ -148,19 +133,29 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
     path.join(reportRoot, raw ? "evidence/field-evidence.json" : "field-evidence.json"),
   );
   const missing = readJson<EvidenceRecord[]>(path.join(bundle, "evidence/missing-fields.json"));
-  const recordGroups = new Map(
-    contentGroups.flatMap((group) =>
-      groupAt(content, group).map((row) => [row.id, group] as const),
-    ),
-  );
+  const recordGroups = new Map(content.items.map((record) => [record.id, recordType(record)]));
   const evidenceKeys = new Set<string>();
   for (const proof of [...proofs, ...missing]) {
     fieldEvidenceSchema.parse(proof);
     assert.equal(recordGroups.get(proof.id), proof.group, "Evidence group must match content");
-    assert.ok(
-      [...basicFields, ...additionalFields[proof.group]].includes(proof.field),
-      "Evidence field whitelist",
-    );
+    assert.ok(recordFields(proof.group).includes(proof.field), "Evidence field whitelist");
+    for (const source of proof.sources ?? []) {
+      if (source.pointer) {
+        assert.equal(source.file, "supplemental-admissions.json", "Manual evidence file");
+        assert.equal(
+          source.sha256,
+          crypto
+            .createHash("sha256")
+            .update(fs.readFileSync(path.join(bundle, source.file)))
+            .digest("hex"),
+          "Frozen admission hash",
+        );
+        const admissions = readJson<{ entries: { id: number }[] }>(path.join(bundle, source.file));
+        const match = /^\/entries\/(\d+)$/.exec(source.pointer);
+        assert.ok(match, "Admission pointer");
+        assert.equal(admissions.entries[Number(match[1])]?.id, proof.id, "Admission pointer ID");
+      }
+    }
     const key = `${proof.id}.${proof.field}`;
     assert.ok(!evidenceKeys.has(key), `Duplicate/conflicting field evidence: ${key}`);
     evidenceKeys.add(key);
@@ -170,10 +165,12 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
   );
   for (const input of candidates) {
     const candidate = fieldCandidateSchema.parse(input);
-    const row = groupAt(content, candidate.group).find((record) => record.id === candidate.id);
+    const row = content.items.find(
+      (record) => record.id === candidate.id && recordType(record) === candidate.group,
+    );
     assert.ok(row, "Candidate record must be in scope");
     assert.equal(
-      fieldValue(row, candidate.field),
+      recordField(row, candidate.field),
       null,
       "Unconfirmed candidates cannot populate output fields",
     );
@@ -181,19 +178,21 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
   const proofValues = new Map(proofs.map((p) => [`${p.id}.${p.field}`, p.value]));
   const missingKeys = new Set(missing.filter((p) => p.reason).map((p) => `${p.id}.${p.field}`));
   const coverage: Record<string, unknown> = {};
-  for (const group of contentGroups) {
-    const fields = additionalFields[group];
-    const rows = groupAt(content, group);
+  for (const group of recordTypes) {
+    const fields = recordFields(group);
+    const rows = content.items.filter((record) => recordType(record) === group);
     coverage[group] = Object.fromEntries(
-      [...basicFields, ...fields].map((field) => {
+      fields.map((field) => {
         for (const row of rows) {
           assert.ok(
-            (fieldValue(row, field) === null ? missingKeys : proofValues).has(`${row.id}.${field}`),
+            (recordField(row, field) === null ? missingKeys : proofValues).has(
+              `${row.id}.${field}`,
+            ),
             `Missing evidence/reason ${row.id}.${field}`,
           );
-          if (fieldValue(row, field) !== null)
+          if (recordField(row, field) !== null)
             assert.deepEqual(
-              fieldValue(row, field),
+              recordField(row, field),
               proofValues.get(`${row.id}.${field}`),
               `Evidence value mismatch ${row.id}.${field}`,
             );
@@ -201,8 +200,8 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
         return [
           field,
           {
-            populated: rows.filter((r) => fieldValue(r, field) !== null).length,
-            null: rows.filter((r) => fieldValue(r, field) === null).length,
+            populated: rows.filter((r) => recordField(r, field) !== null).length,
+            null: rows.filter((r) => recordField(r, field) === null).length,
           },
         ];
       }),

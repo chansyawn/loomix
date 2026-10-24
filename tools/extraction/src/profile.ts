@@ -62,18 +62,29 @@ export const profile = {
   },
   binData: { tags: "633e15d6", tagDisplay: "b429c67e", creatureDisplay: "15896ba2" },
   expected: { textmap: 116673, tables: 724 },
-  expectedContent: {
-    "furniture.sets": 42,
-    "furniture.items": 887,
+  expectedEncyclopedia: {
+    "furniture.set": 42,
+    "furniture.item": 887,
     "creatures.series": 27,
-    "creatures.items": 317,
+    "creatures.item": 317,
     "plants.series": 31,
-    "plants.items": 202,
+    "plants.item": 202,
     "dishes.series": 9,
-    "dishes.items": 121,
-    "clothing.sets": 34,
-    "clothing.items": 590,
-    "clothing.appearances": 51,
-    miscellaneous: 16,
+    "dishes.item": 121,
+    "clothing.set": 34,
+    "clothing.item": 590,
+    "clothing.appearance": 51,
+    "miscellaneous.item": 16,
   },
+};
+
+export const catalogSource = {
+  gameVersion: profile.gameVersion,
+  dataRevision: profile.dataRevision,
+  resourceRevision: profile.resourceRevision,
+};
+export const expectedCatalog = {
+  ...profile.expectedEncyclopedia,
+  "plants.item": 208,
+  "miscellaneous.item": 19,
 };

@@ -7,6 +7,7 @@ import { parseBinData } from "../decode/bindata.ts";
 import { createIconResolver } from "../images/resolve.ts";
 import { createVocabulary } from "./vocabulary.ts";
 import type { Vocabulary } from "./vocabulary.ts";
+import { readAdmissions } from "./admissions.ts";
 import { classify, resolveMemberships } from "./scope.ts";
 import type { Scope } from "./scope.ts";
 
@@ -55,14 +56,14 @@ export function createContentContext(work: string): ContentContext {
   const vocabulary = createVocabulary(tables, tree, tagDisplay, display);
   const main = tables.byId(profile.roots.items);
   const creatures = tables.byId(profile.roots.creatures);
-  const classification = classify(tables, vocabulary, main);
+  const classification = classify(tables, vocabulary, main, readAdmissions(work));
   const ui = tables.byId(profile.roots.ui, uiSignature(tables), classification.ids);
   const scope = resolveMemberships(tables, classification);
 
   const recipesByProduct = new Map<number, TableRow>();
   for (const row of tables.rows(profile.roots.recipes)) {
     const id = tables.uint(row, 4);
-    if (id == null || scope.groups.get(id) !== "dishes.items") continue;
+    if (id == null || scope.groups.get(id) !== "dishes.item") continue;
     if (recipesByProduct.has(id)) throw new Error(`Duplicate dish recipe ${id}`);
     recipesByProduct.set(id, row);
   }

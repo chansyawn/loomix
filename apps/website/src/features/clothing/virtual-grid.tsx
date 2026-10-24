@@ -1,7 +1,7 @@
 import { useElementScrollRestoration } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useLayoutEffect, useRef, useState } from "react";
-import type { ClothingItem } from "@loomix/content-schema";
+import type { ClothingItem } from "../collection-view.ts";
 import { ClothingCard } from "./clothing-card";
 
 type GridProps = {

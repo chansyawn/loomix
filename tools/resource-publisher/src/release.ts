@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
-import { contentGroups, groupAt, parseContent } from "@loomix/content-schema";
-import type { Content } from "@loomix/content-schema";
+import { parseCatalog } from "@loomix/content-schema";
+import type { Catalog } from "@loomix/content-schema";
 
 export const releaseIdSchema = z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/);
 export const releaseMarkerSchema = z.strictObject({
@@ -16,13 +16,9 @@ export function sha256(bytes: Uint8Array): string {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
-export function referencedImages(content: Content): string[] {
+export function referencedImages(content: Catalog): string[] {
   return [
-    ...new Set(
-      contentGroups.flatMap((group) =>
-        groupAt(content, group).flatMap((record) => (record.image ? [record.image] : [])),
-      ),
-    ),
+    ...new Set(content.items.flatMap((record) => (record.image ? [record.image] : []))),
   ].sort();
 }
 
@@ -68,7 +64,7 @@ export async function downloadRelease(
   if (sha256(bytes) !== marker.contentSha256) {
     throw new Error("Resource JSON SHA-256 does not match the completed release");
   }
-  const content = parseContent(JSON.parse(bytes.toString("utf8")));
+  const content = parseCatalog(JSON.parse(bytes.toString("utf8")));
   if (referencedImages(content).length !== marker.assetCount) {
     throw new Error("Resource image count does not match the completed release");
   }

@@ -1,6 +1,6 @@
 import { LayersIcon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import type { DishItem, DishSeries } from "@loomix/content-schema";
+import type { DishItem, DishSeries } from "../collection-view.ts";
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/ui/components/card";
 import { RecordImage } from "@/ui/collection/record-image";
 import { QualityBar } from "@/ui/collection/quality";

@@ -1,108 +1,128 @@
 import { z } from "zod";
 
+export const CategorySchema = z.enum([
+  "furniture",
+  "clothing",
+  "creatures",
+  "plants",
+  "dishes",
+  "miscellaneous",
+]);
+export const ItemIdSchema = z.number().int().positive().max(Number.MAX_SAFE_INTEGER);
+export const CatalogSourceSchema = z.strictObject({
+  gameVersion: z.string().min(1),
+  dataRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+  resourceRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+});
 const text = z.string().nullable();
-const id = z.number().int().positive().max(Number.MAX_SAFE_INTEGER);
-const members = z.array(id).nullable();
-
-export const BasicRecordSchema = z.strictObject({
-  name: z.string().min(1),
-  image: z
-    .string()
-    .regex(/^assets\/[a-f0-9]{64}\.webp$/)
-    .nullable(),
-  description: text,
-  id,
-  quality: z.number().int().min(0).max(4).nullable(),
-});
-
-export const FurnitureSetSchema = BasicRecordSchema.extend({
-  seriesName: text,
-  componentIds: members,
-});
-export const FurnitureItemSchema = BasicRecordSchema.extend({
-  category: text,
-  type: text,
-  size: text,
-  colors: text,
-  materials: text,
-  sources: text,
-});
-export const CreatureSeriesSchema = BasicRecordSchema.extend({
-  seriesName: text,
-  creatureIds: members,
-});
-export const CreatureItemSchema = BasicRecordSchema.extend({
-  category: text,
-  region: text,
-  habitat: text,
-  activeSeasons: text,
-  activeTimes: text,
-  activeWeather: text,
-  sizeRange: text,
-});
-export const PlantSeriesSchema = BasicRecordSchema.extend({
-  seriesName: text,
-  plantIds: members,
-});
-export const PlantItemSchema = BasicRecordSchema.extend({
-  category: text,
-  originGalaxy: text,
-  maturityPeriod: text,
-  harvestCount: z.number().int().nonnegative().nullable(),
-});
-export const DishSeriesSchema = BasicRecordSchema.extend({
-  seriesName: text,
-  dishIds: members,
-});
-export const DishItemSchema = BasicRecordSchema.extend({
-  difficulty: text,
-  galaxyFlavor: text,
-  cookware: text,
-  effects: text,
-});
-export const ClothingSetSchema = BasicRecordSchema.extend({
-  setName: text,
-  componentIds: members,
-});
-export const ClothingItemSchema = BasicRecordSchema.extend({
-  category: text,
-  colors: text,
-  materials: text,
-  styles: text,
-  sources: text,
-});
-export const ClothingAppearanceSchema = BasicRecordSchema.extend({ category: text });
-export const MiscellaneousItemSchema = BasicRecordSchema;
-
-export const recordSchemas = {
-  "furniture.sets": FurnitureSetSchema,
-  "furniture.items": FurnitureItemSchema,
-  "creatures.series": CreatureSeriesSchema,
-  "creatures.items": CreatureItemSchema,
-  "plants.series": PlantSeriesSchema,
-  "plants.items": PlantItemSchema,
-  "dishes.series": DishSeriesSchema,
-  "dishes.items": DishItemSchema,
-  "clothing.sets": ClothingSetSchema,
-  "clothing.items": ClothingItemSchema,
-  "clothing.appearances": ClothingAppearanceSchema,
-  miscellaneous: MiscellaneousItemSchema,
+const members = z.array(ItemIdSchema).nullable();
+export const DeliveredImageSchema = z
+  .string()
+  .regex(/^assets\/[a-f0-9]{64}\.webp$/)
+  .nullable();
+export const attributeSchemas = {
+  furniture: z.strictObject({
+    type: text,
+    size: text,
+    colors: text,
+    materials: text,
+    sources: text,
+  }),
+  clothing: z.strictObject({ colors: text, materials: text, styles: text, sources: text }),
+  creatures: z.strictObject({
+    region: text,
+    habitat: text,
+    activeSeasons: text,
+    activeTimes: text,
+    activeWeather: text,
+    sizeRange: text,
+  }),
+  plants: z.strictObject({
+    originGalaxy: text,
+    maturityPeriod: text,
+    harvestCount: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).nullable(),
+  }),
+  dishes: z.strictObject({ difficulty: text, galaxyFlavor: text, cookware: text, effects: text }),
+  miscellaneous: z.strictObject({}),
 };
-
-export type BasicRecord = z.infer<typeof BasicRecordSchema>;
-export type FurnitureSet = z.infer<typeof FurnitureSetSchema>;
-export type FurnitureItem = z.infer<typeof FurnitureItemSchema>;
-export type CreatureSeries = z.infer<typeof CreatureSeriesSchema>;
-export type CreatureItem = z.infer<typeof CreatureItemSchema>;
-export type PlantSeries = z.infer<typeof PlantSeriesSchema>;
-export type PlantItem = z.infer<typeof PlantItemSchema>;
-export type DishSeries = z.infer<typeof DishSeriesSchema>;
-export type DishItem = z.infer<typeof DishItemSchema>;
-export type ClothingSet = z.infer<typeof ClothingSetSchema>;
-export type ClothingItem = z.infer<typeof ClothingItemSchema>;
-export type ClothingAppearance = z.infer<typeof ClothingAppearanceSchema>;
-export type MiscellaneousItem = z.infer<typeof MiscellaneousItemSchema>;
-export type ContentGroup = keyof typeof recordSchemas;
-export type ContentRecord<G extends ContentGroup = ContentGroup> = z.infer<
-  (typeof recordSchemas)[G]
+export function createRecordSchemas(image: z.ZodType<string | null> = DeliveredImageSchema) {
+  const base = z.strictObject({
+    id: ItemIdSchema,
+    name: z.string().min(1),
+    image,
+    description: text,
+    quality: z
+      .union([z.literal(0), z.literal(1), z.literal(2), z.literal(3), z.literal(4)])
+      .nullable(),
+    encyclopediaEntry: z.strictObject({ listed: z.boolean() }).nullable(),
+  });
+  function item<C extends Category>(category: C) {
+    return base.extend({
+      category: z.literal(category),
+      kind: z.literal("item"),
+      subcategory: text,
+      attributes: attributeSchemas[category],
+    });
+  }
+  function collection<C extends Category, K extends "set" | "series">(category: C, kind: K) {
+    return base.extend({
+      category: z.literal(category),
+      kind: z.literal(kind),
+      memberIds: members,
+    });
+  }
+  return {
+    "furniture.item": item("furniture"),
+    "furniture.set": collection("furniture", "set"),
+    "clothing.item": item("clothing"),
+    "clothing.set": collection("clothing", "set"),
+    "clothing.appearance": base.extend({
+      category: z.literal("clothing"),
+      kind: z.literal("appearance"),
+      subcategory: text,
+    }),
+    "creatures.item": item("creatures"),
+    "creatures.series": collection("creatures", "series"),
+    "plants.item": item("plants"),
+    "plants.series": collection("plants", "series"),
+    "dishes.item": item("dishes"),
+    "dishes.series": collection("dishes", "series"),
+    "miscellaneous.item": item("miscellaneous"),
+  };
+}
+export const recordSchemas = createRecordSchemas();
+export function createCatalogRecordSchema(image: z.ZodType<string | null> = DeliveredImageSchema) {
+  const s = createRecordSchemas(image);
+  return z.union([
+    s["furniture.item"],
+    s["furniture.set"],
+    s["clothing.item"],
+    s["clothing.set"],
+    s["clothing.appearance"],
+    s["creatures.item"],
+    s["creatures.series"],
+    s["plants.item"],
+    s["plants.series"],
+    s["dishes.item"],
+    s["dishes.series"],
+    s["miscellaneous.item"],
+  ]);
+}
+export const CatalogRecordSchema = createCatalogRecordSchema();
+export type Category = z.infer<typeof CategorySchema>;
+export type ItemId = number;
+export type NullableText = string | null;
+export type Quality = 0 | 1 | 2 | 3 | 4;
+export type CatalogSource = z.infer<typeof CatalogSourceSchema>;
+export type CatalogRecord = z.infer<typeof CatalogRecordSchema>;
+export type ItemRecord = Extract<CatalogRecord, { kind: "item" }>;
+export type SetRecord = Extract<CatalogRecord, { kind: "set" }>;
+export type SeriesRecord = Extract<CatalogRecord, { kind: "series" }>;
+export type AppearanceRecord = Extract<CatalogRecord, { kind: "appearance" }>;
+export type RecordKind = CatalogRecord["kind"];
+export type RecordBase = Pick<
+  CatalogRecord,
+  "id" | "name" | "image" | "description" | "quality" | "encyclopediaEntry"
 >;
+export type RecordType = keyof typeof recordSchemas;
+export type AttributesByCategory = { [C in Category]: z.infer<(typeof attributeSchemas)[C]> };

@@ -12,9 +12,9 @@ export function buildClothingItem(
   const { tables, vocabulary } = context;
   const { main, ui } = record;
   for (const [field, index] of [
-    ["colors", 9],
-    ["materials", 11],
-    ["styles", 12],
+    ["attributes.colors", 9],
+    ["attributes.materials", 11],
+    ["attributes.styles", 12],
   ] as const)
     builder.put(
       field,
@@ -26,7 +26,7 @@ export function buildClothingItem(
   const sourceIds = tables.vector(ui, profile.fields.ui.sources);
   const sourceLabels = sourceIds?.map((code) => tables.text(vocabulary.sources.get(code), 1));
   builder.put(
-    "sources",
+    "attributes.sources",
     sourceLabels?.length && sourceLabels.every(Boolean)
       ? [...new Set(sourceLabels)].join("，")
       : null,

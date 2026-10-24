@@ -1,5 +1,5 @@
 import path from "node:path";
-import { parseContent } from "@loomix/content-schema";
+import { parseCatalog } from "@loomix/content-schema";
 import { verifyBundle } from "../verify/bundle.ts";
 
 export async function verifyDelivery(
@@ -13,7 +13,7 @@ export async function verifyDelivery(
     staging: path.join(work, "staging"),
     contentFile: path.join(work, "staging", "content.json"),
     raw: false,
-    parse: parseContent,
+    parse: parseCatalog,
     writeReports,
   });
 }

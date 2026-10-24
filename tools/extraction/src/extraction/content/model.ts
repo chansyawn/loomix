@@ -1,15 +1,7 @@
-import type { ContentGroup, ContentRecord } from "@loomix/content-schema";
+import type { RecordType } from "@loomix/content-schema";
 import type { TagNode } from "../types.ts";
 import assert from "node:assert/strict";
-import { contentGroups, groupAt, parseContent } from "@loomix/content-schema";
-
-export {
-  basicFields,
-  additionalFields,
-  memberTargets,
-  emptyContent,
-  groupAt,
-} from "@loomix/content-schema";
+import { recordTypes, recordType, parseCatalog } from "@loomix/content-schema";
 
 export function plainText(value: unknown) {
   return typeof value === "string"
@@ -51,27 +43,26 @@ export function expandTags(names: string[], nodes: Record<number, TagNode>) {
 export function validateModel(
   content: unknown,
   scopeIds: Iterable<number>,
-  expected?: Partial<Record<ContentGroup, number>> | null,
+  expected?: Partial<Record<RecordType, number>> | null,
   qualities?: Set<number>,
-  parse = parseContent,
+  parse = parseCatalog,
 ) {
   const parsed = parse(content);
-  const all: ContentRecord[] = [];
-  const counts: Partial<Record<ContentGroup, number>> = {};
-  for (const group of contentGroups) {
-    const rows = groupAt(parsed, group);
+  const all = parsed.items;
+  const counts: Partial<Record<RecordType, number>> = {};
+  for (const group of recordTypes) {
+    const rows = parsed.items.filter((record) => recordType(record) === group);
     counts[group] = rows.length;
     if (expected) assert.equal(rows.length, expected[group], `${group} count`);
     for (const row of rows) {
       if (row.quality !== null && qualities)
         assert.ok(qualities.has(row.quality), `${row.id} quality`);
-      all.push(row);
     }
   }
   assert.deepEqual(
     new Set(all.map((row) => row.id)),
     new Set(scopeIds),
-    "Exact root 93 membership",
+    "Exact confirmed catalog membership",
   );
   return { all, counts };
 }

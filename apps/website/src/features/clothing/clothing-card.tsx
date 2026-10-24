@@ -1,4 +1,4 @@
-import type { ClothingItem, ClothingSet, ClothingAppearance } from "@loomix/content-schema";
+import type { ClothingItem, ClothingSet, ClothingAppearance } from "../collection-view.ts";
 import { Link } from "@tanstack/react-router";
 import { LayersIcon } from "lucide-react";
 import {

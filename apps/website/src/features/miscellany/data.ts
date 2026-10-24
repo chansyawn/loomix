@@ -1,11 +1,8 @@
-import { parseContent } from "@loomix/content-schema";
-import type { Content } from "@loomix/content-schema";
-import { resourceUrl } from "@/infrastructure/resources";
+import { loadCollectionView } from "../collection-loader.ts";
+import type { CollectionView } from "../collection-view.ts";
 
-export type MiscellanyData = Content["miscellaneous"];
+export type MiscellanyData = CollectionView["miscellaneous"];
 
 export async function loadMiscellany(): Promise<MiscellanyData> {
-  const response = await fetch(resourceUrl("content.json"));
-  if (!response.ok) throw new Error(`Unable to load miscellany: ${response.status}`);
-  return parseContent(await response.json()).miscellaneous;
+  return (await loadCollectionView()).miscellaneous;
 }

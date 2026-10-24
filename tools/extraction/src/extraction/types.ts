@@ -1,4 +1,4 @@
-import type { ContentGroup } from "@loomix/content-schema";
+import type { RecordType } from "@loomix/content-schema";
 
 export interface WorkOptions {
   work: string;
@@ -31,7 +31,7 @@ export interface IconMatch {
 }
 export interface SelectedImage {
   id: number;
-  group: ContentGroup;
+  group: RecordType;
   reference: string;
   assetType: string;
   resourceName: string;
@@ -93,7 +93,18 @@ export interface ResourceEvidence {
   source: string;
   pathId: string;
 }
-export type Evidence = TableEvidence | TableEvidence[] | ResourceEvidence | string[];
+export interface ManualEvidence {
+  kind: "manual";
+  file: string;
+  pointer: string;
+  sha256: string;
+}
+export type Evidence =
+  | ManualEvidence
+  | TableEvidence
+  | TableEvidence[]
+  | ResourceEvidence
+  | string[];
 export interface SourceReference {
   file: string;
   table?: number;
@@ -101,10 +112,12 @@ export interface SourceReference {
   rowOffset?: number;
   fields?: number[];
   pathId?: string;
+  pointer?: string;
+  sha256?: string;
 }
 export interface EvidenceRecord {
   id: number;
-  group: ContentGroup;
+  group: RecordType;
   field: string;
   value: FieldValue;
   evidence: Evidence;

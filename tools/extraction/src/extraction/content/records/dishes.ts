@@ -15,13 +15,13 @@ export function buildDishItem(
   const recipe = context.recipesByProduct.get(id);
   const difficulty = vocabulary.difficulties.get(tables.uint(recipe, 2));
   builder.put(
-    "difficulty",
+    "attributes.difficulty",
     tables.text(difficulty, 1),
     evidence(profile.roots.recipes, [2, 4]),
     "recipe_difficulty_unresolved",
   );
   builder.put(
-    "galaxyFlavor",
+    "attributes.galaxyFlavor",
     vocabulary.renderTags(vocabulary.tags(main, 8)),
     evidence(profile.roots.items, 8),
     "flavor_tag_missing_or_unresolved",
@@ -30,7 +30,7 @@ export function buildDishItem(
     (row) => tables.uint(row, 2) === tables.uint(recipe, 16),
   );
   builder.put(
-    "cookware",
+    "attributes.cookware",
     cookware.length === 1 ? tables.string(cookware[0], 1) : null,
     [evidence(profile.roots.recipes, [4, 16]), evidence(profile.roots.cookware, [1, 2])],
     "cookware_enum_unresolved",
@@ -39,7 +39,7 @@ export function buildDishItem(
   const effectTemplate = tables.textmap[4027993099]?.nameZh;
   const hasOtherEffect = tables.uint(ui, 9, 0) !== 0;
   builder.put(
-    "effects",
+    "attributes.effects",
     strength != null && effectTemplate && !hasOtherEffect
       ? plainText(effectTemplate.replace("%s", String(strength)))
       : null,

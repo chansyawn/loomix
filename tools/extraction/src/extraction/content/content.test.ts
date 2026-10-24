@@ -1,4 +1,4 @@
-import { recordSchemas } from "@loomix/content-schema";
+import { emptyCatalog, recordSchemas } from "@loomix/content-schema";
 import type { ScalarMethod, TableRow } from "../types.ts";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -10,13 +10,7 @@ import { createIconResolver } from "../images/resolve.ts";
 import { profile } from "../../profile.ts";
 import { repoRoot } from "../../paths.ts";
 import { hashTextKey, readUIntVector, Tables } from "../decode/tables.ts";
-import {
-  additionalFields,
-  emptyContent,
-  validateModel,
-  expandTags,
-  furnitureSize,
-} from "./model.ts";
+import { validateModel, expandTags, furnitureSize } from "./model.ts";
 import { exportImages, imageBatches } from "../images/export.ts";
 import { highestResolutionImages } from "../images/select.ts";
 import { safeOutput } from "../../delivery/output.ts";
@@ -60,49 +54,46 @@ test("tag ancestry preserves class membership and detects cycles", () => {
   assert.throws(() => expandTags(["盆栽"], nodes), /cycle/);
 });
 test("field whitelist and same-category member references are strict", () => {
-  const content = emptyContent();
-  const item = recordSchemas["furniture.items"].parse({
-    ...Object.fromEntries(
-      ["name", "image", "description", "id", "quality", ...additionalFields["furniture.items"]].map(
-        (k) => [k, null],
-      ),
-    ),
+  const content = emptyCatalog({
+    gameVersion: "0.95.2",
+    dataRevision: 1449213,
+    resourceRevision: 1391927,
+  });
+  const item = recordSchemas["furniture.item"].parse({
     id: 1101,
     name: "手工图桌",
     quality: 0,
-  });
-  content.furniture.items.push(item);
-  content.furniture.sets.push({
-    name: "套组",
     image: null,
     description: null,
-    id: 3,
-    quality: 2,
-    seriesName: "套组",
-    componentIds: [1101],
+    encyclopediaEntry: { listed: true },
+    category: "furniture",
+    kind: "item",
+    subcategory: "桌",
+    attributes: { type: null, size: null, colors: null, materials: null, sources: null },
   });
+  const set = recordSchemas["furniture.set"].parse({
+    id: 3,
+    name: "套组",
+    quality: 2,
+    image: null,
+    description: null,
+    encyclopediaEntry: { listed: true },
+    category: "furniture",
+    kind: "set",
+    memberIds: [1101],
+  });
+  content.items.push(item, set);
   assert.equal(validateModel(content, [3, 1101], null, new Set([0, 2])).all.length, 2);
-  assert.throws(() => validateModel(content, [3]), /Exact root 93 membership/);
-  assert.throws(() => validateModel(content, [3, 1101], { "furniture.sets": 2 }), /count/);
+  assert.throws(() => validateModel(content, [3]), /Exact confirmed catalog membership/);
+  assert.throws(() => validateModel(content, [3, 1101], { "furniture.set": 2 }), /count/);
   assert.throws(() => validateModel(content, [3, 1101], null, new Set([0])), /quality/);
   Object.assign(item, { source: "extra" });
   assert.throws(() => validateModel(content, [3, 1101]), { name: "ZodError" });
   Reflect.deleteProperty(item, "source");
-  content.furniture.sets[0].componentIds = [999];
+  set.memberIds = [999];
   assert.throws(() => validateModel(content, [3, 1101]), { name: "ZodError" });
-  content.furniture.sets[0].componentIds = null;
-  content.clothing.items.push({
-    id: item.id,
-    name: item.name,
-    quality: 0,
-    description: null,
-    image: null,
-    category: null,
-    colors: null,
-    materials: null,
-    styles: null,
-    sources: null,
-  });
+  set.memberIds = null;
+  content.items.push({ ...item });
   assert.throws(() => validateModel(content, [3, 1101]));
 });
 test("duplicate table IDs require equal extracted values", () => {
@@ -148,7 +139,7 @@ test("same-name sprites use precise containers and isolated export batches", () 
   const batches = imageBatches(
     [right, wrong].map((a) => ({
       id: 1,
-      group: "miscellaneous" as const,
+      group: "miscellaneous.item" as const,
       reference,
       source: a.Source,
       assetType: "Sprite",
@@ -163,7 +154,7 @@ test("same-name sprites use precise containers and isolated export batches", () 
 test("image selection compares native pixels and preserves large-icon order on ties", () => {
   const base = {
     id: 1,
-    group: "miscellaneous" as const,
+    group: "miscellaneous.item" as const,
     reference: "UISprite/Large",
     source: "current.blk",
     assetType: "Texture2D",
@@ -192,7 +183,12 @@ test("export failures and missing selected PNGs stop with logs", async () => {
       const work = path.join(temp, String(code)),
         source = path.join(temp, `export-${code}.ts`);
       fs.mkdirSync(path.join(work, "raw", "assets"), { recursive: true });
-      fs.writeFileSync(path.join(work, "raw", "content.json"), JSON.stringify(emptyContent()));
+      fs.writeFileSync(
+        path.join(work, "raw", "content.json"),
+        JSON.stringify(
+          emptyCatalog({ gameVersion: "0.95.2", dataRevision: 1449213, resourceRevision: 1391927 }),
+        ),
+      );
       fs.writeFileSync(
         path.join(work, "candidate-images.json"),
         JSON.stringify([

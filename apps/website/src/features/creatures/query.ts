@@ -1,4 +1,4 @@
-import type { CreatureItem, CreatureSeries } from "@loomix/content-schema";
+import type { CreatureItem, CreatureSeries } from "../collection-view.ts";
 import type { FilterGroup } from "@/ui/collection/filter-panel";
 import { qualityNames } from "@/ui/collection/quality";
 import type { CreaturesData } from "./data";

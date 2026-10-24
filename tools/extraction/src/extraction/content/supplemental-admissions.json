@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "gameVersion": "0.95.2",
+    "dataRevision": 1449213,
+    "resourceRevision": 1391927
+  },
+  "confirmation": {
+    "kind": "manual",
+    "note": "用户确认已实装及指定分类；分类为人工收录决策，并非游戏原始分类。"
+  },
+  "entries": [
+    {
+      "id": 30161,
+      "expectedName": "苹果",
+      "category": "plants",
+      "subcategory": "采摘材料"
+    },
+    {
+      "id": 30169,
+      "expectedName": "李子",
+      "category": "plants",
+      "subcategory": "采摘材料"
+    },
+    {
+      "id": 30265,
+      "expectedName": "牛油果",
+      "category": "plants",
+      "subcategory": "采摘材料"
+    },
+    {
+      "id": 30266,
+      "expectedName": "芒果",
+      "category": "plants",
+      "subcategory": "采摘材料"
+    },
+    {
+      "id": 30267,
+      "expectedName": "仙人掌果",
+      "category": "plants",
+      "subcategory": "采摘材料"
+    },
+    {
+      "id": 30268,
+      "expectedName": "竹笋",
+      "category": "plants",
+      "subcategory": "采摘材料"
+    },
+    {
+      "id": 2000050,
+      "expectedName": "肉",
+      "category": "miscellaneous",
+      "subcategory": null
+    },
+    {
+      "id": 2000051,
+      "expectedName": "蛋",
+      "category": "miscellaneous",
+      "subcategory": null
+    },
+    {
+      "id": 2000052,
+      "expectedName": "奶",
+      "category": "miscellaneous",
+      "subcategory": null
+    }
+  ]
+}

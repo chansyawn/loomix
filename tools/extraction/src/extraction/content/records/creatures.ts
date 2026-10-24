@@ -12,11 +12,11 @@ export function buildCreatureItem(
   const { tables, vocabulary } = context;
   const { row, ui, id } = record;
   for (const [field, index] of [
-    ["region", profile.fields.ui.region],
-    ["habitat", profile.fields.ui.habitat],
-    ["activeSeasons", profile.fields.ui.seasons],
-    ["activeTimes", profile.fields.ui.times],
-    ["activeWeather", profile.fields.ui.weather],
+    ["attributes.region", profile.fields.ui.region],
+    ["attributes.habitat", profile.fields.ui.habitat],
+    ["attributes.activeSeasons", profile.fields.ui.seasons],
+    ["attributes.activeTimes", profile.fields.ui.times],
+    ["attributes.activeWeather", profile.fields.ui.weather],
   ] as const)
     builder.put(
       field,
@@ -47,7 +47,7 @@ export function buildCreatureItem(
           },
         ]
       : [],
-    field: "sizeRange",
+    field: "attributes.sizeRange",
     table: profile.roots.creatureScale,
     fields: [3, 4, 5, 6],
     min,
@@ -57,7 +57,7 @@ export function buildCreatureItem(
     taskText: tables.text(row, 8),
   });
   builder.put(
-    "sizeRange",
+    "attributes.sizeRange",
     null,
     evidence(profile.roots.creatureScale, [3, 4, 5, 6]),
     "size_units_and_conversion_unconfirmed",

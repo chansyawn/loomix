@@ -1,336 +1,244 @@
 import { expect, expectTypeOf, test } from "vite-plus/test";
-import { z } from "zod";
 import {
-  ContentSchema,
-  additionalFields,
-  basicFields,
-  contentGroups,
-  emptyContent,
-  groupAt,
-  parseContent,
+  CatalogSchema,
+  emptyCatalog,
+  parseCatalog,
+  recordSchemas,
+  recordTypes,
+  attributeSchemas,
+  recordFields,
 } from "../src/index.ts";
-import type { Content, CreatureItem, FurnitureItem, FurnitureSet } from "../src/index.ts";
-
-function fixture(): Content {
-  const base = { name: " 名称 ", image: null, description: null, quality: 0 };
-  return {
-    furniture: {
-      sets: [{ ...base, id: 1, seriesName: null, componentIds: [3, 2] }],
-      items: [3, 2].map((id) => ({
+import type { Catalog, CatalogRecord, ItemRecord } from "../src/index.ts";
+const source = { gameVersion: "0.95.2", dataRevision: 1449213, resourceRevision: 1391927 };
+const base = {
+  name: "fixture",
+  image: null,
+  description: null,
+  quality: 0,
+  encyclopediaEntry: { listed: true },
+};
+function fixture(): Catalog {
+  const catalog = emptyCatalog(source);
+  for (const [index, type] of recordTypes.entries()) {
+    const [category, kind] = type.split(".");
+    const attributes =
+      kind === "item"
+        ? Object.fromEntries(
+            Object.keys(attributeSchemas[category as ItemRecord["category"]].shape).map((field) => [
+              field,
+              null,
+            ]),
+          )
+        : undefined;
+    catalog.items.push(
+      recordSchemas[type].parse({
         ...base,
-        id,
-        category: null,
-        type: null,
-        size: "2.0x1.0",
-        colors: null,
-        materials: "金属，木制",
-        sources: null,
-      })),
-    },
-    creatures: {
-      series: [{ ...base, id: 4, seriesName: null, creatureIds: [5] }],
-      items: [
-        {
-          ...base,
-          id: 5,
-          category: null,
-          region: null,
-          habitat: null,
-          activeSeasons: "春季，夏季",
-          activeTimes: null,
-          activeWeather: null,
-          sizeRange: null,
-        },
-      ],
-    },
-    plants: {
-      series: [{ ...base, id: 6, seriesName: null, plantIds: [7] }],
-      items: [
-        {
-          ...base,
-          id: 7,
-          category: null,
-          originGalaxy: null,
-          maturityPeriod: null,
-          harvestCount: 0,
-        },
-      ],
-    },
-    dishes: {
-      series: [{ ...base, id: 8, seriesName: null, dishIds: [9] }],
-      items: [
-        {
-          ...base,
-          id: 9,
-          difficulty: null,
-          galaxyFlavor: null,
-          cookware: null,
-          effects: "增加 30 力气",
-        },
-      ],
-    },
-    clothing: {
-      sets: [{ ...base, id: 10, setName: null, componentIds: [11] }],
-      items: [
-        {
-          ...base,
-          id: 11,
-          category: null,
-          colors: null,
-          materials: null,
-          styles: null,
-          sources: null,
-        },
-      ],
-      appearances: [{ ...base, id: 12, category: null }],
-    },
-    miscellaneous: [{ ...base, id: 13, image: `assets/${"a".repeat(64)}.webp` }],
-  };
+        id: index + 1,
+        category,
+        kind,
+        ...(kind === "item"
+          ? { subcategory: null, attributes }
+          : kind === "appearance"
+            ? { subcategory: null }
+            : { memberIds: null }),
+      }),
+    );
+  }
+  return catalog;
 }
-
-test("all groups preserve strings, nulls, zero values and input ordering", () => {
-  const content = fixture();
-  const before = fixture();
-  expect(ContentSchema.parse(content)).toEqual(before);
-  expect(parseContent(content)).toEqual(before);
-  expect(content).toEqual(before);
-  expect(contentGroups).toHaveLength(12);
-  for (const group of contentGroups) expect(groupAt(content, group).length).toBeGreaterThan(0);
-  expect(parseContent(emptyContent())).toEqual(emptyContent());
+test("all twelve legal category/kind combinations round-trip in one catalog", () => {
+  const catalog = fixture();
+  expect(parseCatalog(catalog)).toEqual(catalog);
+  expect(catalog.items).toHaveLength(12);
+  expect(parseCatalog(emptyCatalog(source))).toEqual(emptyCatalog(source));
+  expectTypeOf(parseCatalog(catalog)).toEqualTypeOf<Catalog>();
 });
-
-test("null and empty memberships are accepted without inventing members", () => {
-  const content = fixture();
-  content.furniture.sets[0].componentIds = null;
-  content.creatures.series[0].creatureIds = [];
-  content.plants.items[0].harvestCount = null;
-  content.miscellaneous[0].quality = null;
-  expect(parseContent(content)).toEqual(content);
+test("unknown attributes, absent encyclopedia, and unknown or empty memberships remain distinct", () => {
+  const catalog = fixture();
+  catalog.items[0].encyclopediaEntry = null;
+  catalog.items[2].encyclopediaEntry = { listed: false };
+  const sets = catalog.items.filter((record) => record.kind === "set");
+  sets[0].memberIds = null;
+  sets[1].memberIds = [];
+  expect(parseCatalog(catalog)).toEqual(catalog);
 });
-
-const invalidCases: [string, (content: Content) => void, (string | number)[]][] = [
+test("only same-category item IDs may be collection members", () => {
+  const catalog = fixture();
+  const set = catalog.items.find(
+    (record) => record.kind === "set" && record.category === "furniture",
+  )!;
+  if (set.kind !== "set") throw new Error("fixture");
+  set.memberIds = [catalog.items[0].id];
+  expect(parseCatalog(catalog)).toEqual(catalog);
+  for (const members of [
+    [999],
+    [set.id],
+    [catalog.items[2].id],
+    [catalog.items[0].id, catalog.items[0].id],
+  ]) {
+    set.memberIds = members;
+    expect(() => parseCatalog(catalog)).toThrow();
+  }
+});
+const invalid: [string, (catalog: Catalog) => void][] = [
   [
-    "missing root group",
+    "global duplicate ID",
     (c) => {
-      Reflect.deleteProperty(c, "plants");
+      c.items[1].id = c.items[0].id;
     },
-    ["plants"],
   ],
   [
-    "extra root field",
+    "zero ID",
     (c) => {
-      Reflect.set(c, "version", "0.95.2");
+      c.items[0].id = 0;
     },
-    [],
-  ],
-  [
-    "extra subgroup",
-    (c) => {
-      Reflect.set(c.furniture, "series", []);
-    },
-    ["furniture"],
-  ],
-  [
-    "missing subgroup",
-    (c) => {
-      Reflect.deleteProperty(c.clothing, "appearances");
-    },
-    ["clothing", "appearances"],
-  ],
-  [
-    "missing record field",
-    (c) => {
-      Reflect.deleteProperty(c.miscellaneous[0], "description");
-    },
-    ["miscellaneous", 0, "description"],
-  ],
-  [
-    "extra record field",
-    (c) => {
-      Reflect.set(c.miscellaneous[0], "source", "extra");
-    },
-    ["miscellaneous", 0],
-  ],
-  [
-    "invalid group type",
-    (c) => {
-      Reflect.set(c.furniture, "items", {});
-    },
-    ["furniture", "items"],
-  ],
-  [
-    "empty name",
-    (c) => {
-      c.miscellaneous[0].name = "";
-    },
-    ["miscellaneous", 0, "name"],
-  ],
-  [
-    "null name",
-    (c) => {
-      Reflect.set(c.miscellaneous[0], "name", null);
-    },
-    ["miscellaneous", 0, "name"],
-  ],
-  [
-    "array display value",
-    (c) => {
-      Reflect.set(c.furniture.items[0], "materials", ["金属"]);
-    },
-    ["furniture", "items", 0, "materials"],
   ],
   [
     "negative ID",
     (c) => {
-      c.miscellaneous[0].id = -1;
+      c.items[0].id = -1;
     },
-    ["miscellaneous", 0, "id"],
   ],
   [
     "fractional ID",
     (c) => {
-      c.miscellaneous[0].id = 1.5;
+      c.items[0].id = 1.5;
     },
-    ["miscellaneous", 0, "id"],
   ],
   [
     "unsafe ID",
     (c) => {
-      c.miscellaneous[0].id = Number.MAX_SAFE_INTEGER + 1;
+      c.items[0].id = Number.MAX_SAFE_INTEGER + 1;
     },
-    ["miscellaneous", 0, "id"],
-  ],
-  [
-    "invalid image",
-    (c) => {
-      c.miscellaneous[0].image = `assets/${"A".repeat(64)}.webp`;
-    },
-    ["miscellaneous", 0, "image"],
-  ],
-  [
-    "legacy PNG image",
-    (c) => {
-      c.miscellaneous[0].image = `assets/${"a".repeat(64)}.png`;
-    },
-    ["miscellaneous", 0, "image"],
   ],
   [
     "invalid quality",
     (c) => {
-      c.miscellaneous[0].quality = 5;
+      Object.assign(c.items[0], { quality: 5 });
     },
-    ["miscellaneous", 0, "quality"],
-  ],
-  [
-    "negative quality",
-    (c) => {
-      c.miscellaneous[0].quality = -1;
-    },
-    ["miscellaneous", 0, "quality"],
   ],
   [
     "fractional quality",
     (c) => {
-      c.miscellaneous[0].quality = 1.5;
+      Object.assign(c.items[0], { quality: 1.5 });
     },
-    ["miscellaneous", 0, "quality"],
   ],
   [
-    "negative harvest count",
+    "empty name",
     (c) => {
-      c.plants.items[0].harvestCount = -1;
+      c.items[0].name = "";
     },
-    ["plants", "items", 0, "harvestCount"],
   ],
   [
-    "fractional harvest count",
+    "missing base field",
     (c) => {
-      c.plants.items[0].harvestCount = 1.5;
+      Reflect.deleteProperty(c.items[0], "description");
     },
-    ["plants", "items", 0, "harvestCount"],
   ],
   [
-    "duplicate ID across groups",
+    "unknown base field",
     (c) => {
-      c.miscellaneous[0].id = 2;
+      Object.assign(c.items[0], { implemented: true });
     },
-    ["miscellaneous", 0, "id"],
   ],
   [
-    "duplicate ID within group",
+    "missing encyclopedia state",
     (c) => {
-      c.miscellaneous.push({ ...c.miscellaneous[0] });
+      Reflect.deleteProperty(c.items[0], "encyclopediaEntry");
     },
-    ["miscellaneous", 1, "id"],
   ],
   [
-    "duplicate member",
+    "invalid encyclopedia shape",
     (c) => {
-      c.furniture.sets[0].componentIds = [2, 2];
+      Object.assign(c.items[0], { encyclopediaEntry: { listed: true, extra: true } });
     },
-    ["furniture", "sets", 0, "componentIds", 1],
   ],
   [
-    "missing member",
+    "invalid category/kind",
     (c) => {
-      c.creatures.series[0].creatureIds = [999];
+      Object.assign(c.items[0], { category: "plants", kind: "appearance" });
     },
-    ["creatures", "series", 0, "creatureIds", 0],
   ],
   [
-    "wrong member category",
+    "cross-category attributes",
     (c) => {
-      c.plants.series[0].plantIds = [5];
+      Object.assign(c.items[0], { attributes: { harvestCount: 1 } });
     },
-    ["plants", "series", 0, "plantIds", 0],
   ],
   [
-    "dish member is a series",
+    "extra attribute",
     (c) => {
-      c.dishes.series[0].dishIds = [8];
+      const r = c.items[0];
+      if (r.kind === "item") Object.assign(r.attributes, { unexpected: null });
     },
-    ["dishes", "series", 0, "dishIds", 0],
   ],
   [
-    "clothing member is an appearance",
+    "missing attribute",
     (c) => {
-      c.clothing.sets[0].componentIds = [12];
+      const r = c.items[0];
+      if (r.kind === "item") Reflect.deleteProperty(r.attributes, "colors");
     },
-    ["clothing", "sets", 0, "componentIds", 0],
   ],
   [
-    "invalid member ID",
+    "redundant collection name",
     (c) => {
-      c.furniture.sets[0].componentIds = [0];
+      Object.assign(c.items[1], { seriesName: "fixture" });
     },
-    ["furniture", "sets", 0, "componentIds", 0],
+  ],
+  [
+    "missing subcategory",
+    (c) => {
+      Reflect.deleteProperty(c.items[0], "subcategory");
+    },
+  ],
+  [
+    "old schema version",
+    (c) => {
+      Object.assign(c, { schemaVersion: 1 });
+    },
+  ],
+  [
+    "missing source field",
+    (c) => {
+      Reflect.deleteProperty(c.source, "resourceRevision");
+    },
+  ],
+  [
+    "unexpected top-level index",
+    (c) => {
+      Object.assign(c, { plants: [] });
+    },
+  ],
+  [
+    "invalid image",
+    (c) => {
+      c.items[0].image = "assets/icon.png";
+    },
   ],
 ];
-
-test.each(invalidCases)("rejects %s with the offending path", (_name, mutate, path) => {
-  const content = fixture();
-  mutate(content);
-  const result = ContentSchema.safeParse(content);
-  expect(result.success).toBe(false);
-  if (result.success) throw new Error("Invalid fixture accepted");
-  expect(result.error.issues.map((issue) => issue.path)).toContainEqual(path);
-  expect(() => parseContent(content)).toThrow(z.ZodError);
+test.each(invalid)("rejects %s", (_name, mutate) => {
+  const c = fixture();
+  mutate(c);
+  expect(CatalogSchema.safeParse(c).success).toBe(false);
 });
-
-test("field lists and typed group access expose the existing contract", () => {
-  const content = fixture();
-  expect(basicFields).toEqual(["name", "image", "description", "id", "quality"]);
-  expect(additionalFields["furniture.items"]).toEqual([
-    "category",
-    "type",
-    "size",
-    "colors",
-    "materials",
-    "sources",
-  ]);
-  expect(additionalFields.miscellaneous).toEqual([]);
-  expectTypeOf(groupAt(content, "furniture.items")).toEqualTypeOf<FurnitureItem[]>();
-  expectTypeOf(groupAt(content, "furniture.sets")).toEqualTypeOf<FurnitureSet[]>();
-  expectTypeOf(groupAt(content, "creatures.items")).toEqualTypeOf<CreatureItem[]>();
-  expectTypeOf(parseContent(content)).toEqualTypeOf<Content>();
+test("plant harvest count must be nonnegative integer and misc has no attributes", () => {
+  const c = fixture();
+  const plant = c.items.find(
+    (r): r is Extract<CatalogRecord, { category: "plants"; kind: "item" }> =>
+      r.category === "plants" && r.kind === "item",
+  )!;
+  for (const value of [-1, 1.5]) {
+    plant.attributes.harvestCount = value;
+    expect(() => parseCatalog(c)).toThrow();
+  }
+  plant.attributes.harvestCount = 0;
+  expect(parseCatalog(c)).toEqual(c);
+  const misc = c.items.find((r) => r.category === "miscellaneous")!;
+  Object.assign(misc, { attributes: { colors: null } });
+  expect(() => parseCatalog(c)).toThrow();
+});
+test("audit field paths follow the unified model", () => {
+  expect(recordFields("plants.item")).toContain("attributes.harvestCount");
+  expect(recordFields("plants.series")).toContain("memberIds");
+  expect(recordFields("plants.item")).not.toContain("encyclopediaEntry");
 });

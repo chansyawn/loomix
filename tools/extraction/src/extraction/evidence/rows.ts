@@ -10,10 +10,11 @@ function tableEvidence(evidence: Evidence): TableEvidence[] {
 
 export function evidenceHints(proof: EvidenceRecord): TableEvidence[] {
   const hints = tableEvidence(proof.evidence);
-  if (proof.field === "difficulty") hints.push({ table: profile.roots.recipeDifficulty, field: 1 });
+  if (proof.field === "attributes.difficulty")
+    hints.push({ table: profile.roots.recipeDifficulty, field: 1 });
   if (proof.field === "image" && proof.value !== null)
     hints.push({ table: profile.roots.ui, field: [4, 5], note: "configured image reference" });
-  if (proof.field === "componentIds") hints.push({ table: profile.roots.ui, field: 35 });
+  if (proof.field === "memberIds") hints.push({ table: profile.roots.ui, field: 35 });
 
   return hints;
 }
@@ -76,7 +77,7 @@ export function relatedRows(
       const primary = index.rows(hint.table).some((entry) => matches(entry, 5));
       return matches(row, primary ? 5 : 3);
     }
-    if (["componentIds", "creatureIds", "plantIds", "dishIds"].includes(proof.field))
+    if (proof.field === "memberIds")
       return (
         Array.isArray(proof.value) &&
         proof.value.includes(tables.uint(row, 0, 0)) &&

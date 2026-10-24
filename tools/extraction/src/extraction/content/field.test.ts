@@ -3,7 +3,7 @@ import { test } from "vite-plus/test";
 import { RecordBuilder, known, unknown } from "./field.ts";
 
 test("record builder separates confirmed values from reasoned unknowns", () => {
-  const builder = new RecordBuilder("miscellaneous", 1);
+  const builder = new RecordBuilder("miscellaneous.item", 1, null);
   builder.set("name", known("name", { table: 318, field: 1 }));
   builder.set("description", unknown({ table: 93, field: 4 }, "description_missing"));
   builder.put("quality", 0, { table: 325, field: 15 });

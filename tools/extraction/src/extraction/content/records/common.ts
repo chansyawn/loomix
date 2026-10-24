@@ -1,4 +1,4 @@
-import type { ContentGroup } from "@loomix/content-schema";
+import type { RecordType } from "@loomix/content-schema";
 import type { IconMatch, Row, TableEvidence } from "../../types.ts";
 import { plainText } from "../model.ts";
 import { profile } from "../../../profile.ts";
@@ -13,7 +13,7 @@ const evidence = (table: number, field: number | number[], note?: string): Table
 });
 
 export function selectImageReferences(
-  group: ContentGroup,
+  group: RecordType,
   tables: ContentContext["tables"],
   ui: Row,
 ): string[] {
@@ -37,7 +37,7 @@ export function buildCommon(
   const { id, group, row, main, ui, creature } = record;
   const fields = profile.fields;
 
-  builder.put("id", id, evidence(profile.roots.content, fields.content.id));
+  builder.put("id", id, evidence(profile.roots.items, fields.items.id));
   builder.put(
     "name",
     plainText(tables.text(main, fields.items.name)),
@@ -112,13 +112,14 @@ export function buildCategory(
   context: ContentContext,
   record: RecordContext,
 ): void {
-  const appearance = record.group === "clothing.appearances";
+  const appearance = record.group === "clothing.appearance";
   builder.put(
-    "category",
+    "subcategory",
     context.scope.categories.get(record.id),
-    evidence(
-      appearance ? profile.roots.items : profile.roots.categories,
-      appearance ? profile.fields.items.category : 4,
-    ),
+    context.scope.manual.get(record.id) ??
+      evidence(
+        appearance ? profile.roots.items : profile.roots.categories,
+        appearance ? profile.fields.items.category : 4,
+      ),
   );
 }

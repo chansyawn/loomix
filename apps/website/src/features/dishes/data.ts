@@ -1,11 +1,8 @@
-import { parseContent } from "@loomix/content-schema";
-import type { Content } from "@loomix/content-schema";
-import { resourceUrl } from "@/infrastructure/resources";
+import { loadCollectionView } from "../collection-loader.ts";
+import type { CollectionView } from "../collection-view.ts";
 
-export type DishesData = Content["dishes"];
+export type DishesData = CollectionView["dishes"];
 
 export async function loadDishes(): Promise<DishesData> {
-  const response = await fetch(resourceUrl("content.json"));
-  if (!response.ok) throw new Error(`Unable to load dishes: ${response.status}`);
-  return parseContent(await response.json()).dishes;
+  return (await loadCollectionView()).dishes;
 }

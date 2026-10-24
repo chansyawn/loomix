@@ -1,5 +1,5 @@
 import type { WorkOptions, SelectedImage, ImageManifest, EvidenceRecord } from "../types.ts";
-import type { Content } from "@loomix/content-schema";
+import type { Catalog } from "@loomix/content-schema";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
@@ -9,7 +9,6 @@ import { readJson, writeJson } from "../../workflow/json.ts";
 import { removeWithin } from "../../workflow/fs.ts";
 import { exportAssets } from "../../client/anime-studio/index.ts";
 import { assetKey, highestResolutionImages } from "./select.ts";
-import { groupAt } from "@loomix/content-schema";
 
 const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 export function imageBatches(selected: SelectedImage[]) {
@@ -40,7 +39,7 @@ export async function exportImages(options: WorkOptions, extract = exportAssets)
     manifest: ImageManifest[] = [];
   const staging = path.join(options.work, "raw"),
     destination = path.join(staging, "assets");
-  const content = readJson<Content>(path.join(staging, "content.json"));
+  const content = readJson<Catalog>(path.join(staging, "content.json"));
   removeWithin(destination, staging);
   fs.mkdirSync(destination, { recursive: true });
 
@@ -96,7 +95,7 @@ export async function exportImages(options: WorkOptions, extract = exportAssets)
     path.join(options.work, "field-evidence.json"),
   ).filter((p) => p.field !== "image");
   for (const a of selected) {
-    const record = groupAt(content, a.group).find((r) => r.id === a.id);
+    const record = content.items.find((r) => r.id === a.id);
     const image = imageByRecord.get(a.id)?.file;
     if (!record || !image) throw new Error(`No exported image for ${a.id}`);
     record.image = image;

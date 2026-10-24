@@ -1,4 +1,4 @@
-import type { CreatureItem, CreatureSeries } from "@loomix/content-schema";
+import type { CreatureItem, CreatureSeries } from "../collection-view.ts";
 import { RecordImage } from "@/ui/collection/record-image";
 import { seriesPreview } from "./query";
 

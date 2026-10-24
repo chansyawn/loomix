@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import type { ClothingItem } from "@loomix/content-schema";
+import type { ClothingItem } from "../collection-view.ts";
 import type { ClothingData } from "./data";
 import { filterGroups, queryClothing } from "./query";
 import { clothingSearchSchema, emptyQuery, missing, ungrouped, updateViewQuery } from "./search";

@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import type { MiscellaneousItem } from "@loomix/content-schema";
+import type { MiscellaneousItem } from "../collection-view.ts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ui/components/card";
 import { QualityBar } from "@/ui/collection/quality";
 import { RecordImage } from "@/ui/collection/record-image";

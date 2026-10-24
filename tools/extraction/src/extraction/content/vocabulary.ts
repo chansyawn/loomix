@@ -1,4 +1,4 @@
-import type { ContentGroup } from "@loomix/content-schema";
+import type { RecordType } from "@loomix/content-schema";
 import type { TagNode, Row, TableRow } from "../types.ts";
 import type { Tables } from "../decode/tables.ts";
 import type { TagDisplay, CreatureDisplayMap } from "../decode/bindata.ts";
@@ -16,8 +16,8 @@ export interface Vocabulary {
   tree: Record<number, TagNode>;
   qualityLabels: Map<number, string | null>;
   subgroups: Subgroup[];
-  groupNames: Record<number, ContentGroup>;
-  setTags: Record<string, ContentGroup>;
+  groupNames: Record<number, RecordType>;
+  setTags: Record<string, RecordType>;
   sources: Map<number | null, TableRow>;
   furnitureTypes: TableRow[];
   cookware: TableRow[];
@@ -30,18 +30,18 @@ export interface Vocabulary {
   renderDisplay(value: string | null): string | null;
 }
 
-const GROUP_NAMES: Record<number, ContentGroup> = {
-  1: "creatures.items",
-  2: "plants.items",
-  3: "dishes.items",
-  4: "furniture.items",
-  5: "clothing.items",
-  6: "miscellaneous",
+const GROUP_NAMES: Record<number, RecordType> = {
+  1: "creatures.item",
+  2: "plants.item",
+  3: "dishes.item",
+  4: "furniture.item",
+  5: "clothing.item",
+  6: "miscellaneous.item",
 };
 
-const SET_TAGS: Record<string, ContentGroup> = {
-  家具套组: "furniture.sets",
-  服装套组: "clothing.sets",
+const SET_TAGS: Record<string, RecordType> = {
+  家具套组: "furniture.set",
+  服装套组: "clothing.set",
   鱼套组: "creatures.series",
   昆虫套组: "creatures.series",
   赶海生物套组: "creatures.series",

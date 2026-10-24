@@ -1,6 +1,6 @@
 import { lstat, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
-import { parseContent } from "@loomix/content-schema";
+import { parseCatalog } from "@loomix/content-schema";
 import { referencedImages, sha256 } from "./release.ts";
 
 export interface AssetFile {
@@ -36,7 +36,7 @@ export async function validateContent(directory: string): Promise<ValidatedConte
   if (!(await lstat(assetDirectory)).isDirectory())
     throw new Error("assets/ must be a real directory");
   const json = await readRegularFile(path.join(directory, "content.json"));
-  const content = parseContent(JSON.parse(json.toString("utf8")));
+  const content = parseCatalog(JSON.parse(json.toString("utf8")));
   const images = referencedImages(content);
   const files = await readdir(assetDirectory);
   const expected = new Set(images.map((image) => path.basename(image)));

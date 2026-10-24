@@ -7,8 +7,8 @@ import {
   defaultParseSearch,
 } from "@tanstack/react-router";
 import { describe, expect, it, vi, afterEach } from "vite-plus/test";
-import { emptyContent } from "@loomix/content-schema";
-import type { ClothingItem, ClothingSet } from "@loomix/content-schema";
+import { catalogFixture } from "../collection-fixture.ts";
+import type { ClothingItem, ClothingSet } from "../collection-view.ts";
 import { clothingDetail, loadClothingDetail, parseClothingId } from "./detail";
 import { clothingOrigin } from "./detail-navigation";
 import { clothingSearchSchema, compactClothingSearchMiddleware } from "./search";
@@ -99,9 +99,7 @@ describe("clothing details", () => {
   it("loads real schema data and keeps network or validation failures retryable", async () => {
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValue(new Response(JSON.stringify({ ...emptyContent(), clothing: data }))),
+      vi.fn().mockResolvedValue(new Response(JSON.stringify(catalogFixture({ clothing: data })))),
     );
     expect(await loadClothingDetail("items", "1")).toMatchObject({ record: first });
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })));

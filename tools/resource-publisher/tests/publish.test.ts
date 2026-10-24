@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { S3Client } from "@aws-sdk/client-s3";
 import { afterEach, expect, test, vi } from "vite-plus/test";
-import { emptyContent } from "@loomix/content-schema";
+import { emptyCatalog } from "@loomix/content-schema";
 import { publishRelease } from "../src/publish.ts";
 import type { UploadProgress } from "../src/publish.ts";
 import { parseReleaseBase, sha256 } from "../src/release.ts";
@@ -21,7 +21,11 @@ const imageKey = `assets/${sha256(webp)}.webp`;
 async function fixture(imageCount = 1): Promise<string> {
   const directory = await mkdtemp(path.join(tmpdir(), "loomix-publisher-"));
   directories.push(directory);
-  const content = emptyContent();
+  const content = emptyCatalog({
+    gameVersion: "0.95.2",
+    dataRevision: 1449213,
+    resourceRevision: 1391927,
+  });
   await mkdir(path.join(directory, "assets"));
   for (let i = 0; i < imageCount; i++) {
     const chunk = Buffer.alloc(8 + i * 2);
@@ -30,7 +34,18 @@ async function fixture(imageCount = 1): Promise<string> {
     const bytes = i === 0 ? webp : Buffer.concat([webp, chunk]);
     if (i) bytes.writeUInt32LE(bytes.length - 8, 4);
     const image = `assets/${sha256(bytes)}.webp`;
-    content.miscellaneous.push({ id: i + 1, name: "Image", description: null, quality: 0, image });
+    content.items.push({
+      category: "miscellaneous",
+      kind: "item",
+      subcategory: null,
+      attributes: {},
+      encyclopediaEntry: null,
+      id: i + 1,
+      name: "Image",
+      description: null,
+      quality: 0,
+      image,
+    });
     await writeFile(path.join(directory, image), bytes);
   }
   await writeFile(path.join(directory, "content.json"), JSON.stringify(content));
@@ -179,8 +194,17 @@ test("rejects a non-WebP or truncated container even when its content hash match
   for (const bytes of [Buffer.from("not a WebP image"), webp.subarray(0, webp.length - 2)]) {
     const directory = await fixture();
     const key = `assets/${sha256(bytes)}.webp`;
-    const content = emptyContent();
-    content.miscellaneous.push({
+    const content = emptyCatalog({
+      gameVersion: "0.95.2",
+      dataRevision: 1449213,
+      resourceRevision: 1391927,
+    });
+    content.items.push({
+      category: "miscellaneous",
+      kind: "item",
+      subcategory: null,
+      attributes: {},
+      encyclopediaEntry: null,
       id: 1,
       name: "Invalid",
       description: null,

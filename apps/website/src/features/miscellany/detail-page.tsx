@@ -10,7 +10,7 @@ import {
 } from "@/ui/components/empty";
 import { QualityBadge } from "@/ui/collection/quality";
 import { RecordImage } from "@/ui/collection/record-image";
-import type { MiscellaneousItem } from "@loomix/content-schema";
+import type { MiscellaneousItem } from "../collection-view.ts";
 import { MiscellanyReturnLink } from "./detail-navigation";
 import { MiscellanyLoadError } from "./states";
 import { Skeleton } from "@/ui/components/skeleton";

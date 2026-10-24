@@ -1,9 +1,11 @@
 import { expect, test } from "vite-plus/test";
-import { emptyContent } from "@loomix/content-schema";
+import { emptyCatalog } from "@loomix/content-schema";
 import { downloadRelease, sha256 } from "../src/release.ts";
 
 const base = "https://assets.loomix.fun/releases/r1/";
-const json = JSON.stringify(emptyContent());
+const json = JSON.stringify(
+  emptyCatalog({ gameVersion: "0.95.2", dataRevision: 1449213, resourceRevision: 1391927 }),
+);
 const marker = { release: "r1", contentSha256: sha256(Buffer.from(json)), assetCount: 0 };
 
 function resourceServer(

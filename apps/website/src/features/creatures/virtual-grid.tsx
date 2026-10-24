@@ -1,7 +1,7 @@
 import { useElementScrollRestoration } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useLayoutEffect, useRef, useState } from "react";
-import type { CreatureItem, CreatureSeries } from "@loomix/content-schema";
+import type { CreatureItem, CreatureSeries } from "../collection-view.ts";
 import { CreaturesCard, CreatureSeriesCard } from "./creatures-card";
 import type { View } from "./search";
 

@@ -7,8 +7,8 @@ import {
   isNotFound,
 } from "@tanstack/react-router";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import { emptyContent } from "@loomix/content-schema";
-import type { MiscellaneousItem } from "@loomix/content-schema";
+import { catalogFixture } from "../collection-fixture.ts";
+import type { MiscellaneousItem } from "../collection-view.ts";
 import { findMiscellanyDetail, loadMiscellanyDetail, parseMiscellanyId } from "./detail";
 import { miscellanyOrigin } from "./detail-navigation";
 import { miscellanySearchSchema, compactMiscellanySearchMiddleware } from "./search";
@@ -52,9 +52,7 @@ describe("miscellany details", () => {
       "fetch",
       vi
         .fn()
-        .mockResolvedValue(
-          new Response(JSON.stringify({ ...emptyContent(), miscellaneous: data })),
-        ),
+        .mockResolvedValue(new Response(JSON.stringify(catalogFixture({ miscellaneous: data })))),
     );
     expect(await loadMiscellanyDetail("30031")).toEqual(item);
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })));

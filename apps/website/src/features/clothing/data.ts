@@ -1,11 +1,8 @@
-import { parseContent } from "@loomix/content-schema";
-import type { Content } from "@loomix/content-schema";
-import { resourceUrl } from "@/infrastructure/resources";
+import { loadCollectionView } from "../collection-loader.ts";
+import type { CollectionView } from "../collection-view.ts";
 
-export type ClothingData = Content["clothing"];
+export type ClothingData = CollectionView["clothing"];
 
 export async function loadClothing(): Promise<ClothingData> {
-  const response = await fetch(resourceUrl("content.json"));
-  if (!response.ok) throw new Error(`Unable to load clothing: ${response.status}`);
-  return parseContent(await response.json()).clothing;
+  return (await loadCollectionView()).clothing;
 }

@@ -1,4 +1,4 @@
-import type { ClothingItem } from "@loomix/content-schema";
+import type { ClothingItem } from "../collection-view.ts";
 import {
   ShirtIcon,
   SparklesIcon,

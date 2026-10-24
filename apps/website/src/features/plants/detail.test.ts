@@ -7,8 +7,8 @@ import {
   isNotFound,
 } from "@tanstack/react-router";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import { emptyContent } from "@loomix/content-schema";
-import type { PlantItem, PlantSeries } from "@loomix/content-schema";
+import { catalogFixture } from "../collection-fixture.ts";
+import type { PlantItem, PlantSeries } from "../collection-view.ts";
 import { plantsDetail, loadPlantsDetail, parsePlantId } from "./detail";
 import { plantsOrigin } from "./detail-navigation";
 import { compactPlantsSearchMiddleware, plantsSearchSchema } from "./search";
@@ -95,7 +95,7 @@ describe("plant details", () => {
   it("loads validated content and keeps network or schema failures retryable", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue(new Response(JSON.stringify({ ...emptyContent(), plants: data }))),
+      vi.fn().mockResolvedValue(new Response(JSON.stringify(catalogFixture({ plants: data })))),
     );
     expect(await loadPlantsDetail("items", "1")).toMatchObject({ record: first });
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })));

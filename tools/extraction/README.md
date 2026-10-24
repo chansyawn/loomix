@@ -29,7 +29,7 @@ vp check
 每个入口成功时打印下一阶段需要的完整 SHA256 ID。将 `<…-id>` 替换为打印值。所有路径相对仓库解析，与执行命令的工作目录无关；`--help` 不初始化工具。`verify` 是显式验收入口。
 
 - `init` 校验客户端版本、revision、配置对和本地资源清单，准备固定 AnimeStudio，建立覆盖 StreamingAssets 与 Persistent 的 Asset Map，压缩为资源索引，验证后原子发布 environment。相同身份复用已验证环境。
-- `extract` 只接受已初始化 environment，重新核对客户端快照完整文件集合与 SHA256；内部按 decode → structure → raw-assets → source-audit → extraction-verify 自动恢复。输出内容、原始 PNG、证据和审计，完成后封存 manifest，不发布网站资源。
+- `extract` 只接受已初始化 environment，重新核对客户端快照完整文件集合与 SHA256；内部按 admissions + decode → structure → raw-assets → source-audit → extraction-verify 自动恢复。输出内容、原始 PNG、证据和审计，完成后封存 manifest，不发布网站资源。
 - `deliver` 只读已验证 extraction bundle，使用其中冻结的 OBB、表、证据和 PNG，不重新扫描客户端。处理图片、按最终字节 SHA256 去重，验证后发布 `resources/website/`。
 - `verify` 核对整个 manifest 依赖链、实际客户端输入、表范围、字段证据、图片及已发布文件的完整集合和字节。
 
@@ -55,6 +55,8 @@ var/                                              # 运行时数据，整体忽�
     logs/
   artifacts/extractions/<extraction-id>/
     extraction-manifest.json
+    supplemental-admissions.json                 # 冻结的版本绑定补充确认清单
+    record-evidence.json                         # 收录依据及图鉴存在/缺失证据
     prepared/                                    # 冻结 OBB、表索引、TextMap、素材索引
     bindata/                                     # MiHoYoBinData 导出
     raw/{content.json,images-content.json,assets/}
@@ -78,13 +80,13 @@ var/                                              # 运行时数据，整体忽�
 
 更新清单包含基础包、未安装的可选下载及未落地的 overlay。init 校验清单格式与已安装条目的 MD5/大小，data manifest 优先于同路径 res manifest；记录未安装项和 MD5 为 0 的无校验值条目；配置对必须完整匹配当前 data manifest。extract 进一步强制核验实际使用的全部图片候选包、BinData 来源包和两份 OBB；未安装项不视为“内容不存在”的证明。
 
-环境身份绑定客户端清单、profile、工具实际 ready manifest 和实现摘要；提取身份绑定 environment manifest、profile、实现源码、共享 schema 与 lockfile。每个 checkpoint 保存输入摘要、依赖摘要和输出的相对路径、SHA256、字节数。重跑仅在输入、输出字节和文件集合均匹配时跳过；变化或失败会先清除该阶段及所有下游 marker，再执行。已有最终 manifest 在重跑开始时失效，全部验证成功后才重新原子写入。
+环境身份绑定客户端清单、profile、工具实际 ready manifest 和实现摘要；提取身份绑定 environment manifest、冻结补充清单 SHA256、profile、实现源码、共享 schema 与 lockfile。每个 checkpoint 保存输入摘要、依赖摘要和输出的相对路径、SHA256、字节数。重跑仅在输入、输出字节和文件集合均匹配时跳过；变化或失败会先清除该阶段及所有下游 marker，再执行。已有最终 manifest 在重跑开始时失效，全部验证成功后才重新原子写入。
 
 manifest 使用 `schemaVersion: 1`，区分 environment、extraction、delivery，记录稳定 ID、verified 状态、创建时间、输入、实现/profile 摘要、工具版本、输出和验证结果。失败记录写入报告，不生成成功 manifest。相同提取重跑保留创建时间，正式输出与 checkpoint 的哈希保持稳定。日志不作为语义产物。
 
 ## 证据与交付约束
 
-字段证据包含记录 ID、group、field、value、来源文件、表/行/字段或资源 PathID、关联/转换说明和确认状态；未知值必须有 reason。`src/extraction/evidence/schema.ts` 与共享 `@loomix/content-schema` 验证证据、未确认候选和内容契约；中间 PNG 引用使用 `src/extraction/schemas/raw-content.ts`，保留同一组字段与成员约束，最终交付仍只接受 `assets/<SHA256>.webp`。
+统一 content.json 使用 schemaVersion 2、source 和按 ID 排序的 items 数组。六大类及 item/set/series/appearance 由 category/kind 表达，旧分组仅由前端适配生成。字段证据包含记录 ID、group（category.kind）、field、value、来源文件、表/行/字段或资源 PathID、关联/转换说明和确认状态；未知值必须有 reason。`src/extraction/evidence/schema.ts` 与共享 `@loomix/content-schema` 验证证据、未确认候选和内容契约；中间 PNG 引用使用 `src/extraction/schemas/raw-content.ts`，保留同一组字段与成员约束，最终交付仍只接受 `assets/<SHA256>.webp`。
 
 图片规则保持不变：按实际像素面积选最高原生分辨率，平手保留大图优先顺序；家具套组 1024×512，其余有图记录 256×256；Lanczos3 等比缩放、居中裁切，WebP 质量 85、alphaQuality 100。原始 PNG 与最终 WebP 均完整解码，交付文件按最终字节 SHA256 命名和去重。
 

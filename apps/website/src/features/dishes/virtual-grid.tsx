@@ -1,7 +1,7 @@
 import { useElementScrollRestoration } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useLayoutEffect, useRef, useState } from "react";
-import type { DishItem, DishSeries } from "@loomix/content-schema";
+import type { DishItem, DishSeries } from "../collection-view.ts";
 import type { View } from "./search";
 import { DishesCard, DishSeriesCard } from "./dishes-card";
 

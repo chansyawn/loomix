@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
-import type { Content } from "@loomix/content-schema";
+import type { Catalog } from "@loomix/content-schema";
 import type {
   WorkOptions,
   SelectedImage,
@@ -11,12 +11,12 @@ import type {
 } from "../extraction/types.ts";
 import { readJson, writeJson } from "../workflow/json.ts";
 import { processImage, imageDimensions } from "./image.ts";
-import { groupAt } from "@loomix/content-schema";
+
 import { assetKey } from "../extraction/images/select.ts";
 export async function renderImages(options: WorkOptions, extraction: string) {
   const selected = readJson<SelectedImage[]>(path.join(extraction, "selected-images.json"));
   const manifest = readJson<ImageManifest[]>(path.join(extraction, "image-candidates.json"));
-  const content = readJson<Content>(path.join(extraction, "raw/content.json"));
+  const content = readJson<Catalog>(path.join(extraction, "raw/content.json"));
   const staging = path.join(options.work, "staging");
   fs.mkdirSync(path.join(staging, "assets"), { recursive: true });
   const selectedManifest: ProcessedImage[] = [];
@@ -55,7 +55,7 @@ export async function renderImages(options: WorkOptions, extraction: string) {
     });
   }
   for (const image of selectedManifest) {
-    const record = groupAt(content, image.group).find((record) => record.id === image.id);
+    const record = content.items.find((record) => record.id === image.id);
     if (!record) throw new Error(`Missing image record ${image.id}`);
     record.image = image.file;
   }

@@ -29,6 +29,9 @@ export function finalizeEvidence(work: string): void {
       ...proof,
       sources: evidenceSources(proof, hints, tables, tree, bindata, index),
       association:
+        (!Array.isArray(proof.evidence) && "kind" in proof.evidence
+          ? "version-bound manual admission; ID and expected name checked against 318"
+          : "") ||
         hints.map((hint) => associationRule(proof.field, hint)).join("; ") ||
         "325 image configuration → exact resource Container/name; Persistent overlay; selected by native pixel count",
       transformation: transformationRule(proof.field),
@@ -44,6 +47,7 @@ export function finalizeEvidence(work: string): void {
   writeJson(path.join(evidence, "field-evidence.json"), records);
   writeJson(path.join(evidence, "missing-fields.json"), missing);
   for (const name of [
+    "record-evidence",
     "field-candidates",
     "outside-members",
     "image-candidates",

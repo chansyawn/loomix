@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
-import { contentGroups, emptyContent, groupAt, recordSchemas } from "@loomix/content-schema";
+import { emptyCatalog, recordSchemas } from "@loomix/content-schema";
 import type { WorkOptions, EvidenceRecord, SelectedImage } from "../types.ts";
-import { profile } from "../../profile.ts";
+import { catalogSource, expectedCatalog } from "../../profile.ts";
 import { writeJson } from "../../workflow/json.ts";
 import { removeWithin } from "../../workflow/fs.ts";
 import { validateModel } from "./model.ts";
@@ -14,14 +14,14 @@ import type { RecordContext } from "./records/types.ts";
 
 export async function structure(options: WorkOptions): Promise<void> {
   const context = createContentContext(options.work);
-  const content = emptyContent();
+  const content = emptyCatalog(catalogSource);
   const proofs: EvidenceRecord[] = [];
   const diagnostics: EvidenceRecord[] = [];
   const candidateImages: SelectedImage[] = [];
   const candidateFields: FieldCandidate[] = [];
 
-  for (const row of context.scope.rows) {
-    const id = context.tables.id(row);
+  for (const id of [...context.scope.ids].sort((a, b) => a - b)) {
+    const row = context.scope.encyclopedia.get(id);
     const group = context.scope.groups.get(id);
     const main = context.main.get(id);
     if (!group || !main) throw new Error(`Missing classification for ${id}`);
@@ -36,18 +36,18 @@ export async function structure(options: WorkOptions): Promise<void> {
       recipe: context.recipesByProduct.get(id),
     };
     const builder = buildRecord(context, record);
-    groupAt(content, group).push(recordSchemas[group].parse(builder.record));
+    content.items.push(recordSchemas[group].parse(builder.record));
     proofs.push(...builder.proofs);
     diagnostics.push(...builder.diagnostics);
     candidateFields.push(...builder.candidates);
     candidateImages.push(...builder.images);
   }
 
-  for (const group of contentGroups) groupAt(content, group).sort((a, b) => a.id - b.id);
+  content.items.sort((a, b) => a.id - b.id);
   validateModel(
     content,
     context.scope.ids,
-    profile.expectedContent,
+    expectedCatalog,
     new Set(context.vocabulary.qualityLabels.keys()),
   );
 
@@ -55,6 +55,7 @@ export async function structure(options: WorkOptions): Promise<void> {
   removeWithin(staging, options.work);
   fs.mkdirSync(path.join(staging, "assets"), { recursive: true });
   writeJson(path.join(staging, "content.json"), content);
+  writeJson(path.join(options.work, "record-evidence.json"), context.scope.admissionEvidence);
   writeJson(
     path.join(options.work, "scope.json"),
     [...context.scope.ids].sort((a, b) => a - b),
@@ -72,7 +73,7 @@ export async function structure(options: WorkOptions): Promise<void> {
     candidateFields.map((candidate) => fieldCandidateSchema.parse(candidate)),
   );
   writeJson(path.join(options.work, "field-investigation.json"), {
-    scope: "All root 93 entries; no availability inference from appearance flag",
+    scope: "Root 93 entries union version-bound confirmed supplemental admissions",
     verified: [
       "root 93 membership",
       "33 filters + 318 tags + GameplayTag ancestry",

@@ -12,7 +12,7 @@ export function buildPlantItem(
   const { tables, vocabulary } = context;
   const { main, id } = record;
   builder.put(
-    "originGalaxy",
+    "attributes.originGalaxy",
     vocabulary.renderTags(vocabulary.tags(main, 8)),
     evidence(profile.roots.items, 8),
     "origin_tag_missing_or_display_unresolved",
@@ -20,7 +20,7 @@ export function buildPlantItem(
 
   const crop = vocabulary.cropsByProduct.get(id);
   builder.put(
-    "harvestCount",
+    "attributes.harvestCount",
     crop ? tables.uint(crop, 5) : null,
     evidence(profile.roots.crops, [5, 10]),
     "not_in_confirmed_crop_product_vector",
@@ -43,14 +43,14 @@ export function buildPlantItem(
           },
         ]
       : [],
-    field: "maturityPeriod",
+    field: "attributes.maturityPeriod",
     table: profile.roots.crops,
     seedId: crop ? tables.uint(crop, 0) : null,
     mode: tables.string(crop, 3),
     stages: tables.vector(crop, 4),
   });
   builder.put(
-    "maturityPeriod",
+    "attributes.maturityPeriod",
     null,
     evidence(profile.roots.crops, [3, 4]),
     "daily_stage_duration_and_first_harvest_rule_unconfirmed",

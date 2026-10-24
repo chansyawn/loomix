@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import type { DishItem, DishSeries } from "@loomix/content-schema";
+import type { DishItem, DishSeries } from "../collection-view.ts";
 import type { DishesData } from "./data";
 import { filterGroups, queryDishes } from "./query";
 import { emptyQuery, missing, ungrouped } from "./search";

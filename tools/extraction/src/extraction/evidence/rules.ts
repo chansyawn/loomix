@@ -3,8 +3,8 @@ import type { TableEvidence } from "../types.ts";
 
 export function associationRule(field: string, hint: TableEvidence): string {
   const root = profile.roots;
-  if (["componentIds", "creatureIds", "plantIds", "dishIds"].includes(field))
-    return `${hint.table}.${hint.table === root.ui ? 35 : 9} = collection ID; member ID in root93; same target category`;
+  if (field === "memberIds")
+    return `${hint.table}.${hint.table === root.ui ? 35 : 9} = collection ID; member ID in confirmed catalog; same target category`;
   const joins: Record<number, string> = {
     [root.crops]: "144.10 product vector contains item ID",
     [root.recipes]: "122.4 product = item ID",
@@ -20,8 +20,9 @@ export function associationRule(field: string, hint: TableEvidence): string {
 }
 
 export function transformationRule(field: string): string {
+  field = field.replace(/^attributes\./, "");
   const rules: Record<string, string> = {
-    id: "decode root93.0 as unsigned integer; preserve ID",
+    id: "decode 318.0 as unsigned integer; preserve ID",
     name: "318.1 TextMap key → zh text → strip markup and trim",
     description:
       "first resolved 93.4 localized text, 186.6 string, 325.27 TextMap; strip markup and trim",
@@ -31,7 +32,7 @@ export function transformationRule(field: string): string {
       "exact Container/name and Persistent overlay; highest original width*height, preserve large-icon order on ties; retain PNG",
     size: "parse confirmed 尺寸_<w>_<h>a<decimal> tag; exactly one resolved value",
     type: "localize 265.2 and 265.4; join with ·; require one distinct label",
-    category:
+    subcategory:
       "confirmed category display name or appearance tag ancestry; localize through TagUIData/TextMap",
     effects:
       "325.8 strength interpolated into TextMap 4027993099; 325.9 additional buff must be zero; strip markup",
@@ -40,11 +41,11 @@ export function transformationRule(field: string): string {
     harvestCount: "144.10 product vector membership → 144.5 unsigned integer",
     sizeRange: "unconfirmed display units/conversion; retain candidates, emit null",
     maturityPeriod: "unconfirmed stage timing/first-harvest rules; retain candidates, emit null",
-    seriesName: "copy confirmed localized item name",
-    setName: "copy confirmed localized item name",
+    category: "verified six-category classification or frozen admission decision",
+    kind: "verified item type and encyclopedia appearance flag, or supplemental item admission",
   };
   if (field.endsWith("Ids"))
-    return "explicit backreferences; retain root93 members in matching group; deduplicate and sort numeric IDs";
+    return "explicit backreferences; retain admitted items in matching category; deduplicate and sort numeric IDs";
   return (
     rules[field] ??
     "decode configured field; resolve GameplayTag/TagUIData or ecological display key through localized TextMap; require every label; deduplicate and join with ，; unresolved emits null"

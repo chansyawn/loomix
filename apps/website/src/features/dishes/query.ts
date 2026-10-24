@@ -1,4 +1,4 @@
-import type { DishItem, DishSeries } from "@loomix/content-schema";
+import type { DishItem, DishSeries } from "../collection-view.ts";
 import type { FilterGroup as CollectionFilterGroup } from "@/ui/collection/filter-panel";
 import { qualityNames } from "@/ui/collection/quality";
 import type { DishesData } from "./data";

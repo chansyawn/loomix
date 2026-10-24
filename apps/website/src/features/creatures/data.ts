@@ -1,11 +1,8 @@
-import { parseContent } from "@loomix/content-schema";
-import type { Content } from "@loomix/content-schema";
-import { resourceUrl } from "@/infrastructure/resources";
+import { loadCollectionView } from "../collection-loader.ts";
+import type { CollectionView } from "../collection-view.ts";
 
-export type CreaturesData = Content["creatures"];
+export type CreaturesData = CollectionView["creatures"];
 
 export async function loadCreatures(): Promise<CreaturesData> {
-  const response = await fetch(resourceUrl("content.json"));
-  if (!response.ok) throw new Error(`Unable to load creatures: ${response.status}`);
-  return parseContent(await response.json()).creatures;
+  return (await loadCollectionView()).creatures;
 }

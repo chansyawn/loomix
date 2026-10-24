@@ -19,6 +19,10 @@ export function evidenceSources(
   index: EvidenceIndex,
 ): SourceReference[] {
   const sources: SourceReference[] = [];
+  if (!Array.isArray(proof.evidence) && "kind" in proof.evidence) {
+    const { file, pointer, sha256 } = proof.evidence;
+    sources.push({ file, pointer, sha256 });
+  }
   for (const hint of hints) {
     const rows = relatedRows(proof, hint, tables, tree, index);
     for (const row of rows) {
@@ -34,7 +38,7 @@ export function evidenceSources(
               ? hint.field
               : [hint.field],
       });
-      if (typeof proof.value === "string") {
+      if (typeof proof.value === "string" && !["category", "kind"].includes(proof.field)) {
         for (const index of Array.isArray(hint.field) ? hint.field : [hint.field]) {
           const key = tables.uint(row, index);
           const entry = key === null ? undefined : tables.textmap[key];
@@ -54,7 +58,7 @@ export function evidenceSources(
   if (!Array.isArray(proof.evidence) && "source" in proof.evidence) {
     sources.push({ file: proof.evidence.source, pathId: proof.evidence.pathId });
   }
-  if (proof.field === "effects") {
+  if (proof.field === "attributes.effects") {
     const template = tables.textmap[4027993099];
     if (template)
       sources.push({
@@ -69,7 +73,7 @@ export function evidenceSources(
   if (typeof proof.value === "string") sources.push({ file: "prepared/textmap-zh-en.json" });
   if (
     [
-      "category",
+      "subcategory",
       "colors",
       "materials",
       "styles",
@@ -80,7 +84,7 @@ export function evidenceSources(
       "activeSeasons",
       "activeTimes",
       "activeWeather",
-    ].includes(proof.field)
+    ].includes(proof.field.replace(/^attributes\./, ""))
   ) {
     for (const asset of bindata) sources.push({ file: asset.file, pathId: asset.PathID });
   }

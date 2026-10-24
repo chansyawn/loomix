@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import type { PlantItem, PlantSeries } from "@loomix/content-schema";
+import type { PlantItem, PlantSeries } from "../collection-view.ts";
 import { filterGroups, queryPlants } from "./query";
 import { emptyQuery, missing, ungrouped } from "./search";
 
