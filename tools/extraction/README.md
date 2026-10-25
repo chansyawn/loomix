@@ -29,8 +29,8 @@ vp check
 每个入口成功时打印下一阶段需要的完整 SHA256 ID。将 `<…-id>` 替换为打印值。所有路径相对仓库解析，与执行命令的工作目录无关；`--help` 不初始化工具。`verify` 是显式验收入口。
 
 - `init` 校验客户端版本、revision、配置对和本地资源清单，准备固定 AnimeStudio，建立覆盖 StreamingAssets 与 Persistent 的 Asset Map，压缩为资源索引，验证后原子发布 environment。相同身份复用已验证环境。
-- `extract` 只接受已初始化 environment，重新核对客户端快照完整文件集合与 SHA256；内部按 admissions + decode → structure → raw-assets → source-audit → extraction-verify 自动恢复。输出内容、原始 PNG、证据和审计，完成后封存 manifest，不发布网站资源。
-- `deliver` 只读已验证 extraction bundle，使用其中冻结的 OBB、表、证据和 PNG，不重新扫描客户端。处理图片、按最终字节 SHA256 去重，验证后发布 `resources/website/`。
+- `extract` 只接受已初始化 environment，重新核对客户端快照完整文件集合与 SHA256；内部按 admissions + decode → structure → neighbors → raw-assets → source-audit → extraction-verify 自动恢复。输出图鉴、版本化友邻静态数据库、原始 PNG、证据和审计，完成后封存 manifest，不发布网站资源。
+- `deliver` 只读已验证 extraction bundle，使用其中冻结的 OBB、表、证据和 PNG，不重新扫描客户端。处理图片、按最终字节 SHA256 去重，验证后将 `content.json`、`neighbors.json` 和 `assets/` 一起发布到 `resources/website/`。
 - `verify` 核对整个 manifest 依赖链、实际客户端输入、表范围、字段证据、图片及已发布文件的完整集合和字节。
 
 仓库根配置默认不缓存 package scripts，因此每次都会执行入口并重新验证真实输入。内部 checkpoint 是提取恢复协议，与 Vite Task 缓存无关；`logs/`、`checkpoints/` 和 `run-report.json` 不属于 manifest 的语义输出。
@@ -41,7 +41,7 @@ vp check
 resources/game-client/                          # 本地客户端快照（只读输入）
   config.ini
   PetitPlanet_Data/{StreamingAssets,Persistent}/
-resources/website/{content.json,assets/}          # 固定默认交付目录
+resources/website/{content.json,neighbors.json,assets/} # 固定默认交付目录
 var/                                              # 运行时数据，整体忽略
   cache/anime-studio/<rid>/<tool-key>/            # 已验证 CLI/runtime、ready.json
   cache/anime-studio/<rid>/<tool-key>.work/       # 下载、源码、补丁后源码、SDK
@@ -59,7 +59,9 @@ var/                                              # 运行时数据，整体忽�
     record-evidence.json                         # 收录依据及图鉴存在/缺失证据
     prepared/                                    # 冻结 OBB、表索引、TextMap、素材索引
     bindata/                                     # MiHoYoBinData 导出
-    raw/{content.json,images-content.json,assets/}
+    raw/{content.json,images-content.json,neighbors.json,assets/}
+    neighbor-audit.json                            # 友邻字段来源、计数和规范化记录
+    neighbor-exclusions.json                       # 未进入公共数据库的候选
     exports/                                     # 完整原始 PNG
     evidence/                                    # 正式证据协议
     checkpoints/
@@ -67,7 +69,7 @@ var/                                              # 运行时数据，整体忽�
     run-report.json
   artifacts/deliveries/<delivery-id>/
     delivery-manifest.json
-    staging/{content.json,assets/}
+    staging/{content.json,neighbors.json,assets/}
     image-manifest.json
     field-evidence.json
     coverage.json
@@ -90,7 +92,7 @@ manifest 使用 `schemaVersion: 1`，区分 environment、extraction、delivery�
 
 图片规则保持不变：按实际像素面积选最高原生分辨率，平手保留大图优先顺序；家具套组 1024×512，其余有图记录 256×256；Lanczos3 等比缩放、居中裁切，WebP 质量 85、alphaQuality 100。原始 PNG 与最终 WebP 均完整解码，交付文件按最终字节 SHA256 命名和去重。
 
-输出目录拒绝危险路径、符号链接和无关文件，只接受 `content.json`、`assets/` 和可选 `.gitkeep`。发布先验证同级暂存副本，再将旧目录移到备份并重命名整个新目录；不会逐文件混合两个版本。重命名失败时恢复完整旧目录。发布锁串行化本工具的发布；两次目录重命名之间存在短暂不可用窗口，不承诺跨进程读取或机器断电的事务隔离。
+输出目录拒绝危险路径、符号链接和无关文件，只接受 `content.json`、`neighbors.json`、`assets/` 和可选 `.gitkeep`。友邻 JSON 只公开客户端确认的数据，不包含 OBB 来源编号或玩家账号状态；来源证据和排除项仅保存在 extraction bundle。发布先验证同级暂存副本，再将旧目录移到备份并重命名整个新目录；不会逐文件混合两个版本。重命名失败时恢复完整旧目录。发布锁串行化本工具的发布；两次目录重命名之间存在短暂不可用窗口，不承诺跨进程读取或机器断电的事务隔离。
 
 ## AnimeStudio 与清理
 
@@ -101,3 +103,7 @@ Windows x64 使用固定下载和局部 runtime；macOS arm64/x64 使用相同�
 客户端、`var/` 下的缓存/产物/临时文件和日志均忽略，不提交游戏资源或大型生成文件。无运行任务时可以删除失败的 `.staging`、旧 environment/extraction/delivery 或整个 `var/cache/anime-studio`；删除缓存后 init 会重新准备工具。删除 extraction 会使依赖它的 delivery 无法进行完整追溯验收。保留当前在用的整条链。旧 `resources/extraction-tools/`、`resources/temp/extraction/` 和旧 `runs/` 已不再读取，可直接删除。
 
 详细范围和关联规则见[提取原理](docs/extraction-method.md)。
+
+`src/extraction/neighbors/` 将友邻专用表与正式 NPC 主档取交集，输出独立的 `neighbors.json`（schemaVersion 1）。当前快照收录 13 个友邻、13 个星球、48 章故事（231 个段落记录）、198 条同行反应（12 条通用回退）、10 个邂逅岛、11 个装修主题及 256 件家具/服装奖励引用。59 条唯一交往说明保留客户端原始中文和样式；4 条未投放测试说明和完全相同的重复教程行写入内部审计。亚菈缺少正式主档，巴彦和卡逻缺少友邻专用配置，均不进入公开友邻数组。
+
+友邻数据库保持稳定排序且不写入生成时间；同一输入重复提取产生相同字节。故事按章节和段落顺序聚合，同行资源反应不解释为礼物偏好。无法直接确认的 NPC、奖励和资源关联保留空数组；邂逅岛的场景 ID 已确认，但不根据岛名猜测 NPC 关联。友邻事件标签使用已确认的中文标签作为键；一个装修主题的数值 ID 未确认，因此保留空值并用其确认名称维持引用。资源索引冻结于 `prepared/asset-index.json`，公共资源记录只保存客户端路径，不新增二进制导出。验收从冻结表独立重建友邻集合、检查完整数据库及版本绑定数量，再确认交付 JSON 与提取 JSON 的字节一致。

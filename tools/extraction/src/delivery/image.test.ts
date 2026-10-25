@@ -130,6 +130,27 @@ test("asset delivery deduplicates identical outputs and separates target dimensi
     ];
     fs.mkdirSync(path.join(work, "raw"));
     fs.writeFileSync(path.join(work, "raw/content.json"), JSON.stringify(content));
+    fs.writeFileSync(
+      path.join(work, "raw/neighbors.json"),
+      JSON.stringify(
+        {
+          schemaVersion: 1,
+          source: { ...content.source, manifestId: "1" },
+          neighbors: [],
+          stars: [],
+          stories: [],
+          travelReactions: [],
+          encounterIslands: [],
+          friendshipRules: [],
+          eventTags: [],
+          furnishingThemes: [],
+          rewards: [],
+          assets: [],
+        },
+        null,
+        2,
+      ) + "\n",
+    );
     fs.writeFileSync(path.join(work, "candidate-images.json"), JSON.stringify(candidates));
     fs.writeFileSync(path.join(work, "field-evidence.json"), "[]");
     const png = await sharp({ create: { width: 512, height: 512, channels: 4, background: "red" } })
@@ -145,6 +166,10 @@ test("asset delivery deduplicates identical outputs and separates target dimensi
       path.join(work, "evidence/field-evidence.json"),
     );
     await renderImages({ work }, work);
+    assert.deepEqual(
+      fs.readFileSync(path.join(work, "staging/neighbors.json")),
+      fs.readFileSync(path.join(work, "raw/neighbors.json")),
+    );
     const manifest: ProcessedImage[] = JSON.parse(
       fs.readFileSync(path.join(work, "image-manifest.json"), "utf8"),
     );
@@ -163,5 +188,27 @@ test("asset delivery deduplicates identical outputs and separates target dimensi
     }
   } finally {
     fs.rmSync(work, { recursive: true, force: true });
+  }
+});
+
+test("delivery rejects invalid neighbor JSON before converting images", async () => {
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-neighbor-delivery-"));
+  try {
+    fs.mkdirSync(path.join(work, "raw"));
+    fs.writeFileSync(path.join(work, "selected-images.json"), "[]");
+    fs.writeFileSync(path.join(work, "image-candidates.json"), "[]");
+    fs.writeFileSync(
+      path.join(work, "raw/content.json"),
+      JSON.stringify(
+        emptyCatalog({ gameVersion: "fixture", dataRevision: 1, resourceRevision: 1 }),
+      ),
+    );
+    fs.writeFileSync(
+      path.join(work, "raw/neighbors.json"),
+      JSON.stringify({ schemaVersion: 1, root: 41 }),
+    );
+    await assert.rejects(renderImages({ work }, work), { name: "ZodError" });
+  } finally {
+    fs.rmSync(work, { recursive: true });
   }
 });

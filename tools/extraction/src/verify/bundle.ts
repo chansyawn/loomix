@@ -22,6 +22,8 @@ import { validateModel } from "../extraction/content/model.ts";
 import { verifyAdmissions } from "./admissions.ts";
 import { highestResolutionImages } from "../extraction/images/select.ts";
 import { decodeWebp, imageDimensions } from "../delivery/image.ts";
+import { verifyNeighbors } from "../extraction/neighbors/verify.ts";
+import { neighborInput } from "../extraction/neighbors/build.ts";
 
 export interface BundleVerification {
   reportRoot: string;
@@ -40,6 +42,16 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
   const scope = verifyAdmissions(content, bundle);
   const qualities = new Set(tables.rows(profile.roots.qualities).map((r) => tables.uint(r, 1, 0)));
   const { all, counts } = validateModel(content, scope, expectedCatalog, qualities, parse);
+  const neighbors = verifyNeighbors(
+    readJson(path.join(staging, "neighbors.json")),
+    neighborInput(bundle),
+  );
+  if (!raw)
+    assert.deepEqual(
+      fs.readFileSync(path.join(staging, "neighbors.json")),
+      fs.readFileSync(path.join(bundle, "raw/neighbors.json")),
+      "Delivered neighbor bytes must match extraction",
+    );
   const cookingAudit = readJson<{
     counts: Record<string, number>;
     categories: {
@@ -356,6 +368,7 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
       gameVersion: profile.gameVersion,
       revision: profile.dataRevision,
       records: all.length,
+      neighbors: neighbors.neighbors.length,
       counts,
       images: used.size,
       recordsWithImages: all.filter((r) => r.image).length,

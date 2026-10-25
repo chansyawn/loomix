@@ -98,6 +98,7 @@ export async function prepareSource({ work, environment }: DecodeOptions): Promi
   });
 
   const assets = readJson<AssetMapAsset[]>(path.join(environment, "asset-index.json"));
+  writeJson(path.join(prepared, "asset-index.json"), assets);
   const textures: IndexedAsset[] = assets
     .filter((asset) => asset.Type === "Texture2D")
     .map((asset) => ({ ...asset, PathID: asset.PathID, Source: asset.Source }));

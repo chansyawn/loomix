@@ -51,16 +51,22 @@ export function safeOutput(output: string) {
   assertSafeDestination(output);
   if (fs.existsSync(output)) {
     if (fs.lstatSync(output).isSymbolicLink()) throw new Error("Output cannot be a link");
+    const names = fs.readdirSync(output);
     const placeholder = path.join(output, ".gitkeep");
-    if (fs.existsSync(placeholder) && !fs.lstatSync(placeholder).isFile())
-      throw new Error("Output placeholder must be a regular file");
-    const json = path.join(output, "content.json");
     if (
-      fs.existsSync(json) &&
-      (!fs.lstatSync(json).isFile() || fs.lstatSync(json).isSymbolicLink())
+      names.includes(".gitkeep") &&
+      (!fs.lstatSync(placeholder).isFile() || fs.lstatSync(placeholder).isSymbolicLink())
     )
-      throw new Error("Output JSON must be a regular file");
-    if (fs.existsSync(path.join(output, "assets"))) {
+      throw new Error("Output placeholder must be a regular file");
+    for (const name of ["content.json", "neighbors.json"]) {
+      const json = path.join(output, name);
+      if (
+        names.includes(name) &&
+        (!fs.lstatSync(json).isFile() || fs.lstatSync(json).isSymbolicLink())
+      )
+        throw new Error("Output JSON must be a regular file");
+    }
+    if (names.includes("assets")) {
       const assets = path.join(output, "assets");
       if (!fs.lstatSync(assets).isDirectory() || fs.lstatSync(assets).isSymbolicLink())
         throw new Error("Output assets must be a regular directory");
@@ -70,9 +76,9 @@ export function safeOutput(output: string) {
           throw new Error("Output assets contain a link or subdirectory");
       }
     }
-    const unexpected = fs
-      .readdirSync(output)
-      .filter((s) => !["content.json", "assets", ".gitkeep"].includes(s));
+    const unexpected = names.filter(
+      (s) => !["content.json", "neighbors.json", "assets", ".gitkeep"].includes(s),
+    );
     if (unexpected.length)
       throw new Error(`Output contains unrelated files: ${unexpected.join(", ")}`);
   }

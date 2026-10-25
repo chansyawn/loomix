@@ -16,7 +16,11 @@ export async function deliver(extractionId: string): Promise<string> {
   if (extraction.profileHash !== profileHash)
     throw new Error("Extraction profile differs from the current profile; extract again");
   const implementation = await implementationRevision();
-  const inputs = await inventory(bundle, ["extraction-manifest.json"]);
+  const inputs = await inventory(bundle, [
+    "extraction-manifest.json",
+    "raw/content.json",
+    "raw/neighbors.json",
+  ]);
   const id = digest({
     extractionId,
     inputs,

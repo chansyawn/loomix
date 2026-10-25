@@ -16,6 +16,7 @@ import { audit } from "./audit.ts";
 import { verifyExtraction } from "./verify.ts";
 import { admissionsFile, parseAdmissions } from "./content/admissions.ts";
 import { finalizeEvidence } from "./evidence/build.ts";
+import { buildNeighbors } from "./neighbors/build.ts";
 
 export async function extract(environmentId: string): Promise<string> {
   const environmentDirectory = identityDirectory("environments", environmentId);
@@ -92,6 +93,12 @@ export async function extract(environmentId: string): Promise<string> {
           ],
         },
         {
+          name: "neighbors",
+          dependencies: ["structure"],
+          run: () => buildNeighbors(work),
+          outputs: () => ["raw/neighbors.json", "neighbor-audit.json", "neighbor-exclusions.json"],
+        },
+        {
           name: "raw-assets",
           dependencies: ["structure"],
           run: () => exportImages(options),
@@ -112,7 +119,7 @@ export async function extract(environmentId: string): Promise<string> {
         },
         {
           name: "extraction-verify",
-          dependencies: ["source-audit"],
+          dependencies: ["source-audit", "neighbors"],
           run: async () => {
             finalizeEvidence(work);
             await verifyExtraction(work);
@@ -131,6 +138,7 @@ export async function extract(environmentId: string): Promise<string> {
           "admissions",
           "decode",
           "structure",
+          "neighbors",
           "raw-assets",
           "source-audit",
           "extraction-verify",

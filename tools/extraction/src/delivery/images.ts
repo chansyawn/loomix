@@ -13,12 +13,16 @@ import { readJson, writeJson } from "../workflow/json.ts";
 import { processImage, imageDimensions } from "./image.ts";
 
 import { assetKey } from "../extraction/images/select.ts";
+import { parseNeighborDatabase } from "../extraction/neighbors/schema.ts";
 export async function renderImages(options: WorkOptions, extraction: string) {
   const selected = readJson<SelectedImage[]>(path.join(extraction, "selected-images.json"));
   const manifest = readJson<ImageManifest[]>(path.join(extraction, "image-candidates.json"));
   const content = readJson<Catalog>(path.join(extraction, "raw/content.json"));
   const staging = path.join(options.work, "staging");
   fs.mkdirSync(path.join(staging, "assets"), { recursive: true });
+  const neighborFile = path.join(extraction, "raw/neighbors.json");
+  parseNeighborDatabase(readJson(neighborFile));
+  fs.copyFileSync(neighborFile, path.join(staging, "neighbors.json"));
   const selectedManifest: ProcessedImage[] = [];
   const processed = new Map<
     string,

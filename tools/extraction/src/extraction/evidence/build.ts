@@ -57,6 +57,8 @@ export function finalizeEvidence(work: string): void {
     "cooking-audit",
     "cooking-evidence",
     "cooking-investigation",
+    "neighbor-audit",
+    "neighbor-exclusions",
   ])
     fs.copyFileSync(path.join(work, `${name}.json`), path.join(evidence, `${name}.json`));
 }
