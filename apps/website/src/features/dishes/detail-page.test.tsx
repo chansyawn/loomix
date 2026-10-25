@@ -56,11 +56,20 @@ function catalogWithRecipe(recipe: Recipe | null) {
       subcategory: "采摘材料",
       attributes: { originGalaxy: null, maturityPeriod: null, harvestCount: null },
     },
+    {
+      ...base(4, "茶饮系列"),
+      category: "dishes",
+      kind: "series",
+      memberIds: [1],
+    },
   );
   return catalog;
 }
 
-async function renderDish(recipe: Recipe | null): Promise<string> {
+async function renderDish(
+  recipe: Recipe | null,
+  kind: "items" | "series" = "items",
+): Promise<string> {
   const view = toCollectionView(parseCatalog(catalogWithRecipe(recipe)));
   const detail = dishesDetail(
     {
@@ -68,8 +77,8 @@ async function renderDish(recipe: Recipe | null): Promise<string> {
       ingredientCategoriesById: view.ingredientCategoriesById,
       ingredientItemsById: view.ingredientItemsById,
     },
-    "items",
-    1,
+    kind,
+    kind === "items" ? 1 : 4,
   );
   const root = createRootRoute({ component: () => <DishesDetailPage detail={detail} /> });
   const index = createRoute({ getParentRoute: () => root, path: "/" });
@@ -82,7 +91,7 @@ async function renderDish(recipe: Recipe | null): Promise<string> {
 }
 
 describe("dish recipe detail rendering", () => {
-  it("shows expression operators, expandable categories, formal item links and unknown quantity", async () => {
+  it("shows readable conditions and expandable category candidates before the raw expression", async () => {
     const html = await renderDish({
       slots: [
         {
@@ -103,21 +112,70 @@ describe("dish recipe detail rendering", () => {
     expect(html).toContain("原始条件：");
     expect(html).toContain("食材_水果|食材_鲜花");
     expect(html).toContain("任选");
-    expect(html).toContain("水果 · 1 件正式收录物品");
-    expect(html).toContain("鲜花 · 1 件正式收录物品");
+    expect(html).toContain("食材条件 1");
+    expect(html).not.toContain("食材槽位 20");
+    expect(html).toContain("水果候选物品");
+    expect(html).toContain("鲜花候选物品");
+    expect(html).toContain("1 件物品");
+    expect(html).toContain("<details");
+    expect(html).toContain("<summary");
     expect(html).toContain("用量：未确认");
     expect(html).toContain('href="/collection/plants/items/2"');
     expect(html).toContain("星露草莓");
+    expect(html.indexOf("水果候选物品")).toBeLessThan(html.indexOf("原始条件："));
+    expect(html.indexOf('id="dish-recipe"')).toBeLessThan(html.indexOf('id="related-dishes"'));
   });
 
-  it("distinguishes missing recipe, unknown slots, parse failures and empty candidates", async () => {
-    const noRecipe = await renderDish(null);
-    expect(noRecipe).toContain("配方行未提供");
+  it("keeps mixed simultaneous and alternative requirements grouped, and numbers repeated conditions", async () => {
+    const html = await renderDish({
+      slots: [
+        {
+          field: 20,
+          rawExpression: "食材_水果&食材_鲜花|食材_水果",
+          expression: {
+            kind: "any",
+            terms: [
+              {
+                kind: "all",
+                terms: [
+                  { kind: "category", categoryId: 100 },
+                  { kind: "category", categoryId: 101 },
+                ],
+              },
+              { kind: "category", categoryId: 100 },
+            ],
+          },
+          itemIds: [2],
+          quantity: null,
+        },
+        {
+          field: 30,
+          rawExpression: "食材_水果",
+          expression: { kind: "category", categoryId: 100 },
+          itemIds: [2],
+          quantity: null,
+        },
+      ],
+    });
+    expect(html).toContain('aria-label="任选"');
+    expect(html).toContain('aria-label="同时满足"');
+    expect(html).toContain("食材条件 2");
+    expect(html.indexOf("食材条件 1")).toBeLessThan(html.indexOf("食材条件 2"));
+    expect(html.match(/用量：未确认/g)).toHaveLength(2);
+  });
 
-    const noSlots = await renderDish({ slots: null });
-    expect(noSlots).toContain("食材槽位未确认");
+  it.each([
+    { recipe: null, message: "配方行未提供" },
+    { recipe: { slots: null }, message: "配方行存在，食材槽位未确认" },
+    { recipe: { slots: [] }, message: "已确认无需食材" },
+  ])("distinguishes the empty recipe state: $message", async ({ recipe, message }) => {
+    const html = await renderDish(recipe);
+    expect(html).toContain(message);
+    expect(html).not.toContain("食材条件 1");
+  });
 
-    const parseFailure = await renderDish({
+  it("retains the raw expression when a condition cannot be parsed", async () => {
+    const html = await renderDish({
       slots: [
         {
           field: 20,
@@ -128,9 +186,13 @@ describe("dish recipe detail rendering", () => {
         },
       ],
     });
-    expect(parseFailure).toContain("条件解析失败");
+    expect(html).toContain("条件解析失败");
+    expect(html).toContain("食材_未收录");
+    expect(html).not.toContain("已确认无需食材");
+  });
 
-    const emptyCandidates = await renderDish({
+  it("shows an empty category and distinguishes no matching items from no required ingredients", async () => {
+    const html = await renderDish({
       slots: [
         {
           field: 20,
@@ -141,7 +203,18 @@ describe("dish recipe detail rendering", () => {
         },
       ],
     });
-    expect(emptyCandidates).toContain("空类别 · 0 件正式收录物品");
-    expect(emptyCandidates).toContain("没有匹配的正式收录物品");
+    expect(html).toContain("空类别");
+    expect(html).toContain("0 件物品");
+    expect(html).toContain("暂无正式收录物品");
+    expect(html).toContain("没有匹配的正式收录物品");
+    expect(html).not.toContain("已确认无需食材");
+  });
+
+  it("keeps the series detail focused on its dishes", async () => {
+    const html = await renderDish(null, "series");
+    expect(html).toContain("茶饮系列");
+    expect(html).toContain("系列成员");
+    expect(html).toContain('href="/collection/dishes/items/1"');
+    expect(html).not.toContain('id="dish-recipe"');
   });
 });
