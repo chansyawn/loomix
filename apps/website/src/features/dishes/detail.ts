@@ -3,6 +3,8 @@ import type { DishesData } from "./data";
 import { loadDishes } from "./data";
 import { membershipIndex } from "./query";
 import type { View } from "./search";
+import type { IngredientCategory } from "@loomix/content-schema";
+import type { IngredientItem } from "../collection-view";
 
 export function parseDishId(value: string): number {
   const id = Number(value);
@@ -11,12 +13,17 @@ export function parseDishId(value: string): number {
 }
 
 export function dishesDetail(data: DishesData, view: View, id: number) {
+  const ingredientCategoriesById =
+    data.ingredientCategoriesById ?? new Map<number, IngredientCategory>();
+  const ingredientItemsById = data.ingredientItemsById ?? new Map<number, IngredientItem>();
   if (view === "items") {
     const item = data.items.find((row) => row.id === id);
     if (!item) throw notFound();
     return {
       kind: "item" as const,
       record: item,
+      ingredientCategoriesById,
+      ingredientItemsById,
       series: membershipIndex(data.series).get(id) ?? [],
       hasUnconfirmedSeriesMembership: data.series.some((group) => group.dishIds === null),
     };
@@ -27,6 +34,8 @@ export function dishesDetail(data: DishesData, view: View, id: number) {
   return {
     kind: "series" as const,
     record: series,
+    ingredientCategoriesById,
+    ingredientItemsById,
     items: series.dishIds === null ? null : series.dishIds.map((dishId) => items.get(dishId)!),
   };
 }

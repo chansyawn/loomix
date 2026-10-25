@@ -15,6 +15,7 @@ function item(id: number, fields: Partial<DishItem> = {}): DishItem {
     galaxyFlavor: null,
     cookware: null,
     effects: null,
+    recipe: null,
     ...fields,
   };
 }

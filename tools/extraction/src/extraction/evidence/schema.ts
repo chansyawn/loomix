@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { recordTypes } from "@loomix/content-schema";
+import { RecipeSchema } from "@loomix/content-schema";
 
 const tableEvidence = z
   .object({
@@ -31,7 +32,7 @@ export const fieldEvidenceSchema = z
     id: z.number().int(),
     group: z.enum(recordTypes),
     field: z.string().min(1),
-    value: z.union([z.string(), z.number(), z.array(z.number()), z.null()]),
+    value: z.union([z.string(), z.number(), z.array(z.number()), RecipeSchema, z.null()]),
     evidence: z.union([
       z.strictObject({
         kind: z.literal("manual"),
@@ -57,21 +58,24 @@ export const fieldEvidenceSchema = z
         code: "custom",
         message: "Unknown fields require an explicit reason and unconfirmed status",
       });
+    const hasConcreteSource = proof.sources.some(
+      (source) =>
+        (source.table !== undefined && source.rowOffset !== undefined) ||
+        source.pathId ||
+        (["category", "kind", "subcategory"].includes(proof.field) &&
+          source.pointer &&
+          source.sha256),
+    );
     if (
       proof.value !== null &&
-      (proof.status !== "confirmed" ||
-        !proof.sources.some(
-          (source) =>
-            (source.table !== undefined && source.rowOffset !== undefined) ||
-            source.pathId ||
-            (["category", "kind", "subcategory"].includes(proof.field) &&
-              source.pointer &&
-              source.sha256),
-        ))
+      (proof.status === "unconfirmed"
+        ? proof.field !== "recipe" || !proof.reason || !hasConcreteSource
+        : proof.status !== "confirmed" || !hasConcreteSource)
     )
       context.addIssue({
         code: "custom",
-        message: "Confirmed fields require a table row or resource object source",
+        message:
+          "Populated fields require concrete provenance; unconfirmed values are limited to documented recipe evidence",
       });
   });
 export type FieldEvidence = z.infer<typeof fieldEvidenceSchema>;

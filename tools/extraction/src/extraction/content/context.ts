@@ -10,6 +10,8 @@ import type { Vocabulary } from "./vocabulary.ts";
 import { readAdmissions } from "./admissions.ts";
 import { classify, resolveMemberships } from "./scope.ts";
 import type { Scope } from "./scope.ts";
+import { buildIngredientCategories } from "./recipes.ts";
+import type { IngredientCategoryBuild } from "./recipes.ts";
 
 export interface ContentContext {
   tables: Tables;
@@ -19,6 +21,9 @@ export interface ContentContext {
   ui: Map<number | null, TableRow>;
   creatures: Map<number | null, TableRow>;
   recipesByProduct: Map<number, TableRow>;
+  recipeRows: TableRow[];
+  outsideRecipeRows: TableRow[];
+  ingredientCategoryBuild: IngredientCategoryBuild;
   resolveIcon(reference: string): IconMatch | null;
 }
 
@@ -60,10 +65,17 @@ export function createContentContext(work: string): ContentContext {
   const ui = tables.byId(profile.roots.ui, uiSignature(tables), classification.ids);
   const scope = resolveMemberships(tables, classification);
 
+  const ingredientCategoryBuild = buildIngredientCategories(tables, vocabulary, scope);
+  const recipeRows = tables.rows(profile.roots.recipes);
   const recipesByProduct = new Map<number, TableRow>();
-  for (const row of tables.rows(profile.roots.recipes)) {
+  const outsideRecipeRows: TableRow[] = [];
+  for (const row of recipeRows) {
     const id = tables.uint(row, 4);
-    if (id == null || scope.groups.get(id) !== "dishes.item") continue;
+    if (id == null) continue;
+    if (scope.groups.get(id) !== "dishes.item") {
+      outsideRecipeRows.push(row);
+      continue;
+    }
     if (recipesByProduct.has(id)) throw new Error(`Duplicate dish recipe ${id}`);
     recipesByProduct.set(id, row);
   }
@@ -76,6 +88,9 @@ export function createContentContext(work: string): ContentContext {
     ui,
     creatures,
     recipesByProduct,
+    recipeRows,
+    outsideRecipeRows,
+    ingredientCategoryBuild,
     resolveIcon: createIconResolver(
       readJson<IndexedAsset[]>(path.join(work, "prepared", "textures.json")),
       readJson<IndexedAsset[]>(path.join(work, "prepared", "sprites.json")),

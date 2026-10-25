@@ -14,6 +14,33 @@ export const CatalogSourceSchema = z.strictObject({
   dataRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
   resourceRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
 });
+export type IngredientExpression =
+  | { kind: "category"; categoryId: number }
+  | { kind: "all"; terms: IngredientExpression[] }
+  | { kind: "any"; terms: IngredientExpression[] };
+const ingredientExpressionSchema: z.ZodType<IngredientExpression> = z.lazy(() =>
+  z.discriminatedUnion("kind", [
+    z.strictObject({ kind: z.literal("category"), categoryId: ItemIdSchema }),
+    z.strictObject({ kind: z.literal("all"), terms: ingredientExpressionSchema.array().min(2) }),
+    z.strictObject({ kind: z.literal("any"), terms: ingredientExpressionSchema.array().min(2) }),
+  ]),
+);
+export const IngredientExpressionSchema = ingredientExpressionSchema;
+export const RecipeSlotSchema = z.strictObject({
+  field: z.union([z.literal(20), z.literal(25), z.literal(30), z.literal(35)]),
+  rawExpression: z.string().min(1),
+  expression: IngredientExpressionSchema.nullable(),
+  itemIds: z.array(ItemIdSchema).nullable(),
+  quantity: z.null(),
+});
+export const RecipeSchema = z.strictObject({ slots: RecipeSlotSchema.array().nullable() });
+export const IngredientCategorySchema = z.strictObject({
+  id: ItemIdSchema,
+  tagName: z.string().min(1),
+  name: z.string().min(1),
+  parentId: ItemIdSchema.nullable(),
+  itemIds: z.array(ItemIdSchema),
+});
 const text = z.string().nullable();
 const members = z.array(ItemIdSchema).nullable();
 export const DeliveredImageSchema = z
@@ -85,7 +112,7 @@ export function createRecordSchemas(image: z.ZodType<string | null> = DeliveredI
     "creatures.series": collection("creatures", "series"),
     "plants.item": item("plants"),
     "plants.series": collection("plants", "series"),
-    "dishes.item": item("dishes"),
+    "dishes.item": item("dishes").extend({ recipe: RecipeSchema.nullable().default(null) }),
     "dishes.series": collection("dishes", "series"),
     "miscellaneous.item": item("miscellaneous"),
   };
@@ -115,6 +142,9 @@ export type NullableText = string | null;
 export type Quality = 0 | 1 | 2 | 3 | 4;
 export type CatalogSource = z.infer<typeof CatalogSourceSchema>;
 export type CatalogRecord = z.infer<typeof CatalogRecordSchema>;
+export type RecipeSlot = z.infer<typeof RecipeSlotSchema>;
+export type Recipe = z.infer<typeof RecipeSchema>;
+export type IngredientCategory = z.infer<typeof IngredientCategorySchema>;
 export type ItemRecord = Extract<CatalogRecord, { kind: "item" }>;
 export type SetRecord = Extract<CatalogRecord, { kind: "set" }>;
 export type SeriesRecord = Extract<CatalogRecord, { kind: "series" }>;

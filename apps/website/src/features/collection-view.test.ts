@@ -141,6 +141,7 @@ describe("collection view adapter", () => {
         galaxyFlavor: "星屿",
         cookware: "煮锅",
         effects: "增加力气",
+        recipe: null,
       },
     ]);
     expect(view.dishes.series).toMatchObject([{ id: 8, seriesName: "记录8", dishIds: [7] }]);

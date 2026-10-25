@@ -23,6 +23,7 @@ const first: DishItem = {
   galaxyFlavor: "星屿，禾夏",
   cookware: "烤架",
   effects: "耐力上限提升 5 点",
+  recipe: null,
 };
 const second: DishItem = { ...first, id: 2, name: "星露蒸鱼" };
 const group: DishSeries = {
@@ -62,6 +63,8 @@ describe("dish details", () => {
     expect(dishesDetail(data, "items", 1)).toEqual({
       kind: "item",
       record: first,
+      ingredientCategoriesById: new Map(),
+      ingredientItemsById: new Map(),
       series: [group],
       hasUnconfirmedSeriesMembership: true,
     });

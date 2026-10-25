@@ -40,6 +40,148 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
   const scope = verifyAdmissions(content, bundle);
   const qualities = new Set(tables.rows(profile.roots.qualities).map((r) => tables.uint(r, 1, 0)));
   const { all, counts } = validateModel(content, scope, expectedCatalog, qualities, parse);
+  const cookingAudit = readJson<{
+    counts: Record<string, number>;
+    categories: {
+      id: number;
+      tagName: string;
+      name: string;
+      parentId: number | null;
+      itemIds: number[];
+      unlistedItemIds: number[];
+    }[];
+    categoryAssociations: { categoryId: number; itemId: number; listed: boolean }[];
+    records: {
+      recipeId: number;
+      productId: number;
+      disposition: "recipe" | "plant_ingredient_candidate" | "outside_scope";
+      fields: {
+        ingredientSlots: {
+          field: 20 | 25 | 30 | 35;
+          rawExpression: string;
+          expression: unknown;
+          itemIds: number[] | null;
+          parseReason: string | null;
+        }[];
+      };
+      source: { table: number; row: number; rowOffset: number; fields: number[] };
+    }[];
+    outsideDishProducts: { productId: number; recipeId: number }[];
+    plantProductCandidates: { productId: number; recipeId: number }[];
+  }>(path.join(bundle, "evidence/cooking-audit.json"));
+  assert.deepEqual(cookingAudit.counts, {
+    table122Rows: 171,
+    dishRecipes: 121,
+    dishRecipesWithExpressions: 112,
+    dishRecipesWithoutExpressions: 9,
+    plantProductCandidates: 40,
+    outsideScopeProducts: 10,
+  });
+  assert.equal(cookingAudit.records.length, cookingAudit.counts.table122Rows);
+  assert.equal(new Set(cookingAudit.records.map((record) => record.recipeId)).size, 171);
+  assert.equal(new Set(cookingAudit.records.map((record) => record.productId)).size, 171);
+  assert.equal(
+    cookingAudit.records.filter((record) => record.disposition === "recipe").length,
+    cookingAudit.counts.dishRecipes,
+  );
+  assert.equal(
+    cookingAudit.records.filter(
+      (record) => record.disposition === "recipe" && record.fields.ingredientSlots.length > 0,
+    ).length,
+    cookingAudit.counts.dishRecipesWithExpressions,
+  );
+  assert.equal(
+    cookingAudit.records.filter(
+      (record) => record.disposition === "recipe" && record.fields.ingredientSlots.length === 0,
+    ).length,
+    cookingAudit.counts.dishRecipesWithoutExpressions,
+  );
+  assert.equal(
+    cookingAudit.records.filter((record) => record.disposition === "plant_ingredient_candidate")
+      .length,
+    cookingAudit.counts.plantProductCandidates,
+  );
+  assert.equal(
+    cookingAudit.records.filter((record) => record.disposition === "outside_scope").length,
+    cookingAudit.counts.outsideScopeProducts,
+  );
+  assert.deepEqual(
+    cookingAudit.outsideDishProducts.map(({ productId, recipeId }) => ({ productId, recipeId })),
+    cookingAudit.records
+      .filter((record) => record.disposition === "outside_scope")
+      .map(({ productId, recipeId }) => ({ productId, recipeId })),
+    "Outside-scope product audit",
+  );
+  assert.deepEqual(
+    cookingAudit.plantProductCandidates.map(({ productId, recipeId }) => ({ productId, recipeId })),
+    cookingAudit.records
+      .filter((record) => record.disposition === "plant_ingredient_candidate")
+      .map(({ productId, recipeId }) => ({ productId, recipeId })),
+    "Plant product candidate audit",
+  );
+  assert.ok(
+    cookingAudit.records.every(
+      (record) =>
+        record.source.table === profile.roots.recipes &&
+        record.source.row === record.recipeId &&
+        record.source.rowOffset > 0 &&
+        record.source.fields.join(",") === "0,2,4,16,20,25,30,35",
+    ),
+    "Cooking audit table row provenance",
+  );
+  assert.deepEqual(
+    cookingAudit.categories.map(({ id, tagName, name, parentId, itemIds }) => ({
+      id,
+      tagName,
+      name,
+      parentId,
+      itemIds,
+    })),
+    content.ingredientCategories,
+    "Ingredient category audit must match content index",
+  );
+  for (const category of cookingAudit.categories) {
+    for (const listed of [true, false]) {
+      const associated = cookingAudit.categoryAssociations
+        .filter((entry) => entry.categoryId === category.id && entry.listed === listed)
+        .map((entry) => entry.itemId)
+        .sort((a, b) => a - b);
+      const expected = listed ? category.itemIds : category.unlistedItemIds;
+      assert.deepEqual(associated, expected, `Category item associations ${category.id}`);
+    }
+  }
+  const contentItems = new Map(all.map((record) => [record.id, record]));
+  for (const association of cookingAudit.categoryAssociations)
+    assert.equal(
+      association.listed,
+      contentItems.get(association.itemId)?.kind === "item",
+      `Category item admission ${association.categoryId}/${association.itemId}`,
+    );
+  assert.equal(
+    new Set(cookingAudit.categoryAssociations.map((entry) => `${entry.categoryId}/${entry.itemId}`))
+      .size,
+    cookingAudit.categoryAssociations.length,
+    "Unique category item associations",
+  );
+  for (const recipe of cookingAudit.records.filter((entry) => entry.disposition === "recipe")) {
+    const dish = all.find((entry) => entry.id === recipe.productId);
+    assert.ok(dish && dish.category === "dishes" && dish.kind === "item", "Dish recipe scope");
+    assert.deepEqual(
+      dish.recipe,
+      {
+        slots: recipe.fields.ingredientSlots.length
+          ? recipe.fields.ingredientSlots.map((slot) => ({
+              field: slot.field,
+              rawExpression: slot.rawExpression,
+              expression: slot.expression,
+              itemIds: slot.itemIds,
+              quantity: null,
+            }))
+          : null,
+      },
+      `Recipe output ${recipe.productId}`,
+    );
+  }
   const manifest = readJson<(ProcessedImage | ImageManifest)[]>(
     path.join(reportRoot, "image-manifest.json"),
   );

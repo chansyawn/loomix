@@ -10,6 +10,12 @@ function tableEvidence(evidence: Evidence): TableEvidence[] {
 
 export function evidenceHints(proof: EvidenceRecord): TableEvidence[] {
   const hints = tableEvidence(proof.evidence);
+  if (proof.field === "recipe")
+    hints.push({
+      table: profile.roots.recipes,
+      field: [0, 2, 4, 16, 20, 25, 30, 35],
+      note: "raw slot expressions retained; ingredient semantics remain unconfirmed",
+    });
   if (proof.field === "attributes.difficulty")
     hints.push({ table: profile.roots.recipeDifficulty, field: 1 });
   if (proof.field === "image" && proof.value !== null)

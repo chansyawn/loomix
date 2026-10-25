@@ -35,7 +35,7 @@ export function finalizeEvidence(work: string): void {
         hints.map((hint) => associationRule(proof.field, hint)).join("; ") ||
         "325 image configuration → exact resource Container/name; Persistent overlay; selected by native pixel count",
       transformation: transformationRule(proof.field),
-      status: proof.value === null ? "unconfirmed" : "confirmed",
+      status: proof.status ?? (proof.value === null ? "unconfirmed" : "confirmed"),
     });
   };
   const records = readJson<EvidenceRecord[]>(path.join(work, "image-field-evidence.json")).map(
@@ -54,6 +54,9 @@ export function finalizeEvidence(work: string): void {
     "selected-images",
     "image-manifest",
     "source-audit",
+    "cooking-audit",
+    "cooking-evidence",
+    "cooking-investigation",
   ])
     fs.copyFileSync(path.join(work, `${name}.json`), path.join(evidence, `${name}.json`));
 }

@@ -1,4 +1,10 @@
-import type { Catalog, ItemRecord, RecordBase } from "@loomix/content-schema";
+import type {
+  Catalog,
+  IngredientCategory,
+  ItemRecord,
+  Recipe,
+  RecordBase,
+} from "@loomix/content-schema";
 
 export type CollectionRecord = Pick<
   RecordBase,
@@ -13,7 +19,7 @@ type CategorizedRecord = CollectionRecord & { category: string | null };
 export type FurnitureItem = CategorizedRecord & ItemAttributes<"furniture">;
 export type CreatureItem = CategorizedRecord & ItemAttributes<"creatures">;
 export type PlantItem = CategorizedRecord & ItemAttributes<"plants">;
-export type DishItem = CollectionRecord & ItemAttributes<"dishes">;
+export type DishItem = CollectionRecord & ItemAttributes<"dishes"> & { recipe: Recipe | null };
 export type ClothingItem = CategorizedRecord & ItemAttributes<"clothing">;
 export type ClothingAppearance = CategorizedRecord;
 export type MiscellaneousItem = CollectionRecord;
@@ -34,8 +40,12 @@ export type PlantSeries = CollectionRecord & {
   plantIds: number[] | null;
 };
 export type DishSeries = CollectionRecord & { seriesName: string | null; dishIds: number[] | null };
+export type IngredientItem = CollectionRecord & { catalogCategory: ItemRecord["category"] };
 
 export interface CollectionView {
+  ingredientCategories: IngredientCategory[];
+  ingredientCategoriesById: ReadonlyMap<number, IngredientCategory>;
+  ingredientItemsById: Map<number, IngredientItem>;
   furniture: { sets: FurnitureSet[]; items: FurnitureItem[] };
   creatures: { series: CreatureSeries[]; items: CreatureItem[] };
   plants: { series: PlantSeries[]; items: PlantItem[] };
@@ -56,6 +66,11 @@ function collectionRecord(record: RecordBase): CollectionRecord {
 
 export function toCollectionView(catalog: Catalog): CollectionView {
   const view: CollectionView = {
+    ingredientCategories: catalog.ingredientCategories,
+    ingredientCategoriesById: new Map(
+      catalog.ingredientCategories.map((category) => [category.id, category]),
+    ),
+    ingredientItemsById: new Map(),
     furniture: { sets: [], items: [] },
     creatures: { series: [], items: [] },
     plants: { series: [], items: [] },
@@ -91,21 +106,27 @@ export function toCollectionView(catalog: Catalog): CollectionView {
       switch (record.category) {
         case "furniture":
           view.furniture.items.push({ ...base, category, ...record.attributes });
+          view.ingredientItemsById.set(record.id, { ...base, catalogCategory: "furniture" });
           break;
         case "creatures":
           view.creatures.items.push({ ...base, category, ...record.attributes });
+          view.ingredientItemsById.set(record.id, { ...base, catalogCategory: "creatures" });
           break;
         case "plants":
           view.plants.items.push({ ...base, category, ...record.attributes });
+          view.ingredientItemsById.set(record.id, { ...base, catalogCategory: "plants" });
           break;
         case "dishes":
-          view.dishes.items.push({ ...base, ...record.attributes });
+          view.dishes.items.push({ ...base, ...record.attributes, recipe: record.recipe });
+          view.ingredientItemsById.set(record.id, { ...base, catalogCategory: "dishes" });
           break;
         case "clothing":
           view.clothing.items.push({ ...base, category, ...record.attributes });
+          view.ingredientItemsById.set(record.id, { ...base, catalogCategory: "clothing" });
           break;
         case "miscellaneous":
           view.miscellaneous.push(base);
+          view.ingredientItemsById.set(record.id, { ...base, catalogCategory: "miscellaneous" });
           break;
       }
     }

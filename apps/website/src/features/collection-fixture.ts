@@ -19,6 +19,7 @@ export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
     dataRevision: 1449213,
     resourceRevision: 1391927,
   });
+  catalog.ingredientCategories = view.ingredientCategories ?? [];
   for (const record of view.furniture?.items ?? [])
     catalog.items.push({
       ...catalogBase(record),
@@ -93,6 +94,7 @@ export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
         cookware: record.cookware,
         effects: record.effects,
       },
+      recipe: record.recipe,
     });
   for (const record of view.dishes?.series ?? [])
     catalog.items.push({

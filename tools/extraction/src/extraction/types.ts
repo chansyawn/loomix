@@ -1,4 +1,4 @@
-import type { RecordType } from "@loomix/content-schema";
+import type { RecordType, Recipe } from "@loomix/content-schema";
 
 export interface WorkOptions {
   work: string;
@@ -81,7 +81,7 @@ export interface TextEntry {
 export interface TextMap {
   byHash: Record<number, TextEntry>;
 }
-export type FieldValue = string | number | number[] | null;
+export type FieldValue = string | number | number[] | Recipe | null;
 export interface TableEvidence {
   table: number;
   field: number | number[];

@@ -86,6 +86,9 @@ export async function extract(environmentId: string): Promise<string> {
             "outside-members.json",
             "field-candidates.json",
             "field-investigation.json",
+            "cooking-audit.json",
+            "cooking-evidence.json",
+            "cooking-investigation.json",
           ],
         },
         {

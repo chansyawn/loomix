@@ -242,3 +242,120 @@ test("audit field paths follow the unified model", () => {
   expect(recordFields("plants.series")).toContain("memberIds");
   expect(recordFields("plants.item")).not.toContain("encyclopediaEntry");
 });
+
+test("ingredient categories and recursive recipes validate catalog references", () => {
+  const catalog = fixture();
+  const plant = catalog.items.find(
+    (record): record is Extract<CatalogRecord, { category: "plants"; kind: "item" }> =>
+      record.category === "plants" && record.kind === "item",
+  )!;
+  const dish = catalog.items.find(
+    (record): record is Extract<CatalogRecord, { category: "dishes"; kind: "item" }> =>
+      record.category === "dishes" && record.kind === "item",
+  )!;
+  catalog.ingredientCategories = [
+    { id: 100, tagName: "食材", name: "食材", parentId: null, itemIds: [plant.id] },
+    { id: 101, tagName: "食材_A", name: "A", parentId: 100, itemIds: [] },
+    { id: 102, tagName: "食材_B", name: "B", parentId: 100, itemIds: [plant.id] },
+  ];
+  dish.recipe = {
+    slots: [
+      {
+        field: 20,
+        rawExpression: "食材_A&食材_B|食材_A",
+        expression: {
+          kind: "any",
+          terms: [
+            {
+              kind: "all",
+              terms: [
+                { kind: "category", categoryId: 101 },
+                { kind: "category", categoryId: 102 },
+              ],
+            },
+            { kind: "category", categoryId: 101 },
+          ],
+        },
+        itemIds: [],
+        quantity: null,
+      },
+    ],
+  };
+  expect(parseCatalog(catalog)).toEqual(catalog);
+});
+
+test("ingredient and recipe references reject duplicates, invalid kinds, and unknown state conflation", () => {
+  const catalog = fixture();
+  const plant = catalog.items.find(
+    (record): record is Extract<CatalogRecord, { category: "plants"; kind: "item" }> =>
+      record.category === "plants" && record.kind === "item",
+  )!;
+  const dish = catalog.items.find(
+    (record): record is Extract<CatalogRecord, { category: "dishes"; kind: "item" }> =>
+      record.category === "dishes" && record.kind === "item",
+  )!;
+  const set = catalog.items.find((record) => record.kind === "set")!;
+  catalog.ingredientCategories = [
+    { id: 100, tagName: "食材", name: "食材", parentId: null, itemIds: [plant.id] },
+    { id: 101, tagName: "食材_A", name: "A", parentId: 100, itemIds: [] },
+  ];
+  dish.recipe = {
+    slots: [
+      { field: 20, rawExpression: "食材_A", expression: null, itemIds: null, quantity: null },
+    ],
+  };
+  expect(parseCatalog(catalog)).toEqual(catalog);
+
+  const invalidMutations: ((value: Catalog) => void)[] = [
+    (value) => (value.ingredientCategories[1]!.parentId = 999),
+    (value) => (value.ingredientCategories[0]!.parentId = 101),
+    (value) => (value.ingredientCategories[1]!.itemIds = [set.id]),
+    (value) => (value.ingredientCategories[0]!.itemIds = [plant.id, plant.id]),
+    (value) => (value.ingredientCategories[1]!.id = 100),
+    (value) => {
+      const record = value.items.find(
+        (entry): entry is Extract<CatalogRecord, { category: "dishes"; kind: "item" }> =>
+          entry.category === "dishes" && entry.kind === "item",
+      )!;
+      record.recipe = {
+        slots: [
+          {
+            field: 20,
+            rawExpression: "食材_A",
+            expression: { kind: "category", categoryId: 999 },
+            itemIds: [],
+            quantity: null,
+          },
+        ],
+      };
+    },
+    (value) => {
+      const record = value.items.find(
+        (entry): entry is Extract<CatalogRecord, { category: "dishes"; kind: "item" }> =>
+          entry.category === "dishes" && entry.kind === "item",
+      )!;
+      record.recipe = {
+        slots: [
+          {
+            field: 20,
+            rawExpression: "食材_A",
+            expression: { kind: "category", categoryId: 101 },
+            itemIds: null,
+            quantity: null,
+          },
+        ],
+      };
+    },
+  ];
+  for (const mutate of invalidMutations) {
+    const value = JSON.parse(JSON.stringify(catalog)) as Catalog;
+    mutate(value);
+    expect(() => parseCatalog(value)).toThrow();
+  }
+  dish.recipe = { slots: [] };
+  expect(parseCatalog(catalog)).toEqual(catalog);
+  dish.recipe = { slots: null };
+  expect(parseCatalog(catalog)).toEqual(catalog);
+  dish.recipe = null;
+  expect(parseCatalog(catalog)).toEqual(catalog);
+});

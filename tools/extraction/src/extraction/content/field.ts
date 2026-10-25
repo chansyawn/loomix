@@ -41,10 +41,19 @@ export class RecordBuilder {
     value: FieldValue | undefined,
     evidence: Evidence,
     reason = "configuration_missing",
+    status?: "confirmed" | "unconfirmed",
   ): void {
     const resolved = value ?? null;
     this.assign(field, resolved);
-    const detail = { id: this.id, group: this.group, field, value: resolved, evidence };
+    const detail = {
+      id: this.id,
+      group: this.group,
+      field,
+      value: resolved,
+      evidence,
+      ...(status ? { status } : {}),
+      ...(status === "unconfirmed" && resolved !== null ? { reason } : {}),
+    };
     if (resolved === null) this.diagnostics.push({ ...detail, reason });
     else this.proofs.push(detail);
   }

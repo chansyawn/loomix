@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { emptyCatalog, recordSchemas } from "@loomix/content-schema";
-import type { WorkOptions, EvidenceRecord, SelectedImage } from "../types.ts";
+import type { WorkOptions, EvidenceRecord, SelectedImage, BinDataAsset } from "../types.ts";
 import { catalogSource, expectedCatalog } from "../../profile.ts";
-import { writeJson } from "../../workflow/json.ts";
+import { readJson, writeJson } from "../../workflow/json.ts";
 import { removeWithin } from "../../workflow/fs.ts";
 import { validateModel } from "./model.ts";
 import { fieldCandidateSchema } from "../evidence/schema.ts";
@@ -11,10 +11,13 @@ import type { FieldCandidate } from "../evidence/schema.ts";
 import { createContentContext } from "./context.ts";
 import { buildRecord } from "./records/index.ts";
 import type { RecordContext } from "./records/types.ts";
+import { buildCookingAudit } from "./recipes.ts";
+import { profile } from "../../profile.ts";
 
 export async function structure(options: WorkOptions): Promise<void> {
   const context = createContentContext(options.work);
   const content = emptyCatalog(catalogSource);
+  content.ingredientCategories = context.ingredientCategoryBuild.categories;
   const proofs: EvidenceRecord[] = [];
   const diagnostics: EvidenceRecord[] = [];
   const candidateImages: SelectedImage[] = [];
@@ -104,6 +107,49 @@ export async function structure(options: WorkOptions): Promise<void> {
           "67 theme display configurations reuse furniture images; dedicated image purpose unconfirmed",
       },
     ],
+  });
+  const bindata = readJson<BinDataAsset[]>(path.join(options.work, "bindata-manifest.json"));
+  const bindataFile = (name: string) =>
+    bindata.find((asset) => asset.Name === name)?.file ?? `bindata/${name}.json`;
+  const cookingAudit = buildCookingAudit({
+    tables: context.tables,
+    recipeRows: context.recipeRows,
+    scope: context.scope,
+    categoryBuild: context.ingredientCategoryBuild,
+    bindataFiles: {
+      tags: bindataFile(profile.binData.tags),
+      tagDisplay: bindataFile(profile.binData.tagDisplay),
+    },
+  });
+  if (
+    cookingAudit.counts.dishRecipes !== 121 ||
+    cookingAudit.counts.dishRecipesWithExpressions !== 112 ||
+    cookingAudit.counts.dishRecipesWithoutExpressions !== 9 ||
+    cookingAudit.counts.plantProductCandidates !== 40 ||
+    cookingAudit.counts.outsideScopeProducts !== 10
+  )
+    throw new Error(`Cooking scope changed: ${JSON.stringify(cookingAudit.counts)}`);
+  writeJson(path.join(options.work, "cooking-audit.json"), cookingAudit);
+  writeJson(path.join(options.work, "cooking-evidence.json"), {
+    schemaVersion: 1,
+    source: cookingAudit.source,
+    counts: cookingAudit.counts,
+    recipes: cookingAudit.records.filter((record) => record.disposition === "recipe"),
+    outsideProducts: cookingAudit.outsideDishProducts,
+  });
+  writeJson(path.join(options.work, "cooking-investigation.json"), {
+    schemaVersion: 1,
+    source: cookingAudit.source,
+    counts: cookingAudit.counts,
+    reason:
+      "Recipe quantity and runtime slot semantics are not confirmed; configuration expressions are retained with parser results",
+    recipes: cookingAudit.records,
+    categories: cookingAudit.categories,
+    unlistedIngredientReferences: cookingAudit.categories.filter(
+      (category) => category.unlistedItemIds.length > 0,
+    ),
+    plantProductCandidates: cookingAudit.plantProductCandidates,
+    outsideProducts: cookingAudit.outsideDishProducts,
   });
   console.log(
     `Structured ${context.scope.ids.size} records; found ${candidateImages.length} candidate image references`,

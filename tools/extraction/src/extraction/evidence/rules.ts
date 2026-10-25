@@ -16,6 +16,8 @@ export function associationRule(field: string, hint: TableEvidence): string {
       "318.6/15 tags + GameplayTag ancestry match 33.5 category filter; 33.3=304 uses confirmed display label",
     [root.furnitureTypes]: "318.6 tags match 265.5; only if unmatched fall back to 265.3",
   };
+  if (field === "recipe")
+    return "122.4 product = dish item ID; retain 122.20/25/30/35 raw expressions; parser maps &/| syntax to category expression tree while runtime slot semantics remain unconfirmed";
   return `${joins[hint.table] ?? `${hint.table}.0 = item ID`}${hint.note ? `; ${hint.note}` : ""}`;
 }
 
@@ -37,6 +39,8 @@ export function transformationRule(field: string): string {
     effects:
       "325.8 strength interpolated into TextMap 4027993099; 325.9 additional buff must be zero; strip markup",
     difficulty: "122.2 difficulty ID → 121.1 localized TextMap label",
+    recipe:
+      "retain non-empty 122.20/25/30/35 strings; parse & before |, resolve category leaves to formal kind=item IDs; quantity is unknown and emitted null",
     cookware: "122.16 → unique matching 126.2; use 126.1 string",
     harvestCount: "144.10 product vector membership → 144.5 unsigned integer",
     sizeRange: "unconfirmed display units/conversion; retain candidates, emit null",
