@@ -1,6 +1,6 @@
 # 资源发布
 
-在仓库根目录运行。资源目录需包含 `content.json` 和 `assets/`，图片须为内容引用的 WebP 文件。
+在仓库根目录运行。资源目录需包含 `content.json`、`neighbors.json` 和 `assets/`；两个 JSON 的客户端版本信息必须一致，图片须为内容引用的 WebP 文件。
 
 ## 配置凭证
 
@@ -32,3 +32,5 @@ vp run @loomix/resource-publisher#publish \
 ```
 
 `--content` 路径相对仓库根目录；release ID 只能发布一次。默认上传到 `loomix-assets` bucket，可用 `--bucket <name>` 指定其他 bucket。进度写入 stderr，发布结果 JSON 写入 stdout。
+
+发布器会上传图鉴 JSON、友邻静态数据库和引用图片；最后写入 `_complete.json`，其中包含两份 JSON 的 SHA-256、图片数量和友邻数量。网站部署验收会下载并校验两份 JSON 与完成标记。

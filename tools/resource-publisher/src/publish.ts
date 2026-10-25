@@ -72,10 +72,19 @@ export async function publishRelease(
     content.contentSha256,
   );
   await store.verify(`${prefix}content.json`, content.json.length, content.contentSha256);
+  await store.put(
+    `${prefix}neighbors.json`,
+    content.neighbors,
+    "application/json; charset=utf-8",
+    content.neighborsSha256,
+  );
+  await store.verify(`${prefix}neighbors.json`, content.neighbors.length, content.neighborsSha256);
   const marker: ReleaseMarker = {
     release,
     contentSha256: content.contentSha256,
+    neighborsSha256: content.neighborsSha256,
     assetCount: content.assets.length,
+    neighborCount: content.neighborCount,
   };
   const bytes = Buffer.from(JSON.stringify(marker));
   await store.put(`${prefix}_complete.json`, bytes, "application/json", sha256(bytes));

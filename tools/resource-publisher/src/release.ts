@@ -1,13 +1,16 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { parseCatalog } from "@loomix/content-schema";
+import { parseNeighborDatabase } from "@loomix/neighbor-schema";
 import type { Catalog } from "@loomix/content-schema";
 
 export const releaseIdSchema = z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/);
 export const releaseMarkerSchema = z.strictObject({
   release: releaseIdSchema,
   contentSha256: z.string().regex(/^[a-f0-9]{64}$/),
+  neighborsSha256: z.string().regex(/^[a-f0-9]{64}$/),
   assetCount: z.number().int().nonnegative(),
+  neighborCount: z.number().int().nonnegative(),
 });
 export type ReleaseMarker = z.infer<typeof releaseMarkerSchema>;
 export const immutableCacheControl = "public, max-age=31536000, immutable";
@@ -67,6 +70,21 @@ export async function downloadRelease(
   const content = parseCatalog(JSON.parse(bytes.toString("utf8")));
   if (referencedImages(content).length !== marker.assetCount) {
     throw new Error("Resource image count does not match the completed release");
+  }
+  const neighborsBytes = Buffer.from(await (await fetchFile("neighbors.json")).arrayBuffer());
+  if (sha256(neighborsBytes) !== marker.neighborsSha256) {
+    throw new Error("Neighbor JSON SHA-256 does not match the completed release");
+  }
+  const neighbors = parseNeighborDatabase(JSON.parse(neighborsBytes.toString("utf8")));
+  if (neighbors.neighbors.length !== marker.neighborCount) {
+    throw new Error("Resource neighbor count does not match the completed release");
+  }
+  if (
+    neighbors.source.gameVersion !== content.source.gameVersion ||
+    neighbors.source.dataRevision !== content.source.dataRevision ||
+    neighbors.source.resourceRevision !== content.source.resourceRevision
+  ) {
+    throw new Error("Neighbor database source does not match content.json");
   }
   return bytes;
 }

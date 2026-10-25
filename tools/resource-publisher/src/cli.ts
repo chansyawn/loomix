@@ -42,6 +42,8 @@ async function main(): Promise<void> {
         release: values.release,
         contentSha256: content.contentSha256,
         assetCount: content.assets.length,
+        neighborsSha256: content.neighborsSha256,
+        neighborCount: content.neighborCount,
         dryRun: true,
       }),
     );

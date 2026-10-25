@@ -11,13 +11,14 @@
 ├── apps/
 │   └── website/             # 玩家社区网站应用（页面、路由与样式）
 ├── packages/
-│   └── content-schema/      # extraction 与网站共用的内容契约
+│   ├── content-schema/      # 图鉴 JSON 契约
+│   └── neighbor-schema/     # 友邻静态数据库契约
 ├── tools/
 │   ├── extraction/          # 客户端提取文档和脚本（按任务组织）
 │   └── resource-publisher/  # 资源发布工具
 ├── resources/
 │   ├── game-client/          # 当前客户端：config.ini、PetitPlanet_Data 等
-│   ├── website/              # 网站数据 content.json 和 assets/
+│   ├── website/              # 网站数据 content.json、neighbors.json 和 assets/
 │   └── temp/extraction/      # 版本化环境、工具缓存、提取与交付 bundle
 ├── .vscode/                  # VS Code 工作区配置
 ├── package.json              # 仓库级脚本和工具配置
@@ -26,7 +27,7 @@
 └── vite.config.ts            # Vite+ 仓库级配置
 ```
 
-`@loomix/content-schema` 提供当前 content JSON 的严格 schema、推导类型及成员引用校验。`@loomix/extraction` 和 website 通过 workspace 依赖共享契约，直接引用 TypeScript 源码，无需前置构建；数据格式与提取产物保持不变。
+`@loomix/content-schema` 与 `@loomix/neighbor-schema` 提供图鉴及友邻 JSON 的严格契约。提取器、资源发布器和网站部署验收通过 workspace 依赖复用这些契约，直接引用 TypeScript 源码，无需前置构建。
 
 网站页面和路由主要位于 `apps/website/src/`。
 
@@ -34,7 +35,7 @@
 
 - `resources/game-client/`：保存完整客户端副本，作为资源读取来源。
 - `var/`：提取运行时数据。`var/cache/anime-studio/` 为可重建工具缓存，`var/artifacts/{environments,extractions,deliveries}/` 为验收产物，`var/scratch/` 为失败运行、探针和一次性调查。
-- `resources/website/`：验证通过的 content.json 和 assets/，供网站本地开发直接读取。
+- `resources/website/`：验证通过的 content.json、neighbors.json 和 assets/，供网站本地开发及资源发布直接读取。
 
 `resources/` 与 `var/` 下的本地数据均由根目录 `.gitignore` 忽略。
 

@@ -26,6 +26,25 @@ async function fixture(imageCount = 1): Promise<string> {
     dataRevision: 1449213,
     resourceRevision: 1391927,
   });
+  const neighbors = {
+    schemaVersion: 1,
+    source: {
+      gameVersion: "0.95.2",
+      dataRevision: 1449213,
+      resourceRevision: 1391927,
+      manifestId: "5662883",
+    },
+    neighbors: [],
+    stars: [],
+    stories: [],
+    travelReactions: [],
+    encounterIslands: [],
+    friendshipRules: [],
+    eventTags: [],
+    furnishingThemes: [],
+    rewards: [],
+    assets: [],
+  };
   await mkdir(path.join(directory, "assets"));
   for (let i = 0; i < imageCount; i++) {
     const chunk = Buffer.alloc(8 + i * 2);
@@ -49,6 +68,7 @@ async function fixture(imageCount = 1): Promise<string> {
     await writeFile(path.join(directory, image), bytes);
   }
   await writeFile(path.join(directory, "content.json"), JSON.stringify(content));
+  await writeFile(path.join(directory, "neighbors.json"), JSON.stringify(neighbors));
   return directory;
 }
 
@@ -92,11 +112,14 @@ test("publishes a complete, verifiable release and refuses to overwrite it", asy
     release: "0.95.2-r1",
     assetCount: 1,
     contentSha256: sha256(await readFile(path.join(directory, "content.json"))),
+    neighborsSha256: sha256(await readFile(path.join(directory, "neighbors.json"))),
+    neighborCount: 0,
   });
   expect([...objects.keys()]).toEqual([
     "releases/0.95.2-r1/_upload.json",
     `releases/0.95.2-r1/${imageKey}`,
     "releases/0.95.2-r1/content.json",
+    "releases/0.95.2-r1/neighbors.json",
     "releases/0.95.2-r1/_complete.json",
   ]);
   await expect(publishRelease(directory, "0.95.2-r1", store)).rejects.toThrow(
@@ -188,6 +211,14 @@ test("rejects missing, extra, corrupt, and invalidly referenced assets before pu
   await rm(path.join(directory, "assets/extra.webp"));
   await writeFile(path.join(directory, "content.json"), "{}");
   await expect(validateContent(directory)).rejects.toThrow();
+});
+
+test("rejects a neighbor database from a different client revision", async () => {
+  const directory = await fixture();
+  const neighbors = JSON.parse(await readFile(path.join(directory, "neighbors.json"), "utf8"));
+  neighbors.source.dataRevision++;
+  await writeFile(path.join(directory, "neighbors.json"), JSON.stringify(neighbors));
+  await expect(validateContent(directory)).rejects.toThrow("source does not match");
 });
 
 test("rejects a non-WebP or truncated container even when its content hash matches", async () => {

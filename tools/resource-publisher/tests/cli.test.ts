@@ -30,6 +30,28 @@ test("dry run from another directory returns only JSON without credentials or pr
         emptyCatalog({ gameVersion: "0.95.2", dataRevision: 1449213, resourceRevision: 1391927 }),
       ),
     );
+    await writeFile(
+      path.join(directory, "neighbors.json"),
+      JSON.stringify({
+        schemaVersion: 1,
+        source: {
+          gameVersion: "0.95.2",
+          dataRevision: 1449213,
+          resourceRevision: 1391927,
+          manifestId: "5662883",
+        },
+        neighbors: [],
+        stars: [],
+        stories: [],
+        travelReactions: [],
+        encounterIslands: [],
+        friendshipRules: [],
+        eventTags: [],
+        furnishingThemes: [],
+        rewards: [],
+        assets: [],
+      }),
+    );
     const result = spawnSync(
       process.execPath,
       [cli, "--content", directory, "--release", "test", "--dry-run"],
@@ -39,6 +61,7 @@ test("dry run from another directory returns only JSON without credentials or pr
     expect(JSON.parse(result.stdout)).toMatchObject({
       release: "test",
       assetCount: 0,
+      neighborCount: 0,
       dryRun: true,
     });
     expect(result.stderr).toBe("");

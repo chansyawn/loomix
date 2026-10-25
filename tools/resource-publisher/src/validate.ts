@@ -1,6 +1,7 @@
 import { lstat, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { parseCatalog } from "@loomix/content-schema";
+import { parseNeighborDatabase } from "@loomix/neighbor-schema";
 import { referencedImages, sha256 } from "./release.ts";
 
 export interface AssetFile {
@@ -13,6 +14,9 @@ export interface AssetFile {
 export interface ValidatedContent {
   json: Buffer;
   contentSha256: string;
+  neighbors: Buffer;
+  neighborsSha256: string;
+  neighborCount: number;
   assets: AssetFile[];
 }
 
@@ -29,14 +33,28 @@ export async function validateContent(directory: string): Promise<ValidatedConte
   } catch (error) {
     if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
   }
-  if (entries.length !== 2 || !entries.includes("content.json") || !entries.includes("assets")) {
-    throw new Error("Content directory must contain only content.json and assets/");
+  if (
+    entries.length !== 3 ||
+    !entries.includes("content.json") ||
+    !entries.includes("neighbors.json") ||
+    !entries.includes("assets")
+  ) {
+    throw new Error("Content directory must contain content.json, neighbors.json, and assets/");
   }
   const assetDirectory = path.join(directory, "assets");
   if (!(await lstat(assetDirectory)).isDirectory())
     throw new Error("assets/ must be a real directory");
   const json = await readRegularFile(path.join(directory, "content.json"));
   const content = parseCatalog(JSON.parse(json.toString("utf8")));
+  const neighbors = await readRegularFile(path.join(directory, "neighbors.json"));
+  const database = parseNeighborDatabase(JSON.parse(neighbors.toString("utf8")));
+  if (
+    database.source.gameVersion !== content.source.gameVersion ||
+    database.source.dataRevision !== content.source.dataRevision ||
+    database.source.resourceRevision !== content.source.resourceRevision
+  ) {
+    throw new Error("Neighbor database source does not match content.json");
+  }
   const images = referencedImages(content);
   const files = await readdir(assetDirectory);
   const expected = new Set(images.map((image) => path.basename(image)));
@@ -59,5 +77,12 @@ export async function validateContent(directory: string): Promise<ValidatedConte
     }
     assets.push({ key, path: file, sha256: hash, size: bytes.length });
   }
-  return { json, contentSha256: sha256(json), assets };
+  return {
+    json,
+    contentSha256: sha256(json),
+    neighbors,
+    neighborsSha256: sha256(neighbors),
+    neighborCount: database.neighbors.length,
+    assets,
+  };
 }

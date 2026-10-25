@@ -6,12 +6,38 @@ const base = "https://assets.loomix.fun/releases/r1/";
 const json = JSON.stringify(
   emptyCatalog({ gameVersion: "0.95.2", dataRevision: 1449213, resourceRevision: 1391927 }),
 );
-const marker = { release: "r1", contentSha256: sha256(Buffer.from(json)), assetCount: 0 };
+const neighborsJson = JSON.stringify({
+  schemaVersion: 1,
+  source: {
+    gameVersion: "0.95.2",
+    dataRevision: 1449213,
+    resourceRevision: 1391927,
+    manifestId: "5662883",
+  },
+  neighbors: [],
+  stars: [],
+  stories: [],
+  travelReactions: [],
+  encounterIslands: [],
+  friendshipRules: [],
+  eventTags: [],
+  furnishingThemes: [],
+  rewards: [],
+  assets: [],
+});
+const marker = {
+  release: "r1",
+  contentSha256: sha256(Buffer.from(json)),
+  neighborsSha256: sha256(Buffer.from(neighborsJson)),
+  assetCount: 0,
+  neighborCount: 0,
+};
 
 function resourceServer(
   options: {
     marker?: unknown;
     json?: string;
+    neighborsJson?: string;
     cors?: string;
     status?: number;
   } = {},
@@ -20,7 +46,9 @@ function resourceServer(
     const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
     const body = url.endsWith("_complete.json")
       ? JSON.stringify(options.marker ?? marker)
-      : (options.json ?? json);
+      : url.endsWith("neighbors.json")
+        ? (options.neighborsJson ?? neighborsJson)
+        : (options.json ?? json);
     return new Response(body, {
       status: options.status ?? 200,
       headers: { "access-control-allow-origin": options.cors ?? "*" },
@@ -58,4 +86,25 @@ test("CI stops for tampered JSON, invalid content, and incorrect image counts", 
   await expect(
     downloadRelease(base, resourceServer({ marker: { ...marker, assetCount: 1 } })),
   ).rejects.toThrow("image count");
+});
+
+test("CI requires matching neighbor JSON, count, and source metadata", async () => {
+  await expect(
+    downloadRelease(base, resourceServer({ neighborsJson: `${neighborsJson}\n` })),
+  ).rejects.toThrow("Neighbor JSON SHA-256");
+  await expect(
+    downloadRelease(base, resourceServer({ marker: { ...marker, neighborCount: 1 } })),
+  ).rejects.toThrow("neighbor count");
+  const mismatched = JSON.parse(neighborsJson);
+  mismatched.source.resourceRevision++;
+  const body = JSON.stringify(mismatched);
+  await expect(
+    downloadRelease(
+      base,
+      resourceServer({
+        neighborsJson: body,
+        marker: { ...marker, neighborsSha256: sha256(Buffer.from(body)) },
+      }),
+    ),
+  ).rejects.toThrow("source does not match");
 });
