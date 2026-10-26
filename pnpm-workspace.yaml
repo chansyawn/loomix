@@ -3,6 +3,9 @@ packages:
   - packages/*
   - tools/*
 
+runtimeOnFail: ignore
+pmOnFail: ignore
+
 catalogMode: prefer
 
 catalog:
