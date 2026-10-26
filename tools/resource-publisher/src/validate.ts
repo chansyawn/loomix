@@ -1,7 +1,12 @@
 import { lstat, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
+import sharp from "sharp";
 import { parseCatalog } from "@loomix/content-schema";
-import { parseNeighborDatabase } from "@loomix/neighbor-schema";
+import {
+  parseNeighborImages,
+  validateNeighborImages,
+  parseNeighborDatabase,
+} from "@loomix/neighbor-schema";
 import { referencedImages, sha256 } from "./release.ts";
 
 export interface AssetFile {
@@ -17,6 +22,8 @@ export interface ValidatedContent {
   neighbors: Buffer;
   neighborsSha256: string;
   neighborCount: number;
+  neighborImages: Buffer;
+  neighborImagesSha256: string;
   assets: AssetFile[];
 }
 
@@ -34,12 +41,15 @@ export async function validateContent(directory: string): Promise<ValidatedConte
     if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
   }
   if (
-    entries.length !== 3 ||
+    entries.length !== 4 ||
     !entries.includes("content.json") ||
     !entries.includes("neighbors.json") ||
+    !entries.includes("neighbor-images.json") ||
     !entries.includes("assets")
   ) {
-    throw new Error("Content directory must contain content.json, neighbors.json, and assets/");
+    throw new Error(
+      "Content directory must contain content.json, neighbors.json, neighbor-images.json, and assets/",
+    );
   }
   const assetDirectory = path.join(directory, "assets");
   if (!(await lstat(assetDirectory)).isDirectory())
@@ -55,7 +65,10 @@ export async function validateContent(directory: string): Promise<ValidatedConte
   ) {
     throw new Error("Neighbor database source does not match content.json");
   }
-  const images = referencedImages(content);
+  const neighborImages = await readRegularFile(path.join(directory, "neighbor-images.json"));
+  const mapping = parseNeighborImages(JSON.parse(neighborImages.toString("utf8")));
+  validateNeighborImages(database, mapping);
+  const images = referencedImages(content, mapping);
   const files = await readdir(assetDirectory);
   const expected = new Set(images.map((image) => path.basename(image)));
   if (files.length !== expected.size || files.some((file) => !expected.has(file))) {
@@ -75,6 +88,15 @@ export async function validateContent(directory: string): Promise<ValidatedConte
     ) {
       throw new Error(`Invalid WebP container: ${key}`);
     }
+    try {
+      const { data, info } = await sharp(bytes, { failOn: "warning" })
+        .ensureAlpha()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+      if (data.length !== info.width * info.height * 4) throw new Error("Incomplete pixels");
+    } catch (cause) {
+      throw new Error(`Invalid complete WebP image: ${key}`, { cause });
+    }
     assets.push({ key, path: file, sha256: hash, size: bytes.length });
   }
   return {
@@ -83,6 +105,8 @@ export async function validateContent(directory: string): Promise<ValidatedConte
     neighbors,
     neighborsSha256: sha256(neighbors),
     neighborCount: database.neighbors.length,
+    neighborImages,
+    neighborImagesSha256: sha256(neighborImages),
     assets,
   };
 }

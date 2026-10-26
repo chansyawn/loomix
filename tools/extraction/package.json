@@ -7,7 +7,7 @@
     "extract": "node src/cli.ts extract",
     "deliver": "node src/cli.ts deliver",
     "verify": "node src/cli.ts verify",
-    "test": "vp test run"
+    "test": "vp exec vp test run"
   },
   "dependencies": {
     "@loomix/content-schema": "workspace:*",

@@ -6,7 +6,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import sharp from "sharp";
 import { emptyCatalog } from "@loomix/content-schema";
-import { processImage, decodeWebp } from "./image.ts";
+import { processImage, processNeighborImage, decodeWebp } from "./image.ts";
 import { exportImages } from "../extraction/images/export.ts";
 import { renderImages } from "./images.ts";
 import type { ProcessedImage, SelectedImage } from "../extraction/types.ts";
@@ -165,6 +165,7 @@ test("asset delivery deduplicates identical outputs and separates target dimensi
       path.join(work, "image-field-evidence.json"),
       path.join(work, "evidence/field-evidence.json"),
     );
+    fs.writeFileSync(path.join(work, "neighbor-image-exports.json"), "[]");
     await renderImages({ work }, work);
     assert.deepEqual(
       fs.readFileSync(path.join(work, "staging/neighbors.json")),
@@ -210,5 +211,24 @@ test("delivery rejects invalid neighbor JSON before converting images", async ()
     await assert.rejects(renderImages({ work }, work), { name: "ZodError" });
   } finally {
     fs.rmSync(work, { recursive: true });
+  }
+});
+
+test("neighbor images retain full framing and alpha, never upscale and fit within 1600px", async () => {
+  for (const [width, height, targetWidth, targetHeight] of [
+    [80, 40, 80, 40],
+    [2400, 1200, 1600, 800],
+    [800, 2400, 533, 1600],
+  ]) {
+    const input = await sharp({
+      create: { width, height, channels: 4, background: { r: 20, g: 80, b: 150, alpha: 0.5 } },
+    })
+      .png()
+      .toBuffer();
+    const output = await processNeighborImage(input);
+    assert.equal(output.width, targetWidth);
+    assert.equal(output.height, targetHeight);
+    const pixels = await sharp(output.bytes).ensureAlpha().raw().toBuffer();
+    assert.equal(pixels[3], 128);
   }
 });

@@ -7,13 +7,14 @@
     "./validate": "./src/validate.ts"
   },
   "scripts": {
-    "test": "vp test"
+    "test": "vp exec vp test"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "catalog:",
     "@loomix/content-schema": "workspace:*",
     "@loomix/neighbor-schema": "workspace:*",
     "cli-progress": "catalog:",
+    "sharp": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

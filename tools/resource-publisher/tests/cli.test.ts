@@ -52,6 +52,19 @@ test("dry run from another directory returns only JSON without credentials or pr
         assets: [],
       }),
     );
+    await writeFile(
+      path.join(directory, "neighbor-images.json"),
+      JSON.stringify({
+        schemaVersion: 1,
+        source: {
+          gameVersion: "0.95.2",
+          dataRevision: 1449213,
+          resourceRevision: 1391927,
+          manifestId: "5662883",
+        },
+        images: [],
+      }),
+    );
     const result = spawnSync(
       process.execPath,
       [cli, "--content", directory, "--release", "test", "--dry-run"],

@@ -1,4 +1,4 @@
-import type { WorkOptions, SelectedImage, ImageManifest, EvidenceRecord } from "../types.ts";
+import type { WorkOptions, SelectedImage, EvidenceRecord } from "../types.ts";
 import type { Catalog } from "@loomix/content-schema";
 import fs from "node:fs";
 import path from "node:path";
@@ -10,16 +10,18 @@ import { removeWithin } from "../../workflow/fs.ts";
 import { exportAssets } from "../../client/anime-studio/index.ts";
 import { assetKey, highestResolutionImages } from "./select.ts";
 
+export type ImageAsset = Omit<SelectedImage, "id" | "group">;
+
 const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-export function imageBatches(selected: SelectedImage[]) {
+export function imageBatches<T extends ImageAsset>(selected: T[]) {
   const unique = new Map(selected.map((asset) => [assetKey(asset), asset]));
-  const byPackage = new Map<string, SelectedImage[]>();
+  const byPackage = new Map<string, T[]>();
   for (const a of unique.values()) {
     const key = `${a.source}|${a.assetType}`;
     if (!byPackage.has(key)) byPackage.set(key, []);
     byPackage.get(key)!.push(a);
   }
-  const batches: SelectedImage[][] = [];
+  const batches: T[][] = [];
   for (const assets of byPackage.values()) {
     const counts = new Map<string, number>();
     for (const a of assets) counts.set(a.resourceName, (counts.get(a.resourceName) ?? 0) + 1);
@@ -31,18 +33,14 @@ export function imageBatches(selected: SelectedImage[]) {
   return batches;
 }
 
-export async function exportImages(options: WorkOptions, extract = exportAssets) {
-  const candidates = readJson<SelectedImage[]>(path.join(options.work, "candidate-images.json"));
-  removeWithin(path.join(options.work, "exports"), options.work);
-  fs.mkdirSync(path.join(options.work, "exports"), { recursive: true });
-  const batches = imageBatches(candidates),
-    manifest: ImageManifest[] = [];
-  const staging = path.join(options.work, "raw"),
-    destination = path.join(staging, "assets");
-  const content = readJson<Catalog>(path.join(staging, "content.json"));
-  removeWithin(destination, staging);
-  fs.mkdirSync(destination, { recursive: true });
-
+export async function exportImageAssets<T extends ImageAsset>(
+  options: WorkOptions,
+  candidates: T[],
+  directory: string,
+  extract = exportAssets,
+): Promise<(T & { file: string; sha256: string; width: number; height: number })[]> {
+  const batches = imageBatches(candidates);
+  const manifest: (T & { file: string; sha256: string; width: number; height: number })[] = [];
   let done = 0;
   for (const batch of batches) {
     const key = crypto
@@ -50,7 +48,7 @@ export async function exportImages(options: WorkOptions, extract = exportAssets)
       .update(JSON.stringify(batch))
       .digest("hex")
       .slice(0, 24);
-    const exported = path.join(options.work, "exports", key),
+    const exported = path.join(options.work, directory, key),
       { source, assetType } = batch[0];
     removeWithin(exported, options.work);
     await extract({
@@ -79,8 +77,21 @@ export async function exportImages(options: WorkOptions, extract = exportAssets)
     done++;
     if (done % 5 === 0 || done === batches.length)
       console.log(`  Image batches ${done}/${batches.length}`);
-    writeJson(path.join(options.work, "image-candidates.json"), manifest);
   }
+  return manifest;
+}
+
+export async function exportImages(options: WorkOptions, extract = exportAssets) {
+  const candidates = readJson<SelectedImage[]>(path.join(options.work, "candidate-images.json"));
+  removeWithin(path.join(options.work, "exports"), options.work);
+  fs.mkdirSync(path.join(options.work, "exports"), { recursive: true });
+  const staging = path.join(options.work, "raw"),
+    destination = path.join(staging, "assets");
+  const content = readJson<Catalog>(path.join(staging, "content.json"));
+  removeWithin(destination, staging);
+  fs.mkdirSync(destination, { recursive: true });
+
+  const manifest = await exportImageAssets(options, candidates, "exports", extract);
   writeJson(path.join(options.work, "image-candidates.json"), manifest);
   const selected = highestResolutionImages(candidates, manifest);
   const byKey = new Map(manifest.map((entry) => [assetKey(entry), entry]));

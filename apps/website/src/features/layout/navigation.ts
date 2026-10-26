@@ -6,6 +6,7 @@ import {
   PackageIcon,
   ShirtIcon,
   SproutIcon,
+  UsersRoundIcon,
 } from "lucide-react";
 
 export const homeItem = { title: "首页", to: "/", icon: HomeIcon } as const;
@@ -21,3 +22,5 @@ export const collectionNavigation = {
     { title: "菜肴", to: "/collection/dishes", icon: CookingPotIcon },
   ],
 } as const;
+
+export const neighborsItem = { title: "友邻", to: "/neighbors", icon: UsersRoundIcon } as const;

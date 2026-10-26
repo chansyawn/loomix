@@ -79,10 +79,22 @@ export async function publishRelease(
     content.neighborsSha256,
   );
   await store.verify(`${prefix}neighbors.json`, content.neighbors.length, content.neighborsSha256);
+  await store.put(
+    `${prefix}neighbor-images.json`,
+    content.neighborImages,
+    "application/json; charset=utf-8",
+    content.neighborImagesSha256,
+  );
+  await store.verify(
+    `${prefix}neighbor-images.json`,
+    content.neighborImages.length,
+    content.neighborImagesSha256,
+  );
   const marker: ReleaseMarker = {
     release,
     contentSha256: content.contentSha256,
     neighborsSha256: content.neighborsSha256,
+    neighborImagesSha256: content.neighborImagesSha256,
     assetCount: content.assets.length,
     neighborCount: content.neighborCount,
   };

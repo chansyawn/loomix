@@ -1,6 +1,6 @@
 import type { SelectedImage, ImageManifest } from "../types.ts";
 
-export const assetKey = (asset: SelectedImage | ImageManifest) =>
+export const assetKey = (asset: Pick<SelectedImage, "source" | "assetType" | "pathId">) =>
   `${asset.source}|${asset.assetType}|${asset.pathId}`;
 
 export function highestResolutionImages(

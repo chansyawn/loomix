@@ -41,6 +41,10 @@ catalog:
   execa: ^10.2.0
   sax: ^1.6.1
   "@types/sax": ^1.2.7
+  "@testing-library/jest-dom": ^7.0.1
+  "@testing-library/react": ^16.3.3
+  "@testing-library/user-event": ^14.6.8
+  happy-dom: ^21.0.4
 catalogs:
   website:
     "@types/node": ^22.10.2

@@ -44,6 +44,7 @@ async function main(): Promise<void> {
         assetCount: content.assets.length,
         neighborsSha256: content.neighborsSha256,
         neighborCount: content.neighborCount,
+        neighborImagesSha256: content.neighborImagesSha256,
         dryRun: true,
       }),
     );

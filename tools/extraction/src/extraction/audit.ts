@@ -19,7 +19,14 @@ export async function audit(options: WorkOptions) {
   const manifests = readManifestMaps(root, profile.manifestId);
   const images = readJson<ImageManifest[]>(path.join(options.work, "image-candidates.json"));
   const bindata = readJson<BinDataAsset[]>(path.join(options.work, "bindata-manifest.json"));
-  const sourceFiles = new Set([...images.map((a) => a.source), ...bindata.map((a) => a.Source)]);
+  const neighborImages = readJson<{ source: string }[]>(
+    path.join(options.work, "neighbor-image-exports.json"),
+  );
+  const sourceFiles = new Set([
+    ...images.map((a) => a.source),
+    ...neighborImages.map((a) => a.source),
+    ...bindata.map((a) => a.Source),
+  ]);
   const records: SourceCheck[] = [];
   const configChecks: SourceAudit["configChecks"] = [];
   const configuration = readJson<ConfigSource>(

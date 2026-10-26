@@ -7,7 +7,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "test": "vp test"
+    "test": "vp exec vp test"
   },
   "dependencies": {
     "zod": "catalog:"

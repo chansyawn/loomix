@@ -26,6 +26,10 @@ export async function implementationRevision(): Promise<string> {
     "pnpm-lock.yaml",
     "tools/extraction/package.json",
     "packages/content-schema/package.json",
+    "packages/neighbor-schema/package.json",
+    ...filesWithin(path.join(repoRoot, "packages/neighbor-schema/src"))
+      .filter((file) => !file.startsWith("node_modules/") && !file.endsWith(".test.ts"))
+      .map((file) => `packages/neighbor-schema/src/${file}`),
     ...filesWithin(path.join(repoRoot, "packages/content-schema/src"))
       .filter((file) => !file.startsWith("node_modules/") && !file.endsWith(".test.ts"))
       .map((file) => `packages/content-schema/src/${file}`),

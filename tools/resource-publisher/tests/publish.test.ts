@@ -69,6 +69,10 @@ async function fixture(imageCount = 1): Promise<string> {
   }
   await writeFile(path.join(directory, "content.json"), JSON.stringify(content));
   await writeFile(path.join(directory, "neighbors.json"), JSON.stringify(neighbors));
+  await writeFile(
+    path.join(directory, "neighbor-images.json"),
+    JSON.stringify({ schemaVersion: 1, source: neighbors.source, images: [] }),
+  );
   return directory;
 }
 
@@ -114,12 +118,14 @@ test("publishes a complete, verifiable release and refuses to overwrite it", asy
     contentSha256: sha256(await readFile(path.join(directory, "content.json"))),
     neighborsSha256: sha256(await readFile(path.join(directory, "neighbors.json"))),
     neighborCount: 0,
+    neighborImagesSha256: sha256(await readFile(path.join(directory, "neighbor-images.json"))),
   });
   expect([...objects.keys()]).toEqual([
     "releases/0.95.2-r1/_upload.json",
     `releases/0.95.2-r1/${imageKey}`,
     "releases/0.95.2-r1/content.json",
     "releases/0.95.2-r1/neighbors.json",
+    "releases/0.95.2-r1/neighbor-images.json",
     "releases/0.95.2-r1/_complete.json",
   ]);
   await expect(publishRelease(directory, "0.95.2-r1", store)).rejects.toThrow(
@@ -390,4 +396,84 @@ test("failure to verify the completion marker never reports successful publicati
     "Completion verification failed",
   );
   expect(updates.at(-1)?.phase).toBe("finalizing");
+});
+
+test("validates the deduplicated union of collection and neighbor images", async () => {
+  const directory = await fixture();
+  const neighbors = JSON.parse(await readFile(path.join(directory, "neighbors.json"), "utf8"));
+  neighbors.neighbors.push({
+    id: 1,
+    nameZh: "友邻",
+    bodyType: null,
+    scaleValue: null,
+    avatarPath: null,
+    npc2Path: "Avatar/NPC",
+    starKeys: [],
+    storyKeys: ["1:1"],
+    furnishingThemeIds: [],
+    furnishingThemeKeys: [],
+    rewardItemIds: [],
+    assetPaths: [],
+  });
+  neighbors.stories.push({
+    key: "1:1",
+    npcId: 1,
+    chapter: 1,
+    titleZh: "故事",
+    paragraphs: [{ sequence: 1, bodyZh: null, illustrationPath: "UISprite/Story.png" }],
+  });
+  neighbors.assets = ["Avatar/NPC", "UISprite/Story.png"].map((path) => ({
+    path,
+    kind: "other",
+    relatedNeighborIds: [],
+  }));
+  await writeFile(path.join(directory, "neighbors.json"), JSON.stringify(neighbors));
+  const mapping = {
+    schemaVersion: 1,
+    source: neighbors.source,
+    images: [{ path: "UISprite/Story.png", image: imageKey }],
+  };
+  await writeFile(path.join(directory, "neighbor-images.json"), JSON.stringify(mapping));
+  expect((await validateContent(directory)).assets).toHaveLength(1);
+  const chunk = Buffer.from("JUNK\x02\x00\x00\x00ok");
+  const uniqueImage = Buffer.concat([webp, chunk]);
+  uniqueImage.writeUInt32LE(uniqueImage.length - 8, 4);
+  const uniqueKey = `assets/${sha256(uniqueImage)}.webp`;
+  mapping.images[0]!.image = uniqueKey;
+  await writeFile(path.join(directory, "neighbor-images.json"), JSON.stringify(mapping));
+  await expect(validateContent(directory)).rejects.toThrow("exactly the images referenced");
+  await writeFile(path.join(directory, uniqueKey), uniqueImage);
+  expect((await validateContent(directory)).assets).toHaveLength(2);
+  mapping.images = [];
+  await writeFile(path.join(directory, "neighbor-images.json"), JSON.stringify(mapping));
+  await expect(validateContent(directory)).rejects.toThrow("exactly the referenced paths");
+});
+
+test("rejects absent, version-mismatched and invalid image mappings", async () => {
+  const directory = await fixture();
+  const file = path.join(directory, "neighbor-images.json");
+  const mapping = JSON.parse(await readFile(file, "utf8"));
+  mapping.source.manifestId = "999";
+  await writeFile(file, JSON.stringify(mapping));
+  await expect(validateContent(directory)).rejects.toThrow("source does not match");
+  await writeFile(file, "{}");
+  await expect(validateContent(directory)).rejects.toThrow();
+  await rm(file);
+  await expect(validateContent(directory)).rejects.toThrow("neighbor-images.json");
+});
+
+test("rejects a hash-valid RIFF WebP whose image payload cannot fully decode", async () => {
+  const directory = await fixture();
+  const invalid = Buffer.alloc(30);
+  invalid.write("RIFF");
+  invalid.writeUInt32LE(22, 4);
+  invalid.write("WEBPVP8 ", 8);
+  invalid.writeUInt32LE(10, 16);
+  const key = `assets/${sha256(invalid)}.webp`;
+  const content = JSON.parse(await readFile(path.join(directory, "content.json"), "utf8"));
+  content.items[0].image = key;
+  await writeFile(path.join(directory, "content.json"), JSON.stringify(content));
+  await rm(path.join(directory, imageKey));
+  await writeFile(path.join(directory, key), invalid);
+  await expect(validateContent(directory)).rejects.toThrow("Invalid complete WebP");
 });

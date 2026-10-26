@@ -24,6 +24,7 @@ async function serveResource(
   if (
     key !== "content.json" &&
     key !== "neighbors.json" &&
+    key !== "neighbor-images.json" &&
     !/^assets\/[a-f0-9]{64}\.webp$/.test(key)
   ) {
     response.writeHead(404).end();
@@ -53,10 +54,7 @@ async function serveResource(
     throw error;
   }
   response.writeHead(200, {
-    "Content-Type":
-      key === "content.json" || key === "neighbors.json"
-        ? "application/json; charset=utf-8"
-        : "image/webp",
+    "Content-Type": key.endsWith(".json") ? "application/json; charset=utf-8" : "image/webp",
     "Content-Length": size,
     "Cache-Control": "no-cache",
     "X-Content-Type-Options": "nosniff",

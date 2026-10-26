@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
 import { site } from "@/site";
-import { collectionNavigation, homeItem } from "@/features/layout/navigation";
+import { collectionNavigation, homeItem, neighborsItem } from "@/features/layout/navigation";
 import {
   Sidebar,
   SidebarContent,
@@ -45,6 +45,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
               <homeItem.icon />
               <span>{homeItem.title}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              render={<Link to={neighborsItem.to} activeProps={{ "data-active": true }} />}
+            >
+              <neighborsItem.icon />
+              <span>{neighborsItem.title}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

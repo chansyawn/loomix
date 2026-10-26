@@ -25,10 +25,16 @@ const neighborsJson = JSON.stringify({
   rewards: [],
   assets: [],
 });
+const neighborImagesJson = JSON.stringify({
+  schemaVersion: 1,
+  source: JSON.parse(neighborsJson).source,
+  images: [],
+});
 const marker = {
   release: "r1",
   contentSha256: sha256(Buffer.from(json)),
   neighborsSha256: sha256(Buffer.from(neighborsJson)),
+  neighborImagesSha256: sha256(Buffer.from(neighborImagesJson)),
   assetCount: 0,
   neighborCount: 0,
 };
@@ -38,17 +44,20 @@ function resourceServer(
     marker?: unknown;
     json?: string;
     neighborsJson?: string;
+    neighborImagesJson?: string;
     cors?: string;
     status?: number;
   } = {},
 ): typeof fetch {
   return async (input) => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-    const body = url.endsWith("_complete.json")
-      ? JSON.stringify(options.marker ?? marker)
-      : url.endsWith("neighbors.json")
-        ? (options.neighborsJson ?? neighborsJson)
-        : (options.json ?? json);
+    const body = url.endsWith("neighbor-images.json")
+      ? (options.neighborImagesJson ?? neighborImagesJson)
+      : url.endsWith("_complete.json")
+        ? JSON.stringify(options.marker ?? marker)
+        : url.endsWith("neighbors.json")
+          ? (options.neighborsJson ?? neighborsJson)
+          : (options.json ?? json);
     return new Response(body, {
       status: options.status ?? 200,
       headers: { "access-control-allow-origin": options.cors ?? "*" },
@@ -104,6 +113,26 @@ test("CI requires matching neighbor JSON, count, and source metadata", async () 
       resourceServer({
         neighborsJson: body,
         marker: { ...marker, neighborsSha256: sha256(Buffer.from(body)) },
+      }),
+    ),
+  ).rejects.toThrow("source does not match");
+});
+
+test("CI rejects missing image markers and mismatched image mappings", async () => {
+  const { neighborImagesSha256: _missing, ...legacyMarker } = marker;
+  await expect(downloadRelease(base, resourceServer({ marker: legacyMarker }))).rejects.toThrow();
+  await expect(
+    downloadRelease(base, resourceServer({ neighborImagesJson: `${neighborImagesJson}\n` })),
+  ).rejects.toThrow("Neighbor images SHA-256");
+  const mapping = JSON.parse(neighborImagesJson);
+  mapping.source.manifestId = "123";
+  const body = JSON.stringify(mapping);
+  await expect(
+    downloadRelease(
+      base,
+      resourceServer({
+        neighborImagesJson: body,
+        marker: { ...marker, neighborImagesSha256: sha256(Buffer.from(body)) },
       }),
     ),
   ).rejects.toThrow("source does not match");

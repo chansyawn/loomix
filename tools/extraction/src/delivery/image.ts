@@ -25,3 +25,18 @@ export async function processImage(bytes: Buffer, group: RecordType) {
     throw new Error("Unexpected processed image dimensions");
   return { bytes: output, ...dimensions };
 }
+
+export async function processNeighborImage(bytes: Buffer) {
+  const output = await sharp(bytes, { failOn: "warning" })
+    .resize({
+      width: 1600,
+      height: 1600,
+      fit: "inside",
+      withoutEnlargement: true,
+      kernel: "lanczos3",
+    })
+    .webp({ quality: 85, alphaQuality: 100, effort: 4 })
+    .toBuffer();
+  const { width, height } = await decodeWebp(output);
+  return { bytes: output, width, height };
+}

@@ -27,7 +27,7 @@ export async function deliver(extractionId: string): Promise<string> {
     implementation,
     profileHash,
     target: "website",
-    imagePolicy: "Lanczos3-cover-WebP85-alpha100-v1",
+    imagePolicy: "Lanczos3-cover-and-neighbor-inside1600-WebP85-alpha100-v2",
   });
   const work = identityDirectory("deliveries", id);
   await withLock(`${websiteDirectory}.lock`, async () => {

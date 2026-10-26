@@ -16,6 +16,7 @@ import { audit } from "./audit.ts";
 import { verifyExtraction } from "./verify.ts";
 import { admissionsFile, parseAdmissions } from "./content/admissions.ts";
 import { finalizeEvidence } from "./evidence/build.ts";
+import { exportNeighborImages } from "./neighbors/images.ts";
 import { buildNeighbors } from "./neighbors/build.ts";
 
 export async function extract(environmentId: string): Promise<string> {
@@ -112,8 +113,18 @@ export async function extract(environmentId: string): Promise<string> {
           ],
         },
         {
+          name: "neighbor-images",
+          dependencies: ["neighbors", "raw-assets"],
+          run: () => exportNeighborImages(options),
+          outputs: () => [
+            ...tree("neighbor-exports"),
+            "neighbor-image-exports.json",
+            "neighbor-image-audit.json",
+          ],
+        },
+        {
           name: "source-audit",
-          dependencies: ["raw-assets"],
+          dependencies: ["neighbor-images"],
           run: () => audit(options),
           outputs: () => ["source-audit.json"],
         },
@@ -140,6 +151,7 @@ export async function extract(environmentId: string): Promise<string> {
           "structure",
           "neighbors",
           "raw-assets",
+          "neighbor-images",
           "source-audit",
           "extraction-verify",
         ],

@@ -23,6 +23,7 @@ import { verifyAdmissions } from "./admissions.ts";
 import { highestResolutionImages } from "../extraction/images/select.ts";
 import { decodeWebp, imageDimensions } from "../delivery/image.ts";
 import { verifyNeighbors } from "../extraction/neighbors/verify.ts";
+import { verifyNeighborImages } from "./neighbor-images.ts";
 import { neighborInput } from "../extraction/neighbors/build.ts";
 
 export interface BundleVerification {
@@ -262,6 +263,8 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
   );
   assert.equal(manifest.length, selected.length, "Exact selected/processed resource set");
   const used = new Set(all.map((r) => r.image).filter((image): image is string => Boolean(image)));
+  const neighborImages = await verifyNeighborImages(neighbors, bundle, staging, reportRoot, raw);
+  for (const image of neighborImages) used.add(image);
   if (!raw)
     assert.deepEqual(
       new Set(fs.readdirSync(path.join(staging, "assets")).map((s) => `assets/${s}`)),

@@ -1,5 +1,6 @@
 import { useRouterState } from "@tanstack/react-router";
 
+import { NeighborsReturnLink } from "@/features/neighbors/navigation";
 import { CreaturesReturnLink } from "@/features/creatures/detail-navigation";
 import { FurnitureReturnLink } from "@/features/furniture/detail-navigation";
 import { ClothingReturnLink } from "@/features/clothing/detail-navigation";
@@ -20,6 +21,7 @@ import { SidebarTrigger } from "@/ui/components/sidebar";
 
 export function SiteHeader() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const isNeighborDetail = /^\/neighbors\/[^/]+\/?$/.test(pathname);
   const isFurnitureDetail = /^\/collection\/furniture\/(items|sets)\/[^/]+\/?$/.test(pathname);
   const clothingView = /^\/collection\/clothing\/(items|sets|appearances)\/[^/]+\/?$/.exec(
     pathname,
@@ -33,6 +35,7 @@ export function SiteHeader() {
   const isDishesDetail = dishesView !== undefined;
   const isMiscellanyDetail = /^\/collection\/miscellany\/items\/[^/]+\/?$/.test(pathname);
   const isDetail =
+    isNeighborDetail ||
     isFurnitureDetail ||
     isClothingDetail ||
     isCreaturesDetail ||
@@ -67,7 +70,12 @@ export function SiteHeader() {
       (isDishesDetail && item.to === "/collection/dishes") ||
       (isMiscellanyDetail && item.to === "/collection/miscellany"),
   );
-  const title = pathname === homeItem.to ? homeItem.title : (collectionItem?.title ?? "页面未找到");
+  const title =
+    pathname === "/neighbors"
+      ? "友邻"
+      : pathname === homeItem.to
+        ? homeItem.title
+        : (collectionItem?.title ?? "页面未找到");
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 px-4">
@@ -84,6 +92,14 @@ export function SiteHeader() {
                 {collectionNavigation.title}
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
+            </>
+          )}
+          {isNeighborDetail && (
+            <>
+              <BreadcrumbItem>
+                <BreadcrumbLink render={<NeighborsReturnLink />}>友邻</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
             </>
           )}
           {isFurnitureDetail && (
@@ -172,17 +188,19 @@ export function SiteHeader() {
             <BreadcrumbPage className="line-clamp-1">
               {isDetail
                 ? (detailTitle ??
-                  (isCreaturesDetail
-                    ? "生物详情"
-                    : isPlantsDetail
-                      ? "植物详情"
-                      : isClothingDetail
-                        ? "服饰详情"
-                        : isDishesDetail
-                          ? "菜肴详情"
-                          : isMiscellanyDetail
-                            ? "杂物详情"
-                            : "家具详情"))
+                  (isNeighborDetail
+                    ? "友邻详情"
+                    : isCreaturesDetail
+                      ? "生物详情"
+                      : isPlantsDetail
+                        ? "植物详情"
+                        : isClothingDetail
+                          ? "服饰详情"
+                          : isDishesDetail
+                            ? "菜肴详情"
+                            : isMiscellanyDetail
+                              ? "杂物详情"
+                              : "家具详情"))
                 : title}
             </BreadcrumbPage>
           </BreadcrumbItem>
