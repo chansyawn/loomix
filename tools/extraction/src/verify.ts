@@ -19,6 +19,12 @@ export async function verify(deliveryId: string): Promise<void> {
   const environment = await verifyEnvironment(environmentDirectory);
   await verifyExtraction(bundle, false);
   await verifyDelivery(directory, bundle, false);
+  if (delivery.deliveryMode === "artifact-only") {
+    console.log(
+      `Verified artifact-only environment ${environment.id}, extraction ${extraction.id}, delivery ${delivery.id}`,
+    );
+    return;
+  }
   safeOutput(websiteDirectory);
   const published = await inventory(
     websiteDirectory,

@@ -20,7 +20,7 @@
 ```sh
 vp run '@loomix/extraction#init'
 vp run '@loomix/extraction#extract' --environment <environment-id>
-vp run '@loomix/extraction#deliver' --extraction <extraction-id>
+vp run '@loomix/extraction#deliver' --extraction <extraction-id> --artifact-only
 vp run '@loomix/extraction#verify' --delivery <delivery-id>
 vp run '@loomix/extraction#test'
 vp check
@@ -29,9 +29,9 @@ vp check
 每个入口成功时打印下一阶段需要的完整 SHA256 ID。将 `<…-id>` 替换为打印值。所有路径相对仓库解析，与执行命令的工作目录无关；`--help` 不初始化工具。`verify` 是显式验收入口。
 
 - `init` 校验客户端版本、revision、配置对和本地资源清单，准备固定 AnimeStudio，建立覆盖 StreamingAssets 与 Persistent 的 Asset Map，压缩为资源索引，验证后原子发布 environment。相同身份复用已验证环境。
-- `extract` 只接受已初始化 environment，重新核对客户端快照完整文件集合与 SHA256；内部按 admissions + decode → structure → neighbors → raw-assets → source-audit → extraction-verify 自动恢复。输出图鉴、版本化友邻静态数据库、原始 PNG、证据和审计，完成后封存 manifest，不发布网站资源。
-- `deliver` 只读已验证 extraction bundle，使用其中冻结的 OBB、表、证据和 PNG，不重新扫描客户端。处理图片、按最终字节 SHA256 去重，验证后将 `content.json`、`neighbors.json` 和 `assets/` 一起发布到 `resources/website/`。
-- `verify` 核对整个 manifest 依赖链、实际客户端输入、表范围、字段证据、图片及已发布文件的完整集合和字节。
+- `extract` 只接受已初始化 environment，重新核对客户端快照完整文件集合与 SHA256；内部按 admissions + decode → structure → raw-assets → collection → seed-images，以及 neighbors → neighbor-images → source-audit → extraction-verify 自动恢复。输出图鉴、版本化友邻静态数据库、原始 PNG、证据和审计，完成后封存 manifest，不发布网站资源。
+- `deliver --artifact-only` 只读已验证 extraction bundle，处理图片、按最终字节 SHA256 去重，在 `var/artifacts/deliveries/<id>/staging/` 封存 JSON 与 WebP；不访问网站交付目录。默认网站发布路径保留，v4 只支持 artifact-only 模式。
+- `verify` 核对整个 manifest 依赖链、实际客户端输入、表范围、字段证据和图片。manifest 的 `deliveryMode: artifact-only` 仅验收封存产物；网站发布模式额外核对已发布字节。
 
 仓库根配置默认不缓存 package scripts，因此每次都会执行入口并重新验证真实输入。内部 checkpoint 是提取恢复协议，与 Vite Task 缓存无关；`logs/`、`checkpoints/` 和 `run-report.json` 不属于 manifest 的语义输出。
 
@@ -59,7 +59,11 @@ var/                                              # 运行时数据，整体忽�
     record-evidence.json                         # 收录依据及图鉴存在/缺失证据
     prepared/                                    # 冻结 OBB、表索引、TextMap、素材索引
     bindata/                                     # MiHoYoBinData 导出
-    raw/{content.json,images-content.json,neighbors.json,assets/}
+    raw/{content.json,images-content.json,content-v4.json,images-content-v4.json,neighbors.json,assets/}
+    collection-evidence.json                     # v4 扩展字段与种子索引证据
+    crafting-audit.json                          # 全部制作配置及范围外产物
+    seed-exports/                                # 完整种子原始 PNG
+    seed-image-{candidates,originals,manifest}.json
     neighbor-audit.json                            # 友邻字段来源、计数和规范化记录
     neighbor-exclusions.json                       # 未进入公共数据库的候选
     exports/                                     # 完整原始 PNG
@@ -73,6 +77,7 @@ var/                                              # 运行时数据，整体忽�
     image-manifest.json
     field-evidence.json
     coverage.json
+    collection-coverage.json                     # 七项扩展字段的覆盖率
     validation.json
     run-report.json
   scratch/                                        # 失败运行、探针、一次性调查
@@ -88,7 +93,11 @@ manifest 使用 `schemaVersion: 1`，区分 environment、extraction、delivery�
 
 ## 证据与交付约束
 
-统一 content.json 使用 schemaVersion 2、source 和按 ID 排序的 items 数组。六大类及 item/set/series/appearance 由 category/kind 表达，旧分组仅由前端适配生成。字段证据包含记录 ID、group（category.kind）、field、value、来源文件、表/行/字段或资源 PathID、关联/转换说明和确认状态；未知值必须有 reason。`src/extraction/evidence/schema.ts` 与共享 `@loomix/content-schema` 验证证据、未确认候选和内容契约；中间 PNG 引用使用 `src/extraction/schemas/raw-content.ts`，保留同一组字段与成员约束，最终交付仍只接受 `assets/<SHA256>.webp`。
+网站当前的 v3 契约仍由 `@loomix/content-schema` 导出；独立产物使用 `@loomix/content-schema/v4` 的 schemaVersion 4。基础提取保留 v3 中间结果，collection 阶段在其上构建 v4，最终 `staging/content.json` 只包含完整 v4。六大类及 item/set/series/appearance 由 category/kind 表达，记录按 ID 排序。字段证据包含记录 ID、字段、值、来源文件、表/行/字段或资源 PathID、关联/转换说明和确认状态；未知值必须有原因。
+
+v4 补充四大类获取途径、生物学名及课题、菜肴口味和难度前置条件、作物种子关联、家具制作配方。`cropSeeds` 保存种子 ID、名称、图片与产物引用，不计入收藏条目。版本绑定人工清单新增寒松木 30115、陨星矿石 30136、雪晶 30299、纯净雪花 30300；共 2,340 条收藏，其中杂物 23 条。四种新增物品的名称、描述、品质、来源与图标均从客户端读取；配置缺失时保留空值。
+
+`collection-evidence.json` 保存新增字段和种子索引的逐字段证据，`crafting-audit.json` 保留表 568 全部记录及范围外产物。配方存在但材料槽缺失时输出 `materials: null` 与 `unresolvedReason`，不能解释为免费制作；缺少整个配方行时 `craftingRecipes` 为 null。研究课题保留原始文案，不推算尺寸范围或玩家进度。难度前置条件保存原始 JSON 与类型明确的条件，不解释为完整的解锁规则。中间 PNG 引用分别位于 `exports/` 与 `seed-exports/`，最终交付只接受 `assets/<SHA256>.webp`。
 
 图片规则保持不变：按实际像素面积选最高原生分辨率，平手保留大图优先顺序；家具套组 1024×512，其余有图记录 256×256；Lanczos3 等比缩放、居中裁切，WebP 质量 85、alphaQuality 100。原始 PNG 与最终 WebP 均完整解码，交付文件按最终字节 SHA256 命名和去重。
 

@@ -3,6 +3,7 @@ import { init } from "./environment/build.ts";
 import { extract } from "./extraction/build.ts";
 import { deliver } from "./delivery/build.ts";
 import { verify } from "./verify.ts";
+import { errorDetails } from "./workflow/errors.ts";
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2).filter((argument) => argument !== "--");
@@ -14,11 +15,12 @@ async function main(): Promise<void> {
       environment: { type: "string" },
       extraction: { type: "string" },
       delivery: { type: "string" },
+      "artifact-only": { type: "boolean" },
     },
   });
   if (values.help) {
     console.log(
-      "客户端提取：init | extract --environment ID | deliver --extraction ID | verify --delivery ID\n默认交付：resources/website/；所有路径相对仓库，内部 checkpoint 自动恢复。",
+      "客户端提取：init | extract --environment ID | deliver --extraction ID [--artifact-only] | verify --delivery ID\n默认交付：resources/website/；--artifact-only 仅封存版本化产物，不发布网站。所有路径相对仓库，内部 checkpoint 自动恢复。",
     );
     return;
   }
@@ -26,7 +28,9 @@ async function main(): Promise<void> {
   else if (command === "extract" && values.environment)
     console.log(`extraction-id: ${await extract(values.environment)}`);
   else if (command === "deliver" && values.extraction)
-    console.log(`delivery-id: ${await deliver(values.extraction)}`);
+    console.log(
+      `delivery-id: ${await deliver(values.extraction, { artifactOnly: values["artifact-only"] })}`,
+    );
   else if (command === "verify" && values.delivery) await verify(values.delivery);
   else
     throw new Error(
@@ -35,6 +39,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: Error) => {
-  console.error(error.stack ?? error.message);
+  console.error(errorDetails(error));
   process.exitCode = 1;
 });

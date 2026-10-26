@@ -9,12 +9,20 @@ import { withLock } from "../workflow/lock.ts";
 import { renderImages } from "./images.ts";
 import { verifyDelivery } from "./verify.ts";
 import { publish, safeOutput } from "./publish.ts";
+import { renderCollection } from "./collection.ts";
 
-export async function deliver(extractionId: string): Promise<string> {
+export async function deliver(
+  extractionId: string,
+  { artifactOnly = false } = {},
+): Promise<string> {
   const bundle = identityDirectory("extractions", extractionId);
   const extraction = await readManifest(bundle, "extraction");
   if (extraction.profileHash !== profileHash)
     throw new Error("Extraction profile differs from the current profile; extract again");
+  const collectionV4 = fs.existsSync(path.join(bundle, "raw/images-content-v4.json"));
+  if (collectionV4 && !artifactOnly)
+    throw new Error("Schema v4 requires --artifact-only; website publication is not supported");
+  const target = artifactOnly ? "artifact-only" : "website";
   const implementation = await implementationRevision();
   const inputs = await inventory(bundle, [
     "extraction-manifest.json",
@@ -26,12 +34,12 @@ export async function deliver(extractionId: string): Promise<string> {
     inputs,
     implementation,
     profileHash,
-    target: "website",
+    target,
     imagePolicy: "Lanczos3-cover-and-neighbor-inside1600-WebP85-alpha100-v2",
   });
   const work = identityDirectory("deliveries", id);
-  await withLock(`${websiteDirectory}.lock`, async () => {
-    safeOutput(websiteDirectory);
+  await withLock(artifactOnly ? `${work}.lock` : `${websiteDirectory}.lock`, async () => {
+    if (!artifactOnly) safeOutput(websiteDirectory);
     fs.mkdirSync(work, { recursive: true });
     const previousManifest = fs.existsSync(path.join(work, "delivery-manifest.json"))
       ? (JSON.parse(fs.readFileSync(path.join(work, "delivery-manifest.json"), "utf8")) as Manifest)
@@ -41,16 +49,18 @@ export async function deliver(extractionId: string): Promise<string> {
     const options = { work, output: websiteDirectory };
     try {
       await renderImages(options, bundle);
+      if (collectionV4) await renderCollection(work, bundle);
       await verifyDelivery(work, bundle);
       atomicJson(path.join(work, "run-report.json"), {
         passed: true,
         extractionId,
         deliveryId: id,
-        target: "website",
+        target,
       });
       const manifest: Manifest = {
         schemaVersion: 1,
         kind: "delivery",
+        deliveryMode: target,
         id,
         status: "verified",
         createdAt: previousManifest?.createdAt ?? new Date().toISOString(),
@@ -73,7 +83,7 @@ export async function deliver(extractionId: string): Promise<string> {
       if ((await implementationRevision()) !== implementation)
         throw new Error("Implementation changed during delivery; rerun deliver");
       await publishManifest(work, manifest);
-      await publish(options);
+      if (!artifactOnly) await publish(options);
     } catch (error) {
       fs.rmSync(path.join(work, "delivery-manifest.json"), { force: true });
       atomicJson(path.join(work, "run-report.json"), {

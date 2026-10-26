@@ -48,6 +48,11 @@ export function finalizeEvidence(work: string): void {
   writeJson(path.join(evidence, "missing-fields.json"), missing);
   for (const name of [
     "record-evidence",
+    "collection-evidence",
+    "crafting-audit",
+    "seed-image-candidates",
+    "seed-image-originals",
+    "seed-image-manifest",
     "field-candidates",
     "outside-members",
     "image-candidates",

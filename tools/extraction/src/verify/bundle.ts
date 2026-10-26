@@ -34,15 +34,17 @@ export interface BundleVerification {
   raw: boolean;
   parse: (input: unknown) => Catalog;
   writeReports: boolean;
+  extraImages?: string[];
 }
 
 export async function verifyBundle(request: BundleVerification): Promise<void> {
   const { reportRoot, bundle, staging, contentFile, raw, parse, writeReports } = request;
-  const content = parse(readJson(contentFile)),
+  const input = readJson(contentFile);
+  const content = parse(input),
     tables = new Tables(path.join(bundle, "prepared"));
   const scope = verifyAdmissions(content, bundle);
   const qualities = new Set(tables.rows(profile.roots.qualities).map((r) => tables.uint(r, 1, 0)));
-  const { all, counts } = validateModel(content, scope, expectedCatalog, qualities, parse);
+  const { all, counts } = validateModel(input, scope, expectedCatalog, qualities, parse);
   const neighbors = verifyNeighbors(
     readJson(path.join(staging, "neighbors.json")),
     neighborInput(bundle),
@@ -263,6 +265,7 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
   );
   assert.equal(manifest.length, selected.length, "Exact selected/processed resource set");
   const used = new Set(all.map((r) => r.image).filter((image): image is string => Boolean(image)));
+  for (const image of request.extraImages ?? []) used.add(image);
   const neighborImages = await verifyNeighborImages(neighbors, bundle, staging, reportRoot, raw);
   for (const image of neighborImages) used.add(image);
   if (!raw)

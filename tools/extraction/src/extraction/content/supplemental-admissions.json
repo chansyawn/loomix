@@ -46,6 +46,10 @@
       "category": "plants",
       "subcategory": "采摘材料"
     },
+    { "id": 30115, "expectedName": "寒松木", "category": "miscellaneous", "subcategory": null },
+    { "id": 30136, "expectedName": "陨星矿石", "category": "miscellaneous", "subcategory": null },
+    { "id": 30299, "expectedName": "雪晶", "category": "miscellaneous", "subcategory": null },
+    { "id": 30300, "expectedName": "纯净雪花", "category": "miscellaneous", "subcategory": null },
     {
       "id": 2000050,
       "expectedName": "肉",

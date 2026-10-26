@@ -35,6 +35,7 @@ export const profile = {
     furnitureTypes: 265,
     clothing: 519,
     sources: 618,
+    craftingRecipes: 568,
     neighborsNpc: 41,
     neighborStars: 630,
     neighborTravelReactions: 643,
@@ -113,5 +114,5 @@ export const catalogSource = {
 export const expectedCatalog = {
   ...profile.expectedEncyclopedia,
   "plants.item": 208,
-  "miscellaneous.item": 19,
+  "miscellaneous.item": 23,
 };

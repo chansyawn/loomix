@@ -18,6 +18,8 @@ import { admissionsFile, parseAdmissions } from "./content/admissions.ts";
 import { finalizeEvidence } from "./evidence/build.ts";
 import { exportNeighborImages } from "./neighbors/images.ts";
 import { buildNeighbors } from "./neighbors/build.ts";
+import { buildCollection } from "./collection/build.ts";
+import { exportSeedImages } from "./collection/images.ts";
 
 export async function extract(environmentId: string): Promise<string> {
   const environmentDirectory = identityDirectory("environments", environmentId);
@@ -113,6 +115,28 @@ export async function extract(environmentId: string): Promise<string> {
           ],
         },
         {
+          name: "collection",
+          dependencies: ["raw-assets"],
+          run: async () => buildCollection(work),
+          outputs: () => [
+            "raw/content-v4.json",
+            "collection-evidence.json",
+            "seed-image-candidates.json",
+            "crafting-audit.json",
+          ],
+        },
+        {
+          name: "seed-images",
+          dependencies: ["collection"],
+          run: () => exportSeedImages(options),
+          outputs: () => [
+            ...tree("seed-exports"),
+            "seed-image-originals.json",
+            "seed-image-manifest.json",
+            "raw/images-content-v4.json",
+          ],
+        },
+        {
           name: "neighbor-images",
           dependencies: ["neighbors", "raw-assets"],
           run: () => exportNeighborImages(options),
@@ -125,7 +149,7 @@ export async function extract(environmentId: string): Promise<string> {
         },
         {
           name: "source-audit",
-          dependencies: ["neighbor-images"],
+          dependencies: ["neighbor-images", "seed-images"],
           run: () => audit(options),
           outputs: () => ["source-audit.json"],
         },
@@ -136,7 +160,12 @@ export async function extract(environmentId: string): Promise<string> {
             finalizeEvidence(work);
             await verifyExtraction(work);
           },
-          outputs: () => [...tree("evidence"), "coverage.json", "validation.json"],
+          outputs: () => [
+            ...tree("evidence"),
+            "coverage.json",
+            "collection-coverage.json",
+            "validation.json",
+          ],
         },
       ]);
       await assertClientUnchanged(environment);
@@ -152,6 +181,8 @@ export async function extract(environmentId: string): Promise<string> {
           "structure",
           "neighbors",
           "raw-assets",
+          "collection",
+          "seed-images",
           "neighbor-images",
           "source-audit",
           "extraction-verify",

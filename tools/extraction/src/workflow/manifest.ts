@@ -14,6 +14,7 @@ export const manifestSchema = z
   .object({
     schemaVersion: z.literal(1),
     kind: z.enum(["environment", "extraction", "delivery"]),
+    deliveryMode: z.enum(["website", "artifact-only"]).optional(),
     id: hash,
     status: z.literal("verified"),
     createdAt: z.string().datetime(),

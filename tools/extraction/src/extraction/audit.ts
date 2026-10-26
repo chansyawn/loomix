@@ -26,6 +26,9 @@ export async function audit(options: WorkOptions) {
     path.join(options.work, "neighbor-additional-image-exports.json"),
   );
   const sourceFiles = new Set([
+    ...readJson<ImageManifest[]>(path.join(options.work, "seed-image-originals.json")).map(
+      (image) => image.source,
+    ),
     ...images.map((a) => a.source),
     ...neighborImages.map((a) => a.source),
     ...additionalNeighborImages.map((a) => a.source),
