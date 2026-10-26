@@ -1,6 +1,23 @@
 import { z } from "zod";
 import { NeighborDatabaseSchema, type NeighborDatabase } from "./schema.ts";
 
+export const AdditionalNeighborImageCategorySchema = z.enum([
+  "avatar",
+  "card",
+  "favour",
+  "house",
+  "island",
+  "outline",
+  "role",
+]);
+
+export const AdditionalNeighborImageSchema = z.strictObject({
+  key: z.string().min(1),
+  category: AdditionalNeighborImageCategorySchema,
+  npcId: z.number().int().positive().nullable(),
+  image: z.string().regex(/^assets\/[a-f0-9]{64}\.webp$/),
+});
+
 export const NeighborImagesSchema = z
   .strictObject({
     schemaVersion: z.literal(1),
@@ -23,6 +40,7 @@ export const NeighborImagesSchema = z
           .nullable(),
       }),
     ),
+    additionalImages: z.array(AdditionalNeighborImageSchema).optional(),
   })
   .superRefine((mapping, ctx) => {
     for (let index = 1; index < mapping.images.length; index++)
@@ -32,9 +50,18 @@ export const NeighborImagesSchema = z
           path: ["images", index],
           message: "Paths must be sorted and unique",
         });
+    for (let index = 1; index < (mapping.additionalImages?.length ?? 0); index++)
+      if (mapping.additionalImages![index - 1]!.key >= mapping.additionalImages![index]!.key)
+        ctx.addIssue({
+          code: "custom",
+          path: ["additionalImages", index],
+          message: "Additional image keys must be sorted and unique",
+        });
   });
 
 export type NeighborImages = z.infer<typeof NeighborImagesSchema>;
+export type AdditionalNeighborImage = z.infer<typeof AdditionalNeighborImageSchema>;
+export type AdditionalNeighborImageCategory = z.infer<typeof AdditionalNeighborImageCategorySchema>;
 
 export function neighborImagePaths(database: NeighborDatabase): string[] {
   return [

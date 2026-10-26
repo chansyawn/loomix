@@ -72,7 +72,9 @@ export async function validateContent(directory: string): Promise<ValidatedConte
   const files = await readdir(assetDirectory);
   const expected = new Set(images.map((image) => path.basename(image)));
   if (files.length !== expected.size || files.some((file) => !expected.has(file))) {
-    throw new Error("assets/ must contain exactly the images referenced by content.json");
+    throw new Error(
+      "assets/ must contain exactly the images referenced by content.json and neighbor-images.json",
+    );
   }
   const assets: AssetFile[] = [];
   for (const key of images) {

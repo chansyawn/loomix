@@ -62,6 +62,28 @@ test("mapping requires sorted unique complete paths and the exact source", () =>
   ).not.toThrow();
 });
 
+test("retains optional extra images without changing neighbor-page image mappings", () => {
+  const expanded = parseNeighborImages({
+    ...mapping,
+    additionalImages: [
+      {
+        key: "NPCFavour_1015",
+        category: "favour",
+        npcId: 1015,
+        image: `assets/${"a".repeat(64)}.webp`,
+      },
+    ],
+  });
+  validateNeighborImages(database, expanded);
+  expect(toNeighborsView(database, expanded)).toEqual(toNeighborsView(database, mapping));
+  expect(() =>
+    parseNeighborImages({
+      ...expanded,
+      additionalImages: [...expanded.additionalImages!, ...expanded.additionalImages!],
+    }),
+  ).toThrow();
+});
+
 test("loads both resources and rejects HTTP, parsing, and version failures", async () => {
   const response = (value: unknown) => new Response(JSON.stringify(value));
   const request: typeof fetch = async (input) =>

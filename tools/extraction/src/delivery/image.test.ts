@@ -166,6 +166,7 @@ test("asset delivery deduplicates identical outputs and separates target dimensi
       path.join(work, "evidence/field-evidence.json"),
     );
     fs.writeFileSync(path.join(work, "neighbor-image-exports.json"), "[]");
+    fs.writeFileSync(path.join(work, "neighbor-additional-image-exports.json"), "[]");
     await renderImages({ work }, work);
     assert.deepEqual(
       fs.readFileSync(path.join(work, "staging/neighbors.json")),

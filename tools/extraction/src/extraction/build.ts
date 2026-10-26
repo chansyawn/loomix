@@ -119,6 +119,7 @@ export async function extract(environmentId: string): Promise<string> {
           outputs: () => [
             ...tree("neighbor-exports"),
             "neighbor-image-exports.json",
+            "neighbor-additional-image-exports.json",
             "neighbor-image-audit.json",
           ],
         },

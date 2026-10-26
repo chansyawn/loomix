@@ -4,9 +4,10 @@ import path from "node:path";
 import { S3Client } from "@aws-sdk/client-s3";
 import { afterEach, expect, test, vi } from "vite-plus/test";
 import { emptyCatalog } from "@loomix/content-schema";
+import { parseNeighborImages } from "@loomix/neighbor-schema";
 import { publishRelease } from "../src/publish.ts";
 import type { UploadProgress } from "../src/publish.ts";
-import { parseReleaseBase, sha256 } from "../src/release.ts";
+import { parseReleaseBase, referencedImages, sha256 } from "../src/release.ts";
 import { createR2Store } from "../src/store.ts";
 import type { ReleaseStore } from "../src/store.ts";
 import { validateContent } from "../src/validate.ts";
@@ -17,6 +18,24 @@ const webp = Buffer.from(
   "base64",
 );
 const imageKey = `assets/${sha256(webp)}.webp`;
+
+test("counts separately delivered neighbor images as referenced release assets", () => {
+  const catalog = emptyCatalog({
+    gameVersion: "0.95.2",
+    dataRevision: 1449213,
+    resourceRevision: 1391927,
+  });
+  const images = parseNeighborImages({
+    schemaVersion: 1,
+    source: {
+      ...catalog.source,
+      manifestId: "5662883",
+    },
+    images: [],
+    additionalImages: [{ key: "NPCFavour_1015", category: "favour", npcId: 1015, image: imageKey }],
+  });
+  expect(referencedImages(catalog, images)).toEqual([imageKey]);
+});
 
 async function fixture(imageCount = 1): Promise<string> {
   const directory = await mkdtemp(path.join(tmpdir(), "loomix-publisher-"));

@@ -30,6 +30,7 @@ export function referencedImages(content: Catalog, neighbors?: NeighborImages): 
     ...new Set([
       ...content.items.flatMap((record) => (record.image ? [record.image] : [])),
       ...(neighbors?.images.flatMap((entry) => (entry.image ? [entry.image] : [])) ?? []),
+      ...(neighbors?.additionalImages?.map((entry) => entry.image) ?? []),
     ]),
   ].sort();
 }
