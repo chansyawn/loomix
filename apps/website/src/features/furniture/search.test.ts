@@ -2,6 +2,22 @@ import { describe, expect, it } from "vite-plus/test";
 import { emptyQuery, furnitureSearchSchema, updateViewQuery } from "./search";
 
 describe("furniture URL state", () => {
+  it("defaults to cards and validates the shared layout independently of content views", () => {
+    for (const layout of [undefined, null, "bad", [], 42])
+      expect(furnitureSearchSchema.parse({ layout }).layout).toBe("grid");
+    const search = furnitureSearchSchema.parse({
+      layout: "table",
+      view: "sets",
+      items: { q: "桌", colors: ["黄色"] },
+      sets: { qualities: ["2"] },
+    });
+    expect(updateViewQuery(search, { q: "麦田" })).toEqual({
+      ...search,
+      sets: { ...search.sets, q: "麦田" },
+    });
+    expect(furnitureSearchSchema.parse(JSON.parse(JSON.stringify(search)))).toEqual(search);
+  });
+
   it("ignores obsolete page parameters in both views", () => {
     const search = furnitureSearchSchema.parse({ items: { page: 8 }, sets: { page: 3 } });
     expect(search.items).toEqual(emptyQuery());
@@ -54,7 +70,7 @@ describe("furniture URL state", () => {
 
 describe("search parameter validation", () => {
   it("restores complete defaults for missing or malformed view objects", () => {
-    const defaults = { view: "items", items: emptyQuery(), sets: emptyQuery() };
+    const defaults = { view: "items", layout: "grid", items: emptyQuery(), sets: emptyQuery() };
     expect(furnitureSearchSchema.parse({})).toEqual(defaults);
     for (const value of [null, [], "bad", 42, true]) {
       expect(furnitureSearchSchema.parse({ items: value, sets: value })).toEqual(defaults);

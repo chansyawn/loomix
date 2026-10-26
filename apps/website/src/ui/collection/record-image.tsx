@@ -7,11 +7,13 @@ export function RecordImage({
   name,
   scene = false,
   eager = false,
+  compact = false,
 }: {
   image: string | null;
   name: string;
   scene?: boolean;
   eager?: boolean;
+  compact?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
   return (
@@ -25,12 +27,12 @@ export function RecordImage({
           loading={eager ? "eager" : "lazy"}
           decoding="async"
           onError={() => setFailed(true)}
-          className={`h-full w-full ${scene ? "object-cover" : "object-contain p-5"}`}
+          className={`h-full w-full ${scene ? "object-cover" : compact ? "object-contain p-1" : "object-contain p-5"}`}
         />
       ) : (
         <div className="flex flex-col items-center gap-2 text-muted-foreground">
-          <ImageOffIcon className="size-7 opacity-40" />
-          <span className="text-xs">暂无图片</span>
+          <ImageOffIcon className={`${compact ? "size-4" : "size-7"} opacity-40`} />
+          {!compact && <span className="text-xs">暂无图片</span>}
         </div>
       )}
     </div>

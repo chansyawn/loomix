@@ -71,6 +71,7 @@ const setQuerySchema = viewQuerySchema
 
 export const furnitureSearchSchema = z.object({
   view: z.enum(["items", "sets"]).catch("items").default("items"),
+  layout: z.enum(["grid", "table"]).catch("grid").default("grid"),
   items: itemQuerySchema.prefault({}).catch(emptyQuery),
   sets: setQuerySchema.prefault({}).catch(emptyQuery),
 });
@@ -102,6 +103,7 @@ export function compactFurnitureSearch(input: FurnitureSearchInput): FurnitureSe
   const sets = compactQuery(search.sets);
   return {
     ...(search.view === "sets" ? { view: search.view } : {}),
+    ...(search.layout === "table" ? { layout: search.layout } : {}),
     ...(Object.keys(items).length > 0 ? { items } : {}),
     ...(Object.keys(sets).length > 0 ? { sets } : {}),
   };
@@ -112,7 +114,7 @@ export const compactFurnitureSearchMiddleware: SearchMiddleware<FurnitureSearch>
   next,
 }) => {
   const result = next(search);
-  const { view: _view, items: _items, sets: _sets, ...other } = result;
+  const { view: _view, layout: _layout, items: _items, sets: _sets, ...other } = result;
   // Router middlewares return the wire representation; validation restores required defaults.
   return { ...other, ...compactFurnitureSearch(result) } as FurnitureSearch;
 };

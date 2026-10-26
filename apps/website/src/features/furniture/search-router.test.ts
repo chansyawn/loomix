@@ -54,6 +54,7 @@ describe("compact furniture URLs", () => {
   it("round trips through URL encoding and compacts idempotently", () => {
     const search = furnitureSearchSchema.parse({
       view: "sets",
+      layout: "table",
       items: { q: '桌 & + # ? "', categories: ["起居"], colors: ["白色"], sets: ["__ungrouped"] },
       sets: { q: "套装", qualities: ["__missing", "2"], sort: "name-asc" },
     });
@@ -63,6 +64,20 @@ describe("compact furniture URLs", () => {
     );
     expect(restored).toEqual(search);
     expect(compactFurnitureSearch(compact)).toEqual(compact);
+  });
+
+  it("omits the grid layout and serializes the table layout", () => {
+    const { router } = setup();
+    const grid = router.buildLocation({
+      to: "/collection/furniture",
+      search: furnitureSearchSchema.parse({ layout: "grid" }),
+    });
+    expect(grid.href).toBe("/collection/furniture");
+    const table = router.buildLocation({
+      to: "/collection/furniture",
+      search: furnitureSearchSchema.parse({ layout: "table" }),
+    });
+    expect(table.href).toBe("/collection/furniture?layout=table");
   });
 
   it("preserves parent parameters while normalizing old furniture URLs", async () => {

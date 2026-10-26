@@ -1,4 +1,13 @@
-import { ArmchairIcon, ArrowDownUpIcon, LayersIcon, SearchIcon, XIcon } from "lucide-react";
+import {
+  ArmchairIcon,
+  ArrowDownUpIcon,
+  LayersIcon,
+  LayoutGridIcon,
+  SearchIcon,
+  TableIcon,
+  XIcon,
+} from "lucide-react";
+import { useLayoutEffect, useRef } from "react";
 import { Button } from "@/ui/components/button";
 import { Badge } from "@/ui/components/badge";
 import {
@@ -16,9 +25,11 @@ import {
   SelectValue,
 } from "@/ui/components/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/components/tabs";
+import { ToggleGroup, ToggleGroupItem } from "@/ui/components/toggle-group";
 import type { FurnitureData } from "./data";
 import { FilterPanel } from "./filter-panel";
 import { FurnitureVirtualGrid } from "./virtual-grid";
+import { FurnitureTable } from "./furniture-table";
 import { filterGroups, queryFurniture } from "./query";
 import { emptyQuery, sortOptions, updateViewQuery } from "./search";
 import type { FurnitureSearch, ViewQuery } from "./search";
@@ -36,6 +47,16 @@ export function FurniturePage({
   onSearchChange: (update: SearchUpdate, replace?: boolean) => Promise<void>;
 }) {
   const query = search[search.view];
+  const section = useRef<HTMLElement>(null);
+  const resultKey = JSON.stringify([search.view, search.layout, query]);
+  const previousResultKey = useRef(resultKey);
+  useLayoutEffect(() => {
+    if (previousResultKey.current === resultKey) return;
+    previousResultKey.current = resultKey;
+    section.current
+      ?.closest<HTMLDivElement>("[data-scroll-restoration-id]")
+      ?.scrollTo({ top: 0, behavior: "instant" });
+  }, [resultKey]);
   const result = queryFurniture(data, search.view, query);
   const groups = filterGroups(data).filter(
     (group) => search.view === "items" || group.key === "qualities",
@@ -55,7 +76,7 @@ export function FurniturePage({
   if (query.q)
     chips.unshift({ key: "q", label: `搜索：${query.q}`, remove: () => update({ q: "" }) });
   return (
-    <section className="@container">
+    <section ref={section} className="@container">
       <div>
         <div className="mb-7">
           <h1 className="text-3xl font-semibold tracking-tight">家具</h1>
@@ -133,6 +154,23 @@ export function FurniturePage({
                         </SelectGroup>
                       </SelectContent>
                     </Select>
+                    <ToggleGroup
+                      aria-label="家具展示方式"
+                      variant="outline"
+                      spacing={0}
+                      value={[search.layout]}
+                      onValueChange={([layout]) => {
+                        if (layout === "grid" || layout === "table")
+                          void onSearchChange((previous) => ({ ...previous, layout }));
+                      }}
+                    >
+                      <ToggleGroupItem value="grid" aria-label="卡片视图">
+                        <LayoutGridIcon />
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="table" aria-label="表格视图">
+                        <TableIcon />
+                      </ToggleGroupItem>
+                    </ToggleGroup>
                   </div>
                   <div className="flex h-16 flex-nowrap items-center gap-2 overflow-x-auto">
                     <p
@@ -169,11 +207,22 @@ export function FurniturePage({
                     )}
                   </div>
                   {result.total > 0 ? (
-                    <FurnitureVirtualGrid
-                      key={JSON.stringify([search.view, query])}
-                      rows={result.rows}
-                      view={search.view}
-                    />
+                    search.layout === "table" ? (
+                      <FurnitureTable
+                        resultKey={resultKey}
+                        rows={result.rows}
+                        view={search.view}
+                        memberships={result.memberships}
+                        sort={query.sort}
+                        onSortChange={(sort) => update({ sort })}
+                      />
+                    ) : (
+                      <FurnitureVirtualGrid
+                        key={JSON.stringify([search.view, query])}
+                        rows={result.rows}
+                        view={search.view}
+                      />
+                    )
                   ) : (
                     <FurnitureEmpty onClear={clear} />
                   )}
