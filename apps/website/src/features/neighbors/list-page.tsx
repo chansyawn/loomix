@@ -1,11 +1,9 @@
-import { Link } from "@tanstack/react-router";
 import { SearchIcon } from "lucide-react";
 import { Badge } from "@/ui/components/badge";
 import { Button } from "@/ui/components/button";
 import { Input } from "@/ui/components/input";
 import type { NeighborsData } from "./data";
-import { NeighborImage } from "./image";
-import { useNeighborsOrigin } from "./navigation";
+import { NeighborCard } from "./neighbor-card";
 import { galaxies, queryNeighbors, type NeighborsSearch } from "./search";
 
 type SearchUpdate = NeighborsSearch | ((previous: NeighborsSearch) => NeighborsSearch);
@@ -18,7 +16,6 @@ export function NeighborsPage({
   search: NeighborsSearch;
   onSearchChange: (update: SearchUpdate, replace?: boolean) => Promise<void>;
 }) {
-  const origin = useNeighborsOrigin();
   const results = queryNeighbors(data, search);
   const update = (patch: Partial<NeighborsSearch>, replace = false) =>
     void onSearchChange((previous) => ({ ...previous, ...patch }), replace);
@@ -68,30 +65,7 @@ export function NeighborsPage({
       {results.length ? (
         <div className="grid grid-cols-1 gap-4 min-[360px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
           {results.map((neighbor) => (
-            <Link
-              key={neighbor.id}
-              to="/neighbors/$id"
-              params={{ id: String(neighbor.id) }}
-              state={{ neighborsOrigin: origin }}
-              className="group min-w-0 overflow-hidden rounded-3xl border bg-card p-2 outline-none transition-colors hover:border-primary focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <NeighborImage
-                image={neighbor.image}
-                name={`${neighbor.name}的星湾插画`}
-                className="aspect-[156/41]"
-              />
-              <div className="space-y-2 px-2 py-4">
-                <h2 className="text-lg font-semibold group-hover:underline">{neighbor.name}</h2>
-                {neighbor.stars.map((star) => (
-                  <p key={star.key} className="text-sm text-muted-foreground">
-                    {star.name}
-                    <span className="mt-1 block text-xs">
-                      {star.galaxy ? `${star.galaxy}星系` : "星系资料暂未收录"}
-                    </span>
-                  </p>
-                ))}
-              </div>
-            </Link>
+            <NeighborCard key={neighbor.id} neighbor={neighbor} />
           ))}
         </div>
       ) : (
