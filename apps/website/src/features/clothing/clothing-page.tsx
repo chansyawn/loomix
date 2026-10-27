@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/ui/components/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/components/tabs";
+import { FilterSummary } from "@/ui/collection/filter-summary";
 import type { ClothingData } from "./data";
 import { FilterPanel } from "@/ui/collection/filter-panel";
 import { ClothingCard } from "./clothing-card";
@@ -163,22 +164,21 @@ export function ClothingPage({
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="flex h-16 flex-nowrap items-center gap-2 overflow-x-auto">
-                    <p
-                      role="status"
-                      className="mr-2 shrink-0 whitespace-nowrap text-xs text-muted-foreground"
-                    >
-                      共{" "}
-                      <span className="font-medium tabular-nums text-foreground">
-                        {result.total}
-                      </span>{" "}
-                      {search.view === "items"
-                        ? "件服装"
-                        : search.view === "sets"
-                          ? "个套装"
-                          : "项外观"}
-                    </p>
-                    {chips.map((chip) => (
+                  <FilterSummary
+                    status={
+                      <p role="status" className="whitespace-nowrap text-xs text-muted-foreground">
+                        共{" "}
+                        <span className="font-medium tabular-nums text-foreground">
+                          {result.total}
+                        </span>{" "}
+                        {search.view === "items"
+                          ? "件服装"
+                          : search.view === "sets"
+                            ? "个套装"
+                            : "项外观"}
+                      </p>
+                    }
+                    chips={chips.map((chip) => (
                       <Badge
                         key={chip.key}
                         variant="secondary"
@@ -195,12 +195,8 @@ export function ClothingPage({
                         </Button>
                       </Badge>
                     ))}
-                    {chips.length > 0 && (
-                      <Button variant="ghost" size="sm" className="shrink-0" onClick={clear}>
-                        清空筛选
-                      </Button>
-                    )}
-                  </div>
+                    onClear={clear}
+                  />
                   {result.total > 0 ? (
                     search.view === "items" ? (
                       <ClothingVirtualGrid

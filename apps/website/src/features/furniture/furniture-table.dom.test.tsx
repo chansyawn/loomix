@@ -9,7 +9,7 @@ import {
   RouterProvider,
 } from "@tanstack/react-router";
 import { afterEach, expect, test, vi } from "vite-plus/test";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom/vitest";
 import type { FurnitureItem, FurnitureSet } from "../collection-view";
@@ -205,6 +205,90 @@ test("cycles header sorting with the toolbar and keeps missing quality last", as
     ),
   );
   expect(itemNames()).toEqual(["台灯", "木桌", "木椅"]);
+});
+
+test("keeps the count and clear action outside the filters and preserves individual removal", async () => {
+  const user = userEvent.setup();
+  const router = await setup({
+    layout: "table",
+    items: { categories: ["起居"], colors: ["黄色"] },
+  });
+  const filters = screen.getByRole("region", { name: "当前筛选" });
+  expect(screen.getByRole("status")).toHaveTextContent("1 件家具");
+  expect(screen.getByRole("status")).toBeVisible();
+  expect(screen.getByRole("button", { name: "清空筛选" })).toBeVisible();
+  expect(within(filters).queryByRole("status")).not.toBeInTheDocument();
+  expect(within(filters).queryByRole("button", { name: "清空筛选" })).not.toBeInTheDocument();
+
+  await user.click(within(filters).getByRole("button", { name: "移除颜色：黄色" }));
+  await waitFor(() => expect(itemNames()).toEqual(["木椅", "木桌"]));
+  expect(screen.getByRole("status")).toHaveTextContent("2 件家具");
+  expect(screen.queryByRole("button", { name: "移除颜色：黄色" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "移除分类：起居" })).toBeVisible();
+  expect(router.state.location.search).toMatchObject({
+    layout: "table",
+    items: { categories: ["起居"] },
+  });
+
+  await user.click(screen.getByRole("button", { name: "清空筛选" }));
+  await waitFor(() => expect(itemNames()).toEqual(["木椅", "台灯", "木桌"]));
+  expect(screen.getByRole("status")).toHaveTextContent("3 件家具");
+  expect(screen.queryByRole("button", { name: "清空筛选" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("region", { name: "当前筛选" })).not.toBeInTheDocument();
+  expect(router.state.location.search).toMatchObject({ layout: "table" });
+});
+
+test("shows fades only at scrollable filter edges and updates them after resizing", async () => {
+  const resizeCallbacks = new Set<() => void>();
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      constructor(private callback: () => void) {}
+      observe() {
+        resizeCallbacks.add(this.callback);
+      }
+      disconnect() {
+        resizeCallbacks.delete(this.callback);
+      }
+    },
+  );
+  await setup({ layout: "table", items: { categories: ["起居"], colors: ["黄色"] } });
+  const filters = screen.getByRole("region", { name: "当前筛选" });
+  let clientWidth = 200;
+  let scrollWidth = 600;
+  Object.defineProperties(filters, {
+    clientWidth: { get: () => clientWidth },
+    scrollWidth: { get: () => scrollWidth },
+  });
+  const resize = () => act(() => resizeCallbacks.forEach((callback) => callback()));
+  const expectFades = (left: boolean, right: boolean) => {
+    if (left) expect(screen.getByTestId("filter-summary-fade-left")).toBeVisible();
+    else expect(screen.queryByTestId("filter-summary-fade-left")).not.toBeInTheDocument();
+    if (right) expect(screen.getByTestId("filter-summary-fade-right")).toBeVisible();
+    else expect(screen.queryByTestId("filter-summary-fade-right")).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeVisible();
+    expect(screen.getByRole("button", { name: "清空筛选" })).toBeVisible();
+  };
+
+  expectFades(false, false);
+  resize();
+  expectFades(false, true);
+  fireEvent.scroll(filters, { target: { scrollLeft: 160 } });
+  expectFades(true, true);
+  fireEvent.scroll(filters, { target: { scrollLeft: 399.5 } });
+  expectFades(true, false);
+  fireEvent.scroll(filters, { target: { scrollLeft: 0 } });
+  expectFades(false, true);
+
+  clientWidth = 700;
+  resize();
+  expectFades(false, false);
+  clientWidth = 200;
+  resize();
+  expectFades(false, true);
+  scrollWidth = 180;
+  resize();
+  expectFades(false, false);
 });
 
 test("searches in table mode and clears empty results without resetting layout", async () => {

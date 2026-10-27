@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/ui/components/select";
 import type { MiscellanyData } from "./data";
+import { FilterSummary } from "@/ui/collection/filter-summary";
 import { FilterPanel } from "@/ui/collection/filter-panel";
 import { MiscellanyCard } from "./miscellany-card";
 import { filterGroups, queryMiscellany } from "./query";
@@ -112,11 +113,14 @@ export function MiscellanyPage({
           </SelectContent>
         </Select>
       </div>
-      <div className="flex h-16 flex-nowrap items-center gap-2 overflow-x-auto">
-        <p role="status" className="mr-2 shrink-0 whitespace-nowrap text-xs text-muted-foreground">
-          共 <span className="font-medium tabular-nums text-foreground">{result.total}</span> 件杂物
-        </p>
-        {chips.map((chip) => (
+      <FilterSummary
+        status={
+          <p role="status" className="whitespace-nowrap text-xs text-muted-foreground">
+            共 <span className="font-medium tabular-nums text-foreground">{result.total}</span>{" "}
+            件杂物
+          </p>
+        }
+        chips={chips.map((chip) => (
           <Badge
             key={chip.key}
             variant="secondary"
@@ -133,12 +137,8 @@ export function MiscellanyPage({
             </Button>
           </Badge>
         ))}
-        {chips.length > 0 && (
-          <Button variant="ghost" size="sm" className="shrink-0" onClick={clear}>
-            清空筛选
-          </Button>
-        )}
-      </div>
+        onClear={clear}
+      />
       {result.total > 0 ? (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,11rem),1fr))] gap-4 pb-8">
           {result.rows.map((item) => (
