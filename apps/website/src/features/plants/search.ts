@@ -1,5 +1,6 @@
 import type { SearchMiddleware } from "@tanstack/react-router";
 import { z } from "zod";
+import { collectionLayoutSchema } from "../collection/layout";
 
 export const missing = "__missing";
 export const ungrouped = "__ungrouped";
@@ -52,6 +53,7 @@ export type Sort = ViewQuery["sort"];
 export type View = "items" | "series";
 export type PlantsSearch = {
   view: View;
+  layout?: "grid" | "table";
   items: ViewQuery;
   series: ViewQuery;
 };
@@ -66,6 +68,7 @@ const seriesQuerySchema = viewQuerySchema
   .transform((query): ViewQuery => ({ ...emptyQuery(), ...query }));
 
 export const plantsSearchSchema = z.object({
+  layout: collectionLayoutSchema,
   view: z.enum(["items", "series"]).catch("items").default("items"),
   items: viewQuerySchema.prefault({}).catch(emptyQuery),
   series: seriesQuerySchema.prefault({}).catch(emptyQuery),
@@ -88,6 +91,7 @@ export function compactPlantsSearch(input: PlantsSearchInput): PlantsSearchInput
   const items = compactQuery(search.items);
   const series = compactQuery(search.series);
   return {
+    ...(search.layout ? { layout: search.layout } : {}),
     ...(search.view === "series" ? { view: search.view } : {}),
     ...(Object.keys(items).length > 0 ? { items } : {}),
     ...(Object.keys(series).length > 0 ? { series } : {}),
@@ -96,6 +100,6 @@ export function compactPlantsSearch(input: PlantsSearchInput): PlantsSearchInput
 
 export const compactPlantsSearchMiddleware: SearchMiddleware<PlantsSearch> = ({ search, next }) => {
   const result = next(search);
-  const { view: _view, items: _items, series: _series, ...other } = result;
+  const { layout: _layout, view: _view, items: _items, series: _series, ...other } = result;
   return { ...other, ...compactPlantsSearch(result) } as PlantsSearch;
 };

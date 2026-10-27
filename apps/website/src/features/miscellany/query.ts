@@ -1,5 +1,5 @@
-import type { FilterGroup as CollectionFilterGroup } from "@/ui/collection/filter-panel";
-import { qualityNames } from "@/ui/collection/quality";
+import type { FilterGroup as CollectionFilterGroup } from "@/features/collection/filter-panel";
+import { qualityNames } from "@/features/collection/quality";
 import type { MiscellanyData } from "./data";
 import { missing } from "./search";
 import type { MiscellanyQuery } from "./search";

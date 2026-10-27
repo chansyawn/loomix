@@ -74,3 +74,31 @@ describe("compact dish URLs", () => {
     });
   });
 });
+
+describe("layout URL overrides", () => {
+  it.each(["grid", "table"] as const)(
+    "preserves explicit %s layout through URLs and query updates",
+    (layout) => {
+      const router = setup();
+      const search = dishesSearchSchema.parse({ layout, items: { q: "测试" } });
+      const compact = compactDishesSearch(search);
+      expect(dishesSearchSchema.parse(defaultParseSearch(defaultStringifySearch(compact)))).toEqual(
+        search,
+      );
+      const location = router.buildLocation({ to: "/collection/dishes", search });
+      expect(defaultParseSearch(location.searchStr)).toMatchObject({ layout });
+      const cleared = router.buildLocation({
+        to: "/collection/dishes",
+        search: dishesSearchSchema.parse({ ...search, items: {} }),
+      });
+      expect(defaultParseSearch(cleared.searchStr)).toEqual({ layout });
+    },
+  );
+  it("omits absent and malformed layouts so local preferences can apply", () => {
+    for (const layout of [undefined, null, "bad", 42, []]) {
+      const parsed = dishesSearchSchema.parse({ layout });
+      expect(parsed.layout).toBeUndefined();
+      expect(compactDishesSearch(parsed).layout).toBeUndefined();
+    }
+  });
+});

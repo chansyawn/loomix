@@ -1,6 +1,14 @@
-import { useLayoutEffect, useRef, useState } from "react";
 import { useElementScrollRestoration } from "@tanstack/react-router";
-import { useTable, type ReactTable, type Row, type SortingState } from "@tanstack/react-table";
+import {
+  useTable,
+  createColumnHelper,
+  rowSortingFeature,
+  tableFeatures,
+  type ReactTable,
+  type Row,
+  type SortingState,
+  type OnChangeFn,
+} from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ArrowDownIcon, ArrowDownUpIcon, ArrowUpIcon } from "lucide-react";
 import { Button } from "@/ui/components/button";
@@ -12,78 +20,69 @@ import {
   TableHeader,
   TableRow,
 } from "@/ui/components/table";
-import type { FurnitureSet } from "../collection-view";
-import {
-  furnitureColumnWidths,
-  furnitureTableColumns,
-  furnitureTableFeatures,
-  type FurnitureRow,
-} from "./furniture-table-columns";
-import type { Sort, View } from "./search";
+import type { CollectionColumn } from "./table-columns";
+import { useScrollGeometry } from "./use-scroll-geometry";
 
-type FurnitureTableInstance = ReactTable<typeof furnitureTableFeatures, FurnitureRow>;
-type TableRowModel = Row<typeof furnitureTableFeatures, FurnitureRow>;
-type Geometry = { scrollElement: HTMLDivElement; scrollMargin: number };
+const collectionTableFeatures = tableFeatures({ rowSortingFeature });
+type CollectionTableInstance<T extends object> = ReactTable<typeof collectionTableFeatures, T>;
+type TableRowModel<T extends object> = Row<typeof collectionTableFeatures, T>;
 const estimatedRowHeight = 64;
 
-export function FurnitureTable({
+export function CollectionTable<T extends object>({
   resultKey,
   rows,
-  view,
-  memberships,
-  sort,
-  onSortChange,
+  columns: definitions,
+  getRowId,
+  label,
+  sorting,
+  onSortingChange,
 }: {
   resultKey: string;
-  rows: FurnitureRow[];
-  view: View;
-  memberships: Map<number, FurnitureSet[]>;
-  sort: Sort;
-  onSortChange: (sort: Sort) => void;
+  rows: T[];
+  columns: CollectionColumn<T>[];
+  getRowId: (record: T) => string;
+  label: string;
+  sorting: SortingState;
+  onSortingChange: OnChangeFn<SortingState>;
 }) {
-  const columns = furnitureTableColumns(view, memberships);
-  const sorting: SortingState =
-    sort === "original"
-      ? []
-      : [
-          {
-            id: sort.startsWith("name") ? "name" : "quality",
-            desc: sort.endsWith("desc"),
-          },
-        ];
+  const helper = createColumnHelper<typeof collectionTableFeatures, T>();
+  const columns = helper.columns(
+    definitions.map((column) =>
+      helper.accessor((record) => column.value?.(record), {
+        id: column.id,
+        header: column.header,
+        enableSorting: column.sortable ?? false,
+        cell: ({ row }) => column.cell(row.original),
+      }),
+    ),
+  );
+  const widths = Object.fromEntries(definitions.map((column) => [column.id, column.width]));
   const table = useTable({
-    features: furnitureTableFeatures,
+    features: collectionTableFeatures,
     data: rows,
     columns,
-    getRowId: (row) => String(row.id),
+    getRowId,
     defaultColumn: { enableSorting: false },
     manualSorting: true,
     enableMultiSort: false,
     sortDescFirst: false,
     state: { sorting },
-    onSortingChange: (updater) => {
-      const [next] = typeof updater === "function" ? updater(sorting) : updater;
-      onSortChange(
-        next && (next.id === "name" || next.id === "quality")
-          ? `${next.id}-${next.desc ? "desc" : "asc"}`
-          : "original",
-      );
-    },
+    onSortingChange,
   });
   const leafColumns = table.getAllLeafColumns();
-  const width = leafColumns.reduce((total, column) => total + furnitureColumnWidths[column.id]!, 0);
+  const width = leafColumns.reduce((total, column) => total + widths[column.id]!, 0);
 
   return (
     <div className="mb-8 overflow-hidden rounded-xl border">
       <Table
-        aria-label={view === "items" ? "家具单件表格" : "家具套装表格"}
+        aria-label={label}
         aria-rowcount={rows.length + 1}
         className="table-fixed"
         style={{ minWidth: width }}
       >
         <colgroup>
           {leafColumns.map((column) => (
-            <col key={column.id} style={{ width: furnitureColumnWidths[column.id] }} />
+            <col key={column.id} style={{ width: widths[column.id] }} />
           ))}
         </colgroup>
         <TableHeader className="bg-muted/50">
@@ -129,48 +128,24 @@ export function FurnitureTable({
             </TableRow>
           ))}
         </TableHeader>
-        <FurnitureTableBody key={resultKey} table={table} rows={table.getRowModel().rows} />
+        <CollectionTableBody key={resultKey} table={table} rows={table.getRowModel().rows} />
       </Table>
     </div>
   );
 }
 
-function FurnitureTableBody({
+function CollectionTableBody<T extends object>({
   table,
   rows,
 }: {
-  table: FurnitureTableInstance;
-  rows: TableRowModel[];
+  table: CollectionTableInstance<T>;
+  rows: TableRowModel<T>[];
 }) {
   "use no memo";
   // Virtual v3 mutates a stable instance; its range must be read on every scroll render.
-  const body = useRef<HTMLTableSectionElement>(null);
-  const [geometry, setGeometry] = useState<Geometry | null>(null);
+  const { container: body, geometry } = useScrollGeometry<HTMLTableSectionElement>();
   const scrollEntry = useElementScrollRestoration({ id: "wiki-content" });
   const virtual = rows.length > 50;
-
-  useLayoutEffect(() => {
-    const element = body.current;
-    const scrollElement = element?.closest<HTMLDivElement>("[data-scroll-restoration-id]");
-    if (!element || !scrollElement || !virtual) return;
-    const measure = () => {
-      const scrollMargin =
-        element.getBoundingClientRect().top -
-        scrollElement.getBoundingClientRect().top -
-        scrollElement.clientTop +
-        scrollElement.scrollTop;
-      setGeometry((previous) =>
-        previous?.scrollMargin === scrollMargin && previous.scrollElement === scrollElement
-          ? previous
-          : { scrollElement, scrollMargin },
-      );
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(scrollElement);
-    if (element.parentElement) observer.observe(element.parentElement);
-    return () => observer.disconnect();
-  }, [virtual]);
 
   const virtualizer = useVirtualizer<HTMLDivElement, HTMLTableRowElement>({
     count: rows.length,

@@ -1,5 +1,6 @@
 import type { SearchMiddleware } from "@tanstack/react-router";
 import { z } from "zod";
+import { collectionLayoutSchema } from "../collection/layout";
 
 export const categories = ["起居", "装饰物", "功能家具", "硬装", "绿植", "户外布设", "其他"];
 export const missing = "__missing";
@@ -71,7 +72,7 @@ const setQuerySchema = viewQuerySchema
 
 export const furnitureSearchSchema = z.object({
   view: z.enum(["items", "sets"]).catch("items").default("items"),
-  layout: z.enum(["grid", "table"]).catch("grid").default("grid"),
+  layout: collectionLayoutSchema,
   items: itemQuerySchema.prefault({}).catch(emptyQuery),
   sets: setQuerySchema.prefault({}).catch(emptyQuery),
 });
@@ -103,7 +104,7 @@ export function compactFurnitureSearch(input: FurnitureSearchInput): FurnitureSe
   const sets = compactQuery(search.sets);
   return {
     ...(search.view === "sets" ? { view: search.view } : {}),
-    ...(search.layout === "table" ? { layout: search.layout } : {}),
+    ...(search.layout ? { layout: search.layout } : {}),
     ...(Object.keys(items).length > 0 ? { items } : {}),
     ...(Object.keys(sets).length > 0 ? { sets } : {}),
   };

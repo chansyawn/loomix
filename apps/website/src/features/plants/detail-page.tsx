@@ -10,8 +10,8 @@ import {
   EmptyTitle,
 } from "@/ui/components/empty";
 import { Skeleton } from "@/ui/components/skeleton";
-import { RecordImage } from "@/ui/collection/record-image";
-import { QualityBadge } from "@/ui/collection/quality";
+import { RecordImage } from "@/features/collection/record-image";
+import { QualityBadge } from "@/features/collection/quality";
 import { PlantsCard, PlantSeriesCard } from "./plants-card";
 import { PlantsReturnLink } from "./detail-navigation";
 import type { PlantsDetail } from "./detail";

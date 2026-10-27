@@ -1,5 +1,6 @@
 import type { SearchMiddleware } from "@tanstack/react-router";
 import { z } from "zod";
+import { collectionLayoutSchema } from "../collection/layout";
 
 export const missing = "__missing";
 export const sortOptions = {
@@ -39,6 +40,7 @@ export function emptyQuery(): MiscellanyQuery {
 }
 
 export const miscellanySearchSchema = z.object({
+  layout: collectionLayoutSchema,
   items: itemQuerySchema.prefault({}).catch(emptyQuery),
 });
 
@@ -53,7 +55,10 @@ function compactQuery(query: MiscellanyQuery): Partial<MiscellanyQuery> {
 export function compactMiscellanySearch(input: MiscellanySearchInput): MiscellanySearchInput {
   const search = miscellanySearchSchema.parse(input);
   const items = compactQuery(search.items);
-  return Object.keys(items).length > 0 ? { items } : {};
+  return {
+    ...(search.layout ? { layout: search.layout } : {}),
+    ...(Object.keys(items).length > 0 ? { items } : {}),
+  };
 }
 
 export const compactMiscellanySearchMiddleware: SearchMiddleware<MiscellanySearch> = ({
@@ -61,6 +66,6 @@ export const compactMiscellanySearchMiddleware: SearchMiddleware<MiscellanySearc
   next,
 }) => {
   const result = next(search);
-  const { items: _items, ...other } = result;
+  const { layout: _layout, items: _items, ...other } = result;
   return { ...other, ...compactMiscellanySearch(result) } as MiscellanySearch;
 };

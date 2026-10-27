@@ -10,8 +10,8 @@ import {
   EmptyMedia,
 } from "@/ui/components/empty";
 import { Skeleton } from "@/ui/components/skeleton";
-import { RecordImage } from "@/ui/collection/record-image";
-import { QualityBadge } from "@/ui/collection/quality";
+import { RecordImage } from "@/features/collection/record-image";
+import { QualityBadge } from "@/features/collection/quality";
 import { CreaturesCard, CreatureSeriesCard } from "./creatures-card";
 import { SeriesImage } from "./series-image";
 import { CreaturesReturnLink } from "./detail-navigation";

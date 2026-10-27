@@ -1,158 +1,96 @@
-import { createColumnHelper, rowSortingFeature, tableFeatures } from "@tanstack/react-table";
 import { Link } from "@tanstack/react-router";
 import type { FurnitureItem, FurnitureSet } from "../collection-view";
-import { QualityBadge } from "@/ui/collection/quality";
+import {
+  recordColumns,
+  textColumn,
+  tableLinkClassName,
+  MembershipCell,
+} from "../collection/table-columns";
+import type { CollectionColumn } from "../collection/table-columns";
 import { useFurnitureOrigin } from "./detail-navigation";
-import { FurnitureImage } from "./furniture-image";
+import { membershipIndex } from "./query";
 import type { View } from "./search";
 
 export type FurnitureRow = FurnitureItem | FurnitureSet;
-export const furnitureTableFeatures = tableFeatures({ rowSortingFeature });
-const columnHelper = createColumnHelper<typeof furnitureTableFeatures, FurnitureRow>();
 
-export const furnitureColumnWidths: Record<string, number> = {
-  name: 240,
-  quality: 112,
-  category: 112,
-  type: 160,
-  size: 112,
-  colors: 144,
-  materials: 144,
-  sources: 240,
-  sets: 240,
-  seriesName: 160,
-  members: 128,
-  description: 320,
-};
-
-const linkClassName =
-  "rounded-sm font-medium underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-
-function FurnitureNameCell({ record }: { record: FurnitureRow }) {
+function NameLink({ record, view }: { record: FurnitureRow; view: View }) {
   const origin = useFurnitureOrigin();
   return (
-    <div className="flex min-w-0 items-center gap-3">
-      <div className="w-10 shrink-0 overflow-hidden rounded-md" aria-hidden="true">
-        <FurnitureImage image={record.image} name={record.name} compact />
-      </div>
-      <Link
-        to={
-          "category" in record
-            ? "/collection/furniture/items/$id"
-            : "/collection/furniture/sets/$id"
-        }
-        params={{ id: String(record.id) }}
-        state={{ furnitureOrigin: origin }}
-        className={`${linkClassName} truncate`}
-        title={record.name}
-      >
-        {record.name}
-      </Link>
-    </div>
+    <Link
+      to={view === "items" ? "/collection/furniture/items/$id" : "/collection/furniture/sets/$id"}
+      params={{ id: String(record.id) }}
+      state={{ furnitureOrigin: origin }}
+      className={tableLinkClassName}
+      title={record.name}
+    >
+      {record.name}
+    </Link>
   );
 }
 
-function MembershipCell({ sets }: { sets: FurnitureSet[] | undefined }) {
+function MemberLinks({ groups, complete }: { groups: FurnitureSet[]; complete: boolean }) {
   const origin = useFurnitureOrigin();
-  if (!sets?.length) return <span className="text-muted-foreground">未归入套装</span>;
   return (
-    <div className="flex flex-wrap gap-x-3 gap-y-1">
-      {sets.map((set) => (
+    <MembershipCell
+      groups={groups}
+      complete={complete}
+      noun="套装"
+      renderLink={(entry) => (
         <Link
-          key={set.id}
+          key={entry.id}
           to="/collection/furniture/sets/$id"
-          params={{ id: String(set.id) }}
+          params={{ id: String(entry.id) }}
           state={{ furnitureOrigin: origin }}
-          className={linkClassName}
+          className={tableLinkClassName}
         >
-          {set.name}
+          {entry.name}
         </Link>
-      ))}
-    </div>
+      )}
+    />
   );
 }
 
-function TextCell({ value }: { value: string | null }) {
-  return value ? (
-    <span className="block truncate" title={value}>
-      {value}
-    </span>
-  ) : (
-    <span className="text-muted-foreground">未提供</span>
-  );
-}
-
-const commonColumns = columnHelper.columns([
-  columnHelper.accessor("name", {
-    header: "名称",
-    enableSorting: true,
-    cell: ({ row }) => <FurnitureNameCell record={row.original} />,
-  }),
-  columnHelper.accessor("quality", {
-    header: "品阶",
-    enableSorting: true,
-    cell: ({ row }) =>
-      row.original.quality === null ? (
-        <TextCell value={null} />
-      ) : (
-        <QualityBadge quality={row.original.quality} />
-      ),
-  }),
-]);
-
-export function furnitureTableColumns(view: View, memberships: Map<number, FurnitureSet[]>) {
+export function furnitureTableColumns(
+  view: View,
+  groups: FurnitureSet[] = [],
+): CollectionColumn<FurnitureRow>[] {
+  const common = recordColumns<FurnitureRow>((record) => <NameLink record={record} view={view} />);
   if (view === "sets")
-    return columnHelper.columns([
-      ...commonColumns,
-      columnHelper.display({
-        id: "seriesName",
-        header: "系列",
-        cell: ({ row }) => (
-          <TextCell value={"seriesName" in row.original ? row.original.seriesName : null} />
-        ),
-      }),
-      columnHelper.display({
-        id: "members",
-        header: "成员数量",
-        cell: ({ row }) => {
-          const ids = "componentIds" in row.original ? row.original.componentIds : null;
-          return ids === null ? (
-            <TextCell value={null} />
-          ) : (
-            <span className="tabular-nums">{ids.length} 件家具</span>
-          );
-        },
-      }),
-      columnHelper.accessor("description", {
-        header: "描述",
-        cell: ({ row }) => <TextCell value={row.original.description} />,
-      }),
-    ]);
-
-  return columnHelper.columns([
-    ...commonColumns,
-    ...(
-      [
-        ["category", "分类"],
-        ["type", "类型"],
-        ["size", "尺寸"],
-        ["colors", "颜色"],
-        ["materials", "材质"],
-        ["sources", "获取途径"],
-      ] as const
-    ).map(([key, header]) =>
-      columnHelper.display({
-        id: key,
-        header,
-        cell: ({ row }) => (
-          <TextCell value={"category" in row.original ? row.original[key] : null} />
-        ),
-      }),
+    return [
+      ...common,
+      textColumn("seriesName", "系列", 160, (record) =>
+        "seriesName" in record ? record.seriesName : null,
+      ),
+      textColumn("members", "成员数量", 128, (record) =>
+        "componentIds" in record && record.componentIds !== null
+          ? `${record.componentIds.length} 件家具`
+          : null,
+      ),
+      textColumn("description", "描述", 320, (record) => record.description),
+    ];
+  const memberships = membershipIndex(groups);
+  const complete = groups.every((entry) => entry.componentIds !== null);
+  return [
+    ...common,
+    textColumn("category", "分类", 112, (record) =>
+      "category" in record ? record.category : null,
     ),
-    columnHelper.display({
+    textColumn("type", "类型", 160, (record) => ("category" in record ? record.type : null)),
+    textColumn("size", "尺寸", 112, (record) => ("category" in record ? record.size : null)),
+    textColumn("colors", "颜色", 144, (record) => ("category" in record ? record.colors : null)),
+    textColumn("materials", "材质", 144, (record) =>
+      "category" in record ? record.materials : null,
+    ),
+    textColumn("sources", "获取途径", 240, (record) =>
+      "category" in record ? record.sources : null,
+    ),
+    {
       id: "sets",
       header: "所属套装",
-      cell: ({ row }) => <MembershipCell sets={memberships.get(row.original.id)} />,
-    }),
-  ]);
+      width: 240,
+      cell: (record) => (
+        <MemberLinks groups={memberships.get(record.id) ?? []} complete={complete} />
+      ),
+    },
+  ];
 }

@@ -1,6 +1,6 @@
 import type { CreatureItem, CreatureSeries } from "../collection-view.ts";
-import type { FilterGroup } from "@/ui/collection/filter-panel";
-import { qualityNames } from "@/ui/collection/quality";
+import type { FilterGroup } from "@/features/collection/filter-panel";
+import { qualityNames } from "@/features/collection/quality";
 import type { CreaturesData } from "./data";
 import { categories, missing, ungrouped, seasons, times, weather } from "./search";
 import type { FilterKey, View, ViewQuery } from "./search";

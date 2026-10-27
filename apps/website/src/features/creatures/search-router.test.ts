@@ -86,3 +86,31 @@ describe("compact creatures URLs", () => {
     });
   });
 });
+
+describe("layout URL overrides", () => {
+  it.each(["grid", "table"] as const)(
+    "preserves explicit %s layout through URLs and query updates",
+    (layout) => {
+      const { router } = setup();
+      const search = creaturesSearchSchema.parse({ layout, items: { q: "测试" } });
+      const compact = compactCreaturesSearch(search);
+      expect(
+        creaturesSearchSchema.parse(defaultParseSearch(defaultStringifySearch(compact))),
+      ).toEqual(search);
+      const location = router.buildLocation({ to: "/collection/creatures", search });
+      expect(defaultParseSearch(location.searchStr)).toMatchObject({ layout });
+      const cleared = router.buildLocation({
+        to: "/collection/creatures",
+        search: creaturesSearchSchema.parse({ ...search, items: {} }),
+      });
+      expect(defaultParseSearch(cleared.searchStr)).toEqual({ layout });
+    },
+  );
+  it("omits absent and malformed layouts so local preferences can apply", () => {
+    for (const layout of [undefined, null, "bad", 42, []]) {
+      const parsed = creaturesSearchSchema.parse({ layout });
+      expect(parsed.layout).toBeUndefined();
+      expect(compactCreaturesSearch(parsed).layout).toBeUndefined();
+    }
+  });
+});

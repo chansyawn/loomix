@@ -11,8 +11,8 @@ import {
 } from "@/ui/components/empty";
 import { Skeleton } from "@/ui/components/skeleton";
 import { ClothingCard } from "./clothing-card";
-import { QualityBadge } from "@/ui/collection/quality";
-import { RecordImage } from "@/ui/collection/record-image";
+import { QualityBadge } from "@/features/collection/quality";
+import { RecordImage } from "@/features/collection/record-image";
 import { ClothingReturnLink } from "./detail-navigation";
 import type { ClothingDetail } from "./detail";
 import type { View } from "./search";

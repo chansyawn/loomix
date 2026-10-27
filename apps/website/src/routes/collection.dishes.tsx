@@ -24,7 +24,7 @@ function DishesRoute() {
       data={data}
       search={search}
       onSearchChange={(update, replace = false) =>
-        navigate({ search: update, replace, resetScroll: false })
+        navigate({ search: update, replace, resetScroll: true })
       }
     />
   );

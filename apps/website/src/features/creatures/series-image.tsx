@@ -1,5 +1,5 @@
 import type { CreatureItem, CreatureSeries } from "../collection-view.ts";
-import { RecordImage } from "@/ui/collection/record-image";
+import { RecordImage } from "@/features/collection/record-image";
 import { seriesPreview } from "./query";
 
 export function SeriesImage({

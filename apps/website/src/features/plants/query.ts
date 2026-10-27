@@ -2,8 +2,8 @@ import type { PlantItem, PlantSeries } from "../collection-view.ts";
 import type { PlantsData } from "./data";
 import { missing, ungrouped } from "./search";
 import type { FilterKey, View, ViewQuery } from "./search";
-import type { FilterGroup as CollectionFilterGroup } from "@/ui/collection/filter-panel";
-import { qualityNames } from "@/ui/collection/quality";
+import type { FilterGroup as CollectionFilterGroup } from "@/features/collection/filter-panel";
+import { qualityNames } from "@/features/collection/quality";
 
 export type Option = { value: string; label: string };
 export type FilterGroup = CollectionFilterGroup<FilterKey>;

@@ -82,3 +82,31 @@ describe("compact clothing URLs", () => {
     });
   });
 });
+
+describe("layout URL overrides", () => {
+  it.each(["grid", "table"] as const)(
+    "preserves explicit %s layout through URLs and query updates",
+    (layout) => {
+      const { router } = setup();
+      const search = clothingSearchSchema.parse({ layout, items: { q: "测试" } });
+      const compact = compactClothingSearch(search);
+      expect(
+        clothingSearchSchema.parse(defaultParseSearch(defaultStringifySearch(compact))),
+      ).toEqual(search);
+      const location = router.buildLocation({ to: "/collection/clothing", search });
+      expect(defaultParseSearch(location.searchStr)).toMatchObject({ layout });
+      const cleared = router.buildLocation({
+        to: "/collection/clothing",
+        search: clothingSearchSchema.parse({ ...search, items: {} }),
+      });
+      expect(defaultParseSearch(cleared.searchStr)).toEqual({ layout });
+    },
+  );
+  it("omits absent and malformed layouts so local preferences can apply", () => {
+    for (const layout of [undefined, null, "bad", 42, []]) {
+      const parsed = clothingSearchSchema.parse({ layout });
+      expect(parsed.layout).toBeUndefined();
+      expect(compactClothingSearch(parsed).layout).toBeUndefined();
+    }
+  });
+});

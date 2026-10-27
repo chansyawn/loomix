@@ -10,8 +10,8 @@ import {
   EmptyTitle,
 } from "@/ui/components/empty";
 import { Skeleton } from "@/ui/components/skeleton";
-import { RecordImage } from "@/ui/collection/record-image";
-import { QualityBadge } from "@/ui/collection/quality";
+import { RecordImage } from "@/features/collection/record-image";
+import { QualityBadge } from "@/features/collection/quality";
 import { DishesCard, DishSeriesCard } from "./dishes-card";
 import { DishesReturnLink } from "./detail-navigation";
 import type { DishesDetail } from "./detail";

@@ -1,5 +1,6 @@
 import type { SearchMiddleware } from "@tanstack/react-router";
 import { z } from "zod";
+import { collectionLayoutSchema } from "../collection/layout";
 
 export const missing = "__missing";
 export const ungrouped = "__ungrouped";
@@ -55,6 +56,7 @@ const appearanceQuery = base
   .extend({ categories: stringList.default([]) })
   .transform((query) => ({ ...emptyQuery(), ...query }));
 export const clothingSearchSchema = z.object({
+  layout: collectionLayoutSchema,
   view: z.enum(["items", "sets", "appearances"]).catch("items").default("items"),
   items: viewQuerySchema.prefault({}).catch(emptyQuery),
   sets: setQuery.prefault({}).catch(emptyQuery),
@@ -76,6 +78,7 @@ function compactQuery(query: ViewQuery): Partial<ViewQuery> {
 export function compactClothingSearch(input: ClothingSearchInput): ClothingSearchInput {
   const search = clothingSearchSchema.parse(input);
   return {
+    ...(search.layout ? { layout: search.layout } : {}),
     ...(search.view !== "items" ? { view: search.view } : {}),
     ...Object.fromEntries(
       (["items", "sets", "appearances"] as const).flatMap((view) => {
@@ -90,7 +93,14 @@ export const compactClothingSearchMiddleware: SearchMiddleware<ClothingSearch> =
   next,
 }) => {
   const result = next(search);
-  const { view: _view, items: _items, sets: _sets, appearances: _appearances, ...other } = result;
+  const {
+    layout: _layout,
+    view: _view,
+    items: _items,
+    sets: _sets,
+    appearances: _appearances,
+    ...other
+  } = result;
   // Validation restores required defaults from the compact URL representation.
   return { ...other, ...compactClothingSearch(result) } as ClothingSearch;
 };

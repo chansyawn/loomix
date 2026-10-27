@@ -1,11 +1,10 @@
 import { LayersIcon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { FurnitureImage } from "./furniture-image";
+import { RecordImage as FurnitureImage } from "@/features/collection/record-image";
 import { useFurnitureOrigin } from "./detail-navigation";
 import type { FurnitureItem, FurnitureSet } from "../collection-view.ts";
 import { CardContent, CardDescription } from "@/ui/components/card";
-import { CollectionCard } from "@/ui/collection/collection-card";
-export { QualityBadge } from "@/ui/collection/quality";
+import { CollectionCard } from "@/features/collection/collection-card";
 
 export function FurnitureCard({ item }: { item: FurnitureItem }) {
   const origin = useFurnitureOrigin();

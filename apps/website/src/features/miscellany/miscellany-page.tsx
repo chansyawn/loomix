@@ -1,28 +1,19 @@
-import { ArrowDownUpIcon, SearchIcon, XIcon } from "lucide-react";
-import { Badge } from "@/ui/components/badge";
-import { Button } from "@/ui/components/button";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from "@/ui/components/input-group";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/ui/components/select";
+import { CollectionPage } from "../collection/page";
+import { CollectionToolbar } from "../collection/toolbar";
+import { CollectionResultsSummary } from "../collection/results-summary";
+import { collectionFilterChips } from "../collection/filter-chips";
+import { FilterPanel } from "../collection/filter-panel";
+import { CollectionTable } from "../collection/table";
+import { collectionSort, tableSorting } from "../collection/sort";
+import { useCollectionLayout, saveCollectionLayout } from "../collection/use-collection-layout";
 import type { MiscellanyData } from "./data";
-import { FilterSummary } from "@/ui/collection/filter-summary";
-import { FilterPanel } from "@/ui/collection/filter-panel";
 import { MiscellanyCard } from "./miscellany-card";
 import { filterGroups, queryMiscellany } from "./query";
 import { emptyQuery, sortOptions } from "./search";
-import type { MiscellanyQuery, MiscellanySearch } from "./search";
+import type { MiscellanySearch, MiscellanyQuery } from "./search";
 import { MiscellanyEmpty } from "./states";
+import { miscellanyTableColumns } from "./table-columns";
+import { title, listPresentation } from "./list-presentation";
 
 type SearchUpdate = MiscellanySearch | ((previous: MiscellanySearch) => MiscellanySearch);
 
@@ -36,118 +27,81 @@ export function MiscellanyPage({
   onSearchChange: (update: SearchUpdate, replace?: boolean) => Promise<void>;
 }) {
   const query = search.items;
+  const layout = useCollectionLayout(search.layout);
+  const presentation = listPresentation();
   const result = queryMiscellany(data, query);
   const groups = filterGroups(data);
+  const resultKey = JSON.stringify([layout, query]);
   const update = (patch: Partial<MiscellanyQuery>, replace = false) =>
     void onSearchChange(
       (previous) => ({ ...previous, items: { ...previous.items, ...patch } }),
       replace,
     );
   const clear = () => void onSearchChange((previous) => ({ ...previous, items: emptyQuery() }));
-  const chips = groups.flatMap((group) =>
-    query[group.key].map((value) => ({
-      key: `${group.key}-${value}`,
-      label: `${group.label}：${group.options.find((option) => option.value === value)?.label ?? value}`,
-      remove: () =>
-        update({ [group.key]: query[group.key].filter((selected) => selected !== value) }),
-    })),
-  );
-  if (query.q)
-    chips.unshift({ key: "q", label: `搜索：${query.q}`, remove: () => update({ q: "" }) });
-
+  const chips = collectionFilterChips(groups, query, (key, values) => update({ [key]: values }), {
+    value: query.q,
+    clear: () => update({ q: "" }),
+  });
+  const columns = miscellanyTableColumns();
   return (
-    <section className="@container">
-      <div className="mb-7">
-        <h1 className="text-3xl font-semibold">杂物</h1>
-      </div>
-      <div className="flex flex-wrap items-center gap-2.5">
-        <InputGroup className="min-w-48 flex-1 sm:max-w-sm">
-          <InputGroupInput
-            aria-label="搜索杂物名称或描述"
-            placeholder="搜索名称或描述…"
-            value={query.q}
-            onChange={(event) => update({ q: event.target.value }, true)}
+    <CollectionPage title={title}>
+      <CollectionToolbar
+        title={title}
+        searchLabel={presentation.searchLabel}
+        placeholder={presentation.placeholder}
+        query={query.q}
+        onQueryChange={(q, replace) => update({ q }, replace)}
+        sort={query.sort}
+        sortOptions={sortOptions}
+        onSortChange={(sort) => update({ sort })}
+        layout={layout}
+        onLayoutChange={(next) => {
+          saveCollectionLayout(next);
+          void onSearchChange((previous) => ({ ...previous, layout: next }));
+        }}
+        filters={
+          <FilterPanel
+            title={`筛选${title}`}
+            groups={groups}
+            query={query}
+            total={result.total}
+            onFilter={(key, values) => update({ [key]: values })}
+            onClear={clear}
           />
-          <InputGroupAddon>
-            <SearchIcon />
-          </InputGroupAddon>
-          {query.q && (
-            <InputGroupAddon align="inline-end">
-              <InputGroupButton
-                aria-label="清除搜索"
-                size="icon-xs"
-                onClick={() => update({ q: "" })}
-              >
-                <XIcon />
-              </InputGroupButton>
-            </InputGroupAddon>
-          )}
-        </InputGroup>
-        <FilterPanel
-          title="筛选杂物"
-          groups={groups}
-          query={query}
-          total={result.total}
-          onFilter={(key, values) => update({ [key]: values })}
-          onClear={clear}
-        />
-        <Select
-          items={sortOptions}
-          value={query.sort}
-          onValueChange={(sort) => {
-            if (sort) update({ sort });
-          }}
-        >
-          <SelectTrigger aria-label="杂物排序" className="ml-auto">
-            <ArrowDownUpIcon />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              {Object.entries(sortOptions).map(([value, label]) => (
-                <SelectItem key={value} value={value}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </div>
-      <FilterSummary
-        status={
-          <p role="status" className="whitespace-nowrap text-xs text-muted-foreground">
-            共 <span className="font-medium tabular-nums text-foreground">{result.total}</span>{" "}
-            件杂物
-          </p>
         }
-        chips={chips.map((chip) => (
-          <Badge
-            key={chip.key}
-            variant="secondary"
-            className="h-auto max-w-full shrink-0 gap-1 pr-1"
-          >
-            <span className="truncate">{chip.label}</span>
-            <Button
-              size="icon-xs"
-              variant="ghost"
-              aria-label={`移除${chip.label}`}
-              onClick={chip.remove}
-            >
-              <XIcon />
-            </Button>
-          </Badge>
-        ))}
+      />
+      <CollectionResultsSummary
+        total={result.total}
+        unit={presentation.unit}
+        chips={chips}
         onClear={clear}
       />
       {result.total > 0 ? (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,11rem),1fr))] gap-4 pb-8">
-          {result.rows.map((item) => (
-            <MiscellanyCard key={item.id} item={item} />
-          ))}
-        </div>
+        layout === "table" ? (
+          <CollectionTable
+            resultKey={resultKey}
+            rows={result.rows}
+            columns={columns}
+            getRowId={(row) => String(row.id)}
+            label={`${title}表格`}
+            sorting={tableSorting(query.sort)}
+            onSortingChange={(updater) => {
+              const previous = tableSorting(query.sort);
+              update({
+                sort: collectionSort(typeof updater === "function" ? updater(previous) : updater),
+              });
+            }}
+          />
+        ) : (
+          <div className={`${presentation.grid.className} pb-8`}>
+            {result.rows.map((row) => (
+              <MiscellanyCard key={row.id} item={row} />
+            ))}
+          </div>
+        )
       ) : (
         <MiscellanyEmpty onClear={clear} />
       )}
-    </section>
+    </CollectionPage>
   );
 }

@@ -2,10 +2,9 @@ import type { FurnitureItem, FurnitureSet } from "../collection-view.ts";
 import type { FurnitureData } from "./data";
 import { categories, missing, ungrouped } from "./search";
 import type { FilterKey, View, ViewQuery } from "./search";
-import type { FilterGroup as CollectionFilterGroup } from "@/ui/collection/filter-panel";
+import type { FilterGroup as CollectionFilterGroup } from "@/features/collection/filter-panel";
 
-import { qualityNames } from "@/ui/collection/quality";
-export { qualityNames } from "@/ui/collection/quality";
+import { qualityNames } from "@/features/collection/quality";
 export type Option = { value: string; label: string };
 export type FilterGroup = CollectionFilterGroup<FilterKey>;
 

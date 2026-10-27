@@ -66,13 +66,13 @@ describe("compact furniture URLs", () => {
     expect(compactFurnitureSearch(compact)).toEqual(compact);
   });
 
-  it("omits the grid layout and serializes the table layout", () => {
+  it("serializes both explicit layouts so links override local preferences", () => {
     const { router } = setup();
     const grid = router.buildLocation({
       to: "/collection/furniture",
       search: furnitureSearchSchema.parse({ layout: "grid" }),
     });
-    expect(grid.href).toBe("/collection/furniture");
+    expect(grid.href).toBe("/collection/furniture?layout=grid");
     const table = router.buildLocation({
       to: "/collection/furniture",
       search: furnitureSearchSchema.parse({ layout: "table" }),
@@ -94,5 +94,33 @@ describe("compact furniture URLs", () => {
       lang: "zh",
       items: { categories: ["起居"] },
     });
+  });
+});
+
+describe("layout URL overrides", () => {
+  it.each(["grid", "table"] as const)(
+    "preserves explicit %s layout through URLs and query updates",
+    (layout) => {
+      const { router } = setup();
+      const search = furnitureSearchSchema.parse({ layout, items: { q: "测试" } });
+      const compact = compactFurnitureSearch(search);
+      expect(
+        furnitureSearchSchema.parse(defaultParseSearch(defaultStringifySearch(compact))),
+      ).toEqual(search);
+      const location = router.buildLocation({ to: "/collection/furniture", search });
+      expect(defaultParseSearch(location.searchStr)).toMatchObject({ layout });
+      const cleared = router.buildLocation({
+        to: "/collection/furniture",
+        search: furnitureSearchSchema.parse({ ...search, items: {} }),
+      });
+      expect(defaultParseSearch(cleared.searchStr)).toEqual({ layout });
+    },
+  );
+  it("omits absent and malformed layouts so local preferences can apply", () => {
+    for (const layout of [undefined, null, "bad", 42, []]) {
+      const parsed = furnitureSearchSchema.parse({ layout });
+      expect(parsed.layout).toBeUndefined();
+      expect(compactFurnitureSearch(parsed).layout).toBeUndefined();
+    }
   });
 });

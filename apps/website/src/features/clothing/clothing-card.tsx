@@ -2,8 +2,8 @@ import type { ClothingItem, ClothingSet, ClothingAppearance } from "../collectio
 import { Link } from "@tanstack/react-router";
 import { LayersIcon } from "lucide-react";
 import { CardDescription, CardContent } from "@/ui/components/card";
-import { CollectionCard } from "@/ui/collection/collection-card";
-import { RecordImage } from "@/ui/collection/record-image";
+import { CollectionCard } from "@/features/collection/collection-card";
+import { RecordImage } from "@/features/collection/record-image";
 import { useClothingOrigin } from "./detail-navigation";
 
 export function ClothingCard({

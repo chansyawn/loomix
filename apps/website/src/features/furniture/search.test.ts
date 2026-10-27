@@ -2,9 +2,9 @@ import { describe, expect, it } from "vite-plus/test";
 import { emptyQuery, furnitureSearchSchema, updateViewQuery } from "./search";
 
 describe("furniture URL state", () => {
-  it("defaults to cards and validates the shared layout independently of content views", () => {
+  it("leaves layout unspecified for preferences and validates it independently of content views", () => {
     for (const layout of [undefined, null, "bad", [], 42])
-      expect(furnitureSearchSchema.parse({ layout }).layout).toBe("grid");
+      expect(furnitureSearchSchema.parse({ layout }).layout).toBeUndefined();
     const search = furnitureSearchSchema.parse({
       layout: "table",
       view: "sets",
@@ -70,7 +70,7 @@ describe("furniture URL state", () => {
 
 describe("search parameter validation", () => {
   it("restores complete defaults for missing or malformed view objects", () => {
-    const defaults = { view: "items", layout: "grid", items: emptyQuery(), sets: emptyQuery() };
+    const defaults = { view: "items", items: emptyQuery(), sets: emptyQuery() };
     expect(furnitureSearchSchema.parse({})).toEqual(defaults);
     for (const value of [null, [], "bad", 42, true]) {
       expect(furnitureSearchSchema.parse({ items: value, sets: value })).toEqual(defaults);

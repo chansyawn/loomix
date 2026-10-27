@@ -1,6 +1,6 @@
 import type { ClothingSet } from "../collection-view.ts";
-import type { FilterGroup } from "@/ui/collection/filter-panel";
-import { qualityNames } from "@/ui/collection/quality";
+import type { FilterGroup } from "@/features/collection/filter-panel";
+import { qualityNames } from "@/features/collection/quality";
 import type { ClothingData } from "./data";
 import { missing, ungrouped } from "./search";
 import type { FilterKey, View, ViewQuery } from "./search";

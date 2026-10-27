@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import type { MiscellaneousItem } from "../collection-view.ts";
 import { CardContent, CardDescription } from "@/ui/components/card";
-import { CollectionCard } from "@/ui/collection/collection-card";
-import { RecordImage } from "@/ui/collection/record-image";
+import { CollectionCard } from "@/features/collection/collection-card";
+import { RecordImage } from "@/features/collection/record-image";
 import { useMiscellanyOrigin } from "./detail-navigation";
 
 export function MiscellanyCard({ item }: { item: MiscellaneousItem }) {

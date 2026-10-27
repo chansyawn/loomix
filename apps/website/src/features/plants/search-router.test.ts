@@ -73,3 +73,31 @@ describe("compact plant URLs", () => {
     });
   });
 });
+
+describe("layout URL overrides", () => {
+  it.each(["grid", "table"] as const)(
+    "preserves explicit %s layout through URLs and query updates",
+    (layout) => {
+      const router = setup();
+      const search = plantsSearchSchema.parse({ layout, items: { q: "测试" } });
+      const compact = compactPlantsSearch(search);
+      expect(plantsSearchSchema.parse(defaultParseSearch(defaultStringifySearch(compact)))).toEqual(
+        search,
+      );
+      const location = router.buildLocation({ to: "/collection/plants", search });
+      expect(defaultParseSearch(location.searchStr)).toMatchObject({ layout });
+      const cleared = router.buildLocation({
+        to: "/collection/plants",
+        search: plantsSearchSchema.parse({ ...search, items: {} }),
+      });
+      expect(defaultParseSearch(cleared.searchStr)).toEqual({ layout });
+    },
+  );
+  it("omits absent and malformed layouts so local preferences can apply", () => {
+    for (const layout of [undefined, null, "bad", 42, []]) {
+      const parsed = plantsSearchSchema.parse({ layout });
+      expect(parsed.layout).toBeUndefined();
+      expect(compactPlantsSearch(parsed).layout).toBeUndefined();
+    }
+  });
+});

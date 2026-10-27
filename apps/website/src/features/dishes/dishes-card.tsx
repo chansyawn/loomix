@@ -2,8 +2,8 @@ import { LayersIcon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import type { DishItem, DishSeries } from "../collection-view.ts";
 import { CardDescription } from "@/ui/components/card";
-import { RecordImage } from "@/ui/collection/record-image";
-import { CollectionCard } from "@/ui/collection/collection-card";
+import { RecordImage } from "@/features/collection/record-image";
+import { CollectionCard } from "@/features/collection/collection-card";
 import { useDishesOrigin } from "./detail-navigation";
 
 export function DishesCard({ item }: { item: DishItem }) {

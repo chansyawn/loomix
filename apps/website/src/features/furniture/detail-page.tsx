@@ -10,8 +10,9 @@ import {
   EmptyMedia,
 } from "@/ui/components/empty";
 import { Skeleton } from "@/ui/components/skeleton";
-import { FurnitureCard, FurnitureSetCard, QualityBadge } from "./furniture-card";
-import { FurnitureImage } from "./furniture-image";
+import { FurnitureCard, FurnitureSetCard } from "./furniture-card";
+import { QualityBadge } from "@/features/collection/quality";
+import { RecordImage as FurnitureImage } from "@/features/collection/record-image";
 import { FurnitureReturnLink } from "./detail-navigation";
 import type { FurnitureDetail } from "./detail";
 import type { View } from "./search";

@@ -1,5 +1,6 @@
 import type { SearchMiddleware } from "@tanstack/react-router";
 import { z } from "zod";
+import { collectionLayoutSchema } from "../collection/layout";
 
 export const missing = "__missing";
 export const ungrouped = "__ungrouped";
@@ -62,6 +63,7 @@ const seriesQuerySchema = viewQuerySchema
   .pick({ q: true, sort: true, qualities: true })
   .transform((query): ViewQuery => ({ ...emptyQuery(), ...query }));
 export const creaturesSearchSchema = z.object({
+  layout: collectionLayoutSchema,
   view: z.enum(["items", "series"]).catch("items").default("items"),
   items: viewQuerySchema.prefault({}).catch(emptyQuery),
   series: seriesQuerySchema.prefault({}).catch(emptyQuery),
@@ -87,6 +89,7 @@ export function compactCreaturesSearch(input: CreaturesSearchInput): CreaturesSe
   const items = compactQuery(search.items);
   const series = compactQuery(search.series);
   return {
+    ...(search.layout ? { layout: search.layout } : {}),
     ...(search.view === "series" ? { view: search.view } : {}),
     ...(Object.keys(items).length > 0 ? { items } : {}),
     ...(Object.keys(series).length > 0 ? { series } : {}),
@@ -97,7 +100,7 @@ export const compactCreaturesSearchMiddleware: SearchMiddleware<CreaturesSearch>
   next,
 }) => {
   const result = next(search);
-  const { view: _view, items: _items, series: _series, ...other } = result;
+  const { layout: _layout, view: _view, items: _items, series: _series, ...other } = result;
   // Validation restores defaults omitted from the URL representation.
   return { ...other, ...compactCreaturesSearch(result) } as CreaturesSearch;
 };
