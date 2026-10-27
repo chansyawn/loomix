@@ -100,6 +100,7 @@ describe("collection view adapter", () => {
         colors: "蓝",
         materials: "木",
         sources: "商店",
+        craftingRecipes: null,
       },
     ]);
     expect(view.furniture.sets).toEqual([

@@ -35,9 +35,9 @@ export function FurnitureDetailPage({ detail }: { detail: FurnitureDetail }) {
           ["成员数量", detail.items === null ? null : `${detail.items.length} 件家具`],
         ];
   return (
-    <section className="space-y-8 pb-8">
-      <div className="grid items-start gap-6 lg:grid-cols-2 lg:gap-10">
-        <div className="overflow-hidden rounded-4xl border">
+    <section className="pb-8">
+      <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,1fr)] lg:gap-12">
+        <div className="overflow-hidden rounded-4xl border bg-muted/30 lg:sticky lg:top-6">
           <FurnitureImage
             key={record.image}
             image={record.image}
@@ -46,9 +46,9 @@ export function FurnitureDetailPage({ detail }: { detail: FurnitureDetail }) {
             eager
           />
         </div>
-        <div className="min-w-0 space-y-6">
+        <div className="min-w-0 space-y-4">
           <div className="space-y-3">
-            <h1 className="text-3xl leading-tight font-semibold tracking-tight wrap-break-word">
+            <h1 className="text-3xl leading-tight font-semibold tracking-tight wrap-break-word sm:text-4xl">
               {record.name}
             </h1>
             {record.quality === null ? (
@@ -60,7 +60,7 @@ export function FurnitureDetailPage({ detail }: { detail: FurnitureDetail }) {
           <p className="text-sm leading-7 whitespace-pre-line text-muted-foreground">
             {record.description || "描述未提供"}
           </p>
-          <dl className="grid grid-cols-1 gap-x-6 gap-y-5 rounded-3xl border p-5 sm:grid-cols-2">
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-5 border-y py-5">
             {fields.map(([label, value]) => (
               <div key={label} className="min-w-0 space-y-1.5">
                 <dt className="text-xs text-muted-foreground">{label}</dt>
@@ -70,34 +70,87 @@ export function FurnitureDetailPage({ detail }: { detail: FurnitureDetail }) {
               </div>
             ))}
           </dl>
+          {detail.kind === "item" && <FurnitureRecipes detail={detail} />}
+          <FurnitureRelated detail={detail} />
         </div>
       </div>
-      <section aria-labelledby="related-furniture" className="space-y-4">
-        <h2 id="related-furniture" className="text-xl font-semibold">
-          {detail.kind === "item" ? "所属套装" : "套装成员"}
+    </section>
+  );
+}
+
+function FurnitureRecipes({ detail }: { detail: Extract<FurnitureDetail, { kind: "item" }> }) {
+  const recipes = detail.recipes;
+  return (
+    <section aria-labelledby="furniture-recipes" className="space-y-4">
+      <div>
+        <h2 id="furniture-recipes" className="text-lg font-semibold">
+          制作配方
         </h2>
-        {detail.kind === "item" ? (
-          detail.sets.length > 0 ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {detail.sets.map((set) => (
-                <FurnitureSetCard key={set.id} set={set} />
-              ))}
+        <p className="mt-1 text-sm text-muted-foreground">打造这件家具所需的材料</p>
+      </div>
+      {recipes === null ? (
+        <p className="text-sm text-muted-foreground">配方信息未提供</p>
+      ) : (
+        <div className="space-y-3">
+          {recipes.map((recipe, index) => (
+            <div key={recipe.id} className="rounded-2xl border p-4">
+              {recipes.length > 1 && <h3 className="mb-3 text-sm font-medium">配方 {index + 1}</h3>}
+              {recipe.materials === null ? (
+                <p className="text-sm text-muted-foreground">
+                  {recipe.unresolvedReason || "材料信息未确认"}
+                </p>
+              ) : (
+                <ul className="divide-y">
+                  {recipe.materials.map((material) => (
+                    <li
+                      key={material.itemId}
+                      className="flex items-center justify-between gap-4 py-2.5 first:pt-0 last:pb-0"
+                    >
+                      <span className="min-w-0 truncate text-sm">
+                        {material.item?.name ?? `未知材料 #${material.itemId}`}
+                      </span>
+                      <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
+                        × {material.quantity}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">未归入套装</p>
-          )
-        ) : detail.items === null ? (
-          <p className="text-sm text-muted-foreground">成员信息未提供</p>
-        ) : detail.items.length === 0 ? (
-          <p className="text-sm text-muted-foreground">暂无套装成员</p>
-        ) : (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,9rem),1fr))] gap-3">
-            {detail.items.map((item) => (
-              <FurnitureCard key={item.id} item={item} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function FurnitureRelated({ detail }: { detail: FurnitureDetail }) {
+  return (
+    <section aria-labelledby="related-furniture" className="space-y-4">
+      <h2 id="related-furniture" className="text-lg font-semibold">
+        {detail.kind === "item" ? "所属套组" : "套组成员"}
+      </h2>
+      {detail.kind === "item" ? (
+        detail.sets.length > 0 ? (
+          <div className="grid gap-4">
+            {detail.sets.map((set) => (
+              <FurnitureSetCard key={set.id} set={set} />
             ))}
           </div>
-        )}
-      </section>
+        ) : (
+          <p className="text-sm text-muted-foreground">未归入套组</p>
+        )
+      ) : detail.items === null ? (
+        <p className="text-sm text-muted-foreground">成员信息未提供</p>
+      ) : detail.items.length === 0 ? (
+        <p className="text-sm text-muted-foreground">暂无套组成员</p>
+      ) : (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,8rem),1fr))] gap-3">
+          {detail.items.map((item) => (
+            <FurnitureCard key={item.id} item={item} />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -125,7 +178,7 @@ export function FurnitureDetailNotFound({ view }: { view: View }) {
           <SearchXIcon />
         </EmptyMedia>
         <EmptyTitle>
-          <h1>{view === "items" ? "未找到这件家具" : "未找到这个套装"}</h1>
+          <h1>{view === "items" ? "未找到这件家具" : "未找到这个套组"}</h1>
         </EmptyTitle>
         <EmptyDescription>该条目不存在，请返回图鉴查找其他家具。</EmptyDescription>
       </EmptyHeader>

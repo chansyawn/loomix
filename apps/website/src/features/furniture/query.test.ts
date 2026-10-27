@@ -20,6 +20,7 @@ function item(
     colors: null,
     materials: null,
     sources: null,
+    craftingRecipes: null,
     ...fields,
   };
 }
@@ -73,7 +74,7 @@ const items: FurnitureItem[] = [
 const sets: FurnitureSet[] = [
   {
     id: 101,
-    name: "木制套装",
+    name: "木制套组",
     image: null,
     description: null,
     quality: 2,
@@ -82,7 +83,7 @@ const sets: FurnitureSet[] = [
   },
   {
     id: 102,
-    name: "白色套装",
+    name: "白色套组",
     image: null,
     description: null,
     quality: null,
@@ -91,7 +92,7 @@ const sets: FurnitureSet[] = [
   },
   {
     id: 103,
-    name: "未知套装",
+    name: "未知套组",
     image: null,
     description: null,
     quality: 0,
@@ -99,7 +100,7 @@ const sets: FurnitureSet[] = [
     componentIds: null,
   },
 ];
-const data = { items, sets };
+const data = { items, sets, ingredientItemsById: new Map() };
 
 function ids(rows: { id: number }[]): number[] {
   return rows.map((row) => row.id);

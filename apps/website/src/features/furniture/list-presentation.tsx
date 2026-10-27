@@ -9,12 +9,12 @@ import type { View } from "./search";
 export const title = "家具";
 export const tabs: CollectionTab<"items" | "sets">[] = [
   { value: "items", label: "家具单件", icon: <ArmchairIcon /> },
-  { value: "sets", label: "家具套装", icon: <LayersIcon /> },
+  { value: "sets", label: "家具套组", icon: <LayersIcon /> },
 ];
 export function listPresentation(view: View) {
   const entry = {
     items: { unit: "件家具", searchLabel: "搜索家具名称", placeholder: "搜索家具名称…" },
-    sets: { unit: "个套装", searchLabel: "搜索套装名称", placeholder: "搜索套装名称…" },
+    sets: { unit: "个套组", searchLabel: "搜索套组名称", placeholder: "搜索套组名称…" },
   }[view];
   return {
     ...entry,

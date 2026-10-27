@@ -118,4 +118,54 @@ describe("unified catalog loading", () => {
     );
     await expect(loadCollectionView()).rejects.toThrow();
   });
+
+  it("preserves furniture crafting recipes and ingredient names in collection data", async () => {
+    const furnitureCatalog: CatalogV4 = {
+      ...catalog,
+      cropSeeds: [],
+      items: [
+        {
+          id: 30162,
+          name: "木桌",
+          image: null,
+          description: null,
+          quality: null,
+          encyclopediaEntry: null,
+          kind: "item",
+          category: "furniture",
+          subcategory: "起居",
+          attributes: { type: "桌子", size: null, colors: null, materials: "木", sources: null },
+          craftingRecipes: [
+            {
+              id: 800,
+              materials: [{ itemId: 30163, quantity: 3 }],
+              unresolvedReason: null,
+            },
+          ],
+        },
+        {
+          id: 30163,
+          name: "木板",
+          image: null,
+          description: null,
+          quality: null,
+          encyclopediaEntry: null,
+          kind: "item",
+          category: "miscellaneous",
+          subcategory: null,
+          attributes: { sources: null },
+        },
+      ],
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify(furnitureCatalog))),
+    );
+
+    const collection = await loadCollectionView();
+    expect(collection.furniture.items[0]?.craftingRecipes).toEqual([
+      { id: 800, materials: [{ itemId: 30163, quantity: 3 }], unresolvedReason: null },
+    ]);
+    expect(collection.ingredientItemsById.get(30163)?.name).toBe("木板");
+  });
 });

@@ -51,10 +51,10 @@ export function filterGroups(data: FurnitureData): FilterGroup[] {
     },
     {
       key: "sets",
-      label: "所属套装",
+      label: "所属套组",
       options: data.sets
         .map((set) => ({ value: String(set.id), label: set.name }))
-        .concat([{ value: ungrouped, label: "未归入套装" }]),
+        .concat([{ value: ungrouped, label: "未归入套组" }]),
     },
     {
       key: "colors",

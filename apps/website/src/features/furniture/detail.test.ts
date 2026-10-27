@@ -25,18 +25,47 @@ const first: FurnitureItem = {
   colors: null,
   materials: null,
   sources: null,
+  craftingRecipes: null,
 };
 const second: FurnitureItem = { ...first, id: 2, name: "木桌" };
 const set: FurnitureSet = {
   id: 3,
-  name: "木制套装",
+  name: "木制套组",
   image: null,
   quality: null,
   description: null,
   seriesName: null,
   componentIds: [2, 1],
 };
-const data = { items: [first, second], sets: [set, { ...set, id: 4, componentIds: [1] }] };
+const ingredientItemsById = new Map([
+  [
+    1,
+    {
+      id: 1,
+      name: "木椅",
+      image: null,
+      description: null,
+      quality: null,
+      catalogCategory: "furniture" as const,
+    },
+  ],
+  [
+    2,
+    {
+      id: 2,
+      name: "木桌",
+      image: null,
+      description: null,
+      quality: null,
+      catalogCategory: "furniture" as const,
+    },
+  ],
+]);
+const data = {
+  items: [first, second],
+  sets: [set, { ...set, id: 4, componentIds: [1] }],
+  ingredientItemsById,
+};
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -57,8 +86,30 @@ describe("furniture details", () => {
       kind: "item",
       record: first,
       sets: data.sets,
+      recipes: null,
     });
     expect(furnitureDetail({ ...data, sets: [] }, "items", 1)).toMatchObject({ sets: [] });
+  });
+  it("resolves crafting materials and preserves unconfirmed recipe reasons", () => {
+    const recipeData = {
+      ...data,
+      items: [
+        {
+          ...first,
+          craftingRecipes: [
+            { id: 10, materials: [{ itemId: 2, quantity: 3 }], unresolvedReason: null },
+            { id: 11, materials: null, unresolvedReason: "材料信息尚未确认" },
+          ],
+        },
+        second,
+      ],
+    };
+    expect(furnitureDetail(recipeData, "items", 1)).toMatchObject({
+      recipes: [
+        { id: 10, materials: [{ itemId: 2, quantity: 3, item: { name: "木桌" } }] },
+        { id: 11, materials: null, unresolvedReason: "材料信息尚未确认" },
+      ],
+    });
   });
   it("preserves member order and distinguishes unavailable from empty members", () => {
     expect(furnitureDetail(data, "sets", 3)).toMatchObject({ items: [second, first] });

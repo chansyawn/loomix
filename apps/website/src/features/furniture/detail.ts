@@ -14,7 +14,20 @@ export function furnitureDetail(data: FurnitureData, view: View, id: number) {
   if (view === "items") {
     const item = data.items.find((row) => row.id === id);
     if (!item) throw notFound();
-    return { kind: "item" as const, record: item, sets: membershipIndex(data.sets).get(id) ?? [] };
+    return {
+      kind: "item" as const,
+      record: item,
+      sets: membershipIndex(data.sets).get(id) ?? [],
+      recipes:
+        item.craftingRecipes?.map((recipe) => ({
+          ...recipe,
+          materials:
+            recipe.materials?.map((material) => ({
+              ...material,
+              item: data.ingredientItemsById?.get(material.itemId) ?? null,
+            })) ?? null,
+        })) ?? null,
+    };
   }
   const set = data.sets.find((row) => row.id === id);
   if (!set) throw notFound();

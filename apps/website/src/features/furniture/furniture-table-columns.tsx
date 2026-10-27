@@ -34,7 +34,7 @@ function MemberLinks({ groups, complete }: { groups: FurnitureSet[]; complete: b
     <MembershipCell
       groups={groups}
       complete={complete}
-      noun="套装"
+      noun="套组"
       renderLink={(entry) => (
         <Link
           key={entry.id}
@@ -86,7 +86,7 @@ export function furnitureTableColumns(
     ),
     {
       id: "sets",
-      header: "所属套装",
+      header: "所属套组",
       width: 240,
       cell: (record) => (
         <MemberLinks groups={memberships.get(record.id) ?? []} complete={complete} />

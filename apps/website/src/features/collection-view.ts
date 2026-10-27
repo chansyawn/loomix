@@ -5,6 +5,7 @@ import type {
   Recipe,
   RecordBase,
 } from "@loomix/content-schema";
+import type { CraftingRecipe } from "@loomix/content-schema/v4";
 
 export type CollectionRecord = Pick<
   RecordBase,
@@ -16,7 +17,10 @@ type ItemAttributes<C extends ItemRecord["category"]> = Extract<
 >["attributes"];
 type CategorizedRecord = CollectionRecord & { category: string | null };
 
-export type FurnitureItem = CategorizedRecord & ItemAttributes<"furniture">;
+export type FurnitureItem = CategorizedRecord &
+  ItemAttributes<"furniture"> & {
+    craftingRecipes: CraftingRecipe[] | null;
+  };
 export type CreatureItem = CategorizedRecord & ItemAttributes<"creatures">;
 export type PlantItem = CategorizedRecord & ItemAttributes<"plants">;
 export type DishItem = CollectionRecord & ItemAttributes<"dishes"> & { recipe: Recipe | null };
@@ -64,7 +68,10 @@ function collectionRecord(record: RecordBase): CollectionRecord {
   };
 }
 
-export function toCollectionView(catalog: Catalog): CollectionView {
+export function toCollectionView(
+  catalog: Catalog,
+  furnitureRecipes: ReadonlyMap<number, CraftingRecipe[] | null> = new Map(),
+): CollectionView {
   const view: CollectionView = {
     ingredientCategories: catalog.ingredientCategories,
     ingredientCategoriesById: new Map(
@@ -105,7 +112,12 @@ export function toCollectionView(catalog: Catalog): CollectionView {
       const category = record.subcategory;
       switch (record.category) {
         case "furniture":
-          view.furniture.items.push({ ...base, category, ...record.attributes });
+          view.furniture.items.push({
+            ...base,
+            category,
+            ...record.attributes,
+            craftingRecipes: furnitureRecipes.get(record.id) ?? null,
+          });
           view.ingredientItemsById.set(record.id, { ...base, catalogCategory: "furniture" });
           break;
         case "creatures":

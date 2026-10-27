@@ -7,5 +7,10 @@ export async function loadCollectionView(): Promise<CollectionView> {
   const response = await fetch(resourceUrl("content.json"));
   if (!response.ok) throw new Error(`Unable to load collection: ${response.status}`);
   const catalog = parseCatalogV4(await response.json());
-  return toCollectionView(projectLegacyCatalog(catalog));
+  const furnitureRecipes = new Map(
+    catalog.items
+      .filter((record) => record.category === "furniture" && record.kind === "item")
+      .map((record) => [record.id, record.craftingRecipes]),
+  );
+  return toCollectionView(projectLegacyCatalog(catalog), furnitureRecipes);
 }
