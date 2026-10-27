@@ -53,7 +53,7 @@ function IngredientRequirement({
         {matches.length ? (
           <ul
             aria-label={`${category.name}候选物品`}
-            className="grid max-h-80 gap-1 overflow-y-auto border-t p-2 sm:grid-cols-2 xl:grid-cols-3"
+            className="grid max-h-80 grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-1 overflow-y-auto border-t p-2"
           >
             {matches.map((item) => (
               <li key={item.id} className="min-w-0">
@@ -100,13 +100,13 @@ export function DishRecipe({ detail }: { detail: Extract<DishesDetail, { kind: "
           ? "已确认无需食材"
           : null;
   return (
-    <section aria-labelledby="dish-recipe" className="min-w-0 space-y-5">
+    <section aria-labelledby="dish-recipe" className="min-w-0 space-y-4">
       <div className="flex items-start gap-3">
         <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/20">
           <CookingPotIcon aria-hidden="true" className="size-5" />
         </div>
         <div className="min-w-0 space-y-1">
-          <h2 id="dish-recipe" className="text-xl font-semibold">
+          <h2 id="dish-recipe" className="text-lg font-semibold">
             配方
           </h2>
           {emptyMessage === null && (

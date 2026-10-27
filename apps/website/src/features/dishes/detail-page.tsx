@@ -9,9 +9,11 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/ui/components/empty";
-import { Skeleton } from "@/ui/components/skeleton";
 import { RecordImage } from "@/features/collection/record-image";
-import { QualityBadge } from "@/features/collection/quality";
+import {
+  CollectionDetailLayout,
+  CollectionDetailLoading,
+} from "@/features/collection/detail-layout";
 import { DishesCard, DishSeriesCard } from "./dishes-card";
 import { DishesReturnLink } from "./detail-navigation";
 import type { DishesDetail } from "./detail";
@@ -35,54 +37,28 @@ export function DishesDetailPage({ detail }: { detail: DishesDetail }) {
         ];
 
   return (
-    <section className="space-y-8 pb-8">
-      <div className="grid items-start gap-6 lg:grid-cols-2 lg:gap-10">
-        <div className="overflow-hidden rounded-4xl border">
-          <RecordImage key={record.image} image={record.image} name={record.name} eager />
-        </div>
-        <div className="min-w-0 space-y-6">
-          <div className="space-y-3">
-            <h1 className="text-3xl leading-tight font-semibold tracking-tight wrap-break-word">
-              {record.name}
-            </h1>
-            {record.quality === null ? (
-              <p className="text-sm text-muted-foreground">品阶：未提供</p>
-            ) : (
-              <QualityBadge quality={record.quality} />
-            )}
-          </div>
-          {(detail.kind === "item" || record.description) && (
-            <p className="text-sm leading-7 whitespace-pre-line text-muted-foreground">
-              {record.description || "描述未提供"}
-            </p>
-          )}
-          <dl className="grid grid-cols-1 gap-x-6 gap-y-5 rounded-3xl border p-5 sm:grid-cols-2">
-            {fields.map(([label, value]) => (
-              <div key={label} className="min-w-0 space-y-1.5">
-                <dt className="text-xs text-muted-foreground">{label}</dt>
-                <dd className="text-sm leading-6 whitespace-pre-line wrap-break-word">
-                  {value || "未提供"}
-                </dd>
-              </div>
-            ))}
-          </dl>
-          <DishesReturnLink
-            view={detail.kind === "item" ? "items" : "series"}
-            className={buttonVariants({ variant: "outline" })}
-          >
-            返回菜肴列表
-          </DishesReturnLink>
-        </div>
-      </div>
+    <CollectionDetailLayout
+      image={<RecordImage key={record.image} image={record.image} name={record.name} eager />}
+      title={record.name}
+      quality={record.quality}
+      description={
+        (detail.kind === "item" || record.description) && (
+          <p className="text-sm leading-7 whitespace-pre-line text-muted-foreground">
+            {record.description || "描述未提供"}
+          </p>
+        )
+      }
+      fields={fields}
+    >
       {detail.kind === "item" && <DishRecipe detail={detail} />}
       <section aria-labelledby="related-dishes" className="space-y-4">
-        <h2 id="related-dishes" className="text-xl font-semibold">
+        <h2 id="related-dishes" className="text-lg font-semibold">
           {detail.kind === "item" ? "所属系列" : "系列成员"}
         </h2>
         {detail.kind === "item" ? (
           detail.series.length > 0 ? (
             <>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-4">
                 {detail.series.map((series) => (
                   <DishSeriesCard key={series.id} series={series} />
                 ))}
@@ -108,23 +84,12 @@ export function DishesDetailPage({ detail }: { detail: DishesDetail }) {
           </div>
         )}
       </section>
-    </section>
+    </CollectionDetailLayout>
   );
 }
 
 export function DishesDetailLoading() {
-  return (
-    <section aria-label="正在加载菜肴详情" aria-busy="true" className="space-y-8">
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Skeleton className="aspect-square rounded-4xl" />
-        <div className="space-y-6">
-          <Skeleton className="h-10 w-2/3" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-48 w-full" />
-        </div>
-      </div>
-    </section>
-  );
+  return <CollectionDetailLoading label="正在加载菜肴详情" />;
 }
 
 export function DishesDetailNotFound({ view }: { view: View }) {

@@ -9,9 +9,11 @@ import {
   EmptyContent,
   EmptyMedia,
 } from "@/ui/components/empty";
-import { Skeleton } from "@/ui/components/skeleton";
 import { FurnitureCard, FurnitureSetCard } from "./furniture-card";
-import { QualityBadge } from "@/features/collection/quality";
+import {
+  CollectionDetailLayout,
+  CollectionDetailLoading,
+} from "@/features/collection/detail-layout";
 import { RecordImage as FurnitureImage } from "@/features/collection/record-image";
 import { FurnitureReturnLink } from "./detail-navigation";
 import type { IngredientItem } from "../collection-view";
@@ -45,46 +47,28 @@ export function FurnitureDetailPage({ detail }: { detail: FurnitureDetail }) {
           ["成员数量", detail.items === null ? null : `${detail.items.length} 件家具`],
         ];
   return (
-    <section className="pb-8">
-      <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,1fr)] lg:gap-12">
-        <div className="overflow-hidden rounded-4xl border bg-muted/30 lg:sticky lg:top-6">
-          <FurnitureImage
-            key={record.image}
-            image={record.image}
-            name={record.name}
-            scene={detail.kind === "set"}
-            eager
-          />
-        </div>
-        <div className="min-w-0 space-y-4">
-          <div className="space-y-3">
-            <h1 className="text-3xl leading-tight font-semibold tracking-tight wrap-break-word sm:text-4xl">
-              {record.name}
-            </h1>
-            {record.quality === null ? (
-              <p className="text-sm text-muted-foreground">品阶：未提供</p>
-            ) : (
-              <QualityBadge quality={record.quality} />
-            )}
-          </div>
-          <p className="text-sm leading-7 whitespace-pre-line text-muted-foreground">
-            {record.description || "描述未提供"}
-          </p>
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-5 border-y py-5">
-            {fields.map(([label, value]) => (
-              <div key={label} className="min-w-0 space-y-1.5">
-                <dt className="text-xs text-muted-foreground">{label}</dt>
-                <dd className="text-sm leading-6 whitespace-pre-line wrap-break-word">
-                  {value || "未提供"}
-                </dd>
-              </div>
-            ))}
-          </dl>
-          {detail.kind === "item" && <FurnitureRecipes detail={detail} />}
-          <FurnitureRelated detail={detail} />
-        </div>
-      </div>
-    </section>
+    <CollectionDetailLayout
+      image={
+        <FurnitureImage
+          key={record.image}
+          image={record.image}
+          name={record.name}
+          scene={detail.kind === "set"}
+          eager
+        />
+      }
+      title={record.name}
+      quality={record.quality}
+      description={
+        <p className="text-sm leading-7 whitespace-pre-line text-muted-foreground">
+          {record.description || "描述未提供"}
+        </p>
+      }
+      fields={fields}
+    >
+      {detail.kind === "item" && <FurnitureRecipes detail={detail} />}
+      <FurnitureRelated detail={detail} />
+    </CollectionDetailLayout>
   );
 }
 
@@ -187,18 +171,7 @@ function FurnitureRelated({ detail }: { detail: FurnitureDetail }) {
 }
 
 export function FurnitureDetailLoading() {
-  return (
-    <section aria-label="正在加载家具详情" aria-busy="true" className="space-y-8">
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Skeleton className="aspect-square rounded-4xl" />
-        <div className="space-y-6">
-          <Skeleton className="h-10 w-2/3" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-48 w-full" />
-        </div>
-      </div>
-    </section>
-  );
+  return <CollectionDetailLoading label="正在加载家具详情" />;
 }
 
 export function FurnitureDetailNotFound({ view }: { view: View }) {

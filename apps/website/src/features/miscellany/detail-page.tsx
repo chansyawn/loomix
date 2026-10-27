@@ -8,59 +8,34 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/ui/components/empty";
-import { QualityBadge } from "@/features/collection/quality";
+import {
+  CollectionDetailLayout,
+  CollectionDetailLoading,
+} from "@/features/collection/detail-layout";
 import { RecordImage } from "@/features/collection/record-image";
 import type { MiscellaneousItem } from "../collection-view.ts";
 import { MiscellanyReturnLink } from "./detail-navigation";
 import { MiscellanyLoadError } from "./states";
-import { Skeleton } from "@/ui/components/skeleton";
 import { useRouter } from "@tanstack/react-router";
 
 export function MiscellanyDetailPage({ item }: { item: MiscellaneousItem }) {
   return (
-    <section className="space-y-8 pb-8">
-      <div className="grid items-start gap-6 lg:grid-cols-2 lg:gap-10">
-        <div className="overflow-hidden rounded-xl border">
-          <RecordImage key={item.image} image={item.image} name={item.name} eager />
-        </div>
-        <div className="min-w-0 space-y-6">
-          <div className="space-y-3">
-            <h1 className="wrap-break-word text-3xl leading-tight font-semibold">{item.name}</h1>
-            {item.quality === null ? (
-              <p className="text-sm text-muted-foreground">品阶：未提供</p>
-            ) : (
-              <QualityBadge quality={item.quality} />
-            )}
-          </div>
-          <p className="text-sm leading-7 whitespace-pre-line text-muted-foreground">
-            {item.description || "描述未提供"}
-          </p>
-          <dl className="flex gap-2 text-xs text-muted-foreground">
-            <dt>编号</dt>
-            <dd className="tabular-nums text-foreground">{item.id}</dd>
-          </dl>
-          <MiscellanyReturnLink className={buttonVariants({ variant: "outline" })}>
-            返回杂物列表
-          </MiscellanyReturnLink>
-        </div>
-      </div>
-    </section>
+    <CollectionDetailLayout
+      image={<RecordImage key={item.image} image={item.image} name={item.name} eager />}
+      title={item.name}
+      quality={item.quality}
+      description={
+        <p className="text-sm leading-7 whitespace-pre-line text-muted-foreground">
+          {item.description || "描述未提供"}
+        </p>
+      }
+      fields={[["编号", String(item.id)]]}
+    />
   );
 }
 
 export function MiscellanyDetailLoading() {
-  return (
-    <section aria-label="正在加载杂物详情" aria-busy="true" className="space-y-8">
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Skeleton className="aspect-square rounded-xl" />
-        <div className="space-y-6">
-          <Skeleton className="h-10 w-2/3" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-28 w-full" />
-        </div>
-      </div>
-    </section>
-  );
+  return <CollectionDetailLoading label="正在加载杂物详情" />;
 }
 
 export function MiscellanyDetailNotFound() {
