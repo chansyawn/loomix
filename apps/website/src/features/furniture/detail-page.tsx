@@ -1,5 +1,5 @@
 import { SearchXIcon } from "lucide-react";
-import { useRouter } from "@tanstack/react-router";
+import { Link, useRouter } from "@tanstack/react-router";
 import { buttonVariants } from "@/ui/components/button";
 import {
   Empty,
@@ -14,9 +14,19 @@ import { FurnitureCard, FurnitureSetCard } from "./furniture-card";
 import { QualityBadge } from "@/features/collection/quality";
 import { RecordImage as FurnitureImage } from "@/features/collection/record-image";
 import { FurnitureReturnLink } from "./detail-navigation";
+import type { IngredientItem } from "../collection-view";
 import type { FurnitureDetail } from "./detail";
 import type { View } from "./search";
 import { FurnitureLoadError } from "./states";
+
+const ingredientRoutes = {
+  plants: "/collection/plants/items/$id",
+  creatures: "/collection/creatures/items/$id",
+  miscellaneous: "/collection/miscellany/items/$id",
+  furniture: "/collection/furniture/items/$id",
+  clothing: "/collection/clothing/items/$id",
+  dishes: "/collection/dishes/items/$id",
+} as const;
 
 export function FurnitureDetailPage({ detail }: { detail: FurnitureDetail }) {
   const { record } = detail;
@@ -104,11 +114,15 @@ function FurnitureRecipes({ detail }: { detail: Extract<FurnitureDetail, { kind:
                   {recipe.materials.map((material) => (
                     <li
                       key={material.itemId}
-                      className="flex items-center justify-between gap-4 py-2.5 first:pt-0 last:pb-0"
+                      className="flex items-center justify-between gap-4 py-2 first:pt-0 last:pb-0"
                     >
-                      <span className="min-w-0 truncate text-sm">
-                        {material.item?.name ?? `未知材料 #${material.itemId}`}
-                      </span>
+                      {material.item ? (
+                        <FurnitureMaterialLink item={material.item} />
+                      ) : (
+                        <span className="min-w-0 truncate text-sm">
+                          未知材料 #{material.itemId}
+                        </span>
+                      )}
                       <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
                         × {material.quantity}
                       </span>
@@ -121,6 +135,23 @@ function FurnitureRecipes({ detail }: { detail: Extract<FurnitureDetail, { kind:
         </div>
       )}
     </section>
+  );
+}
+
+function FurnitureMaterialLink({ item }: { item: IngredientItem }) {
+  return (
+    <Link
+      to={ingredientRoutes[item.catalogCategory]}
+      params={{ id: String(item.id) }}
+      className="group/material flex min-w-0 items-center gap-3 rounded-lg outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <div className="size-11 shrink-0 overflow-hidden rounded-md border bg-muted/30">
+        <FurnitureImage image={item.image} name={item.name} compact />
+      </div>
+      <span className="min-w-0 truncate text-sm underline-offset-4 group-hover/material:underline">
+        {item.name}
+      </span>
+    </Link>
   );
 }
 
