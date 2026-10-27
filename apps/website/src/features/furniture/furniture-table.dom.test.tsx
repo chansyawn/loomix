@@ -238,6 +238,31 @@ test("keeps the count and clear action outside the filters and preserves individ
   expect(router.state.location.search).toMatchObject({ layout: "table" });
 });
 
+test("clears one filter group without toggling its accordion or clearing other groups", async () => {
+  const user = userEvent.setup();
+  await setup({ layout: "table", items: { categories: ["起居"], colors: ["黄色"] } });
+  await user.click(screen.getByRole("button", { name: "筛选 2" }));
+  const panel = screen.getByRole("dialog", { name: "筛选家具" });
+  const category = within(panel).getByRole("button", { name: "分类 已选 1" });
+  expect(category).toHaveAttribute("aria-expanded", "true");
+
+  await user.click(within(panel).getByRole("button", { name: "清除分类筛选" }));
+  await waitFor(() => expect(category).toHaveAccessibleName("分类"));
+  expect(category).toHaveAttribute("aria-expanded", "true");
+  expect(within(panel).getByRole("checkbox", { name: "起居" })).not.toBeChecked();
+  expect(within(panel).queryByRole("button", { name: "清除分类筛选" })).not.toBeInTheDocument();
+
+  const color = within(panel).getByRole("button", { name: "颜色 已选 1" });
+  expect(color).toHaveAttribute("aria-expanded", "false");
+  await user.click(color);
+  expect(within(panel).getByRole("checkbox", { name: "黄色" })).toBeChecked();
+  await user.click(color);
+  await user.click(within(panel).getByRole("button", { name: "清除颜色筛选" }));
+  expect(color).toHaveAttribute("aria-expanded", "false");
+  await waitFor(() => expect(color).toHaveAccessibleName("颜色"));
+  expect(within(panel).getByRole("button", { name: "查看 3 个结果" })).toBeVisible();
+});
+
 test("shows fades only at scrollable filter edges and updates them after resizing", async () => {
   const resizeCallbacks = new Set<() => void>();
   vi.stubGlobal(

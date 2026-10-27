@@ -43,15 +43,22 @@ function FilterOptions<K extends string>({
       value={group.key}
       className="border-b border-border/70 last:border-b-0 data-open:bg-transparent"
     >
-      <div className="flex items-center gap-3">
+      <div className="relative flex items-center">
         <AccordionTrigger className="min-w-0 flex-1 items-center gap-3 border-0 px-0 py-2 hover:no-underline">
-          <span className="flex min-w-0 items-center gap-2">
+          <span className={`flex min-w-0 items-center gap-2 ${selected.length > 0 ? "pr-16" : ""}`}>
             <span>{group.label}</span>
             {selected.length > 0 && <Badge variant="secondary">已选 {selected.length}</Badge>}
           </span>
         </AccordionTrigger>
         {selected.length > 0 && (
-          <Button type="button" variant="ghost" size="xs" onClick={() => onChange([])}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
+            className="absolute right-7"
+            aria-label={`清除${group.label}筛选`}
+            onClick={() => onChange([])}
+          >
             清除
           </Button>
         )}
