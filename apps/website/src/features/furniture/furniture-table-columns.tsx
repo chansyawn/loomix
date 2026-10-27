@@ -58,12 +58,9 @@ export function furnitureTableColumns(
   if (view === "sets")
     return [
       ...common,
-      textColumn("seriesName", "系列", 160, (record) =>
-        "seriesName" in record ? record.seriesName : null,
-      ),
       textColumn("members", "成员数量", 128, (record) =>
         "componentIds" in record && record.componentIds !== null
-          ? `${record.componentIds.length} 件家具`
+          ? String(record.componentIds.length)
           : null,
       ),
       textColumn("description", "描述", 320, (record) => record.description),
