@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { S3Client } from "@aws-sdk/client-s3";
 import { afterEach, expect, test, vi } from "vite-plus/test";
-import { emptyCatalog } from "@loomix/content-schema";
+import type { CatalogV4 } from "@loomix/content-schema/v4";
 import { parseNeighborImages } from "@loomix/neighbor-schema";
 import { publishRelease } from "../src/publish.ts";
 import type { UploadProgress } from "../src/publish.ts";
@@ -18,6 +18,19 @@ const webp = Buffer.from(
   "base64",
 );
 const imageKey = `assets/${sha256(webp)}.webp`;
+const emptyCatalog = (
+  source = {
+    gameVersion: "0.95.2",
+    dataRevision: 1449213,
+    resourceRevision: 1391927,
+  },
+): CatalogV4 => ({
+  schemaVersion: 4,
+  source,
+  ingredientCategories: [],
+  items: [],
+  cropSeeds: [],
+});
 const islandData = (source: {
   gameVersion: string;
   dataRevision: number;
@@ -32,11 +45,7 @@ const islandImages = (source: {
 }) => ({ schemaVersion: 1, source, images: [] });
 
 test("counts separately delivered neighbor images as referenced release assets", () => {
-  const catalog = emptyCatalog({
-    gameVersion: "0.95.2",
-    dataRevision: 1449213,
-    resourceRevision: 1391927,
-  });
+  const catalog = emptyCatalog();
   const images = parseNeighborImages({
     schemaVersion: 1,
     source: {
@@ -49,14 +58,34 @@ test("counts separately delivered neighbor images as referenced release assets",
   expect(referencedImages(catalog, images)).toEqual([imageKey]);
 });
 
+test("counts crop seed images as referenced release assets", () => {
+  const catalog = emptyCatalog();
+  catalog.items.push({
+    id: 3,
+    name: "crop",
+    image: null,
+    description: null,
+    quality: 0,
+    encyclopediaEntry: null,
+    category: "plants",
+    kind: "item",
+    subcategory: null,
+    attributes: {
+      originGalaxy: null,
+      maturityPeriod: null,
+      harvestCount: null,
+      sources: null,
+    },
+    seedId: 2,
+  });
+  catalog.cropSeeds.push({ id: 2, name: "seed", image: imageKey, productIds: [3] });
+  expect(referencedImages(catalog)).toEqual([imageKey]);
+});
+
 async function fixture(imageCount = 1): Promise<string> {
   const directory = await mkdtemp(path.join(tmpdir(), "loomix-publisher-"));
   directories.push(directory);
-  const content = emptyCatalog({
-    gameVersion: "0.95.2",
-    dataRevision: 1449213,
-    resourceRevision: 1391927,
-  });
+  const content = emptyCatalog();
   const neighbors = {
     schemaVersion: 1,
     source: {
@@ -88,7 +117,7 @@ async function fixture(imageCount = 1): Promise<string> {
       category: "miscellaneous",
       kind: "item",
       subcategory: null,
-      attributes: {},
+      attributes: { sources: null },
       encyclopediaEntry: null,
       id: i + 1,
       name: "Image",
@@ -275,16 +304,12 @@ test("rejects a non-WebP or truncated container even when its content hash match
   for (const bytes of [Buffer.from("not a WebP image"), webp.subarray(0, webp.length - 2)]) {
     const directory = await fixture();
     const key = `assets/${sha256(bytes)}.webp`;
-    const content = emptyCatalog({
-      gameVersion: "0.95.2",
-      dataRevision: 1449213,
-      resourceRevision: 1391927,
-    });
+    const content = emptyCatalog();
     content.items.push({
       category: "miscellaneous",
       kind: "item",
       subcategory: null,
-      attributes: {},
+      attributes: { sources: null },
       encyclopediaEntry: null,
       id: 1,
       name: "Invalid",

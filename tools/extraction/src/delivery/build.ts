@@ -20,8 +20,6 @@ export async function deliver(
   if (extraction.profileHash !== profileHash)
     throw new Error("Extraction profile differs from the current profile; extract again");
   const collectionV4 = fs.existsSync(path.join(bundle, "raw/images-content-v4.json"));
-  if (collectionV4 && !artifactOnly)
-    throw new Error("Schema v4 requires --artifact-only; website publication is not supported");
   const target = artifactOnly ? "artifact-only" : "website";
   const implementation = await implementationRevision();
   const inputs = await inventory(bundle, [

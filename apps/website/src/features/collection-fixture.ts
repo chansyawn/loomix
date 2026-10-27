@@ -1,5 +1,5 @@
-import { emptyCatalog } from "@loomix/content-schema";
-import type { Catalog, RecordBase } from "@loomix/content-schema";
+import type { RecordBase } from "@loomix/content-schema";
+import type { CatalogV4 } from "@loomix/content-schema/v4";
 import type { CollectionRecord, CollectionView } from "./collection-view.ts";
 
 export function catalogBase(record: CollectionRecord): RecordBase {
@@ -13,12 +13,14 @@ export function catalogBase(record: CollectionRecord): RecordBase {
   };
 }
 
-export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
-  const catalog = emptyCatalog({
-    gameVersion: "0.95.2",
-    dataRevision: 1449213,
-    resourceRevision: 1391927,
-  });
+export function catalogFixture(view: Partial<CollectionView> = {}): CatalogV4 {
+  const catalog: CatalogV4 = {
+    schemaVersion: 4,
+    source: { gameVersion: "0.95.2", dataRevision: 1449213, resourceRevision: 1391927 },
+    ingredientCategories: [],
+    items: [],
+    cropSeeds: [],
+  };
   catalog.ingredientCategories = view.ingredientCategories ?? [];
   for (const record of view.furniture?.items ?? [])
     catalog.items.push({
@@ -33,6 +35,7 @@ export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
         materials: record.materials,
         sources: record.sources,
       },
+      craftingRecipes: null,
     });
   for (const record of view.furniture?.sets ?? [])
     catalog.items.push({
@@ -54,7 +57,10 @@ export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
         activeTimes: record.activeTimes,
         activeWeather: record.activeWeather,
         sizeRange: record.sizeRange,
+        sources: null,
+        scientificName: null,
       },
+      research: null,
     });
   for (const record of view.creatures?.series ?? [])
     catalog.items.push({
@@ -73,7 +79,9 @@ export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
         originGalaxy: record.originGalaxy,
         maturityPeriod: record.maturityPeriod,
         harvestCount: record.harvestCount,
+        sources: null,
       },
+      seedId: null,
     });
   for (const record of view.plants?.series ?? [])
     catalog.items.push({
@@ -93,8 +101,11 @@ export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
         galaxyFlavor: record.galaxyFlavor,
         cookware: record.cookware,
         effects: record.effects,
+        sources: null,
+        tastes: null,
       },
       recipe: record.recipe,
+      difficultyRequirement: null,
     });
   for (const record of view.dishes?.series ?? [])
     catalog.items.push({
@@ -137,7 +148,7 @@ export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
       kind: "item",
       category: "miscellaneous",
       subcategory: null,
-      attributes: {},
+      attributes: { sources: null },
     });
   return catalog;
 }

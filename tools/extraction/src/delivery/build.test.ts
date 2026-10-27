@@ -81,11 +81,14 @@ test("artifact-only delivery seals a verifiable bundle without accessing the web
   expect(await inventory(path.join(dependencies.root, "website"))).toEqual(before);
 });
 
-test("v4 delivery rejects implicit website publication before processing or output mutation", async () => {
-  const before = await inventory(path.join(dependencies.root, "website"));
-  await expect(deliver(extractionId)).rejects.toThrow(/requires --artifact-only/);
-  expect(dependencies.render).not.toHaveBeenCalled();
-  expect(dependencies.publish).not.toHaveBeenCalled();
-  expect(dependencies.safeOutput).not.toHaveBeenCalled();
-  expect(await inventory(path.join(dependencies.root, "website"))).toEqual(before);
+test("v4 delivery can publish through the website target", async () => {
+  const id = await deliver(extractionId);
+  const directory = path.join(dependencies.root, "deliveries", id);
+  const manifest = await readManifest(directory, "delivery");
+  expect(manifest.deliveryMode).toBe("website");
+  expect(dependencies.render).toHaveBeenCalledOnce();
+  expect(dependencies.collection).toHaveBeenCalledOnce();
+  expect(dependencies.verify).toHaveBeenCalledOnce();
+  expect(dependencies.safeOutput).toHaveBeenCalledOnce();
+  expect(dependencies.publish).toHaveBeenCalledOnce();
 });

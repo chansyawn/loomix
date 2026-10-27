@@ -1,13 +1,13 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
-import { parseCatalog } from "@loomix/content-schema";
+import { parseCatalogV4 } from "@loomix/content-schema/v4";
 import {
   parseNeighborImages,
   validateNeighborImages,
   type NeighborImages,
   parseNeighborDatabase,
 } from "@loomix/neighbor-schema";
-import type { Catalog } from "@loomix/content-schema";
+import type { CatalogV4 } from "@loomix/content-schema/v4";
 import {
   parseIslandDatabase,
   parseIslandImages,
@@ -46,10 +46,11 @@ export function sha256(bytes: Uint8Array): string {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
-export function referencedImages(content: Catalog, neighbors?: NeighborImages): string[] {
+export function referencedImages(content: CatalogV4, neighbors?: NeighborImages): string[] {
   return [
     ...new Set([
       ...content.items.flatMap((record) => (record.image ? [record.image] : [])),
+      ...content.cropSeeds.flatMap((seed) => (seed.image ? [seed.image] : [])),
       ...(neighbors?.images.flatMap((entry) => (entry.image ? [entry.image] : [])) ?? []),
       ...(neighbors?.additionalImages?.map((entry) => entry.image) ?? []),
     ]),
@@ -98,7 +99,7 @@ export async function downloadRelease(
   if (sha256(bytes) !== marker.contentSha256) {
     throw new Error("Resource JSON SHA-256 does not match the completed release");
   }
-  const content = parseCatalog(JSON.parse(bytes.toString("utf8")));
+  const content = parseCatalogV4(JSON.parse(bytes.toString("utf8")));
   const neighborsBytes = Buffer.from(await (await fetchFile("neighbors.json")).arrayBuffer());
   if (sha256(neighborsBytes) !== marker.neighborsSha256) {
     throw new Error("Neighbor JSON SHA-256 does not match the completed release");

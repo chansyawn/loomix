@@ -3,7 +3,6 @@ import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { emptyCatalog } from "@loomix/content-schema";
 import { expect, test } from "vite-plus/test";
 
 const cli = fileURLToPath(new URL("../src/cli.ts", import.meta.url));
@@ -26,9 +25,13 @@ test("dry run from another directory returns only JSON without credentials or pr
     await mkdir(path.join(directory, "assets"));
     await writeFile(
       path.join(directory, "content.json"),
-      JSON.stringify(
-        emptyCatalog({ gameVersion: "0.95.2", dataRevision: 1449213, resourceRevision: 1391927 }),
-      ),
+      JSON.stringify({
+        schemaVersion: 4,
+        source: { gameVersion: "0.95.2", dataRevision: 1449213, resourceRevision: 1391927 },
+        ingredientCategories: [],
+        items: [],
+        cropSeeds: [],
+      }),
     );
     await writeFile(
       path.join(directory, "neighbors.json"),

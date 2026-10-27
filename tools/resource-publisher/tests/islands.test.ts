@@ -3,7 +3,6 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import sharp from "sharp";
 import { afterEach, expect, test } from "vite-plus/test";
-import { emptyCatalog } from "@loomix/content-schema";
 import { islandImagePaths, parseIslandDatabase, parseIslandImages } from "@loomix/island-schema";
 import { publishRelease } from "../src/publish.ts";
 import { sha256 } from "../src/release.ts";
@@ -55,11 +54,17 @@ async function fixture() {
     images: islandImagePaths(database).map((path) => ({ path, image })),
   });
   const files = {
-    "content.json": emptyCatalog({
-      gameVersion: source.gameVersion,
-      dataRevision: source.dataRevision,
-      resourceRevision: source.resourceRevision,
-    }),
+    "content.json": {
+      schemaVersion: 4,
+      source: {
+        gameVersion: source.gameVersion,
+        dataRevision: source.dataRevision,
+        resourceRevision: source.resourceRevision,
+      },
+      ingredientCategories: [],
+      items: [],
+      cropSeeds: [],
+    },
     "neighbors.json": {
       schemaVersion: 1,
       source,

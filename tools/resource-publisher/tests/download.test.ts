@@ -1,11 +1,16 @@
 import { expect, test, vi } from "vite-plus/test";
-import { emptyCatalog } from "@loomix/content-schema";
+import type { CatalogV4 } from "@loomix/content-schema/v4";
 import { downloadRelease, sha256 } from "../src/release.ts";
 
 const base = "https://assets.loomix.fun/releases/r1/";
-const json = JSON.stringify(
-  emptyCatalog({ gameVersion: "0.95.2", dataRevision: 1449213, resourceRevision: 1391927 }),
-);
+const emptyCatalog = (): CatalogV4 => ({
+  schemaVersion: 4,
+  source: { gameVersion: "0.95.2", dataRevision: 1449213, resourceRevision: 1391927 },
+  ingredientCategories: [],
+  items: [],
+  cropSeeds: [],
+});
+const json = JSON.stringify(emptyCatalog());
 const neighborsJson = JSON.stringify({
   schemaVersion: 1,
   source: {
@@ -89,6 +94,48 @@ function resourceServer(
 
 test("CI receives only content matching the completed release", async () => {
   expect((await downloadRelease(base, resourceServer())).toString()).toBe(json);
+});
+
+test("download validation counts crop seed images in the release asset total", async () => {
+  const content = emptyCatalog();
+  content.items.push({
+    id: 3,
+    name: "crop",
+    image: null,
+    description: null,
+    quality: 0,
+    encyclopediaEntry: null,
+    category: "plants",
+    kind: "item",
+    subcategory: null,
+    attributes: {
+      originGalaxy: null,
+      maturityPeriod: null,
+      harvestCount: null,
+      sources: null,
+    },
+    seedId: 2,
+  });
+  content.cropSeeds.push({
+    id: 2,
+    name: "seed",
+    image: `assets/${"a".repeat(64)}.webp`,
+    productIds: [3],
+  });
+  const contentJson = JSON.stringify(content);
+  const releaseMarker = {
+    ...marker,
+    contentSha256: sha256(Buffer.from(contentJson)),
+    assetCount: 1,
+  };
+  const request = resourceServer({ json: contentJson, marker: releaseMarker });
+  await expect(downloadRelease(base, request)).resolves.toEqual(Buffer.from(contentJson));
+  await expect(
+    downloadRelease(
+      base,
+      resourceServer({ json: contentJson, marker: { ...releaseMarker, assetCount: 0 } }),
+    ),
+  ).rejects.toThrow("image count does not match");
 });
 
 test("CI stops for missing completion, incorrect CORS, and a different release marker", async () => {
