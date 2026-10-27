@@ -13,6 +13,7 @@ import { readJson, writeJson } from "../workflow/json.ts";
 import { processImage, imageDimensions } from "./image.ts";
 
 import { renderNeighborImages } from "./neighbor-images.ts";
+import { renderIslandImages } from "./island-images.ts";
 import { assetKey } from "../extraction/images/select.ts";
 import { parseNeighborDatabase } from "../extraction/neighbors/schema.ts";
 export async function renderImages(options: WorkOptions, extraction: string) {
@@ -76,4 +77,6 @@ export async function renderImages(options: WorkOptions, extraction: string) {
   writeJson(path.join(staging, "content.json"), content);
   writeJson(path.join(options.work, "image-manifest.json"), selectedManifest);
   await renderNeighborImages(options.work, extraction);
+  if (fs.existsSync(path.join(extraction, "raw/islands.json")))
+    await renderIslandImages(options.work, extraction);
 }

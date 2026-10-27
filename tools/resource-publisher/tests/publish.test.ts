@@ -18,6 +18,18 @@ const webp = Buffer.from(
   "base64",
 );
 const imageKey = `assets/${sha256(webp)}.webp`;
+const islandData = (source: {
+  gameVersion: string;
+  dataRevision: number;
+  resourceRevision: number;
+  manifestId: string;
+}) => ({ schemaVersion: 1, source, islands: [], islandIconStyles: [], regions: [] });
+const islandImages = (source: {
+  gameVersion: string;
+  dataRevision: number;
+  resourceRevision: number;
+  manifestId: string;
+}) => ({ schemaVersion: 1, source, images: [] });
 
 test("counts separately delivered neighbor images as referenced release assets", () => {
   const catalog = emptyCatalog({
@@ -92,6 +104,14 @@ async function fixture(imageCount = 1): Promise<string> {
     path.join(directory, "neighbor-images.json"),
     JSON.stringify({ schemaVersion: 1, source: neighbors.source, images: [] }),
   );
+  await writeFile(
+    path.join(directory, "islands.json"),
+    JSON.stringify(islandData(neighbors.source)),
+  );
+  await writeFile(
+    path.join(directory, "islands-images.json"),
+    JSON.stringify(islandImages(neighbors.source)),
+  );
   return directory;
 }
 
@@ -138,6 +158,9 @@ test("publishes a complete, verifiable release and refuses to overwrite it", asy
     neighborsSha256: sha256(await readFile(path.join(directory, "neighbors.json"))),
     neighborCount: 0,
     neighborImagesSha256: sha256(await readFile(path.join(directory, "neighbor-images.json"))),
+    islandsSha256: sha256(await readFile(path.join(directory, "islands.json"))),
+    islandsImagesSha256: sha256(await readFile(path.join(directory, "islands-images.json"))),
+    islandCount: 0,
   });
   expect([...objects.keys()]).toEqual([
     "releases/0.95.2-r1/_upload.json",
@@ -145,6 +168,8 @@ test("publishes a complete, verifiable release and refuses to overwrite it", asy
     "releases/0.95.2-r1/content.json",
     "releases/0.95.2-r1/neighbors.json",
     "releases/0.95.2-r1/neighbor-images.json",
+    "releases/0.95.2-r1/islands.json",
+    "releases/0.95.2-r1/islands-images.json",
     "releases/0.95.2-r1/_complete.json",
   ]);
   await expect(publishRelease(directory, "0.95.2-r1", store)).rejects.toThrow(

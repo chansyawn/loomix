@@ -28,6 +28,7 @@ export async function deliver(
     "extraction-manifest.json",
     "raw/content.json",
     "raw/neighbors.json",
+    ...(fs.existsSync(path.join(bundle, "raw/islands.json")) ? ["raw/islands.json"] : []),
   ]);
   const id = digest({
     extractionId,

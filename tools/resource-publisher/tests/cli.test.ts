@@ -65,6 +65,20 @@ test("dry run from another directory returns only JSON without credentials or pr
         images: [],
       }),
     );
+    const source = {
+      gameVersion: "0.95.2",
+      dataRevision: 1449213,
+      resourceRevision: 1391927,
+      manifestId: "5662883",
+    };
+    await writeFile(
+      path.join(directory, "islands.json"),
+      JSON.stringify({ schemaVersion: 1, source, islands: [], islandIconStyles: [], regions: [] }),
+    );
+    await writeFile(
+      path.join(directory, "islands-images.json"),
+      JSON.stringify({ schemaVersion: 1, source, images: [] }),
+    );
     const result = spawnSync(
       process.execPath,
       [cli, "--content", directory, "--release", "test", "--dry-run"],
@@ -75,6 +89,9 @@ test("dry run from another directory returns only JSON without credentials or pr
       release: "test",
       assetCount: 0,
       neighborCount: 0,
+      islandCount: 0,
+      islandsSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+      islandsImagesSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
       dryRun: true,
     });
     expect(result.stderr).toBe("");

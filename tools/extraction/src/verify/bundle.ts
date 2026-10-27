@@ -25,6 +25,8 @@ import { decodeWebp, imageDimensions } from "../delivery/image.ts";
 import { verifyNeighbors } from "../extraction/neighbors/verify.ts";
 import { verifyNeighborImages } from "./neighbor-images.ts";
 import { neighborInput } from "../extraction/neighbors/build.ts";
+import { verifyIslandBundle } from "../extraction/islands/verify-bundle.ts";
+import { verifyIslandImages } from "../extraction/islands/verify-images.ts";
 
 export interface BundleVerification {
   reportRoot: string;
@@ -49,6 +51,7 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
     readJson(path.join(staging, "neighbors.json")),
     neighborInput(bundle),
   );
+  const islands = verifyIslandBundle(bundle, staging, raw);
   if (!raw)
     assert.deepEqual(
       fs.readFileSync(path.join(staging, "neighbors.json")),
@@ -268,6 +271,10 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
   for (const image of request.extraImages ?? []) used.add(image);
   const neighborImages = await verifyNeighborImages(neighbors, bundle, staging, reportRoot, raw);
   for (const image of neighborImages) used.add(image);
+  if (islands) {
+    const islandImages = await verifyIslandImages(islands, bundle, staging, raw);
+    for (const image of islandImages) used.add(image);
+  }
   if (!raw)
     assert.deepEqual(
       new Set(fs.readdirSync(path.join(staging, "assets")).map((s) => `assets/${s}`)),

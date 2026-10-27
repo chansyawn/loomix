@@ -58,7 +58,13 @@ export function safeOutput(output: string) {
       (!fs.lstatSync(placeholder).isFile() || fs.lstatSync(placeholder).isSymbolicLink())
     )
       throw new Error("Output placeholder must be a regular file");
-    for (const name of ["content.json", "neighbors.json", "neighbor-images.json"]) {
+    for (const name of [
+      "content.json",
+      "neighbors.json",
+      "neighbor-images.json",
+      "islands.json",
+      "islands-images.json",
+    ]) {
       const json = path.join(output, name);
       if (
         names.includes(name) &&
@@ -78,9 +84,15 @@ export function safeOutput(output: string) {
     }
     const unexpected = names.filter(
       (s) =>
-        !["content.json", "neighbors.json", "neighbor-images.json", "assets", ".gitkeep"].includes(
-          s,
-        ),
+        ![
+          "content.json",
+          "neighbors.json",
+          "neighbor-images.json",
+          "islands.json",
+          "islands-images.json",
+          "assets",
+          ".gitkeep",
+        ].includes(s),
     );
     if (unexpected.length)
       throw new Error(`Output contains unrelated files: ${unexpected.join(", ")}`);

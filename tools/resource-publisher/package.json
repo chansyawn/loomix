@@ -12,6 +12,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "catalog:",
     "@loomix/content-schema": "workspace:*",
+    "@loomix/island-schema": "workspace:*",
     "@loomix/neighbor-schema": "workspace:*",
     "cli-progress": "catalog:",
     "sharp": "catalog:",

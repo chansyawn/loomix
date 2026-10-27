@@ -90,6 +90,24 @@ export async function publishRelease(
     content.neighborImages.length,
     content.neighborImagesSha256,
   );
+  await store.put(
+    `${prefix}islands.json`,
+    content.islands,
+    "application/json; charset=utf-8",
+    content.islandsSha256,
+  );
+  await store.verify(`${prefix}islands.json`, content.islands.length, content.islandsSha256);
+  await store.put(
+    `${prefix}islands-images.json`,
+    content.islandsImages,
+    "application/json; charset=utf-8",
+    content.islandsImagesSha256,
+  );
+  await store.verify(
+    `${prefix}islands-images.json`,
+    content.islandsImages.length,
+    content.islandsImagesSha256,
+  );
   const marker: ReleaseMarker = {
     release,
     contentSha256: content.contentSha256,
@@ -97,6 +115,9 @@ export async function publishRelease(
     neighborImagesSha256: content.neighborImagesSha256,
     assetCount: content.assets.length,
     neighborCount: content.neighborCount,
+    islandsSha256: content.islandsSha256,
+    islandsImagesSha256: content.islandsImagesSha256,
+    islandCount: content.islandCount,
   };
   const bytes = Buffer.from(JSON.stringify(marker));
   await store.put(`${prefix}_complete.json`, bytes, "application/json", sha256(bytes));

@@ -7,6 +7,12 @@ import {
   validateNeighborImages,
   parseNeighborDatabase,
 } from "@loomix/neighbor-schema";
+import {
+  parseIslandDatabase,
+  parseIslandImages,
+  validateIslandCatalog,
+  validateIslandImages,
+} from "@loomix/island-schema";
 import { referencedImages, sha256 } from "./release.ts";
 
 export interface AssetFile {
@@ -24,6 +30,11 @@ export interface ValidatedContent {
   neighborCount: number;
   neighborImages: Buffer;
   neighborImagesSha256: string;
+  islands: Buffer;
+  islandsSha256: string;
+  islandsImages: Buffer;
+  islandsImagesSha256: string;
+  islandCount: number;
   assets: AssetFile[];
 }
 
@@ -41,14 +52,16 @@ export async function validateContent(directory: string): Promise<ValidatedConte
     if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
   }
   if (
-    entries.length !== 4 ||
+    entries.length !== 6 ||
     !entries.includes("content.json") ||
     !entries.includes("neighbors.json") ||
     !entries.includes("neighbor-images.json") ||
+    !entries.includes("islands.json") ||
+    !entries.includes("islands-images.json") ||
     !entries.includes("assets")
   ) {
     throw new Error(
-      "Content directory must contain content.json, neighbors.json, neighbor-images.json, and assets/",
+      "Content directory must contain content.json, neighbors.json, neighbor-images.json, islands.json, islands-images.json, and assets/",
     );
   }
   const assetDirectory = path.join(directory, "assets");
@@ -68,12 +81,25 @@ export async function validateContent(directory: string): Promise<ValidatedConte
   const neighborImages = await readRegularFile(path.join(directory, "neighbor-images.json"));
   const mapping = parseNeighborImages(JSON.parse(neighborImages.toString("utf8")));
   validateNeighborImages(database, mapping);
-  const images = referencedImages(content, mapping);
+  const islands = await readRegularFile(path.join(directory, "islands.json"));
+  const islandDatabase = parseIslandDatabase(JSON.parse(islands.toString("utf8")));
+  validateIslandCatalog(islandDatabase, content);
+  if (islandDatabase.source.manifestId !== database.source.manifestId)
+    throw new Error("Island manifest does not match neighbors.json");
+  const islandsImages = await readRegularFile(path.join(directory, "islands-images.json"));
+  const islandImageMapping = parseIslandImages(JSON.parse(islandsImages.toString("utf8")));
+  validateIslandImages(islandDatabase, islandImageMapping);
+  const images = [
+    ...new Set([
+      ...referencedImages(content, mapping),
+      ...islandImageMapping.images.flatMap((entry) => (entry.image ? [entry.image] : [])),
+    ]),
+  ].sort();
   const files = await readdir(assetDirectory);
   const expected = new Set(images.map((image) => path.basename(image)));
   if (files.length !== expected.size || files.some((file) => !expected.has(file))) {
     throw new Error(
-      "assets/ must contain exactly the images referenced by content.json and neighbor-images.json",
+      "assets/ must contain exactly the images referenced by content.json, neighbor-images.json, and islands-images.json",
     );
   }
   const assets: AssetFile[] = [];
@@ -109,6 +135,11 @@ export async function validateContent(directory: string): Promise<ValidatedConte
     neighborCount: database.neighbors.length,
     neighborImages,
     neighborImagesSha256: sha256(neighborImages),
+    islands,
+    islandsSha256: sha256(islands),
+    islandsImages,
+    islandsImagesSha256: sha256(islandsImages),
+    islandCount: islandDatabase.islands.length,
     assets,
   };
 }

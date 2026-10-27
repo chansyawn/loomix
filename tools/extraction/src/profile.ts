@@ -45,6 +45,9 @@ export const profile = {
     neighborGuide: 711,
     neighborThemes: 180,
     neighborAssets: 206,
+    islandIconStyles: 628,
+    islandRegions: 652,
+    islands: 654,
   },
   fields: {
     items: { id: 0, name: 1, type: 2, secondaryType: 3, category: 6, search: 7 },
@@ -72,6 +75,7 @@ export const profile = {
   },
   binData: { tags: "633e15d6", tagDisplay: "b429c67e", creatureDisplay: "15896ba2" },
   expected: { textmap: 116673, tables: 724 },
+  expectedIslands: { islands: 90, islandIconStyles: 15, regions: 3 },
   expectedNeighbors: {
     neighbors: 13,
     stars: 13,

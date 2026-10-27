@@ -8,16 +8,37 @@ import {
   parseNeighborDatabase,
 } from "@loomix/neighbor-schema";
 import type { Catalog } from "@loomix/content-schema";
+import {
+  parseIslandDatabase,
+  parseIslandImages,
+  validateIslandCatalog,
+  validateIslandImages,
+} from "@loomix/island-schema";
 
 export const releaseIdSchema = z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/);
-export const releaseMarkerSchema = z.strictObject({
-  release: releaseIdSchema,
-  contentSha256: z.string().regex(/^[a-f0-9]{64}$/),
-  neighborsSha256: z.string().regex(/^[a-f0-9]{64}$/),
-  neighborImagesSha256: z.string().regex(/^[a-f0-9]{64}$/),
-  assetCount: z.number().int().nonnegative(),
-  neighborCount: z.number().int().nonnegative(),
-});
+export const releaseMarkerSchema = z
+  .strictObject({
+    release: releaseIdSchema,
+    contentSha256: z.string().regex(/^[a-f0-9]{64}$/),
+    neighborsSha256: z.string().regex(/^[a-f0-9]{64}$/),
+    neighborImagesSha256: z.string().regex(/^[a-f0-9]{64}$/),
+    islandsSha256: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/)
+      .optional(),
+    islandsImagesSha256: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/)
+      .optional(),
+    assetCount: z.number().int().nonnegative(),
+    neighborCount: z.number().int().nonnegative(),
+    islandCount: z.number().int().nonnegative().optional(),
+  })
+  .superRefine((marker, ctx) => {
+    const fields = [marker.islandsSha256, marker.islandsImagesSha256, marker.islandCount];
+    if (fields.some((field) => field !== undefined) && fields.some((field) => field === undefined))
+      ctx.addIssue({ code: "custom", message: "Island release metadata must be complete" });
+  });
 export type ReleaseMarker = z.infer<typeof releaseMarkerSchema>;
 export const immutableCacheControl = "public, max-age=31536000, immutable";
 
@@ -98,7 +119,28 @@ export async function downloadRelease(
     throw new Error("Neighbor images SHA-256 does not match the completed release");
   const images = parseNeighborImages(JSON.parse(imageBytes.toString("utf8")));
   validateNeighborImages(neighbors, images);
-  if (referencedImages(content, images).length !== marker.assetCount)
+  const usedImages = new Set(referencedImages(content, images));
+  // Older immutable releases predate island data; partial island metadata is rejected by the schema.
+  if (marker.islandsSha256 !== undefined) {
+    const islandsBytes = Buffer.from(await (await fetchFile("islands.json")).arrayBuffer());
+    if (sha256(islandsBytes) !== marker.islandsSha256)
+      throw new Error("Island JSON SHA-256 does not match the completed release");
+    const islands = parseIslandDatabase(JSON.parse(islandsBytes.toString("utf8")));
+    validateIslandCatalog(islands, content);
+    if (islands.source.manifestId !== neighbors.source.manifestId)
+      throw new Error("Island manifest does not match neighbors.json");
+    if (islands.islands.length !== marker.islandCount)
+      throw new Error("Resource island count does not match the completed release");
+    const islandImagesBytes = Buffer.from(
+      await (await fetchFile("islands-images.json")).arrayBuffer(),
+    );
+    if (sha256(islandImagesBytes) !== marker.islandsImagesSha256)
+      throw new Error("Island images SHA-256 does not match the completed release");
+    const mapping = parseIslandImages(JSON.parse(islandImagesBytes.toString("utf8")));
+    validateIslandImages(islands, mapping);
+    for (const image of mapping.images) if (image.image !== null) usedImages.add(image.image);
+  }
+  if (usedImages.size !== marker.assetCount)
     throw new Error("Resource image count does not match the completed release");
   return bytes;
 }
