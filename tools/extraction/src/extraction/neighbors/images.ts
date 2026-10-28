@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { neighborImagePaths, parseNeighborDatabase } from "@loomix/schema/extraction/neighbor";
+import { neighborImagePaths, parseNeighborDatabase } from "./schema.ts";
 import { readJson, writeJson } from "../../workflow/json.ts";
 import type { IndexedAsset, ImageManifest, WorkOptions } from "../types.ts";
 import { createIconResolver } from "../images/resolve.ts";

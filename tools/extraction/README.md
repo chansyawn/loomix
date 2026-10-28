@@ -91,7 +91,7 @@ var/                                              # 运行时数据，整体忽�
 
 更新清单包含基础包、未安装的可选下载及未落地的 overlay。init 校验清单格式与已安装条目的 MD5/大小，data manifest 优先于同路径 res manifest；记录未安装项和 MD5 为 0 的无校验值条目；配置对必须完整匹配当前 data manifest。extract 进一步强制核验实际使用的全部图片候选包、BinData 来源包和两份 OBB；未安装项不视为“内容不存在”的证明。
 
-环境身份绑定客户端清单、profile、工具实际 ready manifest 和实现摘要；提取身份绑定 environment manifest、冻结补充清单 SHA256、profile、实现源码、共享 schema 与 lockfile。每个 checkpoint 保存输入摘要、依赖摘要和输出的相对路径、SHA256、字节数。重跑仅在输入、输出字节和文件集合均匹配时跳过；变化或失败会先清除该阶段及所有下游 marker，再执行。已有最终 manifest 在重跑开始时失效，全部验证成功后才重新原子写入。
+环境身份绑定客户端清单、profile、工具实际 ready manifest 和实现摘要；提取身份绑定 environment manifest、冻结补充清单 SHA256、profile、实现源码、发布契约 schema 与 lockfile。每个 checkpoint 保存输入摘要、依赖摘要和输出的相对路径、SHA256、字节数。重跑仅在输入、输出字节和文件集合均匹配时跳过；变化或失败会先清除该阶段及所有下游 marker，再执行。已有最终 manifest 在重跑开始时失效，全部验证成功后才重新原子写入。
 
 manifest 使用 `schemaVersion: 1`，区分 environment、extraction、delivery，记录稳定 ID、verified 状态、创建时间、输入、实现/profile 摘要、工具版本、输出和验证结果。失败记录写入报告，不生成成功 manifest。相同提取重跑保留创建时间，正式输出与 checkpoint 的哈希保持稳定。日志不作为语义产物。
 
@@ -99,7 +99,7 @@ manifest 使用 `schemaVersion: 1`，区分 environment、extraction、delivery�
 
 唯一共享包为 `@loomix/schema`。`catalog` 保存 items、groups、appearances、seeds、growths、ingredientCategories 和 entries；单品按 type 区分家具、服装、生物、植物、菜肴、材料与仅供引用的物品。entries 独立表达图鉴收录，不将配方引用误认为开放内容。多值属性保存数组，共享生长配置使用 growthId 引用。`neighbors` 与 `world` 保存各自实体和单向关系，不重复保存反向索引或物品名称。
 
-源观察位于 extraction 子路径，只供提取与来源验收使用；基础观察和详情观察是内部 checkpoint，不是公开交付版本。领域组装读取冻结观察，补全已确认的物品引用，生成 dataset.json，并执行跨领域引用、集合成员类型、分类环、生长阶段和图片覆盖检查。verify 从冻结观察重建领域数据、交付任务与领域证据，防止只修改输出使其自洽。
+源观察模型位于 `tools/extraction`，只供提取与来源验收使用；基础观察和详情观察是内部 checkpoint，不是公开交付版本。领域组装读取冻结观察，补全已确认的物品引用，生成 dataset.json，并执行跨领域引用、集合成员类型、分类环、生长阶段和图片覆盖检查。verify 从冻结观察重建领域数据、交付任务与领域证据，防止只修改输出使其自洽。
 
 `evidence/domain-fields.json` 使用实体集合、身份和字段路径定位值，区分 confirmed、absent、unresolved；来源区分表行、完整表扫描、素材对象和人工确认。catalog.entries 的收录依据与图鉴缺失证据单独保存，生长配置有独立实体证据，友邻和世界保留实体级表来源。细粒度字段来源、未确认候选和排除原因继续保存在源审计中。
 

@@ -1,9 +1,6 @@
 import path from "node:path";
-import {
-  createCollectionObservationsSchema,
-  type CollectionObservations,
-} from "@loomix/schema/extraction";
-import type { Catalog, CatalogRecord } from "@loomix/schema/extraction";
+import { createCollectionObservationsSchema, type CollectionObservations } from "../schema.ts";
+import type { Catalog, CatalogRecord } from "../schema.ts";
 import type { ContentContext } from "../content/context.ts";
 import { createContentContext } from "../content/context.ts";
 import type { SelectedImage } from "../types.ts";

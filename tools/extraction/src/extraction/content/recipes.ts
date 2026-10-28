@@ -1,9 +1,4 @@
-import type {
-  IngredientCategory,
-  IngredientExpression,
-  ItemId,
-  RecipeSlot,
-} from "@loomix/schema/extraction";
+import type { IngredientCategory, IngredientExpression, ItemId, RecipeSlot } from "../schema.ts";
 import type { TagNode, Row, TableRow } from "../types.ts";
 import type { Tables } from "../decode/tables.ts";
 import type { Vocabulary } from "./vocabulary.ts";

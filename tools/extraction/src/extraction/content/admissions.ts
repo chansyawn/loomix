@@ -3,8 +3,8 @@ import path from "node:path";
 import crypto from "node:crypto";
 import assert from "node:assert/strict";
 import { z } from "zod";
-import { CategorySchema, CatalogSourceSchema, ItemIdSchema } from "@loomix/schema/extraction";
-import type { CatalogSource } from "@loomix/schema/extraction";
+import { CategorySchema, CatalogSourceSchema, ItemIdSchema } from "../schema.ts";
+import type { CatalogSource } from "../schema.ts";
 import { catalogSource } from "../../profile.ts";
 
 export const admissionsFile = "supplemental-admissions.json";

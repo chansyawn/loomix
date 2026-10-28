@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { emptyCatalog } from "@loomix/schema/extraction";
+import { emptyCatalog } from "../../schema.ts";
 import { profile } from "../../../profile.ts";
 import { decodeBytes } from "../../decode/obb.ts";
 import { Tables } from "../../decode/tables.ts";

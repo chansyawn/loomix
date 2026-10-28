@@ -5,14 +5,14 @@ import {
   CraftingRecipeSchema,
   DifficultyRequirementSchema,
   TastesSchema,
-} from "../catalog/recipes.ts";
+} from "@loomix/schema/catalog";
 export {
   ResearchSchema,
   CraftingRecipeSchema,
   DifficultyRequirementSchema,
   DifficultyConditionSchema,
   TastesSchema,
-} from "../catalog/recipes.ts";
+} from "@loomix/schema/catalog";
 const text = z.string().min(1).nullable();
 export function createObservedRecordSchemas(
   image: z.ZodType<string | null> = DeliveredImageSchema,

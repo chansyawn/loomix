@@ -4,8 +4,8 @@ import { parseDataset } from "@loomix/schema/dataset";
 import { referencedImages } from "@loomix/schema/dataset/images";
 import { imageKey } from "@loomix/schema/assets";
 import { RawCollectionObservationsSchema } from "../extraction/collection/build.ts";
-import { parseNeighborDatabase } from "@loomix/schema/extraction/neighbor";
-import { parseIslandDatabase } from "@loomix/schema/extraction/islands";
+import { parseNeighborDatabase } from "../extraction/neighbors/schema.ts";
+import { parseIslandDatabase } from "../extraction/islands/schema.ts";
 import { parseNeighbors } from "@loomix/schema/neighbors";
 import { parseWorld } from "@loomix/schema/world";
 import type {

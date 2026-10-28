@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { islandImagePaths, parseIslandDatabase } from "@loomix/schema/extraction/islands";
+import { islandImagePaths, parseIslandDatabase } from "./schema.ts";
 import { readJson, writeJson } from "../../workflow/json.ts";
 import type { IndexedAsset, WorkOptions } from "../types.ts";
 import { createIslandImageResolver } from "./resolve-images.ts";

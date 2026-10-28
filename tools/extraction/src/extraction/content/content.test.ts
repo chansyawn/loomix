@@ -1,4 +1,4 @@
-import { emptyCatalog, recordSchemas } from "@loomix/schema/extraction";
+import { emptyCatalog, recordSchemas } from "../schema.ts";
 import type { ScalarMethod, TableRow } from "../types.ts";
 import assert from "node:assert/strict";
 import fs from "node:fs";

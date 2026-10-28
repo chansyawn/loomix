@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ContextSchema, HashSchema, IdSchema } from "../common/identity.ts";
+import { ContextSchema, HashSchema, IdSchema } from "@loomix/schema/common";
 
 export const EntityRefSchema = z.strictObject({
   collection: z.string().min(1),

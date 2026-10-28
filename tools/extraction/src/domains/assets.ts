@@ -1,5 +1,5 @@
 import type { ImageRef } from "@loomix/schema/assets";
-import type { RecordType } from "@loomix/schema/extraction";
+import type { RecordType } from "../extraction/schema.ts";
 import { digest } from "../workflow/hashing.ts";
 
 export interface OriginalImage {

@@ -1,7 +1,7 @@
-import type { RecordType } from "@loomix/schema/extraction";
+import type { RecordType } from "../schema.ts";
 import type { TagNode } from "../types.ts";
 import assert from "node:assert/strict";
-import { recordTypes, recordType, parseCatalog } from "@loomix/schema/extraction";
+import { recordTypes, recordType, parseCatalog } from "../schema.ts";
 
 export function plainText(value: unknown) {
   return typeof value === "string"

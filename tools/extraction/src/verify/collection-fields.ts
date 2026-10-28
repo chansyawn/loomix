@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import type { CollectionObservations, CraftingRecipe } from "@loomix/schema/extraction";
+import type { CollectionObservations, CraftingRecipe } from "../extraction/schema.ts";
 import type { Tables } from "../extraction/decode/tables.ts";
 import type { TableRow } from "../extraction/types.ts";
 import { plainText } from "../extraction/content/model.ts";

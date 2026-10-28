@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { parseIslandDatabase } from "@loomix/schema/extraction/islands";
+import { parseIslandDatabase } from "./schema.ts";
 import { profile } from "../../profile.ts";
 import { extractIslandBundle, type IslandExtractionInput } from "./extract.ts";
 

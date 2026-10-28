@@ -1,4 +1,4 @@
-import type { RecordType } from "@loomix/schema/extraction";
+import type { RecordType } from "../../schema.ts";
 import type { Row, TableRow } from "../../types.ts";
 
 export interface RecordContext {

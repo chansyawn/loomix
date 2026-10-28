@@ -1,14 +1,8 @@
 import { expect, expectTypeOf, test } from "vite-plus/test";
-import {
-  CatalogSchema,
-  emptyCatalog,
-  parseCatalog,
-  recordSchemas,
-  recordTypes,
-  attributeSchemas,
-  recordFields,
-} from "../src/extraction/index.ts";
-import type { Catalog, CatalogRecord, ItemRecord } from "../src/extraction/index.ts";
+import { CatalogSchema, emptyCatalog, parseCatalog, recordFields, recordTypes } from "./catalog.ts";
+import { attributeSchemas, recordSchemas } from "./records.ts";
+import type { Catalog } from "./catalog.ts";
+import type { CatalogRecord, ItemRecord } from "./records.ts";
 const source = { gameVersion: "0.95.2", dataRevision: 1449213, resourceRevision: 1391927 };
 const base = {
   name: "fixture",

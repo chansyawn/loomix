@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { attributeSchemas, recordSchemas } from "./records.ts";
-import type { CatalogRecord, RecordType } from "./records.ts";
-import type { Catalog } from "./content.ts";
-import type { CatalogRecordObserved } from "./features.ts";
+import { attributeSchemas, recordSchemas } from "../content/schema/records.ts";
+import type { CatalogRecord, RecordType } from "../content/schema/records.ts";
+import type { Catalog } from "../content/schema/catalog.ts";
+import type { CatalogRecordObserved } from "../content/schema/features.ts";
 export function baseRecord(record: CatalogRecordObserved): CatalogRecord {
   const type = `${record.category}.${record.kind}` as RecordType;
   const projected = Object.fromEntries(

@@ -4,8 +4,8 @@ import {
   validateIslandCatalog,
   type Island,
   type IslandDatabase,
-} from "@loomix/schema/extraction/islands";
-import type { Catalog } from "@loomix/schema/extraction";
+} from "./schema.ts";
+import type { Catalog } from "../schema.ts";
 import type { Tables } from "../decode/tables.ts";
 import type { TableRow } from "../types.ts";
 import { profile } from "../../profile.ts";

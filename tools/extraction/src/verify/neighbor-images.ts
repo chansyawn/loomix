@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { PNG } from "pngjs";
-import { neighborImagePaths, type NeighborDatabase } from "@loomix/schema/extraction/neighbor";
+import { neighborImagePaths, type NeighborDatabase } from "../extraction/neighbors/schema.ts";
 import type {
   AdditionalNeighborImageExport,
   NeighborImageExport,

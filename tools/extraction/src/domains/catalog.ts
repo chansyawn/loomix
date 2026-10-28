@@ -1,7 +1,7 @@
 import { CatalogSchema } from "@loomix/schema/catalog";
 import type { Catalog, Growth, Item, Group } from "@loomix/schema/catalog";
 import type { Dataset } from "@loomix/schema/dataset";
-import type { CollectionObservations } from "@loomix/schema/extraction";
+import type { CollectionObservations } from "../extraction/schema.ts";
 import type { AssetRegistry } from "./assets.ts";
 import type { ContentContext } from "../extraction/content/context.ts";
 import { plainText, splitTags } from "../extraction/content/model.ts";

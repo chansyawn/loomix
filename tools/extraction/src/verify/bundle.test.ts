@@ -2,7 +2,7 @@ import { afterEach, expect, test, vi } from "vite-plus/test";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { parseCollectionObservations, baseCollectionObservations } from "@loomix/schema/extraction";
+import { parseCollectionObservations, baseCollectionObservations } from "../extraction/schema.ts";
 import { verifyBundle } from "./bundle.ts";
 
 vi.mock("../extraction/decode/tables.ts", async (original) => ({
@@ -17,7 +17,7 @@ vi.mock("../extraction/decode/tables.ts", async (original) => ({
   },
 }));
 vi.mock("../profile.ts", async (original) => {
-  const { recordTypes } = await import("@loomix/schema/extraction");
+  const { recordTypes } = await import("../extraction/schema.ts");
   return {
     ...(await original<typeof import("../profile.ts")>()),
     expectedCatalog: Object.fromEntries(recordTypes.map((type) => [type, 0])),

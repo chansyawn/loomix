@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { islandImagePaths, parseIslandDatabase } from "@loomix/schema/extraction/islands";
+import { islandImagePaths, parseIslandDatabase } from "./schema.ts";
 import { PNG } from "pngjs";
 import type { IndexedAsset, SourceAudit } from "../types.ts";
 import { createIslandImageResolver } from "./resolve-images.ts";

@@ -1,12 +1,12 @@
 import { expect, test } from "vite-plus/test";
-import { emptyCatalog } from "../src/extraction/content.ts";
-import { baseObservations } from "../src/extraction/collection-relations.ts";
+import { emptyCatalog } from "../content/schema/catalog.ts";
+import { baseObservations } from "./relations.ts";
 import {
   emptyCollectionDetail,
   emptyCropSeedDetail,
   parseCollectionObservations,
   baseCollectionObservations,
-} from "../src/extraction/collection.ts";
+} from "./schema.ts";
 
 test("Collection observations keeps client-detail records separate from the existing catalog projection", () => {
   const baseInput = emptyCatalog({

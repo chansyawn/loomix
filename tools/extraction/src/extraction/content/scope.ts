@@ -1,4 +1,4 @@
-import type { RecordType } from "@loomix/schema/extraction";
+import type { RecordType } from "../schema.ts";
 import type { FrozenAdmissions, RecordEvidence } from "./admissions.ts";
 import type { ManualEvidence } from "../types.ts";
 import { plainText } from "./model.ts";

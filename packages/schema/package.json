@@ -10,11 +10,8 @@
     "./assets": "./src/assets/index.ts",
     "./dataset": "./src/dataset/index.ts",
     "./release": "./src/release/index.ts",
-    "./extraction": "./src/extraction/index.ts",
-    "./extraction/neighbor": "./src/extraction/neighbor.ts",
-    "./extraction/islands": "./src/extraction/islands.ts",
-    "./dataset/images": "./src/dataset/images.ts",
-    "./extraction/evidence": "./src/extraction/evidence.ts"
+    "./common": "./src/common/identity.ts",
+    "./dataset/images": "./src/dataset/images.ts"
   },
   "scripts": {
     "test": "vp exec vp test run"

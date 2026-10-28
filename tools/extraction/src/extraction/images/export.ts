@@ -1,5 +1,5 @@
 import type { WorkOptions, SelectedImage, EvidenceRecord } from "../types.ts";
-import type { Catalog } from "@loomix/schema/extraction";
+import type { Catalog } from "../schema.ts";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";

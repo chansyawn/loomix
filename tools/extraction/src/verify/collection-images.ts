@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { PNG } from "pngjs";
-import type { CollectionObservations } from "@loomix/schema/extraction";
+import type { CollectionObservations } from "../extraction/schema.ts";
 import type { ImageManifest, SelectedImage, SourceAudit } from "../extraction/types.ts";
 import { readJson } from "../workflow/json.ts";
 import { within } from "../paths.ts";

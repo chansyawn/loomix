@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "vite-plus/test";
-import type { IngredientCategory } from "@loomix/schema/extraction";
+import type { IngredientCategory } from "../schema.ts";
 import { ingredientExpressionItemIds, parseIngredientExpression } from "./recipes.ts";
 
 const categories: IngredientCategory[] = [

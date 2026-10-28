@@ -1,9 +1,9 @@
-import type { Catalog } from "@loomix/schema/extraction";
+import type { Catalog } from "../schema.ts";
 import type { IndexedAsset } from "../types.ts";
 import type { Tables } from "../decode/tables.ts";
 
-import type { NeighborDatabase } from "@loomix/schema/extraction/neighbor";
-export type { NeighborDatabase } from "@loomix/schema/extraction/neighbor";
+import type { NeighborDatabase } from "./schema.ts";
+export type { NeighborDatabase } from "./schema.ts";
 export type NeighborSource = NeighborDatabase["source"];
 export type NeighborRecord = NeighborDatabase["neighbors"][number];
 export type NeighborStar = NeighborDatabase["stars"][number];

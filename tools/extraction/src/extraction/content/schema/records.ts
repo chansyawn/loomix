@@ -19,9 +19,9 @@ export {
   RecipeSlotSchema,
   RecipeSchema,
   IngredientCategorySchema,
-} from "../catalog/recipes.ts";
-export type { IngredientExpression } from "../catalog/recipes.ts";
-import { RecipeSchema, RecipeSlotSchema, IngredientCategorySchema } from "../catalog/recipes.ts";
+} from "@loomix/schema/catalog";
+export type { IngredientExpression } from "@loomix/schema/catalog";
+import { RecipeSchema, RecipeSlotSchema, IngredientCategorySchema } from "@loomix/schema/catalog";
 const text = z.string().nullable();
 const members = z.array(ItemIdSchema).nullable();
 export const DeliveredImageSchema = z

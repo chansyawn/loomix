@@ -25,7 +25,7 @@
 └── vite.config.ts            # Vite+ 仓库级配置
 ```
 
-`@loomix/schema` 按 catalog、neighbors、world、assets、dataset、release 和 extraction 划分子路径。领域实体与图鉴收录分离；关系只保存一个方向，反向索引由消费方派生；图片引用使用 assetId 与 variant，交付路径由共享资源清单解析。提取器、发布器和网站共用严格契约，直接引用 TypeScript 源码，无需前置构建。
+`@loomix/schema` 按 catalog、neighbors、world、assets、dataset、release 和 common 划分子路径，维护发布契约。提取观察、原始数据库和证据模型位于 `tools/extraction`，仅复用发布契约中的通用结构。领域实体与图鉴收录分离；关系只保存一个方向，反向索引由消费方派生；图片引用使用 assetId 与 variant，交付路径由共享资源清单解析。提取器、发布器和网站共用严格契约，直接引用 TypeScript 源码，无需前置构建。
 
 网站页面和路由主要位于 `apps/website/src/`。
 

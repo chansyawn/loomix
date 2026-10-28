@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import path from "node:path";
-import { baseCollectionObservations } from "@loomix/schema/extraction";
-import type { CollectionObservations } from "@loomix/schema/extraction";
+import { baseCollectionObservations } from "../extraction/schema.ts";
+import type { CollectionObservations } from "../extraction/schema.ts";
 import { readJson, writeJson } from "../workflow/json.ts";
 import { RawCollectionObservationsSchema } from "../extraction/collection/build.ts";
 import { collectionEvidenceSchema } from "../extraction/collection/evidence.ts";

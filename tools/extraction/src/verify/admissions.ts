@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import path from "node:path";
-import { recordType } from "@loomix/schema/extraction";
-import type { Catalog } from "@loomix/schema/extraction";
+import { recordType } from "../extraction/schema.ts";
+import type { Catalog } from "../extraction/schema.ts";
 import { createContentContext } from "../extraction/content/context.ts";
 import { buildRecord } from "../extraction/content/records/index.ts";
 import { catalogSource, profile } from "../profile.ts";

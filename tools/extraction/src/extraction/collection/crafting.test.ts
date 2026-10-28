@@ -1,5 +1,5 @@
 import { expect, test } from "vite-plus/test";
-import { emptyCatalog, recordSchemas } from "@loomix/schema/extraction";
+import { emptyCatalog, recordSchemas } from "../schema.ts";
 import type { Row } from "../types.ts";
 import { catalogSource } from "../../profile.ts";
 import { readCraftingRecipes } from "./crafting.ts";

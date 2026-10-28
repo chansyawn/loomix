@@ -1,6 +1,6 @@
 import path from "node:path";
-import { EvidenceSchema } from "@loomix/schema/extraction/evidence";
-import type { EvidenceSource, FieldEvidence } from "@loomix/schema/extraction/evidence";
+import { EvidenceSchema } from "../extraction/evidence/domain-schema.ts";
+import type { EvidenceSource, FieldEvidence } from "../extraction/evidence/domain-schema.ts";
 import type { Dataset } from "@loomix/schema/dataset";
 import type { FieldEvidence as ObservedFieldEvidence } from "../extraction/evidence/schema.ts";
 import type { CollectionEvidence } from "../extraction/collection/evidence.ts";

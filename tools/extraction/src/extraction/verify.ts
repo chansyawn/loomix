@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { parseDataset } from "@loomix/schema/dataset";
-import { EvidenceSchema } from "@loomix/schema/extraction/evidence";
+import { EvidenceSchema } from "./evidence/domain-schema.ts";
 import { buildDataset } from "../domains/build.ts";
 import { readDomainEvidence } from "../domains/evidence.ts";
 import path from "node:path";
@@ -8,7 +8,7 @@ import { verifyBundle } from "../verify/bundle.ts";
 import { parseRawContent } from "./schemas/raw-content.ts";
 import { verifyCollection } from "../verify/collection.ts";
 import { readJson } from "../workflow/json.ts";
-import type { CollectionObservations } from "@loomix/schema/extraction";
+import type { CollectionObservations } from "./schema.ts";
 
 export async function verifyExtraction(work: string, writeReports = true): Promise<void> {
   const collection = readJson<CollectionObservations>(

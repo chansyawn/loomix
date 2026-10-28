@@ -3,7 +3,7 @@ import { z } from "zod";
 import {
   AdditionalNeighborImageCategorySchema,
   type AdditionalNeighborImageCategory,
-} from "@loomix/schema/extraction/neighbor";
+} from "./schema.ts";
 import { readJson } from "../../workflow/json.ts";
 import type { IndexedAsset } from "../types.ts";
 import type { ImageAsset } from "../images/export.ts";

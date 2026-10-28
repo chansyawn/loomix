@@ -1,6 +1,6 @@
-import type { CatalogRecord } from "@loomix/schema/extraction";
-import type { CollectionDetail, CropSeedDetail } from "@loomix/schema/extraction";
-import { emptyCollectionDetail, emptyCropSeedDetail } from "@loomix/schema/extraction";
+import type { CatalogRecord } from "../../schema.ts";
+import type { CollectionDetail, CropSeedDetail } from "../../schema.ts";
+import { emptyCollectionDetail, emptyCropSeedDetail } from "../../schema.ts";
 import type { ContentContext } from "../../content/context.ts";
 import { plainText } from "../../content/model.ts";
 import type { CollectionEvidenceBuilder, CollectionSource } from "../evidence.ts";

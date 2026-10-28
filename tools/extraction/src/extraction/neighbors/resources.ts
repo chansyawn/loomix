@@ -1,4 +1,4 @@
-import type { Catalog } from "@loomix/schema/extraction";
+import type { Catalog } from "../schema.ts";
 import { profile } from "../../profile.ts";
 import type { Tables } from "../decode/tables.ts";
 import { evidence } from "./adapters.ts";

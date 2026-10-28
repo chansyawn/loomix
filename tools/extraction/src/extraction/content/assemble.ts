@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { emptyCatalog, recordSchemas } from "@loomix/schema/extraction";
+import { emptyCatalog, recordSchemas } from "../schema.ts";
 import type { WorkOptions, EvidenceRecord, SelectedImage, BinDataAsset } from "../types.ts";
 import { catalogSource, expectedCatalog } from "../../profile.ts";
 import { readJson, writeJson } from "../../workflow/json.ts";

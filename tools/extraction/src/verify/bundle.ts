@@ -4,8 +4,8 @@ import type {
   SourceAudit,
   EvidenceRecord,
 } from "../extraction/types.ts";
-import type { Catalog } from "@loomix/schema/extraction";
-import { recordTypes, recordType, recordFields, recordField } from "@loomix/schema/extraction";
+import type { Catalog } from "../extraction/schema.ts";
+import { recordTypes, recordType, recordFields, recordField } from "../extraction/schema.ts";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";

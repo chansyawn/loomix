@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { DifficultyConditionSchema } from "@loomix/schema/extraction";
-import type { DifficultyRequirement } from "@loomix/schema/extraction";
+import { DifficultyConditionSchema } from "../schema.ts";
+import type { DifficultyRequirement } from "../schema.ts";
 
 const rawCondition = z.strictObject({
   childList: z.strictObject({

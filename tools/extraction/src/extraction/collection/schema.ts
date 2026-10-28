@@ -3,13 +3,13 @@ import {
   DropSchema as drop,
   TradeSchema as trade,
   AcquisitionSchema as acquisition,
-} from "../catalog/index.ts";
-import { createCatalogSchema } from "./content.ts";
-import { createObservedRecordSchema } from "./features.ts";
-import { baseObservations, validateObservedRelations } from "./collection-relations.ts";
-import { CatalogSourceSchema, IngredientCategorySchema } from "./records.ts";
-import { ItemIdSchema, DeliveredImageSchema } from "./records.ts";
-import type { Catalog } from "./content.ts";
+} from "@loomix/schema/catalog";
+import { createCatalogSchema } from "../content/schema/catalog.ts";
+import { createObservedRecordSchema } from "../content/schema/features.ts";
+import { baseObservations, validateObservedRelations } from "./relations.ts";
+import { CatalogSourceSchema, IngredientCategorySchema } from "../content/schema/records.ts";
+import { ItemIdSchema, DeliveredImageSchema } from "../content/schema/records.ts";
+import type { Catalog } from "../content/schema/catalog.ts";
 
 const text = z.string().min(1).nullable();
 const positive = ItemIdSchema;

@@ -1,4 +1,4 @@
-import type { RecordType, Recipe } from "@loomix/schema/extraction";
+import type { RecordType, Recipe } from "./schema.ts";
 
 export interface WorkOptions {
   work: string;
