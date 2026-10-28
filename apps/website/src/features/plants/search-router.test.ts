@@ -49,7 +49,13 @@ describe("compact plant URLs", () => {
     const search = plantsSearchSchema.parse({
       view: "series",
       items: { q: '花 & + # ? "', categories: ["作物"], series: ["__ungrouped"] },
-      series: { q: "春系列", qualities: ["__missing", "2"], sort: "name-asc" },
+      series: {
+        q: "春系列",
+        qualities: ["__missing", "2"],
+        sort: "name-asc",
+        sources: ["采集"],
+        flowerColors: ["白色"],
+      },
     });
     const compact = compactPlantsSearch(search);
     const restored = plantsSearchSchema.parse(defaultParseSearch(defaultStringifySearch(compact)));

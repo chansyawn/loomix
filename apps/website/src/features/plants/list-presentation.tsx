@@ -18,14 +18,13 @@ export function listPresentation(view: View) {
   }[view];
   return {
     ...entry,
-    grid: compactGrid(124),
+    grid: compactGrid(view === "items" ? 100 : 112),
     card:
       view === "items" ? (
         <CollectionCardSkeleton
           description={
-            <CardDescription className="space-y-1">
+            <CardDescription>
               <Skeleton className="h-4 w-2/3" />
-              <Skeleton className="h-4 w-3/4" />
             </CardDescription>
           }
         />

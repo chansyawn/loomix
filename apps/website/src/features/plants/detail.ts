@@ -11,23 +11,37 @@ export function parsePlantId(value: string): number {
 }
 
 export function plantsDetail(data: PlantsData, view: View, id: number) {
+  const itemsById = new Map(data.items.map((item) => [item.id, item]));
   if (view === "items") {
-    const item = data.items.find((row) => row.id === id);
+    const item = itemsById.get(id);
     if (!item) throw notFound();
+    const series = membershipIndex(data.series).get(id) ?? [];
     return {
       kind: "item" as const,
       record: item,
-      series: membershipIndex(data.series).get(id) ?? [],
+      series,
+      relatedGroups: series.map((group) => ({
+        series: group,
+        items:
+          group.plantIds?.flatMap((memberId) =>
+            memberId !== id && itemsById.has(memberId) ? [itemsById.get(memberId)!] : [],
+          ) ?? [],
+      })),
+      sourceTrees: (data.sourceTreesByItemId.get(id) ?? []).flatMap(
+        (tree) => data.itemRefs.get(tree.id) ?? [],
+      ),
+      itemRefs: data.itemRefs,
       hasUnconfirmedSeriesMembership: data.series.some((group) => group.plantIds === null),
     };
   }
   const series = data.series.find((row) => row.id === id);
   if (!series) throw notFound();
-  const items = new Map(data.items.map((item) => [item.id, item]));
   return {
     kind: "series" as const,
     record: series,
-    items: series.plantIds === null ? null : series.plantIds.map((id) => items.get(id)!),
+    items:
+      series.plantIds === null ? null : series.plantIds.flatMap((id) => itemsById.get(id) ?? []),
+    itemRefs: data.itemRefs,
   };
 }
 

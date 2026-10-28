@@ -10,6 +10,7 @@ import type { CollectionColumn } from "../collection/table-columns";
 import { usePlantsOrigin } from "./detail-navigation";
 import { membershipIndex } from "./query";
 import type { View } from "./search";
+import { PlantSeedLinks } from "./seed-info";
 
 export type PlantsRow = PlantItem | PlantSeries;
 
@@ -55,9 +56,46 @@ export function plantsTableColumns(
   groups: PlantSeries[] = [],
 ): CollectionColumn<PlantsRow>[] {
   const common = recordColumns<PlantsRow>((record) => <NameLink record={record} view={view} />);
+  const memberships = membershipIndex(groups);
+  const facts: CollectionColumn<PlantsRow>[] = [
+    textColumn("sources", "获取来源", 224, (record) => record.summary.sources.join("、") || null),
+    textColumn(
+      "flowerColors",
+      "花色",
+      168,
+      (record) => record.summary.flowerColors.join("、") || null,
+    ),
+    {
+      id: "seeds",
+      header: "种子",
+      width: 192,
+      cell: (record) => (
+        <PlantSeedLinks
+          seeds={record.summary.seeds}
+          seriesId={"plantIds" in record ? record.id : memberships.get(record.id)?.[0]?.id}
+        />
+      ),
+    },
+  ];
   if (view === "series")
     return [
       ...common,
+      textColumn(
+        "categories",
+        "分类",
+        144,
+        (record) => record.summary.categories.join("、") || null,
+      ),
+      textColumn(
+        "galaxies",
+        "原产星系",
+        160,
+        (record) => record.summary.galaxies.join("、") || null,
+      ),
+      textColumn("harvestCounts", "收获茬数", 112, (record) =>
+        record.summary.harvestCounts.length ? record.summary.harvestCounts.join(" / ") : null,
+      ),
+      ...facts,
 
       textColumn("members", "成员数量", 128, (record) =>
         "plantIds" in record && record.plantIds !== null
@@ -66,7 +104,6 @@ export function plantsTableColumns(
       ),
       textColumn("description", "描述", 320, (record) => record.description),
     ];
-  const memberships = membershipIndex(groups);
   const complete = groups.every((entry) => entry.plantIds !== null);
   return [
     ...common,
@@ -90,5 +127,7 @@ export function plantsTableColumns(
         <MemberLinks groups={memberships.get(record.id) ?? []} complete={complete} />
       ),
     },
+    ...facts,
+    textColumn("description", "描述", 320, (record) => record.description),
   ];
 }

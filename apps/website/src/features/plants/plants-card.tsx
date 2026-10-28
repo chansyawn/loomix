@@ -23,13 +23,9 @@ export function PlantsCard({ item }: { item: PlantItem }) {
         </Link>
       }
       description={
-        <CardDescription className="space-y-1 text-xs">
+        <CardDescription className="text-xs">
           <p className="truncate" title={item.category ?? undefined}>
             {item.category || "分类未提供"}
-          </p>
-          <p className="truncate" title={item.originGalaxy ?? undefined}>
-            {item.originGalaxy || "原产星系未提供"}
-            {item.harvestCount === null ? "" : ` · ${item.harvestCount} 茬`}
           </p>
         </CardDescription>
       }

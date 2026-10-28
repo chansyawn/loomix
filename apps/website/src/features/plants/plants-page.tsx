@@ -33,7 +33,8 @@ export function PlantsPage({
   const presentation = listPresentation(search.view);
   const result = queryPlants(data, search.view, query);
   const groups = filterGroups(data).filter(
-    (group) => search.view === "items" || group.key === "qualities",
+    (group) =>
+      search.view === "items" || ["qualities", "sources", "flowerColors"].includes(group.key),
   );
   const resultKey = JSON.stringify([search.view, layout, query]);
   const update = (patch: Partial<ViewQuery>, replace = false) =>

@@ -32,6 +32,19 @@ function options(values: (string | null)[]): Option[] {
 
 export function filterGroups(data: PlantsData): FilterGroup[] {
   return [
+    {
+      key: "sources",
+      label: "获取来源",
+      options: options(data.items.flatMap((row) => splitValues(row.sources))),
+      fullWidth: true,
+    },
+    {
+      key: "flowerColors",
+      label: "花色",
+      options: options(
+        data.items.flatMap((row) => (row.flowerColors?.length ? row.flowerColors : [null])),
+      ),
+    },
     { key: "categories", label: "分类", options: options(data.items.map((row) => row.category)) },
     {
       key: "qualities",
@@ -85,7 +98,12 @@ export function queryPlants(data: PlantsData, view: View, query: ViewQuery) {
   const filtered = rows.filter((row) => {
     if (
       !row.name.toLocaleLowerCase("zh-CN").includes(term) ||
-      !matches(query.qualities, [row.quality === null ? missing : String(row.quality)])
+      !matches(query.qualities, [row.quality === null ? missing : String(row.quality)]) ||
+      !matches(query.sources, row.summary.sources.length ? row.summary.sources : [missing]) ||
+      !matches(
+        query.flowerColors,
+        row.summary.flowerColors.length ? row.summary.flowerColors : [missing],
+      )
     )
       return false;
     if (!("category" in row)) return true;

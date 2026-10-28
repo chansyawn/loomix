@@ -19,9 +19,14 @@ import { PlantsReturnLink } from "./detail-navigation";
 import type { PlantsDetail } from "./detail";
 import type { View } from "./search";
 import { PlantsLoadError } from "./states";
+import { PlantSeedInfo } from "./seed-info";
+import { PlantGrowthStages } from "./growth-stages";
+import { PlantItemGrowing } from "./item-growing";
+import { PlantDropsInfo, PlantRelatedItems } from "./related-items";
 
 export function PlantsDetailPage({ detail }: { detail: PlantsDetail }) {
   const { record } = detail;
+  const summary = record.summary;
   const fields: [string, string | null][] =
     detail.kind === "item"
       ? [
@@ -36,7 +41,14 @@ export function PlantsDetailPage({ detail }: { detail: PlantsDetail }) {
       : [
           ["系列", detail.record.seriesName],
           ["成员数量", detail.items === null ? null : `${detail.items.length} 种植物`],
+          ["分类", summary.categories.join("、") || null],
+          ["原产星系", summary.galaxies.join("、") || null],
+          ...(summary.harvestCounts.length
+            ? [["收获茬数", `${summary.harvestCounts.join(" / ")} 茬`] as [string, string]]
+            : []),
         ];
+  if (summary.sources.length) fields.push(["获取来源", summary.sources.join("、")]);
+  if (summary.flowerColors.length) fields.push(["花色", summary.flowerColors.join("、")]);
 
   return (
     <CollectionDetailLayout
@@ -52,6 +64,16 @@ export function PlantsDetailPage({ detail }: { detail: PlantsDetail }) {
       }
       fields={fields}
     >
+      {detail.kind === "series" ? (
+        <>
+          <PlantSeedInfo seeds={summary.seeds} itemRefs={detail.itemRefs} />
+          <PlantGrowthStages groups={summary.growths} itemRefs={detail.itemRefs} />
+        </>
+      ) : (
+        <PlantItemGrowing item={detail.record} series={detail.series} itemRefs={detail.itemRefs} />
+      )}
+      <PlantDropsInfo drops={summary.drops} />
+      {detail.kind === "item" && <PlantRelatedItems title="来源树木" items={detail.sourceTrees} />}
       <section aria-labelledby="related-plants" className="space-y-4">
         <h2 id="related-plants" className="text-lg font-semibold">
           {detail.kind === "item" ? "所属系列" : "系列成员"}
@@ -64,6 +86,19 @@ export function PlantsDetailPage({ detail }: { detail: PlantsDetail }) {
                   <PlantSeriesCard key={series.id} series={series} />
                 ))}
               </div>
+              {detail.relatedGroups.map(
+                ({ series, items }) =>
+                  items.length > 0 && (
+                    <div key={series.id} className="space-y-3">
+                      <h3 className="text-sm font-medium">{series.name} · 同系列植物</h3>
+                      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-3">
+                        {items.map((item) => (
+                          <PlantsCard key={item.id} item={item} />
+                        ))}
+                      </div>
+                    </div>
+                  ),
+              )}
               {detail.hasUnconfirmedSeriesMembership && (
                 <p className="text-sm text-muted-foreground">其他系列的成员关系未确认</p>
               )}

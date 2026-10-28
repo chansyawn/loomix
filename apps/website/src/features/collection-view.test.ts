@@ -1,7 +1,19 @@
 import { describe, expect, it } from "vite-plus/test";
-import { emptyCatalog, parseCatalog } from "@loomix/content-schema";
+import { parseCatalogV5, emptyCollectionDetail } from "@loomix/content-schema/v5";
+import type { CatalogV5 } from "@loomix/content-schema/v5";
 import type { RecordBase } from "@loomix/content-schema";
 import { toCollectionView } from "./collection-view.ts";
+
+function catalogInput(items: CatalogV5["items"]): CatalogV5 {
+  return {
+    schemaVersion: 5,
+    source,
+    items,
+    ingredientCategories: [],
+    cropSeeds: [],
+    details: items.map((item) => emptyCollectionDetail(item.id)),
+  };
+}
 
 const source = { gameVersion: "0.95.2", dataRevision: 1449213, resourceRevision: 1391927 };
 const base = (id: number): RecordBase => ({
@@ -15,9 +27,8 @@ const base = (id: number): RecordBase => ({
 
 describe("collection view adapter", () => {
   it("projects every category and record kind into the existing collection views", () => {
-    const catalog = parseCatalog({
-      ...emptyCatalog(source),
-      items: [
+    const catalog = parseCatalogV5(
+      catalogInput([
         {
           ...base(1),
           kind: "item",
@@ -30,6 +41,7 @@ describe("collection view adapter", () => {
             materials: "木",
             sources: "商店",
           },
+          craftingRecipes: null,
         },
         { ...base(2), kind: "set", category: "furniture", memberIds: [1] },
         {
@@ -44,7 +56,10 @@ describe("collection view adapter", () => {
             activeTimes: "上午",
             activeWeather: "晴",
             sizeRange: null,
+            sources: null,
+            scientificName: null,
           },
+          research: null,
         },
         { ...base(4), kind: "series", category: "creatures", memberIds: [3] },
         {
@@ -52,7 +67,13 @@ describe("collection view adapter", () => {
           kind: "item",
           category: "plants",
           subcategory: "采摘材料",
-          attributes: { originGalaxy: "星屿", maturityPeriod: null, harvestCount: 3 },
+          attributes: {
+            originGalaxy: "星屿",
+            maturityPeriod: null,
+            harvestCount: 3,
+            sources: "采集",
+          },
+          seedId: null,
         },
         { ...base(6), kind: "series", category: "plants", memberIds: [5] },
         {
@@ -65,7 +86,11 @@ describe("collection view adapter", () => {
             galaxyFlavor: "星屿",
             cookware: "煮锅",
             effects: "增加力气",
+            sources: null,
+            tastes: null,
           },
+          difficultyRequirement: null,
+          recipe: null,
         },
         { ...base(8), kind: "series", category: "dishes", memberIds: [7] },
         {
@@ -83,9 +108,15 @@ describe("collection view adapter", () => {
           subcategory: "发型",
           encyclopediaEntry: { listed: false },
         },
-        { ...base(12), kind: "item", category: "miscellaneous", subcategory: null, attributes: {} },
-      ],
-    });
+        {
+          ...base(12),
+          kind: "item",
+          category: "miscellaneous",
+          subcategory: null,
+          attributes: { sources: null },
+        },
+      ]),
+    );
     const view = toCollectionView(catalog);
     expect(view.furniture.items).toEqual([
       {
@@ -159,28 +190,39 @@ describe("collection view adapter", () => {
   });
 
   it("preserves record and member order, null memberships, and confirmed empty memberships", () => {
-    const catalog = parseCatalog({
-      ...emptyCatalog(source),
-      items: [
+    const catalog = parseCatalogV5(
+      catalogInput([
         {
           ...base(2),
           kind: "item",
           category: "plants",
           subcategory: null,
-          attributes: { originGalaxy: null, maturityPeriod: null, harvestCount: null },
+          attributes: {
+            originGalaxy: null,
+            maturityPeriod: null,
+            harvestCount: null,
+            sources: null,
+          },
+          seedId: null,
         },
         {
           ...base(1),
           kind: "item",
           category: "plants",
           subcategory: null,
-          attributes: { originGalaxy: null, maturityPeriod: null, harvestCount: null },
+          attributes: {
+            originGalaxy: null,
+            maturityPeriod: null,
+            harvestCount: null,
+            sources: null,
+          },
+          seedId: null,
         },
         { ...base(3), kind: "series", category: "plants", memberIds: [1, 2] },
         { ...base(4), kind: "series", category: "plants", memberIds: null },
         { ...base(5), kind: "series", category: "plants", memberIds: [] },
-      ],
-    });
+      ]),
+    );
     const before = structuredClone(catalog);
     const view = toCollectionView(catalog);
     expect(view.plants.items.map((record) => record.id)).toEqual([2, 1]);
@@ -189,15 +231,14 @@ describe("collection view adapter", () => {
   });
 
   it("includes confirmed items regardless of encyclopedia presence or list visibility", () => {
-    const catalog = parseCatalog({
-      ...emptyCatalog(source),
-      items: [
+    const catalog = parseCatalogV5(
+      catalogInput([
         {
           ...base(1),
           kind: "item",
           category: "miscellaneous",
           subcategory: null,
-          attributes: {},
+          attributes: { sources: null },
           encyclopediaEntry: null,
         },
         {
@@ -207,8 +248,8 @@ describe("collection view adapter", () => {
           subcategory: "眼睛",
           encyclopediaEntry: { listed: false },
         },
-      ],
-    });
+      ]),
+    );
     const view = toCollectionView(catalog);
     expect(view.miscellaneous.map((record) => record.id)).toEqual([1]);
     expect(view.clothing.appearances.map((record) => record.id)).toEqual([2]);

@@ -1,23 +1,14 @@
+import { collectionItemLocation } from "../collection/item-route";
 import { ChevronDownIcon, CookingPotIcon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import type { IngredientCategory, IngredientExpression } from "@loomix/content-schema";
 import type { IngredientItem } from "../collection-view";
 import type { DishesDetail } from "./detail";
 
-const ingredientRoutes = {
-  plants: "/collection/plants/items/$id",
-  creatures: "/collection/creatures/items/$id",
-  miscellaneous: "/collection/miscellany/items/$id",
-  furniture: "/collection/furniture/items/$id",
-  clothing: "/collection/clothing/items/$id",
-  dishes: "/collection/dishes/items/$id",
-} as const;
-
 function IngredientItemLink({ item }: { item: IngredientItem }) {
   return (
     <Link
-      to={ingredientRoutes[item.catalogCategory]}
-      params={{ id: String(item.id) }}
+      {...collectionItemLocation(item)}
       className="flex min-h-9 items-center rounded-lg px-2 py-1.5 text-sm leading-6 wrap-anywhere underline-offset-4 outline-none hover:bg-muted hover:underline focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
     >
       {item.name}

@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vite-plus/test";
 import type { PlantItem, PlantSeries } from "../collection-view.ts";
+import { plantItemFixture, plantSeriesFixture, plantsDataFixture } from "./fixture";
 import { filterGroups, queryPlants } from "./query";
 import { emptyQuery, missing, ungrouped } from "./search";
 
 function item(id: number, fields: Partial<PlantItem> = {}): PlantItem {
-  return {
+  return plantItemFixture({
     id,
     name: `植物${id}`,
     image: null,
@@ -15,7 +16,7 @@ function item(id: number, fields: Partial<PlantItem> = {}): PlantItem {
     maturityPeriod: null,
     harvestCount: null,
     ...fields,
-  };
+  });
 }
 
 const items = [
@@ -37,7 +38,7 @@ const items = [
   item(4, { name: "Alpha", quality: 2, harvestCount: 1 }),
 ];
 const series: PlantSeries[] = [
-  {
+  plantSeriesFixture({
     id: 100,
     name: "星屿花系列",
     image: null,
@@ -45,8 +46,8 @@ const series: PlantSeries[] = [
     quality: 1,
     seriesName: null,
     plantIds: [2, 1],
-  },
-  {
+  }),
+  plantSeriesFixture({
     id: 101,
     name: "禾夏系列",
     image: null,
@@ -54,8 +55,8 @@ const series: PlantSeries[] = [
     quality: 2,
     seriesName: null,
     plantIds: [1],
-  },
-  {
+  }),
+  plantSeriesFixture({
     id: 102,
     name: "未定系列",
     image: null,
@@ -63,9 +64,9 @@ const series: PlantSeries[] = [
     quality: null,
     seriesName: null,
     plantIds: null,
-  },
+  }),
 ];
-const data = { items, series };
+const data = plantsDataFixture({ items, series });
 const ids = (rows: { id: number }[]) => rows.map((row) => row.id);
 const search = (patch: Partial<ReturnType<typeof emptyQuery>>) =>
   queryPlants(data, "items", { ...emptyQuery(), ...patch });
@@ -78,7 +79,9 @@ describe("plant catalog", () => {
     expect(ids(search({ q: "ALPHA" }).rows)).toEqual([4]);
     expect(ids(queryPlants(data, "series", { ...emptyQuery(), q: "禾夏" }).rows)).toEqual([101]);
     expect(search({ q: "不存在" }).total).toBe(0);
-    expect(queryPlants({ items: [], series: [] }, "items", emptyQuery()).total).toBe(0);
+    expect(
+      queryPlants(plantsDataFixture({ items: [], series: [] }), "items", emptyQuery()).total,
+    ).toBe(0);
   });
 
   it("combines facets with AND and multiple selected values with OR", () => {
@@ -116,5 +119,35 @@ describe("plant catalog", () => {
     expect(ids(search({ sort: "quality-asc" }).rows)).toEqual([2, 1, 4, 3]);
     expect(ids(search({ sort: "name-asc" }).rows)).toEqual([2, 1, 3, 4]);
     expect(ids(items)).toEqual([1, 2, 3, 4]);
+  });
+
+  it("filters confirmed sources and flower colors independently in both views", () => {
+    const flower = item(5, { name: "白百合", sources: "采集，花卉杂交", flowerColors: ["白色"] });
+    const flowerSeries = plantSeriesFixture({
+      id: 105,
+      name: "百合",
+      plantIds: [5],
+      summary: flower.summary,
+    });
+    const entries = plantsDataFixture({
+      items: [...items, flower],
+      series: [...series, flowerSeries],
+    });
+    const query = { ...emptyQuery(), sources: ["花卉杂交"], flowerColors: ["白色"] };
+    expect(ids(queryPlants(entries, "items", query).rows)).toEqual([5]);
+    expect(ids(queryPlants(entries, "series", query).rows)).toEqual([105]);
+    expect(queryPlants(entries, "items", { ...query, flowerColors: ["红色"] }).total).toBe(0);
+    expect(
+      ids(queryPlants(entries, "items", { ...emptyQuery(), sources: [missing] }).rows),
+    ).toEqual([1, 2, 3, 4]);
+    const groups = filterGroups(entries);
+    expect(groups.find((group) => group.key === "sources")?.options).toContainEqual({
+      value: "花卉杂交",
+      label: "花卉杂交",
+    });
+    expect(groups.find((group) => group.key === "flowerColors")?.options).toContainEqual({
+      value: "白色",
+      label: "白色",
+    });
   });
 });

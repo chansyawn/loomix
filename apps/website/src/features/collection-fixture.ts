@@ -81,9 +81,9 @@ export function catalogFixture(view: Partial<CollectionView> = {}): CatalogV5 {
         originGalaxy: record.originGalaxy,
         maturityPeriod: record.maturityPeriod,
         harvestCount: record.harvestCount,
-        sources: null,
+        sources: record.sources,
       },
-      seedId: null,
+      seedId: record.seedId,
     });
   for (const record of view.plants?.series ?? [])
     catalog.items.push({
@@ -152,6 +152,22 @@ export function catalogFixture(view: Partial<CollectionView> = {}): CatalogV5 {
       subcategory: null,
       attributes: { sources: null },
     });
-  catalog.details = catalog.items.map((record) => emptyCollectionDetail(record.id));
+  const plants = new Map(view.plants?.items.map((item) => [item.id, item]));
+  catalog.details = catalog.items.map((record) => {
+    const plant = plants.get(record.id);
+    return {
+      ...emptyCollectionDetail(record.id),
+      ...(plant
+        ? { flowerColors: plant.flowerColors, growth: plant.growth, treeDrops: plant.treeDrops }
+        : {}),
+    };
+  });
+  catalog.cropSeeds = [
+    ...new Map(
+      view.plants?.items.flatMap((item) =>
+        item.summary.seeds.map((seed) => [seed.id, seed] as const),
+      ) ?? [],
+    ).values(),
+  ].sort((a, b) => a.id - b.id);
   return catalog;
 }

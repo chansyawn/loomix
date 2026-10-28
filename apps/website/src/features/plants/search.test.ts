@@ -22,7 +22,12 @@ describe("plant URL state", () => {
           harvestCounts: ["2", "-1", "02", "__missing", 3],
           qualities: ["0", "9", "__missing", "0"],
         },
-        series: { qualities: ["4", "invalid"], galaxies: ["禾夏"] },
+        series: {
+          qualities: ["4", "invalid"],
+          galaxies: ["禾夏"],
+          sources: ["采集", "采集", false],
+          flowerColors: ["白色", "白色", 3],
+        },
       }),
     ).toEqual({
       view: "items",
@@ -33,7 +38,7 @@ describe("plant URL state", () => {
         harvestCounts: ["2", "__missing"],
         qualities: ["0", "__missing"],
       },
-      series: { ...emptyQuery(), qualities: ["4"] },
+      series: { ...emptyQuery(), qualities: ["4"], sources: ["采集"], flowerColors: ["白色"] },
     });
   });
 

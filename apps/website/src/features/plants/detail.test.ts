@@ -8,12 +8,13 @@ import {
 } from "@tanstack/react-router";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { catalogFixture } from "../collection-fixture.ts";
+import { plantItemFixture, plantSeriesFixture, plantsDataFixture } from "./fixture";
 import type { PlantItem, PlantSeries } from "../collection-view.ts";
 import { plantsDetail, loadPlantsDetail, parsePlantId } from "./detail";
 import { plantsOrigin } from "./detail-navigation";
 import { compactPlantsSearchMiddleware, plantsSearchSchema } from "./search";
 
-const first: PlantItem = {
+const first: PlantItem = plantItemFixture({
   id: 1,
   name: "星露花",
   image: null,
@@ -23,9 +24,9 @@ const first: PlantItem = {
   originGalaxy: null,
   maturityPeriod: null,
   harvestCount: null,
-};
+});
 const second: PlantItem = { ...first, id: 2, name: "星露果" };
-const group: PlantSeries = {
+const group: PlantSeries = plantSeriesFixture({
   id: 3,
   name: "星露系列",
   image: null,
@@ -33,15 +34,15 @@ const group: PlantSeries = {
   quality: null,
   seriesName: null,
   plantIds: [2, 1],
-};
-const data = {
+});
+const data = plantsDataFixture({
   items: [first, second],
   series: [
     group,
     { ...group, id: 4, name: "空系列", plantIds: [] },
     { ...group, id: 5, plantIds: null },
   ],
-};
+});
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -59,7 +60,7 @@ describe("plant details", () => {
   });
 
   it("returns known series memberships and preserves missing plant fields", () => {
-    expect(plantsDetail(data, "items", 1)).toEqual({
+    expect(plantsDetail(data, "items", 1)).toMatchObject({
       kind: "item",
       record: first,
       series: [group],
@@ -67,7 +68,7 @@ describe("plant details", () => {
     });
     expect(plantsDetail({ ...data, series: [] }, "items", 1)).toMatchObject({ series: [] });
     expect(
-      plantsDetail({ items: [first], series: [{ ...group, plantIds: null }] }, "items", 1),
+      plantsDetail({ ...data, items: [first], series: [{ ...group, plantIds: null }] }, "items", 1),
     ).toMatchObject({ series: [], hasUnconfirmedSeriesMembership: true });
   });
 

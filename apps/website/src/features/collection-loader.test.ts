@@ -72,8 +72,9 @@ describe("unified catalog loading", () => {
       queryPlants(plants, "items", { ...emptyPlantsQuery(), q: "苹果", categories: ["采摘材料"] })
         .rows,
     ).toMatchObject([{ id: 30161, name: "苹果" }]);
-    expect(plants.items[0]).not.toHaveProperty("seedId");
-    expect(plants.items[0]).not.toHaveProperty("sources");
+    expect(plants.items[0]).toHaveProperty("seedId", 900);
+    expect(plants.items[0]).toHaveProperty("sources", "种植");
+    expect(plants.items[0]?.summary.seeds).toMatchObject([{ id: 900, name: "苹果种子" }]);
     expect(await loadPlantsDetail("items", "30161")).toMatchObject({
       record: {
         id: 30161,

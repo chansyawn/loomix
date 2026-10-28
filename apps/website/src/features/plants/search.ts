@@ -17,6 +17,8 @@ export const filterKeys = [
   "galaxies",
   "series",
   "harvestCounts",
+  "sources",
+  "flowerColors",
 ] as const;
 export type FilterKey = (typeof filterKeys)[number];
 
@@ -40,6 +42,8 @@ const viewQuerySchema = z.object({
     .transform((values) => values.filter((value) => value === missing || /^[0-4]$/.test(value)))
     .default([]),
   galaxies: stringList.default([]),
+  sources: stringList.default([]),
+  flowerColors: stringList.default([]),
   series: stringList.default([]),
   harvestCounts: stringList
     .transform((values) =>
@@ -64,7 +68,7 @@ export function emptyQuery(): ViewQuery {
 }
 
 const seriesQuerySchema = viewQuerySchema
-  .pick({ q: true, sort: true, qualities: true })
+  .pick({ q: true, sort: true, qualities: true, sources: true, flowerColors: true })
   .transform((query): ViewQuery => ({ ...emptyQuery(), ...query }));
 
 export const plantsSearchSchema = z.object({

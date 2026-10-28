@@ -1,3 +1,4 @@
+import { collectionItemLocation } from "../collection/item-route";
 import { SearchXIcon } from "lucide-react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { buttonVariants } from "@/ui/components/button";
@@ -20,15 +21,6 @@ import type { IngredientItem } from "../collection-view";
 import type { FurnitureDetail } from "./detail";
 import type { View } from "./search";
 import { FurnitureLoadError } from "./states";
-
-const ingredientRoutes = {
-  plants: "/collection/plants/items/$id",
-  creatures: "/collection/creatures/items/$id",
-  miscellaneous: "/collection/miscellany/items/$id",
-  furniture: "/collection/furniture/items/$id",
-  clothing: "/collection/clothing/items/$id",
-  dishes: "/collection/dishes/items/$id",
-} as const;
 
 export function FurnitureDetailPage({ detail }: { detail: FurnitureDetail }) {
   const { record } = detail;
@@ -125,8 +117,7 @@ function FurnitureRecipes({ detail }: { detail: Extract<FurnitureDetail, { kind:
 function FurnitureMaterialLink({ item }: { item: IngredientItem }) {
   return (
     <Link
-      to={ingredientRoutes[item.catalogCategory]}
-      params={{ id: String(item.id) }}
+      {...collectionItemLocation(item)}
       className="group/material flex min-w-0 items-center gap-3 rounded-lg outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div className="size-11 shrink-0 overflow-hidden rounded-md border bg-muted/30">
