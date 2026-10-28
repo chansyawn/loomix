@@ -17,5 +17,5 @@ export const Route = createFileRoute("/collection/miscellany_/items/$id")({
 });
 
 function MiscellanyItemRoute() {
-  return <MiscellanyDetailPage item={Route.useLoaderData()} />;
+  return <MiscellanyDetailPage detail={Route.useLoaderData()} />;
 }

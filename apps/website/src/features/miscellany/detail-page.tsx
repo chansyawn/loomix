@@ -17,8 +17,15 @@ import type { MiscellaneousItem } from "../collection-view.ts";
 import { MiscellanyReturnLink } from "./detail-navigation";
 import { MiscellanyLoadError } from "./states";
 import { useRouter } from "@tanstack/react-router";
+import { ItemCookingUsage } from "../ingredients/item-usage";
+import type { loadMiscellanyDetail } from "./detail";
 
-export function MiscellanyDetailPage({ item }: { item: MiscellaneousItem }) {
+export function MiscellanyDetailPage({
+  detail,
+}: {
+  detail: Awaited<ReturnType<typeof loadMiscellanyDetail>>;
+}) {
+  const item: MiscellaneousItem = detail.record;
   return (
     <CollectionDetailLayout
       image={<RecordImage key={item.image} image={item.image} name={item.name} eager />}
@@ -33,7 +40,9 @@ export function MiscellanyDetailPage({ item }: { item: MiscellaneousItem }) {
         ["编号", String(item.id)],
         ["获取途径", item.acquisition],
       ]}
-    />
+    >
+      <ItemCookingUsage usage={detail.cooking} />
+    </CollectionDetailLayout>
   );
 }
 

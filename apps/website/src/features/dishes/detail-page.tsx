@@ -17,7 +17,7 @@ import {
 import { DishesCard, DishSeriesCard } from "./dishes-card";
 import { DishesReturnLink } from "./detail-navigation";
 import type { DishesDetail } from "./detail";
-import type { View } from "./search";
+import type { DishView as View } from "./search";
 import { DishesLoadError } from "./states";
 import { DishRecipe } from "./recipe";
 import { DishEffects, DishRequirementSource } from "./effects";

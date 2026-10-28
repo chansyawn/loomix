@@ -1,6 +1,7 @@
 import { notFound } from "@tanstack/react-router";
 import type { MiscellanyData } from "./data";
-import { loadMiscellany } from "./data";
+import { loadCollectionView } from "../collection-loader";
+import { buildIngredientsData, ingredientUsage } from "../ingredients/model";
 
 export function parseMiscellanyId(value: string): number {
   const id = Number(value);
@@ -16,5 +17,8 @@ export function findMiscellanyDetail(data: MiscellanyData, value: string) {
 }
 
 export async function loadMiscellanyDetail(value: string) {
-  return findMiscellanyDetail(await loadMiscellany(), value);
+  parseMiscellanyId(value);
+  const collection = await loadCollectionView();
+  const record = findMiscellanyDetail(collection.miscellaneous, value);
+  return { record, cooking: ingredientUsage(buildIngredientsData(collection), record.id) };
 }

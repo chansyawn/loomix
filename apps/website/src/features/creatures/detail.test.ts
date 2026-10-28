@@ -59,6 +59,7 @@ describe("creatures details", () => {
     expect(creaturesDetail(data, "items", 1)).toEqual({
       kind: "item",
       record: first,
+      cooking: null,
       catalogItems: data.items,
       series: data.series,
     });

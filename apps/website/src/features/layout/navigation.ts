@@ -19,7 +19,7 @@ export const collectionNavigation = {
     { title: "生物", to: "/collection/creatures", icon: BugIcon },
     { title: "杂物", to: "/collection/miscellany", icon: PackageIcon },
     { title: "服饰", to: "/collection/clothing", icon: ShirtIcon },
-    { title: "菜肴", to: "/collection/dishes", icon: CookingPotIcon },
+    { title: "烹饪", to: "/collection/dishes", icon: CookingPotIcon },
   ],
 } as const;
 

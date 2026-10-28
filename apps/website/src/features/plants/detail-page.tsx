@@ -23,6 +23,7 @@ import { PlantSeedInfo } from "./seed-info";
 import { PlantGrowthStages } from "./growth-stages";
 import { PlantItemGrowing } from "./item-growing";
 import { PlantDropsInfo, PlantRelatedItems } from "./related-items";
+import { ItemCookingUsage } from "../ingredients/item-usage";
 
 export function PlantsDetailPage({ detail }: { detail: PlantsDetail }) {
   const { record } = detail;
@@ -74,6 +75,7 @@ export function PlantsDetailPage({ detail }: { detail: PlantsDetail }) {
       )}
       <PlantDropsInfo drops={summary.drops} />
       {detail.kind === "item" && <PlantRelatedItems title="来源树木" items={detail.sourceTrees} />}
+      {detail.kind === "item" && <ItemCookingUsage usage={detail.cooking} />}
       <section aria-labelledby="related-plants" className="space-y-4">
         <h2 id="related-plants" className="text-lg font-semibold">
           {detail.kind === "item" ? "所属系列" : "系列成员"}

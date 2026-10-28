@@ -4,11 +4,15 @@ import { Link } from "@tanstack/react-router";
 import type { IngredientCategory, IngredientExpression } from "@loomix/schema/catalog";
 import type { IngredientItem } from "../collection-view";
 import type { DishesDetail } from "./detail";
+import { IngredientCategoryLink } from "../ingredients/category-link";
+import { useDishesOrigin } from "./detail-navigation";
 
 function IngredientItemLink({ item }: { item: IngredientItem }) {
+  const origin = useDishesOrigin();
   return (
     <Link
       {...collectionItemLocation(item)}
+      state={{ dishesOrigin: origin }}
       className="flex min-h-9 items-center rounded-lg px-2 py-1.5 text-sm leading-6 wrap-anywhere underline-offset-4 outline-none hover:bg-muted hover:underline focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
     >
       {item.name}
@@ -30,32 +34,40 @@ function IngredientRequirement({
     if (!category) return <p className="text-sm text-muted-foreground">食材类别未收录</p>;
     const matches = category.itemIds
       .map((id) => items.get(id))
-      .filter((item): item is IngredientItem => item !== undefined);
+      .filter((item): item is IngredientItem => item !== undefined && item.listed !== false);
     return (
-      <details className="group/ingredient min-w-0 overflow-hidden rounded-xl border">
-        <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 rounded-xl bg-muted/30 px-4 py-3 text-sm outline-none hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset [&::-webkit-details-marker]:hidden">
-          <span className="min-w-0 flex-1 font-medium wrap-anywhere">{category.name}</span>
-          <span className="shrink-0 text-xs text-muted-foreground">{matches.length} 件物品</span>
-          <ChevronDownIcon
-            aria-hidden="true"
-            className="size-4 shrink-0 text-muted-foreground motion-safe:transition-transform group-open/ingredient:rotate-180"
-          />
-        </summary>
-        {matches.length ? (
-          <ul
-            aria-label={`${category.name}候选物品`}
-            className="grid max-h-80 grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-1 overflow-y-auto border-t p-2"
-          >
-            {matches.map((item) => (
-              <li key={item.id} className="min-w-0">
-                <IngredientItemLink item={item} />
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="border-t px-4 py-3 text-sm text-muted-foreground">暂无正式收录物品</p>
-        )}
-      </details>
+      <div className="min-w-0 space-y-2">
+        <details className="group/ingredient min-w-0 overflow-hidden rounded-xl border">
+          <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 rounded-xl bg-muted/30 px-4 py-3 text-sm outline-none hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset [&::-webkit-details-marker]:hidden">
+            <span className="min-w-0 flex-1 font-medium wrap-anywhere">{category.name}</span>
+            <span className="shrink-0 text-xs text-muted-foreground">{matches.length} 件物品</span>
+            <ChevronDownIcon
+              aria-hidden="true"
+              className="size-4 shrink-0 text-muted-foreground motion-safe:transition-transform group-open/ingredient:rotate-180"
+            />
+          </summary>
+          {matches.length ? (
+            <ul
+              aria-label={`${category.name}候选物品`}
+              className="grid max-h-80 grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-1 overflow-y-auto border-t p-2"
+            >
+              {matches.map((item) => (
+                <li key={item.id} className="min-w-0">
+                  <IngredientItemLink item={item} />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="border-t px-4 py-3 text-sm text-muted-foreground">暂无正式收录物品</p>
+          )}
+        </details>
+        <IngredientCategoryLink
+          category={category}
+          className="inline-block px-2 text-xs text-muted-foreground underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+        >
+          查看{category.name}类别与关联菜肴 →
+        </IngredientCategoryLink>
+      </div>
     );
   }
   const label = expression.kind === "all" ? "同时满足" : "任选";

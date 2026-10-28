@@ -53,7 +53,7 @@ describe("miscellany details", () => {
       "fetch",
       vi.fn().mockImplementation(fixtureRequest(catalogFixture({ miscellaneous: data }))),
     );
-    expect(await loadMiscellanyDetail("30031")).toEqual(item);
+    expect(await loadMiscellanyDetail("30031")).toEqual({ record: item, cooking: null });
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })));
     await expect(loadMiscellanyDetail("30031")).rejects.toThrow("503");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}")));

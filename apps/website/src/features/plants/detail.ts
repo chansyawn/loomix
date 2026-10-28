@@ -1,6 +1,8 @@
 import { notFound } from "@tanstack/react-router";
 import type { PlantsData } from "./data";
-import { loadPlants } from "./data";
+import { loadCollectionView } from "../collection-loader";
+import { buildIngredientsData, ingredientUsage } from "../ingredients/model";
+import type { IngredientUsage } from "../ingredients/model";
 import { membershipIndex } from "./query";
 import type { View } from "./search";
 
@@ -10,7 +12,12 @@ export function parsePlantId(value: string): number {
   return id;
 }
 
-export function plantsDetail(data: PlantsData, view: View, id: number) {
+export function plantsDetail(
+  data: PlantsData,
+  view: View,
+  id: number,
+  cooking: IngredientUsage | null = null,
+) {
   const itemsById = new Map(data.items.map((item) => [item.id, item]));
   if (view === "items") {
     const item = itemsById.get(id);
@@ -19,6 +26,7 @@ export function plantsDetail(data: PlantsData, view: View, id: number) {
     return {
       kind: "item" as const,
       record: item,
+      cooking,
       series,
       relatedGroups: series.map((group) => ({
         series: group,
@@ -49,5 +57,11 @@ export type PlantsDetail = ReturnType<typeof plantsDetail>;
 
 export async function loadPlantsDetail(view: View, value: string): Promise<PlantsDetail> {
   const id = parsePlantId(value);
-  return plantsDetail(await loadPlants(), view, id);
+  const collection = await loadCollectionView();
+  return plantsDetail(
+    collection.plants,
+    view,
+    id,
+    view === "items" ? ingredientUsage(buildIngredientsData(collection), id) : null,
+  );
 }

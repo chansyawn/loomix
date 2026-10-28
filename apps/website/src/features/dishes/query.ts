@@ -4,7 +4,7 @@ import { qualityNames } from "@/features/collection/quality";
 import type { DishesData } from "./data";
 import { difficultyRequirementLabel, effectValues } from "./presentation";
 import { missing, ungrouped } from "./search";
-import type { FilterKey, View, ViewQuery } from "./search";
+import type { FilterKey, DishView as View, ViewQuery } from "./search";
 
 export type FilterGroup = CollectionFilterGroup<FilterKey>;
 

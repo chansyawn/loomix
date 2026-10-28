@@ -1,6 +1,12 @@
 import type { SearchMiddleware } from "@tanstack/react-router";
 import { z } from "zod";
 import { collectionLayoutSchema } from "../collection/layout";
+import {
+  compactIngredientsQuery,
+  emptyIngredientsQuery,
+  ingredientsQuerySchema,
+} from "../ingredients/search";
+import type { IngredientsQuery } from "../ingredients/search";
 
 export const missing = "__missing";
 export const ungrouped = "__ungrouped";
@@ -55,12 +61,14 @@ const viewQuerySchema = z.object({
 
 export type ViewQuery = z.output<typeof viewQuerySchema>;
 export type Sort = ViewQuery["sort"];
-export type View = "items" | "series";
+export type DishView = "items" | "series";
+export type View = DishView | "ingredients";
 export type DishesSearch = {
   view: View;
   layout?: "grid" | "table";
   items: ViewQuery;
   series: ViewQuery;
+  ingredients: IngredientsQuery;
 };
 export type DishesSearchInput = z.input<typeof dishesSearchSchema>;
 
@@ -74,12 +82,14 @@ const seriesQuerySchema = viewQuerySchema
 
 export const dishesSearchSchema = z.object({
   layout: collectionLayoutSchema,
-  view: z.enum(["items", "series"]).catch("items").default("items"),
+  view: z.enum(["items", "ingredients", "series"]).catch("items").default("items"),
   items: viewQuerySchema.prefault({}).catch(emptyQuery),
   series: seriesQuerySchema.prefault({}).catch(emptyQuery),
+  ingredients: ingredientsQuerySchema.prefault({}).catch(emptyIngredientsQuery),
 });
 
 export function updateViewQuery(search: DishesSearch, patch: Partial<ViewQuery>): DishesSearch {
+  if (search.view === "ingredients") return search;
   return { ...search, [search.view]: { ...search[search.view], ...patch } };
 }
 
@@ -95,16 +105,25 @@ export function compactDishesSearch(input: DishesSearchInput): DishesSearchInput
   const search = dishesSearchSchema.parse(input);
   const items = compactQuery(search.items);
   const series = compactQuery(search.series);
+  const ingredients = compactIngredientsQuery(search.ingredients);
   return {
     ...(search.layout ? { layout: search.layout } : {}),
-    ...(search.view === "series" ? { view: search.view } : {}),
+    ...(search.view !== "items" ? { view: search.view } : {}),
     ...(Object.keys(items).length > 0 ? { items } : {}),
     ...(Object.keys(series).length > 0 ? { series } : {}),
+    ...(Object.keys(ingredients).length > 0 ? { ingredients } : {}),
   };
 }
 
 export const compactDishesSearchMiddleware: SearchMiddleware<DishesSearch> = ({ search, next }) => {
   const result = next(search);
-  const { layout: _layout, view: _view, items: _items, series: _series, ...other } = result;
+  const {
+    layout: _layout,
+    view: _view,
+    items: _items,
+    series: _series,
+    ingredients: _ingredients,
+    ...other
+  } = result;
   return { ...other, ...compactDishesSearch(result) } as DishesSearch;
 };

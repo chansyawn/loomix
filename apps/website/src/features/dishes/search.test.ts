@@ -1,9 +1,15 @@
 import { describe, expect, it } from "vite-plus/test";
 import { emptyQuery, dishesSearchSchema, updateViewQuery } from "./search";
+import { emptyIngredientsQuery } from "../ingredients/search";
 
 describe("dish URL state", () => {
   it("restores defaults for missing and malformed view objects", () => {
-    const defaults = { view: "items", items: emptyQuery(), series: emptyQuery() };
+    const defaults = {
+      view: "items",
+      items: emptyQuery(),
+      series: emptyQuery(),
+      ingredients: emptyIngredientsQuery(),
+    };
     expect(dishesSearchSchema.parse({})).toEqual(defaults);
     for (const value of [null, [], "invalid", 42, true])
       expect(dishesSearchSchema.parse({ view: "invalid", items: value, series: value })).toEqual(
@@ -30,6 +36,7 @@ describe("dish URL state", () => {
       }),
     ).toEqual({
       view: "items",
+      ingredients: emptyIngredientsQuery(),
       items: {
         ...emptyQuery(),
         difficulties: ["简单", "未知"],

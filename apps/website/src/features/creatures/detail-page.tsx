@@ -20,6 +20,7 @@ import { CreaturesReturnLink } from "./detail-navigation";
 import type { CreaturesDetail } from "./detail";
 import type { View } from "./search";
 import { CreaturesLoadError } from "./states";
+import { ItemCookingUsage } from "../ingredients/item-usage";
 
 export function CreaturesDetailPage({ detail }: { detail: CreaturesDetail }) {
   const { record } = detail;
@@ -62,6 +63,7 @@ export function CreaturesDetailPage({ detail }: { detail: CreaturesDetail }) {
       }
       fields={fields}
     >
+      {detail.kind === "item" && <ItemCookingUsage usage={detail.cooking} />}
       <section aria-labelledby="related-creatures" className="space-y-4">
         <h2 id="related-creatures" className="text-lg font-semibold">
           {detail.kind === "item" ? "所属系列" : "系列成员"}

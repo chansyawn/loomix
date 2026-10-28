@@ -1,17 +1,18 @@
-import { CookingPotIcon, LayersIcon } from "lucide-react";
+import { CarrotIcon, CookingPotIcon, LayersIcon } from "lucide-react";
 import { CardDescription, CardFooter } from "@/ui/components/card";
 import { Skeleton } from "@/ui/components/skeleton";
 import { CollectionCardSkeleton } from "../collection/card-skeleton";
 import { compactGrid, wideGrid } from "../collection/grid-layout";
 import type { CollectionTab } from "../collection/page";
-import type { View } from "./search";
+import type { DishView, View } from "./search";
 
-export const title = "菜肴";
-export const tabs: CollectionTab<"items" | "series">[] = [
+export const title = "烹饪";
+export const tabs: CollectionTab<View>[] = [
   { value: "items", label: "菜肴", icon: <CookingPotIcon /> },
+  { value: "ingredients", label: "食材", icon: <CarrotIcon /> },
   { value: "series", label: "菜肴系列", icon: <LayersIcon /> },
 ];
-export function listPresentation(view: View) {
+export function listPresentation(view: DishView) {
   const entry = {
     items: { unit: "道菜肴", searchLabel: "搜索菜肴名称", placeholder: "搜索菜肴名称…" },
     series: { unit: "个系列", searchLabel: "搜索系列名称", placeholder: "搜索系列名称…" },

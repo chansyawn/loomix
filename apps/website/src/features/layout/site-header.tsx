@@ -31,7 +31,9 @@ export function SiteHeader() {
   const isCreaturesDetail = creaturesView !== undefined;
   const plantsView = /^\/collection\/plants\/(items|series)\/[^/]+\/?$/.exec(pathname)?.[1];
   const isPlantsDetail = plantsView !== undefined;
-  const dishesView = /^\/collection\/dishes\/(items|series)\/[^/]+\/?$/.exec(pathname)?.[1];
+  const dishesView = /^\/collection\/dishes\/(items|series|ingredients)\/[^/]+\/?$/.exec(
+    pathname,
+  )?.[1];
   const isDishesDetail = dishesView !== undefined;
   const isMiscellanyDetail = /^\/collection\/miscellany\/items\/[^/]+\/?$/.test(pathname);
   const isDetail =
@@ -168,9 +170,19 @@ export function SiteHeader() {
             <>
               <BreadcrumbItem>
                 <BreadcrumbLink
-                  render={<DishesReturnLink view={dishesView === "series" ? "series" : "items"} />}
+                  render={
+                    <DishesReturnLink
+                      view={
+                        dishesView === "series"
+                          ? "series"
+                          : dishesView === "ingredients"
+                            ? "ingredients"
+                            : "items"
+                      }
+                    />
+                  }
                 >
-                  菜肴
+                  烹饪
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
@@ -197,7 +209,9 @@ export function SiteHeader() {
                         : isClothingDetail
                           ? "服饰详情"
                           : isDishesDetail
-                            ? "菜肴详情"
+                            ? dishesView === "ingredients"
+                              ? "食材类别"
+                              : "菜肴详情"
                             : isMiscellanyDetail
                               ? "杂物详情"
                               : "家具详情"))

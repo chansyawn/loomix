@@ -10,7 +10,7 @@ import type { CollectionColumn } from "../collection/table-columns";
 import { useDishesOrigin } from "./detail-navigation";
 import { membershipIndex } from "./query";
 import { difficultyRequirementLabel, effectSummary, formatTastes } from "./presentation";
-import type { View } from "./search";
+import type { DishView as View } from "./search";
 
 export type DishesRow = DishItem | DishSeries;
 
