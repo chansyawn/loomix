@@ -37,3 +37,35 @@ test("external appearance records retain their identity without entering item li
   catalog.entries.push({ entity: { kind: "appearance", id: 8 }, encyclopedia: { listed: false } });
   expect(toCollectionView(catalog, assetsFixture(catalog)).clothing.appearances[0].id).toBe(8);
 });
+
+test("creature details retain scientific names and localized acquisition labels", () => {
+  const catalog = emptyDataset(fixtureContext, fixtureSource).catalog;
+  catalog.items.push({
+    id: 1,
+    name: "三色锦鲤",
+    type: "creature",
+    subcategory: "水生生物",
+    image: null,
+    description: null,
+    quality: 2,
+    trade: null,
+    acquisition: null,
+    region: null,
+    habitat: null,
+    activeSeasons: null,
+    activeTimes: null,
+    activeWeather: null,
+    sizeRange: null,
+    scientificName: "Cyprinus carpio",
+    sources: ["钓鱼", "河域钓取"],
+    research: null,
+    size: null,
+    grades: null,
+  });
+  catalog.entries.push({ entity: { kind: "item", id: 1 }, encyclopedia: { listed: true } });
+
+  expect(toCollectionView(catalog, assetsFixture(catalog)).creatures.items[0]).toMatchObject({
+    scientificName: "Cyprinus carpio",
+    sources: "钓鱼，河域钓取",
+  });
+});

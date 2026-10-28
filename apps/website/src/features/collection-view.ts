@@ -29,6 +29,8 @@ export type FurnitureItem = CategorizedRecord & {
   craftingRecipes: CraftingRecipe[] | null;
 };
 export type CreatureItem = CategorizedRecord & {
+  scientificName: string | null;
+  sources: string | null;
   region: string | null;
   habitat: string | null;
   activeSeasons: string | null;
@@ -177,6 +179,8 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
         view.creatures.items.push({
           ...common,
           category,
+          scientificName: record.scientificName,
+          sources: displayValues(record.sources),
           region: displayValues(record.region),
           habitat: displayValues(record.habitat),
           activeSeasons: displayValues(record.activeSeasons),

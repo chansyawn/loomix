@@ -20,6 +20,8 @@ const first: CreatureItem = {
   quality: null,
   description: null,
   category: null,
+  scientificName: null,
+  sources: null,
   region: null,
   habitat: null,
   activeSeasons: null,

@@ -11,6 +11,8 @@ function item(id: number, fields: Partial<CreatureItem> = {}): CreatureItem {
     description: null,
     quality: null,
     category: null,
+    scientificName: null,
+    sources: null,
     region: null,
     habitat: null,
     activeSeasons: null,
