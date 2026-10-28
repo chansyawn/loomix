@@ -52,7 +52,9 @@ export type ClothingItem = CategorizedRecord & {
   sources: string | null;
 };
 export type ClothingAppearance = CategorizedRecord;
-export type MiscellaneousItem = CollectionRecord;
+export type MiscellaneousItem = CollectionRecord & {
+  acquisition: string | null;
+};
 export type FurnitureSet = CollectionRecord & {
   seriesName: string | null;
   componentIds: number[] | null;
@@ -200,7 +202,10 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
         });
         break;
       case "material":
-        view.miscellaneous.push(common);
+        view.miscellaneous.push({
+          ...common,
+          acquisition: displayValues(record.acquisition?.map((source) => source.label) ?? null),
+        });
         break;
       case "plant":
         break;

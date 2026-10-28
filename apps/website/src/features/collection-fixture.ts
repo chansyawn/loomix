@@ -18,6 +18,15 @@ export const fixtureSource = {
   manifestId: "5662883",
 };
 const values = (value: string | null): string[] | null => value?.split("，") ?? null;
+type MaterialItem = Extract<Item, { type: "material" }>;
+const acquisition = (value: string | null): MaterialItem["acquisition"] =>
+  value === null
+    ? null
+    : value.split("，").map((label, index) => ({
+        sourceId: index + 1,
+        label,
+        condition: null,
+      }));
 export function catalogBase(record: CollectionRecord) {
   return {
     id: record.id,
@@ -147,7 +156,14 @@ export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
     });
   }
   for (const record of view.miscellaneous ?? [])
-    add({ ...catalogBase(record), ...common, type: "material", subcategory: null, sources: null });
+    add({
+      ...catalogBase(record),
+      ...common,
+      type: "material",
+      subcategory: null,
+      acquisition: acquisition(record.acquisition),
+      sources: null,
+    });
   return catalog;
 }
 export function assetsFixture(catalog: Catalog): Assets {

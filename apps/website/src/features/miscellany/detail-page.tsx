@@ -29,7 +29,10 @@ export function MiscellanyDetailPage({ item }: { item: MiscellaneousItem }) {
           {item.description || "描述未提供"}
         </p>
       }
-      fields={[["编号", String(item.id)]]}
+      fields={[
+        ["编号", String(item.id)],
+        ["获取途径", item.acquisition],
+      ]}
     />
   );
 }

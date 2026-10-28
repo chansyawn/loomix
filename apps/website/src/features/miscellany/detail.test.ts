@@ -19,6 +19,7 @@ const item: MiscellaneousItem = {
   image: null,
   description: "良好的黏合剂。",
   quality: 1,
+  acquisition: "沙滩拾取",
 };
 const data = [item];
 

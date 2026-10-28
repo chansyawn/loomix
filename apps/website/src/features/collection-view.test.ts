@@ -13,7 +13,10 @@ test("catalog entries control listing while reference entities remain available 
       type: "material",
       subcategory: null,
       trade: null,
-      acquisition: null,
+      acquisition: [
+        { sourceId: 1, label: "来源甲", condition: null },
+        { sourceId: 2, label: "来源乙", condition: null },
+      ],
       sources: ["来源甲，保留原文", "来源乙"],
     },
     { ...base, id: 2, type: "reference" },
@@ -21,6 +24,7 @@ test("catalog entries control listing while reference entities remain available 
   catalog.entries.push({ entity: { kind: "item", id: 1 }, encyclopedia: null });
   const view = toCollectionView(catalog, assetsFixture(catalog));
   expect(view.miscellaneous.map((item) => item.id)).toEqual([1]);
+  expect(view.miscellaneous[0]?.acquisition).toBe("来源甲，来源乙");
   expect(view.ingredientItemsById.get(2)).toMatchObject({ listed: false });
 });
 
