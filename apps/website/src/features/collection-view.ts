@@ -1,6 +1,7 @@
 import type {
   Catalog,
   CraftingRecipe,
+  DifficultyRequirement,
   IngredientCategory,
   Item,
   Quality,
@@ -38,11 +39,16 @@ export type CreatureItem = CategorizedRecord & {
   activeWeather: string | null;
   sizeRange: string | null;
 };
+export type DishEffect = NonNullable<Extract<Item, { type: "dish" }>["effects"]>[number];
 export type DishItem = CollectionRecord & {
   difficulty: string | null;
   galaxyFlavor: string | null;
   cookware: string | null;
-  effects: string | null;
+  effectsText: string | null;
+  effects: DishEffect[] | null;
+  tastes: Extract<Item, { type: "dish" }>["tastes"];
+  difficultyRequirement: DifficultyRequirement | null;
+  acquisition: string | null;
   recipe: Recipe | null;
 };
 export type ClothingItem = CategorizedRecord & {
@@ -91,6 +97,15 @@ export interface CollectionView {
   miscellaneous: MiscellaneousItem[];
 }
 export const displayValues = (values: string[] | null): string | null => values?.join("，") || null;
+function dishAcquisition(record: Extract<Item, { type: "dish" }>): string | null {
+  const labels = [
+    ...(record.sources ?? []),
+    ...(record.acquisition?.map((source) =>
+      source.condition ? `${source.label}（${source.condition}）` : source.label,
+    ) ?? []),
+  ];
+  return [...new Set(labels)].join("，") || null;
+}
 export function itemCategory(item: Item): CatalogCategory {
   switch (item.type) {
     case "creature":
@@ -197,7 +212,11 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
           difficulty: record.difficulty,
           galaxyFlavor: record.galaxyFlavor,
           cookware: displayValues(record.cookware),
-          effects: record.effectsText,
+          effectsText: record.effectsText,
+          effects: record.effects,
+          tastes: record.tastes,
+          difficultyRequirement: record.difficultyRequirement,
+          acquisition: dishAcquisition(record),
           recipe: record.recipe,
         });
         break;

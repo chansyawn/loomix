@@ -20,6 +20,8 @@ import type { DishesDetail } from "./detail";
 import type { View } from "./search";
 import { DishesLoadError } from "./states";
 import { DishRecipe } from "./recipe";
+import { DishEffects, DishRequirementSource } from "./effects";
+import { difficultyRequirementLabel, formatTastes } from "./presentation";
 
 export function DishesDetailPage({ detail }: { detail: DishesDetail }) {
   const { record } = detail;
@@ -27,9 +29,12 @@ export function DishesDetailPage({ detail }: { detail: DishesDetail }) {
     detail.kind === "item"
       ? [
           ["难度", detail.record.difficulty],
+          ["解锁条件", difficultyRequirementLabel(detail.record.difficultyRequirement)],
+          ["口味", formatTastes(detail.record.tastes)],
           ["星系风味", detail.record.galaxyFlavor],
           ["炊具", detail.record.cookware],
-          ["效果", detail.record.effects],
+          ["基础效果", detail.record.effectsText],
+          ["获取方式", detail.record.acquisition],
         ]
       : [
           ["系列", detail.record.seriesName],
@@ -50,7 +55,13 @@ export function DishesDetailPage({ detail }: { detail: DishesDetail }) {
       }
       fields={fields}
     >
-      {detail.kind === "item" && <DishRecipe detail={detail} />}
+      {detail.kind === "item" && (
+        <>
+          <DishRequirementSource requirement={detail.record.difficultyRequirement} />
+          <DishEffects effects={detail.record.effects} />
+          <DishRecipe detail={detail} />
+        </>
+      )}
       <section aria-labelledby="related-dishes" className="space-y-4">
         <h2 id="related-dishes" className="text-lg font-semibold">
           {detail.kind === "item" ? "所属系列" : "系列成员"}

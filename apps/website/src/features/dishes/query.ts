@@ -2,6 +2,7 @@ import type { DishItem, DishSeries } from "../collection-view.ts";
 import type { FilterGroup as CollectionFilterGroup } from "@/features/collection/filter-panel";
 import { qualityNames } from "@/features/collection/quality";
 import type { DishesData } from "./data";
+import { difficultyRequirementLabel, effectValues } from "./presentation";
 import { missing, ungrouped } from "./search";
 import type { FilterKey, View, ViewQuery } from "./search";
 
@@ -23,11 +24,18 @@ export function membershipIndex(series: DishSeries[]): Map<number, DishSeries[]>
   return index;
 }
 
-function options(values: (string | null)[], split = false) {
-  const normalized = values.flatMap((value) => (split ? splitValues(value) : [value || missing]));
+function optionList(normalized: string[]) {
   return [...new Set(normalized)]
     .sort((a, b) => (a === missing ? 1 : b === missing ? -1 : a.localeCompare(b, "zh-CN")))
     .map((value) => ({ value, label: value === missing ? "未提供" : value }));
+}
+
+function options(values: (string | null)[], split = false) {
+  return optionList(values.flatMap((value) => (split ? splitValues(value) : [value || missing])));
+}
+
+function multiOptions(values: (string[] | null)[]) {
+  return optionList(values.flatMap((value) => (value?.length ? value : [missing])));
 }
 
 export function filterGroups(data: DishesData, view: View = "items"): FilterGroup[] {
@@ -45,6 +53,19 @@ export function filterGroups(data: DishesData, view: View = "items"): FilterGrou
       options: options(data.items.map((row) => row.difficulty)),
     },
     {
+      key: "difficultyRequirements",
+      label: "解锁条件",
+      options: options(
+        data.items.map((row) => difficultyRequirementLabel(row.difficultyRequirement)),
+      ),
+      fullWidth: true,
+    },
+    {
+      key: "tastes",
+      label: "口味",
+      options: multiOptions(data.items.map((row) => row.tastes)),
+    },
+    {
       key: "galaxyFlavors",
       label: "星系风味",
       options: options(
@@ -57,7 +78,12 @@ export function filterGroups(data: DishesData, view: View = "items"): FilterGrou
     {
       key: "effects",
       label: "效果",
-      options: options(data.items.map((row) => row.effects)),
+      options: multiOptions(
+        data.items.map((row) => {
+          const values = effectValues(row);
+          return values.length > 0 ? values : null;
+        }),
+      ),
       fullWidth: true,
     },
     { key: "qualities", label: "品阶", options: qualities },
@@ -93,11 +119,16 @@ export function queryDishes(data: DishesData, view: View, query: ViewQuery) {
     )
       return false;
     if (!("difficulty" in row)) return true;
+    const effects = effectValues(row);
     return (
       matches(query.difficulties, [row.difficulty || missing]) &&
+      matches(query.difficultyRequirements, [
+        difficultyRequirementLabel(row.difficultyRequirement),
+      ]) &&
+      matches(query.tastes, row.tastes?.length ? row.tastes : [missing]) &&
       matches(query.galaxyFlavors, splitValues(row.galaxyFlavor)) &&
       matches(query.cookwares, [row.cookware || missing]) &&
-      matches(query.effects, [row.effects || missing]) &&
+      matches(query.effects, effects.length > 0 ? effects : [missing]) &&
       matches(
         query.series,
         memberships.get(row.id)?.map((group) => String(group.id)) ??

@@ -22,7 +22,24 @@ const first: DishItem = {
   difficulty: "中等",
   galaxyFlavor: "星屿，禾夏",
   cookware: "烤架",
-  effects: "耐力上限提升 5 点",
+  effectsText: "耐力上限提升 5 点",
+  effects: [
+    {
+      effectId: 1,
+      name: "耐力提升",
+      description: "耐力上限提升 5 点",
+      level: 1,
+      uses: null,
+      durationSeconds: 30,
+    },
+  ],
+  tastes: ["甜"],
+  difficultyRequirement: {
+    rawExpression: '{"childList":{"nodeList":[{"leaf":{"chefLevelGreaterOrEqual":{"level":5}}}]}}',
+    condition: { kind: "chefLevelGreaterOrEqual", level: 5 },
+    unresolvedReason: null,
+  },
+  acquisition: "烹饪",
   recipe: null,
 };
 const second: DishItem = { ...first, id: 2, name: "星露蒸鱼" };

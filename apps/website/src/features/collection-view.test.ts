@@ -72,3 +72,49 @@ test("creature details retain scientific names and localized acquisition labels"
     sources: "钓鱼，河域钓取",
   });
 });
+
+test("dish details retain tastes, structured effects, unlock requirements and acquisition", () => {
+  const catalog = emptyDataset(fixtureContext, fixtureSource).catalog;
+  catalog.items.push({
+    id: 1,
+    name: "星露烤鱼",
+    type: "dish",
+    subcategory: null,
+    image: null,
+    description: null,
+    quality: 2,
+    trade: null,
+    acquisition: [{ sourceId: 1, label: "烹饪", condition: null }],
+    difficulty: "招牌",
+    galaxyFlavor: "禾夏风味",
+    cookware: ["烤箱"],
+    sources: ["烹饪"],
+    effectsText: "增加 40 力气",
+    tastes: ["甜", "咸"],
+    recipe: null,
+    difficultyRequirement: {
+      rawExpression: "condition",
+      condition: { kind: "chefLevelGreaterOrEqual", level: 5 },
+      unresolvedReason: null,
+    },
+    effects: [
+      {
+        effectId: 1000201,
+        name: "大力播洒 一阶",
+        description: "浇水或施肥范围提升",
+        level: 1,
+        uses: null,
+        durationSeconds: 10,
+      },
+    ],
+  });
+  catalog.entries.push({ entity: { kind: "item", id: 1 }, encyclopedia: { listed: true } });
+
+  expect(toCollectionView(catalog, assetsFixture(catalog)).dishes.items[0]).toMatchObject({
+    effectsText: "增加 40 力气",
+    effects: [{ name: "大力播洒 一阶", durationSeconds: 10 }],
+    tastes: ["甜", "咸"],
+    difficultyRequirement: { condition: { kind: "chefLevelGreaterOrEqual", level: 5 } },
+    acquisition: "烹饪",
+  });
+});

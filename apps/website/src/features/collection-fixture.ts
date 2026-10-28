@@ -126,12 +126,13 @@ export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
       difficulty: record.difficulty,
       galaxyFlavor: record.galaxyFlavor,
       cookware: values(record.cookware),
-      effectsText: record.effects,
+      effectsText: record.effectsText,
       recipe: record.recipe,
-      sources: null,
-      tastes: null,
-      difficultyRequirement: null,
-      effects: null,
+      sources: values(record.acquisition),
+      acquisition: acquisition(record.acquisition),
+      tastes: record.tastes,
+      difficultyRequirement: record.difficultyRequirement,
+      effects: record.effects,
     });
   for (const record of view.dishes?.series ?? []) group(record, "dishes.series", record.dishIds);
   for (const record of view.clothing?.items ?? [])

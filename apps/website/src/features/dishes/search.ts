@@ -13,6 +13,8 @@ export const sortOptions = {
 };
 export const filterKeys = [
   "difficulties",
+  "difficultyRequirements",
+  "tastes",
   "galaxyFlavors",
   "cookwares",
   "effects",
@@ -42,6 +44,8 @@ const viewQuerySchema = z.object({
     .catch("original")
     .default("original"),
   difficulties: stringList.default([]),
+  difficultyRequirements: stringList.default([]),
+  tastes: stringList.default([]),
   galaxyFlavors: stringList.default([]),
   cookwares: stringList.default([]),
   effects: stringList.default([]),

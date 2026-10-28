@@ -9,6 +9,7 @@ import {
 import type { CollectionColumn } from "../collection/table-columns";
 import { useDishesOrigin } from "./detail-navigation";
 import { membershipIndex } from "./query";
+import { difficultyRequirementLabel, effectSummary, formatTastes } from "./presentation";
 import type { View } from "./search";
 
 export type DishesRow = DishItem | DishSeries;
@@ -71,14 +72,20 @@ export function dishesTableColumns(
     textColumn("difficulty", "难度", 112, (record) =>
       "difficulty" in record ? record.difficulty : null,
     ),
+    textColumn("tastes", "口味", 112, (record) =>
+      "difficulty" in record ? formatTastes(record.tastes) : null,
+    ),
     textColumn("galaxyFlavor", "星系风味", 160, (record) =>
       "difficulty" in record ? record.galaxyFlavor : null,
     ),
     textColumn("cookware", "炊具", 160, (record) =>
       "difficulty" in record ? record.cookware : null,
     ),
+    textColumn("difficultyRequirement", "解锁条件", 240, (record) =>
+      "difficulty" in record ? difficultyRequirementLabel(record.difficultyRequirement) : null,
+    ),
     textColumn("effects", "效果", 320, (record) =>
-      "difficulty" in record ? record.effects : null,
+      "difficulty" in record ? effectSummary(record) : null,
     ),
     {
       id: "series",

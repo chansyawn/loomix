@@ -14,7 +14,11 @@ function item(id: number, fields: Partial<DishItem> = {}): DishItem {
     difficulty: null,
     galaxyFlavor: null,
     cookware: null,
+    effectsText: null,
     effects: null,
+    tastes: null,
+    difficultyRequirement: null,
+    acquisition: null,
     recipe: null,
     ...fields,
   };
@@ -27,7 +31,24 @@ const items = [
     difficulty: "中等",
     galaxyFlavor: "星屿，禾夏",
     cookware: "烤架",
-    effects: "耐力上限提升 5 点",
+    effectsText: "耐力上限提升 5 点",
+    effects: [
+      {
+        effectId: 1,
+        name: "耐力提升",
+        description: "耐力上限提升 5 点",
+        level: 1,
+        uses: null,
+        durationSeconds: 30,
+      },
+    ],
+    tastes: ["甜"],
+    difficultyRequirement: {
+      rawExpression: "unused",
+      condition: { kind: "chefLevelGreaterOrEqual", level: 5 },
+      unresolvedReason: null,
+    },
+    acquisition: "烹饪",
   }),
   item(2, {
     name: "星露蒸鱼",
@@ -35,7 +56,9 @@ const items = [
     difficulty: "简单",
     galaxyFlavor: "禾夏",
     cookware: "蒸锅",
-    effects: "耐力上限提升 3 点",
+    effectsText: "耐力上限提升 3 点",
+    tastes: ["甜", "咸"],
+    acquisition: "烹饪",
   }),
   item(3),
   item(4, { name: "Alpha", quality: 2, difficulty: "中等", cookware: "烤架" }),
@@ -89,6 +112,8 @@ describe("dish catalog", () => {
       ids(
         search({
           difficulties: ["中等", "简单"],
+          difficultyRequirements: ["厨师等级 ≥ 5"],
+          tastes: ["甜"],
           galaxyFlavors: ["星屿"],
           cookwares: ["烤架"],
           effects: ["耐力上限提升 5 点"],
@@ -99,6 +124,9 @@ describe("dish catalog", () => {
     ).toEqual([1]);
     expect(ids(search({ galaxyFlavors: ["禾夏"] }).rows)).toEqual([1, 2]);
     expect(ids(search({ cookwares: ["烤架", "蒸锅"] }).rows)).toEqual([1, 2, 4]);
+    expect(ids(search({ tastes: ["咸"] }).rows)).toEqual([2]);
+    expect(ids(search({ difficultyRequirements: ["无额外条件"] }).rows)).toEqual([2, 3, 4]);
+    expect(ids(search({ effects: ["耐力提升"] }).rows)).toEqual([1]);
   });
 
   it("filters missing values and does not infer unconfirmed series membership", () => {
@@ -106,6 +134,7 @@ describe("dish catalog", () => {
       ids(
         search({
           difficulties: [missing],
+          tastes: [missing],
           galaxyFlavors: [missing],
           cookwares: [missing],
           effects: [missing],

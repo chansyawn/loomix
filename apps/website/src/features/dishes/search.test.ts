@@ -18,6 +18,8 @@ describe("dish URL state", () => {
           q: 12,
           sort: "toString",
           difficulties: ["简单", "未知", "简单"],
+          difficultyRequirements: ["厨师等级 ≥ 5", "厨师等级 ≥ 5", false],
+          tastes: ["甜", "咸", "甜"],
           galaxyFlavors: ["禾夏", false],
           cookwares: "bad",
           effects: ["耐力提升", "耐力提升"],
@@ -31,6 +33,8 @@ describe("dish URL state", () => {
       items: {
         ...emptyQuery(),
         difficulties: ["简单", "未知"],
+        difficultyRequirements: ["厨师等级 ≥ 5"],
+        tastes: ["甜", "咸"],
         galaxyFlavors: ["禾夏"],
         effects: ["耐力提升"],
         qualities: ["0", "__missing"],
@@ -44,7 +48,13 @@ describe("dish URL state", () => {
     const search = dishesSearchSchema.parse({
       view: "series",
       items: { q: "烤鱼", cookwares: ["烤架"] },
-      series: { q: "星露", qualities: ["1"], effects: ["ignored"] },
+      series: {
+        q: "星露",
+        qualities: ["1"],
+        effects: ["ignored"],
+        tastes: ["ignored"],
+        difficultyRequirements: ["ignored"],
+      },
     });
     expect(search.series).toEqual({ ...emptyQuery(), q: "星露", qualities: ["1"] });
     const updated = updateViewQuery(search, { q: "蒸鱼" });

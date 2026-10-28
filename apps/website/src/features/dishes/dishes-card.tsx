@@ -5,9 +5,15 @@ import { CardDescription } from "@/ui/components/card";
 import { RecordImage } from "@/features/collection/record-image";
 import { CollectionCard } from "@/features/collection/collection-card";
 import { useDishesOrigin } from "./detail-navigation";
+import { effectSummary, formatTastes } from "./presentation";
 
 export function DishesCard({ item }: { item: DishItem }) {
   const origin = useDishesOrigin();
+  const effects = effectSummary(item);
+  const tastes = formatTastes(item.tastes);
+  const attributes = `${tastes || "口味未提供"} · ${item.difficulty || "难度未提供"} · ${
+    item.cookware || "炊具未提供"
+  }`;
   return (
     <CollectionCard
       name={item.name}
@@ -24,15 +30,12 @@ export function DishesCard({ item }: { item: DishItem }) {
       }
       description={
         <CardDescription className="space-y-2 text-xs">
-          <p className="line-clamp-2 leading-5" title={item.effects ?? undefined}>
+          <p className="line-clamp-2 leading-5" title={effects ?? undefined}>
             <span className="font-medium text-foreground">效果 · </span>
-            {item.effects || "未提供"}
+            {effects || "未提供"}
           </p>
-          <p
-            className="truncate"
-            title={`${item.difficulty || "难度未提供"} · ${item.cookware || "炊具未提供"}`}
-          >
-            {item.difficulty || "难度未提供"} · {item.cookware || "炊具未提供"}
+          <p className="truncate" title={attributes}>
+            {attributes}
           </p>
         </CardDescription>
       }

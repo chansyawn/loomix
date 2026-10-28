@@ -37,18 +37,36 @@ describe("compact dish URLs", () => {
       to: "/collection/dishes",
       from: "/collection/dishes",
       search: dishesSearchSchema.parse({
-        items: { q: "鱼", galaxyFlavors: ["禾夏"], cookwares: ["烤架"] },
+        items: {
+          q: "鱼",
+          galaxyFlavors: ["禾夏"],
+          cookwares: ["烤架"],
+          tastes: ["甜"],
+          difficultyRequirements: ["厨师等级 ≥ 5"],
+        },
       }),
     });
     expect(defaultParseSearch(selected.searchStr)).toEqual({
-      items: { q: "鱼", galaxyFlavors: ["禾夏"], cookwares: ["烤架"] },
+      items: {
+        q: "鱼",
+        galaxyFlavors: ["禾夏"],
+        cookwares: ["烤架"],
+        tastes: ["甜"],
+        difficultyRequirements: ["厨师等级 ≥ 5"],
+      },
     });
   });
 
   it("round trips encoded text and compacts idempotently", () => {
     const search = dishesSearchSchema.parse({
       view: "series",
-      items: { q: '鱼 & + # ? "', difficulties: ["简单"], series: ["__ungrouped"] },
+      items: {
+        q: '鱼 & + # ? "',
+        difficulties: ["简单"],
+        tastes: ["甜"],
+        difficultyRequirements: ["无额外条件"],
+        series: ["__ungrouped"],
+      },
       series: { q: "星露系列", qualities: ["__missing", "2"], sort: "name-asc" },
     });
     const compact = compactDishesSearch(search);
