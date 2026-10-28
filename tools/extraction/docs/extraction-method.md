@@ -2,7 +2,7 @@
 
 本文说明独立实现所需的输入、解码、关联和验收规则，不要求使用本仓库脚本。当前参数对应客户端 **0.95.2**、配置 revision **1449213**、资源 revision **1391927**、清单目录 **5662883**，新版本必须重新定位字段。
 
-用户已确认当前根字段 93 的全部记录属于开放游戏内容。字段 1 为 1 的外观也是开放内容，只是不计入万象列表；67 个主题集合是各大类内的小分类。另有用户明确确认的九条实装记录由版本绑定清单收录；其他表外内容是否开放不能由名称、图标或配方引用推断。
+用户已确认当前根字段 93 的全部记录属于开放游戏内容。字段 1 为 1 的外观也是开放内容，只是不计入万象列表；67 个主题集合是各大类内的小分类。另有用户明确确认的十三条实装记录由版本绑定清单收录；其他表外内容是否开放不能由名称、图标或配方引用推断。
 
 ## 输入及版本选择
 
@@ -56,7 +56,7 @@ TextMap 特殊处理：根字段 1 解引用到包装层，包装字段 0 解引
 
 ## 内容收录、分类及关联
 
-以主物品表 318 的字段 0 建立身份，收录集合为根表 93 ID 与冻结补充清单 ID 的并集。按同一 ID 可选关联图鉴 93、显示配置 325、生物配置 186。所有 2,327 个 ID 必须保留，不因缺图、缺描述或外观标记而删除。主物品字段 1 是名字 hash，2 是内部类型；类型 500/501 是集合记录。其编号与表 33 的子分类编号不是同一种枚举。
+以主物品表 318 的字段 0 建立身份，收录集合为根表 93 ID 与冻结补充清单 ID 的并集。按同一 ID 可选关联图鉴 93、显示配置 325、生物配置 186。表 93 的全部 2,327 个 ID 必须保留，不因缺图、缺描述或外观标记而删除。主物品字段 1 是名字 hash，2 是内部类型；类型 500/501 是集合记录。其编号与表 33 的子分类编号不是同一种枚举。
 
 从 Unity 包导出 GameplayTag 树及 TagUIData、显示键字典。当前对象名分别为 633e15d6、b429c67e、15896ba2，类型 MiHoYoBinData；这些是版本参数，不是跨版本固定规则。树中的 AllNodes 以 TagId 为键，包含 TagName、EnumName、ParentId。TagUIData 以 TagId 关联 nameInGame.textId；必须再查当前 TextMap。
 
@@ -110,42 +110,23 @@ UISprite 引用加 assets/moleres/rel/sres/ 前缀，统一斜杠和小写，只
 
 导出时同时筛选对象名和 Container。同一个包内若有同名 Sprite，分别导出，避免工具以名称写文件时发生覆盖。任何已选对象导出失败均停止。完整解码 PNG、校验 CRC、尺寸和全部像素数据；仅转换选中的图片，完整解码最终 WebP 并检查目标尺寸；用最终 WebP 字节的 SHA256 命名并去重。相同原图用于不同目标尺寸时分别转换，清单分别记录原始 PNG 和交付 WebP 的路径、哈希及尺寸。
 
-交付 `content.json` 使用共享包 `packages/content-schema/src/records.ts` 和 `content.ts` 定义的严格契约，不发布旧分组副本。所有记录按原始 ID 升序保存在一个数组中：
+交付契约集中在 `packages/schema/src/`，按 catalog、neighbors、world、assets、dataset、release 和 extraction 组织。源观察与交付领域模型分离，不保留历史版本解析分支。
 
-```ts
-interface Catalog {
-  schemaVersion: 2;
-  source: { gameVersion: string; dataRevision: number; resourceRevision: number };
-  items: CatalogRecord[];
-}
-```
+catalog 的 items 使用 type 判别字段；groups、appearances、seeds、growths 与 entries 各自保存身份。entries 引用领域实体并单独保存 encyclopedia 状态；引用到范围外的已确认物品使用 reference 实体，不计入收录。生长配置只保存一份，植物与种子使用 growthId；反向关系由使用方派生。颜色、材质、来源等多值字段使用数组，不从展示字符串反向拆解。
 
-每条记录必须包含 `id`、`name`、`image`、`description`、`quality`、`encyclopediaEntry`、`category`、`kind`。ID 为正安全整数且全库唯一，名称非空，品质为 0–4 或 null，图片为 `assets/<SHA256>.webp` 或 null。所有未知字段显式为 null，禁止未定义的附加字段。
+领域图片使用 {assetId, variant}，不包含交付路径。assets.json 将引用映射为不可变文件路径、SHA256、大小与尺寸。release.json 指定语言目录下的 catalog.json、neighbors.json、world.json 和共享 assets.json，绑定 formatVersion、snapshotId、locale 及每份文档的实际字节校验值。所有未知值显式为 null，严格拒绝附加字段；null 与已确认空数组含义不同。
 
-| category      | 合法 kind             | item.attributes 的全部字段                                            |
-| ------------- | --------------------- | --------------------------------------------------------------------- |
-| furniture     | item、set             | type、size、colors、materials、sources                                |
-| clothing      | item、set、appearance | colors、materials、styles、sources                                    |
-| creatures     | item、series          | region、habitat、activeSeasons、activeTimes、activeWeather、sizeRange |
-| plants        | item、series          | originGalaxy、maturityPeriod、harvestCount                            |
-| dishes        | item、series          | difficulty、galaxyFlavor、cookware、effects                           |
-| miscellaneous | item                  | 无，固定为 {}                                                         |
-
-单品和外观另有 `subcategory: string | null`，单品另有上述严格分类属性对象。菜肴和杂物当前子分类为 null。属性除非负整数 `harvestCount` 外均为字符串或 null。套组及系列仅另有 `memberIds: number[] | null`；不重复保存名称，不保存 attributes/subcategory。成员必须存在、同大类、kind 为 item 且不重复；null 表示关系未知，[] 表示已确认空集合。
-
-`encyclopediaEntry` 的 `{listed:true}` 表示有图鉴配置且进入万象列表（当前 2,276 条），`{listed:false}` 表示有图鉴配置但不进入万象列表（当前 51 条外观），null 表示已扫描完整表 93 确认没有配置（九条补充物品）。收录身份本身表示已确认实装，不另存恒真的 implemented。
-
-补充清单位于 `src/extraction/content/supplemental-admissions.json`，schemaVersion 为 1，source 绑定同一客户端版本，confirmation 保存人工确认说明。entries 仅含 `id`、`expectedName`、`category`、`subcategory`：苹果 30161、李子 30169、牛油果 30265、芒果 30266、仙人掌果 30267、竹笋 30268 为 plants/采摘材料；肉 2000050、蛋 2000051、奶 2000052 为 miscellaneous/null。名称、描述、图片和品质始终从客户端提取，不从清单复制。缺失主表、版本或名称错配、重复 ID、与图鉴分类冲突均中止提取；重叠 ID 只生成一次且保存双方依据。
+补充清单位于 `src/extraction/content/supplemental-admissions.json`，schemaVersion 为 1，source 绑定同一客户端版本，confirmation 保存人工确认说明。entries 仅含 `id`、`expectedName`、`category`、`subcategory`：苹果 30161、李子 30169、牛油果 30265、芒果 30266、仙人掌果 30267、竹笋 30268 为 plants/采摘材料；肉 2000050、蛋 2000051、奶 2000052，以及寒松木 30115、陨星矿石 30136、雪晶 30299、纯净雪花 30300 为 miscellaneous/null。名称、描述、图片和品质始终从客户端提取，不从清单复制。缺失主表、版本或名称错配、重复 ID、与图鉴分类冲突均中止提取；重叠 ID 只生成一次且保存双方依据。
 
 九条均无系列引用，六种植物的原产星系、成熟周期和收获茬数均未配置，保留 null。肉蛋奶描述未解析到，保留 null。图鉴行缺失不会阻断 UI 描述或图片来源。
 
 `record-evidence.json` 独立记录 `id`、`admissionSources` 和 `encyclopedia`。图鉴收录源含 kind=encyclopedia、file、table=93、rowOffset；人工源含 kind=manual、file、pointer、sha256。图鉴证据为 present（含原始行及 listed）或 absent（含扫描文件及 table=93），不与未知属性混用。字段路径使用 name、subcategory、attributes.harvestCount、memberIds 等；ID 证据统一为 318.0，只有分类字段允许引用冻结清单的 JSON Pointer 和 SHA256。
 
-前端通过唯一 `toCollectionView` 适配恢复原分组 DTO，包括单品属性展开、subcategory 映射和旧集合名称/成员字段。该适配不按 listed 过滤，外观和补充物品均可访问。
+前端通过 toCollectionView 从领域实体和资源清单派生页面 DTO；展示层命名不进入共享契约。reference 实体可展示名称，但不生成未收录详情页链接。
 
 ## 验收与版本更新
 
-当前构成：家具 887 单品+42 套组；生物 317+27 系列；植物 208+31 系列；菜肴 121+9 系列；服饰 590 服装+34 套装+51 外观；杂物 19，共 2,336 条（原图鉴 2,327 条另行核验）。
+当前构成：家具 887 单品+42 套组；生物 317+27 系列；植物 208+31 系列；菜肴 121+9 系列；服饰 590 服装+34 套装+51 外观；杂物 23，共 2,340 条（原图鉴 2,327 条另行核验）。
 
 验收 ID 集合与冻结表 93 及冻结补充清单的并集完全相等、跨组无重复、所有字段符合白名单、所有成员可解析且类别正确、每个非空值有确认依据、每个未知属性 null 有原因，图鉴 null 有完整表扫描缺失证据。检查每个引用 WebP 完整解码、尺寸符合分组规则、内容哈希相等、素材无多余文件，并复核原始 PNG 的来源、哈希、尺寸和完整解码。检查配置对及所有使用资源包的清单校验值。
 
@@ -164,6 +145,7 @@ resources/game-client/ 中的客户端文件
   → raw/content.json、图片候选关联
   → 完整 PNG 导出、原生分辨率比较、稳定选图（raw-assets）
   → 字段证据、未知原因、未确认候选、范围外成员、来源包审计
+  → 领域组装 dataset.json、image-jobs.json、evidence/domain-fields.json
   → extraction-verify、extraction-manifest.json
   → 只读取 extraction bundle 的图片缩放、裁切、WebP 编码（deliver）
   → 最终 JSON 与按最终字节 SHA256 去重的 WebP
@@ -181,6 +163,6 @@ environment、extraction、delivery 的 manifest 均采用 schemaVersion 1。输
 
 `evidence/missing-fields.json` 使用同一字段协议，状态 unconfirmed 且必须带 reason；字段未找到、文本缺失、用途未确认、冲突等均不等价于值不存在。`field-candidates.json` 保留实际候选参数，`outside-members.json` 解释被范围规则排除的关联；它们不回填交付字段。`source-audit.json` 将所有候选图片、BinData 和 OBB 来源绑定到版本清单，不能只审计最后选中的图片。
 
-raw/content.json 保留结构阶段结果；raw/images-content.json 在不修改结构 checkpoint 输出的情况下加入选中 PNG 的 bundle 相对路径。交付阶段从原始内容和选图 manifest 生成新的交付 JSON，图片字段改为 `assets/<SHA256>.webp`，并生成交付侧字段证据。最终验证从 bundle 中冻结的 OBB 重新核对表 93 与冻结确认清单的收录并集、分类、图鉴状态、品阶及成员，不打开客户端；只有 init、extract 和完整链 verify 会核对实际客户端快照。
+raw/content.json 保留结构阶段结果；raw/images-content.json 在不修改结构 checkpoint 输出的情况下加入选中 PNG 的 bundle 相对路径。详情观察保存在 raw/images-catalog-observations.json，领域组装生成统一 dataset 与图片交付任务。交付阶段只读封存 dataset，处理图片并生成领域 JSON、assets.json 和 release.json，不重做业务关联。最终验证从 bundle 中冻结的 OBB 重新核对表 93 与冻结确认清单的收录并集、分类、图鉴状态、品阶及成员，不打开客户端；只有 init、extract 和完整链 verify 会核对实际客户端快照。
 
 补充清单在 extract 的 admissions checkpoint 冻结，原始字节 SHA256 进入提取身份和 manifest，structure 依赖此 checkpoint。修改工作区清单不能影响已封存交付；验证器重读冻结 OBB 和冻结清单重建并集，不信任 scope.json。线上切换须先上传新的不可变资源版本，再同步资源指针与网站代码；本次仅完成本地交付，不更新生产指针。

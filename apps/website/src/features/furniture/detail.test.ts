@@ -7,7 +7,7 @@ import {
   defaultParseSearch,
 } from "@tanstack/react-router";
 import { describe, expect, it, vi, afterEach } from "vite-plus/test";
-import { catalogFixture } from "../collection-fixture.ts";
+import { catalogFixture, fixtureRequest } from "../collection-fixture.ts";
 import type { FurnitureItem, FurnitureSet } from "../collection-view.ts";
 import { furnitureDetail, loadFurnitureDetail, parseFurnitureId } from "./detail";
 import { furnitureOrigin } from "./detail-navigation";
@@ -135,10 +135,7 @@ describe("furniture details", () => {
     }
   });
   it("loads real schema data and keeps network or validation failures retryable", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(new Response(JSON.stringify(catalogFixture({ furniture: data })))),
-    );
+    vi.stubGlobal("fetch", vi.fn(fixtureRequest(catalogFixture({ furniture: data }))));
     expect(await loadFurnitureDetail("items", "1")).toMatchObject({ record: first });
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })));
     await expect(loadFurnitureDetail("items", "1")).rejects.toThrow("503");

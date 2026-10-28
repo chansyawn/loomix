@@ -1,4 +1,4 @@
-import type { RecordType } from "@loomix/content-schema";
+import type { RecordType } from "@loomix/schema/extraction";
 import type { TagNode, Row, TableRow } from "../types.ts";
 import type { Tables } from "../decode/tables.ts";
 import type { TagDisplay, CreatureDisplayMap } from "../decode/bindata.ts";

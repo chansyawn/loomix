@@ -1,5 +1,5 @@
-import { recordFields } from "@loomix/content-schema";
-import type { RecordType } from "@loomix/content-schema";
+import { recordFields } from "@loomix/schema/extraction";
+import type { RecordType } from "@loomix/schema/extraction";
 import type { Evidence, EvidenceRecord, FieldValue, SelectedImage } from "../types.ts";
 import type { FieldCandidate } from "../evidence/schema.ts";
 export interface Field<T extends FieldValue = FieldValue> {

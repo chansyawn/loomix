@@ -1,15 +1,13 @@
 import assert from "node:assert/strict";
-import fs from "node:fs";
 import path from "node:path";
-import { parseCatalogV5, projectLegacyCatalogV5 } from "@loomix/content-schema/v5";
-import type { CatalogV5 } from "@loomix/content-schema/v5";
+import { baseCollectionObservations } from "@loomix/schema/extraction";
+import type { CollectionObservations } from "@loomix/schema/extraction";
 import { readJson, writeJson } from "../workflow/json.ts";
-import { RawCollectionV5Schema } from "../extraction/collection/build.ts";
+import { RawCollectionObservationsSchema } from "../extraction/collection/build.ts";
 import { collectionEvidenceSchema } from "../extraction/collection/evidence.ts";
 import type { CollectionEvidence } from "../extraction/collection/evidence.ts";
 import { detailInvestigationSchema } from "../extraction/collection/details/investigation.ts";
 import { parseRawContent } from "../extraction/schemas/raw-content.ts";
-import { RawImageSchema } from "../extraction/schemas/raw-content.ts";
 import { Tables } from "../extraction/decode/tables.ts";
 import type { TableRow } from "../extraction/types.ts";
 import { verifyCollectionFields } from "./collection-fields.ts";
@@ -153,27 +151,22 @@ function verifyProofSources(proof: CollectionEvidence, tables: Tables): void {
 export async function verifyCollection(
   bundle: string,
   reportRoot: string,
-  raw: boolean,
   writeReports = true,
-): Promise<CatalogV5> {
-  const file = raw
-    ? path.join(bundle, "raw/images-content-v5.json")
-    : path.join(reportRoot, "staging/content.json");
-  const catalog = raw
-    ? RawCollectionV5Schema.parse(readJson(file))
-    : parseCatalogV5(readJson(file));
+): Promise<CollectionObservations> {
+  const file = path.join(bundle, "raw/images-catalog-observations.json");
+  const catalog = RawCollectionObservationsSchema.parse(readJson(file));
   const base = parseRawContent(readJson(path.join(bundle, "raw/images-content.json")));
   const withoutImages = (items: typeof base.items) =>
     items.map(({ image: _image, ...record }) => record);
-  const legacy = projectLegacyCatalogV5(catalog, raw ? RawImageSchema : undefined);
-  if (raw) assert.deepEqual(legacy, base, "Raw v4 image/base projection");
+  const baseProjection = baseCollectionObservations(catalog);
+  assert.deepEqual(baseProjection, base, "Raw observation base projection");
   assert.deepEqual(
-    withoutImages(legacy.items),
+    withoutImages(baseProjection.items),
     withoutImages(base.items),
-    "V4 preserves extracted base fields",
+    "Collection preserves extracted base fields",
   );
-  assert.deepEqual(legacy.source, base.source);
-  assert.deepEqual(legacy.ingredientCategories, base.ingredientCategories);
+  assert.deepEqual(baseProjection.source, base.source);
+  assert.deepEqual(baseProjection.ingredientCategories, base.ingredientCategories);
   const tables = new Tables(path.join(bundle, "prepared"));
   const { requiredFields, craftingAudit } = verifyCollectionFields(catalog, tables);
   assert.deepEqual(
@@ -209,11 +202,6 @@ export async function verifyCollection(
         `Unrelated investigation source ${candidate.id}.${candidate.field}`,
       );
     }
-  if (!raw)
-    assert.deepEqual(
-      fs.readFileSync(path.join(reportRoot, "collection-evidence.json")),
-      fs.readFileSync(path.join(bundle, "collection-evidence.json")),
-    );
   assert.deepEqual(readJson(path.join(bundle, "evidence/collection-evidence.json")), proofs);
   assert.deepEqual(readJson(path.join(bundle, "evidence/crafting-audit.json")), craftingAudit);
   const seen = new Set<string>();
@@ -250,8 +238,8 @@ export async function verifyCollection(
     stats[proof.value === null ? "null" : "populated"]++;
   }
   assert.equal(seen.size, requiredFields.size, "Complete collection evidence coverage");
-  await verifySeedImages(catalog, bundle, reportRoot, raw);
-  await verifyStageImages(catalog, bundle, reportRoot, raw);
+  await verifySeedImages(catalog, bundle);
+  await verifyStageImages(catalog, bundle);
   if (writeReports) writeJson(path.join(reportRoot, "collection-coverage.json"), coverage);
   return catalog;
 }

@@ -1,148 +1,22 @@
-import type { Catalog } from "@loomix/content-schema";
+import type { Catalog } from "@loomix/schema/extraction";
 import type { IndexedAsset } from "../types.ts";
 import type { Tables } from "../decode/tables.ts";
 
-export interface NeighborSource {
-  gameVersion: string;
-  dataRevision: number;
-  resourceRevision: number;
-  manifestId: string;
-}
-
-export type NeighborBodyType = "small" | "medium" | "big";
-
-export interface NeighborRecord {
-  id: number;
-  nameZh: string;
-  bodyType: NeighborBodyType | null;
-  scaleValue: number | null;
-  avatarPath: string | null;
-  npc2Path: string;
-  starKeys: string[];
-  storyKeys: string[];
-  furnishingThemeIds: number[];
-  furnishingThemeKeys: string[];
-  rewardItemIds: number[];
-  assetPaths: string[];
-}
-
-export interface NeighborStar {
-  key: string;
-  npcId: number;
-  galaxyNameZh: string | null;
-  galaxyIndex: number | null;
-  systemIndex: number | null;
-  starIndex: number | null;
-  nameZh: string;
-  galaxyModelPath: string | null;
-  playerModelPath: string | null;
-  skyModelPath: string | null;
-  illustrationPath: string | null;
-}
-
-export interface NeighborStoryParagraph {
-  sequence: number;
-  bodyZh: string | null;
-  illustrationPath: string | null;
-}
-
-export interface NeighborStoryChapter {
-  key: string;
-  npcId: number;
-  chapter: number;
-  titleZh: string;
-  paragraphs: NeighborStoryParagraph[];
-}
-
-export interface NeighborTravelReaction {
-  key: string;
-  npcId: number | null;
-  variantId: number;
-  conditionType: string | null;
-  threshold: string | null;
-  resourceCategory: string | null;
-  secondaryThreshold: string | null;
-  reactionAsset: string | null;
-  textZh: string | null;
-}
-
-export interface NeighborEncounterIsland {
-  id: number;
-  sceneId: number;
-  nameZh: string;
-  galaxyNameZh: string | null;
-  neighborIds: number[];
-  resourcePaths: string[];
-  unlockCondition: string | null;
-  illustrationPath: string | null;
-}
-
-export interface NeighborFriendshipRule {
-  key: string;
-  titleZh: string | null;
-  textZh: string;
-  category: string | null;
-  level: number | null;
-}
-
-export interface NeighborEventTag {
-  key: string;
-  textZh: string;
-}
-
-export interface NeighborFurnishingTheme {
-  id: number | null;
-  key: string;
-  nameZh: string;
-  neighborIds: number[];
-  descriptionZh: string | null;
-  cardBagPath: string | null;
-  cardBackgroundPath: string | null;
-  cardBackPath: string | null;
-  topicIconPath: string | null;
-  lockedBackgroundPath: string | null;
-  unlockedBackgroundPath: string | null;
-  themePath: string | null;
-  coverPath: string | null;
-}
-
-export interface NeighborRewardRef {
-  itemId: number;
-  itemNameZh: string;
-  category: string;
-  kind: string;
-  sources: string[];
-  relatedNeighborIds: number[];
-}
-
-export interface NeighborAssetRef {
-  path: string;
-  kind:
-    | "house"
-    | "friendStar"
-    | "outfit"
-    | "hub"
-    | "favourMission"
-    | "storyEnv"
-    | "reaction"
-    | "other";
-  relatedNeighborIds: number[];
-}
-
-export interface NeighborDatabase {
-  schemaVersion: 1;
-  source: NeighborSource;
-  neighbors: NeighborRecord[];
-  stars: NeighborStar[];
-  stories: NeighborStoryChapter[];
-  travelReactions: NeighborTravelReaction[];
-  encounterIslands: NeighborEncounterIsland[];
-  friendshipRules: NeighborFriendshipRule[];
-  eventTags: NeighborEventTag[];
-  furnishingThemes: NeighborFurnishingTheme[];
-  rewards: NeighborRewardRef[];
-  assets: NeighborAssetRef[];
-}
+import type { NeighborDatabase } from "@loomix/schema/extraction/neighbor";
+export type { NeighborDatabase } from "@loomix/schema/extraction/neighbor";
+export type NeighborSource = NeighborDatabase["source"];
+export type NeighborRecord = NeighborDatabase["neighbors"][number];
+export type NeighborStar = NeighborDatabase["stars"][number];
+export type NeighborStoryChapter = NeighborDatabase["stories"][number];
+export type NeighborTravelReaction = NeighborDatabase["travelReactions"][number];
+export type NeighborEncounterIsland = NeighborDatabase["encounterIslands"][number];
+export type NeighborFriendshipRule = NeighborDatabase["friendshipRules"][number];
+export type NeighborEventTag = NeighborDatabase["eventTags"][number];
+export type NeighborFurnishingTheme = NeighborDatabase["furnishingThemes"][number];
+export type NeighborRewardRef = NeighborDatabase["rewards"][number];
+export type NeighborAssetRef = NeighborDatabase["assets"][number];
+export type NeighborBodyType = NonNullable<NeighborRecord["bodyType"]>;
+export type NeighborStoryParagraph = NeighborStoryChapter["paragraphs"][number];
 
 export interface NeighborExtractionInput {
   tables: Tables;

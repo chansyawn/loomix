@@ -1,2 +1,2 @@
-export { NeighborDatabaseSchema, parseNeighborDatabase } from "@loomix/neighbor-schema";
-export type { NeighborDatabase } from "@loomix/neighbor-schema";
+export { NeighborDatabaseSchema, parseNeighborDatabase } from "@loomix/schema/extraction/neighbor";
+export type { NeighborDatabase } from "@loomix/schema/extraction/neighbor";

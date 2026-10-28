@@ -1,22 +1,32 @@
-import type { CatalogV5, CollectionDetail, GrowthSchema } from "@loomix/content-schema/v5";
-import type { z } from "zod";
+import type { Growth, Item, Seed } from "@loomix/schema/catalog";
 import type { CollectionRecord, IngredientItem } from "../collection-view";
 
-export type PlantGrowth = z.infer<typeof GrowthSchema>;
-export type PlantSeed = CatalogV5["cropSeeds"][number];
-type PlantRecord = Extract<CatalogV5["items"][number], { category: "plants"; kind: "item" }>;
-
+export type PlantGrowth = Omit<Growth, "id" | "stages"> & {
+  stages: { id: number; name: string | null; image: string | null }[] | null;
+};
+export type PlantSeed = Omit<Seed, "image"> & {
+  image: string | null;
+  detail: {
+    description: string | null;
+    quality: number | null;
+    trade: Seed["trade"];
+    acquisitionConditions: Seed["acquisition"];
+    growth: PlantGrowth | null;
+    stageIds: number[] | null;
+    maturityDays: number | null;
+    harvestCount: number | null;
+  };
+};
+type PlantRecord = Extract<Item, { type: "plant" }>;
 export interface PlantDrops {
   items: IngredientItem[];
   unlistedCount: number;
 }
-
 export interface PlantGrowthGroup {
   id: number;
   name: string;
   growth: PlantGrowth;
 }
-
 export interface PlantSummary {
   categories: string[];
   galaxies: string[];
@@ -27,23 +37,23 @@ export interface PlantSummary {
   growths: PlantGrowthGroup[];
   drops: PlantDrops;
 }
-
-export type PlantItem = CollectionRecord &
-  PlantRecord["attributes"] & {
-    category: string | null;
-    seedId: number | null;
-    flowerColors: CollectionDetail["flowerColors"];
-    growth: PlantGrowth | null;
-    treeDrops: CollectionDetail["treeDrops"];
-    summary: PlantSummary;
-  };
-
+export type PlantItem = CollectionRecord & {
+  category: string | null;
+  originGalaxy: string | null;
+  maturityPeriod: string | null;
+  harvestCount: number | null;
+  sources: string | null;
+  seedId: number | null;
+  flowerColors: PlantRecord["flowerColors"];
+  growth: PlantGrowth | null;
+  treeDrops: PlantRecord["drops"];
+  summary: PlantSummary;
+};
 export type PlantSeries = CollectionRecord & {
   seriesName: string | null;
   plantIds: number[] | null;
   summary: PlantSummary;
 };
-
 export interface PlantsData {
   items: PlantItem[];
   series: PlantSeries[];

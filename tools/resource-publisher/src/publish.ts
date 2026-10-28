@@ -22,7 +22,7 @@ export async function publishRelease(
   const prefix = `releases/${release}/`;
 
   const reservation = Buffer.from(
-    JSON.stringify({ release, contentSha256: content.contentSha256 }),
+    JSON.stringify({ release, manifestSha256: content.manifestSha256 }),
   );
   if (
     !(await store.tryReserve(
@@ -65,60 +65,16 @@ export async function publishRelease(
     active = false;
   }
   onProgress?.({ ...progress, phase: "finalizing" });
-  await store.put(
-    `${prefix}content.json`,
-    content.json,
-    "application/json; charset=utf-8",
-    content.contentSha256,
-  );
-  await store.verify(`${prefix}content.json`, content.json.length, content.contentSha256);
-  await store.put(
-    `${prefix}neighbors.json`,
-    content.neighbors,
-    "application/json; charset=utf-8",
-    content.neighborsSha256,
-  );
-  await store.verify(`${prefix}neighbors.json`, content.neighbors.length, content.neighborsSha256);
-  await store.put(
-    `${prefix}neighbor-images.json`,
-    content.neighborImages,
-    "application/json; charset=utf-8",
-    content.neighborImagesSha256,
-  );
-  await store.verify(
-    `${prefix}neighbor-images.json`,
-    content.neighborImages.length,
-    content.neighborImagesSha256,
-  );
-  await store.put(
-    `${prefix}islands.json`,
-    content.islands,
-    "application/json; charset=utf-8",
-    content.islandsSha256,
-  );
-  await store.verify(`${prefix}islands.json`, content.islands.length, content.islandsSha256);
-  await store.put(
-    `${prefix}islands-images.json`,
-    content.islandsImages,
-    "application/json; charset=utf-8",
-    content.islandsImagesSha256,
-  );
-  await store.verify(
-    `${prefix}islands-images.json`,
-    content.islandsImages.length,
-    content.islandsImagesSha256,
-  );
-  const marker: ReleaseMarker = {
-    release,
-    contentSha256: content.contentSha256,
-    neighborsSha256: content.neighborsSha256,
-    neighborImagesSha256: content.neighborImagesSha256,
-    assetCount: content.assets.length,
-    neighborCount: content.neighborCount,
-    islandsSha256: content.islandsSha256,
-    islandsImagesSha256: content.islandsImagesSha256,
-    islandCount: content.islandCount,
-  };
+  for (const document of content.documents) {
+    await store.put(
+      `${prefix}${document.key}`,
+      document.bytes,
+      "application/json; charset=utf-8",
+      document.sha256,
+    );
+    await store.verify(`${prefix}${document.key}`, document.bytes.length, document.sha256);
+  }
+  const marker: ReleaseMarker = { release, manifestSha256: content.manifestSha256 };
   const bytes = Buffer.from(JSON.stringify(marker));
   await store.put(`${prefix}_complete.json`, bytes, "application/json", sha256(bytes));
   await store.verify(`${prefix}_complete.json`, bytes.length, sha256(bytes));

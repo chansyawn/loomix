@@ -1,173 +1,202 @@
-import type { RecordBase } from "@loomix/content-schema";
-import type { CatalogV5 } from "@loomix/content-schema/v5";
-import { emptyCollectionDetail } from "@loomix/content-schema/v5";
+import { createHash } from "node:crypto";
+import type { Catalog, Item, Group } from "@loomix/schema/catalog";
+import type { Assets, ImageRef } from "@loomix/schema/assets";
+import { emptyDataset } from "@loomix/schema/dataset";
+import { documentPath } from "@loomix/schema/release";
+import { referencedImages } from "@loomix/schema/dataset/images";
 import type { CollectionRecord, CollectionView } from "./collection-view.ts";
 
-export function catalogBase(record: CollectionRecord): RecordBase {
+export const fixtureContext = {
+  formatVersion: 1,
+  snapshotId: "a".repeat(64),
+  locale: "zh-CN",
+} as const;
+export const fixtureSource = {
+  gameVersion: "0.95.2",
+  dataRevision: 1449213,
+  resourceRevision: 1391927,
+  manifestId: "5662883",
+};
+const values = (value: string | null): string[] | null => value?.split("，") ?? null;
+export function catalogBase(record: CollectionRecord) {
   return {
     id: record.id,
     name: record.name,
-    image: record.image,
+    image: record.image === null ? null : { assetId: record.image, variant: "icon" as const },
     description: record.description,
     quality: record.quality,
-    encyclopediaEntry: { listed: true },
   };
 }
-
-export function catalogFixture(view: Partial<CollectionView> = {}): CatalogV5 {
-  const catalog: CatalogV5 = {
-    schemaVersion: 5,
-    source: { gameVersion: "0.95.2", dataRevision: 1449213, resourceRevision: 1391927 },
-    ingredientCategories: [],
-    items: [],
-    cropSeeds: [],
-    details: [],
-  };
+export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
+  const catalog = emptyDataset(fixtureContext, fixtureSource).catalog;
   catalog.ingredientCategories = view.ingredientCategories ?? [];
+  const add = (item: Item) => {
+    catalog.items.push(item);
+    catalog.entries.push({ entity: { kind: "item", id: item.id }, encyclopedia: { listed: true } });
+  };
+  const group = (record: CollectionRecord, type: Group["type"], memberIds: number[] | null) => {
+    catalog.groups.push({ ...catalogBase(record), type, memberIds });
+    catalog.entries.push({
+      entity: { kind: "group", id: record.id },
+      encyclopedia: { listed: true },
+    });
+  };
+  const common = { trade: null, acquisition: null };
   for (const record of view.furniture?.items ?? [])
-    catalog.items.push({
+    add({
       ...catalogBase(record),
-      kind: "item",
-      category: "furniture",
+      ...common,
+      type: "furniture",
       subcategory: record.category,
-      attributes: {
-        type: record.type,
-        size: record.size,
-        colors: record.colors,
-        materials: record.materials,
-        sources: record.sources,
-      },
-      craftingRecipes: null,
+      furnitureType: record.type,
+      size: record.size,
+      colors: values(record.colors),
+      materials: values(record.materials),
+      sources: values(record.sources),
+      craftingRecipes: record.craftingRecipes,
     });
   for (const record of view.furniture?.sets ?? [])
-    catalog.items.push({
-      ...catalogBase(record),
-      kind: "set",
-      category: "furniture",
-      memberIds: record.componentIds,
-    });
+    group(record, "furniture.set", record.componentIds);
   for (const record of view.creatures?.items ?? [])
-    catalog.items.push({
+    add({
       ...catalogBase(record),
-      kind: "item",
-      category: "creatures",
+      ...common,
+      type: "creature",
       subcategory: record.category,
-      attributes: {
-        region: record.region,
-        habitat: record.habitat,
-        activeSeasons: record.activeSeasons,
-        activeTimes: record.activeTimes,
-        activeWeather: record.activeWeather,
-        sizeRange: record.sizeRange,
-        sources: null,
-        scientificName: null,
-      },
+      region: values(record.region),
+      habitat: values(record.habitat),
+      activeSeasons: values(record.activeSeasons),
+      activeTimes: values(record.activeTimes),
+      activeWeather: values(record.activeWeather),
+      sizeRange: record.sizeRange,
+      scientificName: null,
+      sources: null,
       research: null,
+      size: null,
+      grades: null,
     });
   for (const record of view.creatures?.series ?? [])
-    catalog.items.push({
+    group(record, "creatures.series", record.creatureIds);
+  for (const record of view.plants?.items ?? []) {
+    const growthId = record.growth ? (record.seedId ?? record.id) : null;
+    if (
+      record.growth &&
+      growthId !== null &&
+      !catalog.growths.some((growth) => growth.id === growthId)
+    )
+      catalog.growths.push({
+        ...record.growth,
+        id: growthId,
+        stages:
+          record.growth.stages?.map((stage) => ({
+            ...stage,
+            image: stage.image ? { assetId: stage.image, variant: "icon" } : null,
+          })) ?? null,
+      });
+    add({
       ...catalogBase(record),
-      kind: "series",
-      category: "creatures",
-      memberIds: record.creatureIds,
-    });
-  for (const record of view.plants?.items ?? [])
-    catalog.items.push({
-      ...catalogBase(record),
-      kind: "item",
-      category: "plants",
+      ...common,
+      type: "plant",
       subcategory: record.category,
-      attributes: {
-        originGalaxy: record.originGalaxy,
-        maturityPeriod: record.maturityPeriod,
-        harvestCount: record.harvestCount,
-        sources: record.sources,
-      },
-      seedId: record.seedId,
+      origins: values(record.originGalaxy),
+      maturityPeriod: record.maturityPeriod,
+      harvestCount: record.harvestCount,
+      sources: values(record.sources),
+      flowerColors: record.flowerColors,
+      growthId,
+      drops: record.treeDrops,
+      hybridRecipes: null,
     });
-  for (const record of view.plants?.series ?? [])
-    catalog.items.push({
-      ...catalogBase(record),
-      kind: "series",
-      category: "plants",
-      memberIds: record.plantIds,
-    });
+  }
+  for (const record of view.plants?.series ?? []) group(record, "plants.series", record.plantIds);
   for (const record of view.dishes?.items ?? [])
-    catalog.items.push({
+    add({
       ...catalogBase(record),
-      kind: "item",
-      category: "dishes",
+      ...common,
+      type: "dish",
       subcategory: null,
-      attributes: {
-        difficulty: record.difficulty,
-        galaxyFlavor: record.galaxyFlavor,
-        cookware: record.cookware,
-        effects: record.effects,
-        sources: null,
-        tastes: null,
-      },
+      difficulty: record.difficulty,
+      galaxyFlavor: record.galaxyFlavor,
+      cookware: values(record.cookware),
+      effectsText: record.effects,
       recipe: record.recipe,
+      sources: null,
+      tastes: null,
       difficultyRequirement: null,
+      effects: null,
     });
-  for (const record of view.dishes?.series ?? [])
-    catalog.items.push({
-      ...catalogBase(record),
-      kind: "series",
-      category: "dishes",
-      memberIds: record.dishIds,
-    });
+  for (const record of view.dishes?.series ?? []) group(record, "dishes.series", record.dishIds);
   for (const record of view.clothing?.items ?? [])
-    catalog.items.push({
+    add({
       ...catalogBase(record),
-      kind: "item",
-      category: "clothing",
+      ...common,
+      type: "clothing",
       subcategory: record.category,
-      attributes: {
-        colors: record.colors,
-        materials: record.materials,
-        styles: record.styles,
-        sources: record.sources,
-      },
+      colors: values(record.colors),
+      materials: values(record.materials),
+      styles: values(record.styles),
+      sources: values(record.sources),
     });
   for (const record of view.clothing?.sets ?? [])
-    catalog.items.push({
-      ...catalogBase(record),
-      kind: "set",
-      category: "clothing",
-      memberIds: record.componentIds,
+    group(record, "clothing.set", record.componentIds);
+  for (const record of view.clothing?.appearances ?? []) {
+    catalog.appearances.push({ ...catalogBase(record), subcategory: record.category });
+    catalog.entries.push({
+      entity: { kind: "appearance", id: record.id },
+      encyclopedia: { listed: false },
     });
-  for (const record of view.clothing?.appearances ?? [])
-    catalog.items.push({
-      ...catalogBase(record),
-      encyclopediaEntry: { listed: false },
-      kind: "appearance",
-      category: "clothing",
-      subcategory: record.category,
-    });
+  }
   for (const record of view.miscellaneous ?? [])
-    catalog.items.push({
-      ...catalogBase(record),
-      kind: "item",
-      category: "miscellaneous",
-      subcategory: null,
-      attributes: { sources: null },
-    });
-  const plants = new Map(view.plants?.items.map((item) => [item.id, item]));
-  catalog.details = catalog.items.map((record) => {
-    const plant = plants.get(record.id);
+    add({ ...catalogBase(record), ...common, type: "material", subcategory: null, sources: null });
+  return catalog;
+}
+export function assetsFixture(catalog: Catalog): Assets {
+  const dataset = emptyDataset(fixtureContext, fixtureSource);
+  dataset.catalog = catalog;
+  return {
+    ...fixtureContext,
+    kind: "assets",
+    images: referencedImages(dataset).map((image: ImageRef) => ({
+      ...image,
+      file: image.assetId,
+      sha256: image.assetId.match(/[a-f0-9]{64}/)?.[0] ?? "a".repeat(64),
+      bytes: 1,
+      width: 256,
+      height: 256,
+    })),
+  };
+}
+export function fixtureRequest(catalog: Catalog): typeof fetch {
+  const dataset = emptyDataset(fixtureContext, fixtureSource);
+  dataset.catalog = catalog;
+  const documents = {
+    catalog,
+    neighbors: dataset.neighbors,
+    world: dataset.world,
+    assets: assetsFixture(catalog),
+  };
+  const files = Object.entries(documents).map(([kind, data]) => {
+    const bytes = JSON.stringify(data);
     return {
-      ...emptyCollectionDetail(record.id),
-      ...(plant
-        ? { flowerColors: plant.flowerColors, growth: plant.growth, treeDrops: plant.treeDrops }
-        : {}),
+      kind,
+      path: documentPath(kind as keyof typeof documents, fixtureContext.locale),
+      sha256: createHash("sha256").update(bytes).digest("hex"),
+      bytes: Buffer.byteLength(bytes),
     };
   });
-  catalog.cropSeeds = [
-    ...new Map(
-      view.plants?.items.flatMap((item) =>
-        item.summary.seeds.map((seed) => [seed.id, seed] as const),
-      ) ?? [],
-    ).values(),
-  ].sort((a, b) => a.id - b.id);
-  return catalog;
+  const responses = new Map(
+    files.map((file) => [
+      file.path,
+      JSON.stringify(documents[file.kind as keyof typeof documents]),
+    ]),
+  );
+  responses.set(
+    "release.json",
+    JSON.stringify({ ...fixtureContext, source: fixtureSource, files }),
+  );
+  return (input) => {
+    const url = input instanceof Request ? input.url : String(input);
+    const entry = [...responses].find(([key]) => url.endsWith(key));
+    return Promise.resolve(new Response(entry?.[1] ?? "missing", { status: entry ? 200 : 404 }));
+  };
 }

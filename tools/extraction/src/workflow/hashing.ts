@@ -11,7 +11,13 @@ export interface FileHash {
 export function digest(value: object | string): string {
   return crypto
     .createHash("sha256")
-    .update(typeof value === "string" ? value : JSON.stringify(value))
+    .update(
+      value instanceof Uint8Array
+        ? value
+        : typeof value === "string"
+          ? value
+          : JSON.stringify(value),
+    )
     .digest("hex");
 }
 

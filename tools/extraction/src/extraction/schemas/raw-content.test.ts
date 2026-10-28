@@ -1,6 +1,6 @@
 import { test } from "vite-plus/test";
 import assert from "node:assert/strict";
-import { emptyCatalog, parseCatalog } from "@loomix/content-schema";
+import { emptyCatalog, parseCatalog } from "@loomix/schema/extraction";
 import { parseRawContent } from "./raw-content.ts";
 import { validateModel } from "../content/model.ts";
 

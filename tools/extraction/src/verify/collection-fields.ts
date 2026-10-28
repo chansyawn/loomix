@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
-import type { CatalogV5, CraftingRecipe } from "@loomix/content-schema/v5";
+import type { CollectionObservations, CraftingRecipe } from "@loomix/schema/extraction";
 import type { Tables } from "../extraction/decode/tables.ts";
 import type { TableRow } from "../extraction/types.ts";
 import { plainText } from "../extraction/content/model.ts";
 
-export function verifyCollectionFields(catalog: CatalogV5, tables: Tables) {
+export function verifyCollectionFields(catalog: CollectionObservations, tables: Tables) {
   const main = tables.byId(318);
   const sources = tables.byId(618);
   const content = tables.byId(93);

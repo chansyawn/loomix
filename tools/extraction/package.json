@@ -10,9 +10,8 @@
     "test": "vp exec vp test run"
   },
   "dependencies": {
-    "@loomix/content-schema": "workspace:*",
-    "@loomix/island-schema": "workspace:*",
-    "@loomix/neighbor-schema": "workspace:*",
+    "@loomix/resource-publisher": "workspace:*",
+    "@loomix/schema": "workspace:*",
     "execa": "catalog:",
     "pngjs": "catalog:",
     "sax": "catalog:",

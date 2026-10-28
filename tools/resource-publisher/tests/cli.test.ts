@@ -1,5 +1,6 @@
+import { writeFixture } from "./fixture.ts";
 import { spawnSync } from "node:child_process";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,67 +23,7 @@ test("help describes automatic configuration without requiring credentials", () 
 test("dry run from another directory returns only JSON without credentials or progress", async () => {
   const directory = await mkdtemp(path.join(tmpdir(), "loomix-cli-"));
   try {
-    await mkdir(path.join(directory, "assets"));
-    await writeFile(
-      path.join(directory, "content.json"),
-      JSON.stringify({
-        schemaVersion: 5,
-        source: { gameVersion: "0.95.2", dataRevision: 1449213, resourceRevision: 1391927 },
-        ingredientCategories: [],
-        items: [],
-        cropSeeds: [],
-        details: [],
-      }),
-    );
-    await writeFile(
-      path.join(directory, "neighbors.json"),
-      JSON.stringify({
-        schemaVersion: 1,
-        source: {
-          gameVersion: "0.95.2",
-          dataRevision: 1449213,
-          resourceRevision: 1391927,
-          manifestId: "5662883",
-        },
-        neighbors: [],
-        stars: [],
-        stories: [],
-        travelReactions: [],
-        encounterIslands: [],
-        friendshipRules: [],
-        eventTags: [],
-        furnishingThemes: [],
-        rewards: [],
-        assets: [],
-      }),
-    );
-    await writeFile(
-      path.join(directory, "neighbor-images.json"),
-      JSON.stringify({
-        schemaVersion: 1,
-        source: {
-          gameVersion: "0.95.2",
-          dataRevision: 1449213,
-          resourceRevision: 1391927,
-          manifestId: "5662883",
-        },
-        images: [],
-      }),
-    );
-    const source = {
-      gameVersion: "0.95.2",
-      dataRevision: 1449213,
-      resourceRevision: 1391927,
-      manifestId: "5662883",
-    };
-    await writeFile(
-      path.join(directory, "islands.json"),
-      JSON.stringify({ schemaVersion: 1, source, islands: [], islandIconStyles: [], regions: [] }),
-    );
-    await writeFile(
-      path.join(directory, "islands-images.json"),
-      JSON.stringify({ schemaVersion: 1, source, images: [] }),
-    );
+    await writeFixture(directory, 0);
     const result = spawnSync(
       process.execPath,
       [cli, "--content", directory, "--release", "test", "--dry-run"],
@@ -92,10 +33,8 @@ test("dry run from another directory returns only JSON without credentials or pr
     expect(JSON.parse(result.stdout)).toMatchObject({
       release: "test",
       assetCount: 0,
-      neighborCount: 0,
-      islandCount: 0,
-      islandsSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
-      islandsImagesSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+      documentCount: 5,
+      manifestSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
       dryRun: true,
     });
     expect(result.stderr).toBe("");

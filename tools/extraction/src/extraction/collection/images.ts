@@ -4,12 +4,12 @@ import { removeWithin } from "../../workflow/fs.ts";
 import { exportImageAssets } from "../images/export.ts";
 import { highestResolutionImages } from "../images/select.ts";
 import type { SelectedImage, WorkOptions } from "../types.ts";
-import { RawCollectionV5Schema } from "./build.ts";
+import { RawCollectionObservationsSchema } from "./build.ts";
 import type { CollectionEvidence } from "./evidence.ts";
 
 export async function exportSeedImages(options: WorkOptions): Promise<void> {
-  const catalog = RawCollectionV5Schema.parse(
-    readJson(path.join(options.work, "raw/content-v5.json")),
+  const catalog = RawCollectionObservationsSchema.parse(
+    readJson(path.join(options.work, "raw/catalog-observations.json")),
   );
   const candidates = readJson<SelectedImage[]>(
     path.join(options.work, "seed-image-candidates.json"),
@@ -81,7 +81,7 @@ export async function exportSeedImages(options: WorkOptions): Promise<void> {
   writeJson(path.join(options.work, "stage-image-originals.json"), stageOriginals);
   writeJson(path.join(options.work, "stage-image-manifest.json"), stageManifest);
   writeJson(
-    path.join(options.work, "raw/images-content-v5.json"),
-    RawCollectionV5Schema.parse(catalog),
+    path.join(options.work, "raw/images-catalog-observations.json"),
+    RawCollectionObservationsSchema.parse(catalog),
   );
 }

@@ -1,82 +1,68 @@
 import fs from "node:fs";
 import path from "node:path";
-import crypto from "node:crypto";
-import type { Catalog } from "@loomix/content-schema";
-import type {
-  WorkOptions,
-  SelectedImage,
-  ImageManifest,
-  ProcessedImage,
-  EvidenceRecord,
-} from "../extraction/types.ts";
+import { parseDataset } from "@loomix/schema/dataset";
+import { AssetsSchema } from "@loomix/schema/assets";
+import { documentPath, parseRelease } from "@loomix/schema/release";
+import type { ReleaseManifest, DocumentKind } from "@loomix/schema/release";
+import type { WorkOptions } from "../extraction/types.ts";
+import type { ImageJob } from "../domains/assets.ts";
 import { readJson, writeJson } from "../workflow/json.ts";
-import { processImage, imageDimensions } from "./image.ts";
+import { digest } from "../workflow/hashing.ts";
+import { within } from "../paths.ts";
+import { processImage, processNeighborImage } from "./image.ts";
 
-import { renderNeighborImages } from "./neighbor-images.ts";
-import { renderIslandImages } from "./island-images.ts";
-import { assetKey } from "../extraction/images/select.ts";
-import { parseNeighborDatabase } from "../extraction/neighbors/schema.ts";
-export async function renderImages(options: WorkOptions, extraction: string) {
-  const selected = readJson<SelectedImage[]>(path.join(extraction, "selected-images.json"));
-  const manifest = readJson<ImageManifest[]>(path.join(extraction, "image-candidates.json"));
-  const content = readJson<Catalog>(path.join(extraction, "raw/content.json"));
+export async function renderImages(options: WorkOptions, extraction: string): Promise<void> {
+  const dataset = parseDataset(readJson(path.join(extraction, "dataset.json")));
+  const jobs = readJson<ImageJob[]>(path.join(extraction, "image-jobs.json"));
   const staging = path.join(options.work, "staging");
   fs.mkdirSync(path.join(staging, "assets"), { recursive: true });
-  const neighborFile = path.join(extraction, "raw/neighbors.json");
-  parseNeighborDatabase(readJson(neighborFile));
-  fs.copyFileSync(neighborFile, path.join(staging, "neighbors.json"));
-  const selectedManifest: ProcessedImage[] = [];
+  const images = [];
+  const evidence = [];
   const processed = new Map<
     string,
-    Awaited<ReturnType<typeof processImage>> & { file: string; sha256: string }
+    { file: string; sha256: string; bytes: number; width: number; height: number }
   >();
-  for (const a of selected) {
-    const original = manifest.find((entry) => assetKey(entry) === assetKey(a))!;
-    const originalFile = path.isAbsolute(original.file)
-      ? original.file
-      : path.join(extraction, original.file);
-    const { width, height } = imageDimensions(a.group);
-    const key = `${original.sha256}|${width}x${height}`;
+  for (const job of jobs) {
+    const bytes = fs.readFileSync(within(extraction, job.original.file));
+    if (digest(bytes) !== job.original.sha256)
+      throw new Error(`Original image hash mismatch ${job.assetId}`);
+    const key = `${job.original.sha256}:${job.variant}`;
     let result = processed.get(key);
     if (!result) {
-      const image = await processImage(fs.readFileSync(originalFile), a.group);
-      const sha256 = crypto.createHash("sha256").update(image.bytes).digest("hex");
+      const image = job.group
+        ? await processImage(bytes, job.group)
+        : await processNeighborImage(bytes);
+      const sha256 = digest(image.bytes);
       const file = `assets/${sha256}.webp`;
       fs.writeFileSync(path.join(staging, file), image.bytes);
-      result = { ...image, file, sha256 };
+      result = {
+        file,
+        sha256,
+        bytes: image.bytes.length,
+        width: image.width,
+        height: image.height,
+      };
       processed.set(key, result);
     }
-    selectedManifest.push({
-      ...a,
-      file: result.file,
-      sha256: result.sha256,
-      width,
-      height,
-      original: {
-        file: original.file,
-        sha256: original.sha256,
-        width: original.width,
-        height: original.height,
-      },
-    });
+    images.push({ assetId: job.assetId, variant: job.variant, ...result });
+    evidence.push({ ...job, delivered: result });
   }
-  for (const image of selectedManifest) {
-    const record = content.items.find((record) => record.id === image.id);
-    if (!record) throw new Error(`Missing image record ${image.id}`);
-    record.image = image.file;
+  const assets = AssetsSchema.parse({ ...dataset.context, kind: "assets", images });
+  const documents = {
+    catalog: dataset.catalog,
+    neighbors: dataset.neighbors,
+    world: dataset.world,
+    assets,
+  };
+  const files: ReleaseManifest["files"] = [];
+  for (const kind of Object.keys(documents) as DocumentKind[]) {
+    const file = documentPath(kind, dataset.context.locale);
+    writeJson(path.join(staging, file), documents[kind]);
+    const bytes = fs.readFileSync(path.join(staging, file));
+    files.push({ kind, path: file, sha256: digest(bytes), bytes: bytes.length });
   }
-  const evidence = readJson<EvidenceRecord[]>(
-    path.join(extraction, "evidence/field-evidence.json"),
-  );
-  for (const proof of evidence.filter((proof) => proof.field === "image")) {
-    proof.value = selectedManifest.find((image) => image.id === proof.id)?.file ?? null;
-    proof.transformation =
-      "Lanczos3 cover/centre; WebP quality 85, alphaQuality 100; final byte SHA256";
-  }
-  writeJson(path.join(options.work, "field-evidence.json"), evidence);
-  writeJson(path.join(staging, "content.json"), content);
-  writeJson(path.join(options.work, "image-manifest.json"), selectedManifest);
-  await renderNeighborImages(options.work, extraction);
-  if (fs.existsSync(path.join(extraction, "raw/islands.json")))
-    await renderIslandImages(options.work, extraction);
+  const manifest: ReleaseManifest = { ...dataset.context, source: dataset.source, files };
+  parseRelease({ manifest, dataset, assets });
+  writeJson(path.join(staging, "release.json"), manifest);
+  writeJson(path.join(options.work, "image-manifest.json"), evidence);
 }

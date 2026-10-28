@@ -1,19 +1,9 @@
 import { lstat, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
-import { parseCatalogV5 } from "@loomix/content-schema/v5";
-import {
-  parseNeighborImages,
-  validateNeighborImages,
-  parseNeighborDatabase,
-} from "@loomix/neighbor-schema";
-import {
-  parseIslandDatabase,
-  parseIslandImages,
-  validateIslandCatalog,
-  validateIslandImages,
-} from "@loomix/island-schema";
-import { referencedImages, sha256 } from "./release.ts";
+import { assembleRelease, parseReleaseManifest } from "@loomix/schema/release";
+import type { DocumentKind, Release } from "@loomix/schema/release";
+import { sha256 } from "./release.ts";
 
 export interface AssetFile {
   key: string;
@@ -21,20 +11,15 @@ export interface AssetFile {
   sha256: string;
   size: number;
 }
-
+export interface DocumentFile {
+  key: string;
+  bytes: Buffer;
+  sha256: string;
+}
 export interface ValidatedContent {
-  json: Buffer;
-  contentSha256: string;
-  neighbors: Buffer;
-  neighborsSha256: string;
-  neighborCount: number;
-  neighborImages: Buffer;
-  neighborImagesSha256: string;
-  islands: Buffer;
-  islandsSha256: string;
-  islandsImages: Buffer;
-  islandsImagesSha256: string;
-  islandCount: number;
+  release: Release;
+  manifestSha256: string;
+  documents: DocumentFile[];
   assets: AssetFile[];
 }
 
@@ -43,103 +28,78 @@ export async function readRegularFile(file: string): Promise<Buffer> {
   return readFile(file);
 }
 
+async function filesWithin(directory: string): Promise<string[]> {
+  if (!(await lstat(directory)).isDirectory())
+    throw new Error(`Expected a real directory: ${directory}`);
+  const files: string[] = [];
+  const visit = async (prefix: string): Promise<void> => {
+    for (const name of await readdir(path.join(directory, prefix))) {
+      const relative = prefix ? `${prefix}/${name}` : name;
+      const stat = await lstat(path.join(directory, relative));
+      if (relative === ".gitkeep" && !stat.isFile())
+        throw new Error(".gitkeep must be a regular file");
+      if (stat.isSymbolicLink()) throw new Error(`Refusing symbolic link: ${relative}`);
+      if (stat.isDirectory()) await visit(relative);
+      else if (stat.isFile()) files.push(relative);
+      else throw new Error(`Expected a regular file: ${relative}`);
+    }
+  };
+  await visit("");
+  return files.filter((file) => file !== ".gitkeep").sort();
+}
+
 export async function validateContent(directory: string): Promise<ValidatedContent> {
-  const entries = (await readdir(directory)).filter((entry) => entry !== ".gitkeep");
-  try {
-    if (!(await lstat(path.join(directory, ".gitkeep"))).isFile())
-      throw new Error(".gitkeep must be a regular file");
-  } catch (error) {
-    if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
+  const actual = await filesWithin(directory);
+  const manifestBytes = await readRegularFile(path.join(directory, "release.json"));
+  const manifest = parseReleaseManifest(JSON.parse(manifestBytes.toString("utf8")));
+  const documents: DocumentFile[] = [];
+  const parsed = new Map<DocumentKind, unknown>();
+  for (const file of manifest.files) {
+    const bytes = await readRegularFile(path.join(directory, file.path));
+    if (bytes.length !== file.bytes || sha256(bytes) !== file.sha256)
+      throw new Error(`Document SHA-256 or size mismatch: ${file.path}`);
+    parsed.set(file.kind, JSON.parse(bytes.toString("utf8")));
+    documents.push({ key: file.path, bytes, sha256: file.sha256 });
   }
-  if (
-    entries.length !== 6 ||
-    !entries.includes("content.json") ||
-    !entries.includes("neighbors.json") ||
-    !entries.includes("neighbor-images.json") ||
-    !entries.includes("islands.json") ||
-    !entries.includes("islands-images.json") ||
-    !entries.includes("assets")
-  ) {
-    throw new Error(
-      "Content directory must contain content.json, neighbors.json, neighbor-images.json, islands.json, islands-images.json, and assets/",
-    );
-  }
-  const assetDirectory = path.join(directory, "assets");
-  if (!(await lstat(assetDirectory)).isDirectory())
-    throw new Error("assets/ must be a real directory");
-  const json = await readRegularFile(path.join(directory, "content.json"));
-  const content = parseCatalogV5(JSON.parse(json.toString("utf8")));
-  const neighbors = await readRegularFile(path.join(directory, "neighbors.json"));
-  const database = parseNeighborDatabase(JSON.parse(neighbors.toString("utf8")));
-  if (
-    database.source.gameVersion !== content.source.gameVersion ||
-    database.source.dataRevision !== content.source.dataRevision ||
-    database.source.resourceRevision !== content.source.resourceRevision
-  ) {
-    throw new Error("Neighbor database source does not match content.json");
-  }
-  const neighborImages = await readRegularFile(path.join(directory, "neighbor-images.json"));
-  const mapping = parseNeighborImages(JSON.parse(neighborImages.toString("utf8")));
-  validateNeighborImages(database, mapping);
-  const islands = await readRegularFile(path.join(directory, "islands.json"));
-  const islandDatabase = parseIslandDatabase(JSON.parse(islands.toString("utf8")));
-  validateIslandCatalog(islandDatabase, content);
-  if (islandDatabase.source.manifestId !== database.source.manifestId)
-    throw new Error("Island manifest does not match neighbors.json");
-  const islandsImages = await readRegularFile(path.join(directory, "islands-images.json"));
-  const islandImageMapping = parseIslandImages(JSON.parse(islandsImages.toString("utf8")));
-  validateIslandImages(islandDatabase, islandImageMapping);
-  const images = [
-    ...new Set([
-      ...referencedImages(content, mapping),
-      ...islandImageMapping.images.flatMap((entry) => (entry.image ? [entry.image] : [])),
-    ]),
+  const release = assembleRelease(manifest, parsed);
+  const expectedImages = new Map(release.assets.images.map((image) => [image.file, image]));
+  const expected = [
+    "release.json",
+    ...manifest.files.map((file) => file.path),
+    ...expectedImages.keys(),
   ].sort();
-  const files = await readdir(assetDirectory);
-  const expected = new Set(images.map((image) => path.basename(image)));
-  if (files.length !== expected.size || files.some((file) => !expected.has(file))) {
-    throw new Error(
-      "assets/ must contain exactly the images referenced by content.json, neighbor-images.json, and islands-images.json",
-    );
-  }
+  if (JSON.stringify(actual) !== JSON.stringify(expected))
+    throw new Error("Release directory must contain exactly the declared documents and images");
   const assets: AssetFile[] = [];
-  for (const key of images) {
+  for (const [key, image] of expectedImages) {
     const file = path.join(directory, key);
     const bytes = await readRegularFile(file);
-    const hash = sha256(bytes);
-    if (key !== `assets/${hash}.webp`) throw new Error(`Image SHA-256 mismatch: ${key}`);
+    if (sha256(bytes) !== image.sha256 || bytes.length !== image.bytes)
+      throw new Error(`Image SHA-256 or size mismatch: ${key}`);
     if (
       bytes.length < 20 ||
       bytes.toString("ascii", 0, 4) !== "RIFF" ||
       bytes.toString("ascii", 8, 12) !== "WEBP" ||
       bytes.readUInt32LE(4) !== bytes.length - 8
-    ) {
+    )
       throw new Error(`Invalid WebP container: ${key}`);
-    }
     try {
       const { data, info } = await sharp(bytes, { failOn: "warning" })
         .ensureAlpha()
         .raw()
         .toBuffer({ resolveWithObject: true });
-      if (data.length !== info.width * info.height * 4) throw new Error("Incomplete pixels");
+      if (
+        data.length !== info.width * info.height * 4 ||
+        info.width !== image.width ||
+        info.height !== image.height
+      )
+        throw new Error("Image dimensions or complete pixels mismatch");
     } catch (cause) {
       throw new Error(`Invalid complete WebP image: ${key}`, { cause });
     }
-    assets.push({ key, path: file, sha256: hash, size: bytes.length });
+    assets.push({ key, path: file, sha256: image.sha256, size: bytes.length });
   }
-  return {
-    json,
-    contentSha256: sha256(json),
-    neighbors,
-    neighborsSha256: sha256(neighbors),
-    neighborCount: database.neighbors.length,
-    neighborImages,
-    neighborImagesSha256: sha256(neighborImages),
-    islands,
-    islandsSha256: sha256(islands),
-    islandsImages,
-    islandsImagesSha256: sha256(islandsImages),
-    islandCount: islandDatabase.islands.length,
-    assets,
-  };
+  const manifestSha256 = sha256(manifestBytes);
+  documents.push({ key: "release.json", bytes: manifestBytes, sha256: manifestSha256 });
+  return { release, manifestSha256, documents, assets };
 }

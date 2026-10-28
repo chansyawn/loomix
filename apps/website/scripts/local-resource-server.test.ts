@@ -17,8 +17,8 @@ test("serves WebP resources with the correct MIME type for GET and HEAD", async 
   try {
     await mkdir(path.join(directory, "assets"));
     await writeFile(path.join(directory, key), bytes);
-    await writeFile(path.join(directory, "neighbors.json"), "{}");
-    await writeFile(path.join(directory, "neighbor-images.json"), "{}");
+    await writeFile(path.join(directory, "release.json"), "{}");
+    await writeFile(path.join(directory, "assets.json"), "{}");
     server.listen(0, "127.0.0.1");
     await once(server, "listening");
     const address = server.address();
@@ -28,11 +28,11 @@ test("serves WebP resources with the correct MIME type for GET and HEAD", async 
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toBe("image/webp");
     expect(Buffer.from(await response.arrayBuffer())).toEqual(bytes);
-    const neighbors = await fetch(base + "neighbors.json");
+    const neighbors = await fetch(base + "release.json");
     expect(neighbors.status).toBe(200);
     expect(neighbors.headers.get("content-type")).toBe("application/json; charset=utf-8");
     expect(await neighbors.text()).toBe("{}");
-    const images = await fetch(base + "neighbor-images.json");
+    const images = await fetch(base + "assets.json");
     expect(images.status).toBe(200);
     expect(images.headers.get("content-type")).toBe("application/json; charset=utf-8");
     const head = await fetch(base + key, { method: "HEAD" });

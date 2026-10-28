@@ -1,7 +1,7 @@
 import { collectionItemLocation } from "../collection/item-route";
 import { ChevronDownIcon, CookingPotIcon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import type { IngredientCategory, IngredientExpression } from "@loomix/content-schema";
+import type { IngredientCategory, IngredientExpression } from "@loomix/schema/catalog";
 import type { IngredientItem } from "../collection-view";
 import type { DishesDetail } from "./detail";
 

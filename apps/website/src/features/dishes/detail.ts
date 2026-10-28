@@ -3,7 +3,7 @@ import type { DishesData } from "./data";
 import { loadDishes } from "./data";
 import { membershipIndex } from "./query";
 import type { View } from "./search";
-import type { IngredientCategory } from "@loomix/content-schema";
+import type { IngredientCategory } from "@loomix/schema/catalog";
 import type { IngredientItem } from "../collection-view";
 
 export function parseDishId(value: string): number {

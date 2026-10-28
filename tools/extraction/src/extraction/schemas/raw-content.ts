@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createCatalogSchema } from "@loomix/content-schema";
+import { createCatalogSchema } from "@loomix/schema/extraction";
 export const RawImageSchema = z
   .string()
   .regex(

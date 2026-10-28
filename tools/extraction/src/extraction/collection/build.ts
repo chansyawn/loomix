@@ -1,7 +1,9 @@
 import path from "node:path";
-import { createCatalogV4Schema } from "@loomix/content-schema/v4";
-import { createCatalogV5Schema, type CatalogV5 } from "@loomix/content-schema/v5";
-import type { Catalog, CatalogRecord } from "@loomix/content-schema";
+import {
+  createCollectionObservationsSchema,
+  type CollectionObservations,
+} from "@loomix/schema/extraction";
+import type { Catalog, CatalogRecord } from "@loomix/schema/extraction";
 import type { ContentContext } from "../content/context.ts";
 import { createContentContext } from "../content/context.ts";
 import type { SelectedImage } from "../types.ts";
@@ -13,12 +15,11 @@ import { readCreatureFields, readDishFields, readSources } from "./fields.ts";
 import { buildItemDetail, buildSeedDetail } from "./details/client.ts";
 import { detailInvestigation } from "./details/investigation.ts";
 
-export const RawCollectionSchema = createCatalogV4Schema(RawImageSchema);
-export const RawCollectionV5Schema = createCatalogV5Schema(RawImageSchema);
+export const RawCollectionObservationsSchema = createCollectionObservationsSchema(RawImageSchema);
 
 function cropSeeds(context: ContentContext, proofs: CollectionEvidenceBuilder) {
   const { tables, scope } = context;
-  const seeds: CatalogV5["cropSeeds"] = [];
+  const seeds: CollectionObservations["cropSeeds"] = [];
   const images: SelectedImage[] = [];
   const stageImages: SelectedImage[] = [];
   const stageIds = new Set<number>();
@@ -99,7 +100,7 @@ export function extendCollection(base: Catalog, context: ContentContext) {
   const products = new Map(
     crops.seeds.flatMap((seed) => seed.productIds.map((id) => [id, seed.id] as const)),
   );
-  const details: CatalogV5["details"] = [];
+  const details: CollectionObservations["details"] = [];
   const items = base.items.map((record: CatalogRecord) => {
     details.push(buildItemDetail(context, record, proofs));
     if (record.kind !== "item") return record;
@@ -149,9 +150,9 @@ export function extendCollection(base: Catalog, context: ContentContext) {
     }
     return { ...record, attributes: { ...record.attributes, sources } };
   });
-  const catalog: CatalogV5 = RawCollectionV5Schema.parse({
+  const catalog: CollectionObservations = RawCollectionObservationsSchema.parse({
     ...base,
-    schemaVersion: 5,
+    schemaVersion: 1,
     items,
     cropSeeds: crops.seeds,
     details: details.sort((a, b) => a.id - b.id),
@@ -168,7 +169,7 @@ export function extendCollection(base: Catalog, context: ContentContext) {
 export function buildCollection(work: string): void {
   const base = parseRawContent(readJson(path.join(work, "raw/images-content.json")));
   const result = extendCollection(base, createContentContext(work));
-  writeJson(path.join(work, "raw/content-v5.json"), result.catalog);
+  writeJson(path.join(work, "raw/catalog-observations.json"), result.catalog);
   writeJson(path.join(work, "collection-evidence.json"), result.evidence);
   writeJson(
     path.join(work, "collection-missing-fields.json"),

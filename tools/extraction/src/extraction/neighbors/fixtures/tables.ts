@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { emptyCatalog } from "@loomix/content-schema";
+import { emptyCatalog } from "@loomix/schema/extraction";
 import { profile } from "../../../profile.ts";
 import { decodeBytes } from "../../decode/obb.ts";
 import { Tables } from "../../decode/tables.ts";
@@ -94,7 +94,7 @@ export function fixtureRows(): FixtureRows {
         ...Array<Cell>(10).fill(null),
         "UISprite/Island.png",
       ],
-      [77, text("普通岛屿")],
+      [77, text("普通岛屿"), ...Array(14).fill(null), 7700],
     ],
     704: [
       [2, "超过5次对NPC邀约"],

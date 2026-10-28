@@ -1,90 +1,76 @@
-import {
-  neighborImagePaths,
-  parseNeighborDatabase,
-  type NeighborImages,
-} from "@loomix/neighbor-schema";
+import { parseNeighbors } from "@loomix/schema/neighbors";
+import type { Assets } from "@loomix/schema/assets";
+import { fixtureContext } from "../collection-fixture";
 
 export function neighborFixture() {
-  const source = {
-    gameVersion: "0.95.2",
-    dataRevision: 1449213,
-    resourceRevision: 1391927,
-    manifestId: "5662883",
-  };
-  const neighbors = ["蛮蛮", "幻雪", "图塔", "纳蕾娜"].map((nameZh, index) => ({
+  const neighbors = ["蛮蛮", "幻雪", "图塔", "纳蕾娜"].map((name, index) => ({
     id: index + 1,
-    nameZh,
+    name,
     bodyType: "medium",
     scaleValue: null,
-    avatarPath: null,
+    avatar: null,
     npc2Path: `Avatar/${index + 1}`,
-    starKeys: [`star:${index + 1}`],
-    storyKeys: index === 0 ? ["1:1", "1:2"] : [],
-    furnishingThemeIds: index === 3 ? [7] : [],
-    furnishingThemeKeys: index === 3 ? ["theme:a", "theme:b"] : [],
-    rewardItemIds: [],
-    assetPaths: [],
   }));
-  const database = parseNeighborDatabase({
-    schemaVersion: 1,
-    source,
+  const database = parseNeighbors({
+    ...fixtureContext,
+    kind: "neighbors",
     neighbors,
     stars: neighbors.map((neighbor, index) => ({
       key: `star:${neighbor.id}`,
-      npcId: neighbor.id,
-      galaxyNameZh: index < 2 ? "禾夏" : "帕沙",
+      neighborId: neighbor.id,
+      galaxyName: index < 2 ? "禾夏" : "帕沙",
       galaxyIndex: 1,
       systemIndex: 1,
       starIndex: index,
-      nameZh: `${neighbor.nameZh}的星球`,
+      name: `${neighbor.name}的星球`,
       galaxyModelPath: null,
       playerModelPath: null,
       skyModelPath: null,
-      illustrationPath: "UISprite/Star.png",
+      image: { assetId: "star", variant: "illustration" },
     })),
     stories: [1, 2].map((chapter) => ({
       key: `1:${chapter}`,
-      npcId: 1,
+      neighborId: 1,
       chapter,
-      titleZh: chapter === 1 ? "启程" : "归来",
+      title: chapter === 1 ? "启程" : "归来",
       paragraphs: [
         {
           sequence: 1,
-          bodyZh: chapter === 1 ? "<i>第一行\n<b>第二行</b></i>" : null,
-          illustrationPath: "UISprite/Story.png",
+          text: chapter === 1 ? "<i>第一行\n<b>第二行</b></i>" : null,
+          image: { assetId: "story", variant: "illustration" },
         },
       ],
     })),
     travelReactions: [
       {
         key: "fallback:1",
-        npcId: null,
+        neighborId: null,
         variantId: 1,
         conditionType: null,
         threshold: null,
         resourceCategory: null,
         secondaryThreshold: null,
         reactionAsset: null,
-        textZh: null,
+        text: null,
       },
       {
         key: "1:1",
-        npcId: 1,
+        neighborId: 1,
         variantId: 1,
         conditionType: "Npc_Get_Items_Num_In_Travel",
         threshold: "4",
         resourceCategory: "6",
         secondaryThreshold: "2",
         reactionAsset: null,
-        textZh: "旅行真开心！",
+        text: "旅行真开心！",
       },
     ],
     furnishingThemes: ["theme:a", "theme:b"].map((key, index) => ({
       id: index === 0 ? null : 7,
       key,
-      nameZh: `创想卡集${index}`,
+      name: `创想卡集${index}`,
       neighborIds: [4],
-      descriptionZh: "完成友邻事件\n完成装修请求",
+      description: "完成友邻事件\n完成装修请求",
       cardBagPath: null,
       cardBackgroundPath: null,
       cardBackPath: null,
@@ -92,13 +78,13 @@ export function neighborFixture() {
       lockedBackgroundPath: null,
       unlockedBackgroundPath: null,
       themePath: null,
-      coverPath: "UISprite/Star.png",
+      cover: { assetId: "star", variant: "illustration" },
     })),
-    encounterIslands: [],
     friendshipRules: [],
     eventTags: [],
     rewards: [],
-    assets: [
+    additionalImages: [],
+    resources: [
       ...neighbors.map((neighbor) => neighbor.npc2Path),
       "UISprite/Star.png",
       "UISprite/Story.png",
@@ -106,12 +92,17 @@ export function neighborFixture() {
       .sort()
       .map((path) => ({ path, kind: "other", relatedNeighborIds: [] })),
   });
-  const mapping: NeighborImages = {
-    schemaVersion: 1,
-    source,
-    images: neighborImagePaths(database).map((path) => ({
-      path,
-      image: `assets/${"a".repeat(64)}.webp`,
+  const mapping: Assets = {
+    ...fixtureContext,
+    kind: "assets",
+    images: ["star", "story"].map((assetId) => ({
+      assetId,
+      variant: "illustration",
+      file: `assets/${"a".repeat(64)}.webp`,
+      sha256: "a".repeat(64),
+      bytes: 1,
+      width: 100,
+      height: 100,
     })),
   };
   return { database, mapping };

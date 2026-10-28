@@ -9,7 +9,6 @@ import { withLock } from "../workflow/lock.ts";
 import { renderImages } from "./images.ts";
 import { verifyDelivery } from "./verify.ts";
 import { publish, safeOutput } from "./publish.ts";
-import { renderCollection } from "./collection.ts";
 
 export async function deliver(
   extractionId: string,
@@ -19,14 +18,13 @@ export async function deliver(
   const extraction = await readManifest(bundle, "extraction");
   if (extraction.profileHash !== profileHash)
     throw new Error("Extraction profile differs from the current profile; extract again");
-  const collectionV4 = fs.existsSync(path.join(bundle, "raw/images-content-v5.json"));
   const target = artifactOnly ? "artifact-only" : "website";
   const implementation = await implementationRevision();
   const inputs = await inventory(bundle, [
     "extraction-manifest.json",
-    "raw/content.json",
-    "raw/neighbors.json",
-    ...(fs.existsSync(path.join(bundle, "raw/islands.json")) ? ["raw/islands.json"] : []),
+    "dataset.json",
+    "image-jobs.json",
+    ...extraction.outputs.filter((file) => file.path.endsWith(".png")).map((file) => file.path),
   ]);
   const id = digest({
     extractionId,
@@ -48,7 +46,6 @@ export async function deliver(
     const options = { work, output: websiteDirectory };
     try {
       await renderImages(options, bundle);
-      if (collectionV4) await renderCollection(work, bundle);
       await verifyDelivery(work, bundle);
       atomicJson(path.join(work, "run-report.json"), {
         passed: true,

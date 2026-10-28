@@ -15,6 +15,7 @@ export function CollectionItemLink({
   children?: ReactNode;
   className?: string;
 }) {
+  if (item.listed === false) return <span className={className}>{children ?? item.name}</span>;
   return (
     <Link
       {...collectionItemLocation(item)}

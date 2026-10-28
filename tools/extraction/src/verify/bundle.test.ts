@@ -2,7 +2,7 @@ import { afterEach, expect, test, vi } from "vite-plus/test";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { parseCatalogV5, projectLegacyCatalogV5 } from "@loomix/content-schema/v5";
+import { parseCollectionObservations, baseCollectionObservations } from "@loomix/schema/extraction";
 import { verifyBundle } from "./bundle.ts";
 
 vi.mock("../extraction/decode/tables.ts", async (original) => ({
@@ -17,7 +17,7 @@ vi.mock("../extraction/decode/tables.ts", async (original) => ({
   },
 }));
 vi.mock("../profile.ts", async (original) => {
-  const { recordTypes } = await import("@loomix/content-schema");
+  const { recordTypes } = await import("@loomix/schema/extraction");
   return {
     ...(await original<typeof import("../profile.ts")>()),
     expectedCatalog: Object.fromEntries(recordTypes.map((type) => [type, 0])),
@@ -36,14 +36,14 @@ afterEach(() => {
     fs.rmSync(directory, { recursive: true, force: true });
 });
 
-test("bundle verification validates the original v5 input when a parser projects to v3", async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-v5-verification-"));
+test("bundle verification validates the original observations before checking their base fields", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-observations-verification-"));
   temporary.push(root);
   const file = path.join(root, "content.json");
   fs.writeFileSync(
     file,
     JSON.stringify({
-      schemaVersion: 5,
+      schemaVersion: 1,
       source: { gameVersion: "0.95.2", dataRevision: 1449213, resourceRevision: 1391927 },
       ingredientCategories: [],
       items: [],
@@ -58,9 +58,8 @@ test("bundle verification validates the original v5 input when a parser projects
       bundle: root,
       staging: root,
       contentFile: file,
-      raw: false,
       writeReports: false,
-      parse: (input) => projectLegacyCatalogV5(parseCatalogV5(input)),
+      parse: (input) => baseCollectionObservations(parseCollectionObservations(input)),
     }),
   ).rejects.toThrow("model_verified");
 });

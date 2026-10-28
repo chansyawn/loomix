@@ -1,7 +1,5 @@
-import fs from "node:fs";
-import path from "node:path";
 import { readManifest, verifyFiles } from "./workflow/manifest.ts";
-import { digest, inventory } from "./workflow/hashing.ts";
+import { digest, inventory, filesWithin } from "./workflow/hashing.ts";
 import { identityDirectory, websiteDirectory } from "./paths.ts";
 import { verifyEnvironment } from "./environment/verify.ts";
 import { safeOutput } from "./delivery/output.ts";
@@ -28,15 +26,7 @@ export async function verify(deliveryId: string): Promise<void> {
   safeOutput(websiteDirectory);
   const published = await inventory(
     websiteDirectory,
-    fs
-      .readdirSync(websiteDirectory)
-      .flatMap((name) =>
-        name === ".gitkeep"
-          ? []
-          : name === "assets"
-            ? fs.readdirSync(path.join(websiteDirectory, name)).map((file) => `assets/${file}`)
-            : [name],
-      ),
+    filesWithin(websiteDirectory).filter((file) => file !== ".gitkeep"),
   );
   const staged = delivery.outputs
     .filter((file) => file.path.startsWith("staging/"))

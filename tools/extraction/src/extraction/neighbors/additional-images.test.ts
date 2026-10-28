@@ -1,5 +1,5 @@
 import { expect, test } from "vite-plus/test";
-import type { AdditionalNeighborImageCategory } from "@loomix/neighbor-schema";
+import type { AdditionalNeighborImageCategory } from "@loomix/schema/extraction/neighbor";
 import type { IndexedAsset } from "../types.ts";
 import {
   additionalNeighborImageSelections,

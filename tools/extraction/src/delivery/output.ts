@@ -58,43 +58,22 @@ export function safeOutput(output: string) {
       (!fs.lstatSync(placeholder).isFile() || fs.lstatSync(placeholder).isSymbolicLink())
     )
       throw new Error("Output placeholder must be a regular file");
-    for (const name of [
-      "content.json",
-      "neighbors.json",
-      "neighbor-images.json",
-      "islands.json",
-      "islands-images.json",
-    ]) {
-      const json = path.join(output, name);
-      if (
-        names.includes(name) &&
-        (!fs.lstatSync(json).isFile() || fs.lstatSync(json).isSymbolicLink())
-      )
-        throw new Error("Output JSON must be a regular file");
-    }
-    if (names.includes("assets")) {
-      const assets = path.join(output, "assets");
-      if (!fs.lstatSync(assets).isDirectory() || fs.lstatSync(assets).isSymbolicLink())
-        throw new Error("Output assets must be a regular directory");
-      for (const name of fs.readdirSync(assets)) {
-        const stat = fs.lstatSync(path.join(assets, name));
-        if (!stat.isFile() || stat.isSymbolicLink())
-          throw new Error("Output assets contain a link or subdirectory");
+    const visit = (directory: string, prefix = "") => {
+      for (const name of fs.readdirSync(directory)) {
+        const key = prefix ? `${prefix}/${name}` : name;
+        const file = path.join(directory, name);
+        const stat = fs.lstatSync(file);
+        if (stat.isSymbolicLink()) throw new Error("Output cannot contain a link");
+        if (stat.isDirectory() && ["assets", "zh-CN", "en-US"].includes(key)) visit(file, key);
+        else if (
+          !stat.isFile() ||
+          !/^(?:\.gitkeep|release\.json|assets\.json|(?:zh-CN|en-US)\/(?:catalog|neighbors|world)\.json|assets\/[a-f0-9]{64}\.webp)$/.test(
+            key,
+          )
+        )
+          throw new Error(`Output contains unrelated file: ${key}`);
       }
-    }
-    const unexpected = names.filter(
-      (s) =>
-        ![
-          "content.json",
-          "neighbors.json",
-          "neighbor-images.json",
-          "islands.json",
-          "islands-images.json",
-          "assets",
-          ".gitkeep",
-        ].includes(s),
-    );
-    if (unexpected.length)
-      throw new Error(`Output contains unrelated files: ${unexpected.join(", ")}`);
+    };
+    visit(output);
   }
 }

@@ -1,4 +1,4 @@
-import type { RecordType, Recipe } from "@loomix/content-schema";
+import type { RecordType, Recipe } from "@loomix/schema/extraction";
 
 export interface WorkOptions {
   work: string;
@@ -44,9 +44,6 @@ export interface ImageManifest extends SelectedImage {
   sha256: string;
   width: number;
   height: number;
-}
-export interface ProcessedImage extends ImageManifest {
-  original: Pick<ImageManifest, "file" | "sha256" | "width" | "height">;
 }
 export interface ConfigFile {
   file: string;

@@ -7,7 +7,7 @@ import {
   isNotFound,
 } from "@tanstack/react-router";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import { catalogFixture } from "../collection-fixture.ts";
+import { catalogFixture, fixtureRequest } from "../collection-fixture.ts";
 import type { DishItem, DishSeries } from "../collection-view.ts";
 import { dishesDetail, loadDishesDetail, parseDishId } from "./detail";
 import { dishesOrigin } from "./detail-navigation";
@@ -96,10 +96,7 @@ describe("dish details", () => {
   });
 
   it("loads validated content and keeps network or schema failures retryable", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(new Response(JSON.stringify(catalogFixture({ dishes: data })))),
-    );
+    vi.stubGlobal("fetch", vi.fn(fixtureRequest(catalogFixture({ dishes: data }))));
     expect(await loadDishesDetail("items", "1")).toMatchObject({ record: first });
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })));
     await expect(loadDishesDetail("items", "1")).rejects.toThrow("503");

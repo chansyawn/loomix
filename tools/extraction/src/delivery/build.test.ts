@@ -10,7 +10,6 @@ const dependencies = vi.hoisted(() => ({
   publish: vi.fn(),
   safeOutput: vi.fn(),
   render: vi.fn(),
-  collection: vi.fn(),
   verify: vi.fn(),
 }));
 vi.mock("../paths.ts", async (original) => ({
@@ -23,7 +22,6 @@ vi.mock("../workflow/identity.ts", () => ({
   implementationRevision: async () => "b".repeat(64),
 }));
 vi.mock("./images.ts", () => ({ renderImages: dependencies.render }));
-vi.mock("./collection.ts", () => ({ renderCollection: dependencies.collection }));
 vi.mock("./verify.ts", () => ({ verifyDelivery: dependencies.verify }));
 vi.mock("./publish.ts", () => ({
   publish: dependencies.publish,
@@ -40,8 +38,10 @@ beforeEach(async () => {
   );
   const bundle = path.join(dependencies.root, "extractions", extractionId);
   fs.mkdirSync(path.join(bundle, "raw"), { recursive: true });
-  for (const file of ["content.json", "neighbors.json", "images-content-v5.json"])
+  for (const file of ["content.json", "neighbors.json", "images-catalog-observations.json"])
     fs.writeFileSync(path.join(bundle, "raw", file), "{}\n");
+  fs.writeFileSync(path.join(bundle, "dataset.json"), "{}\n");
+  fs.writeFileSync(path.join(bundle, "image-jobs.json"), "[]\n");
   const outputs = await inventory(bundle);
   await publishManifest(bundle, {
     schemaVersion: 1,
@@ -60,7 +60,6 @@ beforeEach(async () => {
     fs.mkdirSync(path.join(work, "staging"), { recursive: true });
     fs.writeFileSync(path.join(work, "staging/content.json"), "generated artifact\n");
   });
-  dependencies.collection.mockResolvedValue(undefined);
   dependencies.verify.mockResolvedValue(undefined);
 });
 afterEach(() => fs.rmSync(dependencies.root, { recursive: true, force: true }));
@@ -75,19 +74,17 @@ test("artifact-only delivery seals a verifiable bundle without accessing the web
     "generated artifact\n",
   );
   expect(dependencies.verify).toHaveBeenCalledOnce();
-  expect(dependencies.collection).toHaveBeenCalledOnce();
   expect(dependencies.publish).not.toHaveBeenCalled();
   expect(dependencies.safeOutput).not.toHaveBeenCalled();
   expect(await inventory(path.join(dependencies.root, "website"))).toEqual(before);
 });
 
-test("v5 collection delivery can publish through the website target", async () => {
+test("Dataset delivery can publish through the website target", async () => {
   const id = await deliver(extractionId);
   const directory = path.join(dependencies.root, "deliveries", id);
   const manifest = await readManifest(directory, "delivery");
   expect(manifest.deliveryMode).toBe("website");
   expect(dependencies.render).toHaveBeenCalledOnce();
-  expect(dependencies.collection).toHaveBeenCalledOnce();
   expect(dependencies.verify).toHaveBeenCalledOnce();
   expect(dependencies.safeOutput).toHaveBeenCalledOnce();
   expect(dependencies.publish).toHaveBeenCalledOnce();

@@ -1,10 +1,11 @@
+import { readIslandTable } from "../../source/client/islands.ts";
 import {
   parseIslandDatabase,
   validateIslandCatalog,
   type Island,
   type IslandDatabase,
-} from "@loomix/island-schema";
-import type { Catalog } from "@loomix/content-schema";
+} from "@loomix/schema/extraction/islands";
+import type { Catalog } from "@loomix/schema/extraction";
 import type { Tables } from "../decode/tables.ts";
 import type { TableRow } from "../types.ts";
 import { profile } from "../../profile.ts";
@@ -145,12 +146,9 @@ export function extractIslandBundle({ tables, content, source }: IslandExtractio
       };
     })
     .sort((a, b) => a.id - b.id);
-  const islands = tables
-    .rows(profile.roots.islands)
-    .map((row) => {
+  const islands = readIslandTable(tables)
+    .map(({ row, id: islandId, name: nameZh, sceneId, illustration }) => {
       proof("islands", row, [0, 1, 16, 17, 18, 21, 22, 25, 26, 27], 28);
-      const islandId = tables.id(row);
-      const nameZh = text(row, 1);
       const state = tables.string(row, 18);
       const styleId = id(row, 17);
       if (!islandIconStyles.some((style) => style.id === styleId))
@@ -168,12 +166,12 @@ export function extractIslandBundle({ tables, content, source }: IslandExtractio
       return {
         id: islandId,
         nameZh,
-        sceneId: id(row, 16),
+        sceneId,
         status,
         galaxyId: null,
         regionId: null,
         iconStyleId: styleId,
-        illustrationPath: assetPath(row, 27),
+        illustrationPath: illustration,
         displayCreatureIds: creatures,
         displaySpecialtyIds: specialties,
       };

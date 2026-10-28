@@ -3,157 +3,20 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { S3Client } from "@aws-sdk/client-s3";
 import { afterEach, expect, test, vi } from "vite-plus/test";
-import { emptyCollectionDetail, emptyCropSeedDetail } from "@loomix/content-schema/v5";
-import type { CatalogV5 } from "@loomix/content-schema/v5";
-import { parseNeighborImages } from "@loomix/neighbor-schema";
 import { publishRelease } from "../src/publish.ts";
 import type { UploadProgress } from "../src/publish.ts";
-import { parseReleaseBase, referencedImages, sha256 } from "../src/release.ts";
+import { parseReleaseBase, sha256 } from "../src/release.ts";
 import { createR2Store } from "../src/store.ts";
 import type { ReleaseStore } from "../src/store.ts";
 import { validateContent } from "../src/validate.ts";
-
+import { writeFixture, webp, imageKey } from "./fixture.ts";
 const directories: string[] = [];
-const webp = Buffer.from(
-  "UklGRuYAAABXRUJQVlA4WAoAAAAQAAAA/wAA/wAAQUxQSBIAAAABB1DAiAgAKNL//xTR/9T//gNWUDggrgAAADARAJ0BKgABAAE+bTaZSaQjIqEgKACADYlpbuF2sR7cAAAWlsnIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32rAAP7/XGb//ztbDEFS//+tt383sqAAAAAAAAAAAA==",
-  "base64",
-);
-const imageKey = `assets/${sha256(webp)}.webp`;
-const emptyCatalog = (
-  source = {
-    gameVersion: "0.95.2",
-    dataRevision: 1449213,
-    resourceRevision: 1391927,
-  },
-): CatalogV5 => ({
-  schemaVersion: 5,
-  source,
-  ingredientCategories: [],
-  items: [],
-  cropSeeds: [],
-  details: [],
-});
-const islandData = (source: {
-  gameVersion: string;
-  dataRevision: number;
-  resourceRevision: number;
-  manifestId: string;
-}) => ({ schemaVersion: 1, source, islands: [], islandIconStyles: [], regions: [] });
-const islandImages = (source: {
-  gameVersion: string;
-  dataRevision: number;
-  resourceRevision: number;
-  manifestId: string;
-}) => ({ schemaVersion: 1, source, images: [] });
-
-test("counts separately delivered neighbor images as referenced release assets", () => {
-  const catalog = emptyCatalog();
-  const images = parseNeighborImages({
-    schemaVersion: 1,
-    source: {
-      ...catalog.source,
-      manifestId: "5662883",
-    },
-    images: [],
-    additionalImages: [{ key: "NPCFavour_1015", category: "favour", npcId: 1015, image: imageKey }],
-  });
-  expect(referencedImages(catalog, images)).toEqual([imageKey]);
-});
-
-test("counts crop seed images as referenced release assets", () => {
-  const catalog = emptyCatalog();
-  catalog.items.push({
-    id: 3,
-    name: "crop",
-    image: null,
-    description: null,
-    quality: 0,
-    encyclopediaEntry: null,
-    category: "plants",
-    kind: "item",
-    subcategory: null,
-    attributes: {
-      originGalaxy: null,
-      maturityPeriod: null,
-      harvestCount: null,
-      sources: null,
-    },
-    seedId: 2,
-  });
-  catalog.details.push(emptyCollectionDetail(3));
-  catalog.cropSeeds.push({
-    id: 2,
-    name: "seed",
-    image: imageKey,
-    productIds: [3],
-    detail: emptyCropSeedDetail(2),
-  });
-  expect(referencedImages(catalog)).toEqual([imageKey]);
-});
-
 async function fixture(imageCount = 1): Promise<string> {
   const directory = await mkdtemp(path.join(tmpdir(), "loomix-publisher-"));
   directories.push(directory);
-  const content = emptyCatalog();
-  const neighbors = {
-    schemaVersion: 1,
-    source: {
-      gameVersion: "0.95.2",
-      dataRevision: 1449213,
-      resourceRevision: 1391927,
-      manifestId: "5662883",
-    },
-    neighbors: [],
-    stars: [],
-    stories: [],
-    travelReactions: [],
-    encounterIslands: [],
-    friendshipRules: [],
-    eventTags: [],
-    furnishingThemes: [],
-    rewards: [],
-    assets: [],
-  };
-  await mkdir(path.join(directory, "assets"));
-  for (let i = 0; i < imageCount; i++) {
-    const chunk = Buffer.alloc(8 + i * 2);
-    chunk.write("JUNK");
-    chunk.writeUInt32LE(i * 2, 4);
-    const bytes = i === 0 ? webp : Buffer.concat([webp, chunk]);
-    if (i) bytes.writeUInt32LE(bytes.length - 8, 4);
-    const image = `assets/${sha256(bytes)}.webp`;
-    content.items.push({
-      category: "miscellaneous",
-      kind: "item",
-      subcategory: null,
-      attributes: { sources: null },
-      encyclopediaEntry: null,
-      id: i + 1,
-      name: "Image",
-      description: null,
-      quality: 0,
-      image,
-    });
-    content.details.push(emptyCollectionDetail(i + 1));
-    await writeFile(path.join(directory, image), bytes);
-  }
-  await writeFile(path.join(directory, "content.json"), JSON.stringify(content));
-  await writeFile(path.join(directory, "neighbors.json"), JSON.stringify(neighbors));
-  await writeFile(
-    path.join(directory, "neighbor-images.json"),
-    JSON.stringify({ schemaVersion: 1, source: neighbors.source, images: [] }),
-  );
-  await writeFile(
-    path.join(directory, "islands.json"),
-    JSON.stringify(islandData(neighbors.source)),
-  );
-  await writeFile(
-    path.join(directory, "islands-images.json"),
-    JSON.stringify(islandImages(neighbors.source)),
-  );
+  await writeFixture(directory, imageCount);
   return directory;
 }
-
 afterEach(async () => {
   vi.restoreAllMocks();
   await Promise.all(
@@ -192,25 +55,10 @@ test("publishes a complete, verifiable release and refuses to overwrite it", asy
   const marker = await publishRelease(directory, "0.95.2-r1", store);
   expect(marker).toEqual({
     release: "0.95.2-r1",
-    assetCount: 1,
-    contentSha256: sha256(await readFile(path.join(directory, "content.json"))),
-    neighborsSha256: sha256(await readFile(path.join(directory, "neighbors.json"))),
-    neighborCount: 0,
-    neighborImagesSha256: sha256(await readFile(path.join(directory, "neighbor-images.json"))),
-    islandsSha256: sha256(await readFile(path.join(directory, "islands.json"))),
-    islandsImagesSha256: sha256(await readFile(path.join(directory, "islands-images.json"))),
-    islandCount: 0,
+    manifestSha256: sha256(await readFile(path.join(directory, "release.json"))),
   });
-  expect([...objects.keys()]).toEqual([
-    "releases/0.95.2-r1/_upload.json",
-    `releases/0.95.2-r1/${imageKey}`,
-    "releases/0.95.2-r1/content.json",
-    "releases/0.95.2-r1/neighbors.json",
-    "releases/0.95.2-r1/neighbor-images.json",
-    "releases/0.95.2-r1/islands.json",
-    "releases/0.95.2-r1/islands-images.json",
-    "releases/0.95.2-r1/_complete.json",
-  ]);
+  expect([...objects.keys()].at(-1)).toBe("releases/0.95.2-r1/_complete.json");
+  expect(objects.has("releases/0.95.2-r1/zh-CN/world.json")).toBe(true);
   await expect(publishRelease(directory, "0.95.2-r1", store)).rejects.toThrow(
     "Release already exists",
   );
@@ -291,50 +139,24 @@ test("a failed remote integrity check prevents completion", async () => {
 test("rejects missing, extra, corrupt, and invalidly referenced assets before publication", async () => {
   const directory = await fixture();
   await writeFile(path.join(directory, imageKey), Buffer.from("corrupt"));
-  await expect(validateContent(directory)).rejects.toThrow("SHA-256 mismatch");
+  await expect(validateContent(directory)).rejects.toThrow("SHA-256 or size mismatch");
   await rm(path.join(directory, imageKey));
-  await expect(validateContent(directory)).rejects.toThrow("exactly the images referenced");
+  await expect(validateContent(directory)).rejects.toThrow("exactly the declared");
   await writeFile(path.join(directory, imageKey), webp);
   await writeFile(path.join(directory, "assets/extra.webp"), webp);
-  await expect(validateContent(directory)).rejects.toThrow("exactly the images referenced");
+  await expect(validateContent(directory)).rejects.toThrow("exactly the declared");
   await rm(path.join(directory, "assets/extra.webp"));
-  await writeFile(path.join(directory, "content.json"), "{}");
+  await writeFile(path.join(directory, "zh-CN/catalog.json"), "{}");
   await expect(validateContent(directory)).rejects.toThrow();
 });
 
-test("rejects a neighbor database from a different client revision", async () => {
-  const directory = await fixture();
-  const neighbors = JSON.parse(await readFile(path.join(directory, "neighbors.json"), "utf8"));
-  neighbors.source.dataRevision++;
-  await writeFile(path.join(directory, "neighbors.json"), JSON.stringify(neighbors));
-  await expect(validateContent(directory)).rejects.toThrow("source does not match");
-});
-
-test("rejects a non-WebP or truncated container even when its content hash matches", async () => {
+test("rejects a non-WebP or truncated container even when its hash matches", async () => {
   for (const bytes of [Buffer.from("not a WebP image"), webp.subarray(0, webp.length - 2)]) {
-    const directory = await fixture();
-    const key = `assets/${sha256(bytes)}.webp`;
-    const content = emptyCatalog();
-    content.items.push({
-      category: "miscellaneous",
-      kind: "item",
-      subcategory: null,
-      attributes: { sources: null },
-      encyclopediaEntry: null,
-      id: 1,
-      name: "Invalid",
-      description: null,
-      quality: 0,
-      image: key,
-    });
-    content.details.push(emptyCollectionDetail(1));
-    await rm(path.join(directory, imageKey));
-    await writeFile(path.join(directory, key), bytes);
-    await writeFile(path.join(directory, "content.json"), JSON.stringify(content));
+    const directory = await fixture(0);
+    await writeFixture(directory, 1, [bytes]);
     await expect(validateContent(directory)).rejects.toThrow("Invalid WebP container");
   }
 });
-
 test.each(["../escape", "r1/path", "", ".", ".."])(
   "rejects unsafe release ID %s",
   async (release) => {
@@ -476,84 +298,4 @@ test("failure to verify the completion marker never reports successful publicati
     "Completion verification failed",
   );
   expect(updates.at(-1)?.phase).toBe("finalizing");
-});
-
-test("validates the deduplicated union of collection and neighbor images", async () => {
-  const directory = await fixture();
-  const neighbors = JSON.parse(await readFile(path.join(directory, "neighbors.json"), "utf8"));
-  neighbors.neighbors.push({
-    id: 1,
-    nameZh: "友邻",
-    bodyType: null,
-    scaleValue: null,
-    avatarPath: null,
-    npc2Path: "Avatar/NPC",
-    starKeys: [],
-    storyKeys: ["1:1"],
-    furnishingThemeIds: [],
-    furnishingThemeKeys: [],
-    rewardItemIds: [],
-    assetPaths: [],
-  });
-  neighbors.stories.push({
-    key: "1:1",
-    npcId: 1,
-    chapter: 1,
-    titleZh: "故事",
-    paragraphs: [{ sequence: 1, bodyZh: null, illustrationPath: "UISprite/Story.png" }],
-  });
-  neighbors.assets = ["Avatar/NPC", "UISprite/Story.png"].map((path) => ({
-    path,
-    kind: "other",
-    relatedNeighborIds: [],
-  }));
-  await writeFile(path.join(directory, "neighbors.json"), JSON.stringify(neighbors));
-  const mapping = {
-    schemaVersion: 1,
-    source: neighbors.source,
-    images: [{ path: "UISprite/Story.png", image: imageKey }],
-  };
-  await writeFile(path.join(directory, "neighbor-images.json"), JSON.stringify(mapping));
-  expect((await validateContent(directory)).assets).toHaveLength(1);
-  const chunk = Buffer.from("JUNK\x02\x00\x00\x00ok");
-  const uniqueImage = Buffer.concat([webp, chunk]);
-  uniqueImage.writeUInt32LE(uniqueImage.length - 8, 4);
-  const uniqueKey = `assets/${sha256(uniqueImage)}.webp`;
-  mapping.images[0]!.image = uniqueKey;
-  await writeFile(path.join(directory, "neighbor-images.json"), JSON.stringify(mapping));
-  await expect(validateContent(directory)).rejects.toThrow("exactly the images referenced");
-  await writeFile(path.join(directory, uniqueKey), uniqueImage);
-  expect((await validateContent(directory)).assets).toHaveLength(2);
-  mapping.images = [];
-  await writeFile(path.join(directory, "neighbor-images.json"), JSON.stringify(mapping));
-  await expect(validateContent(directory)).rejects.toThrow("exactly the referenced paths");
-});
-
-test("rejects absent, version-mismatched and invalid image mappings", async () => {
-  const directory = await fixture();
-  const file = path.join(directory, "neighbor-images.json");
-  const mapping = JSON.parse(await readFile(file, "utf8"));
-  mapping.source.manifestId = "999";
-  await writeFile(file, JSON.stringify(mapping));
-  await expect(validateContent(directory)).rejects.toThrow("source does not match");
-  await writeFile(file, "{}");
-  await expect(validateContent(directory)).rejects.toThrow();
-  await rm(file);
-  await expect(validateContent(directory)).rejects.toThrow("neighbor-images.json");
-});
-
-test("rejects a hash-valid RIFF WebP whose image payload cannot fully decode", async () => {
-  const directory = await fixture();
-  const invalid = Buffer.alloc(30);
-  invalid.write("RIFF");
-  invalid.writeUInt32LE(22, 4);
-  invalid.write("WEBPVP8 ", 8);
-  invalid.writeUInt32LE(10, 16);
-  const key = `assets/${sha256(invalid)}.webp`;
-  const content = JSON.parse(await readFile(path.join(directory, "content.json"), "utf8"));
-  content.items[0].image = key;
-  await writeFile(path.join(directory, "content.json"), JSON.stringify(content));
-  await rm(path.join(directory, imageKey));
-  await writeFile(path.join(directory, key), invalid);
-  await expect(validateContent(directory)).rejects.toThrow("Invalid complete WebP");
 });

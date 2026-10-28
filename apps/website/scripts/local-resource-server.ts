@@ -22,9 +22,9 @@ async function serveResource(
   }
   const key = pathname.slice("/resources/".length);
   if (
-    key !== "content.json" &&
-    key !== "neighbors.json" &&
-    key !== "neighbor-images.json" &&
+    key !== "release.json" &&
+    key !== "assets.json" &&
+    !/^(?:zh-CN|en-US)\/(?:catalog|neighbors|world)\.json$/.test(key) &&
     !/^assets\/[a-f0-9]{64}\.webp$/.test(key)
   ) {
     response.writeHead(404).end();

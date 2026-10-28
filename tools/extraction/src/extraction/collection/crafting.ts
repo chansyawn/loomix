@@ -1,5 +1,5 @@
-import type { Catalog } from "@loomix/content-schema";
-import type { CraftingRecipe } from "@loomix/content-schema/v4";
+import type { Catalog } from "@loomix/schema/extraction";
+import type { CraftingRecipe } from "@loomix/schema/extraction";
 import type { Tables } from "../decode/tables.ts";
 import { profile } from "../../profile.ts";
 import { tableSource } from "./evidence.ts";

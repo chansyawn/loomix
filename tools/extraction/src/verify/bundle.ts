@@ -1,12 +1,11 @@
 import type {
   ImageManifest,
-  ProcessedImage,
   SelectedImage,
   SourceAudit,
   EvidenceRecord,
 } from "../extraction/types.ts";
-import type { Catalog } from "@loomix/content-schema";
-import { recordTypes, recordType, recordFields, recordField } from "@loomix/content-schema";
+import type { Catalog } from "@loomix/schema/extraction";
+import { recordTypes, recordType, recordFields, recordField } from "@loomix/schema/extraction";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
@@ -21,7 +20,6 @@ import { readJson, writeJson } from "../workflow/json.ts";
 import { validateModel } from "../extraction/content/model.ts";
 import { verifyAdmissions } from "./admissions.ts";
 import { highestResolutionImages } from "../extraction/images/select.ts";
-import { decodeWebp, imageDimensions } from "../delivery/image.ts";
 import { verifyNeighbors } from "../extraction/neighbors/verify.ts";
 import { verifyNeighborImages } from "./neighbor-images.ts";
 import { neighborInput } from "../extraction/neighbors/build.ts";
@@ -33,14 +31,13 @@ export interface BundleVerification {
   bundle: string;
   staging: string;
   contentFile: string;
-  raw: boolean;
   parse: (input: unknown) => Catalog;
   writeReports: boolean;
   extraImages?: string[];
 }
 
 export async function verifyBundle(request: BundleVerification): Promise<void> {
-  const { reportRoot, bundle, staging, contentFile, raw, parse, writeReports } = request;
+  const { reportRoot, bundle, staging, contentFile, parse, writeReports } = request;
   const input = readJson(contentFile);
   const content = parse(input),
     tables = new Tables(path.join(bundle, "prepared"));
@@ -51,13 +48,7 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
     readJson(path.join(staging, "neighbors.json")),
     neighborInput(bundle),
   );
-  const islands = verifyIslandBundle(bundle, staging, raw);
-  if (!raw)
-    assert.deepEqual(
-      fs.readFileSync(path.join(staging, "neighbors.json")),
-      fs.readFileSync(path.join(bundle, "raw/neighbors.json")),
-      "Delivered neighbor bytes must match extraction",
-    );
+  const islands = verifyIslandBundle(bundle, staging);
   const cookingAudit = readJson<{
     counts: Record<string, number>;
     categories: {
@@ -200,9 +191,7 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
       `Recipe output ${recipe.productId}`,
     );
   }
-  const manifest = readJson<(ProcessedImage | ImageManifest)[]>(
-    path.join(reportRoot, "image-manifest.json"),
-  );
+  const manifest = readJson<ImageManifest[]>(path.join(reportRoot, "image-manifest.json"));
   const selected = readJson<SelectedImage[]>(path.join(bundle, "selected-images.json"));
   assert.deepEqual(
     selected,
@@ -234,12 +223,6 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
         entry.container === a.container,
     );
     assert.ok(native, "Original image association");
-    if (!raw && "original" in exported)
-      assert.deepEqual(
-        exported.original,
-        { file: native.file, sha256: native.sha256, width: native.width, height: native.height },
-        "Original image evidence",
-      );
   }
   for (const native of nativeImages) {
     const nativeFile = path.isAbsolute(native.file) ? native.file : path.join(bundle, native.file);
@@ -269,36 +252,11 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
   assert.equal(manifest.length, selected.length, "Exact selected/processed resource set");
   const used = new Set(all.map((r) => r.image).filter((image): image is string => Boolean(image)));
   for (const image of request.extraImages ?? []) used.add(image);
-  const neighborImages = await verifyNeighborImages(neighbors, bundle, staging, reportRoot, raw);
-  for (const image of neighborImages) used.add(image);
-  if (islands) {
-    const islandImages = await verifyIslandImages(islands, bundle, staging, raw);
-    for (const image of islandImages) used.add(image);
-  }
-  if (!raw)
-    assert.deepEqual(
-      new Set(fs.readdirSync(path.join(staging, "assets")).map((s) => `assets/${s}`)),
-      used,
-      "No missing/unreferenced assets",
-    );
-  for (const image of used) {
-    const bytes = fs.readFileSync(within(raw ? bundle : staging, image)),
-      decoded = raw ? PNG.sync.read(bytes, { checkCRC: true }) : await decodeWebp(bytes);
-    if (raw) continue;
-    const sha256 = crypto.createHash("sha256").update(bytes).digest("hex");
-    assert.equal(image, `assets/${sha256}.webp`, "Image content hash");
-    for (const entry of manifest.filter((a) => a.file === image)) {
-      const target = imageDimensions(entry.group);
-      assert.equal(decoded.width, target.width, "Target image width");
-      assert.equal(decoded.height, target.height, "Target image height");
-      assert.equal(decoded.width, entry.width, "Manifest image width");
-      assert.equal(decoded.height, entry.height, "Manifest image height");
-      assert.equal(sha256, entry.sha256, "Manifest image hash");
-    }
-  }
-  const proofs = readJson<EvidenceRecord[]>(
-    path.join(reportRoot, raw ? "evidence/field-evidence.json" : "field-evidence.json"),
-  );
+  await verifyNeighborImages(neighbors, bundle);
+  await verifyIslandImages(islands, bundle);
+  for (const image of used)
+    PNG.sync.read(fs.readFileSync(within(bundle, image)), { checkCRC: true });
+  const proofs = readJson<EvidenceRecord[]>(path.join(reportRoot, "evidence/field-evidence.json"));
   const missing = readJson<EvidenceRecord[]>(path.join(bundle, "evidence/missing-fields.json"));
   const recordGroups = new Map(content.items.map((record) => [record.id, recordType(record)]));
   const evidenceKeys = new Set<string>();
@@ -388,5 +346,5 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
       checkedPackages: sources.checkedPackages,
       contentSha256: crypto.createHash("sha256").update(fs.readFileSync(contentFile)).digest("hex"),
     });
-  console.log(`Validated ${all.length} records, ${used.size} complete ${raw ? "PNGs" : "WebPs"}`);
+  console.log(`Validated ${all.length} records, ${used.size} complete PNGs`);
 }

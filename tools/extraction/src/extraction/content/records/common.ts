@@ -1,4 +1,4 @@
-import type { RecordType } from "@loomix/content-schema";
+import type { RecordType } from "@loomix/schema/extraction";
 import type { IconMatch, Row, TableEvidence } from "../../types.ts";
 import { plainText } from "../model.ts";
 import { profile } from "../../../profile.ts";

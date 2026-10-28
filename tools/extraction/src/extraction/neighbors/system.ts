@@ -1,15 +1,9 @@
+import { readIslandTable } from "../../source/client/islands.ts";
 import crypto from "node:crypto";
 import { profile } from "../../profile.ts";
 import type { Tables } from "../decode/tables.ts";
 import { evidence } from "./adapters.ts";
-import {
-  assertLayout,
-  localized,
-  normalizedPath,
-  optionalString,
-  requiredId,
-  requiredText,
-} from "./fields.ts";
+import { assertLayout, localized, normalizedPath, optionalString, requiredText } from "./fields.ts";
 import type {
   NeighborEncounterIsland,
   NeighborEventTag,
@@ -25,25 +19,17 @@ export function readIslands(
   records: NeighborEvidence[],
 ): NeighborEncounterIsland[] {
   const islands: NeighborEncounterIsland[] = [];
-  for (const row of tables.rows(profile.roots.neighborIslands)) {
-    assertLayout(
-      tables,
-      row,
-      { id: [0, "uint"], name: [1, "text"], scene: [16, "uint"], illustration: [27, "string"] },
-      28,
-    );
-    const name = localized(tables, row, 1);
-    if (!name?.includes("邂逅")) continue;
-    const id = requiredId(tables, row, 0);
+  for (const { row, id, name, sceneId, illustration } of readIslandTable(tables)) {
+    if (!name.includes("邂逅")) continue;
     islands.push({
       id,
-      sceneId: requiredId(tables, row, 16),
+      sceneId,
       nameZh: name,
       galaxyNameZh: null,
       neighborIds: [],
       resourcePaths: [],
       unlockCondition: null,
-      illustrationPath: normalizedPath(tables.string(row, 27)),
+      illustrationPath: illustration,
     });
     records.push(evidence("encounterIslands", String(id), row, [0, 1, 16, 27]));
   }

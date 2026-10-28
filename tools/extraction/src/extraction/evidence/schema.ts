@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { recordTypes } from "@loomix/content-schema";
-import { RecipeSchema } from "@loomix/content-schema";
+import { recordTypes } from "@loomix/schema/extraction";
+import { RecipeSchema } from "@loomix/schema/extraction";
 
 const tableEvidence = z
   .object({

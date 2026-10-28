@@ -1,3 +1,4 @@
+import { assembleDataset } from "../domains/build.ts";
 import fs from "node:fs";
 import path from "node:path";
 import { identityDirectory } from "../paths.ts";
@@ -127,7 +128,7 @@ export async function extract(environmentId: string): Promise<string> {
           dependencies: ["raw-assets"],
           run: async () => buildCollection(work),
           outputs: () => [
-            "raw/content-v5.json",
+            "raw/catalog-observations.json",
             "collection-evidence.json",
             "seed-image-candidates.json",
             "stage-image-candidates.json",
@@ -147,7 +148,7 @@ export async function extract(environmentId: string): Promise<string> {
             "seed-image-manifest.json",
             "stage-image-originals.json",
             "stage-image-manifest.json",
-            "raw/images-content-v5.json",
+            "raw/images-catalog-observations.json",
           ],
         },
         {
@@ -182,9 +183,12 @@ export async function extract(environmentId: string): Promise<string> {
           dependencies: ["source-audit", "neighbors", "islands", "island-images"],
           run: async () => {
             finalizeEvidence(work);
+            assembleDataset(work);
             await verifyExtraction(work);
           },
           outputs: () => [
+            "dataset.json",
+            "image-jobs.json",
             ...tree("evidence"),
             "coverage.json",
             "collection-coverage.json",

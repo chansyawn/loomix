@@ -11,13 +11,28 @@ function fixture() {
     work = path.join(root, "work");
   fs.mkdirSync(path.join(output, "assets"), { recursive: true });
   fs.writeFileSync(path.join(output, ".gitkeep"), "");
-  fs.writeFileSync(path.join(output, "content.json"), "old");
-  fs.writeFileSync(path.join(output, "neighbors.json"), "old neighbors");
-  fs.writeFileSync(path.join(output, "assets", "old.png"), "old image");
+  fs.writeFileSync(path.join(output, "release.json"), "old");
+  fs.writeFileSync(path.join(output, "assets.json"), "old neighbors");
+  fs.writeFileSync(
+    path.join(
+      output,
+      "assets",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.webp",
+    ),
+    "old image",
+  );
   fs.mkdirSync(path.join(work, "staging", "assets"), { recursive: true });
-  fs.writeFileSync(path.join(work, "staging", "content.json"), "new");
-  fs.writeFileSync(path.join(work, "staging", "neighbors.json"), "new neighbors");
-  fs.writeFileSync(path.join(work, "staging", "assets", "new.webp"), "new image");
+  fs.writeFileSync(path.join(work, "staging", "release.json"), "new");
+  fs.writeFileSync(path.join(work, "staging", "assets.json"), "new neighbors");
+  fs.writeFileSync(
+    path.join(
+      work,
+      "staging",
+      "assets",
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.webp",
+    ),
+    "new image",
+  );
   fs.writeFileSync(path.join(work, "validation.json"), '{"passed":true}');
   return { root, output, work };
 }
@@ -28,21 +43,23 @@ test("publication replaces validated deliverables and preserves the placeholder"
     let verified = false;
     await publish(options, async (request) => {
       assert.equal(request.work, options.work);
-      assert.equal(fs.readFileSync(path.join(options.output, "content.json"), "utf8"), "old");
+      assert.equal(fs.readFileSync(path.join(options.output, "release.json"), "utf8"), "old");
       verified = true;
     });
     assert.equal(verified, true);
-    assert.equal(fs.readFileSync(path.join(options.output, "content.json"), "utf8"), "new");
+    assert.equal(fs.readFileSync(path.join(options.output, "release.json"), "utf8"), "new");
     assert.equal(
-      fs.readFileSync(path.join(options.output, "neighbors.json"), "utf8"),
+      fs.readFileSync(path.join(options.output, "assets.json"), "utf8"),
       "new neighbors",
     );
-    assert.deepEqual(fs.readdirSync(path.join(options.output, "assets")), ["new.webp"]);
+    assert.deepEqual(fs.readdirSync(path.join(options.output, "assets")), [
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.webp",
+    ]);
     assert.deepEqual(fs.readdirSync(options.output).sort(), [
       ".gitkeep",
       "assets",
-      "content.json",
-      "neighbors.json",
+      "assets.json",
+      "release.json",
     ]);
   } finally {
     fs.rmSync(options.root, { recursive: true });
@@ -58,12 +75,14 @@ test("failed revalidation preserves both previous JSON and assets", async () => 
       }),
       /Changed client/,
     );
-    assert.equal(fs.readFileSync(path.join(options.output, "content.json"), "utf8"), "old");
+    assert.equal(fs.readFileSync(path.join(options.output, "release.json"), "utf8"), "old");
     assert.equal(
-      fs.readFileSync(path.join(options.output, "neighbors.json"), "utf8"),
+      fs.readFileSync(path.join(options.output, "assets.json"), "utf8"),
       "old neighbors",
     );
-    assert.deepEqual(fs.readdirSync(path.join(options.output, "assets")), ["old.png"]);
+    assert.deepEqual(fs.readdirSync(path.join(options.output, "assets")), [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.webp",
+    ]);
   } finally {
     fs.rmSync(options.root, { recursive: true });
   }
@@ -99,12 +118,14 @@ test("rename failure restores the complete previous delivery", async () => {
       ),
       /injected/,
     );
-    assert.equal(fs.readFileSync(path.join(options.output, "content.json"), "utf8"), "old");
+    assert.equal(fs.readFileSync(path.join(options.output, "release.json"), "utf8"), "old");
     assert.equal(
-      fs.readFileSync(path.join(options.output, "neighbors.json"), "utf8"),
+      fs.readFileSync(path.join(options.output, "assets.json"), "utf8"),
       "old neighbors",
     );
-    assert.deepEqual(fs.readdirSync(path.join(options.output, "assets")), ["old.png"]);
+    assert.deepEqual(fs.readdirSync(path.join(options.output, "assets")), [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.webp",
+    ]);
     assert.ok(fs.readdirSync(options.root).every((name) => !name.startsWith(".delivery-")));
   } finally {
     fs.rmSync(options.root, { recursive: true });
@@ -114,14 +135,14 @@ test("rename failure restores the complete previous delivery", async () => {
 test("neighbor JSON rejects directories and links, including dangling links", () => {
   const options = fixture();
   try {
-    const file = path.join(options.output, "neighbors.json");
+    const file = path.join(options.output, "assets.json");
     fs.unlinkSync(file);
     fs.mkdirSync(file);
-    assert.throws(() => safeOutput(options.output), /regular file/);
+    assert.throws(() => safeOutput(options.output), /unrelated file|link/);
     fs.rmdirSync(file);
-    for (const target of ["content.json", "missing.json"]) {
+    for (const target of ["release.json", "missing.json"]) {
       fs.symlinkSync(target, file);
-      assert.throws(() => safeOutput(options.output), /regular file/);
+      assert.throws(() => safeOutput(options.output), /unrelated file|link/);
       fs.unlinkSync(file);
     }
   } finally {
@@ -139,11 +160,13 @@ test("unrelated staged JSON and directories never replace the previous neighbor 
     fs.mkdirSync(path.join(options.work, "staging", "evidence"));
     await assert.rejects(publish(options), /unrelated/);
     assert.equal(
-      fs.readFileSync(path.join(options.output, "neighbors.json"), "utf8"),
+      fs.readFileSync(path.join(options.output, "assets.json"), "utf8"),
       "old neighbors",
     );
-    assert.equal(fs.readFileSync(path.join(options.output, "content.json"), "utf8"), "old");
-    assert.deepEqual(fs.readdirSync(path.join(options.output, "assets")), ["old.png"]);
+    assert.equal(fs.readFileSync(path.join(options.output, "release.json"), "utf8"), "old");
+    assert.deepEqual(fs.readdirSync(path.join(options.output, "assets")), [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.webp",
+    ]);
   } finally {
     fs.rmSync(options.root, { recursive: true });
   }

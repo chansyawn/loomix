@@ -7,7 +7,7 @@ import {
   isNotFound,
 } from "@tanstack/react-router";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import { catalogFixture } from "../collection-fixture.ts";
+import { catalogFixture, fixtureRequest } from "../collection-fixture.ts";
 import type { MiscellaneousItem } from "../collection-view.ts";
 import { findMiscellanyDetail, loadMiscellanyDetail, parseMiscellanyId } from "./detail";
 import { miscellanyOrigin } from "./detail-navigation";
@@ -50,9 +50,7 @@ describe("miscellany details", () => {
   it("keeps resource and schema failures retryable", async () => {
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValue(new Response(JSON.stringify(catalogFixture({ miscellaneous: data })))),
+      vi.fn().mockImplementation(fixtureRequest(catalogFixture({ miscellaneous: data }))),
     );
     expect(await loadMiscellanyDetail("30031")).toEqual(item);
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })));

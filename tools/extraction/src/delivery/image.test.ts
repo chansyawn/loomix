@@ -3,13 +3,13 @@ import { test } from "vite-plus/test";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import crypto from "node:crypto";
 import sharp from "sharp";
-import { emptyCatalog } from "@loomix/content-schema";
+import { emptyDataset } from "@loomix/schema/dataset";
+import { createAssetRegistry } from "../domains/assets.ts";
+import type { ImageJob } from "../domains/assets.ts";
+import { digest } from "../workflow/hashing.ts";
 import { processImage, processNeighborImage, decodeWebp } from "./image.ts";
-import { exportImages } from "../extraction/images/export.ts";
 import { renderImages } from "./images.ts";
-import type { ProcessedImage, SelectedImage } from "../extraction/types.ts";
 
 for (const size of [256, 512]) {
   test(`converts ${size}px icons to 256px WebP and preserves alpha`, async () => {
@@ -79,139 +79,70 @@ test("corrupt inputs and truncated WebP fail decoding", async () => {
 test("asset delivery deduplicates identical outputs and separates target dimensions", async () => {
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-webp-"));
   try {
-    const content = emptyCatalog({
-      gameVersion: "0.95.2",
-      dataRevision: 1449213,
-      resourceRevision: 1391927,
-    });
-    const base = { name: "fixture", description: null, quality: 0 as const, image: null };
-    content.items.push(
-      {
-        category: "miscellaneous",
-        kind: "item",
-        subcategory: null,
-        attributes: {},
-        encyclopediaEntry: null,
-        ...base,
-        id: 1,
-      },
-      {
-        ...base,
-        id: 2,
-        category: "miscellaneous",
-        kind: "item",
-        subcategory: null,
-        attributes: {},
-        encyclopediaEntry: null,
-      },
+    const dataset = emptyDataset(
+      { formatVersion: 1, snapshotId: "a".repeat(64), locale: "zh-CN" },
+      { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" },
     );
-    content.items.push({
-      category: "furniture",
-      kind: "set",
-      encyclopediaEntry: { listed: true },
-      ...base,
-      id: 3,
-      memberIds: null,
-    });
-    const candidate: SelectedImage = {
-      id: 1,
-      group: "miscellaneous.item",
-      source: "fixture.blk",
-      assetType: "Texture2D",
-      pathId: "1",
-      resourceName: "fixture",
-      container: "fixture.png",
-      reference: "fixture",
-    };
-    const candidates = [
-      candidate,
-      { ...candidate, id: 2 },
-      { ...candidate, id: 3, group: "furniture.set" },
-    ];
-    fs.mkdirSync(path.join(work, "raw"));
-    fs.writeFileSync(path.join(work, "raw/content.json"), JSON.stringify(content));
-    fs.writeFileSync(
-      path.join(work, "raw/neighbors.json"),
-      JSON.stringify(
-        {
-          schemaVersion: 1,
-          source: { ...content.source, manifestId: "1" },
-          neighbors: [],
-          stars: [],
-          stories: [],
-          travelReactions: [],
-          encounterIslands: [],
-          friendshipRules: [],
-          eventTags: [],
-          furnishingThemes: [],
-          rewards: [],
-          assets: [],
-        },
-        null,
-        2,
-      ) + "\n",
-    );
-    fs.writeFileSync(path.join(work, "candidate-images.json"), JSON.stringify(candidates));
-    fs.writeFileSync(path.join(work, "field-evidence.json"), "[]");
     const png = await sharp({ create: { width: 512, height: 512, channels: 4, background: "red" } })
       .png()
       .toBuffer();
-    await exportImages({ work }, async (request) => {
-      fs.mkdirSync(path.join(request.output, "Texture2D"), { recursive: true });
-      fs.writeFileSync(path.join(request.output, "Texture2D/fixture.png"), png);
+    fs.writeFileSync(path.join(work, "original.png"), png);
+    const registry = createAssetRegistry();
+    const original = {
+      file: "original.png",
+      sha256: digest(png),
+      width: 512,
+      height: 512,
+      source: "source.blk",
+      container: "fixture",
+      assetType: "Sprite",
+      pathId: "1",
+    };
+    const first = registry.register(original, "miscellaneous.item");
+    const second = registry.register({ ...original, pathId: "2" }, "miscellaneous.item");
+    const banner = registry.register(original, "furniture.set");
+    const base = { name: "fixture", quality: null, description: null };
+    dataset.catalog.items.push(
+      { ...base, id: 1, type: "reference", image: first },
+      { ...base, id: 2, type: "reference", image: second },
+    );
+    dataset.catalog.groups.push({
+      ...base,
+      id: 3,
+      type: "furniture.set",
+      image: banner,
+      memberIds: null,
     });
-    fs.mkdirSync(path.join(work, "evidence"));
-    fs.copyFileSync(
-      path.join(work, "image-field-evidence.json"),
-      path.join(work, "evidence/field-evidence.json"),
+    fs.writeFileSync(path.join(work, "dataset.json"), JSON.stringify(dataset));
+    fs.writeFileSync(
+      path.join(work, "image-jobs.json"),
+      JSON.stringify([...registry.jobs.values()]),
     );
-    fs.writeFileSync(path.join(work, "neighbor-image-exports.json"), "[]");
-    fs.writeFileSync(path.join(work, "neighbor-additional-image-exports.json"), "[]");
     await renderImages({ work }, work);
-    assert.deepEqual(
-      fs.readFileSync(path.join(work, "staging/neighbors.json")),
-      fs.readFileSync(path.join(work, "raw/neighbors.json")),
-    );
-    const manifest: ProcessedImage[] = JSON.parse(
+    const manifest: (ImageJob & { delivered: { file: string; width: number } })[] = JSON.parse(
       fs.readFileSync(path.join(work, "image-manifest.json"), "utf8"),
     );
     assert.equal(manifest.length, 3);
-    assert.equal(manifest[0].file, manifest[1].file);
-    assert.notEqual(manifest[0].file, manifest[2].file);
-    assert.equal(manifest[0].original.width, 512);
-    assert.equal(manifest[2].width, 1024);
+    assert.equal(manifest[0].delivered.file, manifest[1].delivered.file);
+    assert.notEqual(manifest[0].delivered.file, manifest[2].delivered.file);
+    assert.equal(manifest[2].delivered.width, 1024);
     assert.equal(fs.readdirSync(path.join(work, "staging/assets")).length, 2);
-    for (const row of manifest) {
-      const bytes = fs.readFileSync(path.join(work, "staging", row.file));
-      assert.equal(
-        row.file,
-        `assets/${crypto.createHash("sha256").update(bytes).digest("hex")}.webp`,
-      );
-    }
+    assert.deepEqual(
+      JSON.parse(fs.readFileSync(path.join(work, "staging/zh-CN/catalog.json"), "utf8")),
+      dataset.catalog,
+    );
   } finally {
     fs.rmSync(work, { recursive: true, force: true });
   }
 });
 
-test("delivery rejects invalid neighbor JSON before converting images", async () => {
-  const work = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-neighbor-delivery-"));
+test("delivery rejects invalid domain data before converting images", async () => {
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-invalid-dataset-"));
   try {
-    fs.mkdirSync(path.join(work, "raw"));
-    fs.writeFileSync(path.join(work, "selected-images.json"), "[]");
-    fs.writeFileSync(path.join(work, "image-candidates.json"), "[]");
-    fs.writeFileSync(
-      path.join(work, "raw/content.json"),
-      JSON.stringify(
-        emptyCatalog({ gameVersion: "fixture", dataRevision: 1, resourceRevision: 1 }),
-      ),
-    );
-    fs.writeFileSync(
-      path.join(work, "raw/neighbors.json"),
-      JSON.stringify({ schemaVersion: 1, root: 41 }),
-    );
+    fs.writeFileSync(path.join(work, "dataset.json"), "{}");
     await assert.rejects(renderImages({ work }, work), { name: "ZodError" });
   } finally {
-    fs.rmSync(work, { recursive: true });
+    fs.rmSync(work, { recursive: true, force: true });
   }
 });
 

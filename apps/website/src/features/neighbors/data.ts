@@ -1,11 +1,8 @@
-import {
-  parseNeighborDatabase,
-  parseNeighborImages,
-  validateNeighborImages,
-  type NeighborDatabase,
-  type NeighborImages,
-} from "@loomix/neighbor-schema";
-import { resourceUrl } from "@/infrastructure/resources";
+import { parseNeighbors } from "@loomix/schema/neighbors";
+import type { Neighbors } from "@loomix/schema/neighbors";
+import { parseAssets, createImageResolver } from "@loomix/schema/assets";
+import type { Assets } from "@loomix/schema/assets";
+import { createResourceReader } from "@/infrastructure/resources";
 
 const bodyTypes = { small: "小型", medium: "中型", big: "大型" };
 export const travelEvents: Record<string, string> = {
@@ -20,39 +17,39 @@ export const travelEvents: Record<string, string> = {
   Npc_Get_Items_Num_In_Travel: "友邻在旅行中获得物品",
 };
 
-export function toNeighborsView(database: NeighborDatabase, mapping: NeighborImages) {
-  validateNeighborImages(database, mapping);
-  const images = new Map(mapping.images.map((entry) => [entry.path, entry.image]));
-  const image = (reference: string | null) => (reference ? (images.get(reference) ?? null) : null);
+export function toNeighborsView(database: Neighbors, assets: Assets) {
+  if (database.snapshotId !== assets.snapshotId || database.locale !== assets.locale)
+    throw new Error("Neighbor assets context mismatch");
+  const image = createImageResolver(assets);
   const neighbors = database.neighbors.map((neighbor) => {
     const stars = database.stars
-      .filter((star) => star.npcId === neighbor.id)
+      .filter((star) => star.neighborId === neighbor.id)
       .map((star) => ({
         key: star.key,
-        name: star.nameZh,
-        galaxy: star.galaxyNameZh,
-        image: image(star.illustrationPath),
+        name: star.name,
+        galaxy: star.galaxyName,
+        image: image(star.image),
       }));
     const themes = database.furnishingThemes
-      .filter((theme) => neighbor.furnishingThemeKeys.includes(theme.key))
+      .filter((theme) => theme.neighborIds.includes(neighbor.id))
       .map((theme) => ({
         key: theme.key,
-        name: theme.nameZh,
-        description: theme.descriptionZh,
-        image: image(theme.coverPath),
+        name: theme.name,
+        description: theme.description,
+        image: image(theme.cover),
       }));
     const stories = database.stories
-      .filter((story) => story.npcId === neighbor.id)
+      .filter((story) => story.neighborId === neighbor.id)
       .sort((a, b) => a.chapter - b.chapter)
       .map((story) => ({
         key: story.key,
         chapter: story.chapter,
-        title: story.titleZh,
+        title: story.title,
         paragraphs: story.paragraphs.map((paragraph) => ({
           sequence: paragraph.sequence,
-          text: paragraph.bodyZh,
-          image: image(paragraph.illustrationPath),
-          hasIllustration: paragraph.illustrationPath !== null,
+          text: paragraph.text,
+          image: image(paragraph.image),
+          hasIllustration: paragraph.image !== null,
         })),
       }));
     const groups = new Map<
@@ -64,7 +61,7 @@ export function toNeighborsView(database: NeighborDatabase, mapping: NeighborIma
       }
     >();
     for (const reaction of database.travelReactions) {
-      if (reaction.npcId !== neighbor.id || !reaction.textZh?.trim()) continue;
+      if (reaction.neighborId !== neighbor.id || !reaction.text?.trim()) continue;
       const key = reaction.conditionType ?? "unknown";
       const group = groups.get(key) ?? {
         key,
@@ -80,14 +77,14 @@ export function toNeighborsView(database: NeighborDatabase, mapping: NeighborIma
         .join(" · ");
       group.reactions.push({
         key: reaction.key,
-        text: reaction.textZh,
+        text: reaction.text,
         parameters: parameters || null,
       });
       groups.set(key, group);
     }
     return {
       id: neighbor.id,
-      name: neighbor.nameZh,
+      name: neighbor.name,
       bodyType: neighbor.bodyType ? bodyTypes[neighbor.bodyType] : null,
       stars,
       image: stars[0]?.image ?? null,
@@ -112,12 +109,10 @@ export type NeighborsData = ReturnType<typeof toNeighborsView>;
 export type NeighborDetail = NeighborsData["neighbors"][number];
 
 export async function loadNeighbors(request: typeof fetch = fetch): Promise<NeighborsData> {
-  const [databaseResponse, imagesResponse] = await Promise.all([
-    request(resourceUrl("neighbors.json")),
-    request(resourceUrl("neighbor-images.json")),
+  const load = createResourceReader(request);
+  const [database, assets] = await Promise.all([
+    load("neighbors", parseNeighbors),
+    load("assets", parseAssets),
   ]);
-  if (!databaseResponse.ok || !imagesResponse.ok)
-    throw new Error("Unable to load neighbor resources");
-  const [database, images] = await Promise.all([databaseResponse.json(), imagesResponse.json()]);
-  return toNeighborsView(parseNeighborDatabase(database), parseNeighborImages(images));
+  return toNeighborsView(database, assets);
 }

@@ -1,5 +1,5 @@
-import { TastesSchema } from "@loomix/content-schema/v4";
-import type { Research } from "@loomix/content-schema/v4";
+import { TastesSchema } from "@loomix/schema/extraction";
+import type { Research } from "@loomix/schema/extraction";
 import type { ContentContext } from "../content/context.ts";
 import { plainText } from "../content/model.ts";
 import type { CollectionEvidenceBuilder } from "./evidence.ts";

@@ -25,18 +25,10 @@ export async function implementationRevision(): Promise<string> {
   const contracts = await inventory(repoRoot, [
     "pnpm-lock.yaml",
     "tools/extraction/package.json",
-    "packages/content-schema/package.json",
-    "packages/neighbor-schema/package.json",
-    "packages/island-schema/package.json",
-    ...filesWithin(path.join(repoRoot, "packages/island-schema/src"))
+    "packages/schema/package.json",
+    ...filesWithin(path.join(repoRoot, "packages/schema/src"))
       .filter((file) => !file.endsWith(".test.ts"))
-      .map((file) => `packages/island-schema/src/${file}`),
-    ...filesWithin(path.join(repoRoot, "packages/neighbor-schema/src"))
-      .filter((file) => !file.startsWith("node_modules/") && !file.endsWith(".test.ts"))
-      .map((file) => `packages/neighbor-schema/src/${file}`),
-    ...filesWithin(path.join(repoRoot, "packages/content-schema/src"))
-      .filter((file) => !file.startsWith("node_modules/") && !file.endsWith(".test.ts"))
-      .map((file) => `packages/content-schema/src/${file}`),
+      .map((file) => `packages/schema/src/${file}`),
   ]);
   return digest({
     sources,

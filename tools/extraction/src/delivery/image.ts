@@ -1,4 +1,4 @@
-import type { RecordType } from "@loomix/content-schema";
+import type { RecordType } from "@loomix/schema/extraction";
 import sharp from "sharp";
 
 export function imageDimensions(group: RecordType) {
