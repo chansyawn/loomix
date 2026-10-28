@@ -40,7 +40,7 @@ beforeEach(async () => {
   );
   const bundle = path.join(dependencies.root, "extractions", extractionId);
   fs.mkdirSync(path.join(bundle, "raw"), { recursive: true });
-  for (const file of ["content.json", "neighbors.json", "images-content-v4.json"])
+  for (const file of ["content.json", "neighbors.json", "images-content-v5.json"])
     fs.writeFileSync(path.join(bundle, "raw", file), "{}\n");
   const outputs = await inventory(bundle);
   await publishManifest(bundle, {
@@ -81,7 +81,7 @@ test("artifact-only delivery seals a verifiable bundle without accessing the web
   expect(await inventory(path.join(dependencies.root, "website"))).toEqual(before);
 });
 
-test("v4 delivery can publish through the website target", async () => {
+test("v5 collection delivery can publish through the website target", async () => {
   const id = await deliver(extractionId);
   const directory = path.join(dependencies.root, "deliveries", id);
   const manifest = await readManifest(directory, "delivery");

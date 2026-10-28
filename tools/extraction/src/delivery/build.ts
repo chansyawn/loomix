@@ -19,7 +19,7 @@ export async function deliver(
   const extraction = await readManifest(bundle, "extraction");
   if (extraction.profileHash !== profileHash)
     throw new Error("Extraction profile differs from the current profile; extract again");
-  const collectionV4 = fs.existsSync(path.join(bundle, "raw/images-content-v4.json"));
+  const collectionV4 = fs.existsSync(path.join(bundle, "raw/images-content-v5.json"));
   const target = artifactOnly ? "artifact-only" : "website";
   const implementation = await implementationRevision();
   const inputs = await inventory(bundle, [

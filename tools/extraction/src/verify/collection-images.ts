@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { PNG } from "pngjs";
-import type { CatalogV4 } from "@loomix/content-schema/v4";
+import type { CatalogV5 } from "@loomix/content-schema/v5";
 import type {
   ImageManifest,
   ProcessedImage,
@@ -19,7 +19,7 @@ import { createIconResolver } from "../extraction/images/resolve.ts";
 import type { IndexedAsset } from "../extraction/types.ts";
 
 export async function verifySeedImages(
-  catalog: CatalogV4,
+  catalog: CatalogV5,
   bundle: string,
   reportRoot: string,
   raw: boolean,
@@ -108,6 +108,49 @@ export async function verifySeedImages(
     const sha256 = crypto.createHash("sha256").update(bytes).digest("hex");
     assert.equal(processed.sha256, sha256);
     assert.equal(processed.file, `assets/${sha256}.webp`);
+    assert.equal(info.width, 256);
+    assert.equal(info.height, 256);
+    assert.equal(processed.width, info.width);
+    assert.equal(processed.height, info.height);
+  }
+}
+
+export async function verifyStageImages(
+  catalog: CatalogV5,
+  bundle: string,
+  reportRoot: string,
+  raw: boolean,
+): Promise<void> {
+  const candidates = readJson<SelectedImage[]>(path.join(bundle, "stage-image-candidates.json"));
+  const originals = readJson<ImageManifest[]>(path.join(bundle, "stage-image-originals.json"));
+  const selected = readJson<ImageManifest[]>(path.join(bundle, "stage-image-manifest.json"));
+  const ids = new Set<number>();
+  for (const seed of catalog.cropSeeds)
+    for (const stage of seed.detail.growth?.stages ?? []) ids.add(stage.id);
+  for (const detail of catalog.details)
+    for (const stage of detail.growth?.stages ?? []) ids.add(stage.id);
+  for (const id of candidates.map((candidate) => candidate.id))
+    assert.ok(ids.has(id), `Unreferenced stage image candidate ${id}`);
+  assert.equal(new Set(originals.map((image) => assetKey(image))).size, originals.length);
+  for (const candidate of candidates)
+    assert.ok(originals.some((image) => assetKey(image) === assetKey(candidate)));
+  assert.equal(selected.length, new Set(candidates.map((candidate) => candidate.id)).size);
+  const delivered = raw
+    ? selected
+    : readJson<ProcessedImage[]>(path.join(reportRoot, "stage-image-manifest.json"));
+  assert.equal(delivered.length, selected.length);
+  for (const image of originals) {
+    const bytes = fs.readFileSync(within(bundle, image.file));
+    assert.equal(crypto.createHash("sha256").update(bytes).digest("hex"), image.sha256);
+    const png = PNG.sync.read(bytes, { checkCRC: true });
+    assert.equal(png.width, image.width);
+    assert.equal(png.height, image.height);
+  }
+  for (const image of delivered) {
+    if (raw) continue;
+    const processed = image as ProcessedImage;
+    const bytes = fs.readFileSync(within(path.join(reportRoot, "staging"), processed.file));
+    const info = await decodeWebp(bytes);
     assert.equal(info.width, 256);
     assert.equal(info.height, 256);
     assert.equal(processed.width, info.width);

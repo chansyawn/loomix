@@ -1,17 +1,19 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { parseCatalogV4, projectLegacyCatalog } from "@loomix/content-schema/v4";
-import type { CatalogV4 } from "@loomix/content-schema/v4";
+import { parseCatalogV5, projectLegacyCatalogV5 } from "@loomix/content-schema/v5";
+import type { CatalogV5 } from "@loomix/content-schema/v5";
 import { readJson, writeJson } from "../workflow/json.ts";
-import { RawCollectionSchema } from "../extraction/collection/build.ts";
+import { RawCollectionV5Schema } from "../extraction/collection/build.ts";
 import { collectionEvidenceSchema } from "../extraction/collection/evidence.ts";
 import type { CollectionEvidence } from "../extraction/collection/evidence.ts";
+import { detailInvestigationSchema } from "../extraction/collection/details/investigation.ts";
 import { parseRawContent } from "../extraction/schemas/raw-content.ts";
+import { RawImageSchema } from "../extraction/schemas/raw-content.ts";
 import { Tables } from "../extraction/decode/tables.ts";
 import type { TableRow } from "../extraction/types.ts";
 import { verifyCollectionFields } from "./collection-fields.ts";
-import { verifySeedImages } from "./collection-images.ts";
+import { verifySeedImages, verifyStageImages } from "./collection-images.ts";
 
 function verifyProofSources(proof: CollectionEvidence, tables: Tables): void {
   const rows: { row: TableRow; fields: number[] }[] = [];
@@ -20,6 +22,28 @@ function verifyProofSources(proof: CollectionEvidence, tables: Tables): void {
   };
   if (proof.owner === "seed") {
     if (proof.field === "name") add(318, (row) => tables.id(row) === proof.id, [0, 1]);
+    else if (proof.field === "detail.description" || proof.field === "detail.quality")
+      add(325, (row) => tables.id(row) === proof.id, [0, 15, 27]);
+    else if (proof.field.startsWith("detail.trade"))
+      add(
+        659,
+        (row) => tables.uint(row, 2) === proof.id,
+        [0, 1, 2, 9, 10, 12, 13, 17, 18, 22, 23, 24],
+      );
+    else if (proof.field.startsWith("detail.acquisitionConditions")) {
+      add(325, (row) => tables.id(row) === proof.id, [0, 2]);
+      const codes = new Set(rows.flatMap(({ row }) => tables.vector(row, 2) ?? []));
+      add(618, (row) => codes.has(tables.id(row)), [0, 1]);
+    } else if (proof.field.startsWith("detail.growth")) {
+      add(144, (row) => tables.id(row) === proof.id, [0, 3, 4, 5, 6, 8, 9, 10]);
+      const stageIds = new Set(rows.flatMap(({ row }) => tables.vector(row, 8) ?? []));
+      add(137, (row) => stageIds.has(tables.id(row)), [0, 1, 2, 3]);
+    } else if (proof.field.startsWith("detail.stageIds"))
+      add(144, (row) => tables.id(row) === proof.id, [0, 4]);
+    else if (proof.field.startsWith("detail.harvestCount"))
+      add(144, (row) => tables.id(row) === proof.id, [0, 5]);
+    else if (proof.field.startsWith("detail.maturityDays"))
+      add(144, (row) => tables.id(row) === proof.id, [0, 3, 4]);
     else add(144, (row) => tables.id(row) === proof.id, [0, 10]);
   } else if (proof.field === "attributes.sources") {
     add(325, (row) => tables.id(row) === proof.id, [0, 2]);
@@ -31,6 +55,55 @@ function verifyProofSources(proof: CollectionEvidence, tables: Tables): void {
     add(93, (row) => tables.id(row) === proof.id, [7, 8, 9, 13, 14, 15]);
   } else if (proof.field === "seedId") {
     add(144, (row) => tables.vector(row, 10)?.includes(proof.id) ?? false, [0, 10]);
+  } else if (proof.field.startsWith("detail.")) {
+    if (proof.field === "detail.flowerColors") {
+      add(318, (row) => tables.id(row) === proof.id, [0, 9]);
+    } else if (proof.field.startsWith("detail.growth")) {
+      add(
+        144,
+        (row) => tables.vector(row, 10)?.includes(proof.id) ?? false,
+        [0, 3, 4, 5, 6, 8, 9, 10],
+      );
+      const stageIds = new Set(rows.flatMap(({ row }) => tables.vector(row, 8) ?? []));
+      add(137, (row) => stageIds.has(tables.id(row)), [0, 1, 2, 3]);
+    } else if (proof.field.startsWith("detail.creatureSize")) {
+      add(132, (row) => tables.id(row) === proof.id, [0, 3, 4, 5, 6]);
+    } else if (proof.field.startsWith("detail.creatureGrades")) {
+      add(325, (row) => tables.id(row) === proof.id, [0, 12, 14]);
+    } else if (proof.field.startsWith("detail.hybridRecipes")) {
+      add(
+        241,
+        (row) => [1, 2, 3].some((field) => tables.uint(row, field) === proof.id),
+        [0, 1, 2, 3],
+      );
+      add(244, (row) => tables.vector(row, 2)?.includes(proof.id) ?? false, [0, 1, 2]);
+    } else if (proof.field.startsWith("detail.dishEffects")) {
+      add(122, (row) => tables.uint(row, 4) === proof.id, [0, 4, 6, 7, 8]);
+      const effectIds = new Set(
+        rows.flatMap(({ row }) => {
+          const raw = tables.string(row, 6);
+          return raw && /^\d+(?:[,;]\d+)*$/.test(raw) ? raw.split(/[,;]/).map(Number) : [];
+        }),
+      );
+      add(70, (row) => effectIds.has(tables.id(row)), [0, 1, 4, 10, 19]);
+    } else if (proof.field.startsWith("detail.acquisitionConditions")) {
+      add(325, (row) => tables.id(row) === proof.id, [0, 2]);
+      const codes = new Set(rows.flatMap(({ row }) => tables.vector(row, 2) ?? []));
+      add(618, (row) => codes.has(tables.id(row)), [0, 1]);
+    } else if (proof.field.startsWith("detail.trade")) {
+      add(
+        659,
+        (row) => tables.uint(row, 2) === proof.id,
+        [0, 1, 2, 9, 10, 12, 13, 17, 18, 22, 23, 24],
+      );
+    } else if (proof.field.startsWith("detail.treeDrops")) {
+      const tree = tables.rows(708).find((row) => tables.id(row) === proof.id);
+      if (tree) {
+        rows.push({ row: tree, fields: [0, 1, 2, 3, 5] });
+        const groupId = tables.uint(tree, 5);
+        add(563, (row) => tables.uint(row, 0) === groupId, [0, 1, 2, 3, 4, 5, 15]);
+      }
+    }
   } else if (proof.field === "craftingRecipes") {
     add(568, (row) => tables.uint(row, 1) === proof.id, [0, 1, 12, 13, 14, 15, 16, 17, 18, 19]);
   } else {
@@ -82,15 +155,17 @@ export async function verifyCollection(
   reportRoot: string,
   raw: boolean,
   writeReports = true,
-): Promise<CatalogV4> {
+): Promise<CatalogV5> {
   const file = raw
-    ? path.join(bundle, "raw/images-content-v4.json")
+    ? path.join(bundle, "raw/images-content-v5.json")
     : path.join(reportRoot, "staging/content.json");
-  const catalog = raw ? RawCollectionSchema.parse(readJson(file)) : parseCatalogV4(readJson(file));
+  const catalog = raw
+    ? RawCollectionV5Schema.parse(readJson(file))
+    : parseCatalogV5(readJson(file));
   const base = parseRawContent(readJson(path.join(bundle, "raw/images-content.json")));
   const withoutImages = (items: typeof base.items) =>
     items.map(({ image: _image, ...record }) => record);
-  const legacy = projectLegacyCatalog(catalog);
+  const legacy = projectLegacyCatalogV5(catalog, raw ? RawImageSchema : undefined);
   if (raw) assert.deepEqual(legacy, base, "Raw v4 image/base projection");
   assert.deepEqual(
     withoutImages(legacy.items),
@@ -107,6 +182,33 @@ export async function verifyCollection(
     "Independent crafting audit including exclusions",
   );
   const proofs = readJson<CollectionEvidence[]>(path.join(bundle, "collection-evidence.json"));
+  const missing = proofs.filter((proof) => proof.value === null);
+  assert.deepEqual(
+    readJson(path.join(bundle, "collection-missing-fields.json")),
+    missing,
+    "Every unknown detail has a reasoned missing-field record",
+  );
+  const investigation = detailInvestigationSchema.parse(
+    readJson(path.join(bundle, "collection-investigation.json")),
+  );
+  assert.deepEqual(
+    readJson(path.join(bundle, "evidence/collection-investigation.json")),
+    investigation,
+    "Client candidates are preserved in the evidence package",
+  );
+  for (const candidate of investigation.records)
+    for (const source of candidate.sources) {
+      if (source.table === 1) {
+        assert.equal(tables.textmap[source.row]?.rowOffset, source.rowOffset);
+        continue;
+      }
+      assert.ok(
+        tables
+          .rows(source.table)
+          .some((row) => tables.id(row) === source.row && row.rowOffset === source.rowOffset),
+        `Unrelated investigation source ${candidate.id}.${candidate.field}`,
+      );
+    }
   if (!raw)
     assert.deepEqual(
       fs.readFileSync(path.join(reportRoot, "collection-evidence.json")),
@@ -116,6 +218,16 @@ export async function verifyCollection(
   assert.deepEqual(readJson(path.join(bundle, "evidence/crafting-audit.json")), craftingAudit);
   const seen = new Set<string>();
   const coverage: Record<string, { populated: number; null: number }> = {};
+  const withoutStageImages = (value: unknown): unknown => {
+    if (Array.isArray(value)) return value.map(withoutStageImages);
+    if (value && typeof value === "object") {
+      const result: Record<string, unknown> = {};
+      for (const [key, entry] of Object.entries(value))
+        result[key] = key === "image" ? null : withoutStageImages(entry);
+      return result;
+    }
+    return value;
+  };
   for (const input of proofs) {
     const proof = collectionEvidenceSchema.parse(input);
     const key = `${proof.owner}:${proof.id}:${proof.field}`;
@@ -123,7 +235,11 @@ export async function verifyCollection(
       requiredFields.has(key) && !seen.has(key),
       `Unexpected/duplicate collection evidence ${key}`,
     );
-    assert.deepEqual(proof.value, requiredFields.get(key), `Collection evidence value ${key}`);
+    assert.deepEqual(
+      withoutStageImages(proof.value),
+      withoutStageImages(requiredFields.get(key)),
+      `Collection evidence value ${key}`,
+    );
     verifyProofSources(proof, tables);
     seen.add(key);
     const category =
@@ -135,6 +251,7 @@ export async function verifyCollection(
   }
   assert.equal(seen.size, requiredFields.size, "Complete collection evidence coverage");
   await verifySeedImages(catalog, bundle, reportRoot, raw);
+  await verifyStageImages(catalog, bundle, reportRoot, raw);
   if (writeReports) writeJson(path.join(reportRoot, "collection-coverage.json"), coverage);
   return catalog;
 }

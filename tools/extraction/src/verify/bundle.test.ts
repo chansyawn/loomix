@@ -2,7 +2,7 @@ import { afterEach, expect, test, vi } from "vite-plus/test";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { parseCatalogV4, projectLegacyCatalog } from "@loomix/content-schema/v4";
+import { parseCatalogV5, projectLegacyCatalogV5 } from "@loomix/content-schema/v5";
 import { verifyBundle } from "./bundle.ts";
 
 vi.mock("../extraction/decode/tables.ts", async (original) => ({
@@ -36,18 +36,19 @@ afterEach(() => {
     fs.rmSync(directory, { recursive: true, force: true });
 });
 
-test("bundle verification validates the original v4 input when a parser projects to v3", async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-v4-verification-"));
+test("bundle verification validates the original v5 input when a parser projects to v3", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-v5-verification-"));
   temporary.push(root);
   const file = path.join(root, "content.json");
   fs.writeFileSync(
     file,
     JSON.stringify({
-      schemaVersion: 4,
+      schemaVersion: 5,
       source: { gameVersion: "0.95.2", dataRevision: 1449213, resourceRevision: 1391927 },
       ingredientCategories: [],
       items: [],
       cropSeeds: [],
+      details: [],
     }),
   );
   fs.writeFileSync(path.join(root, "neighbors.json"), "{}");
@@ -59,7 +60,7 @@ test("bundle verification validates the original v4 input when a parser projects
       contentFile: file,
       raw: false,
       writeReports: false,
-      parse: (input) => projectLegacyCatalog(parseCatalogV4(input)),
+      parse: (input) => projectLegacyCatalogV5(parseCatalogV5(input)),
     }),
   ).rejects.toThrow("model_verified");
 });

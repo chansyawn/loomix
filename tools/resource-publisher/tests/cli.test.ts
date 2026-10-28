@@ -26,11 +26,12 @@ test("dry run from another directory returns only JSON without credentials or pr
     await writeFile(
       path.join(directory, "content.json"),
       JSON.stringify({
-        schemaVersion: 4,
+        schemaVersion: 5,
         source: { gameVersion: "0.95.2", dataRevision: 1449213, resourceRevision: 1391927 },
         ingredientCategories: [],
         items: [],
         cropSeeds: [],
+        details: [],
       }),
     );
     await writeFile(

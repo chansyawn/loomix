@@ -55,7 +55,7 @@ async function fixture() {
   });
   const files = {
     "content.json": {
-      schemaVersion: 4,
+      schemaVersion: 5,
       source: {
         gameVersion: source.gameVersion,
         dataRevision: source.dataRevision,
@@ -64,6 +64,7 @@ async function fixture() {
       ingredientCategories: [],
       items: [],
       cropSeeds: [],
+      details: [],
     },
     "neighbors.json": {
       schemaVersion: 1,

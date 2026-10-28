@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import type { CatalogV4 } from "@loomix/content-schema/v4";
+import type { CatalogV5 } from "@loomix/content-schema/v5";
+import { emptyCollectionDetail, emptyCropSeedDetail } from "@loomix/content-schema/v5";
 import { loadCollectionView } from "./collection-loader.ts";
 import { loadPlants } from "./plants/data.ts";
 import { loadPlantsDetail } from "./plants/detail.ts";
@@ -10,11 +11,19 @@ import { loadMiscellanyDetail } from "./miscellany/detail.ts";
 import { queryMiscellany } from "./miscellany/query.ts";
 import { emptyQuery as emptyMiscellanyQuery } from "./miscellany/search.ts";
 
-const catalog: CatalogV4 = {
-  schemaVersion: 4,
+const catalog: CatalogV5 = {
+  schemaVersion: 5,
   source: { gameVersion: "0.95.2", dataRevision: 1449213, resourceRevision: 1391927 },
   ingredientCategories: [],
-  cropSeeds: [{ id: 900, name: "苹果种子", image: null, productIds: [30161] }],
+  cropSeeds: [
+    {
+      id: 900,
+      name: "苹果种子",
+      image: null,
+      productIds: [30161],
+      detail: emptyCropSeedDetail(900),
+    },
+  ],
   items: [
     {
       id: 30161,
@@ -47,6 +56,7 @@ const catalog: CatalogV4 = {
       attributes: { sources: "沙滩拾取" },
     },
   ],
+  details: [emptyCollectionDetail(30161), emptyCollectionDetail(2000050)],
 };
 
 afterEach(() => vi.unstubAllGlobals());
@@ -120,7 +130,7 @@ describe("unified catalog loading", () => {
   });
 
   it("preserves furniture crafting recipes and ingredient names in collection data", async () => {
-    const furnitureCatalog: CatalogV4 = {
+    const furnitureCatalog: CatalogV5 = {
       ...catalog,
       cropSeeds: [],
       items: [
@@ -156,6 +166,7 @@ describe("unified catalog loading", () => {
           attributes: { sources: null },
         },
       ],
+      details: [emptyCollectionDetail(30162), emptyCollectionDetail(30163)],
     };
     vi.stubGlobal(
       "fetch",

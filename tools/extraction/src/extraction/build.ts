@@ -127,10 +127,13 @@ export async function extract(environmentId: string): Promise<string> {
           dependencies: ["raw-assets"],
           run: async () => buildCollection(work),
           outputs: () => [
-            "raw/content-v4.json",
+            "raw/content-v5.json",
             "collection-evidence.json",
             "seed-image-candidates.json",
+            "stage-image-candidates.json",
             "crafting-audit.json",
+            "collection-missing-fields.json",
+            "collection-investigation.json",
           ],
         },
         {
@@ -139,9 +142,12 @@ export async function extract(environmentId: string): Promise<string> {
           run: () => exportSeedImages(options),
           outputs: () => [
             ...tree("seed-exports"),
+            ...tree("stage-exports"),
             "seed-image-originals.json",
             "seed-image-manifest.json",
-            "raw/images-content-v4.json",
+            "stage-image-originals.json",
+            "stage-image-manifest.json",
+            "raw/images-content-v5.json",
           ],
         },
         {

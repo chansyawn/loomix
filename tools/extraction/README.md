@@ -59,8 +59,10 @@ var/                                              # 运行时数据，整体忽�
     record-evidence.json                         # 收录依据及图鉴存在/缺失证据
     prepared/                                    # 冻结 OBB、表索引、TextMap、素材索引
     bindata/                                     # MiHoYoBinData 导出
-    raw/{content.json,images-content.json,content-v4.json,images-content-v4.json,neighbors.json,assets/}
-    collection-evidence.json                     # v4 扩展字段与种子索引证据
+    raw/{content.json,images-content.json,content-v5.json,images-content-v5.json,neighbors.json,assets/}
+    collection-evidence.json                     # v5 客户端详情与种子索引字段证据
+    collection-missing-fields.json               # 未确认详情的空值、原因与来源
+    collection-investigation.json                # 客户端候选字段及未确认原因
     crafting-audit.json                          # 全部制作配置及范围外产物
     seed-exports/                                # 完整种子原始 PNG
     seed-image-{candidates,originals,manifest}.json

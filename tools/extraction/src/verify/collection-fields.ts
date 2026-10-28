@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
-import type { CatalogV4, CraftingRecipe } from "@loomix/content-schema/v4";
+import type { CatalogV5, CraftingRecipe } from "@loomix/content-schema/v5";
 import type { Tables } from "../extraction/decode/tables.ts";
 import type { TableRow } from "../extraction/types.ts";
 import { plainText } from "../extraction/content/model.ts";
 
-export function verifyCollectionFields(catalog: CatalogV4, tables: Tables) {
+export function verifyCollectionFields(catalog: CatalogV5, tables: Tables) {
   const main = tables.byId(318);
   const sources = tables.byId(618);
   const content = tables.byId(93);
@@ -23,7 +23,7 @@ export function verifyCollectionFields(catalog: CatalogV4, tables: Tables) {
     .filter((seed) => seed.productIds.length)
     .sort((a, b) => a.id - b.id);
   assert.deepEqual(
-    catalog.cropSeeds.map(({ image: _image, ...seed }) => seed),
+    catalog.cropSeeds.map(({ image: _image, detail: _detail, ...seed }) => seed),
     seeds,
     "Independent crop seed index",
   );
@@ -73,6 +73,21 @@ export function verifyCollectionFields(catalog: CatalogV4, tables: Tables) {
   }
   const requiredFields = new Map<string, unknown>();
   for (const record of catalog.items) {
+    const detail = catalog.details.find((entry) => entry.id === record.id);
+    assert.ok(detail, `Missing details for ${record.id}`);
+    for (const field of [
+      "flowerColors",
+      "hybridRecipes",
+      "growth",
+      "treeDrops",
+      "creatureSize",
+      "creatureGrades",
+      "trade",
+      "acquisitionConditions",
+      "dishEffects",
+    ] as const) {
+      requiredFields.set(`item:${record.id}:detail.${field}`, detail[field]);
+    }
     if (record.kind !== "item") continue;
     const expect = (field: string, actual: unknown, expected: unknown) => {
       assert.deepEqual(actual, expected, `${record.id}.${field}`);
@@ -162,6 +177,18 @@ export function verifyCollectionFields(catalog: CatalogV4, tables: Tables) {
   for (const seed of catalog.cropSeeds) {
     requiredFields.set(`seed:${seed.id}:name`, seed.name);
     requiredFields.set(`seed:${seed.id}:productIds`, seed.productIds);
+    for (const field of [
+      "description",
+      "quality",
+      "growth",
+      "trade",
+      "acquisitionConditions",
+      "stageIds",
+      "maturityDays",
+      "harvestCount",
+    ] as const) {
+      requiredFields.set(`seed:${seed.id}:detail.${field}`, seed.detail[field]);
+    }
   }
   return { requiredFields, craftingAudit: audit };
 }

@@ -1,5 +1,6 @@
 import type { RecordBase } from "@loomix/content-schema";
-import type { CatalogV4 } from "@loomix/content-schema/v4";
+import type { CatalogV5 } from "@loomix/content-schema/v5";
+import { emptyCollectionDetail } from "@loomix/content-schema/v5";
 import type { CollectionRecord, CollectionView } from "./collection-view.ts";
 
 export function catalogBase(record: CollectionRecord): RecordBase {
@@ -13,13 +14,14 @@ export function catalogBase(record: CollectionRecord): RecordBase {
   };
 }
 
-export function catalogFixture(view: Partial<CollectionView> = {}): CatalogV4 {
-  const catalog: CatalogV4 = {
-    schemaVersion: 4,
+export function catalogFixture(view: Partial<CollectionView> = {}): CatalogV5 {
+  const catalog: CatalogV5 = {
+    schemaVersion: 5,
     source: { gameVersion: "0.95.2", dataRevision: 1449213, resourceRevision: 1391927 },
     ingredientCategories: [],
     items: [],
     cropSeeds: [],
+    details: [],
   };
   catalog.ingredientCategories = view.ingredientCategories ?? [];
   for (const record of view.furniture?.items ?? [])
@@ -150,5 +152,6 @@ export function catalogFixture(view: Partial<CollectionView> = {}): CatalogV4 {
       subcategory: null,
       attributes: { sources: null },
     });
+  catalog.details = catalog.items.map((record) => emptyCollectionDetail(record.id));
   return catalog;
 }

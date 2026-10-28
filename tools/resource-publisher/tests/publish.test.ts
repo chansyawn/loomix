@@ -3,7 +3,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { S3Client } from "@aws-sdk/client-s3";
 import { afterEach, expect, test, vi } from "vite-plus/test";
-import type { CatalogV4 } from "@loomix/content-schema/v4";
+import { emptyCollectionDetail, emptyCropSeedDetail } from "@loomix/content-schema/v5";
+import type { CatalogV5 } from "@loomix/content-schema/v5";
 import { parseNeighborImages } from "@loomix/neighbor-schema";
 import { publishRelease } from "../src/publish.ts";
 import type { UploadProgress } from "../src/publish.ts";
@@ -24,12 +25,13 @@ const emptyCatalog = (
     dataRevision: 1449213,
     resourceRevision: 1391927,
   },
-): CatalogV4 => ({
-  schemaVersion: 4,
+): CatalogV5 => ({
+  schemaVersion: 5,
   source,
   ingredientCategories: [],
   items: [],
   cropSeeds: [],
+  details: [],
 });
 const islandData = (source: {
   gameVersion: string;
@@ -78,7 +80,14 @@ test("counts crop seed images as referenced release assets", () => {
     },
     seedId: 2,
   });
-  catalog.cropSeeds.push({ id: 2, name: "seed", image: imageKey, productIds: [3] });
+  catalog.details.push(emptyCollectionDetail(3));
+  catalog.cropSeeds.push({
+    id: 2,
+    name: "seed",
+    image: imageKey,
+    productIds: [3],
+    detail: emptyCropSeedDetail(2),
+  });
   expect(referencedImages(catalog)).toEqual([imageKey]);
 });
 
@@ -125,6 +134,7 @@ async function fixture(imageCount = 1): Promise<string> {
       quality: 0,
       image,
     });
+    content.details.push(emptyCollectionDetail(i + 1));
     await writeFile(path.join(directory, image), bytes);
   }
   await writeFile(path.join(directory, "content.json"), JSON.stringify(content));
@@ -317,6 +327,7 @@ test("rejects a non-WebP or truncated container even when its content hash match
       quality: 0,
       image: key,
     });
+    content.details.push(emptyCollectionDetail(1));
     await rm(path.join(directory, imageKey));
     await writeFile(path.join(directory, key), bytes);
     await writeFile(path.join(directory, "content.json"), JSON.stringify(content));

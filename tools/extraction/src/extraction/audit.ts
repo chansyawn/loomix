@@ -32,6 +32,9 @@ export async function audit(options: WorkOptions) {
     ...readJson<ImageManifest[]>(path.join(options.work, "seed-image-originals.json")).map(
       (image) => image.source,
     ),
+    ...readJson<ImageManifest[]>(path.join(options.work, "stage-image-originals.json")).map(
+      (image) => image.source,
+    ),
     ...images.map((a) => a.source),
     ...neighborImages.map((a) => a.source),
     ...additionalNeighborImages.map((a) => a.source),

@@ -1,7 +1,7 @@
 import { lstat, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
-import { parseCatalogV4 } from "@loomix/content-schema/v4";
+import { parseCatalogV5 } from "@loomix/content-schema/v5";
 import {
   parseNeighborImages,
   validateNeighborImages,
@@ -68,7 +68,7 @@ export async function validateContent(directory: string): Promise<ValidatedConte
   if (!(await lstat(assetDirectory)).isDirectory())
     throw new Error("assets/ must be a real directory");
   const json = await readRegularFile(path.join(directory, "content.json"));
-  const content = parseCatalogV4(JSON.parse(json.toString("utf8")));
+  const content = parseCatalogV5(JSON.parse(json.toString("utf8")));
   const neighbors = await readRegularFile(path.join(directory, "neighbors.json"));
   const database = parseNeighborDatabase(JSON.parse(neighbors.toString("utf8")));
   if (

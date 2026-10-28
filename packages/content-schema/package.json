@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./v4": "./src/v4/index.ts"
+    "./v4": "./src/v4/index.ts",
+    "./v5": "./src/v5/index.ts"
   },
   "scripts": {
     "test": "vp exec vp test"

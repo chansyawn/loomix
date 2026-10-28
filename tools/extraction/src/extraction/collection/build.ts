@@ -1,7 +1,7 @@
 import path from "node:path";
 import { createCatalogV4Schema } from "@loomix/content-schema/v4";
+import { createCatalogV5Schema, type CatalogV5 } from "@loomix/content-schema/v5";
 import type { Catalog, CatalogRecord } from "@loomix/content-schema";
-import type { CatalogV4, CropSeed } from "@loomix/content-schema/v4";
 import type { ContentContext } from "../content/context.ts";
 import { createContentContext } from "../content/context.ts";
 import type { SelectedImage } from "../types.ts";
@@ -10,13 +10,18 @@ import { parseRawContent, RawImageSchema } from "../schemas/raw-content.ts";
 import { readCraftingRecipes } from "./crafting.ts";
 import { CollectionEvidenceBuilder, localizedSources, tableSource } from "./evidence.ts";
 import { readCreatureFields, readDishFields, readSources } from "./fields.ts";
+import { buildItemDetail, buildSeedDetail } from "./details/client.ts";
+import { detailInvestigation } from "./details/investigation.ts";
 
 export const RawCollectionSchema = createCatalogV4Schema(RawImageSchema);
+export const RawCollectionV5Schema = createCatalogV5Schema(RawImageSchema);
 
 function cropSeeds(context: ContentContext, proofs: CollectionEvidenceBuilder) {
   const { tables, scope } = context;
-  const seeds: CropSeed[] = [];
+  const seeds: CatalogV5["cropSeeds"] = [];
   const images: SelectedImage[] = [];
+  const stageImages: SelectedImage[] = [];
+  const stageIds = new Set<number>();
   for (const row of tables.rows(144)) {
     const id = tables.id(row);
     const productIds = (tables.vector(row, 10) ?? [])
@@ -25,7 +30,9 @@ function cropSeeds(context: ContentContext, proofs: CollectionEvidenceBuilder) {
     if (!productIds.length) continue;
     const name = tables.text(context.main.get(id), 1);
     if (!name) throw new Error(`Unresolved crop seed name ${id}`);
-    seeds.push({ id, name, productIds, image: null });
+    const detail = buildSeedDetail(context, row, proofs);
+    for (const stage of detail.growth?.stages ?? []) stageIds.add(stage.id);
+    seeds.push({ id, name, productIds, image: null, detail });
     proofs.put(
       "seed",
       id,
@@ -62,7 +69,27 @@ function cropSeeds(context: ContentContext, proofs: CollectionEvidenceBuilder) {
     }
     if (!images.some((image) => image.id === id)) throw new Error(`Missing crop seed icon ${id}`);
   }
-  return { seeds: seeds.sort((a, b) => a.id - b.id), images };
+  for (const id of stageIds) {
+    const ui = tables.rows(325).find((entry) => tables.id(entry) === id);
+    for (const field of [5, 4]) {
+      const reference = tables.string(ui, field);
+      const match = reference ? context.resolveIcon(reference) : null;
+      if (match?.matched && match.source && match.resourceName && match.container && match.pathId)
+        stageImages.push({
+          id,
+          group: "plants.item",
+          reference: reference!,
+          assetType: match.assetType,
+          resourceName: match.resourceName,
+          container: match.container,
+          source: match.source,
+          pathId: match.pathId,
+        });
+    }
+    if (!stageImages.some((image) => image.id === id))
+      throw new Error(`Missing crop stage icon ${id}`);
+  }
+  return { seeds: seeds.sort((a, b) => a.id - b.id), images, stageImages };
 }
 
 export function extendCollection(base: Catalog, context: ContentContext) {
@@ -72,7 +99,9 @@ export function extendCollection(base: Catalog, context: ContentContext) {
   const products = new Map(
     crops.seeds.flatMap((seed) => seed.productIds.map((id) => [id, seed.id] as const)),
   );
+  const details: CatalogV5["details"] = [];
   const items = base.items.map((record: CatalogRecord) => {
+    details.push(buildItemDetail(context, record, proofs));
     if (record.kind !== "item") return record;
     if (record.category === "furniture") {
       const entry = crafting.byProduct.get(record.id);
@@ -120,16 +149,18 @@ export function extendCollection(base: Catalog, context: ContentContext) {
     }
     return { ...record, attributes: { ...record.attributes, sources } };
   });
-  const catalog: CatalogV4 = RawCollectionSchema.parse({
+  const catalog: CatalogV5 = RawCollectionV5Schema.parse({
     ...base,
-    schemaVersion: 4,
+    schemaVersion: 5,
     items,
     cropSeeds: crops.seeds,
+    details: details.sort((a, b) => a.id - b.id),
   });
   return {
     catalog,
     evidence: proofs.records,
     seedImages: crops.images,
+    stageImages: crops.stageImages,
     craftingAudit: crafting.audit,
   };
 }
@@ -137,8 +168,17 @@ export function extendCollection(base: Catalog, context: ContentContext) {
 export function buildCollection(work: string): void {
   const base = parseRawContent(readJson(path.join(work, "raw/images-content.json")));
   const result = extendCollection(base, createContentContext(work));
-  writeJson(path.join(work, "raw/content-v4.json"), result.catalog);
+  writeJson(path.join(work, "raw/content-v5.json"), result.catalog);
   writeJson(path.join(work, "collection-evidence.json"), result.evidence);
+  writeJson(
+    path.join(work, "collection-missing-fields.json"),
+    result.evidence.filter((proof) => proof.value === null),
+  );
+  writeJson(
+    path.join(work, "collection-investigation.json"),
+    detailInvestigation(createContentContext(work)),
+  );
   writeJson(path.join(work, "seed-image-candidates.json"), result.seedImages);
+  writeJson(path.join(work, "stage-image-candidates.json"), result.stageImages);
   writeJson(path.join(work, "crafting-audit.json"), result.craftingAudit);
 }

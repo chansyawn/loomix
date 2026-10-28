@@ -1,14 +1,16 @@
 import { expect, test, vi } from "vite-plus/test";
-import type { CatalogV4 } from "@loomix/content-schema/v4";
+import { emptyCollectionDetail, emptyCropSeedDetail } from "@loomix/content-schema/v5";
+import type { CatalogV5 } from "@loomix/content-schema/v5";
 import { downloadRelease, sha256 } from "../src/release.ts";
 
 const base = "https://assets.loomix.fun/releases/r1/";
-const emptyCatalog = (): CatalogV4 => ({
-  schemaVersion: 4,
+const emptyCatalog = (): CatalogV5 => ({
+  schemaVersion: 5,
   source: { gameVersion: "0.95.2", dataRevision: 1449213, resourceRevision: 1391927 },
   ingredientCategories: [],
   items: [],
   cropSeeds: [],
+  details: [],
 });
 const json = JSON.stringify(emptyCatalog());
 const neighborsJson = JSON.stringify({
@@ -121,7 +123,9 @@ test("download validation counts crop seed images in the release asset total", a
     name: "seed",
     image: `assets/${"a".repeat(64)}.webp`,
     productIds: [3],
+    detail: emptyCropSeedDetail(2),
   });
+  content.details.push(emptyCollectionDetail(3));
   const contentJson = JSON.stringify(content);
   const releaseMarker = {
     ...marker,
