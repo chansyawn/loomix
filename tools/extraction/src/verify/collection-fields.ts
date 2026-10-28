@@ -119,24 +119,6 @@ export function verifyCollectionFields(catalog: CollectionObservations, tables: 
         record.attributes.scientificName,
         plainText(tables.text(row, 16)),
       );
-      const tasks = ([7, 8, 9] as const).flatMap((field, index) => {
-        const text = plainText(tables.text(row, field));
-        return text
-          ? [{ kind: ["collectionCount", "collectionSize", "cooking"][index], text }]
-          : [];
-      });
-      const completionConditions = [13, 14, 15].flatMap((field) => {
-        const text = plainText(tables.text(row, field));
-        if (!text) return [];
-        const match = /^完成任意([1-9]\d*)个课题$/.exec(text);
-        assert.ok(match);
-        return [{ requiredTaskCount: Number(match[1]), text }];
-      });
-      expect(
-        "research",
-        record.research,
-        tasks.length || completionConditions.length ? { tasks, completionConditions } : null,
-      );
     }
     if (record.category === "dishes") {
       const recipe = recipeByDish.get(record.id);

@@ -80,7 +80,6 @@ export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
       sizeRange: record.sizeRange,
       scientificName: record.scientificName,
       sources: values(record.sources),
-      research: null,
       size: null,
       grades: null,
     });

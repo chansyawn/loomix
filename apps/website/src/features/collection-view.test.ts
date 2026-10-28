@@ -62,7 +62,6 @@ test("creature details retain scientific names and localized acquisition labels"
     sizeRange: null,
     scientificName: "Cyprinus carpio",
     sources: ["钓鱼", "河域钓取"],
-    research: null,
     size: null,
     grades: null,
   });

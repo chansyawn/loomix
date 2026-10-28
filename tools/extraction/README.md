@@ -105,7 +105,7 @@ manifest 使用 `schemaVersion: 1`，区分 environment、extraction、delivery�
 
 发布目录由 release.json 指定四个文档：zh-CN/catalog.json、zh-CN/neighbors.json、zh-CN/world.json 和 assets.json。每个文档绑定相同 formatVersion、snapshotId、locale；manifest 保存实际字节数与 SHA256。领域图片使用 {assetId, variant}，assets.json 解析到按最终字节 SHA256 命名的 WebP、大小和尺寸。同一源图的 icon、banner、illustration 独立登记。当前提取 zh-CN；语言是快照上下文，后续语言无需改变实体字段名。
 
-当前收录 2,340 条（杂物 23 条）。配方引用到范围外物品时可建立 reference 实体，但不增加图鉴 entries。未确认属性保留 null，配方材料缺失不解释为免费制作；研究和条件保留客户端语义，不推算进度或未确认规则。
+当前收录 2,340 条（杂物 23 条）。配方引用到范围外物品时可建立 reference 实体，但不增加图鉴 entries。未确认属性保留 null，配方材料缺失不解释为免费制作。
 
 图片规则保持不变：按实际像素面积选最高原生分辨率，平手保留大图优先顺序；家具套组 1024×512，其余有图记录 256×256；Lanczos3 等比缩放、居中裁切，WebP 质量 85、alphaQuality 100。原始 PNG 与最终 WebP 均完整解码，交付文件按最终字节 SHA256 命名和去重。
 

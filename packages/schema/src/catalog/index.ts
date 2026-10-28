@@ -6,7 +6,6 @@ import {
   DifficultyRequirementSchema,
   IngredientCategorySchema,
   RecipeSchema,
-  ResearchSchema,
   TastesSchema,
 } from "./recipes.ts";
 
@@ -105,7 +104,6 @@ export const ItemSchema = z.discriminatedUnion("type", [
     sizeRange: text,
     scientificName: text,
     sources: texts,
-    research: ResearchSchema.nullable(),
     size: z
       .strictObject({
         min: z.number().nonnegative().nullable(),

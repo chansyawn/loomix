@@ -87,20 +87,6 @@ export function validateObservedRelations(
         path: ["items", index, "seedId"],
         message: "Unresolved seed reference",
       });
-    if (record.category === "creatures" && record.research) {
-      if (
-        new Set(record.research.tasks.map((task) => task.kind)).size !==
-          record.research.tasks.length ||
-        new Set(
-          record.research.completionConditions.map((condition) => condition.requiredTaskCount),
-        ).size !== record.research.completionConditions.length
-      )
-        ctx.addIssue({
-          code: "custom",
-          path: ["items", index, "research"],
-          message: "Duplicate research task or condition",
-        });
-    }
     if (
       record.category === "dishes" &&
       record.attributes.tastes &&

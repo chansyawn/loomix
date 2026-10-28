@@ -49,8 +49,6 @@ function verifyProofSources(proof: CollectionEvidence, tables: Tables): void {
     add(618, (row) => codes.has(tables.id(row)), [1]);
   } else if (proof.field === "attributes.scientificName") {
     add(93, (row) => tables.id(row) === proof.id, [16]);
-  } else if (proof.field === "research") {
-    add(93, (row) => tables.id(row) === proof.id, [7, 8, 9, 13, 14, 15]);
   } else if (proof.field === "seedId") {
     add(144, (row) => tables.vector(row, 10)?.includes(proof.id) ?? false, [0, 10]);
   } else if (proof.field.startsWith("detail.")) {

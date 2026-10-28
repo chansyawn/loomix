@@ -119,8 +119,8 @@ export function extendCollection(base: Catalog, context: ContentContext) {
     if (record.category === "clothing") return record;
     const sources = readSources(context, record.id, proofs);
     if (record.category === "creatures") {
-      const { scientificName, research } = readCreatureFields(context, record.id, proofs);
-      return { ...record, attributes: { ...record.attributes, sources, scientificName }, research };
+      const { scientificName } = readCreatureFields(context, record.id, proofs);
+      return { ...record, attributes: { ...record.attributes, sources, scientificName } };
     }
     if (record.category === "dishes") {
       const { tastes, difficultyRequirement } = readDishFields(context, record.id, proofs);

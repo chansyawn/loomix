@@ -140,7 +140,6 @@ export function buildCatalog(
           sizeRange: record.attributes.sizeRange,
           scientificName: record.attributes.scientificName,
           sources,
-          research: record.research,
           size: detail.creatureSize,
           grades: detail.creatureGrades,
         });

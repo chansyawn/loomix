@@ -28,17 +28,6 @@ export const IngredientCategorySchema = z.strictObject({
   itemIds: z.array(ItemIdSchema),
 });
 const text = z.string().min(1).nullable();
-export const ResearchSchema = z.strictObject({
-  tasks: z.array(
-    z.strictObject({
-      kind: z.enum(["collectionCount", "collectionSize", "cooking"]),
-      text: z.string().min(1),
-    }),
-  ),
-  completionConditions: z.array(
-    z.strictObject({ requiredTaskCount: ItemIdSchema, text: z.string().min(1) }),
-  ),
-});
 export const DifficultyConditionSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("chefLevelGreaterOrEqual"), level: ItemIdSchema }),
   z.strictObject({ kind: z.literal("learnCookRecipeInCategory"), categoryId: ItemIdSchema }),
@@ -71,5 +60,4 @@ export const TastesSchema = z.array(z.enum(["甜", "咸"])).min(1);
 export type Recipe = z.infer<typeof RecipeSchema>;
 export type IngredientCategory = z.infer<typeof IngredientCategorySchema>;
 export type CraftingRecipe = z.infer<typeof CraftingRecipeSchema>;
-export type Research = z.infer<typeof ResearchSchema>;
 export type DifficultyRequirement = z.infer<typeof DifficultyRequirementSchema>;

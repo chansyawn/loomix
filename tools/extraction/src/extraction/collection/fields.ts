@@ -1,5 +1,4 @@
 import { TastesSchema } from "../schema.ts";
-import type { Research } from "../schema.ts";
 import type { ContentContext } from "../content/context.ts";
 import { plainText } from "../content/model.ts";
 import type { CollectionEvidenceBuilder } from "./evidence.ts";
@@ -50,42 +49,7 @@ export function readCreatureFields(
     "93.16 TextMap → scientific name; strip markup",
     "scientific_name_not_configured_or_text_missing",
   );
-  const tasks: Research["tasks"] = [];
-  for (const [field, kind] of [
-    [7, "collectionCount"],
-    [8, "collectionSize"],
-    [9, "cooking"],
-  ] as const) {
-    const text = plainText(tables.text(row, field));
-    if (text) tasks.push({ kind, text });
-    else if (tables.uint(row, field, 0) !== 0)
-      throw new Error(`Unresolved research task ${id}.${field}`);
-  }
-  const completionConditions: Research["completionConditions"] = [];
-  for (const field of [13, 14, 15]) {
-    const text = plainText(tables.text(row, field));
-    if (!text) {
-      if (tables.uint(row, field, 0) !== 0)
-        throw new Error(`Unresolved research condition ${id}.${field}`);
-      continue;
-    }
-    const match = /^完成任意([1-9]\d*)个课题$/.exec(text);
-    if (!match) throw new Error(`Unknown research completion condition ${id}: ${text}`);
-    completionConditions.push({ requiredTaskCount: Number(match[1]), text });
-  }
-  const research =
-    tasks.length || completionConditions.length ? { tasks, completionConditions } : null;
-  proofs.put(
-    "item",
-    id,
-    "research",
-    research,
-    localizedSources(tables, row, [7, 8, 9, 13, 14, 15]),
-    "93.0=item ID",
-    "Retain localized task text and configured completion conditions; no player progress or size conversion",
-    "research_not_configured",
-  );
-  return { scientificName, research };
+  return { scientificName };
 }
 
 export function readDishFields(

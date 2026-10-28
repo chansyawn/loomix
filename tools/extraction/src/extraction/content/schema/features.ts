@@ -1,13 +1,11 @@
 import { z } from "zod";
 import { createRecordSchemas, DeliveredImageSchema, ItemIdSchema } from "./records.ts";
 import {
-  ResearchSchema,
   CraftingRecipeSchema,
   DifficultyRequirementSchema,
   TastesSchema,
 } from "@loomix/schema/catalog";
 export {
-  ResearchSchema,
   CraftingRecipeSchema,
   DifficultyRequirementSchema,
   DifficultyConditionSchema,
@@ -28,7 +26,6 @@ export function createObservedRecordSchemas(
         sources: text,
         scientificName: text,
       }),
-      research: ResearchSchema.nullable(),
     }),
     "plants.item": base["plants.item"].extend({
       attributes: base["plants.item"].shape.attributes.extend({ sources: text }),
@@ -66,6 +63,5 @@ export function createObservedRecordSchema(image: z.ZodType<string | null> = Del
 }
 export const ObservedRecordSchema = createObservedRecordSchema();
 export type CatalogRecordObserved = z.infer<typeof ObservedRecordSchema>;
-export type Research = z.infer<typeof ResearchSchema>;
 export type DifficultyRequirement = z.infer<typeof DifficultyRequirementSchema>;
 export type CraftingRecipe = z.infer<typeof CraftingRecipeSchema>;
