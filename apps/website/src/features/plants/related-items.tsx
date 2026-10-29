@@ -24,7 +24,7 @@ export function PlantRelatedItems({
             <CollectionItemLink
               item={item}
               state={{ plantsOrigin: origin }}
-              className="flex items-center gap-3 rounded-xl border p-2 text-sm underline-offset-4 hover:bg-muted/50 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex items-center gap-3 rounded-xl border p-2 text-sm underline-offset-4 hover:bg-muted/50 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
               <span aria-hidden="true" className="w-12 shrink-0 overflow-hidden rounded-lg">
                 <RecordImage image={item.image} name={item.name} compact />

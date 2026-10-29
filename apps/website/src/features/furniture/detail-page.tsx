@@ -52,7 +52,7 @@ export function FurnitureDetailPage({ detail }: { detail: FurnitureDetail }) {
       title={record.name}
       quality={record.quality}
       description={
-        <p className="text-sm leading-7 whitespace-pre-line text-muted-foreground">
+        <p className="text-sm/7 whitespace-pre-line text-muted-foreground">
           {record.description || "描述未提供"}
         </p>
       }
@@ -99,7 +99,7 @@ function FurnitureRecipes({ detail }: { detail: Extract<FurnitureDetail, { kind:
                           未知材料 #{material.itemId}
                         </span>
                       )}
-                      <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
+                      <span className="shrink-0 text-sm text-muted-foreground tabular-nums">
                         × {material.quantity}
                       </span>
                     </li>

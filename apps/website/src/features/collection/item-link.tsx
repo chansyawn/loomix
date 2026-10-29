@@ -22,7 +22,7 @@ export function CollectionItemLink({
       state={state}
       className={
         className ??
-        "rounded-sm text-sm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        "rounded-sm text-sm underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       }
     >
       {children ?? item.name}

@@ -27,7 +27,7 @@ export function RecordImage({
           loading={eager ? "eager" : "lazy"}
           decoding="async"
           onError={() => setFailed(true)}
-          className={`h-full w-full ${scene ? "object-cover" : compact ? "object-contain p-1" : "object-contain p-5"}`}
+          className={`size-full ${scene ? "object-cover" : compact ? "object-contain p-1" : "object-contain p-5"}`}
         />
       ) : (
         <div className="flex flex-col items-center gap-2 text-muted-foreground">

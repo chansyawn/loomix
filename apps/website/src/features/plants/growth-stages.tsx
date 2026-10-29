@@ -15,7 +15,7 @@ function StageList({ ids, growth }: { ids: number[]; growth: PlantGrowth }) {
             <div className="overflow-hidden rounded-xl border">
               <RecordImage image={stage?.image ?? null} name={stage?.name ?? "生长阶段"} compact />
             </div>
-            <p className="text-xs leading-5">{stage?.name ?? "阶段名称未提供"}</p>
+            <p className="text-xs/5">{stage?.name ?? "阶段名称未提供"}</p>
           </li>
         );
       })}
@@ -86,7 +86,7 @@ export function PlantGrowthStages({
         <h2 id="plant-growth-heading" className="text-lg font-semibold">
           生长阶段
         </h2>
-        <p className="text-sm leading-6 text-muted-foreground">
+        <p className="text-sm/6 text-muted-foreground">
           成熟形态为不同产物分支；阶段数量不代表成熟天数。
         </p>
       </div>

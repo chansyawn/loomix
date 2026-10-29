@@ -50,7 +50,7 @@ export function NeighborDetailPage({ neighbor }: { neighbor: NeighborDetail }) {
               image={neighbor.image}
               name={`${neighbor.name}的星湾插画`}
               eager
-              className="aspect-[156/41] rounded-none"
+              className="aspect-156/41 rounded-none"
             />
             <div className="space-y-4 p-5 md:p-8">
               <div className="flex flex-wrap items-center gap-3">

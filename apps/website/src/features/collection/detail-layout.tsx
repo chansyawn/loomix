@@ -27,7 +27,7 @@ export function CollectionDetailLayout({
         </div>
         <div className="min-w-0 space-y-4">
           <div className="space-y-3">
-            <h1 className="text-3xl leading-tight font-semibold tracking-tight wrap-break-word sm:text-4xl">
+            <h1 className="text-3xl/tight font-semibold tracking-tight wrap-break-word sm:text-4xl">
               {title}
             </h1>
             {quality === null ? (
@@ -41,7 +41,7 @@ export function CollectionDetailLayout({
             {fields.map(([label, value]) => (
               <div key={label} className="min-w-0 space-y-1.5">
                 <dt className="text-xs text-muted-foreground">{label}</dt>
-                <dd className="text-sm leading-6 whitespace-pre-line wrap-break-word">
+                <dd className="text-sm/6 wrap-break-word whitespace-pre-line">
                   {value || "未提供"}
                 </dd>
               </div>

@@ -68,7 +68,7 @@ export function NeighborTravel({ neighbor }: { neighbor: NeighborDetail }) {
                 <ul className="divide-y px-3 md:px-6">
                   {group.reactions.map((reaction) => (
                     <li key={reaction.key} className="space-y-2 py-4">
-                      <p className="whitespace-pre-wrap leading-7 wrap-anywhere">{reaction.text}</p>
+                      <p className="leading-7 wrap-anywhere whitespace-pre-wrap">{reaction.text}</p>
                       {reaction.parameters && (
                         <p className="text-xs text-muted-foreground">
                           原始触发参数 · {reaction.parameters}

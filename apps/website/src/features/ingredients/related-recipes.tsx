@@ -7,7 +7,7 @@ import type { IngredientDishMatch } from "./model";
 
 export function RecipeAssociationNotice({ unconfirmedCount = 0 }: { unconfirmedCount?: number }) {
   return (
-    <p className="text-sm leading-6 text-muted-foreground">
+    <p className="text-sm/6 text-muted-foreground">
       关联结果来自已解析的食材条件，仅表示可作为候选食材；仍需满足其他条件。用量与实际投放规则尚未确认。
       {unconfirmedCount > 0 &&
         `另有 ${unconfirmedCount} 道菜肴的食材条件未完整确认，未确认部分不参与匹配。`}
@@ -37,12 +37,12 @@ function RecipeMatch({ match }: { match: IngredientDishMatch }) {
               className="size-3.5 shrink-0 text-muted-foreground"
             />
           </div>
-          <p className="text-xs leading-5 text-muted-foreground">
+          <p className="text-xs/5 text-muted-foreground">
             {[dish.difficulty, dish.cookware, effectSummary(dish)].filter(Boolean).join(" · ") ||
               "菜肴信息未提供"}
           </p>
           <ul
-            className="space-y-1 text-xs leading-5 text-muted-foreground"
+            className="space-y-1 text-xs/5 text-muted-foreground"
             aria-label={`${dish.name}匹配的食材条件`}
           >
             {conditions.map((condition) => (
@@ -66,7 +66,7 @@ export function RelatedRecipes({
 }) {
   if (matches.length === 0)
     return (
-      <p className="rounded-xl border p-4 text-sm leading-6 text-muted-foreground">
+      <p className="rounded-xl border p-4 text-sm/6 text-muted-foreground">
         暂无匹配的已解析配方，不代表该食材不能用于烹饪。
       </p>
     );

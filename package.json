@@ -11,6 +11,7 @@
   },
   "devDependencies": {
     "@shadcn/lint": "catalog:",
+    "eslint-plugin-better-tailwindcss": "catalog:",
     "vite-plus": "catalog:"
   },
   "devEngines": {

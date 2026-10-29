@@ -20,7 +20,7 @@ export function DishEffects({ effects }: { effects: DishItem["effects"] }) {
           <h2 id="dish-effects" className="text-lg font-semibold">
             特殊效果
           </h2>
-          <p className="text-sm leading-6 text-muted-foreground">
+          <p className="text-sm/6 text-muted-foreground">
             结构化效果信息来自菜肴配置，可能与基础效果同时存在。
           </p>
         </div>
@@ -37,7 +37,7 @@ export function DishEffects({ effects }: { effects: DishItem["effects"] }) {
                     <p className="text-xs text-muted-foreground">{metadata.join(" · ")}</p>
                   )}
                 </div>
-                <p className="text-sm leading-6 whitespace-pre-line text-muted-foreground">
+                <p className="text-sm/6 whitespace-pre-line text-muted-foreground">
                   {effect.description || "效果说明未提供"}
                 </p>
               </li>
@@ -65,10 +65,10 @@ export function DishRequirementSource({
         <span>查看解锁条件原始表达式</span>
         <ChevronDownIcon
           aria-hidden="true"
-          className="size-4 shrink-0 text-muted-foreground motion-safe:transition-transform group-open/requirement:rotate-180"
+          className="size-4 shrink-0 text-muted-foreground group-open/requirement:rotate-180 motion-safe:transition-transform"
         />
       </summary>
-      <code className="block border-t px-4 py-3 text-xs leading-5 wrap-anywhere text-muted-foreground">
+      <code className="block border-t px-4 py-3 text-xs/5 wrap-anywhere text-muted-foreground">
         {requirement.rawExpression}
       </code>
     </details>

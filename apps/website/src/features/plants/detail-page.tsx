@@ -58,7 +58,7 @@ export function PlantsDetailPage({ detail }: { detail: PlantsDetail }) {
       quality={record.quality}
       description={
         (detail.kind === "item" || record.description) && (
-          <p className="text-sm leading-7 whitespace-pre-line text-muted-foreground">
+          <p className="text-sm/7 whitespace-pre-line text-muted-foreground">
             {record.description || "描述未提供"}
           </p>
         )

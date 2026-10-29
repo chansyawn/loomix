@@ -25,7 +25,7 @@ export function NeighborImage({
           loading={eager ? "eager" : "lazy"}
           decoding="async"
           onError={() => setFailedImage(image)}
-          className="h-full w-full object-contain"
+          className="size-full object-contain"
         />
       ) : (
         <div

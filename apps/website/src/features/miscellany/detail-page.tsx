@@ -32,7 +32,7 @@ export function MiscellanyDetailPage({
       title={item.name}
       quality={item.quality}
       description={
-        <p className="text-sm leading-7 whitespace-pre-line text-muted-foreground">
+        <p className="text-sm/7 whitespace-pre-line text-muted-foreground">
           {item.description || "描述未提供"}
         </p>
       }

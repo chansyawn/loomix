@@ -18,8 +18,8 @@ export function CollectionResultsSummary({
   return (
     <FilterSummary
       status={
-        <p role="status" className="whitespace-nowrap text-xs text-muted-foreground">
-          共 <span className="font-medium tabular-nums text-foreground">{total}</span> {unit}
+        <p role="status" className="text-xs whitespace-nowrap text-muted-foreground">
+          共 <span className="font-medium text-foreground tabular-nums">{total}</span> {unit}
         </p>
       }
       chips={chips.map((chip) => (

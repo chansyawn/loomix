@@ -55,7 +55,7 @@ export function PlantItemGrowing({
               params={{ id: String(group.id) }}
               hash="plant-growth"
               state={{ plantsOrigin: origin }}
-              className="text-sm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="text-sm underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
               查看{group.name}的种子与生长阶段
             </Link>

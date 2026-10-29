@@ -17,7 +17,7 @@ export function SeriesImage({
       <RecordImage key={series.image} image={series.image} name={series.name} scene eager={eager} />
     );
   return (
-    <div className="grid aspect-2/1 grid-cols-2 grid-rows-2 gap-1 overflow-hidden bg-muted p-2 [&>div]:aspect-auto [&>div]:min-h-0 [&_img]:p-2">
+    <div className="grid aspect-2/1 grid-cols-2 grid-rows-2 gap-1 overflow-hidden bg-muted p-2 [&_img]:p-2 [&>div]:aspect-auto [&>div]:min-h-0">
       {Array.from({ length: 4 }, (_, index) => {
         const item = preview[index];
         return item ? (

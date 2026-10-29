@@ -98,7 +98,7 @@ function FilterOptions<K extends string>({
             />
           )}
           {group.description && (
-            <p className="text-xs leading-5 text-muted-foreground">{group.description}</p>
+            <p className="text-xs/5 text-muted-foreground">{group.description}</p>
           )}
           {group.tree ? (
             <ul className="space-y-0.5 py-1">
@@ -118,7 +118,7 @@ function FilterOptions<K extends string>({
               ))}
             </ul>
           ) : (
-            <div className="grid grid-cols-2 gap-x-3 gap-y-3 py-1">
+            <div className="grid grid-cols-2 gap-3 py-1">
               {options.map((option) => (
                 <div
                   key={option.value}

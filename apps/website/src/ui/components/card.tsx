@@ -20,7 +20,7 @@ function Card({
         "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground shadow-xs ring-1 ring-foreground/5 [--card-spacing:--spacing(6)] has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(4)] dark:ring-foreground/10 *:[img:first-child]:rounded-t-4xl *:[img:last-child]:rounded-b-4xl",
         media === "flush" && "pt-0",
         interactive &&
-          "transition-[translate,box-shadow] duration-180 ease-out hover:shadow-md hover:ring-foreground/10 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-solid has-[:focus-visible]:outline-ring motion-safe:hover:-translate-y-0.5 motion-reduce:transition-none dark:hover:ring-foreground/20",
+          "transition-[translate,box-shadow] duration-180 ease-out hover:shadow-md hover:ring-foreground/10 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring has-focus-visible:outline-solid motion-safe:hover:-translate-y-0.5 motion-reduce:transition-none dark:hover:ring-foreground/20",
         className,
       )}
       {...props}

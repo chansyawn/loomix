@@ -22,7 +22,7 @@ export function PlantSeedLinks({ seeds, seriesId }: { seeds: PlantSeed[]; series
             params={{ id: String(seriesId) }}
             hash={`seed-${seed.id}`}
             state={{ plantsOrigin: origin }}
-            className="rounded-sm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="rounded-sm underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
             {seed.name}
           </Link>
@@ -72,13 +72,11 @@ export function PlantSeedInfo({
                 <h3 className="font-medium">{seed.name}</h3>
                 {seed.detail.quality !== null && <QualityBadge quality={seed.detail.quality} />}
                 {seed.detail.description && (
-                  <p className="text-sm leading-6 whitespace-pre-line text-muted-foreground">
+                  <p className="text-sm/6 whitespace-pre-line text-muted-foreground">
                     {seed.detail.description}
                   </p>
                 )}
-                {sources.length > 0 && (
-                  <p className="text-sm leading-6">获取来源：{sources.join("、")}</p>
-                )}
+                {sources.length > 0 && <p className="text-sm/6">获取来源：{sources.join("、")}</p>}
                 {seed.detail.harvestCount !== null && (
                   <p className="text-sm">收获茬数：{seed.detail.harvestCount} 茬</p>
                 )}

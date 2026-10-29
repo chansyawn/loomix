@@ -46,6 +46,7 @@ catalog:
   sax: ^1.6.1
   "@types/sax": ^1.2.7
   "@shadcn/lint": ^0.2.3
+  eslint-plugin-better-tailwindcss: ^4.10.0
 catalogs:
   website:
     "@types/node": ^22.10.2

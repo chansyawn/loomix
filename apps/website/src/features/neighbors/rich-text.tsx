@@ -20,5 +20,5 @@ export function StoryText({ text }: { text: string }) {
     const frame = stack.pop()!;
     stack.at(-1)!.children.push(`<${frame.tag}>`, ...frame.children);
   }
-  return <p className="whitespace-pre-wrap leading-8 wrap-anywhere">{root.children}</p>;
+  return <p className="leading-8 wrap-anywhere whitespace-pre-wrap">{root.children}</p>;
 }

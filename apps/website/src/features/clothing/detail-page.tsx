@@ -43,7 +43,7 @@ export function ClothingDetailPage({ detail }: { detail: ClothingDetail }) {
       title={record.name}
       quality={record.quality}
       description={
-        <p className="text-sm leading-7 whitespace-pre-line text-muted-foreground">
+        <p className="text-sm/7 whitespace-pre-line text-muted-foreground">
           {record.description || "描述未提供"}
         </p>
       }
