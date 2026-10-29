@@ -1,7 +1,12 @@
 import type { IngredientCategory, IngredientExpression } from "@loomix/schema/catalog";
 import type { CollectionView, DishItem, IngredientItem } from "../collection-view";
+import type { IngredientFilterKey } from "./search";
 
 export type IngredientDimension = "type" | "color" | "quality" | "group";
+export type IngredientTag = {
+  category: IngredientCategory;
+  filterKey: IngredientFilterKey;
+};
 export type IngredientCondition = {
   position: number;
   expression: IngredientExpression;
@@ -9,18 +14,16 @@ export type IngredientCondition = {
 };
 export type IngredientDishMatch = { dish: DishItem; conditions: IngredientCondition[] };
 export type IngredientUsage = {
-  categories: IngredientCategory[];
+  tags: IngredientTag[];
   dishes: IngredientDishMatch[];
 };
 export type IngredientsData = {
   categories: IngredientCategory[];
   categoriesById: ReadonlyMap<number, IngredientCategory>;
   dimensions: ReadonlyMap<number, IngredientDimension>;
-  browseCategories: IngredientCategory[];
   itemsById: ReadonlyMap<number, IngredientItem>;
   categoriesByItemId: ReadonlyMap<number, IngredientCategory[]>;
   dishesByItemId: ReadonlyMap<number, IngredientDishMatch[]>;
-  dishesByCategoryId: ReadonlyMap<number, IngredientDishMatch[]>;
   unconfirmedRecipeCount: number;
 };
 
@@ -39,6 +42,23 @@ function dimension(
   return ["食材", "食材_荤菜", "食材_素菜", "食材_原料", "食材_不宜使用"].includes(category.tagName)
     ? "group"
     : "type";
+}
+
+export function ingredientFilterKey(
+  category: IngredientCategory,
+  categories: ReadonlyMap<number, IngredientCategory>,
+): IngredientFilterKey {
+  const value = dimension(category, categories);
+  if (value === "color") return "colors";
+  if (value === "quality") return "qualities";
+  return "types";
+}
+
+export function ingredientTag(
+  category: IngredientCategory,
+  categories: ReadonlyMap<number, IngredientCategory>,
+): IngredientTag {
+  return { category, filterKey: ingredientFilterKey(category, categories) };
 }
 
 type MatchIndex = Map<number, Map<number, IngredientDishMatch>>;
@@ -76,14 +96,13 @@ export function buildIngredientsData(
   for (const category of categories) {
     for (const id of new Set(category.itemIds)) {
       const item = view.ingredientItemsById.get(id);
-      // Reference-only records have no canonical detail page and must not become links.
+      // Reference-only records have no canonical detail page and must not become browsable.
       if (!item || item.listed === false) continue;
       itemsById.set(id, item);
       categoriesByItemId.set(id, [...(categoriesByItemId.get(id) ?? []), category]);
     }
   }
   const byItem: MatchIndex = new Map();
-  const byCategory: MatchIndex = new Map();
   let unconfirmedRecipeCount = 0;
   for (const dish of view.dishes.items) {
     const slots = dish.recipe?.slots;
@@ -96,45 +115,34 @@ export function buildIngredientsData(
         expression: slot.expression,
         label: ingredientConditionLabel(slot.expression, categoriesById),
       };
-      const matchedCategories = new Set<number>();
       // The resolved candidates preserve intersections (all) and unions (any).
       for (const id of new Set(slot.itemIds)) {
         if (!itemsById.has(id)) continue;
         addMatch(byItem, id, dish, condition);
-        for (const category of categoriesByItemId.get(id) ?? []) matchedCategories.add(category.id);
       }
-      for (const id of matchedCategories) addMatch(byCategory, id, dish, condition);
     });
   }
-  const browseCategories = categories.filter((category) => {
-    const parent = category.parentId === null ? undefined : categoriesById.get(category.parentId);
-    return (
-      dimensions.get(category.id) === "type" &&
-      parent !== undefined &&
-      dimensions.get(parent.id) === "group" &&
-      category.itemIds.some((id) => itemsById.has(id))
-    );
-  });
   return {
     categories,
     categoriesById,
     dimensions,
-    browseCategories,
     itemsById,
     categoriesByItemId,
     dishesByItemId: flattenIndex(byItem),
-    dishesByCategoryId: flattenIndex(byCategory),
     unconfirmedRecipeCount,
   };
 }
 
 export function ingredientUsage(data: IngredientsData, itemId: number): IngredientUsage | null {
   const categories = (data.categoriesByItemId.get(itemId) ?? []).filter(
-    (category) =>
-      data.dimensions.get(category.id) !== "group" &&
-      !["食材_颜色", "食材_品阶"].includes(category.tagName),
+    (category) => !["食材", "食材_颜色", "食材_品阶", "食材_不宜使用"].includes(category.tagName),
   );
-  return categories.length ? { categories, dishes: data.dishesByItemId.get(itemId) ?? [] } : null;
+  return categories.length
+    ? {
+        tags: categories.map((category) => ingredientTag(category, data.categoriesById)),
+        dishes: data.dishesByItemId.get(itemId) ?? [],
+      }
+    : null;
 }
 
 export function ingredientConditionLabel(

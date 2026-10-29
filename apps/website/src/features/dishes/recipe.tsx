@@ -3,8 +3,9 @@ import { ChevronDownIcon, CookingPotIcon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import type { IngredientCategory, IngredientExpression } from "@loomix/schema/catalog";
 import type { IngredientItem } from "../collection-view";
+import { ingredientTag } from "../ingredients/model";
+import { IngredientTagLink } from "../ingredients/tag-link";
 import type { DishesDetail } from "./detail";
-import { IngredientCategoryLink } from "../ingredients/category-link";
 import { useDishesOrigin } from "./detail-navigation";
 
 function IngredientItemLink({ item }: { item: IngredientItem }) {
@@ -35,6 +36,7 @@ function IngredientRequirement({
     const matches = category.itemIds
       .map((id) => items.get(id))
       .filter((item): item is IngredientItem => item !== undefined && item.listed !== false);
+    const tag = ingredientTag(category, categories);
     return (
       <div className="min-w-0 space-y-2">
         <details className="group/ingredient min-w-0 overflow-hidden rounded-xl border">
@@ -61,12 +63,13 @@ function IngredientRequirement({
             <p className="border-t px-4 py-3 text-sm text-muted-foreground">暂无正式收录物品</p>
           )}
         </details>
-        <IngredientCategoryLink
+        <IngredientTagLink
           category={category}
+          filterKey={tag.filterKey}
           className="inline-block px-2 text-xs text-muted-foreground underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring"
         >
-          查看{category.name}类别与关联菜肴 →
-        </IngredientCategoryLink>
+          在食材中筛选“{category.name}” →
+        </IngredientTagLink>
       </div>
     );
   }

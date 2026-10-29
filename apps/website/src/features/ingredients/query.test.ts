@@ -4,24 +4,18 @@ import { ingredientFilterGroups, queryIngredients } from "./query";
 import { ingredientsQuerySchema } from "./search";
 
 describe("ingredient browsing and filtering", () => {
-  it("starts with category browsing rather than dumping every item", () => {
+  it("starts with every concrete ingredient and treats tags as filters", () => {
     const { data } = ingredientsFixture();
     const result = queryIngredients(data, ingredientsQuerySchema.parse({}));
     expect(result.active).toBe(false);
-    expect(result.categories.map((category) => category.id)).toEqual([10, 12, 13]);
-    expect(result.items).toHaveLength(6);
+    expect(result.items.map((item) => item.id)).toEqual([1, 2, 3, 4, 5, 6]);
   });
 
-  it("finds both categories and concrete ingredients and supports searching by category names", () => {
+  it("searches concrete ingredient names without matching category names", () => {
     const { data } = ingredientsFixture();
     const result = queryIngredients(data, ingredientsQuerySchema.parse({ q: " 番茄 " }));
-    expect(result.categories.map((category) => category.id)).toEqual([11]);
     expect(result.items.map((item) => item.id)).toEqual([1, 2, 3]);
-    expect(
-      queryIngredients(data, ingredientsQuerySchema.parse({ q: "水果类" })).items.map(
-        (item) => item.id,
-      ),
-    ).toEqual([4]);
+    expect(queryIngredients(data, ingredientsQuerySchema.parse({ q: "水果类" })).items).toEqual([]);
   });
 
   it("combines type, color and quality across dimensions while accepting alternatives within each dimension", () => {
@@ -31,10 +25,14 @@ describe("ingredient browsing and filtering", () => {
       ingredientsQuerySchema.parse({ types: ["10", "13"], colors: ["21"], qualities: ["31"] }),
     );
     expect(result.items.map((item) => item.id)).toEqual([2]);
-    expect(result.categories).toEqual([]);
     expect(queryIngredients(data, ingredientsQuerySchema.parse({ types: ["999"] })).items).toEqual(
       [],
     );
+    expect(
+      queryIngredients(data, ingredientsQuerySchema.parse({ types: ["2"] })).items.map(
+        (item) => item.id,
+      ),
+    ).toEqual([1, 2, 3, 4]);
   });
 
   it("keeps color and quality roots out of filter options", () => {
@@ -45,7 +43,14 @@ describe("ingredient browsing and filtering", () => {
     expect(groups.find((group) => group.key === "qualities")?.options).toEqual([
       { value: "31", label: "特优" },
     ]);
-    expect(groups[0].options.map((option) => option.value)).toEqual(["10", "11", "12", "13"]);
+    expect(groups[0].options.map((option) => option.value)).toEqual([
+      "2",
+      "3",
+      "10",
+      "11",
+      "12",
+      "13",
+    ]);
   });
 
   it("sorts by unique associated dish counts without reordering source data", () => {
@@ -67,6 +72,5 @@ describe("ingredient browsing and filtering", () => {
       ingredientsQuerySchema.parse({ q: "不存在的食材" }),
     );
     expect(result.items).toEqual([]);
-    expect(result.categories).toEqual([]);
   });
 });

@@ -6,7 +6,6 @@ import { loadPlantsDetail } from "../plants/detail";
 import { loadCreaturesDetail } from "../creatures/detail";
 import { loadMiscellanyDetail } from "../miscellany/detail";
 import { loadDishes } from "../dishes/data";
-import { loadIngredientCategoryDetail } from "./detail";
 import { categoryExpression, recipeFixture, recipeSlot } from "./fixture";
 
 function setupResources() {
@@ -56,15 +55,10 @@ function setupResources() {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("ingredient data loading", () => {
-  it("shares one validated resource load with cooking list and category detail indexes", async () => {
+  it("shares one validated resource load with the cooking list indexes", async () => {
     const request = setupResources();
     const dishes = await loadDishes();
     expect(dishes.ingredients.itemsById.size).toBe(3);
-    expect(request).toHaveBeenCalledTimes(3);
-    request.mockClear();
-    const category = await loadIngredientCategoryDetail("11");
-    expect(category.items.map((item) => item.id)).toEqual([1, 2, 3]);
-    expect(category.dishes.map((match) => match.dish.id)).toEqual([100]);
     expect(request).toHaveBeenCalledTimes(3);
   });
 
@@ -84,11 +78,8 @@ describe("ingredient data loading", () => {
     expect(request).toHaveBeenCalledTimes(3);
   });
 
-  it("rejects invalid category addresses before fetching and keeps resource failures retryable", async () => {
-    const request = setupResources();
-    await expect(loadIngredientCategoryDetail("01")).rejects.toBeDefined();
-    expect(request).not.toHaveBeenCalled();
+  it("keeps ingredient-backed resource failures retryable", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })));
-    await expect(loadIngredientCategoryDetail("11")).rejects.toThrow("503");
+    await expect(loadDishes()).rejects.toThrow("503");
   });
 });

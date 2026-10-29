@@ -14,7 +14,7 @@ import {
   updateViewQuery,
 } from "../dishes/search";
 import { dishesOrigin } from "../dishes/detail-navigation";
-import { emptyIngredientsQuery, ingredientsQuerySchema } from "./search";
+import { emptyIngredientsQuery, ingredientFiltersForTag, ingredientsQuerySchema } from "./search";
 
 function setup() {
   const root = createRootRoute();
@@ -24,10 +24,6 @@ function setup() {
     validateSearch: dishesSearchSchema,
     search: { middlewares: [compactDishesSearchMiddleware] },
   });
-  const category = createRoute({
-    getParentRoute: () => root,
-    path: "/collection/dishes/ingredients/$id",
-  });
   const item = createRoute({ getParentRoute: () => root, path: "/collection/plants/items/$id" });
   return createRouter({
     history: createMemoryHistory({
@@ -35,7 +31,7 @@ function setup() {
         "/collection/dishes?view=ingredients&ingredients=%7B%22q%22%3A%22番茄%22%7D",
       ],
     }),
-    routeTree: root.addChildren([list, category, item]),
+    routeTree: root.addChildren([list, item]),
   });
 }
 
@@ -80,20 +76,26 @@ describe("ingredient URL state", () => {
     expect(compactDishesSearch({})).toEqual({});
   });
 
-  it("keeps ingredient search origin across category and canonical item details and returns to the original history entry", async () => {
+  it("builds an ingredient filter from exactly one tag", () => {
+    expect(ingredientFiltersForTag(11, "types")).toEqual({
+      ...emptyIngredientsQuery(),
+      types: ["11"],
+    });
+    expect(ingredientFiltersForTag(31, "qualities")).toEqual({
+      ...emptyIngredientsQuery(),
+      qualities: ["31"],
+    });
+  });
+
+  it("keeps ingredient search origin across canonical item details and returns to the original history entry", async () => {
     const router = setup();
     await router.load();
     const initial = router.state.location;
     const origin = dishesOrigin(initial);
     await router.navigate({
-      to: "/collection/dishes/ingredients/$id",
-      params: { id: "11" },
-      state: { dishesOrigin: origin },
-    });
-    await router.navigate({
       to: "/collection/plants/items/$id",
       params: { id: "1" },
-      state: { dishesOrigin: dishesOrigin(router.state.location) },
+      state: { dishesOrigin: origin },
     });
     const retained = dishesOrigin(router.state.location)!;
     expect(retained).toEqual(origin);

@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+export const ingredientFilterKeys = ["types", "colors", "qualities"] as const;
+export type IngredientFilterKey = (typeof ingredientFilterKeys)[number];
+
 export const ingredientSortOptions = {
   original: "默认顺序",
   "name-asc": "名称：升序",
@@ -31,6 +34,13 @@ export const ingredientsQuerySchema = z.object({
 });
 export type IngredientsQuery = z.output<typeof ingredientsQuerySchema>;
 export const emptyIngredientsQuery = (): IngredientsQuery => ingredientsQuerySchema.parse({});
+
+export function ingredientFiltersForTag(
+  categoryId: number,
+  filterKey: IngredientFilterKey,
+): IngredientsQuery {
+  return { ...emptyIngredientsQuery(), [filterKey]: [String(categoryId)] };
+}
 
 export function compactIngredientsQuery(query: IngredientsQuery): Partial<IngredientsQuery> {
   return {

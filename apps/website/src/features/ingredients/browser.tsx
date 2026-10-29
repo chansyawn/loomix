@@ -8,8 +8,7 @@ import type { IngredientsData } from "./model";
 import { ingredientFilterGroups, queryIngredients } from "./query";
 import { emptyIngredientsQuery, ingredientSortOptions } from "./search";
 import type { IngredientsQuery } from "./search";
-import { IngredientCategories, IngredientItems } from "./cards";
-import { IngredientCategoryLink } from "./category-link";
+import { IngredientItems } from "./cards";
 import { RecipeAssociationNotice } from "./related-recipes";
 
 export function IngredientsBrowser({
@@ -26,7 +25,6 @@ export function IngredientsBrowser({
   onLayoutChange: (layout: CollectionLayout) => void;
 }) {
   const result = queryIngredients(data, query);
-  const root = data.categories.find((category) => category.tagName === "食材");
   const groups = ingredientFilterGroups(data);
   const clear = () => onQueryChange(emptyIngredientsQuery());
   const chips = collectionFilterChips(
@@ -39,8 +37,8 @@ export function IngredientsBrowser({
     <>
       <CollectionToolbar
         title="食材"
-        searchLabel="搜索食材或类别"
-        placeholder="搜索食材或类别，如番茄、鱼类…"
+        searchLabel="搜索食材"
+        placeholder="搜索食材名称，如番茄、虾…"
         query={query.q}
         onQueryChange={(q, replace) => onQueryChange({ q }, replace)}
         sort={query.sort}
@@ -68,23 +66,10 @@ export function IngredientsBrowser({
       <div className="mb-6 rounded-2xl border bg-muted/20 px-4 py-3">
         <RecipeAssociationNotice unconfirmedCount={data.unconfirmedRecipeCount} />
       </div>
-      {result.categories.length > 0 && (
-        <section aria-labelledby="ingredient-types" className="mb-8 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 id="ingredient-types" className="text-lg font-semibold">
-              {result.active ? "匹配的食材类别" : "按种类浏览"}
-            </h2>
-            {root && !result.active && (
-              <IngredientCategoryLink category={root}>查看全部食材</IngredientCategoryLink>
-            )}
-          </div>
-          <IngredientCategories categories={result.categories} data={data} layout={layout} />
-        </section>
-      )}
-      {result.active && result.items.length > 0 && (
+      {result.items.length > 0 && (
         <section aria-labelledby="ingredient-results" className="space-y-4 pb-8">
           <h2 id="ingredient-results" className="text-lg font-semibold">
-            匹配的具体食材
+            {result.active ? "筛选结果" : "全部食材"}
           </h2>
           <IngredientItems items={result.items} data={data} layout={layout} />
         </section>

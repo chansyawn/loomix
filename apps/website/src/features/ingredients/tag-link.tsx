@@ -1,24 +1,28 @@
 import type { ComponentProps } from "react";
 import { Link } from "@tanstack/react-router";
 import type { IngredientCategory } from "@loomix/schema/catalog";
-import { useDishesOrigin } from "../dishes/detail-navigation";
 import { buttonVariants } from "@/ui/components/button";
+import { ingredientFiltersForTag } from "./search";
+import type { IngredientFilterKey } from "./search";
 
-export function IngredientCategoryLink({
+export function IngredientTagLink({
   category,
+  filterKey,
   className,
   children,
 }: {
   category: Pick<IngredientCategory, "id" | "name">;
+  filterKey: IngredientFilterKey;
   className?: string;
   children?: ComponentProps<"a">["children"];
 }) {
-  const origin = useDishesOrigin();
   return (
     <Link
-      to="/collection/dishes/ingredients/$id"
-      params={{ id: String(category.id) }}
-      state={{ dishesOrigin: origin }}
+      to="/collection/dishes"
+      search={{
+        view: "ingredients",
+        ingredients: ingredientFiltersForTag(category.id, filterKey),
+      }}
       className={className ?? buttonVariants({ variant: "outline", size: "sm" })}
     >
       {children ?? category.name}

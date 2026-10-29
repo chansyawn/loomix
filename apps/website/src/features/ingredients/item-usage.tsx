@@ -1,7 +1,7 @@
 import { CookingPotIcon } from "lucide-react";
 import { DishesReturnLink } from "../dishes/detail-navigation";
 import type { IngredientUsage } from "./model";
-import { IngredientCategoryLink } from "./category-link";
+import { IngredientTagLink } from "./tag-link";
 import { RecipeAssociationNotice, RelatedRecipes } from "./related-recipes";
 
 export function ItemCookingUsage({ usage }: { usage: IngredientUsage | null }) {
@@ -20,9 +20,9 @@ export function ItemCookingUsage({ usage }: { usage: IngredientUsage | null }) {
           返回烹饪图鉴
         </DishesReturnLink>
       </div>
-      <div className="flex flex-wrap gap-2" aria-label="食材分类">
-        {usage.categories.map((category) => (
-          <IngredientCategoryLink key={category.id} category={category} />
+      <div className="flex flex-wrap gap-2" aria-label="食材标签">
+        {usage.tags.map(({ category, filterKey }) => (
+          <IngredientTagLink key={category.id} category={category} filterKey={filterKey} />
         ))}
       </div>
       <div className="space-y-2">
