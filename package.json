@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "ready": "vp check && vp run -r test && vp run -r build",
+    "lint": "vp lint",
     "dev": "vp run website#dev",
     "prepare": "vp config"
   },
   "devDependencies": {
+    "@shadcn/lint": "catalog:",
     "vite-plus": "catalog:"
   },
   "devEngines": {

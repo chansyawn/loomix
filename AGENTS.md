@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## Lint
+
+- 修改代码后运行 `vp lint`，并修复所有错误。
+
 ## React skill
 
 - 开发 React 组件与 Hooks 时，优先使用 React 19 最新稳定特性；使用前核对项目安装版本及 [React 官方文档](https://react.dev/reference/react)。
