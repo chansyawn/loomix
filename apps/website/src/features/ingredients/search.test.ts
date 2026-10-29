@@ -41,11 +41,9 @@ describe("ingredient URL state", () => {
       ingredientsQuerySchema.parse({
         q: 7,
         sort: "bad",
-        types: ["10", "10", 11, "01", "-1", "1e2", "9007199254740992"],
-        colors: null,
-        qualities: ["31"],
+        ingredientTags: ["10", "10", 11, "01", "-1", "1e2", "9007199254740992", "31"],
       }),
-    ).toEqual({ ...emptyIngredientsQuery(), types: ["10"], qualities: ["31"] });
+    ).toEqual({ ...emptyIngredientsQuery(), ingredientTags: ["10", "31"] });
     for (const value of [null, [], "bad", 42])
       expect(dishesSearchSchema.parse({ ingredients: value }).ingredients).toEqual(
         emptyIngredientsQuery(),
@@ -60,9 +58,7 @@ describe("ingredient URL state", () => {
       series: { q: "饮品" },
       ingredients: {
         q: '番茄 & + # ? "',
-        types: ["11"],
-        colors: ["21"],
-        qualities: ["31"],
+        ingredientTags: ["11", "21", "31"],
         sort: "recipes-desc",
       },
     });
@@ -77,13 +73,9 @@ describe("ingredient URL state", () => {
   });
 
   it("builds an ingredient filter from exactly one tag", () => {
-    expect(ingredientFiltersForTag(11, "types")).toEqual({
+    expect(ingredientFiltersForTag(11)).toEqual({
       ...emptyIngredientsQuery(),
-      types: ["11"],
-    });
-    expect(ingredientFiltersForTag(31, "qualities")).toEqual({
-      ...emptyIngredientsQuery(),
-      qualities: ["31"],
+      ingredientTags: ["11"],
     });
   });
 

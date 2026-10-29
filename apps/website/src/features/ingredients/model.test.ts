@@ -28,12 +28,12 @@ describe("ingredient relationships", () => {
     expect(matches[0].conditions.map((condition) => condition.position)).toEqual([1, 2]);
   });
 
-  it("indexes dishes by eligible ingredient category without losing compound conditions", () => {
+  it("indexes browsable recipe candidates without losing compound conditions", () => {
     const { data } = ingredientsFixture();
-    expect(data.dishesByCategoryId.get(11)?.map((match) => match.dish.id)).toEqual([100, 102, 109]);
-    expect(data.dishesByCategoryId.get(13)?.map((match) => match.dish.id)).toEqual([101]);
-    expect(data.dishesByCategoryId.get(13)?.[0].conditions[0].label).toBe("虾类 且 特优");
-    expect(data.dishesByCategoryId.get(12)?.map((match) => match.dish.id)).not.toContain(103);
+    expect(data.ingredientCandidatesByDishId.get(101)).toEqual([6]);
+    expect(data.ingredientCandidatesByDishId.get(109)).toEqual([1]);
+    expect(data.ingredientCandidatesByDishId.get(103)).toBeUndefined();
+    expect(data.dishesByItemId.get(6)?.[0].conditions[0].label).toBe("虾类 且 特优");
   });
 
   it("skips unconfirmed slots without discarding known slots or treating confirmed empty recipes as unknown", () => {
@@ -45,15 +45,8 @@ describe("ingredient relationships", () => {
 
   it("exposes useful ingredient tags and hides cooking sections for noningredients", () => {
     const { data } = ingredientsFixture();
-    expect(ingredientUsage(data, 2)?.tags.map((tag) => tag.category.id)).toEqual([
+    expect(ingredientUsage(data, 2)?.tags.map((category) => category.id)).toEqual([
       2, 10, 11, 21, 31,
-    ]);
-    expect(ingredientUsage(data, 2)?.tags.map((tag) => tag.filterKey)).toEqual([
-      "types",
-      "types",
-      "types",
-      "colors",
-      "qualities",
     ]);
     expect(ingredientUsage(data, 5)).toMatchObject({ dishes: [] });
     expect(ingredientUsage(data, 8)).toBeNull();

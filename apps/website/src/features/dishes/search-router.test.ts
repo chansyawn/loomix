@@ -43,7 +43,7 @@ describe("compact dish URLs", () => {
           cookwares: ["烤架"],
           tastes: ["甜"],
           difficultyRequirements: ["厨师等级 ≥ 5"],
-          ingredientCategories: ["50015"],
+          ingredientTags: ["50015"],
         },
       }),
     });
@@ -54,7 +54,7 @@ describe("compact dish URLs", () => {
         cookwares: ["烤架"],
         tastes: ["甜"],
         difficultyRequirements: ["厨师等级 ≥ 5"],
-        ingredientCategories: ["50015"],
+        ingredientTags: ["50015"],
       },
     });
   });

@@ -21,8 +21,8 @@ export function ItemCookingUsage({ usage }: { usage: IngredientUsage | null }) {
         </DishesReturnLink>
       </div>
       <div className="flex flex-wrap gap-2" aria-label="食材标签">
-        {usage.tags.map(({ category, filterKey }) => (
-          <IngredientTagLink key={category.id} category={category} filterKey={filterKey} />
+        {usage.tags.map((category) => (
+          <IngredientTagLink key={category.id} category={category} />
         ))}
       </div>
       <div className="space-y-2">

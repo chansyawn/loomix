@@ -3,16 +3,13 @@ import { Link } from "@tanstack/react-router";
 import type { IngredientCategory } from "@loomix/schema/catalog";
 import { buttonVariants } from "@/ui/components/button";
 import { ingredientFiltersForTag } from "./search";
-import type { IngredientFilterKey } from "./search";
 
 export function IngredientTagLink({
   category,
-  filterKey,
   className,
   children,
 }: {
   category: Pick<IngredientCategory, "id" | "name">;
-  filterKey: IngredientFilterKey;
   className?: string;
   children?: ComponentProps<"a">["children"];
 }) {
@@ -21,7 +18,7 @@ export function IngredientTagLink({
       to="/collection/dishes"
       search={{
         view: "ingredients",
-        ingredients: ingredientFiltersForTag(category.id, filterKey),
+        ingredients: ingredientFiltersForTag(category.id),
       }}
       className={className ?? buttonVariants({ variant: "outline", size: "sm" })}
     >

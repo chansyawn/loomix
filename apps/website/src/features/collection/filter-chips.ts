@@ -1,4 +1,5 @@
-import type { FilterGroup } from "./filter-panel";
+import { flattenFilterOptions } from "./filter-types";
+import type { FilterGroup } from "./filter-types";
 
 export interface FilterChip {
   key: string;
@@ -13,15 +14,18 @@ export function collectionFilterChips<K extends string>(
   search: { value: string; clear: () => void },
 ): FilterChip[] {
   const chips = groups.flatMap((group) =>
-    selected[group.key].map((value) => ({
-      key: `${group.key}-${value}`,
-      label: `${group.label}：${group.options.find((option) => option.value === value)?.label ?? value}`,
-      remove: () =>
-        onFilter(
-          group.key,
-          selected[group.key].filter((item) => item !== value),
-        ),
-    })),
+    selected[group.key].map((value) => {
+      const option = flattenFilterOptions(group.options).find((item) => item.value === value);
+      return {
+        key: `${group.key}-${value}`,
+        label: option?.chipLabel ?? `${group.label}：${option?.label ?? value}`,
+        remove: () =>
+          onFilter(
+            group.key,
+            selected[group.key].filter((item) => item !== value),
+          ),
+      };
+    }),
   );
   if (search.value)
     chips.unshift({ key: "q", label: `搜索：${search.value}`, remove: search.clear });

@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vite-plus/test";
 import type { DishItem, DishSeries } from "../collection-view.ts";
-import { ingredientsFixture } from "../ingredients/fixture";
+import { flattenFilterOptions } from "../collection/filter-types";
+import {
+  categoryExpression,
+  ingredientsFixture,
+  recipeFixture,
+  recipeSlot,
+} from "../ingredients/fixture";
+import { buildIngredientsData } from "../ingredients/model";
 import type { IngredientsData } from "../ingredients/model";
 import type { DishesBrowserData } from "./data";
 import { filterGroups, queryDishes } from "./query";
@@ -98,10 +105,11 @@ const emptyIngredients = (): IngredientsData => ({
   categories: [],
   categoriesById: new Map(),
   dimensions: new Map(),
+  childrenByCategoryId: new Map(),
   itemsById: new Map(),
   categoriesByItemId: new Map(),
+  ingredientCandidatesByDishId: new Map(),
   dishesByItemId: new Map(),
-  dishesByCategoryId: new Map(),
   unconfirmedRecipeCount: 0,
 });
 const browserData = (
@@ -211,20 +219,44 @@ describe("dish catalog", () => {
     ).toEqual([3, 4]);
   });
 
-  it("filters dishes by eligible ingredient category candidates", () => {
+  it("filters dishes through the shared ingredient tag semantics", () => {
     const { input, data: ingredients } = ingredientsFixture();
     const data = { ...input.dishes, ingredients };
-    const search = (ingredientCategories: string[], q = "") =>
-      queryDishes(data, "items", { ...emptyQuery(), q, ingredientCategories }).rows;
+    const search = (ingredientTags: string[], q = "") =>
+      queryDishes(data, "items", { ...emptyQuery(), q, ingredientTags }).rows;
     expect(ids(search(["11"]))).toEqual([100, 102, 109]);
     expect(ids(search(["13", "12"]))).toEqual([101, 102]);
-    expect(ids(search(["999"]))).toEqual([]);
+    expect(ids(search(["13", "31"]))).toEqual([101]);
+    expect(ids(search(["999"]))).toEqual(ids(data.items));
     expect(ids(search(["11"], "101"))).toEqual([]);
     expect(ids(search(["13"], "101"))).toEqual([101]);
     expect(filterGroups(data)[0]).toMatchObject({
-      key: "ingredientCategories",
+      key: "ingredientTags",
       label: "所需食材",
     });
-    expect(filterGroups(data)[0].options.map((option) => option.label)).toContain("虾类");
+    expect(
+      flattenFilterOptions(filterGroups(data)[0].options).map((option) => option.label),
+    ).toContain("虾类");
+  });
+
+  it("does not combine dimensions across separate recipe slots", () => {
+    const { input } = ingredientsFixture();
+    const crossSlotDish = recipeFixture(110, {
+      slots: [recipeSlot(categoryExpression(13), [5]), recipeSlot(categoryExpression(31), [2])],
+    });
+    const ingredients = buildIngredientsData({
+      ...input,
+      dishes: { ...input.dishes, items: [...input.dishes.items, crossSlotDish] },
+    });
+    const data = { ...input.dishes, ingredients };
+
+    expect(
+      ids(
+        queryDishes(data, "items", {
+          ...emptyQuery(),
+          ingredientTags: ["13", "31"],
+        }).rows,
+      ),
+    ).toEqual([101]);
   });
 });

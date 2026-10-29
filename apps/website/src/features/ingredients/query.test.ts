@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+import { flattenFilterOptions } from "../collection/filter-types";
 import { ingredientsFixture } from "./fixture";
 import { ingredientFilterGroups, queryIngredients } from "./query";
 import { ingredientsQuerySchema } from "./search";
@@ -18,39 +19,52 @@ describe("ingredient browsing and filtering", () => {
     expect(queryIngredients(data, ingredientsQuerySchema.parse({ q: "水果类" })).items).toEqual([]);
   });
 
-  it("combines type, color and quality across dimensions while accepting alternatives within each dimension", () => {
+  it("combines tag dimensions while accepting alternatives within each dimension", () => {
     const { data } = ingredientsFixture();
     const result = queryIngredients(
       data,
-      ingredientsQuerySchema.parse({ types: ["10", "13"], colors: ["21"], qualities: ["31"] }),
+      ingredientsQuerySchema.parse({ ingredientTags: ["10", "13", "21", "31"] }),
     );
     expect(result.items.map((item) => item.id)).toEqual([2]);
-    expect(queryIngredients(data, ingredientsQuerySchema.parse({ types: ["999"] })).items).toEqual(
-      [],
-    );
     expect(
-      queryIngredients(data, ingredientsQuerySchema.parse({ types: ["2"] })).items.map(
+      queryIngredients(data, ingredientsQuerySchema.parse({ ingredientTags: ["999"] })).items.map(
+        (item) => item.id,
+      ),
+    ).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(
+      queryIngredients(data, ingredientsQuerySchema.parse({ ingredientTags: ["2"] })).items.map(
         (item) => item.id,
       ),
     ).toEqual([1, 2, 3, 4]);
   });
 
-  it("keeps color and quality roots out of filter options", () => {
-    const groups = ingredientFilterGroups(ingredientsFixture().data);
-    expect(groups.find((group) => group.key === "colors")?.options).toEqual([
-      { value: "21", label: "红色蔬菜" },
-    ]);
-    expect(groups.find((group) => group.key === "qualities")?.options).toEqual([
-      { value: "31", label: "特优" },
-    ]);
-    expect(groups[0].options.map((option) => option.value)).toEqual([
-      "2",
-      "3",
-      "10",
-      "11",
-      "12",
-      "13",
-    ]);
+  it("builds one full tree and filters by parent or child tags", () => {
+    const { data } = ingredientsFixture();
+    const result = queryIngredients(data, ingredientsQuerySchema.parse({}));
+    const group = ingredientFilterGroups(data, result.counts)[0];
+    const options = flattenFilterOptions(group.options);
+    expect(options.find((option) => option.value === "13")).toMatchObject({
+      chipLabel: "分类 · 荤菜 / 虾类",
+      count: 2,
+    });
+    expect(options.find((option) => option.value === "14")?.disabled).toBe(true);
+    expect(
+      queryIngredients(data, ingredientsQuerySchema.parse({ ingredientTags: ["2"] })).items.map(
+        (item) => item.id,
+      ),
+    ).toEqual([1, 2, 3, 4]);
+    expect(
+      queryIngredients(
+        data,
+        ingredientsQuerySchema.parse({ ingredientTags: ["13", "12"] }),
+      ).items.map((item) => item.id),
+    ).toEqual([4, 5, 6]);
+    expect(
+      queryIngredients(
+        data,
+        ingredientsQuerySchema.parse({ ingredientTags: ["13", "31"] }),
+      ).items.map((item) => item.id),
+    ).toEqual([6]);
   });
 
   it("sorts by unique associated dish counts without reordering source data", () => {

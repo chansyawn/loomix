@@ -8,6 +8,7 @@ import type { IngredientsData } from "./model";
 import { ingredientFilterGroups, queryIngredients } from "./query";
 import { emptyIngredientsQuery, ingredientSortOptions } from "./search";
 import type { IngredientsQuery } from "./search";
+import { normalizeIngredientTagIds } from "./tag-filter";
 import { IngredientItems } from "./cards";
 import { RecipeAssociationNotice } from "./related-recipes";
 
@@ -25,14 +26,14 @@ export function IngredientsBrowser({
   onLayoutChange: (layout: CollectionLayout) => void;
 }) {
   const result = queryIngredients(data, query);
-  const groups = ingredientFilterGroups(data);
+  const groups = ingredientFilterGroups(data, result.counts);
   const clear = () => onQueryChange(emptyIngredientsQuery());
-  const chips = collectionFilterChips(
-    groups,
-    query,
-    (key, values) => onQueryChange({ [key]: values }),
-    { value: query.q, clear: () => onQueryChange({ q: "" }) },
-  );
+  const filter = (values: string[]) =>
+    onQueryChange({ ingredientTags: normalizeIngredientTagIds(data, values) });
+  const chips = collectionFilterChips(groups, query, (_key, values) => filter(values), {
+    value: query.q,
+    clear: () => onQueryChange({ q: "" }),
+  });
   return (
     <>
       <CollectionToolbar
@@ -52,7 +53,7 @@ export function IngredientsBrowser({
             groups={groups}
             query={query}
             total={result.items.length}
-            onFilter={(key, values) => onQueryChange({ [key]: values })}
+            onFilter={(_key, values) => filter(values)}
             onClear={clear}
           />
         }

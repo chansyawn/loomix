@@ -1,12 +1,7 @@
 import type { IngredientCategory, IngredientExpression } from "@loomix/schema/catalog";
 import type { CollectionView, DishItem, IngredientItem } from "../collection-view";
-import type { IngredientFilterKey } from "./search";
 
 export type IngredientDimension = "type" | "color" | "quality" | "group";
-export type IngredientTag = {
-  category: IngredientCategory;
-  filterKey: IngredientFilterKey;
-};
 export type IngredientCondition = {
   position: number;
   expression: IngredientExpression;
@@ -14,17 +9,18 @@ export type IngredientCondition = {
 };
 export type IngredientDishMatch = { dish: DishItem; conditions: IngredientCondition[] };
 export type IngredientUsage = {
-  tags: IngredientTag[];
+  tags: IngredientCategory[];
   dishes: IngredientDishMatch[];
 };
 export type IngredientsData = {
   categories: IngredientCategory[];
   categoriesById: ReadonlyMap<number, IngredientCategory>;
   dimensions: ReadonlyMap<number, IngredientDimension>;
+  childrenByCategoryId: ReadonlyMap<number, IngredientCategory[]>;
   itemsById: ReadonlyMap<number, IngredientItem>;
   categoriesByItemId: ReadonlyMap<number, IngredientCategory[]>;
+  ingredientCandidatesByDishId: ReadonlyMap<number, number[]>;
   dishesByItemId: ReadonlyMap<number, IngredientDishMatch[]>;
-  dishesByCategoryId: ReadonlyMap<number, IngredientDishMatch[]>;
   unconfirmedRecipeCount: number;
 };
 
@@ -43,23 +39,6 @@ function dimension(
   return ["食材", "食材_荤菜", "食材_素菜", "食材_原料", "食材_不宜使用"].includes(category.tagName)
     ? "group"
     : "type";
-}
-
-export function ingredientFilterKey(
-  category: IngredientCategory,
-  categories: ReadonlyMap<number, IngredientCategory>,
-): IngredientFilterKey {
-  const value = dimension(category, categories);
-  if (value === "color") return "colors";
-  if (value === "quality") return "qualities";
-  return "types";
-}
-
-export function ingredientTag(
-  category: IngredientCategory,
-  categories: ReadonlyMap<number, IngredientCategory>,
-): IngredientTag {
-  return { category, filterKey: ingredientFilterKey(category, categories) };
 }
 
 type MatchIndex = Map<number, Map<number, IngredientDishMatch>>;
@@ -92,6 +71,14 @@ export function buildIngredientsData(
   const dimensions = new Map(
     categories.map((category) => [category.id, dimension(category, categoriesById)]),
   );
+  const childrenByCategoryId = new Map<number, IngredientCategory[]>();
+  for (const category of categories) {
+    if (category.parentId === null) continue;
+    childrenByCategoryId.set(category.parentId, [
+      ...(childrenByCategoryId.get(category.parentId) ?? []),
+      category,
+    ]);
+  }
   const itemsById = new Map<number, IngredientItem>();
   const categoriesByItemId = new Map<number, IngredientCategory[]>();
   for (const category of categories) {
@@ -104,7 +91,7 @@ export function buildIngredientsData(
     }
   }
   const byItem: MatchIndex = new Map();
-  const byCategory: MatchIndex = new Map();
+  const ingredientCandidatesByDishId = new Map<number, Set<number>>();
   let unconfirmedRecipeCount = 0;
   for (const dish of view.dishes.items) {
     const slots = dish.recipe?.slots;
@@ -118,23 +105,26 @@ export function buildIngredientsData(
         label: ingredientConditionLabel(slot.expression, categoriesById),
       };
       // The resolved candidates preserve intersections (all) and unions (any).
-      const matchedCategories = new Set<number>();
       for (const id of new Set(slot.itemIds)) {
         if (!itemsById.has(id)) continue;
         addMatch(byItem, id, dish, condition);
-        for (const category of categoriesByItemId.get(id) ?? []) matchedCategories.add(category.id);
+        const candidates = ingredientCandidatesByDishId.get(dish.id) ?? new Set<number>();
+        candidates.add(id);
+        ingredientCandidatesByDishId.set(dish.id, candidates);
       }
-      for (const id of matchedCategories) addMatch(byCategory, id, dish, condition);
     });
   }
   return {
     categories,
     categoriesById,
     dimensions,
+    childrenByCategoryId,
     itemsById,
     categoriesByItemId,
+    ingredientCandidatesByDishId: new Map(
+      [...ingredientCandidatesByDishId].map(([id, candidates]) => [id, [...candidates]]),
+    ),
     dishesByItemId: flattenIndex(byItem),
-    dishesByCategoryId: flattenIndex(byCategory),
     unconfirmedRecipeCount,
   };
 }
@@ -145,7 +135,7 @@ export function ingredientUsage(data: IngredientsData, itemId: number): Ingredie
   );
   return categories.length
     ? {
-        tags: categories.map((category) => ingredientTag(category, data.categoriesById)),
+        tags: categories,
         dishes: data.dishesByItemId.get(itemId) ?? [],
       }
     : null;

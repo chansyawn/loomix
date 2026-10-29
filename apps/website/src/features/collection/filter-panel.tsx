@@ -19,12 +19,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/ui/components/sheet";
-export type FilterGroup<K extends string> = {
-  key: K;
-  label: string;
-  options: { value: string; label: string }[];
-  fullWidth?: boolean;
-};
+import { filterTree, flattenFilterOptions } from "./filter-types";
+import type { FilterGroup } from "./filter-types";
+import { FilterTreeOption } from "./filter-tree";
+
+export type { FilterGroup, FilterOption } from "./filter-types";
 
 function FilterOptions<K extends string>({
   group,
@@ -36,8 +35,29 @@ function FilterOptions<K extends string>({
   onChange: (values: string[]) => void;
 }) {
   const [term, setTerm] = useState("");
+  const [expanded, setExpanded] = useState(
+    () =>
+      new Set(
+        flattenFilterOptions(group.options)
+          .filter((option) => option.defaultExpanded)
+          .map((option) => option.value),
+      ),
+  );
   const id = useId();
-  const options = group.options.filter((option) => option.label.includes(term.trim()));
+  const normalizedTerm = term.trim();
+  const options = group.tree
+    ? filterTree(group.options, normalizedTerm)
+    : group.options.filter((option) => option.label.includes(normalizedTerm));
+  const selectableCount = flattenFilterOptions(group.options).filter(
+    (option) => option.selectable !== false,
+  ).length;
+  const setExpandedValue = (value: string, open: boolean) =>
+    setExpanded((previous) => {
+      const next = new Set(previous);
+      if (open) next.add(value);
+      else next.delete(value);
+      return next;
+    });
   return (
     <AccordionItem
       value={group.key}
@@ -66,7 +86,7 @@ function FilterOptions<K extends string>({
       <AccordionContent className="pb-4">
         <fieldset className="space-y-3">
           <legend className="sr-only">{group.label}</legend>
-          {group.options.length > 10 && (
+          {selectableCount > 10 && (
             <Input
               aria-label={`搜索${group.label}`}
               placeholder={`搜索${group.label}…`}
@@ -74,30 +94,57 @@ function FilterOptions<K extends string>({
               onChange={(event) => setTerm(event.target.value)}
             />
           )}
-          <div className="grid grid-cols-2 gap-x-3 gap-y-3 py-1">
-            {options.map((option) => (
-              <div
-                key={option.value}
-                className={`flex items-start gap-2 ${group.fullWidth ? "col-span-2" : ""}`}
-              >
-                <Checkbox
-                  id={`${id}-${option.value}`}
-                  checked={selected.includes(option.value)}
-                  onCheckedChange={(checked) =>
+          {group.description && (
+            <p className="text-xs leading-5 text-muted-foreground">{group.description}</p>
+          )}
+          {group.tree ? (
+            <ul className="space-y-0.5 py-1">
+              {options.map((option) => (
+                <FilterTreeOption
+                  key={option.value}
+                  option={option}
+                  depth={0}
+                  selected={selected}
+                  inherited={false}
+                  expanded={expanded}
+                  searchActive={normalizedTerm.length > 0}
+                  onToggleValue={(value, checked) =>
                     onChange(
                       checked
-                        ? [...selected, option.value]
-                        : selected.filter((value) => value !== option.value),
+                        ? [...selected, value]
+                        : selected.filter((selectedValue) => selectedValue !== value),
                     )
                   }
-                  className="mt-0.5"
+                  onExpandedChange={setExpandedValue}
                 />
-                <Label htmlFor={`${id}-${option.value}`} className="cursor-pointer leading-5">
-                  {option.label}
-                </Label>
-              </div>
-            ))}
-          </div>
+              ))}
+            </ul>
+          ) : (
+            <div className="grid grid-cols-2 gap-x-3 gap-y-3 py-1">
+              {options.map((option) => (
+                <div
+                  key={option.value}
+                  className={`flex items-start gap-2 ${group.fullWidth ? "col-span-2" : ""}`}
+                >
+                  <Checkbox
+                    id={`${id}-${option.value}`}
+                    checked={selected.includes(option.value)}
+                    onCheckedChange={(checked) =>
+                      onChange(
+                        checked
+                          ? [...selected, option.value]
+                          : selected.filter((value) => value !== option.value),
+                      )
+                    }
+                    className="mt-0.5"
+                  />
+                  <Label htmlFor={`${id}-${option.value}`} className="cursor-pointer leading-5">
+                    {option.label}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          )}
           {options.length === 0 && <p className="text-xs text-muted-foreground">没有匹配的选项</p>}
         </fieldset>
       </AccordionContent>

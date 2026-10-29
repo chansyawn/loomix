@@ -11,10 +11,11 @@ import type { DishesBrowserData } from "./data";
 import { DishesCard, DishSeriesCard } from "./dishes-card";
 import { filterGroups, queryDishes } from "./query";
 import { emptyQuery, sortOptions, updateViewQuery } from "./search";
-import type { DishesSearch, DishView, ViewQuery } from "./search";
+import type { DishesSearch, DishView, FilterKey, ViewQuery } from "./search";
 import { DishesEmpty } from "./states";
 import { dishesTableColumns } from "./table-columns";
 import { title, listPresentation } from "./list-presentation";
+import { normalizeIngredientTagIds } from "../ingredients/tag-filter";
 
 type SearchUpdate = DishesSearch | ((previous: DishesSearch) => DishesSearch);
 
@@ -31,13 +32,18 @@ export function DishResults({
   const layout = useCollectionLayout(search.layout);
   const presentation = listPresentation(search.view);
   const result = queryDishes(data, search.view, query);
-  const groups = filterGroups(data, search.view);
+  const groups = filterGroups(data, search.view, result.ingredientTagCounts);
   const resultKey = JSON.stringify([search.view, layout, query]);
   const update = (patch: Partial<ViewQuery>, replace = false) =>
     void onSearchChange((previous) => updateViewQuery(previous, patch), replace);
   const clear = () =>
     void onSearchChange((previous) => ({ ...previous, [previous.view]: emptyQuery() }));
-  const chips = collectionFilterChips(groups, query, (key, values) => update({ [key]: values }), {
+  const filter = (key: FilterKey, values: string[]) =>
+    update({
+      [key]:
+        key === "ingredientTags" ? normalizeIngredientTagIds(data.ingredients, values) : values,
+    });
+  const chips = collectionFilterChips(groups, query, filter, {
     value: query.q,
     clear: () => update({ q: "" }),
   });
@@ -64,7 +70,7 @@ export function DishResults({
             groups={groups}
             query={query}
             total={result.total}
-            onFilter={(key, values) => update({ [key]: values })}
+            onFilter={filter}
             onClear={clear}
           />
         }

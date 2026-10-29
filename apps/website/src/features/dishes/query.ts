@@ -1,7 +1,13 @@
 import type { DishItem, DishSeries } from "../collection-view.ts";
 import type { FilterGroup as CollectionFilterGroup } from "@/features/collection/filter-panel";
 import { qualityNames } from "@/features/collection/quality";
-import { ingredientCategoryOptions } from "../ingredients/query";
+import {
+  dishIngredientTagCounts,
+  ingredientTagFilterGroup,
+  ingredientTagMatcher,
+  normalizeIngredientTagIds,
+} from "../ingredients/tag-filter";
+import type { IngredientTagCounts } from "../ingredients/tag-filter";
 import type { DishesBrowserData } from "./data";
 import { difficultyRequirementLabel, effectValues } from "./presentation";
 import { missing, ungrouped } from "./search";
@@ -39,7 +45,11 @@ function multiOptions(values: (string[] | null)[]) {
   return optionList(values.flatMap((value) => (value?.length ? value : [missing])));
 }
 
-export function filterGroups(data: DishesBrowserData, view: View = "items"): FilterGroup[] {
+export function filterGroups(
+  data: DishesBrowserData,
+  view: View = "items",
+  ingredientTagCounts: IngredientTagCounts = new Map(),
+): FilterGroup[] {
   const rows = view === "items" ? data.items : data.series;
   const missingQuality = rows.some((row) => row.quality === null);
   const qualities = qualityNames
@@ -49,9 +59,8 @@ export function filterGroups(data: DishesBrowserData, view: View = "items"): Fil
 
   return [
     {
-      key: "ingredientCategories",
+      ...ingredientTagFilterGroup(data.ingredients, ingredientTagCounts),
       label: "所需食材",
-      options: ingredientCategoryOptions(data.ingredients),
     },
     {
       key: "difficulties",
@@ -117,23 +126,14 @@ export function queryDishes(data: DishesBrowserData, view: View, query: ViewQuer
   const memberships = membershipIndex(data.series);
   const membershipDataComplete = data.series.every((group) => group.dishIds !== null);
   const term = query.q.trim().toLocaleLowerCase("zh-CN");
-  const ingredientCategoryDishIds = new Set(
-    query.ingredientCategories.flatMap((categoryId) =>
-      (data.ingredients.dishesByCategoryId.get(Number(categoryId)) ?? []).map(
-        (match) => match.dish.id,
-      ),
-    ),
-  );
   const rows: (DishItem | DishSeries)[] = view === "items" ? data.items : data.series;
-  const filtered = rows.filter((row) => {
+  const baseFiltered = rows.filter((row) => {
     if (
       !row.name.toLocaleLowerCase("zh-CN").includes(term) ||
       !matches(query.qualities, [row.quality === null ? missing : String(row.quality)])
     )
       return false;
     if (!("difficulty" in row)) return true;
-    if (query.ingredientCategories.length > 0 && !ingredientCategoryDishIds.has(row.id))
-      return false;
     const effects = effectValues(row);
     return (
       matches(query.difficulties, [row.difficulty || missing]) &&
@@ -151,6 +151,20 @@ export function queryDishes(data: DishesBrowserData, view: View, query: ViewQuer
       )
     );
   });
+  const ingredientTags = normalizeIngredientTagIds(data.ingredients, query.ingredientTags);
+  const ingredientTagCounts =
+    view === "items"
+      ? dishIngredientTagCounts(data.ingredients, baseFiltered as DishItem[])
+      : new Map();
+  const matchesIngredientTags = ingredientTagMatcher(data.ingredients, ingredientTags);
+  const filtered =
+    view === "items" && ingredientTags.length > 0
+      ? (baseFiltered as DishItem[]).filter((row) =>
+          (data.ingredients.ingredientCandidatesByDishId.get(row.id) ?? []).some((itemId) =>
+            matchesIngredientTags(itemId),
+          ),
+        )
+      : baseFiltered;
 
   if (query.sort !== "original")
     filtered.sort((a, b) => {
@@ -161,5 +175,5 @@ export function queryDishes(data: DishesBrowserData, view: View, query: ViewQuer
       return direction * (a.quality - b.quality);
     });
 
-  return { rows: filtered, total: filtered.length, memberships };
+  return { rows: filtered, total: filtered.length, memberships, ingredientTagCounts };
 }
