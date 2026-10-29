@@ -13,6 +13,7 @@ import { ClothingCard } from "./clothing-card";
 import {
   CollectionDetailLayout,
   CollectionDetailLoading,
+  CollectionDetailRelatedGrid,
 } from "@/features/collection/detail-layout";
 import { RecordImage } from "@/features/collection/record-image";
 import { ClothingReturnLink } from "./detail-navigation";
@@ -56,11 +57,11 @@ export function ClothingDetailPage({ detail }: { detail: ClothingDetail }) {
           </h2>
           {detail.kind === "item" ? (
             detail.sets.length > 0 ? (
-              <div className="grid gap-4">
+              <CollectionDetailRelatedGrid>
                 {detail.sets.map((set) => (
                   <ClothingCard key={set.id} record={set} />
                 ))}
-              </div>
+              </CollectionDetailRelatedGrid>
             ) : (
               <p className="text-sm text-muted-foreground">未归入套装</p>
             )

@@ -21,8 +21,8 @@ export function CollectionDetailLayout({
 }) {
   return (
     <section className="pb-8">
-      <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,1fr)] lg:gap-12">
-        <div className="overflow-hidden rounded-4xl border bg-muted/30 lg:sticky lg:top-6">
+      <div className="grid items-start gap-8 lg:grid-cols-[minmax(18rem,26rem)_minmax(0,1fr)] lg:gap-12">
+        <div className="mx-auto w-full max-w-104 overflow-hidden rounded-4xl border bg-muted/30 lg:sticky lg:top-6 lg:mx-0">
           {image}
         </div>
         <div className="min-w-0 space-y-4">
@@ -37,7 +37,7 @@ export function CollectionDetailLayout({
             )}
           </div>
           {description}
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-5 border-y py-5">
+          <dl className="grid grid-cols-1 gap-x-6 gap-y-5 border-y py-5 sm:grid-cols-2">
             {fields.map(([label, value]) => (
               <div key={label} className="min-w-0 space-y-1.5">
                 <dt className="text-xs text-muted-foreground">{label}</dt>
@@ -47,23 +47,37 @@ export function CollectionDetailLayout({
               </div>
             ))}
           </dl>
-          {children}
         </div>
       </div>
+      {children && (
+        <div className="mt-10 space-y-10 border-t pt-8 lg:mt-12 lg:pt-10">{children}</div>
+      )}
     </section>
+  );
+}
+
+export function CollectionDetailRelatedGrid({ children }: { children: ReactNode }) {
+  return (
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))] gap-4">
+      {children}
+    </div>
   );
 }
 
 export function CollectionDetailLoading({ label }: { label: string }) {
   return (
     <section aria-label={label} aria-busy="true" className="space-y-8 pb-8">
-      <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,1fr)] lg:gap-12">
-        <Skeleton className="aspect-square" />
+      <div className="grid items-start gap-8 lg:grid-cols-[minmax(18rem,26rem)_minmax(0,1fr)] lg:gap-12">
+        <Skeleton className="mx-auto aspect-square w-full max-w-104 lg:mx-0" />
         <div className="space-y-6">
           <Skeleton className="h-10 w-2/3" />
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-48 w-full" />
         </div>
+      </div>
+      <div className="mt-10 space-y-6 border-t pt-8 lg:mt-12 lg:pt-10">
+        <Skeleton className="h-8 w-40" />
+        <Skeleton className="h-48 w-full" />
       </div>
     </section>
   );

@@ -41,7 +41,7 @@ export function MiscellanyDetailPage({
         ["获取途径", item.acquisition],
       ]}
     >
-      <ItemCookingUsage usage={detail.cooking} />
+      {detail.cooking && <ItemCookingUsage usage={detail.cooking} />}
     </CollectionDetailLayout>
   );
 }

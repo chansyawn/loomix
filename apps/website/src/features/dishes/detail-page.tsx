@@ -13,6 +13,7 @@ import { RecordImage } from "@/features/collection/record-image";
 import {
   CollectionDetailLayout,
   CollectionDetailLoading,
+  CollectionDetailRelatedGrid,
 } from "@/features/collection/detail-layout";
 import { DishesCard, DishSeriesCard } from "./dishes-card";
 import { DishesReturnLink } from "./detail-navigation";
@@ -69,11 +70,11 @@ export function DishesDetailPage({ detail }: { detail: DishesDetail }) {
         {detail.kind === "item" ? (
           detail.series.length > 0 ? (
             <>
-              <div className="grid gap-4">
+              <CollectionDetailRelatedGrid>
                 {detail.series.map((series) => (
                   <DishSeriesCard key={series.id} series={series} />
                 ))}
-              </div>
+              </CollectionDetailRelatedGrid>
               {detail.hasUnconfirmedSeriesMembership && (
                 <p className="text-sm text-muted-foreground">其他系列的成员关系未确认</p>
               )}

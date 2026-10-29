@@ -14,6 +14,7 @@ import { FurnitureCard, FurnitureSetCard } from "./furniture-card";
 import {
   CollectionDetailLayout,
   CollectionDetailLoading,
+  CollectionDetailRelatedGrid,
 } from "@/features/collection/detail-layout";
 import { RecordImage as FurnitureImage } from "@/features/collection/record-image";
 import { FurnitureReturnLink } from "./detail-navigation";
@@ -138,11 +139,11 @@ function FurnitureRelated({ detail }: { detail: FurnitureDetail }) {
       </h2>
       {detail.kind === "item" ? (
         detail.sets.length > 0 ? (
-          <div className="grid gap-4">
+          <CollectionDetailRelatedGrid>
             {detail.sets.map((set) => (
               <FurnitureSetCard key={set.id} set={set} />
             ))}
-          </div>
+          </CollectionDetailRelatedGrid>
         ) : (
           <p className="text-sm text-muted-foreground">未归入套组</p>
         )

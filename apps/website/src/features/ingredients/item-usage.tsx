@@ -7,7 +7,7 @@ import { RecipeAssociationNotice, RelatedRecipes } from "./related-recipes";
 export function ItemCookingUsage({ usage }: { usage: IngredientUsage | null }) {
   if (!usage) return null;
   return (
-    <section aria-labelledby="item-cooking-usage" className="space-y-4 border-t pt-5">
+    <section aria-labelledby="item-cooking-usage" className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="item-cooking-usage" className="flex items-center gap-2 text-lg font-semibold">
           <CookingPotIcon aria-hidden="true" className="size-5" />

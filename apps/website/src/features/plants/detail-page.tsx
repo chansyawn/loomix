@@ -12,6 +12,7 @@ import {
 import {
   CollectionDetailLayout,
   CollectionDetailLoading,
+  CollectionDetailRelatedGrid,
 } from "@/features/collection/detail-layout";
 import { RecordImage } from "@/features/collection/record-image";
 import { PlantsCard, PlantSeriesCard } from "./plants-card";
@@ -83,11 +84,11 @@ export function PlantsDetailPage({ detail }: { detail: PlantsDetail }) {
         {detail.kind === "item" ? (
           detail.series.length > 0 ? (
             <>
-              <div className="grid gap-4">
+              <CollectionDetailRelatedGrid>
                 {detail.series.map((series) => (
                   <PlantSeriesCard key={series.id} series={series} />
                 ))}
-              </div>
+              </CollectionDetailRelatedGrid>
               {detail.relatedGroups.map(
                 ({ series, items }) =>
                   items.length > 0 && (

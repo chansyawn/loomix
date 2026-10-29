@@ -13,6 +13,7 @@ import { RecordImage } from "@/features/collection/record-image";
 import {
   CollectionDetailLayout,
   CollectionDetailLoading,
+  CollectionDetailRelatedGrid,
 } from "@/features/collection/detail-layout";
 import { CreaturesCard, CreatureSeriesCard } from "./creatures-card";
 import { SeriesImage } from "./series-image";
@@ -70,11 +71,11 @@ export function CreaturesDetailPage({ detail }: { detail: CreaturesDetail }) {
         </h2>
         {detail.kind === "item" ? (
           detail.series.length > 0 ? (
-            <div className="grid gap-4">
+            <CollectionDetailRelatedGrid>
               {detail.series.map((series) => (
                 <CreatureSeriesCard key={series.id} series={series} items={detail.catalogItems} />
               ))}
-            </div>
+            </CollectionDetailRelatedGrid>
           ) : (
             <p className="text-sm text-muted-foreground">未归入系列</p>
           )
