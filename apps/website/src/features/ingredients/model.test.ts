@@ -28,6 +28,14 @@ describe("ingredient relationships", () => {
     expect(matches[0].conditions.map((condition) => condition.position)).toEqual([1, 2]);
   });
 
+  it("indexes dishes by eligible ingredient category without losing compound conditions", () => {
+    const { data } = ingredientsFixture();
+    expect(data.dishesByCategoryId.get(11)?.map((match) => match.dish.id)).toEqual([100, 102, 109]);
+    expect(data.dishesByCategoryId.get(13)?.map((match) => match.dish.id)).toEqual([101]);
+    expect(data.dishesByCategoryId.get(13)?.[0].conditions[0].label).toBe("虾类 且 特优");
+    expect(data.dishesByCategoryId.get(12)?.map((match) => match.dish.id)).not.toContain(103);
+  });
+
   it("skips unconfirmed slots without discarding known slots or treating confirmed empty recipes as unknown", () => {
     const { data } = ingredientsFixture();
     expect(data.unconfirmedRecipeCount).toBe(5);

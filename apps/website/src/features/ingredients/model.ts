@@ -24,6 +24,7 @@ export type IngredientsData = {
   itemsById: ReadonlyMap<number, IngredientItem>;
   categoriesByItemId: ReadonlyMap<number, IngredientCategory[]>;
   dishesByItemId: ReadonlyMap<number, IngredientDishMatch[]>;
+  dishesByCategoryId: ReadonlyMap<number, IngredientDishMatch[]>;
   unconfirmedRecipeCount: number;
 };
 
@@ -103,6 +104,7 @@ export function buildIngredientsData(
     }
   }
   const byItem: MatchIndex = new Map();
+  const byCategory: MatchIndex = new Map();
   let unconfirmedRecipeCount = 0;
   for (const dish of view.dishes.items) {
     const slots = dish.recipe?.slots;
@@ -116,10 +118,13 @@ export function buildIngredientsData(
         label: ingredientConditionLabel(slot.expression, categoriesById),
       };
       // The resolved candidates preserve intersections (all) and unions (any).
+      const matchedCategories = new Set<number>();
       for (const id of new Set(slot.itemIds)) {
         if (!itemsById.has(id)) continue;
         addMatch(byItem, id, dish, condition);
+        for (const category of categoriesByItemId.get(id) ?? []) matchedCategories.add(category.id);
       }
+      for (const id of matchedCategories) addMatch(byCategory, id, dish, condition);
     });
   }
   return {
@@ -129,6 +134,7 @@ export function buildIngredientsData(
     itemsById,
     categoriesByItemId,
     dishesByItemId: flattenIndex(byItem),
+    dishesByCategoryId: flattenIndex(byCategory),
     unconfirmedRecipeCount,
   };
 }

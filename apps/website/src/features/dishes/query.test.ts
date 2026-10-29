@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
 import type { DishItem, DishSeries } from "../collection-view.ts";
-import type { DishesData } from "./data";
+import { ingredientsFixture } from "../ingredients/fixture";
+import type { IngredientsData } from "../ingredients/model";
+import type { DishesBrowserData } from "./data";
 import { filterGroups, queryDishes } from "./query";
 import { emptyQuery, missing, ungrouped } from "./search";
 
@@ -92,7 +94,22 @@ const series: DishSeries[] = [
     dishIds: null,
   },
 ];
-const data: DishesData = { items, series };
+const emptyIngredients = (): IngredientsData => ({
+  categories: [],
+  categoriesById: new Map(),
+  dimensions: new Map(),
+  itemsById: new Map(),
+  categoriesByItemId: new Map(),
+  dishesByItemId: new Map(),
+  dishesByCategoryId: new Map(),
+  unconfirmedRecipeCount: 0,
+});
+const browserData = (
+  items: DishItem[],
+  series: DishSeries[] = [],
+  ingredients = emptyIngredients(),
+): DishesBrowserData => ({ items, series, ingredients });
+const data = browserData(items, series);
 const ids = (rows: { id: number }[]) => rows.map((row) => row.id);
 const search = (patch: Partial<ReturnType<typeof emptyQuery>>) =>
   queryDishes(data, "items", { ...emptyQuery(), ...patch });
@@ -160,16 +177,13 @@ describe("dish catalog", () => {
   });
 
   it("shows missing quality only when the current view has missing values", () => {
-    const completeSeries: DishesData = {
-      items: [item(1)],
-      series: [{ ...series[0]!, quality: 1 }],
-    };
+    const completeSeries = browserData([item(1)], [{ ...series[0]!, quality: 1 }]);
     expect(
       filterGroups(completeSeries, "series")[0]?.options.some((option) => option.value === missing),
     ).toBe(false);
     expect(
       filterGroups(
-        { items: [item(1)], series: [{ ...series[0]!, quality: null }] },
+        browserData([item(1)], [{ ...series[0]!, quality: null }]),
         "series",
       )[0]?.options.some((option) => option.value === missing),
     ).toBe(true);
@@ -183,10 +197,10 @@ describe("dish catalog", () => {
   });
 
   it("recognizes ungrouped dishes when every series membership list is known", () => {
-    const completeData: DishesData = {
+    const completeData = browserData(
       items,
-      series: series.filter((group) => group.dishIds !== null),
-    };
+      series.filter((group) => group.dishIds !== null),
+    );
     expect(
       filterGroups(completeData)
         .find((group) => group.key === "series")
@@ -195,5 +209,22 @@ describe("dish catalog", () => {
     expect(
       ids(queryDishes(completeData, "items", { ...emptyQuery(), series: [ungrouped] }).rows),
     ).toEqual([3, 4]);
+  });
+
+  it("filters dishes by eligible ingredient category candidates", () => {
+    const { input, data: ingredients } = ingredientsFixture();
+    const data = { ...input.dishes, ingredients };
+    const search = (ingredientCategories: string[], q = "") =>
+      queryDishes(data, "items", { ...emptyQuery(), q, ingredientCategories }).rows;
+    expect(ids(search(["11"]))).toEqual([100, 102, 109]);
+    expect(ids(search(["13", "12"]))).toEqual([101, 102]);
+    expect(ids(search(["999"]))).toEqual([]);
+    expect(ids(search(["11"], "101"))).toEqual([]);
+    expect(ids(search(["13"], "101"))).toEqual([101]);
+    expect(filterGroups(data)[0]).toMatchObject({
+      key: "ingredientCategories",
+      label: "所需食材",
+    });
+    expect(filterGroups(data)[0].options.map((option) => option.label)).toContain("虾类");
   });
 });

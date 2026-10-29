@@ -1,7 +1,8 @@
 import type { DishItem, DishSeries } from "../collection-view.ts";
 import type { FilterGroup as CollectionFilterGroup } from "@/features/collection/filter-panel";
 import { qualityNames } from "@/features/collection/quality";
-import type { DishesData } from "./data";
+import { ingredientCategoryOptions } from "../ingredients/query";
+import type { DishesBrowserData } from "./data";
 import { difficultyRequirementLabel, effectValues } from "./presentation";
 import { missing, ungrouped } from "./search";
 import type { FilterKey, DishView as View, ViewQuery } from "./search";
@@ -38,7 +39,7 @@ function multiOptions(values: (string[] | null)[]) {
   return optionList(values.flatMap((value) => (value?.length ? value : [missing])));
 }
 
-export function filterGroups(data: DishesData, view: View = "items"): FilterGroup[] {
+export function filterGroups(data: DishesBrowserData, view: View = "items"): FilterGroup[] {
   const rows = view === "items" ? data.items : data.series;
   const missingQuality = rows.some((row) => row.quality === null);
   const qualities = qualityNames
@@ -47,6 +48,11 @@ export function filterGroups(data: DishesData, view: View = "items"): FilterGrou
   if (view === "series") return [{ key: "qualities", label: "品阶", options: qualities }];
 
   return [
+    {
+      key: "ingredientCategories",
+      label: "所需食材",
+      options: ingredientCategoryOptions(data.ingredients),
+    },
     {
       key: "difficulties",
       label: "难度",
@@ -107,10 +113,17 @@ function matches(selected: string[], values: string[]): boolean {
   return selected.length === 0 || selected.some((value) => values.includes(value));
 }
 
-export function queryDishes(data: DishesData, view: View, query: ViewQuery) {
+export function queryDishes(data: DishesBrowserData, view: View, query: ViewQuery) {
   const memberships = membershipIndex(data.series);
   const membershipDataComplete = data.series.every((group) => group.dishIds !== null);
   const term = query.q.trim().toLocaleLowerCase("zh-CN");
+  const ingredientCategoryDishIds = new Set(
+    query.ingredientCategories.flatMap((categoryId) =>
+      (data.ingredients.dishesByCategoryId.get(Number(categoryId)) ?? []).map(
+        (match) => match.dish.id,
+      ),
+    ),
+  );
   const rows: (DishItem | DishSeries)[] = view === "items" ? data.items : data.series;
   const filtered = rows.filter((row) => {
     if (
@@ -119,6 +132,8 @@ export function queryDishes(data: DishesData, view: View, query: ViewQuery) {
     )
       return false;
     if (!("difficulty" in row)) return true;
+    if (query.ingredientCategories.length > 0 && !ingredientCategoryDishIds.has(row.id))
+      return false;
     const effects = effectValues(row);
     return (
       matches(query.difficulties, [row.difficulty || missing]) &&

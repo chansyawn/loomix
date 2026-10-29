@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { emptyQuery, dishesSearchSchema, updateViewQuery } from "./search";
+import { compactDishesSearch, emptyQuery, dishesSearchSchema, updateViewQuery } from "./search";
 import { emptyIngredientsQuery } from "../ingredients/search";
 
 describe("dish URL state", () => {
@@ -31,6 +31,7 @@ describe("dish URL state", () => {
           effects: ["耐力提升", "耐力提升"],
           qualities: ["0", "9", "__missing", "0"],
           series: ["100", "100", false],
+          ingredientCategories: ["50015", "50015", "01", "-1", "1e2"],
         },
         series: { qualities: ["4", "invalid"], effects: ["ignored"] },
       }),
@@ -46,6 +47,7 @@ describe("dish URL state", () => {
         effects: ["耐力提升"],
         qualities: ["0", "__missing"],
         series: ["100"],
+        ingredientCategories: ["50015"],
       },
       series: { ...emptyQuery(), qualities: ["4"] },
     });
@@ -68,5 +70,15 @@ describe("dish URL state", () => {
     expect(updated.series.q).toBe("蒸鱼");
     expect(updated.items).toEqual(search.items);
     expect(dishesSearchSchema.parse(JSON.parse(JSON.stringify(updated)))).toEqual(updated);
+  });
+
+  it("compacts ingredient category filters and omits empty selections", () => {
+    const selected = dishesSearchSchema.parse({
+      items: { ingredientCategories: ["50015", "50017"] },
+    });
+    expect(compactDishesSearch(selected)).toEqual({
+      items: { ingredientCategories: ["50015", "50017"] },
+    });
+    expect(compactDishesSearch(dishesSearchSchema.parse({}))).toEqual({});
   });
 });

@@ -26,6 +26,7 @@ export const filterKeys = [
   "effects",
   "qualities",
   "series",
+  "ingredientCategories",
 ] as const;
 export type FilterKey = (typeof filterKeys)[number];
 
@@ -43,6 +44,10 @@ const choices = (allowed: string[]) =>
     values.filter((value) => value === missing || allowed.includes(value)),
   );
 
+const categoryIds = stringList.transform((values) =>
+  values.filter((value) => /^[1-9]\d*$/.test(value) && Number.isSafeInteger(Number(value))),
+);
+
 const viewQuerySchema = z.object({
   q: z.string().catch("").default(""),
   sort: z
@@ -57,6 +62,7 @@ const viewQuerySchema = z.object({
   effects: stringList.default([]),
   qualities: choices(["0", "1", "2", "3", "4"]).default([]),
   series: stringList.default([]),
+  ingredientCategories: categoryIds.default([]),
 });
 
 export type ViewQuery = z.output<typeof viewQuerySchema>;

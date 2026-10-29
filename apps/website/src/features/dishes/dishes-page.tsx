@@ -1,8 +1,7 @@
 import { CollectionPage } from "../collection/page";
 import { saveCollectionLayout, useCollectionLayout } from "../collection/use-collection-layout";
 import { IngredientsBrowser } from "../ingredients/browser";
-import type { IngredientsData } from "../ingredients/model";
-import type { DishesData } from "./data";
+import type { DishesBrowserData } from "./data";
 import type { DishesSearch } from "./search";
 import { DishResults } from "./dish-results";
 import { title, tabs } from "./list-presentation";
@@ -14,7 +13,7 @@ export function DishesPage({
   search,
   onSearchChange,
 }: {
-  data: DishesData & { ingredients: IngredientsData };
+  data: DishesBrowserData;
   search: DishesSearch;
   onSearchChange: (update: SearchUpdate, replace?: boolean) => Promise<void>;
 }) {

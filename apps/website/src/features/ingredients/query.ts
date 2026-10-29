@@ -1,28 +1,35 @@
 import type { IngredientItem } from "../collection-view";
 import type { FilterGroup } from "../collection/filter-panel";
-import type { IngredientsData } from "./model";
+import type { IngredientDimension, IngredientsData } from "./model";
 import type { IngredientFilterKey, IngredientsQuery } from "./search";
 
+function categoryOptions(data: IngredientsData, dimensions: IngredientDimension[]) {
+  return data.categories
+    .filter((category) => {
+      const dimension = data.dimensions.get(category.id);
+      return (
+        dimension !== undefined &&
+        dimensions.includes(dimension) &&
+        category.tagName !== "食材" &&
+        !["食材_颜色", "食材_品阶"].includes(category.tagName) &&
+        category.itemIds.some((id) => data.itemsById.has(id))
+      );
+    })
+    .map((category) => ({ value: String(category.id), label: category.name }));
+}
+
+export function ingredientCategoryOptions(
+  data: IngredientsData,
+): { value: string; label: string }[] {
+  return categoryOptions(data, ["type", "group"]);
+}
+
 export function ingredientFilterGroups(data: IngredientsData): FilterGroup<IngredientFilterKey>[] {
-  return (
-    [
-      ["types", "食材种类", ["type", "group"]],
-      ["colors", "食材颜色", ["color"]],
-      ["qualities", "食材品质", ["quality"]],
-    ] as const
-  ).map(([key, label, dimension]) => ({
-    key,
-    label,
-    options: data.categories
-      .filter(
-        (category) =>
-          dimension.some((value) => value === data.dimensions.get(category.id)) &&
-          category.tagName !== "食材" &&
-          !["食材_颜色", "食材_品阶"].includes(category.tagName) &&
-          category.itemIds.some((id) => data.itemsById.has(id)),
-      )
-      .map((category) => ({ value: String(category.id), label: category.name })),
-  }));
+  return [
+    { key: "types", label: "食材种类", options: ingredientCategoryOptions(data) },
+    { key: "colors", label: "食材颜色", options: categoryOptions(data, ["color"]) },
+    { key: "qualities", label: "食材品质", options: categoryOptions(data, ["quality"]) },
+  ];
 }
 
 export function queryIngredients(data: IngredientsData, query: IngredientsQuery) {

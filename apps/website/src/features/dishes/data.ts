@@ -5,8 +5,9 @@ import type { IngredientsData } from "../ingredients/model";
 
 export type DishesData = CollectionView["dishes"] &
   Partial<Pick<CollectionView, "ingredientCategoriesById" | "ingredientItemsById">>;
+export type DishesBrowserData = DishesData & { ingredients: IngredientsData };
 
-export async function loadDishes(): Promise<DishesData & { ingredients: IngredientsData }> {
+export async function loadDishes(): Promise<DishesBrowserData> {
   const view = await loadCollectionView();
   return {
     ...view.dishes,

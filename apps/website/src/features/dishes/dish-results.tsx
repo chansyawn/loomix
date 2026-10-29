@@ -7,7 +7,7 @@ import { CollectionTable } from "../collection/table";
 import { collectionSort, tableSorting } from "../collection/sort";
 import { useCollectionLayout, saveCollectionLayout } from "../collection/use-collection-layout";
 import type { DishItem, DishSeries } from "../collection-view";
-import type { DishesData } from "./data";
+import type { DishesBrowserData } from "./data";
 import { DishesCard, DishSeriesCard } from "./dishes-card";
 import { filterGroups, queryDishes } from "./query";
 import { emptyQuery, sortOptions, updateViewQuery } from "./search";
@@ -23,7 +23,7 @@ export function DishResults({
   search,
   onSearchChange,
 }: {
-  data: DishesData;
+  data: DishesBrowserData;
   search: DishesSearch & { view: DishView };
   onSearchChange: (update: SearchUpdate, replace?: boolean) => Promise<void>;
 }) {
