@@ -4,12 +4,15 @@ import { CollectionResultsSummary } from "../collection/results-summary";
 import { collectionFilterChips } from "../collection/filter-chips";
 import { FilterPanel } from "../collection/filter-panel";
 import { CollectionEmpty } from "../collection/states";
+import { CollectionTable } from "../collection/table";
+import { collectionSort, tableSorting } from "../collection/sort";
 import type { IngredientsData } from "./model";
 import { ingredientFilterGroups, queryIngredients } from "./query";
 import { emptyIngredientsQuery, ingredientSortOptions } from "./search";
 import type { IngredientsQuery } from "./search";
 import { normalizeIngredientTagIds } from "./tag-filter";
 import { IngredientItems } from "./cards";
+import { ingredientTableColumns } from "./table-columns";
 
 export function IngredientsBrowser({
   data,
@@ -69,7 +72,29 @@ export function IngredientsBrowser({
       />
       {result.items.length > 0 && (
         <section aria-label="食材结果" className="pb-8">
-          <IngredientItems items={result.items} data={data} layout={layout} />
+          {layout === "table" ? (
+            <CollectionTable
+              resultKey={JSON.stringify([layout, normalizedQuery])}
+              rows={result.items}
+              columns={ingredientTableColumns(data)}
+              getRowId={(item) => String(item.id)}
+              label="食材列表"
+              sorting={tableSorting(query.sort === "recipes-desc" ? "original" : query.sort)}
+              onSortingChange={(updater) => {
+                const previous = tableSorting(
+                  query.sort === "recipes-desc" ? "original" : query.sort,
+                );
+                const sort = collectionSort(
+                  typeof updater === "function" ? updater(previous) : updater,
+                );
+                onQueryChange({
+                  sort: sort === "name-asc" || sort === "name-desc" ? sort : "original",
+                });
+              }}
+            />
+          ) : (
+            <IngredientItems items={result.items} data={data} />
+          )}
         </section>
       )}
       {result.items.length === 0 && <CollectionEmpty title="食材" onClear={clear} />}
