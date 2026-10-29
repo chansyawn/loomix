@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { Badge } from "@/ui/components/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/components/tabs";
-import { cn } from "cn";
 
 export interface CollectionTab<V extends string = string> {
   value: V;
@@ -41,7 +40,6 @@ export function CollectionPage<V extends string>({
             const tab = tabs.find((item) => item.value === value);
             if (tab) onViewChange?.(tab.value);
           }}
-          className="gap-6"
         >
           <TabsList
             aria-label={`${title}视图`}
@@ -52,10 +50,9 @@ export function CollectionPage<V extends string>({
                 key={tab.value}
                 value={tab.value}
                 disabled={loading}
-                className={cn(
-                  tabs.length > 2 &&
-                    "min-w-0 gap-1 px-2 [&_svg]:hidden @min-[380px]:gap-2 @min-[380px]:px-3 @min-[380px]:[&_svg]:block",
-                )}
+                className={
+                  tabs.length > 2 ? "min-w-0 [&_svg]:hidden @min-[380px]:[&_svg]:block" : undefined
+                }
               >
                 {tab.icon}
                 {tab.label}

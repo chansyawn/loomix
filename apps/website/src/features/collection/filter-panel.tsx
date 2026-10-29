@@ -65,12 +65,9 @@ function FilterOptions<K extends string>({
       return next;
     });
   return (
-    <AccordionItem
-      value={group.key}
-      className="border-b border-border/70 last:border-b-0 data-open:bg-transparent"
-    >
+    <AccordionItem value={group.key}>
       <div className="relative flex items-center">
-        <AccordionTrigger className="min-w-0 flex-1 items-center gap-3 border-0 px-0 py-2 hover:no-underline">
+        <AccordionTrigger className="min-w-0 flex-1 items-center">
           <span className={`flex min-w-0 items-center gap-2 ${selectedCount > 0 ? "pr-16" : ""}`}>
             <span>{group.label}</span>
             {selectedCount > 0 && <Badge variant="secondary">已选 {selectedCount}</Badge>}
@@ -89,7 +86,7 @@ function FilterOptions<K extends string>({
           </Button>
         )}
       </div>
-      <AccordionContent className="pb-4">
+      <AccordionContent>
         <fieldset className="space-y-3">
           <legend className="sr-only">{group.label}</legend>
           {selectableCount > 10 && (
@@ -139,7 +136,7 @@ function FilterOptions<K extends string>({
                     }
                     className="mt-0.5"
                   />
-                  <Label htmlFor={`${id}-${option.value}`} className="cursor-pointer leading-5">
+                  <Label htmlFor={`${id}-${option.value}`} className="cursor-pointer">
                     {option.label}
                   </Label>
                 </div>
@@ -181,14 +178,14 @@ export function FilterPanel<K extends string>({
         {count > 0 && <Badge>{count}</Badge>}
       </SheetTrigger>
       <SheetContent className="data-[side=right]:w-full data-[side=right]:sm:max-w-md">
-        <SheetHeader className="border-b">
+        <SheetHeader>
           <SheetTitle>{title}</SheetTitle>
         </SheetHeader>
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
           <Accordion
             defaultValue={groups[0] ? [groups[0].key] : []}
             multiple
-            className="overflow-visible rounded-none border-0"
+            className="overflow-visible"
           >
             {groups.map((group) => (
               <FilterOptions
@@ -200,7 +197,7 @@ export function FilterPanel<K extends string>({
             ))}
           </Accordion>
         </div>
-        <SheetFooter className="flex-row items-center justify-between border-t">
+        <SheetFooter className="flex-row items-center justify-between">
           <Button variant="ghost" onClick={onClear}>
             清空筛选
           </Button>
