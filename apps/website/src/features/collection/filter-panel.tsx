@@ -19,7 +19,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/ui/components/sheet";
-import { filterTree, flattenFilterOptions } from "./filter-types";
+import { filterTree, flattenFilterOptions, toggleFilterTreeSelection } from "./filter-types";
 import type { FilterGroup } from "./filter-types";
 import { FilterTreeOption } from "./filter-tree";
 
@@ -105,15 +105,10 @@ function FilterOptions<K extends string>({
                   option={option}
                   depth={0}
                   selected={selected}
-                  inherited={false}
                   expanded={expanded}
                   searchActive={normalizedTerm.length > 0}
                   onToggleValue={(value, checked) =>
-                    onChange(
-                      checked
-                        ? [...selected, value]
-                        : selected.filter((selectedValue) => selectedValue !== value),
-                    )
+                    onChange(toggleFilterTreeSelection(group.options, value, checked, selected))
                   }
                   onExpandedChange={setExpandedValue}
                 />

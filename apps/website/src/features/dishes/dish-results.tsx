@@ -28,7 +28,10 @@ export function DishResults({
   search: DishesSearch & { view: DishView };
   onSearchChange: (update: SearchUpdate, replace?: boolean) => Promise<void>;
 }) {
-  const query = search[search.view];
+  const query = {
+    ...search[search.view],
+    ingredientTags: normalizeIngredientTagIds(data.ingredients, search[search.view].ingredientTags),
+  };
   const layout = useCollectionLayout(search.layout);
   const presentation = listPresentation(search.view);
   const result = queryDishes(data, search.view, query);

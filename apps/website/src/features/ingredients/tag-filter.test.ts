@@ -10,7 +10,7 @@ import {
 } from "./tag-filter";
 
 describe("ingredient tag filtering", () => {
-  it("builds a full hierarchical tree with dimension roots and zero-count options", () => {
+  it("builds three nonselectable dimension sections with zero-count options", () => {
     const { data } = ingredientsFixture();
     const counts = ingredientTagCounts(data, data.itemsById.values());
     const group = ingredientTagFilterGroup(data, counts);
@@ -18,6 +18,7 @@ describe("ingredient tag filtering", () => {
     const selectable = options.filter((option) => option.selectable !== false);
 
     expect(group.options.map((option) => option.label)).toEqual(["分类", "颜色", "食材品质"]);
+    expect(group.options.every((option) => option.selectable === false)).toBe(true);
     expect(selectable.map((option) => option.value)).toEqual([
       "2",
       "10",
@@ -27,9 +28,7 @@ describe("ingredient tag filtering", () => {
       "15",
       "3",
       "13",
-      "20",
       "21",
-      "30",
       "31",
     ]);
     expect(options.find((option) => option.value === "13")).toMatchObject({
@@ -41,14 +40,26 @@ describe("ingredient tag filtering", () => {
       count: 0,
       disabled: true,
     });
-    expect(options.find((option) => option.value === "20")?.chipLabel).toBe("颜色");
-    expect(options.find((option) => option.value === "30")?.chipLabel).toBe("品质");
+    expect(options.find((option) => option.value === "20")).toBeUndefined();
+    expect(options.find((option) => option.value === "30")).toBeUndefined();
+    expect(options.find((option) => option.value === "21")?.chipLabel).toBe("颜色 · 红色蔬菜");
+    expect(options.find((option) => option.value === "31")?.chipLabel).toBe("品质 · 特优");
   });
 
-  it("normalizes redundant ancestor selections without changing branch semantics", () => {
+  it("expands selected parents and closes fully selected branches", () => {
     const { data } = ingredientsFixture();
-    expect(normalizeIngredientTagIds(data, ["2", "11", "13"])).toEqual(["2", "13"]);
-    expect(normalizeIngredientTagIds(data, ["20", "21"])).toEqual(["20"]);
+    expect(normalizeIngredientTagIds(data, ["2", "11", "13"])).toEqual([
+      "2",
+      "3",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+    ]);
+    expect(normalizeIngredientTagIds(data, ["20", "21"])).toEqual(["21"]);
+    expect(normalizeIngredientTagIds(data, ["13"])).toEqual(["3", "13"]);
     expect(normalizeIngredientTagIds(data, ["999", "invalid"])).toEqual([]);
   });
 

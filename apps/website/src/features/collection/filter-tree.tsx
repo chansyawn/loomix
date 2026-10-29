@@ -16,7 +16,6 @@ export function FilterTreeOption({
   option,
   depth,
   selected,
-  inherited,
   expanded,
   searchActive,
   onToggleValue,
@@ -25,7 +24,6 @@ export function FilterTreeOption({
   option: FilterOption;
   depth: number;
   selected: string[];
-  inherited: boolean;
   expanded: ReadonlySet<string>;
   searchActive: boolean;
   onToggleValue: (value: string, checked: boolean) => void;
@@ -34,13 +32,11 @@ export function FilterTreeOption({
   const id = useId();
   const selectable = option.selectable !== false;
   const children = option.children ?? [];
-  const checked = selectable && (inherited || selected.includes(option.value));
+  const checked = selectable && selected.includes(option.value);
   const indeterminate =
     selectable && !checked && children.some((child) => subtreeContainsSelected(child, selected));
   const disabled = selectable && !selected.includes(option.value) && Boolean(option.disabled);
-  const isOpen =
-    children.length > 0 &&
-    (searchActive || subtreeContainsSelected(option, selected) || expanded.has(option.value));
+  const isOpen = children.length > 0 && (searchActive || expanded.has(option.value));
 
   return (
     <li className="min-w-0">
@@ -68,14 +64,14 @@ export function FilterTreeOption({
               id={id}
               checked={checked}
               indeterminate={indeterminate}
-              disabled={disabled || inherited}
+              disabled={disabled}
               className="data-indeterminate:border-primary data-indeterminate:bg-primary data-indeterminate:before:h-0.5 data-indeterminate:before:w-2 data-indeterminate:before:rounded-full data-indeterminate:before:bg-primary-foreground data-indeterminate:[&>span>svg]:hidden"
               onCheckedChange={(value) => onToggleValue(option.value, value === true)}
             />
             <Label
               htmlFor={id}
-              className={`min-w-0 flex-1 cursor-pointer py-1.5 text-sm leading-5 ${
-                disabled || inherited ? "cursor-not-allowed text-muted-foreground" : ""
+              className={`min-w-0 flex-1 py-1.5 text-sm leading-5 ${
+                disabled ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer"
               }`}
             >
               {option.label}
@@ -84,7 +80,6 @@ export function FilterTreeOption({
         ) : (
           <span className="min-w-0 flex-1 py-1.5 text-sm font-medium">{option.label}</span>
         )}
-        {inherited && <span className="shrink-0 text-xs text-muted-foreground">已包含</span>}
         {option.count !== undefined && (
           <span
             className={`w-8 shrink-0 text-right text-xs tabular-nums ${
@@ -103,7 +98,6 @@ export function FilterTreeOption({
               option={child}
               depth={depth + 1}
               selected={selected}
-              inherited={checked}
               expanded={expanded}
               searchActive={searchActive}
               onToggleValue={onToggleValue}

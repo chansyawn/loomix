@@ -11,6 +11,7 @@ const categoryDimensionNames = {
   color: "颜色",
   quality: "品质",
 } as const;
+const structuralTagNames = new Set(["食材", "食材_颜色", "食材_品阶"]);
 
 function tagDimension(data: IngredientsData, categoryId: number): IngredientTagDimension | null {
   const dimension = data.dimensions.get(categoryId);
@@ -20,28 +21,33 @@ function tagDimension(data: IngredientsData, categoryId: number): IngredientTagD
   return null;
 }
 
-function hasSelectedAncestor(
-  category: IngredientCategory,
-  selected: ReadonlySet<number>,
-  categories: ReadonlyMap<number, IngredientCategory>,
-): boolean {
-  const seen = new Set<number>();
-  let parent = category.parentId === null ? undefined : categories.get(category.parentId);
-  while (parent && !seen.has(parent.id)) {
-    if (selected.has(parent.id)) return true;
-    seen.add(parent.id);
-    parent = parent.parentId === null ? undefined : categories.get(parent.parentId);
-  }
-  return false;
-}
-
 export function normalizeIngredientTagIds(data: IngredientsData, values: string[]): string[] {
   const selected = new Set(values.map(Number).filter((id) => data.categoriesById.has(id)));
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const category of data.categories) {
+      if (!selected.has(category.id)) continue;
+      for (const child of data.childrenByCategoryId.get(category.id) ?? []) {
+        if (selected.has(child.id)) continue;
+        selected.add(child.id);
+        changed = true;
+      }
+    }
+    for (const category of [...data.categories].reverse()) {
+      const children = data.childrenByCategoryId.get(category.id) ?? [];
+      if (
+        selected.has(category.id) ||
+        children.length === 0 ||
+        !children.every((child) => selected.has(child.id))
+      )
+        continue;
+      selected.add(category.id);
+      changed = true;
+    }
+  }
   return data.categories
-    .filter(
-      (category) =>
-        selected.has(category.id) && !hasSelectedAncestor(category, selected, data.categoriesById),
-    )
+    .filter((category) => selected.has(category.id) && !structuralTagNames.has(category.tagName))
     .map((category) => String(category.id));
 }
 
@@ -114,7 +120,7 @@ function categoryOption(
 ): FilterOption {
   const children = data.childrenByCategoryId.get(category.id) ?? [];
   const count = counts.get(category.id) ?? 0;
-  const dimensionRoot = ["食材_颜色", "食材_品阶"].includes(category.tagName);
+  const dimensionRoot = structuralTagNames.has(category.tagName);
   const childPath = dimensionRoot ? [] : [...path, category.name];
   return {
     value: String(category.id),
@@ -151,7 +157,7 @@ export function ingredientTagFilterGroup(
   return {
     key: "ingredientTags",
     label: "食材标签",
-    description: "父级包含子级；同一分类可任选，不同分类需由同一种食材同时满足。",
+    description: "父级包含子级；同一维度内任选，不同维度需由同一种食材同时满足。",
     tree: true,
     options: [
       sectionOption(
@@ -161,18 +167,24 @@ export function ingredientTagFilterGroup(
       ),
       ...(colorRoot
         ? [
-            {
-              ...categoryOption(data, colorRoot, counts, "color", []),
-              defaultExpanded: true,
-            },
+            sectionOption(
+              "__color",
+              "颜色",
+              (data.childrenByCategoryId.get(colorRoot.id) ?? []).map((category) =>
+                categoryOption(data, category, counts, "color", []),
+              ),
+            ),
           ]
         : []),
       ...(qualityRoot
         ? [
-            {
-              ...categoryOption(data, qualityRoot, counts, "quality", []),
-              defaultExpanded: true,
-            },
+            sectionOption(
+              "__quality",
+              "食材品质",
+              (data.childrenByCategoryId.get(qualityRoot.id) ?? []).map((category) =>
+                categoryOption(data, category, counts, "quality", []),
+              ),
+            ),
           ]
         : []),
     ],

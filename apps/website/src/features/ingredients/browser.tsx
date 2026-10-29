@@ -25,12 +25,16 @@ export function IngredientsBrowser({
   onQueryChange: (patch: Partial<IngredientsQuery>, replace?: boolean) => void;
   onLayoutChange: (layout: CollectionLayout) => void;
 }) {
-  const result = queryIngredients(data, query);
+  const normalizedQuery = {
+    ...query,
+    ingredientTags: normalizeIngredientTagIds(data, query.ingredientTags),
+  };
+  const result = queryIngredients(data, normalizedQuery);
   const groups = ingredientFilterGroups(data, result.counts);
   const clear = () => onQueryChange(emptyIngredientsQuery());
   const filter = (values: string[]) =>
     onQueryChange({ ingredientTags: normalizeIngredientTagIds(data, values) });
-  const chips = collectionFilterChips(groups, query, (_key, values) => filter(values), {
+  const chips = collectionFilterChips(groups, normalizedQuery, (_key, values) => filter(values), {
     value: query.q,
     clear: () => onQueryChange({ q: "" }),
   });
@@ -51,7 +55,7 @@ export function IngredientsBrowser({
           <FilterPanel
             title="筛选食材"
             groups={groups}
-            query={query}
+            query={normalizedQuery}
             total={result.items.length}
             onFilter={(_key, values) => filter(values)}
             onClear={clear}
