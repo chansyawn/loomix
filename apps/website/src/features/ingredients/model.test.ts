@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vite-plus/test";
 import { categoryExpression, ingredientsFixture } from "./fixture";
-import { buildIngredientsData, ingredientConditionLabel, ingredientUsage } from "./model";
+import {
+  buildIngredientsData,
+  ingredientConditionLabel,
+  ingredientLeafTags,
+  ingredientUsage,
+} from "./model";
 
 describe("ingredient relationships", () => {
   it("indexes concrete ingredients without mixing attribute dimensions or reference-only items", () => {
@@ -51,6 +56,12 @@ describe("ingredient relationships", () => {
     expect(ingredientUsage(data, 5)).toMatchObject({ dishes: [] });
     expect(ingredientUsage(data, 8)).toBeNull();
     expect(ingredientUsage(data, 9)).toBeNull();
+  });
+
+  it("returns every leaf tag without structural or parent categories", () => {
+    const { data } = ingredientsFixture();
+    expect(ingredientLeafTags(data, 2).map((category) => category.id)).toEqual([11, 21, 31]);
+    expect(ingredientLeafTags(data, 5).map((category) => category.id)).toEqual([13]);
   });
 
   it("formats nested alternatives without losing boolean grouping", () => {

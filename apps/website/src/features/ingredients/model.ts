@@ -141,6 +141,14 @@ export function ingredientUsage(data: IngredientsData, itemId: number): Ingredie
     : null;
 }
 
+export function ingredientLeafTags(data: IngredientsData, itemId: number): IngredientCategory[] {
+  return (data.categoriesByItemId.get(itemId) ?? []).filter(
+    (category) =>
+      !data.childrenByCategoryId.has(category.id) &&
+      !["食材", "食材_颜色", "食材_品阶", "食材_不宜使用"].includes(category.tagName),
+  );
+}
+
 export function ingredientConditionLabel(
   expression: IngredientExpression,
   categories: ReadonlyMap<number, IngredientCategory>,

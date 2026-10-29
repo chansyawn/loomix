@@ -10,7 +10,6 @@ import { emptyIngredientsQuery, ingredientSortOptions } from "./search";
 import type { IngredientsQuery } from "./search";
 import { normalizeIngredientTagIds } from "./tag-filter";
 import { IngredientItems } from "./cards";
-import { RecipeAssociationNotice } from "./related-recipes";
 
 export function IngredientsBrowser({
   data,
@@ -68,14 +67,8 @@ export function IngredientsBrowser({
         chips={chips}
         onClear={clear}
       />
-      <div className="mb-6 rounded-2xl border bg-muted/20 px-4 py-3">
-        <RecipeAssociationNotice unconfirmedCount={data.unconfirmedRecipeCount} />
-      </div>
       {result.items.length > 0 && (
-        <section aria-labelledby="ingredient-results" className="space-y-4 pb-8">
-          <h2 id="ingredient-results" className="text-lg font-semibold">
-            {result.active ? "筛选结果" : "全部食材"}
-          </h2>
+        <section aria-label="食材结果" className="pb-8">
           <IngredientItems items={result.items} data={data} layout={layout} />
         </section>
       )}

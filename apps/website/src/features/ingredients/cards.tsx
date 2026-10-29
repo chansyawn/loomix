@@ -14,13 +14,12 @@ import {
   TableRow,
 } from "@/ui/components/table";
 import type { CollectionLayout } from "../collection/layout";
+import { ingredientLeafTags } from "./model";
 import type { IngredientsData } from "./model";
 
 function IngredientCard({ item, data }: { item: IngredientItem; data: IngredientsData }) {
   const origin = useDishesOrigin();
-  const categories = (data.categoriesByItemId.get(item.id) ?? []).filter(
-    (category) => data.dimensions.get(category.id) === "type",
-  );
+  const tags = ingredientLeafTags(data, item.id);
   return (
     <CollectionCard
       name={item.name}
@@ -32,8 +31,8 @@ function IngredientCard({ item, data }: { item: IngredientItem; data: Ingredient
         </Link>
       }
       description={
-        <CardDescription className="line-clamp-2 text-xs leading-5">
-          {categories.map((category) => category.name).join(" · ") || "食材"}
+        <CardDescription className="text-xs leading-5">
+          {tags.map((tag) => tag.name).join(" · ") || "食材"}
         </CardDescription>
       }
       footer={<span>{data.dishesByItemId.get(item.id)?.length ?? 0} 道关联菜肴</span>}
@@ -58,7 +57,7 @@ export function IngredientItems({
           <TableHeader>
             <TableRow>
               <TableHead>食材</TableHead>
-              <TableHead>种类</TableHead>
+              <TableHead>标签</TableHead>
               <TableHead className="text-right whitespace-nowrap">关联菜肴</TableHead>
             </TableRow>
           </TableHeader>
@@ -78,9 +77,8 @@ export function IngredientItems({
                   </Link>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
-                  {(data.categoriesByItemId.get(item.id) ?? [])
-                    .filter((category) => data.dimensions.get(category.id) === "type")
-                    .map((category) => category.name)
+                  {ingredientLeafTags(data, item.id)
+                    .map((tag) => tag.name)
                     .join("、")}
                 </TableCell>
                 <TableCell className="text-right">
