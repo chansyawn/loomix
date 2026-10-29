@@ -37,6 +37,37 @@ function selectableSubtreeValues(option: FilterOption): string[] {
     .map((item) => item.value);
 }
 
+export function summarizeFilterTreeSelection(
+  options: FilterOption[],
+  selected: string[],
+): string[] {
+  const selectedSet = new Set(selected);
+  const summary: string[] = [];
+
+  const visit = (option: FilterOption) => {
+    const descendants = (option.children ?? []).flatMap(selectableSubtreeValues);
+    if (
+      option.selectable !== false &&
+      selectedSet.has(option.value) &&
+      descendants.every((value) => selectedSet.has(value))
+    ) {
+      summary.push(option.value);
+      return;
+    }
+    for (const child of option.children ?? []) visit(child);
+  };
+
+  for (const option of options) visit(option);
+  return summary;
+}
+
+export function filterSelectionValues<K extends string>(
+  group: FilterGroup<K>,
+  selected: string[],
+): string[] {
+  return group.tree ? summarizeFilterTreeSelection(group.options, selected) : selected;
+}
+
 export function toggleFilterTreeSelection(
   options: FilterOption[],
   value: string,

@@ -19,7 +19,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/ui/components/sheet";
-import { filterTree, flattenFilterOptions, toggleFilterTreeSelection } from "./filter-types";
+import {
+  filterSelectionValues,
+  filterTree,
+  flattenFilterOptions,
+  toggleFilterTreeSelection,
+} from "./filter-types";
 import type { FilterGroup } from "./filter-types";
 import { FilterTreeOption } from "./filter-tree";
 
@@ -48,6 +53,7 @@ function FilterOptions<K extends string>({
   const options = group.tree
     ? filterTree(group.options, normalizedTerm)
     : group.options.filter((option) => option.label.includes(normalizedTerm));
+  const selectedCount = filterSelectionValues(group, selected).length;
   const selectableCount = flattenFilterOptions(group.options).filter(
     (option) => option.selectable !== false,
   ).length;
@@ -65,12 +71,12 @@ function FilterOptions<K extends string>({
     >
       <div className="relative flex items-center">
         <AccordionTrigger className="min-w-0 flex-1 items-center gap-3 border-0 px-0 py-2 hover:no-underline">
-          <span className={`flex min-w-0 items-center gap-2 ${selected.length > 0 ? "pr-16" : ""}`}>
+          <span className={`flex min-w-0 items-center gap-2 ${selectedCount > 0 ? "pr-16" : ""}`}>
             <span>{group.label}</span>
-            {selected.length > 0 && <Badge variant="secondary">已选 {selected.length}</Badge>}
+            {selectedCount > 0 && <Badge variant="secondary">已选 {selectedCount}</Badge>}
           </span>
         </AccordionTrigger>
-        {selected.length > 0 && (
+        {selectedCount > 0 && (
           <Button
             type="button"
             variant="ghost"
@@ -163,7 +169,10 @@ export function FilterPanel<K extends string>({
   onClear: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const count = groups.reduce((sum, group) => sum + query[group.key].length, 0);
+  const count = groups.reduce(
+    (sum, group) => sum + filterSelectionValues(group, query[group.key]).length,
+    0,
+  );
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger render={<Button variant="outline" />}>

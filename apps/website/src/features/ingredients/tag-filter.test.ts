@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+import { collectionFilterChips } from "../collection/filter-chips";
 import { flattenFilterOptions } from "../collection/filter-types";
 import { ingredientsFixture } from "./fixture";
 import {
@@ -61,6 +62,19 @@ describe("ingredient tag filtering", () => {
     expect(normalizeIngredientTagIds(data, ["20", "21"])).toEqual(["21"]);
     expect(normalizeIngredientTagIds(data, ["13"])).toEqual(["3", "13"]);
     expect(normalizeIngredientTagIds(data, ["999", "invalid"])).toEqual([]);
+  });
+
+  it("shows a fully selected category as a single filter chip", () => {
+    const { data } = ingredientsFixture();
+    const counts = ingredientTagCounts(data, data.itemsById.values());
+    const group = ingredientTagFilterGroup(data, counts);
+    const selected = normalizeIngredientTagIds(data, ["2"]);
+    const chips = collectionFilterChips([group], { ingredientTags: selected }, () => {}, {
+      value: "",
+      clear: () => {},
+    });
+
+    expect(chips.map((chip) => chip.label)).toEqual(["分类 · 素食"]);
   });
 
   it("matches alternatives within a dimension and intersections across dimensions", () => {

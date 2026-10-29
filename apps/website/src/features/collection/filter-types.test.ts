@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vite-plus/test";
-import { toggleFilterTreeSelection } from "./filter-types";
+import {
+  filterSelectionValues,
+  summarizeFilterTreeSelection,
+  toggleFilterTreeSelection,
+} from "./filter-types";
 import type { FilterOption } from "./filter-types";
 
 const options: FilterOption[] = [
@@ -26,6 +30,32 @@ const options: FilterOption[] = [
 ];
 
 describe("tree filter selection", () => {
+  it("summarizes selected branches by their highest complete node", () => {
+    expect(
+      summarizeFilterTreeSelection(options, ["animal", "fish", "salmon", "shrimp", "crab"]),
+    ).toEqual(["animal"]);
+    expect(summarizeFilterTreeSelection(options, ["fish", "salmon", "shrimp"])).toEqual([
+      "fish",
+      "shrimp",
+    ]);
+  });
+
+  it("only summarizes tree groups", () => {
+    const group = { key: "tags" as const, label: "标签", options, tree: true };
+    expect(filterSelectionValues(group, ["animal", "fish", "salmon", "shrimp", "crab"])).toEqual([
+      "animal",
+    ]);
+    expect(
+      filterSelectionValues({ ...group, tree: false }, [
+        "animal",
+        "fish",
+        "salmon",
+        "shrimp",
+        "crab",
+      ]),
+    ).toEqual(["animal", "fish", "salmon", "shrimp", "crab"]);
+  });
+
   it("expands a parent into its full subtree", () => {
     expect(toggleFilterTreeSelection(options, "animal", true, [])).toEqual([
       "animal",

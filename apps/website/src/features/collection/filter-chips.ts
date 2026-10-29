@@ -1,4 +1,8 @@
-import { flattenFilterOptions } from "./filter-types";
+import {
+  filterSelectionValues,
+  flattenFilterOptions,
+  toggleFilterTreeSelection,
+} from "./filter-types";
 import type { FilterGroup } from "./filter-types";
 
 export interface FilterChip {
@@ -14,7 +18,7 @@ export function collectionFilterChips<K extends string>(
   search: { value: string; clear: () => void },
 ): FilterChip[] {
   const chips = groups.flatMap((group) =>
-    selected[group.key].map((value) => {
+    filterSelectionValues(group, selected[group.key]).map((value) => {
       const option = flattenFilterOptions(group.options).find((item) => item.value === value);
       return {
         key: `${group.key}-${value}`,
@@ -22,7 +26,9 @@ export function collectionFilterChips<K extends string>(
         remove: () =>
           onFilter(
             group.key,
-            selected[group.key].filter((item) => item !== value),
+            group.tree
+              ? toggleFilterTreeSelection(group.options, value, false, selected[group.key])
+              : selected[group.key].filter((item) => item !== value),
           ),
       };
     }),
