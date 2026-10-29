@@ -197,7 +197,7 @@ export function SiteHeader() {
             </>
           )}
           <BreadcrumbItem className="min-w-0">
-            <BreadcrumbPage className="line-clamp-1">
+            <BreadcrumbPage>
               {isDetail
                 ? (detailTitle ??
                   (isNeighborDetail

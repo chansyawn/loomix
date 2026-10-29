@@ -74,7 +74,7 @@ export function IngredientItems({
                     {item.name}
                   </Link>
                 </TableCell>
-                <TableCell className="text-muted-foreground">
+                <TableCell>
                   {ingredientLeafTags(data, item.id)
                     .map((tag) => tag.name)
                     .join("、")}

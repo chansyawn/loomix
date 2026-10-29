@@ -76,7 +76,7 @@ export function CollectionLoading<V extends string, T>({
                   <col key={column.id} style={{ width: column.width }} />
                 ))}
               </colgroup>
-              <TableHeader className="bg-muted/50">
+              <TableHeader>
                 <TableRow>
                   {columns.map((column) => (
                     <TableHead key={column.id}>

@@ -19,7 +19,7 @@ export function DishesLoading() {
         <Skeleton className="mb-6 h-9 w-full max-w-sm" />
         <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,14rem),1fr))] gap-4">
           {Array.from({ length: 10 }, (_, index) => (
-            <Skeleton key={index} className="h-48 rounded-2xl" />
+            <Skeleton key={index} className="h-48" />
           ))}
         </div>
       </CollectionPage>

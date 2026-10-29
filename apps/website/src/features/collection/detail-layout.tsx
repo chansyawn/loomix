@@ -58,7 +58,7 @@ export function CollectionDetailLoading({ label }: { label: string }) {
   return (
     <section aria-label={label} aria-busy="true" className="space-y-8 pb-8">
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,1fr)] lg:gap-12">
-        <Skeleton className="aspect-square rounded-4xl" />
+        <Skeleton className="aspect-square" />
         <div className="space-y-6">
           <Skeleton className="h-10 w-2/3" />
           <Skeleton className="h-24 w-full" />

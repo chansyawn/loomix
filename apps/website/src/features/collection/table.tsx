@@ -85,7 +85,7 @@ export function CollectionTable<T extends object>({
             <col key={column.id} style={{ width: widths[column.id] }} />
           ))}
         </colgroup>
-        <TableHeader className="bg-muted/50">
+        <TableHeader>
           {table.getHeaderGroups().map((group) => (
             <TableRow key={group.id} aria-rowindex={1}>
               {group.headers.map((header) => {

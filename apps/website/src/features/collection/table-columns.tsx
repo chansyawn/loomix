@@ -52,7 +52,7 @@ export function recordColumns<
       ),
       skeleton: (
         <div className="flex items-center gap-3">
-          <Skeleton className="size-10 shrink-0 rounded-md" />
+          <Skeleton className="size-10 shrink-0" />
           <Skeleton className="h-4 w-24" />
         </div>
       ),
@@ -69,7 +69,7 @@ export function recordColumns<
         ) : (
           <QualityBadge quality={record.quality} />
         ),
-      skeleton: <Skeleton className="h-5 w-14 rounded-full" />,
+      skeleton: <Skeleton className="h-5 w-14" />,
     },
   ];
 }
