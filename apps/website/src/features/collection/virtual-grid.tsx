@@ -58,12 +58,11 @@ function VirtualRows<T>({
       {virtualizer.getVirtualItems().map((row) => (
         <div
           key={row.key}
-          ref={layout.fixedHeight ? undefined : (element) => virtualizer.measureElement(element)}
+          ref={(element) => virtualizer.measureElement(element)}
           data-index={row.index}
           className="absolute top-0 left-0 grid w-full gap-4"
           style={{
             gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
-            height: layout.fixedHeight ? row.size : undefined,
             transform: `translateY(${row.start - scrollMargin}px)`,
           }}
         >

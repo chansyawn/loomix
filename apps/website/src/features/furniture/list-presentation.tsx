@@ -1,6 +1,4 @@
 import { ArmchairIcon, LayersIcon } from "lucide-react";
-import { CardContent, CardDescription, CardFooter } from "@/ui/components/card";
-import { Skeleton } from "@/ui/components/skeleton";
 import { CollectionCardSkeleton } from "../collection/card-skeleton";
 import { compactGrid, wideGrid } from "../collection/grid-layout";
 import type { CollectionTab } from "../collection/page";
@@ -18,35 +16,12 @@ export function listPresentation(view: View) {
   }[view];
   return {
     ...entry,
-    grid: view === "items" ? compactGrid(100) : wideGrid(180),
+    grid: view === "items" ? compactGrid(78) : wideGrid(124),
     card:
       view === "items" ? (
-        <CollectionCardSkeleton
-          description={
-            <CardDescription>
-              <Skeleton className="h-4 w-1/2" />
-            </CardDescription>
-          }
-        />
+        <CollectionCardSkeleton tags />
       ) : (
-        <CollectionCardSkeleton
-          imageClassName="aspect-2/1"
-          footer={
-            <CardFooter className="mt-auto">
-              <Skeleton className="size-3.5" />
-              <Skeleton className="h-4 w-20" />
-            </CardFooter>
-          }
-        >
-          <CardContent>
-            {
-              <CardDescription>
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-              </CardDescription>
-            }
-          </CardContent>
-        </CollectionCardSkeleton>
+        <CollectionCardSkeleton imageClassName="aspect-2/1" description tags />
       ),
   };
 }

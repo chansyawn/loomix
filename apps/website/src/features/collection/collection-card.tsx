@@ -1,6 +1,6 @@
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "cn";
-import { Card, CardFooter, CardHeader, CardTitle } from "@/ui/components/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/ui/components/card";
 import { QualityBar } from "./quality";
 
 type CollectionCardProps = Pick<ComponentProps<"div">, "className" | "ref"> & {
@@ -8,10 +8,8 @@ type CollectionCardProps = Pick<ComponentProps<"div">, "className" | "ref"> & {
   image: ReactNode;
   quality: number | null;
   titleLink: ReactNode;
-  description?: ReactNode;
-  children?: ReactNode;
-  footer?: ReactNode;
-  headerClassName?: string;
+  description?: string | null;
+  tags?: string | null;
 };
 
 export function CollectionCard({
@@ -20,9 +18,7 @@ export function CollectionCard({
   quality,
   titleLink,
   description,
-  children,
-  footer,
-  headerClassName,
+  tags,
   className,
   ref,
 }: CollectionCardProps) {
@@ -39,7 +35,7 @@ export function CollectionCard({
         {image}
         <QualityBar quality={quality} />
       </div>
-      <CardHeader className={headerClassName}>
+      <CardHeader>
         <CardTitle className="min-w-0">
           <h2
             className="truncate [&>a]:outline-none [&>a]:after:absolute [&>a]:after:inset-0 [&>a]:after:rounded-xl"
@@ -48,10 +44,21 @@ export function CollectionCard({
             {titleLink}
           </h2>
         </CardTitle>
-        {description}
+        {description?.trim() ? (
+          <CardDescription
+            // oxlint-disable-next-line shadcn/no-restyle -- 收藏卡片的描述固定预留两行空间。
+            className="line-clamp-2 min-h-10 leading-5"
+            title={description}
+          >
+            {description}
+          </CardDescription>
+        ) : null}
+        {tags?.trim() ? (
+          <p className="truncate text-xs text-muted-foreground" title={tags}>
+            {tags}
+          </p>
+        ) : null}
       </CardHeader>
-      {children}
-      {footer && <CardFooter className="mt-auto">{footer}</CardFooter>}
     </Card>
   );
 }

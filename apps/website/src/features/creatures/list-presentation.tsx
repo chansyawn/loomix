@@ -1,6 +1,4 @@
 import { BugIcon, LayersIcon } from "lucide-react";
-import { CardDescription, CardFooter } from "@/ui/components/card";
-import { Skeleton } from "@/ui/components/skeleton";
 import { CollectionCardSkeleton } from "../collection/card-skeleton";
 import { compactGrid, wideGrid } from "../collection/grid-layout";
 import type { CollectionTab } from "../collection/page";
@@ -18,27 +16,13 @@ export function listPresentation(view: View) {
   }[view];
   return {
     ...entry,
-    grid: view === "items" ? compactGrid(124) : wideGrid(110),
-    card:
-      view === "items" ? (
-        <CollectionCardSkeleton
-          description={
-            <CardDescription>
-              <Skeleton className="h-4 w-2/3" />
-              <Skeleton className="h-4 w-3/4" />
-            </CardDescription>
-          }
-        />
-      ) : (
-        <CollectionCardSkeleton
-          imageClassName="aspect-2/1"
-          footer={
-            <CardFooter className="mt-auto">
-              <Skeleton className="size-3.5" />
-              <Skeleton className="h-4 w-20" />
-            </CardFooter>
-          }
-        />
-      ),
+    grid: view === "items" ? compactGrid(78) : wideGrid(124),
+    card: (
+      <CollectionCardSkeleton
+        imageClassName={view === "series" ? "aspect-2/1" : "aspect-square"}
+        description={view === "series"}
+        tags
+      />
+    ),
   };
 }

@@ -1,7 +1,5 @@
 import type { ClothingItem, ClothingSet, ClothingAppearance } from "../collection-view.ts";
 import { Link } from "@tanstack/react-router";
-import { LayersIcon } from "lucide-react";
-import { CardDescription, CardContent } from "@/ui/components/card";
 import { CollectionCard } from "@/features/collection/collection-card";
 import { RecordImage } from "@/features/collection/record-image";
 import { useClothingOrigin } from "./detail-navigation";
@@ -28,31 +26,14 @@ export function ClothingCard({
           {record.name}
         </Link>
       }
-      className="h-full"
-      headerClassName={"category" in record ? "h-12 shrink-0" : undefined}
-      description={
-        "category" in record && (
-          <CardDescription className="min-h-4">{record.category ?? "分类未提供"}</CardDescription>
-        )
+      description={"componentIds" in record ? record.description : null}
+      tags={
+        "componentIds" in record
+          ? record.componentIds === null
+            ? null
+            : `${record.componentIds.length} 件服装`
+          : record.category
       }
-      footer={
-        "componentIds" in record && (
-          <>
-            <LayersIcon className="size-3.5" />
-            {record.componentIds === null
-              ? "成员信息未提供"
-              : `${record.componentIds.length} 件服装`}
-          </>
-        )
-      }
-    >
-      {"componentIds" in record && (
-        <CardContent>
-          <CardDescription className="min-h-10">
-            {record.description ?? "描述未提供"}
-          </CardDescription>
-        </CardContent>
-      )}
-    </CollectionCard>
+    />
   );
 }

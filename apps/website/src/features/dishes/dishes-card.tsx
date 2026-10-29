@@ -1,19 +1,15 @@
-import { LayersIcon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import type { DishItem, DishSeries } from "../collection-view.ts";
-import { CardDescription } from "@/ui/components/card";
 import { RecordImage } from "@/features/collection/record-image";
 import { CollectionCard } from "@/features/collection/collection-card";
 import { useDishesOrigin } from "./detail-navigation";
-import { effectSummary, formatTastes } from "./presentation";
+import { formatTastes } from "./presentation";
 
 export function DishesCard({ item }: { item: DishItem }) {
   const origin = useDishesOrigin();
-  const effects = effectSummary(item);
-  const tastes = formatTastes(item.tastes);
-  const attributes = `${tastes || "口味未提供"} · ${item.difficulty || "难度未提供"} · ${
-    item.cookware || "炊具未提供"
-  }`;
+  const attributes = [formatTastes(item.tastes), item.difficulty, item.cookware]
+    .filter(Boolean)
+    .join(" · ");
   return (
     <CollectionCard
       name={item.name}
@@ -28,17 +24,7 @@ export function DishesCard({ item }: { item: DishItem }) {
           {item.name}
         </Link>
       }
-      description={
-        <CardDescription>
-          <p className="line-clamp-2 leading-5" title={effects ?? undefined}>
-            <span className="font-medium text-foreground">效果 · </span>
-            {effects || "未提供"}
-          </p>
-          <p className="truncate" title={attributes}>
-            {attributes}
-          </p>
-        </CardDescription>
-      }
+      tags={attributes}
     />
   );
 }
@@ -59,12 +45,8 @@ export function DishSeriesCard({ series }: { series: DishSeries }) {
           {series.name}
         </Link>
       }
-      footer={
-        <>
-          <LayersIcon className="size-3.5" />
-          {series.dishIds === null ? "成员信息未提供" : `${series.dishIds.length} 道菜肴`}
-        </>
-      }
+      description={series.description}
+      tags={series.dishIds === null ? null : `${series.dishIds.length} 道菜肴`}
     />
   );
 }

@@ -1,9 +1,7 @@
-import { LayersIcon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { RecordImage as FurnitureImage } from "@/features/collection/record-image";
 import { useFurnitureOrigin } from "./detail-navigation";
 import type { FurnitureItem, FurnitureSet } from "../collection-view.ts";
-import { CardContent, CardDescription } from "@/ui/components/card";
 import { CollectionCard } from "@/features/collection/collection-card";
 
 export function FurnitureCard({ item }: { item: FurnitureItem }) {
@@ -22,15 +20,7 @@ export function FurnitureCard({ item }: { item: FurnitureItem }) {
           {item.name}
         </Link>
       }
-      description={
-        <CardDescription className="min-w-0">
-          {item.type && (
-            <span className="min-w-0 truncate text-xs" title={item.type}>
-              {item.type}
-            </span>
-          )}
-        </CardDescription>
-      }
+      tags={item.type}
     />
   );
 }
@@ -51,16 +41,8 @@ export function FurnitureSetCard({ set }: { set: FurnitureSet }) {
           {set.name}
         </Link>
       }
-      footer={
-        <>
-          <LayersIcon className="size-3.5" />
-          {set.componentIds === null ? "成员信息未提供" : `${set.componentIds.length} 件家具`}
-        </>
-      }
-    >
-      <CardContent>
-        <CardDescription className="min-h-10">{set.description}</CardDescription>
-      </CardContent>
-    </CollectionCard>
+      description={set.description}
+      tags={set.componentIds === null ? null : `${set.componentIds.length} 件家具`}
+    />
   );
 }

@@ -1,7 +1,5 @@
-import { LayersIcon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import type { CreatureItem, CreatureSeries } from "../collection-view.ts";
-import { CardDescription } from "@/ui/components/card";
 import { RecordImage } from "@/features/collection/record-image";
 import { CollectionCard } from "@/features/collection/collection-card";
 import { useCreaturesOrigin } from "./detail-navigation";
@@ -23,19 +21,7 @@ export function CreaturesCard({ item }: { item: CreatureItem }) {
           {item.name}
         </Link>
       }
-      description={
-        <CardDescription>
-          <p className="truncate" title={item.habitat ?? undefined}>
-            {item.habitat || "栖息地未提供"}
-          </p>
-          <p
-            className="truncate"
-            title={`${item.activeSeasons || "季节未提供"} · ${item.activeTimes || "时段未提供"}`}
-          >
-            {item.activeSeasons || "季节未提供"} · {item.activeTimes || "时段未提供"}
-          </p>
-        </CardDescription>
-      }
+      tags={item.category}
     />
   );
 }
@@ -62,12 +48,8 @@ export function CreatureSeriesCard({
           {series.name}
         </Link>
       }
-      footer={
-        <>
-          <LayersIcon className="size-3.5" />
-          {series.creatureIds === null ? "成员信息未提供" : `${series.creatureIds.length} 种生物`}
-        </>
-      }
+      description={series.description}
+      tags={series.creatureIds === null ? null : `${series.creatureIds.length} 种生物`}
     />
   );
 }

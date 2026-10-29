@@ -1,10 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import type { IngredientItem } from "../collection-view";
+import { compactGrid } from "../collection/grid-layout";
 import { CollectionCard } from "../collection/collection-card";
 import { RecordImage } from "../collection/record-image";
 import { collectionItemLocation } from "../collection/item-route";
 import { useDishesOrigin } from "../dishes/detail-navigation";
-import { CardDescription } from "@/ui/components/card";
 import { ingredientLeafTags } from "./model";
 import type { IngredientsData } from "./model";
 
@@ -21,10 +21,10 @@ function IngredientCard({ item, data }: { item: IngredientItem; data: Ingredient
           {item.name}
         </Link>
       }
-      description={
-        <CardDescription>{tags.map((tag) => tag.name).join(" · ") || "食材"}</CardDescription>
-      }
-      footer={<span>{data.dishesByItemId.get(item.id)?.length ?? 0} 道关联菜肴</span>}
+      tags={[
+        tags.map((tag) => tag.name).join(" · ") || "食材",
+        `${data.dishesByItemId.get(item.id)?.length ?? 0} 道关联菜肴`,
+      ].join(" · ")}
     />
   );
 }
@@ -37,7 +37,7 @@ export function IngredientItems({
   data: IngredientsData;
 }) {
   return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,9rem),1fr))] gap-3">
+    <div className={compactGrid(78).className}>
       {items.map((item) => (
         <IngredientCard key={item.id} item={item} data={data} />
       ))}

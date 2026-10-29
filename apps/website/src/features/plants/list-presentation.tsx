@@ -1,6 +1,4 @@
 import { SproutIcon, LayersIcon } from "lucide-react";
-import { CardDescription, CardFooter } from "@/ui/components/card";
-import { Skeleton } from "@/ui/components/skeleton";
 import { CollectionCardSkeleton } from "../collection/card-skeleton";
 import { compactGrid } from "../collection/grid-layout";
 import type { CollectionTab } from "../collection/page";
@@ -18,25 +16,7 @@ export function listPresentation(view: View) {
   }[view];
   return {
     ...entry,
-    grid: compactGrid(view === "items" ? 100 : 112),
-    card:
-      view === "items" ? (
-        <CollectionCardSkeleton
-          description={
-            <CardDescription>
-              <Skeleton className="h-4 w-2/3" />
-            </CardDescription>
-          }
-        />
-      ) : (
-        <CollectionCardSkeleton
-          footer={
-            <CardFooter className="mt-auto">
-              <Skeleton className="size-3.5" />
-              <Skeleton className="h-4 w-20" />
-            </CardFooter>
-          }
-        />
-      ),
+    grid: compactGrid(view === "items" ? 78 : 124),
+    card: <CollectionCardSkeleton description={view === "series"} tags />,
   };
 }

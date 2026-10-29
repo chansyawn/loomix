@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import type { MiscellaneousItem } from "../collection-view.ts";
-import { CardContent, CardDescription } from "@/ui/components/card";
 import { CollectionCard } from "@/features/collection/collection-card";
 import { RecordImage } from "@/features/collection/record-image";
 import { useMiscellanyOrigin } from "./detail-navigation";
@@ -21,12 +20,6 @@ export function MiscellanyCard({ item }: { item: MiscellaneousItem }) {
           {item.name}
         </Link>
       }
-      className="h-full"
-    >
-      <CardContent>
-        <CardDescription className="min-h-10">{item.description || "描述未提供"}</CardDescription>
-        <p className="mt-2 text-xs text-muted-foreground">编号 {item.id}</p>
-      </CardContent>
-    </CollectionCard>
+    />
   );
 }

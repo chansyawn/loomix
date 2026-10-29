@@ -1,7 +1,5 @@
-import { LayersIcon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import type { PlantItem, PlantSeries } from "../collection-view.ts";
-import { CardDescription } from "@/ui/components/card";
 import { RecordImage } from "@/features/collection/record-image";
 import { CollectionCard } from "@/features/collection/collection-card";
 import { usePlantsOrigin } from "./detail-navigation";
@@ -22,13 +20,7 @@ export function PlantsCard({ item }: { item: PlantItem }) {
           {item.name}
         </Link>
       }
-      description={
-        <CardDescription>
-          <p className="truncate" title={item.category ?? undefined}>
-            {item.category || "分类未提供"}
-          </p>
-        </CardDescription>
-      }
+      tags={item.category}
     />
   );
 }
@@ -49,12 +41,8 @@ export function PlantSeriesCard({ series }: { series: PlantSeries }) {
           {series.name}
         </Link>
       }
-      footer={
-        <>
-          <LayersIcon className="size-3.5" />
-          {series.plantIds === null ? "成员信息未提供" : `${series.plantIds.length} 种植物`}
-        </>
-      }
+      description={series.description}
+      tags={series.plantIds === null ? null : `${series.plantIds.length} 种植物`}
     />
   );
 }

@@ -1,31 +1,30 @@
-import type { ReactNode } from "react";
 import { Card, CardHeader, CardTitle } from "@/ui/components/card";
 import { Skeleton } from "@/ui/components/skeleton";
 
 export function CollectionCardSkeleton({
   imageClassName = "aspect-square",
-  headerClassName,
-  description,
-  children,
-  footer,
+  description = false,
+  tags = false,
 }: {
   imageClassName?: string;
-  headerClassName?: string;
-  description?: ReactNode;
-  children?: ReactNode;
-  footer?: ReactNode;
+  description?: boolean;
+  tags?: boolean;
 }) {
   return (
     <Card size="sm" media="flush" className="min-w-0" aria-hidden="true">
       <Skeleton className={`${imageClassName} shrink-0`} />
-      <CardHeader className={headerClassName}>
+      <CardHeader>
         <CardTitle>
           <Skeleton className="my-1 h-4 w-2/3" />
         </CardTitle>
-        {description}
+        {description ? (
+          <div className="space-y-1">
+            <Skeleton className="my-1 h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
+        ) : null}
+        {tags ? <Skeleton className="h-4 w-1/2" /> : null}
       </CardHeader>
-      {children}
-      {footer}
     </Card>
   );
 }
