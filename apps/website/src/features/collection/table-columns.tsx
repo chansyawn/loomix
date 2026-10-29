@@ -75,7 +75,7 @@ export function recordColumns<
 }
 
 export const tableLinkClassName =
-  "truncate rounded-sm font-medium underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+  "truncate font-medium underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 export function membershipStatus(hasMemberships: boolean, complete: boolean, noun: string) {
   return hasMemberships ? undefined : complete ? `未归入${noun}` : "成员信息未提供";

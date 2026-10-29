@@ -23,7 +23,7 @@ export function CollectionResultsSummary({
         </p>
       }
       chips={chips.map((chip) => (
-        <Badge key={chip.key} variant="secondary" className="h-auto max-w-full shrink-0 gap-1 pr-1">
+        <Badge key={chip.key} variant="secondary" className="h-auto max-w-full shrink-0">
           <span className="truncate">{chip.label}</span>
           <Button
             size="icon-xs"

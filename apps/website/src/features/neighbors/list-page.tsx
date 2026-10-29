@@ -1,7 +1,12 @@
-import { SearchIcon } from "lucide-react";
+import { SearchIcon, XIcon } from "lucide-react";
 import { Badge } from "@/ui/components/badge";
 import { Button } from "@/ui/components/button";
-import { Input } from "@/ui/components/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/ui/components/input-group";
 import type { NeighborsData } from "./data";
 import { NeighborCard } from "./neighbor-card";
 import { galaxies, queryNeighbors, type NeighborsSearch } from "./search";
@@ -27,19 +32,28 @@ export function NeighborsPage({
         <Badge variant="secondary">{data.neighbors.length} 位</Badge>
       </div>
       <div className="space-y-4">
-        <div className="relative max-w-sm">
-          <SearchIcon
-            aria-hidden="true"
-            className="absolute top-3 left-3 size-4 text-muted-foreground"
-          />
-          <Input
-            className="pl-9"
+        <InputGroup className="max-w-sm">
+          <InputGroupInput
             aria-label="搜索友邻或星球"
             placeholder="搜索友邻或星球…"
             value={search.q}
             onChange={(event) => update({ q: event.target.value }, true)}
           />
-        </div>
+          <InputGroupAddon>
+            <SearchIcon />
+          </InputGroupAddon>
+          {search.q && (
+            <InputGroupAddon align="inline-end">
+              <InputGroupButton
+                aria-label="清除搜索"
+                size="icon-xs"
+                onClick={() => update({ q: "" })}
+              >
+                <XIcon />
+              </InputGroupButton>
+            </InputGroupAddon>
+          )}
+        </InputGroup>
         <div role="group" aria-label="星系筛选" className="flex flex-wrap gap-2">
           {(["", ...galaxies] as const).map((galaxy) => (
             <Button

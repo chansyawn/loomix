@@ -32,30 +32,32 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </Link>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarMenu className="px-2 pt-2">
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              render={
-                <Link
-                  to={homeItem.to}
-                  activeOptions={{ exact: true }}
-                  activeProps={{ "data-active": true }}
-                />
-              }
-            >
-              <homeItem.icon />
-              <span>{homeItem.title}</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              render={<Link to={neighborsItem.to} activeProps={{ "data-active": true }} />}
-            >
-              <neighborsItem.icon />
-              <span>{neighborsItem.title}</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <SidebarGroup>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                render={
+                  <Link
+                    to={homeItem.to}
+                    activeOptions={{ exact: true }}
+                    activeProps={{ "data-active": true }}
+                  />
+                }
+              >
+                <homeItem.icon />
+                <span>{homeItem.title}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                render={<Link to={neighborsItem.to} activeProps={{ "data-active": true }} />}
+              >
+                <neighborsItem.icon />
+                <span>{neighborsItem.title}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
         <SidebarGroup>
           <SidebarGroupLabel>{collectionNavigation.title}</SidebarGroupLabel>
           <SidebarMenu>

@@ -65,10 +65,6 @@ export function FilterTreeOption({
               checked={checked}
               indeterminate={indeterminate}
               disabled={disabled}
-              className={
-                // eslint-disable-next-line shadcn/no-restyle -- 筛选树的半选状态需要明确显示。
-                "data-indeterminate:border-primary data-indeterminate:bg-primary data-indeterminate:before:h-0.5 data-indeterminate:before:w-2 data-indeterminate:before:rounded-full data-indeterminate:before:bg-primary-foreground data-indeterminate:[&>span>svg]:hidden"
-              }
               onCheckedChange={(value) => onToggleValue(option.value, value === true)}
             />
             <Label

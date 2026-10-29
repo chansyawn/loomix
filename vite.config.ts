@@ -12,7 +12,9 @@ export default defineConfig({
     jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }, "@shadcn/lint"],
     rules: {
       "vite-plus/prefer-vite-plus-imports": "error",
-      "shadcn/no-restyle": ["warn", { allow: ["layout", "spacing"] }],
+      "shadcn/no-restyle": ["error", { allow: ["layout"] }],
+      "shadcn/no-raw-colors": "warn",
+      "shadcn/no-unknown-classes": "warn",
     },
     overrides: [
       {

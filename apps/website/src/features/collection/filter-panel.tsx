@@ -181,7 +181,7 @@ export function FilterPanel<K extends string>({
         <SheetHeader>
           <SheetTitle>{title}</SheetTitle>
         </SheetHeader>
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-3">
           <Accordion
             defaultValue={groups[0] ? [groups[0].key] : []}
             multiple

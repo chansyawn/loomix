@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Badge } from "@/ui/components/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/components/tabs";
+import { cn } from "#/ui/lib/utils";
 
 export interface CollectionTab<V extends string = string> {
   value: V;
@@ -30,7 +31,7 @@ export function CollectionPage<V extends string>({
       aria-busy={loading || undefined}
       aria-label={loading ? `正在加载${title}图鉴` : undefined}
     >
-      <div className="mb-7">
+      <div className="mb-4">
         <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
       </div>
       {tabs.length > 0 ? (
@@ -43,7 +44,7 @@ export function CollectionPage<V extends string>({
         >
           <TabsList
             aria-label={`${title}视图`}
-            className={tabs.length > 2 ? "w-full max-w-sm" : undefined}
+            className={cn("mb-1", tabs.length > 2 ? "w-full max-w-sm" : undefined)}
           >
             {tabs.map((tab) => (
               <TabsTrigger
