@@ -21,9 +21,9 @@ export function listPresentation() {
     grid: miscellanyGrid,
     card: (
       <CollectionCardSkeleton>
-        <CardContent className="pt-0">
+        <CardContent>
           {
-            <CardDescription className="space-y-2">
+            <CardDescription>
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-3/4" />
             </CardDescription>

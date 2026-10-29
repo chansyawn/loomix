@@ -23,7 +23,7 @@ export function PlantsCard({ item }: { item: PlantItem }) {
         </Link>
       }
       description={
-        <CardDescription className="text-xs">
+        <CardDescription>
           <p className="truncate" title={item.category ?? undefined}>
             {item.category || "分类未提供"}
           </p>

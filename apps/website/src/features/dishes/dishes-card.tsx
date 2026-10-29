@@ -29,7 +29,7 @@ export function DishesCard({ item }: { item: DishItem }) {
         </Link>
       }
       description={
-        <CardDescription className="space-y-2 text-xs">
+        <CardDescription>
           <p className="line-clamp-2 leading-5" title={effects ?? undefined}>
             <span className="font-medium text-foreground">效果 · </span>
             {effects || "未提供"}

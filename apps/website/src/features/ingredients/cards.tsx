@@ -31,9 +31,7 @@ function IngredientCard({ item, data }: { item: IngredientItem; data: Ingredient
         </Link>
       }
       description={
-        <CardDescription className="text-xs leading-5">
-          {tags.map((tag) => tag.name).join(" · ") || "食材"}
-        </CardDescription>
+        <CardDescription>{tags.map((tag) => tag.name).join(" · ") || "食材"}</CardDescription>
       }
       footer={<span>{data.dishesByItemId.get(item.id)?.length ?? 0} 道关联菜肴</span>}
     />

@@ -16,7 +16,7 @@ export function CollectionCardSkeleton({
   footer?: ReactNode;
 }) {
   return (
-    <Card size="sm" className="min-w-0 pt-0" aria-hidden="true">
+    <Card size="sm" className="min-w-0" aria-hidden="true">
       <Skeleton className={`${imageClassName} shrink-0 rounded-none`} />
       <CardHeader className={headerClassName}>
         <CardTitle>

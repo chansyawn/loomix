@@ -32,9 +32,7 @@ export function ClothingCard({
       headerClassName={"category" in record ? "h-12 shrink-0" : undefined}
       description={
         "category" in record && (
-          <CardDescription className="min-h-4 truncate text-xs">
-            {record.category ?? "分类未提供"}
-          </CardDescription>
+          <CardDescription className="min-h-4">{record.category ?? "分类未提供"}</CardDescription>
         )
       }
       footer={
@@ -50,7 +48,7 @@ export function ClothingCard({
     >
       {"componentIds" in record && (
         <CardContent>
-          <CardDescription className="line-clamp-2 min-h-10">
+          <CardDescription className="min-h-10">
             {record.description ?? "描述未提供"}
           </CardDescription>
         </CardContent>

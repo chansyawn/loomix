@@ -10,7 +10,16 @@ export default defineConfig({
   lint: {
     ignorePatterns: ["apps/website/src/routeTree.gen.ts"],
     jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }, "@shadcn/lint"],
-    rules: { "vite-plus/prefer-vite-plus-imports": "error" },
+    rules: {
+      "vite-plus/prefer-vite-plus-imports": "error",
+      "shadcn/no-restyle": ["warn", { allow: ["layout"] }],
+    },
+    overrides: [
+      {
+        files: ["apps/website/src/ui/components/**"],
+        rules: { "shadcn/no-restyle": "off" },
+      },
+    ],
     options: { typeAware: true, typeCheck: true },
   },
   run: {

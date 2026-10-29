@@ -59,7 +59,7 @@ export function FurnitureSetCard({ set }: { set: FurnitureSet }) {
       }
     >
       <CardContent>
-        <CardDescription className="line-clamp-2 min-h-10">{set.description}</CardDescription>
+        <CardDescription className="min-h-10">{set.description}</CardDescription>
       </CardContent>
     </CollectionCard>
   );

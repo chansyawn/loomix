@@ -23,10 +23,8 @@ export function MiscellanyCard({ item }: { item: MiscellaneousItem }) {
       }
       className="h-full"
     >
-      <CardContent className="pt-0">
-        <CardDescription className="line-clamp-2 min-h-10">
-          {item.description || "描述未提供"}
-        </CardDescription>
+      <CardContent>
+        <CardDescription className="min-h-10">{item.description || "描述未提供"}</CardDescription>
         <p className="mt-2 text-xs text-muted-foreground">编号 {item.id}</p>
       </CardContent>
     </CollectionCard>

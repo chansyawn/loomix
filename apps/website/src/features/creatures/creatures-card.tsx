@@ -24,7 +24,7 @@ export function CreaturesCard({ item }: { item: CreatureItem }) {
         </Link>
       }
       description={
-        <CardDescription className="space-y-1 text-xs">
+        <CardDescription>
           <p className="truncate" title={item.habitat ?? undefined}>
             {item.habitat || "栖息地未提供"}
           </p>

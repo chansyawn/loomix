@@ -32,6 +32,7 @@ export function CollectionCard({
       size="sm"
       role="article"
       className={cn(
+        // eslint-disable-next-line shadcn/no-restyle -- 产品卡片有意定义自身的悬停和焦点样式。
         "relative min-w-0 pt-0 transition-[translate,box-shadow] duration-180 ease-out hover:shadow-md hover:ring-foreground/10 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-solid has-[:focus-visible]:outline-ring motion-safe:hover:-translate-y-0.5 motion-reduce:transition-none dark:hover:ring-foreground/20",
         className,
       )}
@@ -52,9 +53,7 @@ export function CollectionCard({
         {description}
       </CardHeader>
       {children}
-      {footer && (
-        <CardFooter className="mt-auto gap-1.5 text-xs text-muted-foreground">{footer}</CardFooter>
-      )}
+      {footer && <CardFooter className="mt-auto">{footer}</CardFooter>}
     </Card>
   );
 }

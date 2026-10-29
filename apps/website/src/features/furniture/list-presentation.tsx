@@ -32,7 +32,7 @@ export function listPresentation(view: View) {
         <CollectionCardSkeleton
           imageClassName="aspect-2/1"
           footer={
-            <CardFooter className="mt-auto gap-1.5">
+            <CardFooter className="mt-auto">
               <Skeleton className="size-3.5" />
               <Skeleton className="h-4 w-20" />
             </CardFooter>
@@ -40,7 +40,7 @@ export function listPresentation(view: View) {
         >
           <CardContent>
             {
-              <CardDescription className="space-y-2">
+              <CardDescription>
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-3/4" />
               </CardDescription>

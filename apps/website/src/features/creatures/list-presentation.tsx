@@ -23,7 +23,7 @@ export function listPresentation(view: View) {
       view === "items" ? (
         <CollectionCardSkeleton
           description={
-            <CardDescription className="space-y-1">
+            <CardDescription>
               <Skeleton className="h-4 w-2/3" />
               <Skeleton className="h-4 w-3/4" />
             </CardDescription>
@@ -33,7 +33,7 @@ export function listPresentation(view: View) {
         <CollectionCardSkeleton
           imageClassName="aspect-2/1"
           footer={
-            <CardFooter className="mt-auto gap-1.5">
+            <CardFooter className="mt-auto">
               <Skeleton className="size-3.5" />
               <Skeleton className="h-4 w-20" />
             </CardFooter>
