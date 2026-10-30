@@ -122,7 +122,7 @@ function FilterOptions<K extends string>({
               {options.map((option) => (
                 <div
                   key={option.value}
-                  className={`flex items-start gap-2 ${group.fullWidth ? "col-span-2" : ""}`}
+                  className={`flex items-center gap-2 ${group.fullWidth ? "col-span-2" : ""}`}
                 >
                   <Checkbox
                     id={`${id}-${option.value}`}
@@ -134,7 +134,6 @@ function FilterOptions<K extends string>({
                           : selected.filter((value) => value !== option.value),
                       )
                     }
-                    className="mt-0.5"
                   />
                   <Label htmlFor={`${id}-${option.value}`} className="cursor-pointer">
                     {option.label}
