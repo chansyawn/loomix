@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { QualityBadge } from "./quality";
+import { QualityMarker } from "./quality";
 import { Skeleton } from "@/ui/components/skeleton";
 
 type DetailField = readonly [label: string, value: string | null];
@@ -27,14 +27,11 @@ export function CollectionDetailLayout({
         </div>
         <div className="min-w-0 space-y-4">
           <div className="space-y-3">
-            <h1 className="text-3xl/tight font-semibold tracking-tight wrap-break-word sm:text-4xl">
-              {title}
+            <h1 className="flex items-center gap-3 text-3xl/tight font-semibold tracking-tight wrap-break-word sm:text-4xl">
+              {quality !== null && <QualityMarker quality={quality} />}
+              <span className="min-w-0">{title}</span>
             </h1>
-            {quality === null ? (
-              <p className="text-sm text-muted-foreground">品阶：未提供</p>
-            ) : (
-              <QualityBadge quality={quality} />
-            )}
+            {quality === null && <p className="text-sm text-muted-foreground">品阶：未提供</p>}
           </div>
           {description}
           <dl className="grid grid-cols-1 gap-x-6 gap-y-5 border-y py-5 sm:grid-cols-2">
