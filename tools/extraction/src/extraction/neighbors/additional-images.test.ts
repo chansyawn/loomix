@@ -49,3 +49,8 @@ test("selects by the exact frozen asset identity and rejects changed index entri
     "Additional neighbor image index identity changed",
   );
 });
+
+test("omits images assigned to excluded neighbors while retaining unassigned images", () => {
+  expect(selections.some((selection) => selection.npcId === 1014)).toBe(false);
+  expect(selections.some((selection) => selection.npcId === null)).toBe(true);
+});

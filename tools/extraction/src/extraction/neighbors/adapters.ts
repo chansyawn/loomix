@@ -1,3 +1,4 @@
+import { isAllowedNeighbor, neighborAllowlist } from "./allowlist.ts";
 import { profile } from "../../profile.ts";
 import type { Tables } from "../decode/tables.ts";
 import type { TableRow } from "../types.ts";
@@ -71,16 +72,6 @@ export function readRoster(
   records: NeighborEvidence[],
   exclusions: NeighborExclusion[],
 ): NeighborRecord[] {
-  const candidateIds = new Set<number>();
-  for (const [root, field] of [
-    [profile.roots.neighborStars, 5],
-    [profile.roots.neighborStories, 0],
-    [profile.roots.neighborTravelReactions, 0],
-  ])
-    for (const row of tables.rows(root!)) {
-      const id = tables.uint(row, field!);
-      if (id !== null && id !== 0) candidateIds.add(id);
-    }
   const found = new Set<number>();
   const neighbors: NeighborRecord[] = [];
   const bodyTypes: Record<string, NeighborBodyType> = {
@@ -95,22 +86,18 @@ export function readRoster(
     found.add(id);
     const name = localized(tables, row, 1);
     const model = normalizedPath(tables.string(row, 3));
-    const reason = !candidateIds.has(id)
-      ? "no_neighbor_configuration"
-      : !name?.trim() || !model
-        ? "missing_formal_master"
-        : /test|测试|占位/i.test(name)
-          ? "test_or_placeholder"
-          : null;
-    if (reason) {
+    if (!isAllowedNeighbor(id)) {
       exclusions.push({
         kind: "npc",
         key: String(id),
-        reason,
+        reason: "not_in_allowlist",
         sources: [evidence("neighbors", String(id), row, [0, 1, 3]).source],
       });
       continue;
     }
+    const expected = neighborAllowlist.find((neighbor) => neighbor.id === id)!;
+    if (!name?.trim() || !model) throw new Error(`Missing formal neighbor master ${id}`);
+    if (name !== expected.name) throw new Error(`Neighbor name differs from allowlist: ${id}`);
     const type = tables.string(row, 5);
     if (type !== null && !bodyTypes[type]) throw new Error(`Unknown neighbor body type ${type}`);
     const scaleValue = tables.float(row, 4);
@@ -132,20 +119,8 @@ export function readRoster(
     });
     records.push(evidence("neighbors", String(id), row, [0, 1, 2, 3, 4, 5]));
   }
-  for (const id of candidateIds)
-    if (!found.has(id)) {
-      const sources = [
-        [profile.roots.neighborStars, 5],
-        [profile.roots.neighborStories, 0],
-        [profile.roots.neighborTravelReactions, 0],
-      ].flatMap(([root, field]) =>
-        tables
-          .rows(root!)
-          .filter((row) => tables.uint(row, field!) === id)
-          .map((row) => evidence("neighbors", String(id), row, [field!]).source),
-      );
-      exclusions.push({ kind: "npc", key: String(id), reason: "missing_formal_master", sources });
-    }
+  for (const { id } of neighborAllowlist)
+    if (!found.has(id)) throw new Error(`Missing formal neighbor master ${id}`);
   return neighbors.sort((a, b) => a.id - b.id);
 }
 

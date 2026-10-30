@@ -38,7 +38,7 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
     friendshipRules: readRules(tables, records, exclusions),
     eventTags: readEventTags(tables, records),
     furnishingThemes: readThemes(tables, neighbors, records),
-    rewards: readRewards(content, neighbors),
+    rewards: readRewards(content, neighbors, tables),
     assets: readAssets(tables, records, exclusions),
   };
   database.assets = linkedAssets(database);

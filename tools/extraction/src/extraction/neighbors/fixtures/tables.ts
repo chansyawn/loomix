@@ -1,3 +1,4 @@
+import { neighborAllowlist } from "../allowlist.ts";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -60,6 +61,10 @@ export function fixtureRows(): FixtureRows {
       npc(1009, "伊佐奇", "NpcSmall", 65),
       npc(1010, "云果", "NpcMedium", 95),
       npc(1005, "幻雪", "NpcMedium", 95),
+      ...neighborAllowlist
+        .filter((n) => ![1005, 1009, 1010, 1011].includes(n.id))
+        .map((n) => npc(n.id, n.name, "NpcMedium", 95)),
+      npc(1014, "图塔", "NpcMedium", 95),
       npc(1012, "巴彦", "NpcMedium", 95),
       npc(1016, "卡逻", "NpcMedium", 95),
       npc(90001, "测试NPC", "NpcMedium", 95),

@@ -1,3 +1,4 @@
+import { neighborAllowlist, isAllowedNeighbor } from "./allowlist.ts";
 import assert from "node:assert/strict";
 import { profile } from "../../profile.ts";
 import { extractNeighbors } from "./extract.ts";
@@ -8,25 +9,16 @@ export function verifyNeighbors(value: unknown, input: NeighborExtractionInput):
   const database = parseNeighborDatabase(value);
   assert.deepEqual(database.source, input.source, "Neighbor source metadata");
   const { tables } = input;
-  const candidates = new Set<number>();
-  for (const [root, field] of [
-    [profile.roots.neighborStars, 5],
-    [profile.roots.neighborTravelReactions, 0],
-    [profile.roots.neighborStories, 0],
-  ])
-    for (const row of tables.rows(root!)) {
-      const id = tables.uint(row, field!);
-      if (id !== null) candidates.add(id);
-    }
   const roster = tables
     .rows(profile.roots.neighborsNpc)
-    .filter((row) => candidates.has(tables.id(row)))
-    .filter((row) => {
-      const name = tables.text(row, 1);
-      return name?.trim() && !/test|测试|占位/i.test(name) && tables.string(row, 3);
-    })
+    .filter((row) => isAllowedNeighbor(tables.id(row)))
     .map((row) => tables.id(row))
     .sort((a, b) => a - b);
+  assert.deepEqual(
+    roster,
+    neighborAllowlist.map((neighbor) => neighbor.id),
+    "Allowlisted masters",
+  );
   assert.deepEqual(
     database.neighbors.map((n) => n.id),
     roster,

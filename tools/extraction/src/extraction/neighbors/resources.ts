@@ -1,3 +1,4 @@
+import { isAllowedNeighbor } from "./allowlist.ts";
 import type { Catalog } from "../schema.ts";
 import { profile } from "../../profile.ts";
 import type { Tables } from "../decode/tables.ts";
@@ -12,12 +13,26 @@ import type {
   NeighborRewardRef,
 } from "./types.ts";
 
-export function readRewards(content: Catalog, neighbors: NeighborRecord[]): NeighborRewardRef[] {
+export function readRewards(
+  content: Catalog,
+  neighbors: NeighborRecord[],
+  tables: Tables,
+): NeighborRewardRef[] {
+  const excludedNames = tables
+    .rows(profile.roots.neighborsNpc)
+    .filter((row) => !isAllowedNeighbor(tables.id(row)))
+    .flatMap((row) => {
+      const name = tables.text(row, 1);
+      return name?.trim() ? [name] : [];
+    });
   return content.items.flatMap((item) => {
     if (item.kind !== "item" || (item.category !== "furniture" && item.category !== "clothing"))
       return [];
     const summary = item.attributes.sources;
     if (!summary?.includes("友邻")) return [];
+    const relatedNeighborIds = neighbors.filter((n) => summary.includes(n.nameZh)).map((n) => n.id);
+    if (!relatedNeighborIds.length && excludedNames.some((name) => summary.includes(name)))
+      return [];
     return [
       {
         itemId: item.id,
@@ -25,7 +40,7 @@ export function readRewards(content: Catalog, neighbors: NeighborRecord[]): Neig
         category: item.category,
         kind: item.kind,
         sources: [summary],
-        relatedNeighborIds: neighbors.filter((n) => summary.includes(n.nameZh)).map((n) => n.id),
+        relatedNeighborIds,
       },
     ];
   });

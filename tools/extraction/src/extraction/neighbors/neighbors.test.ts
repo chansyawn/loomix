@@ -1,3 +1,4 @@
+import { neighborAllowlist } from "./allowlist.ts";
 import assert from "node:assert/strict";
 import { test } from "vite-plus/test";
 import { extractNeighbors, parseNeighborDatabase, verifyNeighbors } from "./index.ts";
@@ -6,21 +7,16 @@ import { createFixture, fixtureRows } from "./fixtures/tables.ts";
 import { assertLayout } from "./fields.ts";
 import { profile } from "../../profile.ts";
 
-test("extracts only dedicated neighbors with a formal master, preserving optional fields and empty relationships", (context) => {
+test("extracts the fixed allowlist independently of dedicated configurations", (context) => {
   const fixture = createFixture();
   context.onTestFinished(fixture.cleanup);
   const { database, audit } = extractNeighborBundle(fixture.input);
   assert.deepEqual(
-    database.neighbors.map((n) => [n.id, n.bodyType, n.scaleValue]),
-    [
-      [1005, "medium", 95],
-      [1009, "small", 65],
-      [1010, "medium", 95],
-      [1011, "big", 117],
-    ],
+    database.neighbors.map((n) => [n.id, n.nameZh]),
+    neighborAllowlist.map((n) => [n.id, n.name]),
   );
   assert.equal(database.stars.length, 4);
-  const huanxue = database.neighbors[0]!;
+  const huanxue = database.neighbors.find((n) => n.id === 1005)!;
   assert.deepEqual(huanxue.storyKeys, []);
   assert.deepEqual(huanxue.furnishingThemeIds, []);
   assert.deepEqual(huanxue.rewardItemIds, []);
@@ -28,10 +24,10 @@ test("extracts only dedicated neighbors with a formal master, preserving optiona
   assert.deepEqual(
     audit.exclusions.filter((e) => e.kind === "npc").map((e) => [e.key, e.reason]),
     [
-      ["1012", "no_neighbor_configuration"],
-      ["1016", "no_neighbor_configuration"],
-      ["1020", "missing_formal_master"],
-      ["90001", "test_or_placeholder"],
+      ["1012", "not_in_allowlist"],
+      ["1014", "not_in_allowlist"],
+      ["1016", "not_in_allowlist"],
+      ["90001", "not_in_allowlist"],
     ],
   );
   verifyNeighbors(database, fixture.input);
@@ -206,4 +202,49 @@ test("invalid references and unexpected table fields stop extraction", (context)
   const changed = createFixture(rows);
   context.onTestFinished(changed.cleanup);
   assert.throws(() => extractNeighbors(changed.input), /layout/);
+});
+
+test("rejects missing, incomplete or renamed allowlisted masters", (context) => {
+  for (const change of ["missing", "model", "name"] as const) {
+    const rows = fixtureRows();
+    const row = rows[41]!.find((row) => row[0] === 11)!;
+    if (change === "missing") rows[41] = rows[41]!.filter((candidate) => candidate !== row);
+    else if (change === "model") row[3] = null;
+    else row[1] = { text: "不同名称" };
+    const fixture = createFixture(rows);
+    context.onTestFinished(fixture.cleanup);
+    assert.throws(() => extractNeighbors(fixture.input), /master|allowlist/);
+  }
+});
+
+test("excludes fully configured non-allowlisted neighbors and their exclusive rewards", (context) => {
+  const rows = fixtureRows();
+  rows[630]!.push(rows[630]![0]!.map((cell, index) => (index === 5 ? 1014 : cell)));
+  rows[668]!.push([1014, 1, { text: "图塔故事" }, 1, { text: "正文" }, null]);
+  rows[643]!.push([1014, 1, "New_Npc", "1", null, 1, 1, null, { text: "台词" }]);
+  rows[180]!.push([6, { text: "图塔主题" }, null, { text: "完成图塔的装修请求" }]);
+  const fixture = createFixture(rows);
+  context.onTestFinished(fixture.cleanup);
+  const item = fixture.input.content.items[0]!;
+  assert.equal(item.kind, "item");
+  if (item.kind !== "item" || item.category !== "furniture")
+    throw new Error("Expected furniture fixture");
+  fixture.input.content.items.push(
+    { ...item, id: 1129, attributes: { ...item.attributes, sources: "完成图塔的友邻事件" } },
+    { ...item, id: 1130, attributes: { ...item.attributes, sources: "完成图塔或云果的友邻事件" } },
+  );
+  const database = extractNeighbors(fixture.input);
+  assert.ok(database.neighbors.every((n) => n.id !== 1014));
+  assert.ok(database.stars.every((s) => s.npcId !== 1014));
+  assert.ok(database.stories.every((s) => s.npcId !== 1014));
+  assert.ok(database.travelReactions.every((r) => r.npcId !== 1014));
+  assert.ok(database.furnishingThemes.every((t) => !t.neighborIds.includes(1014)));
+  assert.deepEqual(
+    database.rewards.map((r) => [r.itemId, r.relatedNeighborIds]),
+    [
+      [1128, []],
+      [1130, [1010]],
+    ],
+  );
+  verifyNeighbors(database, fixture.input);
 });

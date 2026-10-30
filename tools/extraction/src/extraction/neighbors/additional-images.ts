@@ -1,3 +1,4 @@
+import { isAllowedNeighbor } from "./allowlist.ts";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import {
@@ -46,7 +47,9 @@ export type AdditionalNeighborImageAsset = ImageAsset & {
 const selectionFile = fileURLToPath(new URL("./additional-images.json", import.meta.url));
 
 export function additionalNeighborImageSelections(): AdditionalNeighborImageSelection[] {
-  return selectionsSchema.parse(readJson(selectionFile));
+  return selectionsSchema
+    .parse(readJson(selectionFile))
+    .filter((selection) => selection.npcId === null || isAllowedNeighbor(selection.npcId));
 }
 
 export function selectAdditionalNeighborImages(
