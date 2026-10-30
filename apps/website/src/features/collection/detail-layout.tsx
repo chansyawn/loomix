@@ -49,9 +49,7 @@ export function CollectionDetailLayout({
           </dl>
         </div>
       </div>
-      {children && (
-        <div className="mt-10 space-y-10 border-t pt-8 lg:mt-12 lg:pt-10">{children}</div>
-      )}
+      {children && <div className="mt-10 space-y-10 border-t-3 border-dotted pt-8">{children}</div>}
     </section>
   );
 }
