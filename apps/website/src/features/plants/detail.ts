@@ -3,7 +3,7 @@ import type { PlantsData } from "./data";
 import { loadCollectionView } from "../collection-loader";
 import { buildIngredientsData, ingredientUsage } from "../ingredients/model";
 import type { IngredientUsage } from "../ingredients/model";
-import { membershipIndex } from "./query";
+import { membershipIndex, seedSeries } from "./query";
 import type { View } from "./search";
 
 export function parsePlantId(value: string): number {
@@ -42,6 +42,18 @@ export function plantsDetail(
       hasUnconfirmedSeriesMembership: data.series.some((group) => group.plantIds === null),
     };
   }
+  if (view === "seeds") {
+    const seed = data.seeds.find((row) => row.id === id);
+    if (!seed) throw notFound();
+    return {
+      kind: "seed" as const,
+      record: seed,
+      series: seedSeries(seed, data.series),
+      products: seed.productIds.flatMap((productId) => itemsById.get(productId) ?? []),
+      itemRefs: data.itemRefs,
+      hasUnconfirmedSeriesMembership: data.series.some((group) => group.plantIds === null),
+    };
+  }
   const series = data.series.find((row) => row.id === id);
   if (!series) throw notFound();
   return {
@@ -54,6 +66,7 @@ export function plantsDetail(
 }
 
 export type PlantsDetail = ReturnType<typeof plantsDetail>;
+export type SeedDetail = Extract<PlantsDetail, { kind: "seed" }>;
 
 export async function loadPlantsDetail(view: View, value: string): Promise<PlantsDetail> {
   const id = parsePlantId(value);

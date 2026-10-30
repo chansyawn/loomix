@@ -8,10 +8,11 @@ import { CollectionTable } from "../collection/table";
 import { collectionSort, tableSorting } from "../collection/sort";
 import { useCollectionLayout, saveCollectionLayout } from "../collection/use-collection-layout";
 import type { PlantItem, PlantSeries } from "../collection-view";
+import type { PlantSeed } from "./model";
 import type { PlantsData } from "./data";
-import { PlantsCard, PlantSeriesCard } from "./plants-card";
-import { filterGroups, queryPlants } from "./query";
-import { emptyQuery, sortOptions, updateViewQuery } from "./search";
+import { PlantsCard, PlantSeriesCard, SeedCard } from "./plants-card";
+import { filterGroups, queryPlants, seedSeries } from "./query";
+import { emptyQuery, seedSortOptions, sortOptions, updateViewQuery } from "./search";
 import type { PlantsSearch, ViewQuery } from "./search";
 import { PlantsEmpty } from "./states";
 import { plantsTableColumns } from "./table-columns";
@@ -32,20 +33,21 @@ export function PlantsPage({
   const layout = useCollectionLayout(search.layout);
   const presentation = listPresentation(search.view);
   const result = queryPlants(data, search.view, query);
-  const groups = filterGroups(data).filter(
-    (group) =>
-      search.view === "items" || ["qualities", "sources", "flowerColors"].includes(group.key),
-  );
+  const groups = filterGroups(data, search.view);
   const resultKey = JSON.stringify([search.view, layout, query]);
   const update = (patch: Partial<ViewQuery>, replace = false) =>
     void onSearchChange((previous) => updateViewQuery(previous, patch), replace);
   const clear = () =>
-    void onSearchChange((previous) => ({ ...previous, [previous.view]: emptyQuery() }));
+    void onSearchChange((previous) =>
+      previous.view === "seeds"
+        ? { ...previous, seeds: { ...emptyQuery(), sort: "original" } }
+        : { ...previous, [previous.view]: emptyQuery() },
+    );
   const chips = collectionFilterChips(groups, query, (key, values) => update({ [key]: values }), {
     value: query.q,
     clear: () => update({ q: "" }),
   });
-  const columns = plantsTableColumns(search.view, data.series);
+  const columns = plantsTableColumns(search.view, data);
   return (
     <CollectionPage
       title={title}
@@ -60,7 +62,7 @@ export function PlantsPage({
         query={query.q}
         onQueryChange={(q, replace) => update({ q }, replace)}
         sort={query.sort}
-        sortOptions={sortOptions}
+        sortOptions={search.view === "seeds" ? seedSortOptions : sortOptions}
         onSortChange={(sort) => update({ sort })}
         layout={layout}
         onLayoutChange={(next) => {
@@ -101,14 +103,20 @@ export function PlantsPage({
             }}
           />
         ) : (
-          <CollectionVirtualGrid<PlantItem | PlantSeries>
+          <CollectionVirtualGrid<PlantItem | PlantSeries | PlantSeed>
             key={resultKey}
             rows={result.rows}
             layout={presentation.grid}
             getKey={(row) => row.id}
-            renderCard={(row) =>
-              "category" in row ? <PlantsCard item={row} /> : <PlantSeriesCard series={row} />
-            }
+            renderCard={(row) => {
+              if ("productIds" in row)
+                return <SeedCard seed={row} series={seedSeries(row, data.series)} />;
+              return "category" in row ? (
+                <PlantsCard item={row} />
+              ) : (
+                <PlantSeriesCard series={row} />
+              );
+            }}
           />
         )
       ) : (

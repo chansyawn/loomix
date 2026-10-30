@@ -7,27 +7,22 @@ import type { IngredientItem } from "../collection-view";
 import { CollectionItemLink } from "../collection/item-link";
 import { QualityBadge } from "../collection/quality";
 
-export function PlantSeedLinks({ seeds, seriesId }: { seeds: PlantSeed[]; seriesId?: number }) {
+export function PlantSeedLinks({ seeds }: { seeds: PlantSeed[] }) {
   const origin = usePlantsOrigin();
   if (!seeds.length) return <span className="text-muted-foreground">未提供</span>;
   return (
     <div className="flex flex-wrap gap-x-3 gap-y-1">
-      {seeds.map((seed) =>
-        seriesId === undefined ? (
-          <span key={seed.id}>{seed.name}</span>
-        ) : (
-          <Link
-            key={seed.id}
-            to="/collection/plants/series/$id"
-            params={{ id: String(seriesId) }}
-            hash={`seed-${seed.id}`}
-            state={{ plantsOrigin: origin }}
-            className="rounded-sm underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          >
-            {seed.name}
-          </Link>
-        ),
-      )}
+      {seeds.map((seed) => (
+        <Link
+          key={seed.id}
+          to="/collection/plants/seeds/$id"
+          params={{ id: String(seed.id) }}
+          state={{ plantsOrigin: origin }}
+          className="rounded-sm underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        >
+          {seed.name}
+        </Link>
+      ))}
     </div>
   );
 }
@@ -69,7 +64,16 @@ export function PlantSeedInfo({
                 <RecordImage image={seed.image} name={seed.name} compact />
               </div>
               <div className="min-w-0 space-y-2">
-                <h3 className="font-medium">{seed.name}</h3>
+                <h3 className="font-medium">
+                  <Link
+                    to="/collection/plants/seeds/$id"
+                    params={{ id: String(seed.id) }}
+                    state={{ plantsOrigin: origin }}
+                    className="underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  >
+                    {seed.name}
+                  </Link>
+                </h3>
                 {seed.detail.quality !== null && <QualityBadge quality={seed.detail.quality} />}
                 {seed.detail.description && (
                   <p className="text-sm/6 whitespace-pre-line text-muted-foreground">

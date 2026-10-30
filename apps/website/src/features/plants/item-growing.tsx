@@ -33,7 +33,7 @@ export function PlantItemGrowing({
         {item.summary.seeds.length > 0 && (
           <div className="space-y-2">
             <h3 className="text-sm font-medium">种子</h3>
-            <PlantSeedLinks seeds={item.summary.seeds} seriesId={series[0]?.id} />
+            <PlantSeedLinks seeds={item.summary.seeds} />
           </div>
         )}
         {stage && (

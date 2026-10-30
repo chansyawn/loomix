@@ -8,7 +8,12 @@ import {
 } from "@tanstack/react-router";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { catalogFixture, fixtureRequest } from "../collection-fixture.ts";
-import { plantItemFixture, plantSeriesFixture, plantsDataFixture } from "./fixture";
+import {
+  plantItemFixture,
+  plantSeedFixture,
+  plantSeriesFixture,
+  plantsDataFixture,
+} from "./fixture";
 import type { PlantItem, PlantSeries } from "../collection-view.ts";
 import { plantsDetail, loadPlantsDetail, parsePlantId } from "./detail";
 import { plantsOrigin } from "./detail-navigation";
@@ -35,8 +40,20 @@ const group: PlantSeries = plantSeriesFixture({
   seriesName: null,
   plantIds: [2, 1],
 });
+const seedRecord = plantSeedFixture({
+  id: 10,
+  name: "星露种子",
+  productIds: [2, 1],
+});
+seedRecord.detail = {
+  ...seedRecord.detail,
+  description: "能种出星露系列植物。",
+  harvestCount: 3,
+  acquisitionConditions: [{ sourceId: 1, label: "星屿探索", condition: null }],
+};
 const data = plantsDataFixture({
   items: [first, second],
+  seeds: [seedRecord],
   series: [
     group,
     { ...group, id: 4, name: "空系列", plantIds: [] },
@@ -78,11 +95,23 @@ describe("plant details", () => {
     expect(plantsDetail(data, "series", 5)).toMatchObject({ items: null });
   });
 
+  it("returns seed products in catalog order with confirmed series memberships", () => {
+    expect(plantsDetail(data, "seeds", 10)).toMatchObject({
+      kind: "seed",
+      record: seedRecord,
+      products: [second, first],
+      series: [group],
+      hasUnconfirmedSeriesMembership: true,
+    });
+  });
+
   it("treats missing records and IDs of the wrong kind as not found", () => {
     for (const [view, id] of [
       ["items", 3],
+      ["seeds", 1],
       ["series", 1],
       ["items", 999],
+      ["seeds", 999],
     ] as const) {
       try {
         plantsDetail(data, view, id);
@@ -95,7 +124,12 @@ describe("plant details", () => {
 
   it("loads validated content and keeps network or schema failures retryable", async () => {
     vi.stubGlobal("fetch", vi.fn(fixtureRequest(catalogFixture({ plants: data }))));
-    expect(await loadPlantsDetail("items", "1")).toMatchObject({ record: first });
+    expect(await loadPlantsDetail("items", "1")).toMatchObject({ record: { id: 1 } });
+    expect(await loadPlantsDetail("seeds", "10")).toMatchObject({
+      kind: "seed",
+      record: { id: 10 },
+      products: [{ id: 2 }, { id: 1 }],
+    });
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })));
     await expect(loadPlantsDetail("items", "1")).rejects.toThrow("503");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}")));
@@ -121,15 +155,24 @@ function setup(initialEntries: string[]) {
     path: "/collection/plants/series/$id",
     loader: ({ params }) => plantsDetail(data, "series", parsePlantId(params.id)),
   });
+  const seedRoute = createRoute({
+    getParentRoute: () => root,
+    path: "/collection/plants/seeds/$id",
+    loader: ({ params }) => plantsDetail(data, "seeds", parsePlantId(params.id)),
+  });
   return createRouter({
     history: createMemoryHistory({ initialEntries }),
-    routeTree: root.addChildren([list, item, seriesRoute]),
+    routeTree: root.addChildren([list, item, seriesRoute, seedRoute]),
   });
 }
 
 describe("plant detail navigation", () => {
   it("opens direct detail addresses without requiring a list origin", async () => {
-    for (const href of ["/collection/plants/items/1", "/collection/plants/series/3"]) {
+    for (const href of [
+      "/collection/plants/items/1",
+      "/collection/plants/series/3",
+      "/collection/plants/seeds/10",
+    ]) {
       const router = setup([href]);
       await router.load();
       expect(router.state.matches.at(-1)?.status).toBe("success");
@@ -151,6 +194,11 @@ describe("plant detail navigation", () => {
     await router.navigate({
       to: "/collection/plants/series/$id",
       params: { id: "3" },
+      state: { plantsOrigin: plantsOrigin(router.state.location) },
+    });
+    await router.navigate({
+      to: "/collection/plants/seeds/$id",
+      params: { id: "10" },
       state: { plantsOrigin: plantsOrigin(router.state.location) },
     });
     const retained = plantsOrigin(router.state.location)!;

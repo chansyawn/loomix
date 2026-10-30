@@ -29,6 +29,7 @@ import { Route as CollectionFurnitureItemsIdRouteImport } from './routes/collect
 import { Route as CollectionFurnitureSetsIdRouteImport } from './routes/collection.furniture_.sets.$id'
 import { Route as CollectionMiscellanyItemsIdRouteImport } from './routes/collection.miscellany_.items.$id'
 import { Route as CollectionPlantsItemsIdRouteImport } from './routes/collection.plants_.items.$id'
+import { Route as CollectionPlantsSeedsIdRouteImport } from './routes/collection.plants_.seeds.$id'
 import { Route as CollectionPlantsSeriesIdRouteImport } from './routes/collection.plants_.series.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -140,6 +141,11 @@ const CollectionPlantsItemsIdRoute = CollectionPlantsItemsIdRouteImport.update({
   path: '/collection/plants/items/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CollectionPlantsSeedsIdRoute = CollectionPlantsSeedsIdRouteImport.update({
+  id: '/collection/plants_/seeds/$id',
+  path: '/collection/plants/seeds/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CollectionPlantsSeriesIdRoute =
   CollectionPlantsSeriesIdRouteImport.update({
     id: '/collection/plants_/series/$id',
@@ -168,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/collection/furniture/sets/$id': typeof CollectionFurnitureSetsIdRoute
   '/collection/miscellany/items/$id': typeof CollectionMiscellanyItemsIdRoute
   '/collection/plants/items/$id': typeof CollectionPlantsItemsIdRoute
+  '/collection/plants/seeds/$id': typeof CollectionPlantsSeedsIdRoute
   '/collection/plants/series/$id': typeof CollectionPlantsSeriesIdRoute
 }
 export interface FileRoutesByTo {
@@ -191,6 +198,7 @@ export interface FileRoutesByTo {
   '/collection/furniture/sets/$id': typeof CollectionFurnitureSetsIdRoute
   '/collection/miscellany/items/$id': typeof CollectionMiscellanyItemsIdRoute
   '/collection/plants/items/$id': typeof CollectionPlantsItemsIdRoute
+  '/collection/plants/seeds/$id': typeof CollectionPlantsSeedsIdRoute
   '/collection/plants/series/$id': typeof CollectionPlantsSeriesIdRoute
 }
 export interface FileRoutesById {
@@ -215,6 +223,7 @@ export interface FileRoutesById {
   '/collection/furniture_/sets/$id': typeof CollectionFurnitureSetsIdRoute
   '/collection/miscellany_/items/$id': typeof CollectionMiscellanyItemsIdRoute
   '/collection/plants_/items/$id': typeof CollectionPlantsItemsIdRoute
+  '/collection/plants_/seeds/$id': typeof CollectionPlantsSeedsIdRoute
   '/collection/plants_/series/$id': typeof CollectionPlantsSeriesIdRoute
 }
 export interface FileRouteTypes {
@@ -240,6 +249,7 @@ export interface FileRouteTypes {
     | '/collection/furniture/sets/$id'
     | '/collection/miscellany/items/$id'
     | '/collection/plants/items/$id'
+    | '/collection/plants/seeds/$id'
     | '/collection/plants/series/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -263,6 +273,7 @@ export interface FileRouteTypes {
     | '/collection/furniture/sets/$id'
     | '/collection/miscellany/items/$id'
     | '/collection/plants/items/$id'
+    | '/collection/plants/seeds/$id'
     | '/collection/plants/series/$id'
   id:
     | '__root__'
@@ -286,6 +297,7 @@ export interface FileRouteTypes {
     | '/collection/furniture_/sets/$id'
     | '/collection/miscellany_/items/$id'
     | '/collection/plants_/items/$id'
+    | '/collection/plants_/seeds/$id'
     | '/collection/plants_/series/$id'
   fileRoutesById: FileRoutesById
 }
@@ -310,6 +322,7 @@ export interface RootRouteChildren {
   CollectionFurnitureSetsIdRoute: typeof CollectionFurnitureSetsIdRoute
   CollectionMiscellanyItemsIdRoute: typeof CollectionMiscellanyItemsIdRoute
   CollectionPlantsItemsIdRoute: typeof CollectionPlantsItemsIdRoute
+  CollectionPlantsSeedsIdRoute: typeof CollectionPlantsSeedsIdRoute
   CollectionPlantsSeriesIdRoute: typeof CollectionPlantsSeriesIdRoute
 }
 
@@ -455,6 +468,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CollectionPlantsItemsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/collection/plants_/seeds/$id': {
+      id: '/collection/plants_/seeds/$id'
+      path: '/collection/plants/seeds/$id'
+      fullPath: '/collection/plants/seeds/$id'
+      preLoaderRoute: typeof CollectionPlantsSeedsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/collection/plants_/series/$id': {
       id: '/collection/plants_/series/$id'
       path: '/collection/plants/series/$id'
@@ -486,6 +506,7 @@ const rootRouteChildren: RootRouteChildren = {
   CollectionFurnitureSetsIdRoute: CollectionFurnitureSetsIdRoute,
   CollectionMiscellanyItemsIdRoute: CollectionMiscellanyItemsIdRoute,
   CollectionPlantsItemsIdRoute: CollectionPlantsItemsIdRoute,
+  CollectionPlantsSeedsIdRoute: CollectionPlantsSeedsIdRoute,
   CollectionPlantsSeriesIdRoute: CollectionPlantsSeriesIdRoute,
 }
 export const routeTree = rootRouteImport

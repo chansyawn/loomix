@@ -2,7 +2,7 @@ import { useRouterState } from "@tanstack/react-router";
 import { CollectionLoading } from "../collection/loading";
 import { CollectionEmpty, CollectionLoadError } from "../collection/states";
 import { useCollectionLayout } from "../collection/use-collection-layout";
-import { plantsSearchSchema, sortOptions } from "./search";
+import { plantsSearchSchema, seedSortOptions, sortOptions } from "./search";
 import type { View } from "./search";
 import { plantsTableColumns } from "./table-columns";
 import { title, tabs, listPresentation } from "./list-presentation";
@@ -23,13 +23,14 @@ export function PlantsLoading() {
       columns={plantsTableColumns(search.view)}
       query={query.q}
       sort={query.sort}
-      sortOptions={sortOptions}
+      sortOptions={search.view === "seeds" ? seedSortOptions : sortOptions}
     />
   );
 }
 
 export function PlantsEmpty({ onClear, view }: { onClear: () => void; view: View }) {
-  return <CollectionEmpty title={view === "items" ? title : `${title}系列`} onClear={onClear} />;
+  const label = view === "items" ? title : view === "series" ? `${title}系列` : `${title}种子`;
+  return <CollectionEmpty title={label} onClear={onClear} />;
 }
 
 export function PlantsLoadError({ onRetry }: { onRetry: () => void }) {

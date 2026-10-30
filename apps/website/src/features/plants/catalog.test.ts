@@ -48,7 +48,10 @@ test("keeps multiple seeds for a product and shares one growth configuration", (
       trade: null,
       acquisition: null,
     });
-  const item = toCollectionView(catalog, assetsFixture(catalog)).plants.items[0];
+  const data = toCollectionView(catalog, assetsFixture(catalog)).plants;
+  const item = data.items[0];
   expect(item.summary.seeds.map((seed) => seed.id)).toEqual([10, 11]);
   expect(item.summary.growths).toHaveLength(1);
+  expect(data.seeds.map((seed) => seed.id)).toEqual([10, 11]);
+  expect(data.seeds[0].detail.harvestCount).toBe(3);
 });

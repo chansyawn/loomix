@@ -38,7 +38,7 @@ export function CollectionToolbar<S extends string>({
   query: string;
   onQueryChange?: (value: string, replace: boolean) => void;
   sort: S;
-  sortOptions: Record<S, string>;
+  sortOptions: Partial<Record<S, string>>;
   onSortChange?: (value: S) => void;
   layout: CollectionLayout;
   onLayoutChange?: (value: CollectionLayout) => void;
@@ -87,11 +87,13 @@ export function CollectionToolbar<S extends string>({
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
-            {Object.entries<string>(sortOptions).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
+            {Object.entries(sortOptions).map(([value, label]) =>
+              typeof label === "string" ? (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ) : null,
+            )}
           </SelectGroup>
         </SelectContent>
       </Select>

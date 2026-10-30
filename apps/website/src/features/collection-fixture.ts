@@ -116,6 +116,29 @@ export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
       hybridRecipes: null,
     });
   }
+  for (const record of view.plants?.seeds ?? []) {
+    if (
+      record.growthId !== null &&
+      record.detail.growth &&
+      !catalog.growths.some((growth) => growth.id === record.growthId)
+    )
+      catalog.growths.push({
+        ...record.detail.growth,
+        id: record.growthId,
+        stages:
+          record.detail.growth.stages?.map((stage) => ({
+            ...stage,
+            image: stage.image ? { assetId: stage.image, variant: "icon" } : null,
+          })) ?? null,
+      });
+    catalog.seeds.push({
+      ...catalogBase(record),
+      productIds: record.productIds,
+      growthId: record.growthId,
+      trade: record.trade,
+      acquisition: record.acquisition,
+    });
+  }
   for (const record of view.plants?.series ?? []) group(record, "plants.series", record.plantIds);
   for (const record of view.dishes?.items ?? [])
     add({

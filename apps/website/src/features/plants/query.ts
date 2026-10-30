@@ -1,5 +1,6 @@
 import type { PlantItem, PlantSeries } from "../collection-view.ts";
 import type { PlantsData } from "./data";
+import type { PlantSeed } from "./model";
 import { missing, ungrouped } from "./search";
 import type { FilterKey, View, ViewQuery } from "./search";
 import type { FilterGroup as CollectionFilterGroup } from "@/features/collection/filter-panel";
@@ -24,14 +25,66 @@ export function membershipIndex(series: PlantSeries[]): Map<number, PlantSeries[
   return index;
 }
 
+export function seedSourceLabels(seed: PlantSeed): string[] {
+  return [
+    ...new Set(
+      seed.detail.acquisitionConditions?.map((source) =>
+        source.condition ? `${source.label}（${source.condition}）` : source.label,
+      ) ?? [],
+    ),
+  ];
+}
+
+export function seedSeries(seed: PlantSeed, groups: PlantSeries[]): PlantSeries[] {
+  const productIds = new Set(seed.productIds);
+  return groups.filter((group) => group.plantIds?.some((id) => productIds.has(id)));
+}
+
+export function seedSeriesIndex(data: PlantsData): Map<number, PlantSeries[]> {
+  return new Map(data.seeds.map((seed) => [seed.id, seedSeries(seed, data.series)]));
+}
+
 function options(values: (string | null)[]): Option[] {
   return [...new Set(values.map((value) => (value ? value : missing)))]
     .sort((a, b) => (a === missing ? 1 : b === missing ? -1 : a.localeCompare(b, "zh-CN")))
     .map((value) => ({ value, label: value === missing ? "未提供" : value }));
 }
 
-export function filterGroups(data: PlantsData): FilterGroup[] {
-  return [
+export function filterGroups(data: PlantsData, view: View = "items"): FilterGroup[] {
+  if (view === "seeds") {
+    const series = seedSeriesIndex(data);
+    const usedSeriesIds = new Set(
+      [...series.values()].flatMap((groups) => groups.map((group) => group.id)),
+    );
+    const complete = data.series.every((group) => group.plantIds !== null);
+    return [
+      {
+        key: "sources",
+        label: "获取来源",
+        options: options(data.seeds.flatMap(seedSourceLabels)),
+        fullWidth: true,
+      },
+      {
+        key: "harvestCounts",
+        label: "收获茬数",
+        options: options(
+          data.seeds.map((seed) =>
+            seed.detail.harvestCount === null ? null : String(seed.detail.harvestCount),
+          ),
+        ),
+      },
+      {
+        key: "series",
+        label: "所属系列",
+        options: data.series
+          .filter((group) => usedSeriesIds.has(group.id))
+          .map((group) => ({ value: String(group.id), label: group.name }))
+          .concat(complete ? [{ value: ungrouped, label: "未归入系列" }] : []),
+        fullWidth: true,
+      },
+    ];
+  }
+  const groups: FilterGroup[] = [
     {
       key: "sources",
       label: "获取来源",
@@ -84,6 +137,9 @@ export function filterGroups(data: PlantsData): FilterGroup[] {
       ),
     },
   ];
+  return view === "items"
+    ? groups
+    : groups.filter((group) => ["qualities", "sources", "flowerColors"].includes(group.key));
 }
 
 function matches(selected: string[], values: string[]): boolean {
@@ -92,6 +148,36 @@ function matches(selected: string[], values: string[]): boolean {
 
 export function queryPlants(data: PlantsData, view: View, query: ViewQuery) {
   const memberships = membershipIndex(data.series);
+  if (view === "seeds") {
+    const series = seedSeriesIndex(data);
+    const seriesComplete = data.series.every((group) => group.plantIds !== null);
+    const term = query.q.trim().toLocaleLowerCase("zh-CN");
+    const filtered = data.seeds.filter((seed) => {
+      const sources = seedSourceLabels(seed);
+      const membershipsForSeed = series.get(seed.id) ?? [];
+      return (
+        seed.name.toLocaleLowerCase("zh-CN").includes(term) &&
+        matches(query.sources, sources.length > 0 ? sources : [missing]) &&
+        matches(query.harvestCounts, [
+          seed.detail.harvestCount === null ? missing : String(seed.detail.harvestCount),
+        ]) &&
+        matches(
+          query.series,
+          membershipsForSeed.length > 0
+            ? membershipsForSeed.map((group) => String(group.id))
+            : seriesComplete
+              ? [ungrouped]
+              : [],
+        )
+      );
+    });
+    if (query.sort !== "original")
+      filtered.sort((a, b) => {
+        const direction = query.sort.endsWith("desc") ? -1 : 1;
+        return direction * a.name.localeCompare(b.name, "zh-CN");
+      });
+    return { rows: filtered, total: filtered.length, memberships };
+  }
   const membershipDataComplete = data.series.every((group) => group.plantIds !== null);
   const term = query.q.trim().toLocaleLowerCase("zh-CN");
   const rows: (PlantItem | PlantSeries)[] = view === "items" ? data.items : data.series;

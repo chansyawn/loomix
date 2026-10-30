@@ -43,7 +43,7 @@ export function CollectionLoading<V extends string, T>({
   placeholder: string;
   query: string;
   sort: string;
-  sortOptions: Record<string, string>;
+  sortOptions: Partial<Record<string, string>>;
 }) {
   return (
     <CollectionPage title={title} tabs={tabs} view={view} loading>

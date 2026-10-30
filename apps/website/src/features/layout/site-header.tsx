@@ -29,7 +29,7 @@ export function SiteHeader() {
   const isClothingDetail = clothingView !== undefined;
   const creaturesView = /^\/collection\/creatures\/(items|series)\/[^/]+\/?$/.exec(pathname)?.[1];
   const isCreaturesDetail = creaturesView !== undefined;
-  const plantsView = /^\/collection\/plants\/(items|series)\/[^/]+\/?$/.exec(pathname)?.[1];
+  const plantsView = /^\/collection\/plants\/(items|series|seeds)\/[^/]+\/?$/.exec(pathname)?.[1];
   const isPlantsDetail = plantsView !== undefined;
   const dishesView = /^\/collection\/dishes\/(items|series|ingredients)\/[^/]+\/?$/.exec(
     pathname,
@@ -158,7 +158,17 @@ export function SiteHeader() {
             <>
               <BreadcrumbItem>
                 <BreadcrumbLink
-                  render={<PlantsReturnLink view={plantsView === "series" ? "series" : "items"} />}
+                  render={
+                    <PlantsReturnLink
+                      view={
+                        plantsView === "series"
+                          ? "series"
+                          : plantsView === "seeds"
+                            ? "seeds"
+                            : "items"
+                      }
+                    />
+                  }
                 >
                   植物
                 </BreadcrumbLink>

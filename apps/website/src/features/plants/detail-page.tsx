@@ -17,7 +17,7 @@ import {
 import { RecordImage } from "@/features/collection/record-image";
 import { PlantsCard, PlantSeriesCard } from "./plants-card";
 import { PlantsReturnLink } from "./detail-navigation";
-import type { PlantsDetail } from "./detail";
+import type { PlantsDetail, SeedDetail } from "./detail";
 import type { View } from "./search";
 import { PlantsLoadError } from "./states";
 import { PlantSeedInfo } from "./seed-info";
@@ -25,8 +25,16 @@ import { PlantGrowthStages } from "./growth-stages";
 import { PlantItemGrowing } from "./item-growing";
 import { PlantDropsInfo, PlantRelatedItems } from "./related-items";
 import { ItemCookingUsage } from "../ingredients/item-usage";
+import { SeedDetailPage } from "./seed-detail-page";
+
+type PlantOrSeriesDetail = Exclude<PlantsDetail, SeedDetail>;
 
 export function PlantsDetailPage({ detail }: { detail: PlantsDetail }) {
+  if (detail.kind === "seed") return <SeedDetailPage detail={detail} />;
+  return <PlantOrSeriesDetailPage detail={detail} />;
+}
+
+function PlantOrSeriesDetailPage({ detail }: { detail: PlantOrSeriesDetail }) {
   const { record } = detail;
   const summary = record.summary;
   const fields: [string, string | null][] =
@@ -132,6 +140,8 @@ export function PlantsDetailLoading() {
 }
 
 export function PlantsDetailNotFound({ view }: { view: View }) {
+  const title =
+    view === "items" ? "未找到这种植物" : view === "series" ? "未找到这个系列" : "未找到这颗种子";
   return (
     <Empty className="min-h-80">
       <EmptyHeader>
@@ -139,7 +149,7 @@ export function PlantsDetailNotFound({ view }: { view: View }) {
           <SearchXIcon />
         </EmptyMedia>
         <EmptyTitle>
-          <h1>{view === "items" ? "未找到这种植物" : "未找到这个系列"}</h1>
+          <h1>{title}</h1>
         </EmptyTitle>
         <EmptyDescription>该条目不存在，请返回图鉴查找其他植物。</EmptyDescription>
       </EmptyHeader>

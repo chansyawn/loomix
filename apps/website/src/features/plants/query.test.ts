@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vite-plus/test";
 import type { PlantItem, PlantSeries } from "../collection-view.ts";
-import { plantItemFixture, plantSeriesFixture, plantsDataFixture } from "./fixture";
+import type { PlantSeed } from "./model";
+import {
+  plantItemFixture,
+  plantSeedFixture,
+  plantSeriesFixture,
+  plantsDataFixture,
+} from "./fixture";
 import { filterGroups, queryPlants } from "./query";
 import { emptyQuery, missing, ungrouped } from "./search";
 
@@ -17,6 +23,19 @@ function item(id: number, fields: Partial<PlantItem> = {}): PlantItem {
     harvestCount: null,
     ...fields,
   });
+}
+
+function seed(
+  id: number,
+  fields: Partial<PlantSeed> = {},
+  detail: Partial<PlantSeed["detail"]> = {},
+): PlantSeed {
+  const record = plantSeedFixture({
+    id,
+    name: `种子${id}`,
+    ...fields,
+  });
+  return { ...record, detail: { ...record.detail, ...detail } };
 }
 
 const items = [
@@ -67,6 +86,26 @@ const series: PlantSeries[] = [
   }),
 ];
 const data = plantsDataFixture({ items, series });
+const seeds = [
+  seed(
+    10,
+    { name: "A番茄种子", productIds: [1] },
+    {
+      harvestCount: 3,
+      acquisitionConditions: [{ sourceId: 1, label: "格连商店购买", condition: null }],
+    },
+  ),
+  seed(
+    11,
+    { name: "B甜瓜种子", productIds: [2] },
+    {
+      harvestCount: 1,
+      acquisitionConditions: [{ sourceId: 2, label: "星屿探索", condition: "完成探索" }],
+    },
+  ),
+  seed(12, { name: "C未知种子", productIds: [999] }),
+];
+const seedData = plantsDataFixture({ items, series, seeds });
 const ids = (rows: { id: number }[]) => rows.map((row) => row.id);
 const search = (patch: Partial<ReturnType<typeof emptyQuery>>) =>
   queryPlants(data, "items", { ...emptyQuery(), ...patch });
@@ -148,6 +187,47 @@ describe("plant catalog", () => {
     expect(groups.find((group) => group.key === "flowerColors")?.options).toContainEqual({
       value: "白色",
       label: "白色",
+    });
+  });
+});
+
+describe("seed catalog", () => {
+  const querySeeds = (patch: Partial<ReturnType<typeof emptyQuery>>) =>
+    queryPlants(seedData, "seeds", { ...emptyQuery(), ...patch });
+
+  it("searches, sorts and preserves the original seed collection", () => {
+    expect(querySeeds({}).rows).toEqual(seeds);
+    expect(ids(querySeeds({ q: "番茄" }).rows)).toEqual([10]);
+    expect(ids(querySeeds({ q: "种子" }).rows)).toEqual([10, 11, 12]);
+    expect(ids(querySeeds({ sort: "name-asc" }).rows)).toEqual([10, 11, 12]);
+    expect(ids(seeds)).toEqual([10, 11, 12]);
+  });
+
+  it("combines source, harvest count and series filters", () => {
+    expect(ids(querySeeds({ sources: ["格连商店购买"], harvestCounts: ["3"] }).rows)).toEqual([10]);
+    expect(ids(querySeeds({ sources: ["星屿探索（完成探索）"] }).rows)).toEqual([11]);
+    expect(ids(querySeeds({ series: ["100", "101"] }).rows)).toEqual([10, 11]);
+    expect(querySeeds({ harvestCounts: ["__missing"] }).total).toBe(1);
+  });
+
+  it("filters seeds without confirmed series and builds seed-specific facets", () => {
+    const complete = plantsDataFixture({
+      items,
+      series: series.filter((group) => group.plantIds !== null),
+      seeds,
+    });
+    expect(
+      ids(queryPlants(complete, "seeds", { ...emptyQuery(), series: ["__ungrouped"] }).rows),
+    ).toEqual([12]);
+    const groups = filterGroups(complete, "seeds");
+    expect(groups.map((group) => group.key)).toEqual(["sources", "harvestCounts", "series"]);
+    expect(groups.find((group) => group.key === "sources")?.options).toContainEqual({
+      value: "星屿探索（完成探索）",
+      label: "星屿探索（完成探索）",
+    });
+    expect(groups.find((group) => group.key === "series")?.options).toContainEqual({
+      value: "100",
+      label: "星屿花系列",
     });
   });
 });

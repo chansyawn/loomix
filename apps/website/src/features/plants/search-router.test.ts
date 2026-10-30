@@ -56,6 +56,13 @@ describe("compact plant URLs", () => {
         sources: ["采集"],
         flowerColors: ["白色"],
       },
+      seeds: {
+        q: "种子",
+        sources: ["星屿探索"],
+        series: ["95000", "__ungrouped"],
+        harvestCounts: ["3", "__missing"],
+        sort: "name-desc",
+      },
     });
     const compact = compactPlantsSearch(search);
     const restored = plantsSearchSchema.parse(defaultParseSearch(defaultStringifySearch(compact)));
@@ -63,9 +70,36 @@ describe("compact plant URLs", () => {
     expect(compactPlantsSearch(compact)).toEqual(compact);
   });
 
+  it("serializes the seed view and its supported filters", () => {
+    const router = setup();
+    const search = plantsSearchSchema.parse({
+      view: "seeds",
+      seeds: {
+        q: "番茄",
+        sources: ["格连商店购买"],
+        series: ["95000"],
+        harvestCounts: ["3"],
+      },
+    });
+    const location = router.buildLocation({ to: "/collection/plants", search });
+    expect(defaultParseSearch(location.searchStr)).toEqual({
+      view: "seeds",
+      seeds: {
+        q: "番茄",
+        sources: ["格连商店购买"],
+        series: ["95000"],
+        harvestCounts: ["3"],
+      },
+    });
+  });
+
   it("preserves parent parameters and removes unsupported nested values", async () => {
     const router = setup(
-      `/collection/plants${defaultStringifySearch({ lang: "zh", items: { categories: ["作物"], page: 4 } })}`,
+      `/collection/plants${defaultStringifySearch({
+        lang: "zh",
+        items: { categories: ["作物"], page: 4 },
+        seeds: { categories: ["作物"], sources: ["星屿探索"], page: 4 },
+      })}`,
     );
     await router.load();
     const location = router.buildLocation({
@@ -76,6 +110,7 @@ describe("compact plant URLs", () => {
     expect(defaultParseSearch(location.searchStr)).toEqual({
       lang: "zh",
       items: { categories: ["作物"] },
+      seeds: { sources: ["星屿探索"] },
     });
   });
 });

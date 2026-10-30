@@ -57,6 +57,7 @@ export type PlantSeries = CollectionRecord & {
 export interface PlantsData {
   items: PlantItem[];
   series: PlantSeries[];
+  seeds: PlantSeed[];
   itemRefs: ReadonlyMap<number, IngredientItem>;
   sourceTreesByItemId: ReadonlyMap<number, PlantItem[]>;
 }

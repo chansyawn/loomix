@@ -159,5 +159,5 @@ export function buildPlantsData(
   for (const tree of items)
     for (const id of unique(tree.treeDrops?.map((drop) => drop.itemId) ?? []))
       sourceTreesByItemId.set(id, [...(sourceTreesByItemId.get(id) ?? []), tree]);
-  return { items, series, itemRefs, sourceTreesByItemId };
+  return { items, series, seeds, itemRefs, sourceTreesByItemId };
 }

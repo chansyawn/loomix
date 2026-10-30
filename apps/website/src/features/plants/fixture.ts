@@ -1,4 +1,4 @@
-import type { PlantItem, PlantSeries, PlantSummary, PlantsData } from "./model";
+import type { PlantItem, PlantSeed, PlantSeries, PlantSummary, PlantsData } from "./model";
 import { splitPlantValues } from "./catalog";
 
 export function plantSummaryFixture(fields: Partial<PlantSummary> = {}): PlantSummary {
@@ -61,9 +61,37 @@ export function plantSeriesFixture(fields: Partial<PlantSeries> = {}): PlantSeri
   };
 }
 
-export function plantsDataFixture(fields: Pick<PlantsData, "items" | "series">): PlantsData {
+export function plantSeedFixture(fields: Partial<PlantSeed> = {}): PlantSeed {
+  return {
+    id: 10,
+    name: "种子",
+    image: null,
+    description: null,
+    quality: null,
+    productIds: [1],
+    growthId: null,
+    trade: null,
+    acquisition: null,
+    detail: {
+      description: null,
+      quality: null,
+      trade: null,
+      acquisitionConditions: null,
+      growth: null,
+      stageIds: null,
+      maturityDays: null,
+      harvestCount: null,
+    },
+    ...fields,
+  };
+}
+
+export function plantsDataFixture(
+  fields: Pick<PlantsData, "items" | "series"> & Partial<Pick<PlantsData, "seeds">>,
+): PlantsData {
   return {
     ...fields,
+    seeds: fields.seeds ?? [],
     itemRefs: new Map(
       fields.items.map((item) => [
         item.id,
