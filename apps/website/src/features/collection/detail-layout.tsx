@@ -25,7 +25,7 @@ export function CollectionDetailLayout({
         <div className="mx-auto w-full max-w-104 overflow-hidden rounded-4xl border bg-muted/30 lg:sticky lg:top-6 lg:mx-0">
           {image}
         </div>
-        <div className="min-w-0 space-y-4">
+        <div className="@container/detail-fields min-w-0 space-y-4">
           <div className="space-y-3">
             <h1 className="flex items-center gap-3 text-3xl/tight font-semibold tracking-tight wrap-break-word sm:text-4xl">
               {quality !== null && <QualityMarker quality={quality} />}
@@ -34,9 +34,12 @@ export function CollectionDetailLayout({
             {quality === null && <p className="text-sm text-muted-foreground">品阶：未提供</p>}
           </div>
           {description}
-          <dl className="grid grid-cols-1 gap-x-6 gap-y-5 border-y py-5 sm:grid-cols-2">
+          <dl className="grid grid-cols-1 gap-3 @min-[24rem]/detail-fields:grid-cols-2 @min-[24rem]/detail-fields:gap-4">
             {fields.map(([label, value]) => (
-              <div key={label} className="min-w-0 space-y-1.5">
+              <div
+                key={label}
+                className="min-w-0 space-y-1.5 rounded-xl bg-muted/40 p-3 @min-[24rem]/detail-fields:p-4"
+              >
                 <dt className="text-xs text-muted-foreground">{label}</dt>
                 <dd className="text-sm/6 wrap-break-word whitespace-pre-line">
                   {value || "未提供"}
