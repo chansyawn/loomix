@@ -12,7 +12,7 @@ export function CollectionCardSkeleton({
 }) {
   return (
     <Card padding="flush" className="min-w-0" aria-hidden="true">
-      <Skeleton className={`${imageClassName} shrink-0`} />
+      <Skeleton shape="square" className={`${imageClassName} shrink-0`} />
       <CardHeader>
         <CardTitle>
           <Skeleton className="my-1 h-4 w-2/3" />
