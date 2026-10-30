@@ -25,8 +25,7 @@ export function CollectionCard({
   return (
     <Card
       ref={ref}
-      size="sm"
-      media="flush"
+      padding="flush"
       interactive
       role="article"
       className={cn("relative min-w-0", className)}

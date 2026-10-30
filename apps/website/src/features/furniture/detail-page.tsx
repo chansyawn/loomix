@@ -2,6 +2,7 @@ import { collectionItemLocation } from "../collection/item-route";
 import { SearchXIcon } from "lucide-react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { buttonVariants } from "@/ui/components/button";
+import { Card, CardContent } from "@/ui/components/card";
 import {
   Empty,
   EmptyHeader,
@@ -18,7 +19,7 @@ import {
 } from "@/features/collection/detail-layout";
 import { RecordImage as FurnitureImage } from "@/features/collection/record-image";
 import { FurnitureReturnLink } from "./detail-navigation";
-import type { IngredientItem } from "../collection-view";
+import type { FurnitureItem, FurnitureSet, IngredientItem } from "../collection-view";
 import type { FurnitureDetail } from "./detail";
 import type { View } from "./search";
 import { FurnitureLoadError } from "./states";
@@ -69,40 +70,29 @@ function FurnitureRecipes({ detail }: { detail: Extract<FurnitureDetail, { kind:
   const recipes = detail.recipes;
   return (
     <section aria-labelledby="furniture-recipes" className="space-y-4">
-      <div>
-        <h2 id="furniture-recipes" className="text-lg font-semibold">
-          制作配方
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">打造这件家具所需的材料</p>
-      </div>
+      <h2 id="furniture-recipes" className="text-lg font-semibold">
+        制作配方
+      </h2>
       {recipes === null ? (
-        <p className="text-sm text-muted-foreground">配方信息未提供</p>
+        <p className="text-sm text-muted-foreground">暂无配方信息</p>
       ) : (
         <div className="space-y-3">
           {recipes.map((recipe, index) => (
-            <div key={recipe.id} className="rounded-2xl border p-4">
+            <div key={recipe.id} className="space-y-3">
               {recipes.length > 1 && <h3 className="mb-3 text-sm font-medium">配方 {index + 1}</h3>}
               {recipe.materials === null ? (
                 <p className="text-sm text-muted-foreground">
                   {recipe.unresolvedReason || "材料信息未确认"}
                 </p>
               ) : (
-                <ul className="divide-y">
+                <ul className="flex flex-wrap gap-3">
                   {recipe.materials.map((material) => (
-                    <li
-                      key={material.itemId}
-                      className="flex items-center justify-between gap-4 py-2 first:pt-0 last:pb-0"
-                    >
-                      {material.item ? (
-                        <FurnitureMaterialLink item={material.item} />
-                      ) : (
-                        <span className="min-w-0 truncate text-sm">
-                          未知材料 #{material.itemId}
-                        </span>
-                      )}
-                      <span className="shrink-0 text-sm text-muted-foreground tabular-nums">
-                        × {material.quantity}
-                      </span>
+                    <li key={material.itemId} className="max-w-full min-w-0">
+                      <FurnitureMaterialCard
+                        item={material.item}
+                        itemId={material.itemId}
+                        quantity={material.quantity}
+                      />
                     </li>
                   ))}
                 </ul>
@@ -115,50 +105,113 @@ function FurnitureRecipes({ detail }: { detail: Extract<FurnitureDetail, { kind:
   );
 }
 
-function FurnitureMaterialLink({ item }: { item: IngredientItem }) {
-  return (
-    <Link
-      {...collectionItemLocation(item)}
-      className="group/material flex min-w-0 items-center gap-3 rounded-lg outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
-    >
-      <div className="size-11 shrink-0 overflow-hidden rounded-md border bg-muted/30">
-        <FurnitureImage image={item.image} name={item.name} compact />
+function FurnitureMaterialCard({
+  item,
+  itemId,
+  quantity,
+}: {
+  item: IngredientItem | null;
+  itemId: number;
+  quantity: number;
+}) {
+  const content = (
+    <>
+      <div className="size-12 shrink-0 overflow-hidden rounded-lg border bg-muted/30">
+        <FurnitureImage image={item?.image ?? null} name={item?.name ?? "未知材料"} compact />
       </div>
-      <span className="min-w-0 truncate text-sm underline-offset-4 group-hover/material:underline">
-        {item.name}
-      </span>
-    </Link>
+      <span className="min-w-0 truncate text-sm">{item?.name ?? `未知材料 #${itemId}`}</span>
+      <span className="shrink-0 text-sm text-muted-foreground tabular-nums">× {quantity}</span>
+    </>
+  );
+
+  if (!item)
+    return (
+      <Card size="sm" className="max-w-full">
+        <CardContent>
+          <div className="flex min-h-12 items-center gap-2">{content}</div>
+        </CardContent>
+      </Card>
+    );
+
+  return (
+    <Card size="sm" interactive className="relative max-w-full">
+      <CardContent>
+        <Link
+          {...collectionItemLocation(item)}
+          className="flex min-h-12 w-full items-center gap-2 outline-none after:absolute after:inset-0 after:rounded-xl"
+        >
+          {content}
+        </Link>
+      </CardContent>
+    </Card>
   );
 }
 
 function FurnitureRelated({ detail }: { detail: FurnitureDetail }) {
+  if (detail.kind === "set") return <FurnitureSetMembers detail={detail} />;
+
+  return (
+    <>
+      <FurnitureMemberships sets={detail.sets} />
+      {detail.sameSetItems.length > 0 && <FurnitureSameSetItems items={detail.sameSetItems} />}
+    </>
+  );
+}
+
+function FurnitureMemberships({ sets }: { sets: FurnitureSet[] }) {
   return (
     <section aria-labelledby="related-furniture" className="space-y-4">
       <h2 id="related-furniture" className="text-lg font-semibold">
-        {detail.kind === "item" ? "所属套组" : "套组成员"}
+        所属套组
       </h2>
-      {detail.kind === "item" ? (
-        detail.sets.length > 0 ? (
-          <CollectionDetailRelatedGrid>
-            {detail.sets.map((set) => (
-              <FurnitureSetCard key={set.id} set={set} />
-            ))}
-          </CollectionDetailRelatedGrid>
-        ) : (
-          <p className="text-sm text-muted-foreground">未归入套组</p>
-        )
-      ) : detail.items === null ? (
+      {sets.length > 0 ? (
+        <CollectionDetailRelatedGrid>
+          {sets.map((set) => (
+            <FurnitureSetCard key={set.id} set={set} />
+          ))}
+        </CollectionDetailRelatedGrid>
+      ) : (
+        <p className="text-sm text-muted-foreground">未归入套组</p>
+      )}
+    </section>
+  );
+}
+
+function FurnitureSameSetItems({ items }: { items: FurnitureItem[] }) {
+  return (
+    <section aria-labelledby="same-set-furniture" className="space-y-4">
+      <h2 id="same-set-furniture" className="text-lg font-semibold">
+        同组家具
+      </h2>
+      <FurnitureItemGrid items={items} />
+    </section>
+  );
+}
+
+function FurnitureSetMembers({ detail }: { detail: Extract<FurnitureDetail, { kind: "set" }> }) {
+  return (
+    <section aria-labelledby="related-furniture" className="space-y-4">
+      <h2 id="related-furniture" className="text-lg font-semibold">
+        套组成员
+      </h2>
+      {detail.items === null ? (
         <p className="text-sm text-muted-foreground">成员信息未提供</p>
       ) : detail.items.length === 0 ? (
         <p className="text-sm text-muted-foreground">暂无套组成员</p>
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,8rem),1fr))] gap-3">
-          {detail.items.map((item) => (
-            <FurnitureCard key={item.id} item={item} />
-          ))}
-        </div>
+        <FurnitureItemGrid items={detail.items} />
       )}
     </section>
+  );
+}
+
+function FurnitureItemGrid({ items }: { items: FurnitureItem[] }) {
+  return (
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,9rem),1fr))] gap-3">
+      {items.map((item) => (
+        <FurnitureCard key={item.id} item={item} />
+      ))}
+    </div>
   );
 }
 

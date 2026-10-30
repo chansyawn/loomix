@@ -86,9 +86,27 @@ describe("furniture details", () => {
       kind: "item",
       record: first,
       sets: data.sets,
+      sameSetItems: [second],
       recipes: null,
     });
-    expect(furnitureDetail({ ...data, sets: [] }, "items", 1)).toMatchObject({ sets: [] });
+    expect(furnitureDetail({ ...data, sets: [] }, "items", 1)).toMatchObject({
+      sets: [],
+      sameSetItems: [],
+    });
+  });
+  it("lists each same-set item once across overlapping memberships", () => {
+    const third = { ...first, id: 5, name: "木凳" };
+    const overlapping = {
+      ...data,
+      items: [...data.items, third],
+      sets: [
+        { ...set, componentIds: [5, 2, 1] },
+        { ...set, id: 4, componentIds: [2, 5] },
+      ],
+    };
+    expect(furnitureDetail(overlapping, "items", 1)).toMatchObject({
+      sameSetItems: [third, second],
+    });
   });
   it("resolves crafting materials and preserves unconfirmed recipe reasons", () => {
     const recipeData = {
