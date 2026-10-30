@@ -94,14 +94,7 @@ function IngredientRequirement({
 
 export function DishRecipe({ detail }: { detail: Extract<DishesDetail, { kind: "item" }> }) {
   const { recipe } = detail.record;
-  const emptyMessage =
-    recipe === null
-      ? "配方行未提供"
-      : recipe.slots === null
-        ? "配方行存在，食材槽位未确认"
-        : recipe.slots.length === 0
-          ? "已确认无需食材"
-          : null;
+  if (!recipe?.slots?.length) return null;
   return (
     <section aria-labelledby="dish-recipe" className="min-w-0 space-y-4">
       <div className="flex items-start gap-3">
@@ -112,52 +105,44 @@ export function DishRecipe({ detail }: { detail: Extract<DishesDetail, { kind: "
           <h2 id="dish-recipe" className="text-lg font-semibold">
             配方
           </h2>
-          {emptyMessage === null && (
-            <p className="text-sm/6 text-muted-foreground">
-              展开食材类别，查看图鉴已收录的候选物品。用量与实际投放规则尚未确认。
-            </p>
-          )}
+          <p className="text-sm/6 text-muted-foreground">
+            展开食材类别，查看图鉴已收录的候选物品。用量与实际投放规则尚未确认。
+          </p>
         </div>
       </div>
-      {emptyMessage !== null ? (
-        <p className="rounded-2xl border bg-muted/30 px-5 py-6 text-sm text-muted-foreground">
-          {emptyMessage}
-        </p>
-      ) : (
-        <ol aria-label="配方食材条件" className="divide-y overflow-hidden rounded-3xl border">
-          {recipe?.slots?.map((slot, index) => (
-            <li key={slot.field} className="min-w-0 space-y-4 px-4 py-5 sm:p-6">
-              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-                <h3 className="flex items-center gap-2.5 text-sm font-semibold">
-                  <span aria-hidden="true" className="h-4 w-1 rounded-full bg-primary" />
-                  食材条件 {index + 1}
-                </h3>
-                <span className="text-xs text-muted-foreground">用量：未确认</span>
-              </div>
-              {slot.expression === null ? (
-                <p className="rounded-xl bg-muted/40 px-4 py-3 text-sm/6 text-muted-foreground">
-                  条件解析失败，食材类别或表达式尚未确认
-                </p>
-              ) : (
-                <IngredientRequirement
-                  expression={slot.expression}
-                  categories={detail.ingredientCategoriesById}
-                  items={detail.ingredientItemsById}
-                />
-              )}
-              {slot.itemIds === null && slot.expression !== null && (
-                <p className="text-sm text-muted-foreground">候选物品尚未确认</p>
-              )}
-              {slot.itemIds?.length === 0 && (
-                <p className="text-sm text-muted-foreground">没有匹配的正式收录物品</p>
-              )}
-              <p className="text-xs/5 wrap-anywhere text-muted-foreground">
-                原始条件：<code>{slot.rawExpression}</code>
+      <ol aria-label="配方食材条件" className="divide-y overflow-hidden rounded-3xl border">
+        {recipe.slots.map((slot, index) => (
+          <li key={slot.field} className="min-w-0 space-y-4 px-4 py-5 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+              <h3 className="flex items-center gap-2.5 text-sm font-semibold">
+                <span aria-hidden="true" className="h-4 w-1 rounded-full bg-primary" />
+                食材条件 {index + 1}
+              </h3>
+              <span className="text-xs text-muted-foreground">用量：未确认</span>
+            </div>
+            {slot.expression === null ? (
+              <p className="rounded-xl bg-muted/40 px-4 py-3 text-sm/6 text-muted-foreground">
+                条件解析失败，食材类别或表达式尚未确认
               </p>
-            </li>
-          ))}
-        </ol>
-      )}
+            ) : (
+              <IngredientRequirement
+                expression={slot.expression}
+                categories={detail.ingredientCategoriesById}
+                items={detail.ingredientItemsById}
+              />
+            )}
+            {slot.itemIds === null && slot.expression !== null && (
+              <p className="text-sm text-muted-foreground">候选物品尚未确认</p>
+            )}
+            {slot.itemIds?.length === 0 && (
+              <p className="text-sm text-muted-foreground">没有匹配的正式收录物品</p>
+            )}
+            <p className="text-xs/5 wrap-anywhere text-muted-foreground">
+              原始条件：<code>{slot.rawExpression}</code>
+            </p>
+          </li>
+        ))}
+      </ol>
     </section>
   );
 }

@@ -14,6 +14,8 @@ import {
   CollectionDetailLayout,
   CollectionDetailLoading,
   CollectionDetailRelatedGrid,
+  CollectionDetailExtras,
+  type CollectionDetailSection,
 } from "@/features/collection/detail-layout";
 import { RecordImage } from "@/features/collection/record-image";
 import { ClothingReturnLink } from "./detail-navigation";
@@ -50,36 +52,46 @@ export function ClothingDetailPage({ detail }: { detail: ClothingDetail }) {
       }
       fields={fields}
     >
-      {detail.kind !== "appearance" && (
-        <section aria-labelledby="related-clothing" className="space-y-4">
-          <h2 id="related-clothing" className="text-lg font-semibold">
-            {detail.kind === "item" ? "所属套装" : "套装成员"}
-          </h2>
-          {detail.kind === "item" ? (
-            detail.sets.length > 0 ? (
-              <CollectionDetailRelatedGrid>
-                {detail.sets.map((set) => (
-                  <ClothingCard key={set.id} record={set} />
-                ))}
-              </CollectionDetailRelatedGrid>
-            ) : (
-              <p className="text-sm text-muted-foreground">未归入套装</p>
-            )
-          ) : detail.items === null ? (
-            <p className="text-sm text-muted-foreground">成员信息未提供</p>
-          ) : detail.items.length === 0 ? (
-            <p className="text-sm text-muted-foreground">暂无套装成员</p>
-          ) : (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,9rem),1fr))] gap-3">
-              {detail.items.map((item) => (
-                <ClothingCard key={item.id} record={item} />
-              ))}
-            </div>
-          )}
-        </section>
-      )}
+      <ClothingExtras detail={detail} />
     </CollectionDetailLayout>
   );
+}
+
+function ClothingExtras({ detail }: { detail: ClothingDetail }) {
+  const sections: CollectionDetailSection[] = [];
+  if (detail.kind === "item" && detail.sets.length > 0)
+    sections.push({
+      key: "related-clothing",
+      content: (
+        <section aria-labelledby="related-clothing" className="space-y-4">
+          <h2 id="related-clothing" className="text-lg font-semibold">
+            所属套装
+          </h2>
+          <CollectionDetailRelatedGrid>
+            {detail.sets.map((set) => (
+              <ClothingCard key={set.id} record={set} />
+            ))}
+          </CollectionDetailRelatedGrid>
+        </section>
+      ),
+    });
+  if (detail.kind === "set" && detail.items?.length)
+    sections.push({
+      key: "related-clothing",
+      content: (
+        <section aria-labelledby="related-clothing" className="space-y-4">
+          <h2 id="related-clothing" className="text-lg font-semibold">
+            套装成员
+          </h2>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,9rem),1fr))] gap-3">
+            {detail.items.map((item) => (
+              <ClothingCard key={item.id} record={item} />
+            ))}
+          </div>
+        </section>
+      ),
+    });
+  return <CollectionDetailExtras sections={sections} />;
 }
 
 export function ClothingDetailLoading() {

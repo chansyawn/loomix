@@ -25,11 +25,15 @@ export function ItemCookingUsage({ usage }: { usage: IngredientUsage | null }) {
           <IngredientTagLink key={category.id} category={category} />
         ))}
       </div>
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium">关联菜肴 · {usage.dishes.length} 道</h3>
-        <RecipeAssociationNotice />
-      </div>
-      <RelatedRecipes matches={usage.dishes} preview />
+      {usage.dishes.length > 0 && (
+        <>
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium">关联菜肴 · {usage.dishes.length} 道</h3>
+            <RecipeAssociationNotice />
+          </div>
+          <RelatedRecipes matches={usage.dishes} preview />
+        </>
+      )}
     </section>
   );
 }

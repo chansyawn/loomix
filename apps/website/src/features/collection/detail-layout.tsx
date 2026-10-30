@@ -1,8 +1,20 @@
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
+import { InfoIcon } from "lucide-react";
 import { QualityMarker } from "./quality";
 import { Skeleton } from "@/ui/components/skeleton";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/ui/components/empty";
 
 type DetailField = readonly [label: string, value: string | null];
+export type CollectionDetailSection = {
+  key: string;
+  content: ReactNode;
+};
 
 export function CollectionDetailLayout({
   image,
@@ -52,6 +64,26 @@ export function CollectionDetailLayout({
       {children && <div className="mt-10 space-y-6 border-t-3 border-dotted pt-8">{children}</div>}
     </section>
   );
+}
+
+export function CollectionDetailExtras({
+  sections,
+}: {
+  sections: readonly CollectionDetailSection[];
+}) {
+  if (sections.length === 0)
+    return (
+      <Empty variant="muted" className="min-h-72">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <InfoIcon />
+          </EmptyMedia>
+          <EmptyTitle>暂时没有更多的信息</EmptyTitle>
+          <EmptyDescription>更多资料收录后会在这里展示</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+    );
+  return sections.map(({ key, content }) => <Fragment key={key}>{content}</Fragment>);
 }
 
 export function CollectionDetailRelatedGrid({ children }: { children: ReactNode }) {

@@ -64,12 +64,7 @@ export function RelatedRecipes({
   matches: IngredientDishMatch[];
   preview?: boolean;
 }) {
-  if (matches.length === 0)
-    return (
-      <p className="rounded-xl border p-4 text-sm/6 text-muted-foreground">
-        暂无匹配的已解析配方，不代表该食材不能用于烹饪。
-      </p>
-    );
+  if (matches.length === 0) return null;
   const visible = preview ? matches.slice(0, 3) : matches;
   return (
     <div className="space-y-4">

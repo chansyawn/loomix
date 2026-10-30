@@ -14,6 +14,8 @@ import {
   CollectionDetailLayout,
   CollectionDetailLoading,
   CollectionDetailRelatedGrid,
+  CollectionDetailExtras,
+  type CollectionDetailSection,
 } from "@/features/collection/detail-layout";
 import { CreaturesCard, CreatureSeriesCard } from "./creatures-card";
 import { SeriesImage } from "./series-image";
@@ -64,34 +66,46 @@ export function CreaturesDetailPage({ detail }: { detail: CreaturesDetail }) {
       }
       fields={fields}
     >
-      {detail.kind === "item" && <ItemCookingUsage usage={detail.cooking} />}
-      <section aria-labelledby="related-creatures" className="space-y-4">
-        <h2 id="related-creatures" className="text-lg font-semibold">
-          {detail.kind === "item" ? "所属系列" : "系列成员"}
-        </h2>
-        {detail.kind === "item" ? (
-          detail.series.length > 0 ? (
-            <CollectionDetailRelatedGrid>
-              {detail.series.map((series) => (
-                <CreatureSeriesCard key={series.id} series={series} items={detail.catalogItems} />
-              ))}
-            </CollectionDetailRelatedGrid>
-          ) : (
-            <p className="text-sm text-muted-foreground">未归入系列</p>
-          )
-        ) : detail.items === null ? (
-          <p className="text-sm text-muted-foreground">成员信息未提供</p>
-        ) : detail.items.length === 0 ? (
-          <p className="text-sm text-muted-foreground">暂无系列成员</p>
-        ) : (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-3">
-            {detail.items.map((item) => (
-              <CreaturesCard key={item.id} item={item} />
-            ))}
-          </div>
-        )}
-      </section>
+      <CreaturesExtras detail={detail} />
     </CollectionDetailLayout>
+  );
+}
+
+function CreaturesExtras({ detail }: { detail: CreaturesDetail }) {
+  const sections: CollectionDetailSection[] = [];
+  if (detail.kind === "item" && detail.cooking)
+    sections.push({
+      key: "creature-cooking",
+      content: <ItemCookingUsage usage={detail.cooking} />,
+    });
+  if (
+    (detail.kind === "item" && detail.series.length > 0) ||
+    (detail.kind === "series" && detail.items?.length)
+  )
+    sections.push({ key: "related-creatures", content: <CreaturesRelated detail={detail} /> });
+  return <CollectionDetailExtras sections={sections} />;
+}
+
+function CreaturesRelated({ detail }: { detail: CreaturesDetail }) {
+  return (
+    <section aria-labelledby="related-creatures" className="space-y-4">
+      <h2 id="related-creatures" className="text-lg font-semibold">
+        {detail.kind === "item" ? "所属系列" : "系列成员"}
+      </h2>
+      {detail.kind === "item" ? (
+        <CollectionDetailRelatedGrid>
+          {detail.series.map((series) => (
+            <CreatureSeriesCard key={series.id} series={series} items={detail.catalogItems} />
+          ))}
+        </CollectionDetailRelatedGrid>
+      ) : (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-3">
+          {detail.items?.map((item) => (
+            <CreaturesCard key={item.id} item={item} />
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 

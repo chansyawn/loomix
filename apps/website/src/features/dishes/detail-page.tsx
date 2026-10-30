@@ -14,6 +14,8 @@ import {
   CollectionDetailLayout,
   CollectionDetailLoading,
   CollectionDetailRelatedGrid,
+  CollectionDetailExtras,
+  type CollectionDetailSection,
 } from "@/features/collection/detail-layout";
 import { DishesCard, DishSeriesCard } from "./dishes-card";
 import { DishesReturnLink } from "./detail-navigation";
@@ -56,47 +58,60 @@ export function DishesDetailPage({ detail }: { detail: DishesDetail }) {
       }
       fields={fields}
     >
-      {detail.kind === "item" && (
-        <>
-          <DishRequirementSource requirement={detail.record.difficultyRequirement} />
-          <DishEffects effects={detail.record.effects} />
-          <DishRecipe detail={detail} />
-        </>
-      )}
-      <section aria-labelledby="related-dishes" className="space-y-4">
-        <h2 id="related-dishes" className="text-lg font-semibold">
-          {detail.kind === "item" ? "所属系列" : "系列成员"}
-        </h2>
-        {detail.kind === "item" ? (
-          detail.series.length > 0 ? (
-            <>
-              <CollectionDetailRelatedGrid>
-                {detail.series.map((series) => (
-                  <DishSeriesCard key={series.id} series={series} />
-                ))}
-              </CollectionDetailRelatedGrid>
-              {detail.hasUnconfirmedSeriesMembership && (
-                <p className="text-sm text-muted-foreground">其他系列的成员关系未确认</p>
-              )}
-            </>
-          ) : detail.hasUnconfirmedSeriesMembership ? (
-            <p className="text-sm text-muted-foreground">所属系列的成员关系未确认</p>
-          ) : (
-            <p className="text-sm text-muted-foreground">未归入系列</p>
-          )
-        ) : detail.items === null ? (
-          <p className="text-sm text-muted-foreground">成员信息未提供</p>
-        ) : detail.items.length === 0 ? (
-          <p className="text-sm text-muted-foreground">暂无系列成员</p>
-        ) : (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-3">
-            {detail.items.map((item) => (
-              <DishesCard key={item.id} item={item} />
-            ))}
-          </div>
-        )}
-      </section>
+      <DishesExtras detail={detail} />
     </CollectionDetailLayout>
+  );
+}
+
+function DishesExtras({ detail }: { detail: DishesDetail }) {
+  const sections: CollectionDetailSection[] = [];
+  if (detail.kind === "item") {
+    if (detail.record.difficultyRequirement)
+      sections.push({
+        key: "dish-requirement-source",
+        content: <DishRequirementSource requirement={detail.record.difficultyRequirement} />,
+      });
+    if (detail.record.effects?.length)
+      sections.push({
+        key: "dish-effects",
+        content: <DishEffects effects={detail.record.effects} />,
+      });
+    if (detail.record.recipe?.slots?.length)
+      sections.push({ key: "dish-recipe", content: <DishRecipe detail={detail} /> });
+  }
+  if (
+    (detail.kind === "item" && detail.series.length > 0) ||
+    (detail.kind === "series" && detail.items?.length)
+  )
+    sections.push({ key: "related-dishes", content: <DishesRelated detail={detail} /> });
+  return <CollectionDetailExtras sections={sections} />;
+}
+
+function DishesRelated({ detail }: { detail: DishesDetail }) {
+  return (
+    <section aria-labelledby="related-dishes" className="space-y-4">
+      <h2 id="related-dishes" className="text-lg font-semibold">
+        {detail.kind === "item" ? "所属系列" : "系列成员"}
+      </h2>
+      {detail.kind === "item" ? (
+        <>
+          <CollectionDetailRelatedGrid>
+            {detail.series.map((series) => (
+              <DishSeriesCard key={series.id} series={series} />
+            ))}
+          </CollectionDetailRelatedGrid>
+          {detail.hasUnconfirmedSeriesMembership && (
+            <p className="text-sm text-muted-foreground">其他系列的成员关系未确认</p>
+          )}
+        </>
+      ) : (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-3">
+          {detail.items?.map((item) => (
+            <DishesCard key={item.id} item={item} />
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 

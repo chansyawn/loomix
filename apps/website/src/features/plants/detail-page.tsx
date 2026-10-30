@@ -13,6 +13,8 @@ import {
   CollectionDetailLayout,
   CollectionDetailLoading,
   CollectionDetailRelatedGrid,
+  CollectionDetailExtras,
+  type CollectionDetailSection,
 } from "@/features/collection/detail-layout";
 import { RecordImage } from "@/features/collection/record-image";
 import { PlantsCard, PlantSeriesCard } from "./plants-card";
@@ -74,64 +76,109 @@ function PlantOrSeriesDetailPage({ detail }: { detail: PlantOrSeriesDetail }) {
       }
       fields={fields}
     >
-      {detail.kind === "series" ? (
-        <>
-          <PlantSeedInfo seeds={summary.seeds} itemRefs={detail.itemRefs} />
-          <PlantGrowthStages groups={summary.growths} itemRefs={detail.itemRefs} />
-        </>
-      ) : (
-        <PlantItemGrowing item={detail.record} series={detail.series} itemRefs={detail.itemRefs} />
-      )}
-      <PlantDropsInfo drops={summary.drops} />
-      {detail.kind === "item" && <PlantRelatedItems title="来源树木" items={detail.sourceTrees} />}
-      {detail.kind === "item" && <ItemCookingUsage usage={detail.cooking} />}
-      <section aria-labelledby="related-plants" className="space-y-4">
-        <h2 id="related-plants" className="text-lg font-semibold">
-          {detail.kind === "item" ? "所属系列" : "系列成员"}
-        </h2>
-        {detail.kind === "item" ? (
-          detail.series.length > 0 ? (
-            <>
-              <CollectionDetailRelatedGrid>
-                {detail.series.map((series) => (
-                  <PlantSeriesCard key={series.id} series={series} />
-                ))}
-              </CollectionDetailRelatedGrid>
-              {detail.relatedGroups.map(
-                ({ series, items }) =>
-                  items.length > 0 && (
-                    <div key={series.id} className="space-y-3">
-                      <h3 className="text-sm font-medium">{series.name} · 同系列植物</h3>
-                      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-3">
-                        {items.map((item) => (
-                          <PlantsCard key={item.id} item={item} />
-                        ))}
-                      </div>
-                    </div>
-                  ),
-              )}
-              {detail.hasUnconfirmedSeriesMembership && (
-                <p className="text-sm text-muted-foreground">其他系列的成员关系未确认</p>
-              )}
-            </>
-          ) : detail.hasUnconfirmedSeriesMembership ? (
-            <p className="text-sm text-muted-foreground">所属系列的成员关系未确认</p>
-          ) : (
-            <p className="text-sm text-muted-foreground">未归入系列</p>
-          )
-        ) : detail.items === null ? (
-          <p className="text-sm text-muted-foreground">成员信息未提供</p>
-        ) : detail.items.length === 0 ? (
-          <p className="text-sm text-muted-foreground">暂无系列成员</p>
-        ) : (
+      <PlantExtras detail={detail} />
+    </CollectionDetailLayout>
+  );
+}
+
+function PlantExtras({ detail }: { detail: PlantOrSeriesDetail }) {
+  const sections: CollectionDetailSection[] = [];
+  const summary = detail.record.summary;
+  if (detail.kind === "item") {
+    if (summary.seeds.length > 0 || detail.record.growth !== null)
+      sections.push({
+        key: "plant-growing",
+        content: (
+          <PlantItemGrowing
+            item={detail.record}
+            series={detail.series}
+            itemRefs={detail.itemRefs}
+          />
+        ),
+      });
+  } else {
+    if (summary.seeds.length > 0)
+      sections.push({
+        key: "plant-seeds",
+        content: <PlantSeedInfo seeds={summary.seeds} itemRefs={detail.itemRefs} />,
+      });
+    if (summary.growths.length > 0)
+      sections.push({
+        key: "plant-growth",
+        content: <PlantGrowthStages groups={summary.growths} itemRefs={detail.itemRefs} />,
+      });
+  }
+  if (summary.drops.items.length > 0 || summary.drops.unlistedCount > 0)
+    sections.push({
+      key: "plant-drops",
+      content: <PlantDropsInfo drops={summary.drops} />,
+    });
+  if (detail.kind === "item" && detail.sourceTrees.length > 0)
+    sections.push({
+      key: "plant-source-trees",
+      content: <PlantRelatedItems title="来源树木" items={detail.sourceTrees} />,
+    });
+  if (detail.kind === "item" && detail.cooking)
+    sections.push({
+      key: "plant-cooking",
+      content: <ItemCookingUsage usage={detail.cooking} />,
+    });
+  if (detail.kind === "item" && detail.series.length > 0)
+    sections.push({
+      key: "related-plants",
+      content: <PlantSeriesRelated detail={detail} />,
+    });
+  if (detail.kind === "series" && detail.items?.length)
+    sections.push({
+      key: "related-plants",
+      content: (
+        <section aria-labelledby="related-plants" className="space-y-4">
+          <h2 id="related-plants" className="text-lg font-semibold">
+            系列成员
+          </h2>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-3">
             {detail.items.map((item) => (
               <PlantsCard key={item.id} item={item} />
             ))}
           </div>
-        )}
-      </section>
-    </CollectionDetailLayout>
+        </section>
+      ),
+    });
+  return <CollectionDetailExtras sections={sections} />;
+}
+
+function PlantSeriesRelated({
+  detail,
+}: {
+  detail: Extract<PlantOrSeriesDetail, { kind: "item" }>;
+}) {
+  return (
+    <section aria-labelledby="related-plants" className="space-y-4">
+      <h2 id="related-plants" className="text-lg font-semibold">
+        所属系列
+      </h2>
+      <CollectionDetailRelatedGrid>
+        {detail.series.map((series) => (
+          <PlantSeriesCard key={series.id} series={series} />
+        ))}
+      </CollectionDetailRelatedGrid>
+      {detail.relatedGroups.map(
+        ({ series, items }) =>
+          items.length > 0 && (
+            <div key={series.id} className="space-y-3">
+              <h3 className="text-sm font-medium">{series.name} · 同系列植物</h3>
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-3">
+                {items.map((item) => (
+                  <PlantsCard key={item.id} item={item} />
+                ))}
+              </div>
+            </div>
+          ),
+      )}
+      {detail.hasUnconfirmedSeriesMembership && (
+        <p className="text-sm text-muted-foreground">其他系列的成员关系未确认</p>
+      )}
+    </section>
   );
 }
 

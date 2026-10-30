@@ -9,6 +9,7 @@ import {
   EmptyTitle,
 } from "@/ui/components/empty";
 import {
+  CollectionDetailExtras,
   CollectionDetailLayout,
   CollectionDetailLoading,
 } from "@/features/collection/detail-layout";
@@ -41,7 +42,13 @@ export function MiscellanyDetailPage({
         ["获取途径", item.acquisition],
       ]}
     >
-      {detail.cooking && <ItemCookingUsage usage={detail.cooking} />}
+      <CollectionDetailExtras
+        sections={
+          detail.cooking
+            ? [{ key: "miscellany-cooking", content: <ItemCookingUsage usage={detail.cooking} /> }]
+            : []
+        }
+      />
     </CollectionDetailLayout>
   );
 }

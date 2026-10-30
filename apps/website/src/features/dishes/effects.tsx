@@ -10,6 +10,7 @@ function effectMetadata(effect: NonNullable<DishItem["effects"]>[number]): strin
 }
 
 export function DishEffects({ effects }: { effects: DishItem["effects"] }) {
+  if (!effects?.length) return null;
   return (
     <section aria-labelledby="dish-effects" className="min-w-0 space-y-4">
       <div className="flex items-start gap-3">
@@ -25,30 +26,24 @@ export function DishEffects({ effects }: { effects: DishItem["effects"] }) {
           </p>
         </div>
       </div>
-      {effects?.length ? (
-        <ul className="grid gap-3">
-          {effects.map((effect, index) => {
-            const metadata = effectMetadata(effect);
-            return (
-              <li key={`${effect.effectId}-${index}`} className="space-y-3 rounded-2xl border p-5">
-                <div className="space-y-2">
-                  <h3 className="font-medium wrap-anywhere">{effect.name || "未命名效果"}</h3>
-                  {metadata.length > 0 && (
-                    <p className="text-xs text-muted-foreground">{metadata.join(" · ")}</p>
-                  )}
-                </div>
-                <p className="text-sm/6 whitespace-pre-line text-muted-foreground">
-                  {effect.description || "效果说明未提供"}
-                </p>
-              </li>
-            );
-          })}
-        </ul>
-      ) : (
-        <p className="rounded-2xl border bg-muted/30 px-5 py-6 text-sm text-muted-foreground">
-          特殊效果未提供
-        </p>
-      )}
+      <ul className="grid gap-3">
+        {effects.map((effect, index) => {
+          const metadata = effectMetadata(effect);
+          return (
+            <li key={`${effect.effectId}-${index}`} className="space-y-3 rounded-2xl border p-5">
+              <div className="space-y-2">
+                <h3 className="font-medium wrap-anywhere">{effect.name || "未命名效果"}</h3>
+                {metadata.length > 0 && (
+                  <p className="text-xs text-muted-foreground">{metadata.join(" · ")}</p>
+                )}
+              </div>
+              <p className="text-sm/6 whitespace-pre-line text-muted-foreground">
+                {effect.description || "效果说明未提供"}
+              </p>
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }

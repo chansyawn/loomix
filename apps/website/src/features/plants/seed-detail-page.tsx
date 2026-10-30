@@ -1,6 +1,8 @@
 import {
   CollectionDetailLayout,
   CollectionDetailRelatedGrid,
+  CollectionDetailExtras,
+  type CollectionDetailSection,
 } from "@/features/collection/detail-layout";
 import { RecordImage } from "@/features/collection/record-image";
 import type { SeedDetail } from "./detail";
@@ -22,6 +24,48 @@ export function SeedDetailPage({ detail }: { detail: SeedDetail }) {
       ? [{ id: record.growthId, name: record.name, growth: record.detail.growth }]
       : [];
   const missingProducts = record.productIds.length - detail.products.length;
+  const sections: CollectionDetailSection[] = [];
+  if (detail.products.length > 0) {
+    sections.push({
+      key: "seed-products",
+      content: (
+        <section aria-labelledby="seed-products" className="space-y-4">
+          <h2 id="seed-products" className="text-lg font-semibold">
+            可收获植物
+          </h2>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-3">
+            {detail.products.map((item) => (
+              <PlantsCard key={item.id} item={item} />
+            ))}
+          </div>
+          {missingProducts > 0 && (
+            <p className="text-sm text-muted-foreground">另有 {missingProducts} 种产物尚未收录</p>
+          )}
+        </section>
+      ),
+    });
+  }
+  if (growths.length > 0)
+    sections.push({
+      key: "plant-growth",
+      content: <PlantGrowthStages groups={growths} itemRefs={detail.itemRefs} />,
+    });
+  if (detail.series.length > 0)
+    sections.push({
+      key: "seed-series",
+      content: (
+        <section aria-labelledby="seed-series" className="space-y-4">
+          <h2 id="seed-series" className="text-lg font-semibold">
+            所属系列
+          </h2>
+          <CollectionDetailRelatedGrid>
+            {detail.series.map((series) => (
+              <PlantSeriesCard key={series.id} series={series} />
+            ))}
+          </CollectionDetailRelatedGrid>
+        </section>
+      ),
+    });
   return (
     <CollectionDetailLayout
       image={<RecordImage key={record.image} image={record.image} name={record.name} eager />}
@@ -34,40 +78,7 @@ export function SeedDetailPage({ detail }: { detail: SeedDetail }) {
       }
       fields={fields}
     >
-      <section aria-labelledby="seed-products" className="space-y-4">
-        <h2 id="seed-products" className="text-lg font-semibold">
-          可收获植物
-        </h2>
-        {detail.products.length > 0 ? (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-3">
-            {detail.products.map((item) => (
-              <PlantsCard key={item.id} item={item} />
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">产物信息未收录</p>
-        )}
-        {missingProducts > 0 && detail.products.length > 0 && (
-          <p className="text-sm text-muted-foreground">另有 {missingProducts} 种产物尚未收录</p>
-        )}
-      </section>
-      <PlantGrowthStages groups={growths} itemRefs={detail.itemRefs} />
-      <section aria-labelledby="seed-series" className="space-y-4">
-        <h2 id="seed-series" className="text-lg font-semibold">
-          所属系列
-        </h2>
-        {detail.series.length > 0 ? (
-          <CollectionDetailRelatedGrid>
-            {detail.series.map((series) => (
-              <PlantSeriesCard key={series.id} series={series} />
-            ))}
-          </CollectionDetailRelatedGrid>
-        ) : detail.hasUnconfirmedSeriesMembership ? (
-          <p className="text-sm text-muted-foreground">所属系列的成员关系未确认</p>
-        ) : (
-          <p className="text-sm text-muted-foreground">未归入系列</p>
-        )}
-      </section>
+      <CollectionDetailExtras sections={sections} />
     </CollectionDetailLayout>
   );
 }
