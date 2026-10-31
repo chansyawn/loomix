@@ -1,7 +1,7 @@
 import { expect, test } from "vite-plus/test";
 import type { ContentContext } from "../../content/context.ts";
 import type { TableRow } from "../../types.ts";
-import { acquisition, growth, trade, treeDrops } from "./client.ts";
+import { acquisition, creatureSize, growth, trade, treeDrops } from "./client.ts";
 
 interface FakeRow extends TableRow {
   values: Record<number, number | string | number[] | null>;
@@ -47,9 +47,37 @@ function context(rows: FakeRow[]) {
       sources: new Map(
         rows.filter((entry) => entry.root === 618).map((entry) => [entry.values[0], entry]),
       ),
+      scales: new Map(
+        rows.filter((entry) => entry.root === 132).map((entry) => [entry.values[0], entry]),
+      ),
     },
   } as unknown as ContentContext;
 }
+
+test("creature size preserves table endpoints and applies the documented li unit assumption", () => {
+  const scale = row(132, 41001, { 3: 100, 4: 60, 5: 120, 6: 0.6 });
+  const result = creatureSize(context([scale]), 41001);
+
+  expect(result.value).toEqual({ min: 60, max: 120, unit: "厘" });
+  expect(result.sources).toEqual([
+    {
+      file: "prepared/ed.obb",
+      table: 132,
+      row: 41001,
+      rowOffset: 410010,
+      fields: [0, 3, 4, 5, 6],
+    },
+  ]);
+});
+
+test("creature size remains null when either endpoint is missing and rejects inverted ranges", () => {
+  const incomplete = creatureSize(context([row(132, 41001, { 4: 60 })]), 41001);
+  expect(incomplete.value).toBeNull();
+
+  expect(() => creatureSize(context([row(132, 41001, { 4: 120, 5: 60 })]), 41001)).toThrow(
+    /minimum size exceeds maximum/,
+  );
+});
 
 test("growth resolves mature crop stages only through configured entity and product IDs", () => {
   const crop = row(144, 30213, {

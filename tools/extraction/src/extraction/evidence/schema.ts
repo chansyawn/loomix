@@ -104,18 +104,6 @@ export const fieldCandidateSchema = z.discriminatedUnion("field", [
   z
     .object({
       ...common,
-      field: z.literal("attributes.sizeRange"),
-      fields: z.array(z.number().int()),
-      min: z.number().nullable(),
-      max: z.number().nullable(),
-      scale: z.number().nullable(),
-      extraScale: z.number().nullable(),
-      taskText: z.string().nullable(),
-    })
-    .strict(),
-  z
-    .object({
-      ...common,
       field: z.literal("attributes.maturityPeriod"),
       seedId: z.number().nullable(),
       mode: z.string().nullable(),

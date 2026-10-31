@@ -10,7 +10,7 @@ import { createIconResolver } from "../images/resolve.ts";
 import { profile } from "../../profile.ts";
 import { repoRoot } from "../../paths.ts";
 import { hashTextKey, readUIntVector, Tables } from "../decode/tables.ts";
-import { validateModel, expandTags, furnitureSize } from "./model.ts";
+import { validateModel, expandTags, furnitureSize, creatureSizeRange } from "./model.ts";
 import { exportImages, imageBatches } from "../images/export.ts";
 import { highestResolutionImages } from "../images/select.ts";
 import { safeOutput } from "../../delivery/output.ts";
@@ -43,6 +43,11 @@ test("current habitat localization keys and furniture sizes", () => {
   assert.equal(hashTextKey("TagDisplayName_Habitat_Flowers"), 2692302836);
   assert.equal(furnitureSize("尺寸_1_2a5"), "1.0x2.5");
   assert.equal(furnitureSize("大"), null);
+});
+test("creature ranges use raw endpoints and the temporary 厘 unit", () => {
+  assert.equal(creatureSizeRange(60, 120), "60–120厘");
+  assert.equal(creatureSizeRange(null, 120), null);
+  assert.throws(() => creatureSizeRange(120, 60), /minimum size/);
 });
 test("tag ancestry preserves class membership and detects cycles", () => {
   const nodes = {

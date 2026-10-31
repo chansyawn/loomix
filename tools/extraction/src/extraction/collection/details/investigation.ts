@@ -57,19 +57,22 @@ export function detailInvestigation(context: ContentContext) {
     if (group === "creatures.item") {
       const scale = tables.byId(132).get(id);
       const ui = context.ui.get(id);
-      records.push({
-        id,
-        field: "detail.creatureSize",
-        status: "unconfirmed",
-        reason: "native_scale_endpoints_do_not_prove_display_unit_conversion",
-        candidates: {
-          min: tables.uint(scale, 4),
-          max: tables.uint(scale, 5),
-          scale: tables.float(scale, 3),
-          extraScale: tables.float(scale, 6),
-        },
-        sources: scale ? [tableSource(tables, scale, [0, 3, 4, 5, 6])] : [],
-      });
+      const min = tables.uint(scale, 4);
+      const max = tables.uint(scale, 5);
+      if (min === null || max === null)
+        records.push({
+          id,
+          field: "detail.creatureSize",
+          status: "unconfirmed",
+          reason: "creature_size_endpoints_missing",
+          candidates: {
+            min,
+            max,
+            scale: tables.float(scale, 3),
+            extraScale: tables.float(scale, 6),
+          },
+          sources: scale ? [tableSource(tables, scale, [0, 3, 4, 5, 6])] : [],
+        });
       records.push({
         id,
         field: "detail.creatureGrades",

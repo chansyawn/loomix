@@ -2,7 +2,7 @@ import type { CatalogRecord } from "../../schema.ts";
 import type { CollectionDetail, CropSeedDetail } from "../../schema.ts";
 import { emptyCollectionDetail, emptyCropSeedDetail } from "../../schema.ts";
 import type { ContentContext } from "../../content/context.ts";
-import { plainText } from "../../content/model.ts";
+import { creatureSizeUnit, plainText } from "../../content/model.ts";
 import type { CollectionEvidenceBuilder, CollectionSource } from "../evidence.ts";
 import { localizedSources, tableSource } from "../evidence.ts";
 import type { TableRow } from "../../types.ts";
@@ -34,6 +34,25 @@ export function acquisition(context: ContentContext, id: number) {
     value: value?.every((entry) => entry !== null) ? value : null,
     sources,
     reason: "source_condition_configuration_unconfirmed",
+  };
+}
+
+export function creatureSize(
+  context: ContentContext,
+  id: number,
+): DetailResult<CollectionDetail["creatureSize"]> {
+  const { tables } = context;
+  const scale = context.vocabulary.scales.get(id);
+  const min = tables.uint(scale, 4);
+  const max = tables.uint(scale, 5);
+  const sources = scale ? [tableSource(tables, scale, [0, 3, 4, 5, 6])] : [];
+  if (min === null || max === null)
+    return { value: null, sources, reason: "creature_size_endpoints_missing" };
+  if (min > max) throw new Error(`Creature minimum size exceeds maximum ${id}`);
+  return {
+    value: { min, max, unit: creatureSizeUnit },
+    sources,
+    reason: "creature_size_endpoints_missing",
   };
 }
 
@@ -279,13 +298,19 @@ export function buildItemDetail(
       if (drops.value) recordDetail(proofs, "item", record.id, "detail.treeDrops", drops);
     }
     if (record.category === "creatures") {
-      const scale = context.vocabulary.scales.get(record.id);
+      const size = creatureSize(context, record.id);
       const ui = context.ui.get(record.id);
-      recordDetail(proofs, "item", record.id, "detail.creatureSize", {
-        value: null,
-        sources: scale ? [tableSource(context.tables, scale, [0, 3, 4, 5, 6])] : [],
-        reason: "native_scale_endpoints_do_not_prove_display_unit_conversion",
-      });
+      detail.creatureSize = size.value;
+      proofs.put(
+        "item",
+        record.id,
+        "detail.creatureSize",
+        size.value,
+        size.sources,
+        "132.0 = catalog item ID",
+        "Read 132.4/5 directly as range endpoints and assume 厘 per temporary project policy; preserve 132.3/6 without applying them",
+        size.reason,
+      );
       recordDetail(proofs, "item", record.id, "detail.creatureGrades", {
         value: null,
         sources: ui ? [tableSource(context.tables, ui, [0, 12, 14])] : [],

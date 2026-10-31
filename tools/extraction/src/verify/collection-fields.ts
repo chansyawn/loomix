@@ -1,13 +1,14 @@
 import assert from "node:assert/strict";
 import type { CollectionObservations, CraftingRecipe } from "../extraction/schema.ts";
 import type { Tables } from "../extraction/decode/tables.ts";
-import { plainText } from "../extraction/content/model.ts";
+import { creatureSizeRange, creatureSizeUnit, plainText } from "../extraction/content/model.ts";
 
 export function verifyCollectionFields(catalog: CollectionObservations, tables: Tables) {
   const main = tables.byId(318);
   const content = tables.byId(93);
   const recipeByDish = new Map(tables.rows(122).map((row) => [tables.uint(row, 4), row]));
   const difficulties = tables.byId(121);
+  const creatureScales = tables.byId(132);
   const records = new Map(catalog.items.map((item) => [item.id, item]));
   const seeds = tables
     .rows(144)
@@ -96,6 +97,8 @@ export function verifyCollectionFields(catalog: CollectionObservations, tables: 
       "acquisitionConditions",
       "dishEffects",
     ] as const) {
+      if (record.kind === "item" && record.category === "creatures" && field === "creatureSize")
+        continue;
       requiredFields.set(`item:${record.id}:detail.${field}`, detail[field]);
     }
     if (record.kind !== "item") continue;
@@ -118,10 +121,22 @@ export function verifyCollectionFields(catalog: CollectionObservations, tables: 
       expect("seedId", record.seedId, productSeeds.get(record.id) ?? null);
     if (record.category === "creatures") {
       const row = content.get(record.id);
+      const scale = creatureScales.get(record.id);
+      const min = tables.uint(scale, 4);
+      const max = tables.uint(scale, 5);
+      const expectedSize =
+        min !== null && max !== null && min <= max ? { min, max, unit: creatureSizeUnit } : null;
+      assert.deepEqual(detail.creatureSize, expectedSize, "Creature size follows table endpoints");
+      requiredFields.set(`item:${record.id}:detail.creatureSize`, expectedSize);
       expect(
         "attributes.scientificName",
         record.attributes.scientificName,
         plainText(tables.text(row, 16)),
+      );
+      assert.deepEqual(
+        record.attributes.sizeRange,
+        creatureSizeRange(min, max),
+        `${record.id}.attributes.sizeRange`,
       );
     }
     if (record.category === "dishes") {

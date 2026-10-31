@@ -84,16 +84,11 @@ export async function structure(options: WorkOptions): Promise<void> {
       "325.2 vector → 618.0 source keys",
       "325.35 / 262.9 / 519.9 series backreferences",
       "325.30–34 ecological display keys",
+      "132.0 item ID → 132.4/5 creature size endpoints; current unit assumption 厘, scale parameters unused",
       "144.10 crop product vector → 144.5 harvest count",
       "122.4 dish product → 122.2 difficulty / 122.16 cookware",
     ],
     unresolved: [
-      {
-        field: "sizeRange",
-        candidates: "132.4/5 integers, 132.3/6 float parameters; root93.8 size task text",
-        reason:
-          "Integer endpoints correlate with task thresholds, but exact displayed unit conversion has no independent schema/UI evidence",
-      },
       {
         field: "maturityPeriod",
         candidates: "144.3 daily cycle enum, 144.4 grow-stage IDs; flower/tree configurations",

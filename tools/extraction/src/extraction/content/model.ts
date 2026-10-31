@@ -3,6 +3,8 @@ import type { TagNode } from "../types.ts";
 import assert from "node:assert/strict";
 import { recordTypes, recordType, parseCatalog } from "../schema.ts";
 
+export const creatureSizeUnit = "厘";
+
 export function plainText(value: unknown) {
   return typeof value === "string"
     ? value
@@ -24,6 +26,11 @@ export function furnitureSize(value: string | null | undefined) {
   return match
     ? `${Number(match[1].replace("a", ".")).toFixed(1)}x${Number(match[2].replace("a", ".")).toFixed(1)}`
     : null;
+}
+export function creatureSizeRange(min: number | null, max: number | null) {
+  if (min === null || max === null) return null;
+  if (min > max) throw new Error("Creature minimum size must not exceed maximum");
+  return `${min}–${max}${creatureSizeUnit}`;
 }
 export function expandTags(names: string[], nodes: Record<number, TagNode>) {
   const byName = new Map(Object.values(nodes).map((n) => [n.TagName, n]));
