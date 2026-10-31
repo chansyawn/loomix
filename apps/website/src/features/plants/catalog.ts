@@ -1,4 +1,5 @@
 import type { Catalog } from "@loomix/schema/catalog";
+import { acquisitionLabels } from "../collection/acquisition";
 import { createImageResolver } from "@loomix/schema/assets";
 import type { Assets } from "@loomix/schema/assets";
 import type { IngredientItem } from "../collection-view";
@@ -54,7 +55,6 @@ export function buildPlantsData(
         description: seed.description,
         quality: seed.quality,
         trade: seed.trade,
-        acquisitionConditions: seed.acquisition,
         growth,
         stageIds: growth?.stageIds ?? null,
         maturityDays: growth?.maturityDays ?? null,
@@ -68,13 +68,8 @@ export function buildPlantsData(
   const listed = new Set(
     catalog.entries.filter((entry) => entry.entity.kind === "item").map((entry) => entry.entity.id),
   );
-  const sourceLabels = (id: number): string[] => {
-    const record = records.get(id);
-    return unique([
-      ...(record?.sources ?? []),
-      ...(record?.acquisition?.map((source) => source.label) ?? []),
-    ]);
-  };
+  const itemAcquisitionLabels = (id: number): string[] =>
+    acquisitionLabels(records.get(id)?.acquisition ?? null);
   const summarize = (items: Omit<PlantItem, "summary">[]): PlantSummary => {
     const ids = new Set(items.map((item) => item.id));
     const relatedSeeds = seeds.filter((seed) => seed.productIds.some((id) => ids.has(id)));
@@ -97,7 +92,7 @@ export function buildPlantsData(
     return {
       categories: unique(items.flatMap((item) => (item.category ? [item.category] : []))),
       galaxies: unique(items.flatMap((item) => records.get(item.id)?.origins ?? [])),
-      sources: unique(items.flatMap((item) => sourceLabels(item.id))),
+      acquisition: unique(items.flatMap((item) => itemAcquisitionLabels(item.id))),
       flowerColors: unique(items.flatMap((item) => item.flowerColors ?? [])),
       harvestCounts: unique(
         items.flatMap((item) => (item.harvestCount === null ? [] : [item.harvestCount])),
@@ -126,7 +121,7 @@ export function buildPlantsData(
         originGalaxy: record.origins?.join("，") || null,
         maturityPeriod: record.maturityPeriod,
         harvestCount: record.harvestCount,
-        sources: sourceLabels(record.id).join("，") || null,
+        acquisition: itemAcquisitionLabels(record.id).join("，") || null,
         seedId: seed?.id ?? null,
         flowerColors: record.flowerColors,
         growth: record.growthId === null ? null : (growths.get(record.growthId) ?? null),

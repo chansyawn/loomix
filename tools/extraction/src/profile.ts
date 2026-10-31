@@ -87,7 +87,6 @@ export const profile = {
     friendshipRules: 59,
     eventTags: 12,
     furnishingThemes: 11,
-    rewards: 256,
     housePaths: 21,
     friendStarPaths: 22,
     outfitPaths: 8,

@@ -32,7 +32,7 @@ export function ClothingDetailPage({ detail }: { detail: ClothingDetail }) {
           ["风格", detail.record.styles],
           ["颜色", detail.record.colors],
           ["材质", detail.record.materials],
-          ["获取途径", detail.record.sources],
+          ["获取途径", detail.record.acquisition],
         ]
       : detail.kind === "appearance"
         ? [["分类", detail.record.category]]

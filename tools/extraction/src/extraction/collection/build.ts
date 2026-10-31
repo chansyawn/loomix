@@ -8,7 +8,7 @@ import { readJson, writeJson } from "../../workflow/json.ts";
 import { parseRawContent, RawImageSchema } from "../schemas/raw-content.ts";
 import { readCraftingRecipes } from "./crafting.ts";
 import { CollectionEvidenceBuilder, localizedSources, tableSource } from "./evidence.ts";
-import { readCreatureFields, readDishFields, readSources } from "./fields.ts";
+import { readCreatureFields, readDishFields } from "./fields.ts";
 import { buildItemDetail, buildSeedDetail } from "./details/client.ts";
 import { detailInvestigation } from "./details/investigation.ts";
 
@@ -117,16 +117,15 @@ export function extendCollection(base: Catalog, context: ContentContext) {
       return { ...record, craftingRecipes };
     }
     if (record.category === "clothing") return record;
-    const sources = readSources(context, record.id, proofs);
     if (record.category === "creatures") {
       const { scientificName } = readCreatureFields(context, record.id, proofs);
-      return { ...record, attributes: { ...record.attributes, sources, scientificName } };
+      return { ...record, attributes: { ...record.attributes, scientificName } };
     }
     if (record.category === "dishes") {
       const { tastes, difficultyRequirement } = readDishFields(context, record.id, proofs);
       return {
         ...record,
-        attributes: { ...record.attributes, sources, tastes },
+        attributes: { ...record.attributes, tastes },
         difficultyRequirement,
       };
     }
@@ -143,9 +142,9 @@ export function extendCollection(base: Catalog, context: ContentContext) {
         "Preserve 144.0 seed ID; no new catalog item",
         "not_in_crop_product_vector",
       );
-      return { ...record, attributes: { ...record.attributes, sources }, seedId };
+      return { ...record, seedId };
     }
-    return { ...record, attributes: { ...record.attributes, sources } };
+    return record;
   });
   const catalog: CollectionObservations = RawCollectionObservationsSchema.parse({
     ...base,

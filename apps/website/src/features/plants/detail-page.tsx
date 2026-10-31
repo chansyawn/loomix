@@ -59,7 +59,7 @@ function PlantOrSeriesDetailPage({ detail }: { detail: PlantOrSeriesDetail }) {
             ? [["收获茬数", `${summary.harvestCounts.join(" / ")} 茬`] as [string, string]]
             : []),
         ];
-  if (summary.sources.length) fields.push(["获取来源", summary.sources.join("、")]);
+  if (summary.acquisition.length) fields.push(["获取来源", summary.acquisition.join("、")]);
   if (summary.flowerColors.length) fields.push(["花色", summary.flowerColors.join("、")]);
 
   return (

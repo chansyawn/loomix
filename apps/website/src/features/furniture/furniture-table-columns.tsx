@@ -78,8 +78,8 @@ export function furnitureTableColumns(
     textColumn("materials", "材质", 144, (record) =>
       "category" in record ? record.materials : null,
     ),
-    textColumn("sources", "获取途径", 240, (record) =>
-      "category" in record ? record.sources : null,
+    textColumn("acquisition", "获取途径", 240, (record) =>
+      "category" in record ? record.acquisition : null,
     ),
     {
       id: "sets",

@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { PlantSeed } from "./model";
 import { usePlantsOrigin } from "./detail-navigation";
 import { RecordImage } from "../collection/record-image";
-import { splitPlantValues } from "./catalog";
+import { acquisitionLabels } from "../collection/acquisition";
 import type { IngredientItem } from "../collection-view";
 import { CollectionItemLink } from "../collection/item-link";
 import { QualityBadge } from "../collection/quality";
@@ -46,13 +46,7 @@ export function PlantSeedInfo({
         种子
       </h2>
       {seeds.map((seed) => {
-        const sources = [
-          ...new Set(
-            seed.detail.acquisitionConditions
-              ?.map((source) => source.label)
-              .flatMap(splitPlantValues) ?? [],
-          ),
-        ];
+        const acquisition = acquisitionLabels(seed.acquisition);
         return (
           <article
             key={seed.id}
@@ -80,7 +74,9 @@ export function PlantSeedInfo({
                     {seed.detail.description}
                   </p>
                 )}
-                {sources.length > 0 && <p className="text-sm/6">获取来源：{sources.join("、")}</p>}
+                {acquisition.length > 0 && (
+                  <p className="text-sm/6">获取来源：{acquisition.join("、")}</p>
+                )}
                 {seed.detail.harvestCount !== null && (
                   <p className="text-sm">收获茬数：{seed.detail.harvestCount} 茬</p>
                 )}

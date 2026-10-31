@@ -89,19 +89,21 @@ const data = plantsDataFixture({ items, series });
 const seeds = [
   seed(
     10,
-    { name: "A番茄种子", productIds: [1] },
     {
-      harvestCount: 3,
-      acquisitionConditions: [{ sourceId: 1, label: "格连商店购买", condition: null }],
+      name: "A番茄种子",
+      productIds: [1],
+      acquisition: [{ sourceId: 1, label: "格连商店购买", condition: null }],
     },
+    { harvestCount: 3 },
   ),
   seed(
     11,
-    { name: "B甜瓜种子", productIds: [2] },
     {
-      harvestCount: 1,
-      acquisitionConditions: [{ sourceId: 2, label: "星屿探索", condition: "完成探索" }],
+      name: "B甜瓜种子",
+      productIds: [2],
+      acquisition: [{ sourceId: 2, label: "星屿探索", condition: "完成探索" }],
     },
+    { harvestCount: 1 },
   ),
   seed(12, { name: "C未知种子", productIds: [999] }),
 ];
@@ -160,8 +162,12 @@ describe("plant catalog", () => {
     expect(ids(items)).toEqual([1, 2, 3, 4]);
   });
 
-  it("filters confirmed sources and flower colors independently in both views", () => {
-    const flower = item(5, { name: "白百合", sources: "采集，花卉杂交", flowerColors: ["白色"] });
+  it("filters confirmed acquisition and flower colors independently in both views", () => {
+    const flower = item(5, {
+      name: "白百合",
+      acquisition: "采集，花卉杂交",
+      flowerColors: ["白色"],
+    });
     const flowerSeries = plantSeriesFixture({
       id: 105,
       name: "百合",
@@ -172,15 +178,15 @@ describe("plant catalog", () => {
       items: [...items, flower],
       series: [...series, flowerSeries],
     });
-    const query = { ...emptyQuery(), sources: ["花卉杂交"], flowerColors: ["白色"] };
+    const query = { ...emptyQuery(), acquisition: ["花卉杂交"], flowerColors: ["白色"] };
     expect(ids(queryPlants(entries, "items", query).rows)).toEqual([5]);
     expect(ids(queryPlants(entries, "series", query).rows)).toEqual([105]);
     expect(queryPlants(entries, "items", { ...query, flowerColors: ["红色"] }).total).toBe(0);
     expect(
-      ids(queryPlants(entries, "items", { ...emptyQuery(), sources: [missing] }).rows),
+      ids(queryPlants(entries, "items", { ...emptyQuery(), acquisition: [missing] }).rows),
     ).toEqual([1, 2, 3, 4]);
     const groups = filterGroups(entries);
-    expect(groups.find((group) => group.key === "sources")?.options).toContainEqual({
+    expect(groups.find((group) => group.key === "acquisition")?.options).toContainEqual({
       value: "花卉杂交",
       label: "花卉杂交",
     });
@@ -204,8 +210,10 @@ describe("seed catalog", () => {
   });
 
   it("combines source, harvest count and series filters", () => {
-    expect(ids(querySeeds({ sources: ["格连商店购买"], harvestCounts: ["3"] }).rows)).toEqual([10]);
-    expect(ids(querySeeds({ sources: ["星屿探索（完成探索）"] }).rows)).toEqual([11]);
+    expect(ids(querySeeds({ acquisition: ["格连商店购买"], harvestCounts: ["3"] }).rows)).toEqual([
+      10,
+    ]);
+    expect(ids(querySeeds({ acquisition: ["星屿探索（完成探索）"] }).rows)).toEqual([11]);
     expect(ids(querySeeds({ series: ["100", "101"] }).rows)).toEqual([10, 11]);
     expect(querySeeds({ harvestCounts: ["__missing"] }).total).toBe(1);
   });
@@ -220,8 +228,8 @@ describe("seed catalog", () => {
       ids(queryPlants(complete, "seeds", { ...emptyQuery(), series: ["__ungrouped"] }).rows),
     ).toEqual([12]);
     const groups = filterGroups(complete, "seeds");
-    expect(groups.map((group) => group.key)).toEqual(["sources", "harvestCounts", "series"]);
-    expect(groups.find((group) => group.key === "sources")?.options).toContainEqual({
+    expect(groups.map((group) => group.key)).toEqual(["acquisition", "harvestCounts", "series"]);
+    expect(groups.find((group) => group.key === "acquisition")?.options).toContainEqual({
       value: "星屿探索（完成探索）",
       label: "星屿探索（完成探索）",
     });

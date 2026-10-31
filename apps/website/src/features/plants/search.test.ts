@@ -35,13 +35,13 @@ describe("plant URL state", () => {
         series: {
           qualities: ["4", "invalid"],
           galaxies: ["禾夏"],
-          sources: ["采集", "采集", false],
+          acquisition: ["采集", "采集", false],
           flowerColors: ["白色", "白色", 3],
         },
         seeds: {
           sort: "quality-desc",
           categories: ["作物"],
-          sources: ["格连商店购买"],
+          acquisition: ["格连商店购买"],
           series: ["95000"],
           harvestCounts: ["3", "-1", "__missing"],
         },
@@ -55,10 +55,10 @@ describe("plant URL state", () => {
         harvestCounts: ["2", "__missing"],
         qualities: ["0", "__missing"],
       },
-      series: { ...emptyQuery(), qualities: ["4"], sources: ["采集"], flowerColors: ["白色"] },
+      series: { ...emptyQuery(), qualities: ["4"], acquisition: ["采集"], flowerColors: ["白色"] },
       seeds: {
         ...emptyQuery(),
-        sources: ["格连商店购买"],
+        acquisition: ["格连商店购买"],
         series: ["95000"],
         harvestCounts: ["3", "__missing"],
       },
@@ -70,13 +70,13 @@ describe("plant URL state", () => {
       view: "series",
       items: { q: "花", galaxies: ["禾夏"] },
       series: { q: "春", qualities: ["1"], categories: ["作物"] },
-      seeds: { q: "种子", sources: ["星屿探索"], qualities: ["2"] },
+      seeds: { q: "种子", acquisition: ["星屿探索"], qualities: ["2"] },
     });
     expect(search.series).toEqual({ ...emptyQuery(), q: "春", qualities: ["1"] });
     expect(search.seeds).toEqual({
       ...emptyQuery(),
       q: "种子",
-      sources: ["星屿探索"],
+      acquisition: ["星屿探索"],
     });
     const updated = updateViewQuery(search, { q: "星屿" });
     expect(updated.series.q).toBe("星屿");

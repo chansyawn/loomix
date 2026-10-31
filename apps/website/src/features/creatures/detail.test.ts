@@ -21,7 +21,7 @@ const first: CreatureItem = {
   description: null,
   category: null,
   scientificName: null,
-  sources: null,
+  acquisition: null,
   region: null,
   habitat: null,
   activeSeasons: null,

@@ -1,3 +1,4 @@
+import { acquisitionLabels } from "../collection/acquisition";
 import type { PlantItem, PlantSeries } from "../collection-view.ts";
 import type { PlantsData } from "./data";
 import type { PlantSeed } from "./model";
@@ -26,13 +27,7 @@ export function membershipIndex(series: PlantSeries[]): Map<number, PlantSeries[
 }
 
 export function seedSourceLabels(seed: PlantSeed): string[] {
-  return [
-    ...new Set(
-      seed.detail.acquisitionConditions?.map((source) =>
-        source.condition ? `${source.label}（${source.condition}）` : source.label,
-      ) ?? [],
-    ),
-  ];
+  return acquisitionLabels(seed.acquisition);
 }
 
 export function seedSeries(seed: PlantSeed, groups: PlantSeries[]): PlantSeries[] {
@@ -59,7 +54,7 @@ export function filterGroups(data: PlantsData, view: View = "items"): FilterGrou
     const complete = data.series.every((group) => group.plantIds !== null);
     return [
       {
-        key: "sources",
+        key: "acquisition",
         label: "获取来源",
         options: options(data.seeds.flatMap(seedSourceLabels)),
         fullWidth: true,
@@ -86,9 +81,13 @@ export function filterGroups(data: PlantsData, view: View = "items"): FilterGrou
   }
   const groups: FilterGroup[] = [
     {
-      key: "sources",
+      key: "acquisition",
       label: "获取来源",
-      options: options(data.items.flatMap((row) => splitValues(row.sources))),
+      options: options(
+        data.items.flatMap((row) =>
+          row.summary.acquisition.length ? row.summary.acquisition : [null],
+        ),
+      ),
       fullWidth: true,
     },
     {
@@ -139,7 +138,7 @@ export function filterGroups(data: PlantsData, view: View = "items"): FilterGrou
   ];
   return view === "items"
     ? groups
-    : groups.filter((group) => ["qualities", "sources", "flowerColors"].includes(group.key));
+    : groups.filter((group) => ["qualities", "acquisition", "flowerColors"].includes(group.key));
 }
 
 function matches(selected: string[], values: string[]): boolean {
@@ -153,11 +152,11 @@ export function queryPlants(data: PlantsData, view: View, query: ViewQuery) {
     const seriesComplete = data.series.every((group) => group.plantIds !== null);
     const term = query.q.trim().toLocaleLowerCase("zh-CN");
     const filtered = data.seeds.filter((seed) => {
-      const sources = seedSourceLabels(seed);
+      const acquisition = seedSourceLabels(seed);
       const membershipsForSeed = series.get(seed.id) ?? [];
       return (
         seed.name.toLocaleLowerCase("zh-CN").includes(term) &&
-        matches(query.sources, sources.length > 0 ? sources : [missing]) &&
+        matches(query.acquisition, acquisition.length > 0 ? acquisition : [missing]) &&
         matches(query.harvestCounts, [
           seed.detail.harvestCount === null ? missing : String(seed.detail.harvestCount),
         ]) &&
@@ -185,7 +184,10 @@ export function queryPlants(data: PlantsData, view: View, query: ViewQuery) {
     if (
       !row.name.toLocaleLowerCase("zh-CN").includes(term) ||
       !matches(query.qualities, [row.quality === null ? missing : String(row.quality)]) ||
-      !matches(query.sources, row.summary.sources.length ? row.summary.sources : [missing]) ||
+      !matches(
+        query.acquisition,
+        row.summary.acquisition.length ? row.summary.acquisition : [missing],
+      ) ||
       !matches(
         query.flowerColors,
         row.summary.flowerColors.length ? row.summary.flowerColors : [missing],

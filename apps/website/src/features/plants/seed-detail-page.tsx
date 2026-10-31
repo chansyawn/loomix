@@ -12,9 +12,9 @@ import { seedSourceLabels } from "./query";
 
 export function SeedDetailPage({ detail }: { detail: SeedDetail }) {
   const { record } = detail;
-  const sources = seedSourceLabels(record);
+  const acquisition = seedSourceLabels(record);
   const fields: [string, string | null][] = [
-    ["获取来源", sources.join("、") || null],
+    ["获取来源", acquisition.join("、") || null],
     ["收获茬数", record.detail.harvestCount === null ? null : `${record.detail.harvestCount} 茬`],
     ["成熟天数", record.detail.maturityDays === null ? null : `${record.detail.maturityDays} 天`],
     ["可收获植物", `${record.productIds.length} 种`],

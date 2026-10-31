@@ -134,15 +134,15 @@ function seedTableColumns(
         ) : null,
     },
     {
-      id: "sources",
+      id: "acquisition",
       header: "获取来源",
       width: 224,
       cell: (record) => {
         if (!isSeedRow(record)) return null;
-        const sources = seedSourceLabels(record);
-        return sources.length > 0 ? (
-          <span className="block truncate" title={sources.join("、")}>
-            {sources.join("、")}
+        const acquisition = seedSourceLabels(record);
+        return acquisition.length > 0 ? (
+          <span className="block truncate" title={acquisition.join("、")}>
+            {acquisition.join("、")}
           </span>
         ) : (
           <span className="text-muted-foreground">未提供</span>
@@ -174,8 +174,8 @@ export function plantsTableColumns(
   const common = recordColumns<PlantsRow>((record) => <NameLink record={record} view={view} />);
   const memberships = membershipIndex(groups);
   const facts: CollectionColumn<PlantsRow>[] = [
-    textColumn("sources", "获取来源", 224, (record) =>
-      isSeedRow(record) ? null : record.summary.sources.join("、") || null,
+    textColumn("acquisition", "获取来源", 224, (record) =>
+      isSeedRow(record) ? null : record.summary.acquisition.join("、") || null,
     ),
     textColumn("flowerColors", "花色", 168, (record) =>
       isSeedRow(record) ? null : record.summary.flowerColors.join("、") || null,

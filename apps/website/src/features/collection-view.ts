@@ -9,6 +9,7 @@ import type {
 } from "@loomix/schema/catalog";
 import type { Assets } from "@loomix/schema/assets";
 import { createImageResolver } from "@loomix/schema/assets";
+import { acquisitionText } from "./collection/acquisition";
 import { buildPlantsData } from "./plants/catalog";
 import type { PlantsData } from "./plants/model";
 export type { PlantItem, PlantSeries } from "./plants/model";
@@ -26,12 +27,12 @@ export type FurnitureItem = CategorizedRecord & {
   size: string | null;
   colors: string | null;
   materials: string | null;
-  sources: string | null;
+  acquisition: string | null;
   craftingRecipes: CraftingRecipe[] | null;
 };
 export type CreatureItem = CategorizedRecord & {
   scientificName: string | null;
-  sources: string | null;
+  acquisition: string | null;
   region: string | null;
   habitat: string | null;
   activeSeasons: string | null;
@@ -55,7 +56,7 @@ export type ClothingItem = CategorizedRecord & {
   colors: string | null;
   materials: string | null;
   styles: string | null;
-  sources: string | null;
+  acquisition: string | null;
 };
 export type ClothingAppearance = CategorizedRecord;
 export type MiscellaneousItem = CollectionRecord & {
@@ -97,15 +98,6 @@ export interface CollectionView {
   miscellaneous: MiscellaneousItem[];
 }
 export const displayValues = (values: string[] | null): string | null => values?.join("，") || null;
-function dishAcquisition(record: Extract<Item, { type: "dish" }>): string | null {
-  const labels = [
-    ...(record.sources ?? []),
-    ...(record.acquisition?.map((source) =>
-      source.condition ? `${source.label}（${source.condition}）` : source.label,
-    ) ?? []),
-  ];
-  return [...new Set(labels)].join("，") || null;
-}
 export function itemCategory(item: Item): CatalogCategory {
   switch (item.type) {
     case "creature":
@@ -184,7 +176,7 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
           size: record.size,
           colors: displayValues(record.colors),
           materials: displayValues(record.materials),
-          sources: displayValues(record.sources),
+          acquisition: acquisitionText(record.acquisition),
           craftingRecipes: record.craftingRecipes,
         });
         break;
@@ -195,7 +187,7 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
           colors: displayValues(record.colors),
           materials: displayValues(record.materials),
           styles: displayValues(record.styles),
-          sources: displayValues(record.sources),
+          acquisition: acquisitionText(record.acquisition),
         });
         break;
       case "creature":
@@ -203,7 +195,7 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
           ...common,
           category,
           scientificName: record.scientificName,
-          sources: displayValues(record.sources),
+          acquisition: acquisitionText(record.acquisition),
           region: displayValues(record.region),
           habitat: displayValues(record.habitat),
           activeSeasons: displayValues(record.activeSeasons),
@@ -222,14 +214,14 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
           effects: record.effects,
           tastes: record.tastes,
           difficultyRequirement: record.difficultyRequirement,
-          acquisition: dishAcquisition(record),
+          acquisition: acquisitionText(record.acquisition),
           recipe: record.recipe,
         });
         break;
       case "material":
         view.miscellaneous.push({
           ...common,
-          acquisition: displayValues(record.acquisition?.map((source) => source.label) ?? null),
+          acquisition: acquisitionText(record.acquisition),
         });
         break;
       case "plant":

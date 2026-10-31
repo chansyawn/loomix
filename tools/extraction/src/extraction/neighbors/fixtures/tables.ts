@@ -2,6 +2,7 @@ import { neighborAllowlist } from "../allowlist.ts";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import type { Catalog } from "../../schema.ts";
 import { emptyCatalog } from "../../schema.ts";
 import { profile } from "../../../profile.ts";
 import { decodeBytes } from "../../decode/obb.ts";
@@ -217,7 +218,7 @@ function encodedTables(rows: FixtureRows): {
 
 export function createFixture(rows = fixtureRows()): {
   directory: string;
-  input: NeighborExtractionInput;
+  input: NeighborExtractionInput & { content: Catalog };
   cleanup: () => void;
 } {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-neighbors-"));
@@ -244,7 +245,7 @@ export function createFixture(rows = fixtureRows()): {
     category: "furniture",
     kind: "item",
     subcategory: null,
-    attributes: { type: null, size: null, colors: null, materials: null, sources: "完成友邻事件" },
+    attributes: { type: null, size: null, colors: null, materials: null },
   });
   return {
     directory,

@@ -24,7 +24,7 @@ export function verifyNeighbors(value: unknown, input: NeighborExtractionInput):
     roster,
     "Independently reconstructed neighbor roster",
   );
-  // Re-read the frozen tables and catalog; neither the public JSON nor its audit is a source of truth.
+  // Re-read the frozen tables; neither the public JSON nor its audit is a source of truth.
   assert.deepEqual(
     database,
     extractNeighbors(input),
@@ -47,7 +47,6 @@ export function verifyNeighbors(value: unknown, input: NeighborExtractionInput):
       friendshipRules: database.friendshipRules.length,
       eventTags: database.eventTags.length,
       furnishingThemes: database.furnishingThemes.length,
-      rewards: database.rewards.length,
       housePaths: database.assets.filter((a) => /NPCBldg/i.test(a.path)).length,
       friendStarPaths: database.assets.filter((a) => a.kind === "friendStar").length,
       outfitPaths: database.assets.filter((a) => a.kind === "outfit").length,
@@ -59,13 +58,6 @@ export function verifyNeighbors(value: unknown, input: NeighborExtractionInput):
       profile.expectedNeighbors,
       "Neighbor snapshot counts changed; re-confirm the layout and profile",
     );
-  }
-  for (const reward of database.rewards) {
-    const item = input.content.items.find((item) => item.id === reward.itemId);
-    assert.ok(item && item.kind === "item", `Unknown neighbor reward ${reward.itemId}`);
-    assert.equal(item.name, reward.itemNameZh, "Reward item name");
-    assert.equal(item.category, reward.category, "Reward item category");
-    assert.equal(item.kind, reward.kind, "Reward item kind");
   }
   return database;
 }

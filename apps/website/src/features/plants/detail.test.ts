@@ -45,11 +45,11 @@ const seedRecord = plantSeedFixture({
   name: "星露种子",
   productIds: [2, 1],
 });
+seedRecord.acquisition = [{ sourceId: 1, label: "星屿探索", condition: null }];
 seedRecord.detail = {
   ...seedRecord.detail,
   description: "能种出星露系列植物。",
   harvestCount: 3,
-  acquisitionConditions: [{ sourceId: 1, label: "星屿探索", condition: null }],
 };
 const data = plantsDataFixture({
   items: [first, second],

@@ -59,16 +59,8 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
       issue(["neighbors", "travelReactions", index], "Invalid reaction key");
   });
   const items = new Map(catalog.items.map((item) => [item.id, item]));
-  unique(neighbors.rewards, (reward) => reward.itemId, ["neighbors", "rewards"]);
-  for (const reward of neighbors.rewards)
-    if (!items.has(reward.itemId))
-      issue(["neighbors", "rewards"], `Unknown reward ${reward.itemId}`);
-  for (const name of ["furnishingThemes", "rewards"] as const)
-    for (const value of neighbors[name])
-      checkNeighbors("neighborIds" in value ? value.neighborIds : value.relatedNeighborIds, [
-        "neighbors",
-        name,
-      ]);
+  for (const theme of neighbors.furnishingThemes)
+    checkNeighbors(theme.neighborIds, ["neighbors", "furnishingThemes"]);
   unique(neighbors.resources, (resource) => resource.path, ["neighbors", "resources"]);
   for (const resource of neighbors.resources)
     checkNeighbors(resource.relatedNeighborIds, ["neighbors", "resources"]);

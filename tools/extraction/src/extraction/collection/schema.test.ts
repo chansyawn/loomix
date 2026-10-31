@@ -31,7 +31,7 @@ test("Collection observations keeps client-detail records separate from the exis
     schemaVersion: 1,
     items: baseInput.items.map((record) => ({
       ...record,
-      attributes: { originGalaxy: null, maturityPeriod: null, harvestCount: null, sources: null },
+      attributes: { originGalaxy: null, maturityPeriod: null, harvestCount: null },
       seedId: 20,
     })),
     cropSeeds: [
@@ -92,7 +92,7 @@ test("Collection observations rejects duplicate detail identities, missing detai
         category: "plants",
         kind: "item",
         subcategory: "花",
-        attributes: { originGalaxy: null, maturityPeriod: null, harvestCount: null, sources: null },
+        attributes: { originGalaxy: null, maturityPeriod: null, harvestCount: null },
         seedId: null,
       },
     ],

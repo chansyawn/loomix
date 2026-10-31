@@ -1,12 +1,10 @@
 import assert from "node:assert/strict";
 import type { CollectionObservations, CraftingRecipe } from "../extraction/schema.ts";
 import type { Tables } from "../extraction/decode/tables.ts";
-import type { TableRow } from "../extraction/types.ts";
 import { plainText } from "../extraction/content/model.ts";
 
 export function verifyCollectionFields(catalog: CollectionObservations, tables: Tables) {
   const main = tables.byId(318);
-  const sources = tables.byId(618);
   const content = tables.byId(93);
   const recipeByDish = new Map(tables.rows(122).map((row) => [tables.uint(row, 4), row]));
   const difficulties = tables.byId(121);
@@ -72,6 +70,18 @@ export function verifyCollectionFields(catalog: CollectionObservations, tables: 
     }
   }
   const requiredFields = new Map<string, unknown>();
+  const acquisition = (id: number) => {
+    const rows = tables.rows(325).filter((row) => tables.id(row) === id);
+    const codes = tables.vector(rows[0], 2);
+    for (const row of rows)
+      assert.deepEqual(tables.vector(row, 2), codes, "Consistent acquisition source vectors");
+    if (!codes?.length) return null;
+    const entries = codes.map((sourceId) => {
+      const label = plainText(tables.text(tables.byId(618).get(sourceId), 1));
+      return sourceId > 0 && label ? { sourceId, label, condition: null } : null;
+    });
+    return entries.every((entry) => entry !== null) ? entries : null;
+  };
   for (const record of catalog.items) {
     const detail = catalog.details.find((entry) => entry.id === record.id);
     assert.ok(detail, `Missing details for ${record.id}`);
@@ -89,6 +99,11 @@ export function verifyCollectionFields(catalog: CollectionObservations, tables: 
       requiredFields.set(`item:${record.id}:detail.${field}`, detail[field]);
     }
     if (record.kind !== "item") continue;
+    assert.deepEqual(
+      detail.acquisitionConditions,
+      acquisition(record.id),
+      "Independent item acquisition",
+    );
     const expect = (field: string, actual: unknown, expected: unknown) => {
       assert.deepEqual(actual, expected, `${record.id}.${field}`);
       requiredFields.set(`item:${record.id}:${field}`, actual);
@@ -99,17 +114,6 @@ export function verifyCollectionFields(catalog: CollectionObservations, tables: 
       continue;
     }
     if (record.category === "clothing") continue;
-    const uiRows = tables.rows(325).filter((row) => tables.uint(row, 0) === record.id);
-    const labelsFor = (row: TableRow) => {
-      const labels = tables
-        .vector(row, 2)
-        ?.map((code) => plainText(tables.text(sources.get(code), 1)));
-      return labels?.length && labels.every(Boolean) ? [...new Set(labels)].join("，") : null;
-    };
-    const sourceText = uiRows.length ? labelsFor(uiRows[0]!) : null;
-    for (const row of uiRows)
-      assert.equal(labelsFor(row), sourceText, "Duplicate source semantics");
-    expect("attributes.sources", record.attributes.sources, sourceText);
     if (record.category === "plants")
       expect("seedId", record.seedId, productSeeds.get(record.id) ?? null);
     if (record.category === "creatures") {
@@ -157,6 +161,11 @@ export function verifyCollectionFields(catalog: CollectionObservations, tables: 
     }
   }
   for (const seed of catalog.cropSeeds) {
+    assert.deepEqual(
+      seed.detail.acquisitionConditions,
+      acquisition(seed.id),
+      "Independent seed acquisition",
+    );
     requiredFields.set(`seed:${seed.id}:name`, seed.name);
     requiredFields.set(`seed:${seed.id}:productIds`, seed.productIds);
     for (const field of [

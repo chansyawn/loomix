@@ -24,7 +24,7 @@ const first: FurnitureItem = {
   size: null,
   colors: null,
   materials: null,
-  sources: null,
+  acquisition: null,
   craftingRecipes: null,
 };
 const second: FurnitureItem = { ...first, id: 2, name: "木桌" };

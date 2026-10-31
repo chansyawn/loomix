@@ -29,7 +29,7 @@ function fixture() {
       id: 1101,
       category: "furniture",
       kind: "item",
-      attributes: { type: null, size: null, colors: null, materials: null, sources: null },
+      attributes: { type: null, size: null, colors: null, materials: null },
     }),
   );
   const cells = new Map<number, number>([

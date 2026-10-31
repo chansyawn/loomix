@@ -114,7 +114,6 @@ export function readRoster(
       storyKeys: [],
       furnishingThemeIds: [],
       furnishingThemeKeys: [],
-      rewardItemIds: [],
       assetPaths: [],
     });
     records.push(evidence("neighbors", String(id), row, [0, 1, 2, 3, 4, 5]));

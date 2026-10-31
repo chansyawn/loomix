@@ -93,12 +93,6 @@ export function buildCatalog(
     }
     const detail = observations.details.find((entry) => entry.id === record.id);
     if (!detail) throw new Error(`Missing observed detail ${record.id}`);
-    const sourceIds = tables.vector(context.ui.get(record.id), 2);
-    const labels = sourceIds?.map((id) => plainText(tables.text(vocabulary.sources.get(id), 1)));
-    const sources =
-      labels?.length && labels.every((value): value is string => value !== null)
-        ? [...new Set(labels)]
-        : null;
     const common = {
       ...base,
       subcategory: record.subcategory,
@@ -114,7 +108,6 @@ export function buildCatalog(
           size: record.attributes.size,
           colors: tags(record.id, 9),
           materials: tags(record.id, 11),
-          sources,
           craftingRecipes: record.craftingRecipes,
         });
         break;
@@ -125,7 +118,6 @@ export function buildCatalog(
           colors: tags(record.id, 9),
           materials: tags(record.id, 11),
           styles: tags(record.id, 12),
-          sources,
         });
         break;
       case "creatures":
@@ -139,7 +131,6 @@ export function buildCatalog(
           activeWeather: display(record.id, 33),
           sizeRange: record.attributes.sizeRange,
           scientificName: record.attributes.scientificName,
-          sources,
           size: detail.creatureSize,
           grades: detail.creatureGrades,
         });
@@ -152,7 +143,6 @@ export function buildCatalog(
           origins: tags(record.id, 8),
           maturityPeriod: record.attributes.maturityPeriod,
           harvestCount: record.attributes.harvestCount,
-          sources,
           flowerColors: detail.flowerColors,
           growthId: addGrowth(crop ? tables.id(crop) : record.id, detail.growth),
           drops: detail.treeDrops,
@@ -169,14 +159,13 @@ export function buildCatalog(
           cookware: record.attributes.cookware === null ? null : [record.attributes.cookware],
           effectsText: record.attributes.effects,
           tastes: record.attributes.tastes,
-          sources,
           recipe: record.recipe,
           difficultyRequirement: record.difficultyRequirement,
           effects: detail.dishEffects,
         });
         break;
       case "miscellaneous":
-        catalog.items.push({ ...common, type: "material", sources });
+        catalog.items.push({ ...common, type: "material" });
         break;
     }
   }

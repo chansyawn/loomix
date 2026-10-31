@@ -84,7 +84,6 @@ export const ItemSchema = z.discriminatedUnion("type", [
     size: text,
     colors: texts,
     materials: texts,
-    sources: texts,
     craftingRecipes: CraftingRecipeSchema.array().nullable(),
   }),
   item.extend({
@@ -92,7 +91,6 @@ export const ItemSchema = z.discriminatedUnion("type", [
     colors: texts,
     materials: texts,
     styles: texts,
-    sources: texts,
   }),
   item.extend({
     type: z.literal("creature"),
@@ -103,7 +101,6 @@ export const ItemSchema = z.discriminatedUnion("type", [
     activeWeather: texts,
     sizeRange: text,
     scientificName: text,
-    sources: texts,
     size: z
       .strictObject({
         min: z.number().nonnegative().nullable(),
@@ -126,7 +123,6 @@ export const ItemSchema = z.discriminatedUnion("type", [
     origins: texts,
     maturityPeriod: text,
     harvestCount: z.number().int().nonnegative().nullable(),
-    sources: texts,
     flowerColors: texts,
     growthId: IdSchema.nullable(),
     drops: DropSchema.array().nullable(),
@@ -144,7 +140,6 @@ export const ItemSchema = z.discriminatedUnion("type", [
     difficulty: text,
     galaxyFlavor: text,
     cookware: texts,
-    sources: texts,
     effectsText: text,
     tastes: TastesSchema.nullable(),
     recipe: RecipeSchema.nullable(),
@@ -162,7 +157,7 @@ export const ItemSchema = z.discriminatedUnion("type", [
       )
       .nullable(),
   }),
-  item.extend({ type: z.literal("material"), sources: texts }),
+  item.extend({ type: z.literal("material") }),
   EntityBaseSchema.extend({ type: z.literal("reference") }),
 ]);
 export const GroupSchema = EntityBaseSchema.extend({

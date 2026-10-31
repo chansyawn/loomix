@@ -18,7 +18,7 @@ function setupResources() {
     quality: null,
     category: null,
     scientificName: null,
-    sources: null,
+    acquisition: null,
     region: null,
     habitat: null,
     activeSeasons: null,

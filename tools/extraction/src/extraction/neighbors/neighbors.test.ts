@@ -19,7 +19,7 @@ test("extracts the fixed allowlist independently of dedicated configurations", (
   const huanxue = database.neighbors.find((n) => n.id === 1005)!;
   assert.deepEqual(huanxue.storyKeys, []);
   assert.deepEqual(huanxue.furnishingThemeIds, []);
-  assert.deepEqual(huanxue.rewardItemIds, []);
+  assert.ok(!("rewardItemIds" in huanxue));
   assert.equal(huanxue.avatarPath, null);
   assert.deepEqual(
     audit.exclusions.filter((e) => e.kind === "npc").map((e) => [e.key, e.reason]),
@@ -65,7 +65,7 @@ test("separates the speaker from variant IDs and keeps resource travel condition
   assert.ok(!JSON.stringify(database).includes("giftPreferences"));
 });
 
-test("links explicit themes and catalog rewards, excludes test rules and leaves unconfirmed island associations empty", (context) => {
+test("links explicit themes, excludes test rules and leaves unconfirmed island associations empty", (context) => {
   const fixture = createFixture();
   context.onTestFinished(fixture.cleanup);
   const { database, audit } = extractNeighborBundle(fixture.input);
@@ -80,17 +80,10 @@ test("links explicit themes and catalog rewards, excludes test rules and leaves 
   ]);
   assert.deepEqual(database.encounterIslands[0]!.neighborIds, []);
   assert.equal(database.encounterIslands[0]!.sceneId, 10001010);
-  assert.deepEqual(database.rewards, [
-    {
-      itemId: 1128,
-      itemNameZh: "小方凳",
-      category: "furniture",
-      kind: "item",
-      sources: ["完成友邻事件"],
-      relatedNeighborIds: [],
-    },
-  ]);
-  assert.equal(audit.catalogReferences[0]!.pointer, "/items/0");
+  assert.ok(!("rewards" in database));
+  assert.ok(!("catalogReferences" in audit));
+  assert.ok(!("rewards" in audit.counts));
+  assert.ok(!("rewards" in audit.normalization.associationCounts));
   assert.ok(
     audit.exclusions.some(
       (e) => e.kind === "rule" && e.reason === "test_or_placeholder" && e.sources[0]?.table === 711,
@@ -123,7 +116,7 @@ test("strict schema rejects unknown fields, missing relationships, duplicate IDs
   Reflect.deleteProperty(missing.neighbors[0]!, "storyKeys");
   assert.throws(() => parseNeighborDatabase(missing));
   const dangling = structuredClone(database);
-  dangling.neighbors[0]!.rewardItemIds.push(999);
+  dangling.neighbors[0]!.storyKeys.push("999:1");
   assert.throws(() => parseNeighborDatabase(dangling));
   const invalidIsland = structuredClone(database);
   invalidIsland.encounterIslands[0]!.neighborIds = [999];
@@ -133,7 +126,7 @@ test("strict schema rejects unknown fields, missing relationships, duplicate IDs
   assert.throws(() => parseNeighborDatabase(invalidAsset));
 });
 
-test("independent verification rejects a self-consistent missing neighbor, changed catalog reward and mismatched source", (context) => {
+test("independent verification rejects a self-consistent missing neighbor, changed neighbor and mismatched source", (context) => {
   const fixture = createFixture();
   context.onTestFinished(fixture.cleanup);
   const database = extractNeighbors(fixture.input);
@@ -146,7 +139,7 @@ test("independent verification rejects a self-consistent missing neighbor, chang
   parseNeighborDatabase(missing);
   assert.throws(() => verifyNeighbors(missing, fixture.input), /roster/);
   const renamed = structuredClone(database);
-  renamed.rewards[0]!.itemNameZh = "错误名称";
+  renamed.friendshipRules[0]!.textZh = "错误规则";
   assert.throws(() => verifyNeighbors(renamed, fixture.input), /frozen sources/);
   assert.throws(
     () =>
@@ -217,7 +210,7 @@ test("rejects missing, incomplete or renamed allowlisted masters", (context) => 
   }
 });
 
-test("excludes fully configured non-allowlisted neighbors and their exclusive rewards", (context) => {
+test("excludes fully configured non-allowlisted neighbors", (context) => {
   const rows = fixtureRows();
   rows[630]!.push(rows[630]![0]!.map((cell, index) => (index === 5 ? 1014 : cell)));
   rows[668]!.push([1014, 1, { text: "图塔故事" }, 1, { text: "正文" }, null]);
@@ -225,26 +218,11 @@ test("excludes fully configured non-allowlisted neighbors and their exclusive re
   rows[180]!.push([6, { text: "图塔主题" }, null, { text: "完成图塔的装修请求" }]);
   const fixture = createFixture(rows);
   context.onTestFinished(fixture.cleanup);
-  const item = fixture.input.content.items[0]!;
-  assert.equal(item.kind, "item");
-  if (item.kind !== "item" || item.category !== "furniture")
-    throw new Error("Expected furniture fixture");
-  fixture.input.content.items.push(
-    { ...item, id: 1129, attributes: { ...item.attributes, sources: "完成图塔的友邻事件" } },
-    { ...item, id: 1130, attributes: { ...item.attributes, sources: "完成图塔或云果的友邻事件" } },
-  );
   const database = extractNeighbors(fixture.input);
   assert.ok(database.neighbors.every((n) => n.id !== 1014));
   assert.ok(database.stars.every((s) => s.npcId !== 1014));
   assert.ok(database.stories.every((s) => s.npcId !== 1014));
   assert.ok(database.travelReactions.every((r) => r.npcId !== 1014));
   assert.ok(database.furnishingThemes.every((t) => !t.neighborIds.includes(1014)));
-  assert.deepEqual(
-    database.rewards.map((r) => [r.itemId, r.relatedNeighborIds]),
-    [
-      [1128, []],
-      [1130, [1010]],
-    ],
-  );
   verifyNeighbors(database, fixture.input);
 });

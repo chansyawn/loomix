@@ -17,7 +17,6 @@ test("catalog entries control listing while reference entities remain available 
         { sourceId: 1, label: "来源甲", condition: null },
         { sourceId: 2, label: "来源乙", condition: null },
       ],
-      sources: ["来源甲，保留原文", "来源乙"],
     },
     { ...base, id: 2, type: "reference" },
   );
@@ -53,7 +52,6 @@ test("creature details retain scientific names and localized acquisition labels"
     description: null,
     quality: 2,
     trade: null,
-    acquisition: null,
     region: null,
     habitat: null,
     activeSeasons: null,
@@ -61,7 +59,10 @@ test("creature details retain scientific names and localized acquisition labels"
     activeWeather: null,
     sizeRange: null,
     scientificName: "Cyprinus carpio",
-    sources: ["钓鱼", "河域钓取"],
+    acquisition: [
+      { sourceId: 104, label: "钓鱼", condition: null },
+      { sourceId: 108, label: "河域钓取", condition: null },
+    ],
     size: null,
     grades: null,
   });
@@ -69,7 +70,7 @@ test("creature details retain scientific names and localized acquisition labels"
 
   expect(toCollectionView(catalog, assetsFixture(catalog)).creatures.items[0]).toMatchObject({
     scientificName: "Cyprinus carpio",
-    sources: "钓鱼，河域钓取",
+    acquisition: "钓鱼，河域钓取",
   });
 });
 
@@ -88,7 +89,6 @@ test("dish details retain tastes, structured effects, unlock requirements and ac
     difficulty: "招牌",
     galaxyFlavor: "禾夏风味",
     cookware: ["烤箱"],
-    sources: ["烹饪"],
     effectsText: "增加 40 力气",
     tastes: ["甜", "咸"],
     recipe: null,
@@ -117,4 +117,38 @@ test("dish details retain tastes, structured effects, unlock requirements and ac
     difficultyRequirement: { condition: { kind: "chefLevelGreaterOrEqual", level: 5 } },
     acquisition: "烹饪",
   });
+});
+
+test("furniture, clothing and materials display structured acquisition conditions", () => {
+  const catalog = emptyDataset(fixtureContext, fixtureSource).catalog;
+  const common = {
+    id: 1,
+    name: "物品",
+    image: null,
+    quality: null,
+    description: null,
+    subcategory: null,
+    trade: null,
+    acquisition: [{ sourceId: 1, label: "星屿探索", condition: "完成探索" }],
+  };
+  catalog.items.push(
+    {
+      ...common,
+      type: "furniture",
+      furnitureType: null,
+      size: null,
+      colors: null,
+      materials: null,
+      craftingRecipes: null,
+    },
+    { ...common, id: 2, type: "clothing", colors: null, materials: null, styles: null },
+    { ...common, id: 3, type: "material" },
+  );
+  for (const item of catalog.items)
+    catalog.entries.push({ entity: { kind: "item", id: item.id }, encyclopedia: null });
+  const view = toCollectionView(catalog, assetsFixture(catalog));
+  for (const item of [view.furniture.items[0], view.clothing.items[0], view.miscellaneous[0]]) {
+    expect(item.acquisition).toBe("星屿探索（完成探索）");
+    expect(item).not.toHaveProperty("sources");
+  }
 });

@@ -67,10 +67,10 @@ export function filterGroups(data: FurnitureData): FilterGroup[] {
       options: options(data.items.flatMap((row) => splitValues(row.materials))),
     },
     {
-      key: "sources",
+      key: "acquisition",
       label: "获取途径",
       fullWidth: true,
-      options: options(data.items.map((row) => row.sources)),
+      options: options(data.items.map((row) => row.acquisition)),
     },
   ];
 }
@@ -97,7 +97,7 @@ export function queryFurniture(data: FurnitureData, view: View, query: ViewQuery
       matches(query.sets, memberSets?.map((set) => String(set.id)) ?? [ungrouped]) &&
       matches(query.colors, splitValues(row.colors)) &&
       matches(query.materials, splitValues(row.materials)) &&
-      matches(query.sources, [row.sources ?? missing])
+      matches(query.acquisition, [row.acquisition ?? missing])
     );
   });
   if (query.sort !== "original")

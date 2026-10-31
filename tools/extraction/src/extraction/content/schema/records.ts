@@ -34,9 +34,8 @@ export const attributeSchemas = {
     size: text,
     colors: text,
     materials: text,
-    sources: text,
   }),
-  clothing: z.strictObject({ colors: text, materials: text, styles: text, sources: text }),
+  clothing: z.strictObject({ colors: text, materials: text, styles: text }),
   creatures: z.strictObject({
     region: text,
     habitat: text,

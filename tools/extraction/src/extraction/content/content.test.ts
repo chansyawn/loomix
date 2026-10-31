@@ -69,7 +69,7 @@ test("field whitelist and same-category member references are strict", () => {
     category: "furniture",
     kind: "item",
     subcategory: "桌",
-    attributes: { type: null, size: null, colors: null, materials: null, sources: null },
+    attributes: { type: null, size: null, colors: null, materials: null },
   });
   const set = recordSchemas["furniture.set"].parse({
     id: 3,

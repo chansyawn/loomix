@@ -5,32 +5,6 @@ import type { CollectionEvidenceBuilder } from "./evidence.ts";
 import { localizedSources, tableSource } from "./evidence.ts";
 import { parseDifficultyRequirement } from "./conditions.ts";
 
-export function readSources(
-  context: ContentContext,
-  id: number,
-  proofs: CollectionEvidenceBuilder,
-) {
-  const { tables, ui, vocabulary } = context;
-  const display = ui.get(id);
-  const codes = tables.vector(display, 2);
-  const labels = codes?.map((code) => plainText(tables.text(vocabulary.sources.get(code), 1)));
-  const value = labels?.length && labels.every(Boolean) ? [...new Set(labels)].join("，") : null;
-  const sources = display ? [tableSource(tables, display, [0, 2])] : [];
-  for (const code of codes ?? [])
-    sources.push(...localizedSources(tables, vocabulary.sources.get(code), [1]));
-  proofs.put(
-    "item",
-    id,
-    "attributes.sources",
-    value,
-    sources,
-    "325.0=item ID; 325.2 source vector → 618.0",
-    "Resolve every 618.1 TextMap label; deduplicate in source order",
-    codes?.length ? "source_label_unresolved" : "source_not_configured",
-  );
-  return value;
-}
-
 export function readCreatureFields(
   context: ContentContext,
   id: number,

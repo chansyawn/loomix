@@ -19,7 +19,7 @@ function item(
     size: null,
     colors: null,
     materials: null,
-    sources: null,
+    acquisition: null,
     craftingRecipes: null,
     ...fields,
   };
@@ -32,7 +32,7 @@ const items: FurnitureItem[] = [
     type: "制作台",
     colors: "棕色",
     materials: "金属，木制",
-    sources: "格连商店购买",
+    acquisition: "格连商店购买",
   }),
   item(2, "白色木椅", {
     quality: 2,
@@ -131,16 +131,16 @@ describe("furniture catalog", () => {
     ]);
   });
 
-  it("trims search terms, matches names case-insensitively and matches complete sources", () => {
+  it("trims search terms, matches names case-insensitively and matches complete acquisition", () => {
     expect(ids(queryFurniture(data, "items", { ...emptyQuery(), q: "  手工图桌  " }).rows)).toEqual(
       [1],
     );
     expect(ids(queryFurniture(data, "items", { ...emptyQuery(), q: "ALPHA" }).rows)).toEqual([7]);
-    expect(queryFurniture(data, "items", { ...emptyQuery(), sources: ["格连商店"] }).rows).toEqual(
-      [],
-    );
     expect(
-      ids(queryFurniture(data, "items", { ...emptyQuery(), sources: ["格连商店购买"] }).rows),
+      queryFurniture(data, "items", { ...emptyQuery(), acquisition: ["格连商店"] }).rows,
+    ).toEqual([]);
+    expect(
+      ids(queryFurniture(data, "items", { ...emptyQuery(), acquisition: ["格连商店购买"] }).rows),
     ).toEqual([1]);
     expect(queryFurniture(data, "items", { ...emptyQuery(), q: "不存在的家具" }).rows).toEqual([]);
   });

@@ -85,12 +85,6 @@ const furnishingTheme = z.strictObject({
   cover: ImageRefSchema.nullable(),
 });
 
-const reward = z.strictObject({
-  itemId: z.number().int().positive(),
-  sources: z.string().min(1).array(),
-  relatedNeighborIds: neighborId.array(),
-});
-
 const asset = z.strictObject({
   path,
   kind: z.enum([
@@ -115,7 +109,6 @@ export const NeighborsSchema = ContextSchema.extend({
   friendshipRules: friendshipRule.array(),
   eventTags: eventTag.array(),
   furnishingThemes: furnishingTheme.array(),
-  rewards: reward.array(),
   resources: asset.array(),
   additionalImages: z.array(
     z.strictObject({

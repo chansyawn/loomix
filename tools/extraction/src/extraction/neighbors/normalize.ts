@@ -33,7 +33,6 @@ export function normalizeNeighbors(database: NeighborDatabase): NeighborDatabase
   database.friendshipRules.sort((a, b) => compareText(a.key, b.key));
   database.eventTags.sort((a, b) => compareText(a.key, b.key));
   database.furnishingThemes.sort((a, b) => compareText(a.key, b.key));
-  database.rewards.sort((a, b) => a.itemId - b.itemId);
   const assets = new Map<string, NeighborDatabase["assets"][number]>();
   for (const asset of database.assets) {
     const previous = assets.get(asset.path);
@@ -59,9 +58,6 @@ export function normalizeNeighbors(database: NeighborDatabase): NeighborDatabase
     neighbor.furnishingThemeKeys = database.furnishingThemes
       .filter((t) => t.neighborIds.includes(neighbor.id))
       .map((t) => t.key);
-    neighbor.rewardItemIds = database.rewards
-      .filter((r) => r.relatedNeighborIds.includes(neighbor.id))
-      .map((r) => r.itemId);
     neighbor.assetPaths = database.assets
       .filter((a) => a.relatedNeighborIds.includes(neighbor.id))
       .map((a) => a.path);

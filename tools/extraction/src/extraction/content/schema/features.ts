@@ -23,23 +23,17 @@ export function createObservedRecordSchemas(
     }),
     "creatures.item": base["creatures.item"].extend({
       attributes: base["creatures.item"].shape.attributes.extend({
-        sources: text,
         scientificName: text,
       }),
     }),
     "plants.item": base["plants.item"].extend({
-      attributes: base["plants.item"].shape.attributes.extend({ sources: text }),
       seedId: ItemIdSchema.nullable(),
     }),
     "dishes.item": base["dishes.item"].extend({
       attributes: base["dishes.item"].shape.attributes.extend({
-        sources: text,
         tastes: TastesSchema.nullable(),
       }),
       difficultyRequirement: DifficultyRequirementSchema.nullable(),
-    }),
-    "miscellaneous.item": base["miscellaneous.item"].extend({
-      attributes: base["miscellaneous.item"].shape.attributes.extend({ sources: text }),
     }),
   };
 }

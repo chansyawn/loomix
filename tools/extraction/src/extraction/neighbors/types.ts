@@ -1,4 +1,3 @@
-import type { Catalog } from "../schema.ts";
 import type { IndexedAsset } from "../types.ts";
 import type { Tables } from "../decode/tables.ts";
 
@@ -13,14 +12,12 @@ export type NeighborEncounterIsland = NeighborDatabase["encounterIslands"][numbe
 export type NeighborFriendshipRule = NeighborDatabase["friendshipRules"][number];
 export type NeighborEventTag = NeighborDatabase["eventTags"][number];
 export type NeighborFurnishingTheme = NeighborDatabase["furnishingThemes"][number];
-export type NeighborRewardRef = NeighborDatabase["rewards"][number];
 export type NeighborAssetRef = NeighborDatabase["assets"][number];
 export type NeighborBodyType = NonNullable<NeighborRecord["bodyType"]>;
 export type NeighborStoryParagraph = NeighborStoryChapter["paragraphs"][number];
 
 export interface NeighborExtractionInput {
   tables: Tables;
-  content: Catalog;
   source: NeighborSource;
   assetIndex: readonly IndexedAsset[];
 }
@@ -39,12 +36,10 @@ export interface NeighborExtractionAudit {
     friendshipRules: number;
     eventTags: number;
     furnishingThemes: number;
-    rewards: number;
     assets: number;
   };
   exclusions: NeighborExclusion[];
   assetIndexEntries: number;
-  catalogReferences: { itemId: number; file: "raw/content.json"; pointer: string }[];
   records: NeighborEvidence[];
   normalization: {
     assetOccurrences: number;
@@ -55,7 +50,6 @@ export interface NeighborExtractionAudit {
       stars: number;
       stories: number;
       themes: number;
-      rewards: number;
       assets: number;
     };
   };

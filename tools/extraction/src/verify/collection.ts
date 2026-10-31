@@ -43,10 +43,6 @@ function verifyProofSources(proof: CollectionEvidence, tables: Tables): void {
     else if (proof.field.startsWith("detail.maturityDays"))
       add(144, (row) => tables.id(row) === proof.id, [0, 3, 4]);
     else add(144, (row) => tables.id(row) === proof.id, [0, 10]);
-  } else if (proof.field === "attributes.sources") {
-    add(325, (row) => tables.id(row) === proof.id, [0, 2]);
-    const codes = new Set(rows.flatMap(({ row }) => tables.vector(row, 2) ?? []));
-    add(618, (row) => codes.has(tables.id(row)), [1]);
   } else if (proof.field === "attributes.scientificName") {
     add(93, (row) => tables.id(row) === proof.id, [16]);
   } else if (proof.field === "seedId") {

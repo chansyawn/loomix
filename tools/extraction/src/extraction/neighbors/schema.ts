@@ -51,7 +51,6 @@ const record = z.strictObject({
   storyKeys: z.string().array(),
   furnishingThemeIds: z.number().int().positive().array(),
   furnishingThemeKeys: z.string().min(1).array(),
-  rewardItemIds: z.number().int().positive().array(),
   assetPaths: path.array(),
 });
 
@@ -132,15 +131,6 @@ const furnishingTheme = z.strictObject({
   coverPath: path.nullable(),
 });
 
-const reward = z.strictObject({
-  itemId: z.number().int().positive(),
-  itemNameZh: z.string().min(1),
-  category: z.string().min(1),
-  kind: z.string().min(1),
-  sources: z.string().min(1).array(),
-  relatedNeighborIds: neighborId.array(),
-});
-
 const asset = z.strictObject({
   path,
   kind: z.enum([
@@ -168,7 +158,6 @@ export const NeighborDatabaseSchema = z
     friendshipRules: friendshipRule.array(),
     eventTags: eventTag.array(),
     furnishingThemes: furnishingTheme.array(),
-    rewards: reward.array(),
     assets: asset.array(),
   })
   .superRefine((database, ctx) => {
@@ -199,11 +188,6 @@ export const NeighborDatabaseSchema = z
       database.eventTags.map((value) => value.key),
       compareText,
       ["eventTags"],
-    );
-    assertSorted(
-      database.rewards.map((value) => value.itemId),
-      numeric,
-      ["rewards"],
     );
     assertSorted(
       database.assets.map((value) => value.path),
@@ -241,10 +225,9 @@ export const NeighborDatabaseSchema = z
       database[name].forEach((value, index) =>
         checkIds(value.neighborIds, [name, index, "neighborIds"]),
       );
-    for (const name of ["rewards", "assets"] as const)
-      database[name].forEach((value, index) =>
-        checkIds(value.relatedNeighborIds, [name, index, "relatedNeighborIds"]),
-      );
+    database.assets.forEach((value, index) =>
+      checkIds(value.relatedNeighborIds, ["assets", index, "relatedNeighborIds"]),
+    );
     database.stories.forEach((value, index) => {
       if (!value.paragraphs.length) issue(["stories", index, "paragraphs"], "Empty story chapter");
       assertSorted(
@@ -271,9 +254,6 @@ export const NeighborDatabaseSchema = z
         furnishingThemeKeys: database.furnishingThemes
           .filter((t) => t.neighborIds.includes(neighbor.id))
           .map((t) => t.key),
-        rewardItemIds: database.rewards
-          .filter((r) => r.relatedNeighborIds.includes(neighbor.id))
-          .map((r) => r.itemId),
         assetPaths: database.assets
           .filter((a) => a.relatedNeighborIds.includes(neighbor.id))
           .map((a) => a.path),
@@ -283,7 +263,6 @@ export const NeighborDatabaseSchema = z
         "storyKeys",
         "furnishingThemeIds",
         "furnishingThemeKeys",
-        "rewardItemIds",
         "assetPaths",
       ] as const)
         if (JSON.stringify(neighbor[key]) !== JSON.stringify(expected[key]))

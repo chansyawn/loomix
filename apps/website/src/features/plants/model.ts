@@ -10,7 +10,6 @@ export type PlantSeed = Omit<Seed, "image"> & {
     description: string | null;
     quality: number | null;
     trade: Seed["trade"];
-    acquisitionConditions: Seed["acquisition"];
     growth: PlantGrowth | null;
     stageIds: number[] | null;
     maturityDays: number | null;
@@ -30,7 +29,7 @@ export interface PlantGrowthGroup {
 export interface PlantSummary {
   categories: string[];
   galaxies: string[];
-  sources: string[];
+  acquisition: string[];
   flowerColors: string[];
   harvestCounts: number[];
   seeds: PlantSeed[];
@@ -42,7 +41,7 @@ export type PlantItem = CollectionRecord & {
   originGalaxy: string | null;
   maturityPeriod: string | null;
   harvestCount: number | null;
-  sources: string | null;
+  acquisition: string | null;
   seedId: number | null;
   flowerColors: PlantRecord["flowerColors"];
   growth: PlantGrowth | null;

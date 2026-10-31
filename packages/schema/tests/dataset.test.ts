@@ -14,6 +14,23 @@ test("parsing rejects unknown fields and versions without mutating the input", (
   expect(() => CatalogSchema.parse({ ...dataset.catalog, details: [] })).toThrow();
   expect(dataset.catalog.items).toEqual([]);
 });
+test("acquisition is the only item acquisition field and neighbor rewards are removed", () => {
+  const dataset = emptyDataset(context, source);
+  const acquisition = [
+    { sourceId: 142, label: "摇晃果树或伐木后拾取获得", condition: null },
+    { sourceId: 143, label: "摇晃果树或伐木后拾取获得", condition: null },
+  ];
+  const item = { ...base, type: "material" as const, subcategory: null, trade: null, acquisition };
+  dataset.catalog.items.push(item);
+  expect(parseDataset(dataset).catalog.items[0]).toEqual(item);
+  expect(() =>
+    CatalogSchema.parse({ ...dataset.catalog, items: [{ ...item, sources: [] }] }),
+  ).toThrow();
+  expect(dataset.neighbors).not.toHaveProperty("rewards");
+  expect(() =>
+    parseDataset({ ...dataset, neighbors: { ...dataset.neighbors, rewards: [] } }),
+  ).toThrow();
+});
 test("reference items can participate in relationships but cannot become catalog entries", () => {
   const dataset = emptyDataset(context, source);
   dataset.catalog.items.push({ ...base, type: "reference" });

@@ -32,7 +32,7 @@ export function CreaturesDetailPage({ detail }: { detail: CreaturesDetail }) {
       ? [
           ["分类", detail.record.category],
           ["学名", detail.record.scientificName],
-          ["获取方式", detail.record.sources],
+          ["获取方式", detail.record.acquisition],
           ["地区", detail.record.region],
           ["栖息地", detail.record.habitat],
           ["出没季节", detail.record.activeSeasons],

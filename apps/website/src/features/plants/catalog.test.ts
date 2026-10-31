@@ -2,6 +2,8 @@ import { expect, test } from "vite-plus/test";
 import { assetsFixture, catalogFixture } from "../collection-fixture";
 import { toCollectionView } from "../collection-view";
 import { plantItemFixture, plantSeriesFixture, plantsDataFixture } from "./fixture";
+import { filterGroups, queryPlants } from "./query";
+import { emptyQuery } from "./search";
 
 test("summarizes structured origins without parsing punctuation in localized labels", () => {
   const catalog = catalogFixture({
@@ -13,10 +15,17 @@ test("summarizes structured origins without parsing punctuation in localized lab
   const plant = catalog.items[0];
   if (plant.type !== "plant") throw new Error("Expected plant");
   plant.origins = ["禾夏，星系", "帕沙"];
-  plant.sources = ["采集，限时活动"];
+  plant.acquisition = [{ sourceId: 1, label: "采集，限时活动", condition: null }];
   const data = toCollectionView(catalog, assetsFixture(catalog)).plants;
   expect(data.series[0].summary.galaxies).toEqual(["禾夏，星系", "帕沙"]);
-  expect(data.series[0].summary.sources).toEqual(["采集，限时活动"]);
+  expect(data.series[0].summary.acquisition).toEqual(["采集，限时活动"]);
+  expect(filterGroups(data).find((group) => group.key === "acquisition")?.options).toEqual([
+    { value: "采集，限时活动", label: "采集，限时活动" },
+  ]);
+  expect(
+    queryPlants(data, "items", { ...emptyQuery(), acquisition: ["采集，限时活动"] }).total,
+  ).toBe(1);
+  expect(queryPlants(data, "items", { ...emptyQuery(), acquisition: ["采集"] }).total).toBe(0);
 });
 test("keeps multiple seeds for a product and shares one growth configuration", () => {
   const catalog = catalogFixture({

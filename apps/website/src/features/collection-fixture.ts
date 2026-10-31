@@ -61,7 +61,7 @@ export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
       size: record.size,
       colors: values(record.colors),
       materials: values(record.materials),
-      sources: values(record.sources),
+      acquisition: acquisition(record.acquisition),
       craftingRecipes: record.craftingRecipes,
     });
   for (const record of view.furniture?.sets ?? [])
@@ -79,7 +79,7 @@ export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
       activeWeather: values(record.activeWeather),
       sizeRange: record.sizeRange,
       scientificName: record.scientificName,
-      sources: values(record.sources),
+      acquisition: acquisition(record.acquisition),
       size: null,
       grades: null,
     });
@@ -109,7 +109,7 @@ export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
       origins: values(record.originGalaxy),
       maturityPeriod: record.maturityPeriod,
       harvestCount: record.harvestCount,
-      sources: values(record.sources),
+      acquisition: acquisition(record.acquisition),
       flowerColors: record.flowerColors,
       growthId,
       drops: record.treeDrops,
@@ -151,7 +151,6 @@ export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
       cookware: values(record.cookware),
       effectsText: record.effectsText,
       recipe: record.recipe,
-      sources: values(record.acquisition),
       acquisition: acquisition(record.acquisition),
       tastes: record.tastes,
       difficultyRequirement: record.difficultyRequirement,
@@ -167,7 +166,7 @@ export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
       colors: values(record.colors),
       materials: values(record.materials),
       styles: values(record.styles),
-      sources: values(record.sources),
+      acquisition: acquisition(record.acquisition),
     });
   for (const record of view.clothing?.sets ?? [])
     group(record, "clothing.set", record.componentIds);
@@ -185,7 +184,6 @@ export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
       type: "material",
       subcategory: null,
       acquisition: acquisition(record.acquisition),
-      sources: null,
     });
   return catalog;
 }

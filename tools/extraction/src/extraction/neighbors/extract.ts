@@ -1,6 +1,6 @@
 import { readRoster, readStars, readStories, readTravelReactions } from "./adapters.ts";
 import { readEventTags, readIslands, readRules, readThemes } from "./system.ts";
-import { linkedAssets, readAssets, readRewards } from "./resources.ts";
+import { linkedAssets, readAssets } from "./resources.ts";
 import { compareText, normalizeNeighbors } from "./normalize.ts";
 import { parseNeighborDatabase } from "./schema.ts";
 import { profile } from "../../profile.ts";
@@ -16,13 +16,7 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
   database: NeighborDatabase;
   audit: NeighborExtractionAudit;
 } {
-  const { tables, content, source, assetIndex } = input;
-  if (
-    content.source.gameVersion !== source.gameVersion ||
-    content.source.dataRevision !== source.dataRevision ||
-    content.source.resourceRevision !== source.resourceRevision
-  )
-    throw new Error("Neighbor source differs from content source");
+  const { tables, source, assetIndex } = input;
   const records: NeighborEvidence[] = [];
   const exclusions: NeighborExclusion[] = [];
   const neighbors = readRoster(tables, records, exclusions);
@@ -38,7 +32,6 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
     friendshipRules: readRules(tables, records, exclusions),
     eventTags: readEventTags(tables, records),
     furnishingThemes: readThemes(tables, neighbors, records),
-    rewards: readRewards(content, neighbors, tables),
     assets: readAssets(tables, records, exclusions),
   };
   database.assets = linkedAssets(database);
@@ -69,7 +62,6 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
       friendshipRules: result.friendshipRules.length,
       eventTags: result.eventTags.length,
       furnishingThemes: result.furnishingThemes.length,
-      rewards: result.rewards.length,
       assets: result.assets.length,
     },
     exclusions: exclusions.sort((a, b) => compareText(a.kind, b.kind) || compareText(a.key, b.key)),
@@ -80,11 +72,6 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
         a.source.rowOffset - b.source.rowOffset,
     ),
     assetIndexEntries: assetIndex.length,
-    catalogReferences: result.rewards.map((reward) => ({
-      itemId: reward.itemId,
-      file: "raw/content.json",
-      pointer: `/items/${content.items.findIndex((item) => item.id === reward.itemId)}`,
-    })),
     normalization: {
       assetOccurrences,
       uniqueAssetPaths: result.assets.length,
@@ -107,7 +94,6 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
         stars: result.neighbors.reduce((sum, n) => sum + n.starKeys.length, 0),
         stories: result.neighbors.reduce((sum, n) => sum + n.storyKeys.length, 0),
         themes: result.neighbors.reduce((sum, n) => sum + n.furnishingThemeKeys.length, 0),
-        rewards: result.neighbors.reduce((sum, n) => sum + n.rewardItemIds.length, 0),
         assets: result.neighbors.reduce((sum, n) => sum + n.assetPaths.length, 0),
       },
     },

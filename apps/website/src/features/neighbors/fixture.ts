@@ -82,7 +82,6 @@ export function neighborFixture() {
     })),
     friendshipRules: [],
     eventTags: [],
-    rewards: [],
     additionalImages: [],
     resources: [
       ...neighbors.map((neighbor) => neighbor.npc2Path),

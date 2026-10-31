@@ -88,7 +88,6 @@ export function buildDataset(work: string) {
       storyKeys: _stories,
       furnishingThemeIds: _themeIds,
       furnishingThemeKeys: _themeKeys,
-      rewardItemIds: _rewards,
       assetPaths: _paths,
       avatarPath,
       ...neighbor
@@ -116,11 +115,6 @@ export function buildDataset(work: string) {
         cover: neighborImage(coverPath),
       })),
     }) as object),
-    rewards: neighborData.rewards.map((reward) => ({
-      itemId: reward.itemId,
-      sources: reward.sources,
-      relatedNeighborIds: reward.relatedNeighborIds,
-    })),
     resources,
     additionalImages,
   });
