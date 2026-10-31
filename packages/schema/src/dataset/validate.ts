@@ -36,9 +36,11 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
     "friendshipRules",
     "eventTags",
     "furnishingThemes",
+    "giftPreferences",
     "additionalImages",
   ] as const)
     unique<{ key: string }>(neighbors[name], (value) => value.key, ["neighbors", name]);
+  unique(neighbors.giftPreferenceTags, (tag) => tag.id, ["neighbors", "giftPreferenceTags"]);
   for (const name of ["stars", "stories", "travelReactions", "additionalImages"] as const)
     neighbors[name].forEach((value, index) => {
       if (value.neighborId !== null)
@@ -59,6 +61,26 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
       issue(["neighbors", "travelReactions", index], "Invalid reaction key");
   });
   const items = new Map(catalog.items.map((item) => [item.id, item]));
+  const preferenceTags = new Set(neighbors.giftPreferenceTags.map((tag) => tag.id));
+  const referencedPreferenceTags = new Set<number>();
+  neighbors.giftPreferences.forEach((preference, index) => {
+    const path = ["neighbors", "giftPreferences", index];
+    if (!ids.has(preference.neighborId))
+      issue([...path, "neighborId"], `Unknown neighbor ${preference.neighborId}`);
+    if (preference.key !== `${preference.neighborId}:${preference.level}`)
+      issue([...path, "key"], "Invalid preference key");
+    unique(preference.itemIds, (id) => id, [...path, "itemIds"]);
+    unique(preference.tagIds, (id) => id, [...path, "tagIds"]);
+    for (const id of preference.itemIds)
+      if (!items.has(id)) issue([...path, "itemIds"], `Unknown item ${id}`);
+    for (const id of preference.tagIds) {
+      if (!preferenceTags.has(id)) issue([...path, "tagIds"], `Unknown preference tag ${id}`);
+      referencedPreferenceTags.add(id);
+    }
+  });
+  for (const id of preferenceTags)
+    if (!referencedPreferenceTags.has(id))
+      issue(["neighbors", "giftPreferenceTags"], `Unreferenced preference tag ${id}`);
   for (const theme of neighbors.furnishingThemes)
     checkNeighbors(theme.neighborIds, ["neighbors", "furnishingThemes"]);
   unique(neighbors.resources, (resource) => resource.path, ["neighbors", "resources"]);

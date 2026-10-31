@@ -22,7 +22,9 @@ const fields: Record<string, string> = {
 interface AuditRecord {
   collection: string;
   key: string | number;
-  source: Omit<Extract<EvidenceSource, { kind: "table" }>, "kind">;
+  source:
+    | { kind?: "table"; file: string; table: number; rowOffset: number; fields: number[] }
+    | { kind: "asset"; file: string; pathId: string };
 }
 
 export function buildDomainEvidence(
@@ -190,7 +192,9 @@ export function buildDomainEvidence(
         entity: { collection: `${domain}.${name}`, id: key },
         fieldPath: "$",
         status: "confirmed",
-        sources: [{ kind: "table", ...proof.source }],
+        sources: [
+          proof.source.kind === "asset" ? proof.source : { kind: "table", ...proof.source },
+        ],
         ruleId: `client.${domain}.${name}`,
         reasonCode: null,
       });

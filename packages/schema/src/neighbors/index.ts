@@ -100,6 +100,20 @@ const asset = z.strictObject({
   relatedNeighborIds: neighborId.array(),
 });
 
+const giftPreferenceLevel = z.enum(["love", "favor", "dislike"]);
+const giftPreference = z.strictObject({
+  key: z.string().min(1),
+  neighborId,
+  level: giftPreferenceLevel,
+  itemIds: neighborId.array(),
+  tagIds: neighborId.array(),
+});
+const giftPreferenceTag = z.strictObject({
+  id: neighborId,
+  internalName: z.string().min(1),
+  name: z.string().min(1).nullable(),
+});
+
 export const NeighborsSchema = ContextSchema.extend({
   kind: z.literal("neighbors"),
   neighbors: record.array(),
@@ -109,6 +123,8 @@ export const NeighborsSchema = ContextSchema.extend({
   friendshipRules: friendshipRule.array(),
   eventTags: eventTag.array(),
   furnishingThemes: furnishingTheme.array(),
+  giftPreferences: giftPreference.array().default([]),
+  giftPreferenceTags: giftPreferenceTag.array().default([]),
   resources: asset.array(),
   additionalImages: z.array(
     z.strictObject({

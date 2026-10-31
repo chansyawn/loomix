@@ -147,7 +147,13 @@ export function buildDataset(work: string) {
   const dataset = parseDataset({
     context: identity,
     source: neighbors.source,
-    catalog: buildCatalog(observations, createContentContext(work), assets, identity),
+    catalog: buildCatalog(
+      observations,
+      createContentContext(work),
+      assets,
+      identity,
+      neighbors.giftPreferences.flatMap((preference) => preference.itemIds),
+    ),
     neighbors: publicNeighbors,
     world: publicWorld,
   });

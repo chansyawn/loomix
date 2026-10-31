@@ -62,7 +62,32 @@ test("separates the speaker from variant IDs and keeps resource travel condition
   assert.equal(harvest.variantId, 1);
   assert.equal(harvest.threshold, "3");
   assert.equal(harvest.textZh, "丰收了！");
-  assert.ok(!JSON.stringify(database).includes("giftPreferences"));
+  assert.ok(database.travelReactions.every((reaction) => !("level" in reaction)));
+});
+
+test("extracts gift rules by namespace, normalizes category rows, and audits non-allowlisted neighbors", (context) => {
+  const fixture = createFixture();
+  context.onTestFinished(fixture.cleanup);
+  const { database, audit } = extractNeighborBundle(fixture.input);
+  assert.deepEqual(
+    database.giftPreferences.filter((preference) => preference.npcId === 11),
+    [
+      { key: "11:love", npcId: 11, level: "love", itemIds: [50000], tagIds: [] },
+      { key: "11:favor", npcId: 11, level: "favor", itemIds: [30050], tagIds: [50000] },
+      { key: "11:dislike", npcId: 11, level: "dislike", itemIds: [], tagIds: [50000] },
+    ],
+  );
+  assert.deepEqual(database.giftPreferenceTags, [
+    { id: 50000, internalName: "食物", nameZh: "食物" },
+  ]);
+  assert.deepEqual(
+    audit.exclusions.filter((entry) => entry.kind === "giftPreference").map((entry) => entry.key),
+    ["1020:love"],
+  );
+  assert.equal(
+    audit.records.filter((entry) => entry.collection === "giftPreferenceTags").length,
+    2,
+  );
 });
 
 test("links explicit themes, excludes test rules and leaves unconfirmed island associations empty", (context) => {
@@ -86,7 +111,11 @@ test("links explicit themes, excludes test rules and leaves unconfirmed island a
   assert.ok(!("rewards" in audit.normalization.associationCounts));
   assert.ok(
     audit.exclusions.some(
-      (e) => e.kind === "rule" && e.reason === "test_or_placeholder" && e.sources[0]?.table === 711,
+      (e) =>
+        e.kind === "rule" &&
+        e.reason === "test_or_placeholder" &&
+        e.sources[0]?.kind === "table" &&
+        e.sources[0].table === 711,
     ),
   );
   assert.ok(audit.exclusions.some((e) => e.kind === "asset"));

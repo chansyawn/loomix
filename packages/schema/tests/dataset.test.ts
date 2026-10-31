@@ -3,6 +3,7 @@ import { emptyDataset, parseDataset, validateDataset } from "../src/dataset/inde
 import { CatalogSchema } from "../src/catalog/index.ts";
 import { parseRelease } from "../src/release/index.ts";
 import { referencedImages } from "../src/dataset/images.ts";
+import { parseNeighbors } from "../src/neighbors/index.ts";
 const context = { formatVersion: 1, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
 const source = { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" };
 const base = { id: 1, name: "物品", image: null, quality: null, description: null };
@@ -38,6 +39,40 @@ test("reference items can participate in relationships but cannot become catalog
   dataset.catalog.entries.push({ entity: { kind: "item", id: 1 }, encyclopedia: null });
   expect(validateDataset(dataset)).toContainEqual(
     expect.objectContaining({ message: "Entry requires a classified entity" }),
+  );
+});
+test("gift preferences reference known neighbors, items, and a distinct tag dictionary", () => {
+  const dataset = emptyDataset(context, source);
+  dataset.neighbors.neighbors.push({
+    id: 11,
+    name: "蛮蛮",
+    bodyType: null,
+    scaleValue: null,
+    avatar: null,
+    npc2Path: "Avatar/NPC2/NPC_11",
+  });
+  dataset.catalog.items.push({ ...base, id: 50000, type: "reference" });
+  dataset.neighbors.giftPreferences.push({
+    key: "11:love",
+    neighborId: 11,
+    level: "love",
+    itemIds: [50000],
+    tagIds: [50000],
+  });
+  dataset.neighbors.giftPreferenceTags.push({ id: 50000, internalName: "食物", name: "食物" });
+  expect(parseDataset(dataset).neighbors.giftPreferences).toEqual(
+    dataset.neighbors.giftPreferences,
+  );
+  expect(
+    parseNeighbors({
+      ...dataset.neighbors,
+      giftPreferences: undefined,
+      giftPreferenceTags: undefined,
+    }),
+  ).toMatchObject({ giftPreferences: [], giftPreferenceTags: [] });
+  dataset.neighbors.giftPreferences[0]!.tagIds = [50001];
+  expect(validateDataset(dataset)).toContainEqual(
+    expect.objectContaining({ message: "Unknown preference tag 50001" }),
   );
 });
 test("duplicate entities, dangling groups and ingredient cycles are reported together", () => {

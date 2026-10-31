@@ -63,7 +63,13 @@ export function evidence(
   return {
     collection,
     key,
-    source: { file: "prepared/ed.obb", table: row.root, rowOffset: row.rowOffset, fields },
+    source: {
+      kind: "table",
+      file: "prepared/ed.obb",
+      table: row.root,
+      rowOffset: row.rowOffset,
+      fields,
+    },
   };
 }
 

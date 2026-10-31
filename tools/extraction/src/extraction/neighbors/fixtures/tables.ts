@@ -57,6 +57,7 @@ export function fixtureRows(): FixtureRows {
     text(body),
   ];
   return {
+    318: [[50000], [30050], [1128]],
     41: [
       npc(1011, "多杰朗", "NpcBig", 117),
       npc(1009, "伊佐奇", "NpcSmall", 65),
@@ -127,6 +128,17 @@ export function fixtureRows(): FixtureRows {
         "UISprite/Cover.png",
       ],
       [99, text("其他主题"), null, text("摇树获得")],
+    ],
+    337: [
+      [1, "UISprite/Like.png", text("喜爱"), 0, 0, 0],
+      [2, "UISprite/Favor.png", text("好感"), 0, 0, 0],
+      [4, "UISprite/Dislike.png", text("反感"), 0, 0, 0],
+    ],
+    426: [
+      [11, 1, "喜爱", "50000;", null],
+      [11, 2, "好感", "30050", "50000;"],
+      [11, 4, "反感", null, "50000"],
+      [1020, 1, "喜爱", "1128", null],
     ],
     206: [
       [
@@ -247,9 +259,22 @@ export function createFixture(rows = fixtureRows()): {
     subcategory: null,
     attributes: { type: null, size: null, colors: null, materials: null },
   });
+  const tables = new Tables(directory);
   return {
     directory,
-    input: { tables: new Tables(directory), content, source, assetIndex: [] },
+    input: {
+      tables,
+      content,
+      source,
+      assetIndex: [],
+      preferenceTags: {
+        tags: new Map([[50000, { internalName: "食物", nameZh: "食物", textId: null }]]),
+        sources: {
+          tree: { kind: "asset", file: "bindata/tags.json", pathId: "633e15d6" },
+          display: { kind: "asset", file: "bindata/tag-display.json", pathId: "b429c67e" },
+        },
+      },
+    },
     cleanup: () => fs.rmSync(directory, { recursive: true, force: true }),
   };
 }

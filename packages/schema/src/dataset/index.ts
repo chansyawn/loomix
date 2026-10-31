@@ -39,6 +39,8 @@ export function emptyDataset(context: Dataset["context"], source: Dataset["sourc
       friendshipRules: [],
       eventTags: [],
       furnishingThemes: [],
+      giftPreferences: [],
+      giftPreferenceTags: [],
       resources: [],
       additionalImages: [],
     },

@@ -1,6 +1,7 @@
 import { readRoster, readStars, readStories, readTravelReactions } from "./adapters.ts";
 import { readEventTags, readIslands, readRules, readThemes } from "./system.ts";
 import { linkedAssets, readAssets } from "./resources.ts";
+import { readGiftPreferences } from "./preferences.ts";
 import { compareText, normalizeNeighbors } from "./normalize.ts";
 import { parseNeighborDatabase } from "./schema.ts";
 import { profile } from "../../profile.ts";
@@ -21,6 +22,13 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
   const exclusions: NeighborExclusion[] = [];
   const neighbors = readRoster(tables, records, exclusions);
   const accepted = new Set(neighbors.map((n) => n.id));
+  const giftPreferences = readGiftPreferences(
+    tables,
+    accepted,
+    input.preferenceTags,
+    records,
+    exclusions,
+  );
   const database: NeighborDatabase = {
     schemaVersion: 1,
     source: { ...source },
@@ -32,6 +40,8 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
     friendshipRules: readRules(tables, records, exclusions),
     eventTags: readEventTags(tables, records),
     furnishingThemes: readThemes(tables, neighbors, records),
+    giftPreferences: giftPreferences.preferences,
+    giftPreferenceTags: giftPreferences.tags,
     assets: readAssets(tables, records, exclusions),
   };
   database.assets = linkedAssets(database);
@@ -62,6 +72,23 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
       friendshipRules: result.friendshipRules.length,
       eventTags: result.eventTags.length,
       furnishingThemes: result.furnishingThemes.length,
+      giftPreferences: result.giftPreferences.length,
+      giftPreferenceItems: Object.fromEntries(
+        (["love", "favor", "dislike"] as const).map((level) => [
+          level,
+          result.giftPreferences
+            .filter((preference) => preference.level === level)
+            .reduce((sum, preference) => sum + preference.itemIds.length, 0),
+        ]),
+      ) as NeighborExtractionAudit["counts"]["giftPreferenceItems"],
+      giftPreferenceTags: Object.fromEntries(
+        (["love", "favor", "dislike"] as const).map((level) => [
+          level,
+          result.giftPreferences
+            .filter((preference) => preference.level === level)
+            .reduce((sum, preference) => sum + preference.tagIds.length, 0),
+        ]),
+      ) as NeighborExtractionAudit["counts"]["giftPreferenceTags"],
       assets: result.assets.length,
     },
     exclusions: exclusions.sort((a, b) => compareText(a.kind, b.kind) || compareText(a.key, b.key)),
@@ -69,7 +96,8 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
       (a, b) =>
         compareText(a.collection, b.collection) ||
         compareText(a.key, b.key) ||
-        a.source.rowOffset - b.source.rowOffset,
+        (a.source.kind === "table" ? a.source.rowOffset : 0) -
+          (b.source.kind === "table" ? b.source.rowOffset : 0),
     ),
     assetIndexEntries: assetIndex.length,
     normalization: {

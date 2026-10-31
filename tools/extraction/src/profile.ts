@@ -43,6 +43,8 @@ export const profile = {
     neighborStories: 668,
     neighborEvents: 704,
     neighborGuide: 711,
+    neighborGiftPreferences: 426,
+    neighborPreferenceCategories: 337,
     neighborThemes: 180,
     neighborAssets: 206,
     islandIconStyles: 628,
@@ -92,6 +94,11 @@ export const profile = {
     outfitPaths: 8,
     hubPaths: 15,
     favourMissionPaths: 24,
+  },
+  expectedNeighborPreferences: {
+    groups: 36,
+    items: { love: 43, favor: 1, dislike: 4 },
+    tags: { love: 0, favor: 60, dislike: 24 },
   },
   expectedEncyclopedia: {
     "furniture.set": 42,

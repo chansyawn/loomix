@@ -33,6 +33,15 @@ export function normalizeNeighbors(database: NeighborDatabase): NeighborDatabase
   database.friendshipRules.sort((a, b) => compareText(a.key, b.key));
   database.eventTags.sort((a, b) => compareText(a.key, b.key));
   database.furnishingThemes.sort((a, b) => compareText(a.key, b.key));
+  const preferenceLevelOrder = { love: 1, favor: 2, dislike: 4 } as const;
+  database.giftPreferences.sort(
+    (a, b) => a.npcId - b.npcId || preferenceLevelOrder[a.level] - preferenceLevelOrder[b.level],
+  );
+  database.giftPreferenceTags.sort((a, b) => a.id - b.id);
+  for (const preference of database.giftPreferences) {
+    preference.itemIds = uniqueNumbers(preference.itemIds);
+    preference.tagIds = uniqueNumbers(preference.tagIds);
+  }
   const assets = new Map<string, NeighborDatabase["assets"][number]>();
   for (const asset of database.assets) {
     const previous = assets.get(asset.path);

@@ -58,6 +58,30 @@ export function verifyNeighbors(value: unknown, input: NeighborExtractionInput):
       profile.expectedNeighbors,
       "Neighbor snapshot counts changed; re-confirm the layout and profile",
     );
+    const preferenceCounts = {
+      groups: database.giftPreferences.length,
+      items: Object.fromEntries(
+        (["love", "favor", "dislike"] as const).map((level) => [
+          level,
+          database.giftPreferences
+            .filter((preference) => preference.level === level)
+            .reduce((sum, preference) => sum + preference.itemIds.length, 0),
+        ]),
+      ),
+      tags: Object.fromEntries(
+        (["love", "favor", "dislike"] as const).map((level) => [
+          level,
+          database.giftPreferences
+            .filter((preference) => preference.level === level)
+            .reduce((sum, preference) => sum + preference.tagIds.length, 0),
+        ]),
+      ),
+    };
+    assert.deepEqual(
+      preferenceCounts,
+      profile.expectedNeighborPreferences,
+      "Neighbor gift preference counts changed; re-confirm the layout and profile",
+    );
   }
   return database;
 }

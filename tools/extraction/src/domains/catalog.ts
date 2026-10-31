@@ -12,6 +12,7 @@ export function buildCatalog(
   context: ContentContext,
   assets: AssetRegistry,
   identity: Dataset["context"],
+  referencedGiftItemIds: readonly number[] = [],
 ): Catalog {
   const { tables, vocabulary } = context;
   const catalog: Catalog = {
@@ -184,6 +185,7 @@ export function buildCatalog(
   catalog.growths = [...growths.values()].sort((a, b) => a.id - b.id);
   const items = new Map(catalog.items.map((item) => [item.id, item]));
   const references = new Set<number>();
+  for (const id of referencedGiftItemIds) references.add(id);
   for (const association of context.ingredientCategoryBuild.associations)
     references.add(association.itemId);
   for (const category of catalog.ingredientCategories)

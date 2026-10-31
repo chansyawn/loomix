@@ -146,6 +146,20 @@ const asset = z.strictObject({
   relatedNeighborIds: neighborId.array(),
 });
 
+const giftPreferenceLevel = z.enum(["love", "favor", "dislike"]);
+const giftPreference = z.strictObject({
+  key: z.string().min(1),
+  npcId: neighborId,
+  level: giftPreferenceLevel,
+  itemIds: z.number().int().positive().array(),
+  tagIds: z.number().int().positive().array(),
+});
+const giftPreferenceTag = z.strictObject({
+  id: z.number().int().positive(),
+  internalName: z.string().min(1),
+  nameZh: z.string().min(1).nullable(),
+});
+
 export const NeighborDatabaseSchema = z
   .strictObject({
     schemaVersion: z.literal(1),
@@ -158,6 +172,8 @@ export const NeighborDatabaseSchema = z
     friendshipRules: friendshipRule.array(),
     eventTags: eventTag.array(),
     furnishingThemes: furnishingTheme.array(),
+    giftPreferences: giftPreference.array(),
+    giftPreferenceTags: giftPreferenceTag.array(),
     assets: asset.array(),
   })
   .superRefine((database, ctx) => {
@@ -195,6 +211,19 @@ export const NeighborDatabaseSchema = z
       ["assets"],
     );
     assertSorted(
+      database.giftPreferences,
+      (a, b) =>
+        a.npcId - b.npcId ||
+        ["love", "favor", "dislike"].indexOf(a.level) -
+          ["love", "favor", "dislike"].indexOf(b.level),
+      ["giftPreferences"],
+    );
+    assertSorted(
+      database.giftPreferenceTags.map((tag) => tag.id),
+      numeric,
+      ["giftPreferenceTags"],
+    );
+    assertSorted(
       database.stars,
       (a, b) =>
         a.npcId - b.npcId ||
@@ -211,6 +240,9 @@ export const NeighborDatabaseSchema = z
       const keys = database[name].map((value) => value.key);
       if (new Set(keys).size !== keys.length) issue([name], "Duplicate key");
     }
+    const preferenceKeys = database.giftPreferences.map((value) => value.key);
+    if (new Set(preferenceKeys).size !== preferenceKeys.length)
+      issue(["giftPreferences"], "Duplicate key");
     const known = new Set(database.neighbors.map((value) => value.id));
     const checkIds = (ids: number[], path: (string | number)[]) => {
       assertSorted(ids, numeric, path);
@@ -228,6 +260,26 @@ export const NeighborDatabaseSchema = z
     database.assets.forEach((value, index) =>
       checkIds(value.relatedNeighborIds, ["assets", index, "relatedNeighborIds"]),
     );
+    const preferenceTagIds = new Set(database.giftPreferenceTags.map((tag) => tag.id));
+    const referencedPreferenceTags = new Set<number>();
+    database.giftPreferences.forEach((preference, index) => {
+      if (!known.has(preference.npcId))
+        issue(["giftPreferences", index, "npcId"], "Unknown neighbor");
+      if (preference.key !== `${preference.npcId}:${preference.level}`)
+        issue(["giftPreferences", index, "key"], "Invalid preference key");
+      assertSorted(preference.itemIds, numeric, ["giftPreferences", index, "itemIds"]);
+      assertSorted(preference.tagIds, numeric, ["giftPreferences", index, "tagIds"]);
+      for (const id of preference.tagIds) {
+        if (!preferenceTagIds.has(id))
+          issue(["giftPreferences", index, "tagIds"], `Unknown preference tag ${id}`);
+        referencedPreferenceTags.add(id);
+      }
+    });
+    if (
+      referencedPreferenceTags.size !== preferenceTagIds.size ||
+      [...preferenceTagIds].some((id) => !referencedPreferenceTags.has(id))
+    )
+      issue(["giftPreferenceTags"], "Preference tag dictionary must match referenced tags");
     database.stories.forEach((value, index) => {
       if (!value.paragraphs.length) issue(["stories", index, "paragraphs"], "Empty story chapter");
       assertSorted(
