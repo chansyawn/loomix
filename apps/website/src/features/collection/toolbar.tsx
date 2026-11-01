@@ -1,11 +1,6 @@
 import type { ReactNode } from "react";
-import { ArrowDownUpIcon, LayoutGridIcon, SearchIcon, TableIcon, XIcon } from "lucide-react";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from "@/ui/components/input-group";
+import { ArrowDownUpIcon, LayoutGridIcon, TableIcon } from "lucide-react";
+import { SearchInput } from "@/ui/components/search-input";
 import {
   Select,
   SelectContent,
@@ -48,30 +43,14 @@ export function CollectionToolbar<S extends string>({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2.5">
-      <InputGroup className="min-w-48 flex-1 sm:max-w-sm">
-        <InputGroupInput
-          aria-label={searchLabel}
-          placeholder={placeholder}
-          value={query}
-          onChange={(event) => onQueryChange?.(event.target.value, true)}
-          disabled={disabled}
-        />
-        <InputGroupAddon>
-          <SearchIcon />
-        </InputGroupAddon>
-        {query && (
-          <InputGroupAddon align="inline-end">
-            <InputGroupButton
-              aria-label="清除搜索"
-              size="icon-xs"
-              onClick={() => onQueryChange?.("", false)}
-              disabled={disabled}
-            >
-              <XIcon />
-            </InputGroupButton>
-          </InputGroupAddon>
-        )}
-      </InputGroup>
+      <SearchInput
+        className="min-w-48 flex-1 sm:max-w-sm"
+        ariaLabel={searchLabel}
+        placeholder={placeholder}
+        value={query}
+        onValueChange={onQueryChange}
+        disabled={disabled}
+      />
       {filters}
       <Select
         items={sortOptions}
