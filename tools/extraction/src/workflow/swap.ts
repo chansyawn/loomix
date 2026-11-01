@@ -1,6 +1,6 @@
 import fs from "node:fs";
 
-// Replace a directory with a fully verified staging tree, restoring the previous tree on failure.
+// 使用已完整校验的暂存目录树替换目标目录，失败时恢复原目录树。
 export function swapDirectory(staging: string, target: string): void {
   const previous = `${target}.previous`;
   fs.rmSync(previous, { recursive: true, force: true });

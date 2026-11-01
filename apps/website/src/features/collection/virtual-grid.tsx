@@ -32,7 +32,7 @@ function VirtualRows<T>({
   geometry: { width: number; scrollMargin: number; scrollElement: HTMLDivElement };
 }) {
   "use no memo";
-  // Virtual v3 exposes a mutable instance; read its range on every scroll render.
+  // Virtual v3 暴露的实例可变，每次滚动触发渲染时都需重新读取其范围。
   const { width, scrollMargin, scrollElement } = geometry;
   const { columns, rowHeight } = gridGeometry(width, layout);
   const measuredWidth = useRef(width);

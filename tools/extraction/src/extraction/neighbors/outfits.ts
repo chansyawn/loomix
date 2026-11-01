@@ -117,7 +117,7 @@ function readCandidates(
     const playerItemId = tables.uint(row, 11);
     const neighborId =
       rawNeighborId !== null && acceptedNeighborIds.has(rawNeighborId) ? rawNeighborId : null;
-    // Treat the million range as matching only when the counterpart is explicit.
+    // 仅在存在明确对应项时，才将百万区间判定为匹配。
     const matching = id >= 1_000_000 && playerItemId !== null;
 
     if (rawNeighborId !== null && !acceptedNeighborIds.has(rawNeighborId)) {

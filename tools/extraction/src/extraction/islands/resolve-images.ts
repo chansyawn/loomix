@@ -23,7 +23,7 @@ export function createIslandImageResolver(textures: IndexedAsset[], sprites: Ind
     const active = variants.filter(
       (entry) => /[\\/]Persistent[\\/]/i.test(entry.Source) === overlay,
     );
-    // Atlas Sprite names can differ from the container's filename; only a unique active object is safe.
+    // 图集 Sprite 名称可能与容器文件名不同；只有当前生效对象唯一时才能安全匹配。
     if (new Set(active.map((entry) => `${entry.Source}|${entry.PathID}`)).size !== 1) return match;
     return {
       reference,

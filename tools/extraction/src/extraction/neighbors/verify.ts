@@ -24,7 +24,7 @@ export function verifyNeighbors(value: unknown, input: NeighborExtractionInput):
     roster,
     "Independently reconstructed neighbor roster",
   );
-  // Re-read the frozen tables; neither the public JSON nor its audit is a source of truth.
+  // 重新读取冻结的表数据；对外发布的 JSON 及其审计结果均不作为事实依据。
   assert.deepEqual(
     database,
     extractNeighbors(input),

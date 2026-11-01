@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-// Remove a path only when it is strictly inside the expected parent and contains no links.
+// 仅当路径严格位于预期父目录内部且不含符号链接时，才允许删除。
 export function removeWithin(file: string, parent: string): void {
   const absolute = path.resolve(file),
     root = path.resolve(parent);

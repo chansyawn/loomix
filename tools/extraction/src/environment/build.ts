@@ -38,7 +38,7 @@ export async function init(): Promise<string> {
       console.log(`Reusing verified environment ${id}`);
       return;
     } catch {
-      /* An incomplete or changed environment is never reusable. */
+      /* 不完整或已变更的环境一律不可复用。 */
     }
     const staging = `${directory}.staging`;
     fs.rmSync(staging, { recursive: true, force: true });

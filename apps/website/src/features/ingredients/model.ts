@@ -84,7 +84,7 @@ export function buildIngredientsData(
   for (const category of categories) {
     for (const id of new Set(category.itemIds)) {
       const item = view.ingredientItemsById.get(id);
-      // Reference-only records have no canonical detail page and must not become browsable.
+      // 仅供引用的记录没有正式详情页，不得作为可浏览条目展示。
       if (!item || item.listed === false) continue;
       itemsById.set(id, item);
       categoriesByItemId.set(id, [...(categoriesByItemId.get(id) ?? []), category]);
@@ -104,7 +104,7 @@ export function buildIngredientsData(
         expression: slot.expression,
         label: ingredientConditionLabel(slot.expression, categoriesById),
       };
-      // The resolved candidates preserve intersections (all) and unions (any).
+      // 解析后的候选项保留交集（all）与并集（any）语义。
       for (const id of new Set(slot.itemIds)) {
         if (!itemsById.has(id)) continue;
         addMatch(byItem, id, dish, condition);

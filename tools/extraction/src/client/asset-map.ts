@@ -47,7 +47,7 @@ export async function* readAssetMap(file: string): AsyncGenerator<AssetMapAsset>
   };
   xml.onclosetag = () => {
     if (depth === 3 && asset && field) {
-      // Empty optional fields have always been omitted from the indexed JSON.
+      // 索引 JSON 一直省略为空的可选字段。
       if (text) asset[field] = text;
       field = undefined;
     } else if (depth === 2 && asset) {

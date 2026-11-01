@@ -27,7 +27,7 @@ export function createLayoutStore(storage: LayoutStorage) {
     try {
       snapshot = collectionLayoutSchema.parse(storage.read());
     } catch {
-      // A blocked storage area must not discard the in-memory preference.
+      // 存储区域不可访问时，不得丢弃内存中的偏好设置。
     }
     initialized = true;
   };
@@ -65,7 +65,7 @@ export function createLayoutStore(storage: LayoutStorage) {
         inMemoryOnly = false;
       } catch {
         inMemoryOnly = true;
-        // Continue to share the preference within this session when persistence fails.
+        // 持久化失败时，仍在当前会话中共享偏好设置。
       }
       notify();
     },

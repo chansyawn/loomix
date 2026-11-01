@@ -101,6 +101,6 @@ export const compactClothingSearchMiddleware: SearchMiddleware<ClothingSearch> =
     appearances: _appearances,
     ...other
   } = result;
-  // Validation restores required defaults from the compact URL representation.
+  // 校验时从精简的 URL 表示中恢复必需的默认值。
   return { ...other, ...compactClothingSearch(result) } as ClothingSearch;
 };

@@ -101,6 +101,6 @@ export const compactCreaturesSearchMiddleware: SearchMiddleware<CreaturesSearch>
 }) => {
   const result = next(search);
   const { layout: _layout, view: _view, items: _items, series: _series, ...other } = result;
-  // Validation restores defaults omitted from the URL representation.
+  // 校验时恢复 URL 表示中省略的默认值。
   return { ...other, ...compactCreaturesSearch(result) } as CreaturesSearch;
 };

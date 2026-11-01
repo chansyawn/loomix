@@ -55,7 +55,7 @@ export async function runCheckpoints(
       console.log(`[${task.name}] verified checkpoint`);
     } catch {
       invalidated.add(task.name);
-      // Remove all downstream markers before touching their inputs, including after a failed task.
+      // 修改下游输入前先移除所有下游标记，任务失败后也不例外。
       const downstream = new Set([task.name]);
       for (const candidate of tasks)
         if (candidate.dependencies.some((name) => downstream.has(name)))

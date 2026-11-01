@@ -69,7 +69,7 @@ export function evidenceSources(
         fields: [profile.fields.textmap.zh],
       });
   }
-  // Localization and tag/display resolution are separately retained, hash-bound inputs.
+  // 本地化与标签、展示解析的输入分别保留，并通过哈希绑定。
   if (typeof proof.value === "string") sources.push({ file: "prepared/textmap-zh-en.json" });
   if (
     [

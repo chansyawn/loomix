@@ -95,7 +95,7 @@ export function buildDomainEvidence(
     if (proof.field === "seedId" || proof.field === "detail.id") continue;
     const owner = proof.owner === "seed" ? "catalog.seeds" : collection(proof.id);
     const fieldPath = fields[proof.field] ?? proof.field.replace(/^attributes\.|^detail\./, "");
-    // Inapplicable source observations do not create fields on the domain entity.
+    // 不适用的来源观测记录不会在领域实体上创建字段。
     const entity = entities.get(`${owner}:${proof.id}`);
     const sources: EvidenceSource[] = proof.sources.map(({ file, table, rowOffset, fields }) => ({
       kind: "table",

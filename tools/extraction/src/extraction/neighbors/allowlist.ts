@@ -1,4 +1,4 @@
-// IDs define admission; names document and validate the frozen roster.
+// ID 决定准入范围；名称用于记录和校验冻结名单。
 export const neighborAllowlist = [
   { id: 11, name: "蛮蛮" },
   { id: 12, name: "绵朵莉" },

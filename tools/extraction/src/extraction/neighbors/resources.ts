@@ -27,7 +27,7 @@ export function readAssets(
 ): NeighborAssetRef[] {
   const assets: NeighborAssetRef[] = [];
   for (const row of tables.rows(profile.roots.neighborAssets)) {
-    // Only these two fields are verified string references; other entity fields are scalars.
+    // 仅这两个字段已确认为字符串引用，其余实体字段均为标量。
     assertLayout(tables, row, { template: [6, "string"], prefab: [7, "string"] }, 18);
     for (const field of [6, 7]) {
       const value = normalizedPath(tables.string(row, field));

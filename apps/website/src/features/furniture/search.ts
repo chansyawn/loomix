@@ -116,6 +116,6 @@ export const compactFurnitureSearchMiddleware: SearchMiddleware<FurnitureSearch>
 }) => {
   const result = next(search);
   const { view: _view, layout: _layout, items: _items, sets: _sets, ...other } = result;
-  // Router middlewares return the wire representation; validation restores required defaults.
+  // 路由中间件返回序列化表示，校验时恢复必需的默认值。
   return { ...other, ...compactFurnitureSearch(result) } as FurnitureSearch;
 };

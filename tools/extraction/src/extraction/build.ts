@@ -197,7 +197,7 @@ export async function extract(environmentId: string): Promise<string> {
         },
       ]);
       await assertClientUnchanged(environment);
-      // Verification is repeated on reuse, independently of checkpoint markers.
+      // 复用时仍需重新校验，不依赖检查点标记。
       await verifyExtraction(work);
       atomicJson(path.join(work, "run-report.json"), {
         passed: true,

@@ -74,7 +74,7 @@ export async function deliver(
         ),
         result: { passed: true, validation: "passed", failures: [] },
       };
-      // Re-read the sealed extraction before publication in case it changed during image processing.
+      // 发布前重新读取已封存的提取结果，防止其在图片处理期间发生变更。
       await readManifest(bundle, "extraction");
       if ((await implementationRevision()) !== implementation)
         throw new Error("Implementation changed during delivery; rerun deliver");

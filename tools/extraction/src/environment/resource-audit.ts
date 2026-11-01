@@ -37,7 +37,7 @@ export async function validateResourceManifests(
     const uninstalled: string[] = [];
     const withoutChecksum: string[] = [];
     for (const entry of entries) {
-      // The data update supersedes matching resource-update entries, as in source-audit.
+      // 与来源审计逻辑一致，数据更新会覆盖资源更新中的同路径条目。
       if (
         scope === "Persistent" &&
         manifest.endsWith("/res_versions.json") &&
@@ -45,8 +45,8 @@ export async function validateResourceManifests(
       )
         continue;
       const file = within(path.join(gameRoot, scope), entry.path);
-      // Update manifests include unchanged base packages and optional downloads.
-      // Missing overlays are not evidence of absence; selected sources are audited in extract.
+      // 更新清单包含未变更的基础包和可选下载项。
+      // 缺少覆盖文件不代表资源不存在；实际选用的来源会在提取阶段接受审计。
       if (!fs.existsSync(file)) {
         uninstalled.push(entry.path);
         continue;

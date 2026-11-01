@@ -19,7 +19,7 @@ export async function publish(
   const result = readJson<ValidationReport>(path.join(options.work, "validation.json"));
   if (!result.passed) throw new Error("Validation has not passed");
   if (validateStaging) await validateStaging(options);
-  // Validate the complete tree before copying; cp must never follow a resource symlink.
+  // 复制前校验完整目录树；cp 不得跟随资源中的符号链接。
   const expected = await inventory(staging, filesWithin(staging));
   const parent = path.dirname(options.output);
   fs.mkdirSync(parent, { recursive: true });

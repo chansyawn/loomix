@@ -142,7 +142,7 @@ function CollectionTableBody<T extends object>({
   rows: TableRowModel<T>[];
 }) {
   "use no memo";
-  // Virtual v3 mutates a stable instance; its range must be read on every scroll render.
+  // Virtual v3 会修改同一个实例，每次滚动触发渲染时都必须重新读取其范围。
   const { container: body, geometry } = useScrollGeometry<HTMLTableSectionElement>();
   const scrollEntry = useElementScrollRestoration({ id: "wiki-content" });
   const virtual = rows.length > 50;
