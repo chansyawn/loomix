@@ -44,10 +44,14 @@ test("current habitat localization keys and furniture sizes", () => {
   assert.equal(furnitureSize("尺寸_1_2a5"), "1.0x2.5");
   assert.equal(furnitureSize("大"), null);
 });
-test("creature ranges use raw endpoints and the temporary 厘 unit", () => {
-  assert.equal(creatureSizeRange(60, 120), "60–120厘");
-  assert.equal(creatureSizeRange(null, 120), null);
-  assert.throws(() => creatureSizeRange(120, 60), /minimum size/);
+test("creature ranges apply the configured factor and normalize float precision", () => {
+  assert.equal(creatureSizeRange(30, 50, 0.05000000074505806), "1.5–2.5厘");
+  assert.equal(creatureSizeRange(23, 38, 0.20000000298023224), "4.6–7.6厘");
+  assert.equal(creatureSizeRange(26, 46, 0.20000000298023224), "5.2–9.2厘");
+  assert.equal(creatureSizeRange(20, 40, 0.699999988079071), "14–28厘");
+  assert.equal(creatureSizeRange(null, 120, 0.6), null);
+  assert.throws(() => creatureSizeRange(120, 60, 0.6), /minimum size/);
+  assert.throws(() => creatureSizeRange(1, 2, 0.005), /two decimal places/);
 });
 test("tag ancestry preserves class membership and detects cycles", () => {
   const nodes = {

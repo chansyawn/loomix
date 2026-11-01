@@ -25,6 +25,10 @@ function context(rows: FakeRow[]) {
       const value = entry?.values[field];
       return typeof value === "number" ? value : null;
     },
+    float: (entry: FakeRow | undefined, field: number) => {
+      const value = entry?.values[field];
+      return typeof value === "number" ? value : null;
+    },
     string: (entry: FakeRow | undefined, field: number) => {
       const value = entry?.values[field];
       return typeof value === "string" ? value : null;
@@ -54,25 +58,28 @@ function context(rows: FakeRow[]) {
   } as unknown as ContentContext;
 }
 
-test("creature size preserves table endpoints and applies the documented li unit assumption", () => {
-  const scale = row(132, 41001, { 3: 100, 4: 60, 5: 120, 6: 0.6 });
-  const result = creatureSize(context([scale]), 41001);
+test("creature size multiplies table endpoints by the configured size factor", () => {
+  const scale = row(132, 43052, { 3: 100, 4: 26, 5: 46, 6: 0.2 });
+  const result = creatureSize(context([scale]), 43052);
 
-  expect(result.value).toEqual({ min: 60, max: 120, unit: "厘" });
+  expect(result.value).toEqual({ min: 5.2, max: 9.2, unit: "厘" });
   expect(result.sources).toEqual([
     {
       file: "prepared/ed.obb",
       table: 132,
-      row: 41001,
-      rowOffset: 410010,
+      row: 43052,
+      rowOffset: 430520,
       fields: [0, 3, 4, 5, 6],
     },
   ]);
 });
 
-test("creature size remains null when either endpoint is missing and rejects inverted ranges", () => {
+test("creature size remains null for incomplete settings and rejects inverted ranges", () => {
   const incomplete = creatureSize(context([row(132, 41001, { 4: 60 })]), 41001);
   expect(incomplete.value).toBeNull();
+
+  const missingMultiplier = creatureSize(context([row(132, 41001, { 4: 60, 5: 120 })]), 41001);
+  expect(missingMultiplier.value).toBeNull();
 
   expect(() => creatureSize(context([row(132, 41001, { 4: 120, 5: 60 })]), 41001)).toThrow(
     /minimum size exceeds maximum/,

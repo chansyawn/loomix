@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import type { CollectionObservations, CraftingRecipe } from "../extraction/schema.ts";
 import type { Tables } from "../extraction/decode/tables.ts";
-import { creatureSizeRange, creatureSizeUnit, plainText } from "../extraction/content/model.ts";
+import { creatureSizeRange, plainText, scaledCreatureSize } from "../extraction/content/model.ts";
 
 export function verifyCollectionFields(catalog: CollectionObservations, tables: Tables) {
   const main = tables.byId(318);
@@ -124,8 +124,11 @@ export function verifyCollectionFields(catalog: CollectionObservations, tables: 
       const scale = creatureScales.get(record.id);
       const min = tables.uint(scale, 4);
       const max = tables.uint(scale, 5);
+      const multiplier = tables.float(scale, 6);
       const expectedSize =
-        min !== null && max !== null && min <= max ? { min, max, unit: creatureSizeUnit } : null;
+        min !== null && max !== null && min <= max
+          ? scaledCreatureSize(min, max, multiplier)
+          : null;
       assert.deepEqual(detail.creatureSize, expectedSize, "Creature size follows table endpoints");
       requiredFields.set(`item:${record.id}:detail.creatureSize`, expectedSize);
       expect(
@@ -135,7 +138,7 @@ export function verifyCollectionFields(catalog: CollectionObservations, tables: 
       );
       assert.deepEqual(
         record.attributes.sizeRange,
-        creatureSizeRange(min, max),
+        creatureSizeRange(min, max, multiplier),
         `${record.id}.attributes.sizeRange`,
       );
     }

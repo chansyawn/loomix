@@ -84,7 +84,7 @@ export async function structure(options: WorkOptions): Promise<void> {
       "325.2 vector → 618.0 source keys",
       "325.35 / 262.9 / 519.9 series backreferences",
       "325.30–34 ecological display keys",
-      "132.0 item ID → 132.4/5 creature size endpoints; current unit assumption 厘, scale parameters unused",
+      "132.0 item ID → 132.4/5 endpoints × 132.6 multiplier → creature size in 厘",
       "144.10 crop product vector → 144.5 harvest count",
       "122.4 dish product → 122.2 difficulty / 122.16 cookware",
     ],

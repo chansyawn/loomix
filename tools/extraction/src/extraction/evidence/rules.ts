@@ -44,7 +44,7 @@ export function transformationRule(field: string): string {
     cookware: "122.16 → unique matching 126.2; use 126.1 string",
     harvestCount: "144.10 product vector membership → 144.5 unsigned integer",
     sizeRange:
-      "read table 132.4/5 as range endpoints and assume 厘 per the temporary project policy; do not apply 132.3/6 scaling parameters",
+      "multiply table 132.4/5 range endpoints by 132.6 to obtain the displayed range in 厘; 132.3 is not used",
     maturityPeriod: "unconfirmed stage timing/first-harvest rules; retain candidates, emit null",
     category: "verified six-category classification or frozen admission decision",
     kind: "verified item type and encyclopedia appearance flag, or supplemental item admission",

@@ -29,14 +29,15 @@ export function buildCreatureItem(
   const scale = vocabulary.scales.get(id);
   const min = tables.uint(scale, 4);
   const max = tables.uint(scale, 5);
+  const multiplier = tables.float(scale, 6);
   builder.put(
     "attributes.sizeRange",
-    creatureSizeRange(min, max),
+    creatureSizeRange(min, max, multiplier),
     evidence(
       profile.roots.creatureScale,
       [3, 4, 5, 6],
-      "Use raw endpoints as 厘 by temporary project policy; retain scale parameters without applying them",
+      "Multiply table 132.4/5 by 132.6; 132.3 is not part of the displayed size range",
     ),
-    "creature_size_endpoints_missing",
+    "creature_size_configuration_missing",
   );
 }

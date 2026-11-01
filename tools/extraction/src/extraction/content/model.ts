@@ -5,6 +5,27 @@ import { recordTypes, recordType, parseCatalog } from "../schema.ts";
 
 export const creatureSizeUnit = "厘";
 
+export function scaledCreatureSize(
+  min: number | null,
+  max: number | null,
+  multiplier: number | null,
+) {
+  if (min === null || max === null || multiplier === null) return null;
+  if (min > max) throw new Error("Creature minimum size must not exceed maximum");
+  if (!Number.isFinite(multiplier) || multiplier <= 0)
+    throw new Error("Creature size multiplier must be positive");
+
+  const normalizedMultiplier = Math.round(multiplier * 100) / 100;
+  if (Math.abs(multiplier - normalizedMultiplier) > 0.00001)
+    throw new Error("Creature size multiplier exceeds two decimal places");
+  const scale = (endpoint: number) => Math.round(endpoint * normalizedMultiplier * 100) / 100;
+  return {
+    min: scale(min),
+    max: scale(max),
+    unit: creatureSizeUnit,
+  };
+}
+
 export function plainText(value: unknown) {
   return typeof value === "string"
     ? value
@@ -27,10 +48,13 @@ export function furnitureSize(value: string | null | undefined) {
     ? `${Number(match[1].replace("a", ".")).toFixed(1)}x${Number(match[2].replace("a", ".")).toFixed(1)}`
     : null;
 }
-export function creatureSizeRange(min: number | null, max: number | null) {
-  if (min === null || max === null) return null;
-  if (min > max) throw new Error("Creature minimum size must not exceed maximum");
-  return `${min}–${max}${creatureSizeUnit}`;
+export function creatureSizeRange(
+  min: number | null,
+  max: number | null,
+  multiplier: number | null,
+) {
+  const size = scaledCreatureSize(min, max, multiplier);
+  return size ? `${size.min}–${size.max}${size.unit}` : null;
 }
 export function expandTags(names: string[], nodes: Record<number, TagNode>) {
   const byName = new Map(Object.values(nodes).map((n) => [n.TagName, n]));

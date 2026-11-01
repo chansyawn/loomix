@@ -2,7 +2,7 @@ import type { CatalogRecord } from "../../schema.ts";
 import type { CollectionDetail, CropSeedDetail } from "../../schema.ts";
 import { emptyCollectionDetail, emptyCropSeedDetail } from "../../schema.ts";
 import type { ContentContext } from "../../content/context.ts";
-import { creatureSizeUnit, plainText } from "../../content/model.ts";
+import { plainText, scaledCreatureSize } from "../../content/model.ts";
 import type { CollectionEvidenceBuilder, CollectionSource } from "../evidence.ts";
 import { localizedSources, tableSource } from "../evidence.ts";
 import type { TableRow } from "../../types.ts";
@@ -45,14 +45,14 @@ export function creatureSize(
   const scale = context.vocabulary.scales.get(id);
   const min = tables.uint(scale, 4);
   const max = tables.uint(scale, 5);
+  const multiplier = tables.float(scale, 6);
   const sources = scale ? [tableSource(tables, scale, [0, 3, 4, 5, 6])] : [];
-  if (min === null || max === null)
-    return { value: null, sources, reason: "creature_size_endpoints_missing" };
-  if (min > max) throw new Error(`Creature minimum size exceeds maximum ${id}`);
+  if (min !== null && max !== null && min > max)
+    throw new Error(`Creature minimum size exceeds maximum ${id}`);
   return {
-    value: { min, max, unit: creatureSizeUnit },
+    value: scaledCreatureSize(min, max, multiplier),
     sources,
-    reason: "creature_size_endpoints_missing",
+    reason: "creature_size_configuration_missing",
   };
 }
 
@@ -308,7 +308,7 @@ export function buildItemDetail(
         size.value,
         size.sources,
         "132.0 = catalog item ID",
-        "Read 132.4/5 directly as range endpoints and assume 厘 per temporary project policy; preserve 132.3/6 without applying them",
+        "Multiply 132.4/5 endpoints by 132.6 to obtain the displayed 厘 range; 132.3 is not used",
         size.reason,
       );
       recordDetail(proofs, "item", record.id, "detail.creatureGrades", {

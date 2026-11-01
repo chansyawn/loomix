@@ -59,12 +59,13 @@ export function detailInvestigation(context: ContentContext) {
       const ui = context.ui.get(id);
       const min = tables.uint(scale, 4);
       const max = tables.uint(scale, 5);
-      if (min === null || max === null)
+      const multiplier = tables.float(scale, 6);
+      if (min === null || max === null || multiplier === null)
         records.push({
           id,
           field: "detail.creatureSize",
           status: "unconfirmed",
-          reason: "creature_size_endpoints_missing",
+          reason: "creature_size_configuration_missing",
           candidates: {
             min,
             max,
