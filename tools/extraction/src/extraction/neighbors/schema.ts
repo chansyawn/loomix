@@ -160,6 +160,60 @@ const giftPreferenceTag = z.strictObject({
   nameZh: z.string().min(1).nullable(),
 });
 
+const outfitOffer = z.strictObject({
+  id: z.number().int().positive(),
+  goodsGroupId: z.number().int().positive(),
+  configuredPrice: z.number().int().nonnegative(),
+  currencyItemId: z.number().int().positive(),
+});
+
+const outfit = z
+  .strictObject({
+    id: z.number().int().positive(),
+    nameZh: z.string().min(1),
+    relationship: z.enum(["matching", "neighbor-specific"]),
+    neighborId: neighborId.nullable(),
+    slotCode: z.number().int().positive(),
+    slotNameZh: z.string().min(1),
+    modelPaths: z.strictObject({
+      small: path.nullable(),
+      medium: path.nullable(),
+      big: path.nullable(),
+    }),
+    playerItemId: z.number().int().positive().nullable(),
+    playerItemNameZh: z.string().min(1).nullable(),
+    colors: z.string().min(1).array(),
+    materials: z.string().min(1).array(),
+    styles: z.string().min(1).array(),
+    specialTags: z.string().min(1).array(),
+    imagePath: path,
+    descriptionZh: z.string().nullable(),
+    offers: outfitOffer.array(),
+  })
+  .superRefine((value, ctx) => {
+    if (!value.modelPaths.small && !value.modelPaths.medium && !value.modelPaths.big)
+      ctx.addIssue({
+        code: "custom",
+        path: ["modelPaths"],
+        message: "At least one model size is required",
+      });
+    if (value.relationship === "matching" && value.playerItemId === null)
+      ctx.addIssue({
+        code: "custom",
+        path: ["playerItemId"],
+        message: "Matching outfits need an explicit player item",
+      });
+    if (value.relationship === "neighbor-specific" && value.neighborId === null)
+      ctx.addIssue({
+        code: "custom",
+        path: ["neighborId"],
+        message: "Neighbor-specific outfits need a neighbor",
+      });
+    const offerIds = value.offers.map((offer) => offer.id);
+    if (new Set(offerIds).size !== offerIds.length)
+      ctx.addIssue({ code: "custom", path: ["offers"], message: "Duplicate outfit offer ID" });
+  });
+
 export const NeighborDatabaseSchema = z
   .strictObject({
     schemaVersion: z.literal(1),
@@ -174,6 +228,7 @@ export const NeighborDatabaseSchema = z
     furnishingThemes: furnishingTheme.array(),
     giftPreferences: giftPreference.array(),
     giftPreferenceTags: giftPreferenceTag.array(),
+    outfits: outfit.array(),
     assets: asset.array(),
   })
   .superRefine((database, ctx) => {
@@ -224,6 +279,11 @@ export const NeighborDatabaseSchema = z
       ["giftPreferenceTags"],
     );
     assertSorted(
+      database.outfits.map((value) => value.id),
+      numeric,
+      ["outfits"],
+    );
+    assertSorted(
       database.stars,
       (a, b) =>
         a.npcId - b.npcId ||
@@ -244,6 +304,10 @@ export const NeighborDatabaseSchema = z
     if (new Set(preferenceKeys).size !== preferenceKeys.length)
       issue(["giftPreferences"], "Duplicate key");
     const known = new Set(database.neighbors.map((value) => value.id));
+    database.outfits.forEach((value, index) => {
+      if (value.neighborId !== null && !known.has(value.neighborId))
+        issue(["outfits", index, "neighborId"], "Unknown neighbor");
+    });
     const checkIds = (ids: number[], path: (string | number)[]) => {
       assertSorted(ids, numeric, path);
       if (ids.some((id) => !known.has(id))) issue(path, "Unknown neighbor");
@@ -353,6 +417,7 @@ export const NeighborDatabaseSchema = z
   });
 
 export type NeighborDatabase = z.infer<typeof NeighborDatabaseSchema>;
+export type NeighborOutfit = z.infer<typeof outfit>;
 
 export function parseNeighborDatabase(input: unknown): NeighborDatabase {
   return NeighborDatabaseSchema.parse(input);
@@ -379,6 +444,7 @@ export function neighborImagePaths(database: NeighborDatabase): string[] {
           story.paragraphs.map((paragraph) => paragraph.illustrationPath),
         ),
         ...database.furnishingThemes.map((theme) => theme.coverPath),
+        ...database.outfits.map((outfit) => outfit.imagePath),
       ].filter((value): value is string => value !== null),
     ),
   ].sort();

@@ -1,7 +1,7 @@
 import type { Tables } from "../decode/tables.ts";
 import type { TableRow } from "../types.ts";
 
-export type FieldKind = "uint" | "float" | "text" | "string" | "vector";
+export type FieldKind = "uint" | "byte" | "float" | "text" | "string" | "vector";
 export type Layout = Readonly<Record<string, readonly [number, FieldKind]>>;
 
 export function assertLayout(tables: Tables, row: TableRow, layout: Layout, maxFields: number) {
@@ -13,7 +13,8 @@ export function assertLayout(tables: Tables, row: TableRow, layout: Layout, maxF
     const position = fields[field];
     if (position == null) continue;
     const next = Math.min(end, ...fields.filter((p): p is number => p !== null && p > position));
-    if (next - position !== 4 || !tables.reader.inRange(position, 4))
+    const width = kind === "byte" ? 1 : 4;
+    if (next - position !== width || !tables.reader.inRange(position, width))
       throw new Error(`Invalid neighbor ${kind} width: ${row.root}.${field}`);
     if (kind === "string" && tables.string(row, field) === null)
       throw new Error(`Invalid neighbor string: ${row.root}.${field}`);

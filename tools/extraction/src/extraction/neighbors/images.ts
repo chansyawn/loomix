@@ -31,6 +31,7 @@ export async function exportNeighborImages(options: WorkOptions): Promise<void> 
   const reusable = readJson<ImageManifest[]>(path.join(options.work, "image-candidates.json"));
   const selected: ImageAsset[] = [];
   const unresolved: { path: string; reason: string }[] = [];
+  const requiredOutfitIcons = new Set(database.outfits.map((outfit) => outfit.imagePath));
   for (const reference of neighborImagePaths(database)) {
     const match = resolve(reference);
     if (
@@ -52,6 +53,13 @@ export async function exportNeighborImages(options: WorkOptions): Promise<void> 
       pathId: match.pathId,
     });
   }
+  const missingOutfitIcons = unresolved.filter(({ path: reference }) =>
+    requiredOutfitIcons.has(reference),
+  );
+  if (missingOutfitIcons.length)
+    throw new Error(
+      `Missing configured neighbor outfit icons: ${missingOutfitIcons.map((entry) => entry.path).join(", ")}`,
+    );
   const additionalSelected = selectAdditionalNeighborImages(textures, sprites);
   const available = new Map<string, NeighborImageExport>(
     reusable.map((entry) => [assetKey(entry), entry]),

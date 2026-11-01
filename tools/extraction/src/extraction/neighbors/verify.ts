@@ -82,6 +82,20 @@ export function verifyNeighbors(value: unknown, input: NeighborExtractionInput):
       profile.expectedNeighborPreferences,
       "Neighbor gift preference counts changed; re-confirm the layout and profile",
     );
+    const outfitCounts = {
+      total: database.outfits.length,
+      matching: database.outfits.filter((outfit) => outfit.relationship === "matching").length,
+      neighborSpecific: database.outfits.filter(
+        (outfit) => outfit.relationship === "neighbor-specific",
+      ).length,
+      tokenPricedOutfits: database.outfits.filter((outfit) => outfit.offers.length > 0).length,
+      tokenPricedOffers: database.outfits.reduce((sum, outfit) => sum + outfit.offers.length, 0),
+    };
+    assert.deepEqual(
+      outfitCounts,
+      profile.expectedNeighborOutfits,
+      "Neighbor outfit counts changed; re-confirm the layout and profile",
+    );
   }
   return database;
 }

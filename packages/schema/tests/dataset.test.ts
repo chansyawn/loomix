@@ -75,6 +75,58 @@ test("gift preferences reference known neighbors, items, and a distinct tag dict
     expect.objectContaining({ message: "Unknown preference tag 50001" }),
   );
 });
+test("neighbor outfit data is backward-compatible and keeps configured prices distinct from availability", () => {
+  const dataset = emptyDataset(context, source);
+  dataset.neighbors.neighbors.push({
+    id: 11,
+    name: "蛮蛮",
+    bodyType: null,
+    scaleValue: null,
+    avatar: null,
+    npc2Path: "Avatar/NPC2/NPC_11",
+  });
+  const image = { assetId: "neighbor-outfit-icon", variant: "icon" as const };
+  dataset.neighbors.outfits.push({
+    id: 1160001,
+    name: "友邻款帽子",
+    relationship: "matching",
+    neighborId: null,
+    slotCode: 5001,
+    slotName: "头戴物",
+    modelPaths: { small: "NpcOutfits/Small/Hat", medium: null, big: "NpcOutfits/Big/Hat" },
+    playerItemId: 60001,
+    playerItemName: "玩家帽子",
+    colors: ["蓝色"],
+    materials: ["毛线"],
+    styles: ["休闲"],
+    specialTags: [],
+    image,
+    description: null,
+    offers: [{ id: 50001, goodsGroupId: 500, configuredPrice: 120, currencyItemId: 200014 }],
+  });
+  expect(parseDataset(dataset).neighbors.outfits).toEqual(dataset.neighbors.outfits);
+  expect(referencedImages(dataset)).toContainEqual(image);
+  const legacy = { ...dataset.neighbors };
+  Reflect.deleteProperty(legacy, "outfits");
+  expect(parseNeighbors(legacy).outfits).toEqual([]);
+  expect(parseDataset({ ...dataset, neighbors: legacy }).neighbors.outfits).toEqual([]);
+  const outfit = dataset.neighbors.outfits[0]!;
+  const offer = outfit.offers[0]!;
+  for (const invalid of [
+    { ...outfit, playerItemId: null },
+    { ...outfit, relationship: "neighbor-specific", neighborId: null },
+    { ...outfit, modelPaths: { small: null, medium: null, big: null } },
+    { ...outfit, offers: [offer, offer] },
+    { ...outfit, offers: [{ ...offer, configuredPrice: -1 }] },
+    { ...outfit, offers: [{ ...offer, configuredPrice: 1.5 }] },
+    { ...outfit, offers: [{ ...offer, available: true }] },
+  ])
+    expect(() => parseNeighbors({ ...dataset.neighbors, outfits: [invalid] })).toThrow();
+  dataset.neighbors.outfits[0]!.neighborId = 999;
+  expect(validateDataset(dataset)).toContainEqual(
+    expect.objectContaining({ message: "Unknown neighbor 999" }),
+  );
+});
 test("duplicate entities, dangling groups and ingredient cycles are reported together", () => {
   const dataset = emptyDataset(context, source);
   dataset.catalog.items.push({ ...base, type: "reference" }, { ...base, type: "reference" });

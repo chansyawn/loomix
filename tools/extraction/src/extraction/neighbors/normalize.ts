@@ -38,6 +38,8 @@ export function normalizeNeighbors(database: NeighborDatabase): NeighborDatabase
     (a, b) => a.npcId - b.npcId || preferenceLevelOrder[a.level] - preferenceLevelOrder[b.level],
   );
   database.giftPreferenceTags.sort((a, b) => a.id - b.id);
+  database.outfits.sort((a, b) => a.id - b.id);
+  for (const outfit of database.outfits) outfit.offers.sort((a, b) => a.id - b.id);
   for (const preference of database.giftPreferences) {
     preference.itemIds = uniqueNumbers(preference.itemIds);
     preference.tagIds = uniqueNumbers(preference.tagIds);

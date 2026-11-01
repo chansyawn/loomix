@@ -47,6 +47,9 @@ export const profile = {
     neighborPreferenceCategories: 337,
     neighborThemes: 180,
     neighborAssets: 206,
+    neighborOutfits: 474,
+    neighborOutfitSlots: 416,
+    neighborOutfitGoods: 659,
     islandIconStyles: 628,
     islandRegions: 652,
     islands: 654,
@@ -99,6 +102,13 @@ export const profile = {
     groups: 36,
     items: { love: 43, favor: 1, dislike: 4 },
     tags: { love: 0, favor: 60, dislike: 24 },
+  },
+  expectedNeighborOutfits: {
+    total: 131,
+    matching: 94,
+    neighborSpecific: 37,
+    tokenPricedOutfits: 94,
+    tokenPricedOffers: 185,
   },
   expectedEncyclopedia: {
     "furniture.set": 42,

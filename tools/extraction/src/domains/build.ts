@@ -114,6 +114,10 @@ export function buildDataset(work: string) {
         ...theme,
         cover: neighborImage(coverPath),
       })),
+      outfits: neighborData.outfits.map(({ imagePath, ...outfit }) => ({
+        ...outfit,
+        image: neighborImage(imagePath),
+      })),
     }) as object),
     resources,
     additionalImages,

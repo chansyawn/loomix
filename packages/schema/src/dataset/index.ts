@@ -41,6 +41,7 @@ export function emptyDataset(context: Dataset["context"], source: Dataset["sourc
       furnishingThemes: [],
       giftPreferences: [],
       giftPreferenceTags: [],
+      outfits: [],
       resources: [],
       additionalImages: [],
     },

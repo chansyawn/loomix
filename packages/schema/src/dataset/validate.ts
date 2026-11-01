@@ -41,6 +41,7 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
   ] as const)
     unique<{ key: string }>(neighbors[name], (value) => value.key, ["neighbors", name]);
   unique(neighbors.giftPreferenceTags, (tag) => tag.id, ["neighbors", "giftPreferenceTags"]);
+  unique(neighbors.outfits, (outfit) => outfit.id, ["neighbors", "outfits"]);
   for (const name of ["stars", "stories", "travelReactions", "additionalImages"] as const)
     neighbors[name].forEach((value, index) => {
       if (value.neighborId !== null)
@@ -81,6 +82,11 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
   for (const id of preferenceTags)
     if (!referencedPreferenceTags.has(id))
       issue(["neighbors", "giftPreferenceTags"], `Unreferenced preference tag ${id}`);
+  neighbors.outfits.forEach((outfit, index) => {
+    if (outfit.neighborId !== null && !ids.has(outfit.neighborId))
+      issue(["neighbors", "outfits", index, "neighborId"], `Unknown neighbor ${outfit.neighborId}`);
+    unique(outfit.offers, (offer) => offer.id, ["neighbors", "outfits", index, "offers"]);
+  });
   for (const theme of neighbors.furnishingThemes)
     checkNeighbors(theme.neighborIds, ["neighbors", "furnishingThemes"]);
   unique(neighbors.resources, (resource) => resource.path, ["neighbors", "resources"]);

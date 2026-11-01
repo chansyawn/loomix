@@ -2,6 +2,7 @@ import { readRoster, readStars, readStories, readTravelReactions } from "./adapt
 import { readEventTags, readIslands, readRules, readThemes } from "./system.ts";
 import { linkedAssets, readAssets } from "./resources.ts";
 import { readGiftPreferences } from "./preferences.ts";
+import { readNeighborOutfits } from "./outfits.ts";
 import { compareText, normalizeNeighbors } from "./normalize.ts";
 import { parseNeighborDatabase } from "./schema.ts";
 import { profile } from "../../profile.ts";
@@ -29,6 +30,7 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
     records,
     exclusions,
   );
+  const outfits = readNeighborOutfits(tables, accepted, records, exclusions);
   const database: NeighborDatabase = {
     schemaVersion: 1,
     source: { ...source },
@@ -42,6 +44,7 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
     furnishingThemes: readThemes(tables, neighbors, records),
     giftPreferences: giftPreferences.preferences,
     giftPreferenceTags: giftPreferences.tags,
+    outfits,
     assets: readAssets(tables, records, exclusions),
   };
   database.assets = linkedAssets(database);
@@ -89,6 +92,13 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
             .reduce((sum, preference) => sum + preference.tagIds.length, 0),
         ]),
       ) as NeighborExtractionAudit["counts"]["giftPreferenceTags"],
+      outfits: result.outfits.length,
+      matchingOutfits: result.outfits.filter((outfit) => outfit.relationship === "matching").length,
+      neighborSpecificOutfits: result.outfits.filter(
+        (outfit) => outfit.relationship === "neighbor-specific",
+      ).length,
+      tokenPricedOutfits: result.outfits.filter((outfit) => outfit.offers.length > 0).length,
+      tokenPricedOffers: result.outfits.reduce((sum, outfit) => sum + outfit.offers.length, 0),
       assets: result.assets.length,
     },
     exclusions: exclusions.sort((a, b) => compareText(a.kind, b.kind) || compareText(a.key, b.key)),

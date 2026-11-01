@@ -15,6 +15,7 @@ export type NeighborFurnishingTheme = NeighborDatabase["furnishingThemes"][numbe
 export type NeighborAssetRef = NeighborDatabase["assets"][number];
 export type NeighborGiftPreference = NeighborDatabase["giftPreferences"][number];
 export type NeighborGiftPreferenceTag = NeighborDatabase["giftPreferenceTags"][number];
+export type NeighborOutfit = NeighborDatabase["outfits"][number];
 export type NeighborBodyType = NonNullable<NeighborRecord["bodyType"]>;
 export type NeighborStoryParagraph = NeighborStoryChapter["paragraphs"][number];
 
@@ -52,6 +53,11 @@ export interface NeighborExtractionAudit {
     giftPreferences: number;
     giftPreferenceItems: Record<GiftPreferenceLevel, number>;
     giftPreferenceTags: Record<GiftPreferenceLevel, number>;
+    outfits: number;
+    matchingOutfits: number;
+    neighborSpecificOutfits: number;
+    tokenPricedOutfits: number;
+    tokenPricedOffers: number;
     assets: number;
   };
   exclusions: NeighborExclusion[];
@@ -72,7 +78,7 @@ export interface NeighborExtractionAudit {
 }
 
 export interface NeighborExclusion {
-  kind: "npc" | "rule" | "asset" | "giftPreference";
+  kind: "npc" | "rule" | "asset" | "giftPreference" | "outfit";
   key: string;
   reason: string;
   sources: NeighborEvidenceSource[];

@@ -58,6 +58,10 @@ export function fixtureRows(): FixtureRows {
   ];
   return {
     318: [[50000], [30050], [1128]],
+    325: [],
+    416: [],
+    474: [],
+    659: [],
     41: [
       npc(1011, "多杰朗", "NpcBig", 117),
       npc(1009, "伊佐奇", "NpcSmall", 65),
