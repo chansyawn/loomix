@@ -1,8 +1,6 @@
-import { collectionItemLocation } from "../collection/item-route";
 import { SearchXIcon } from "lucide-react";
-import { Link, useRouter } from "@tanstack/react-router";
+import { useRouter } from "@tanstack/react-router";
 import { buttonVariants } from "@/ui/components/button";
-import { Card, CardContent } from "@/ui/components/card";
 import {
   Empty,
   EmptyHeader,
@@ -20,8 +18,9 @@ import {
   type CollectionDetailSection,
 } from "@/features/collection/detail-layout";
 import { RecordImage as FurnitureImage } from "@/features/collection/record-image";
+import { CollectionItemCard } from "@/features/collection/collection-item-card";
 import { FurnitureReturnLink } from "./detail-navigation";
-import type { FurnitureItem, FurnitureSet, IngredientItem } from "../collection-view";
+import type { FurnitureItem, FurnitureSet } from "../collection-view";
 import type { FurnitureDetail } from "./detail";
 import type { View } from "./search";
 import { FurnitureLoadError } from "./states";
@@ -116,10 +115,11 @@ function FurnitureRecipes({
               <ul className="flex flex-wrap gap-3">
                 {recipe.materials.map((material) => (
                   <li key={material.itemId} className="max-w-full min-w-0">
-                    <FurnitureMaterialCard
+                    <CollectionItemCard
                       item={material.item}
                       itemId={material.itemId}
                       quantity={material.quantity}
+                      fallbackName="未知材料"
                     />
                   </li>
                 ))}
@@ -129,48 +129,6 @@ function FurnitureRecipes({
         ))}
       </div>
     </section>
-  );
-}
-
-function FurnitureMaterialCard({
-  item,
-  itemId,
-  quantity,
-}: {
-  item: IngredientItem | null;
-  itemId: number;
-  quantity: number;
-}) {
-  const content = (
-    <>
-      <div className="size-12 shrink-0 overflow-hidden rounded-lg border bg-muted/30">
-        <FurnitureImage image={item?.image ?? null} name={item?.name ?? "未知材料"} compact />
-      </div>
-      <span className="min-w-0 truncate text-sm">{item?.name ?? `未知材料 #${itemId}`}</span>
-      <span className="shrink-0 text-sm text-muted-foreground tabular-nums">× {quantity}</span>
-    </>
-  );
-
-  if (!item)
-    return (
-      <Card size="sm" className="max-w-full">
-        <CardContent>
-          <div className="flex min-h-12 items-center gap-2">{content}</div>
-        </CardContent>
-      </Card>
-    );
-
-  return (
-    <Card size="sm" interactive className="relative max-w-full">
-      <CardContent>
-        <Link
-          {...collectionItemLocation(item)}
-          className="flex min-h-12 w-full items-center gap-2 outline-none after:absolute after:inset-0 after:rounded-xl"
-        >
-          {content}
-        </Link>
-      </CardContent>
-    </Card>
   );
 }
 
