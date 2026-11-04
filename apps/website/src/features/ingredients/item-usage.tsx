@@ -2,7 +2,7 @@ import { CookingPotIcon } from "lucide-react";
 import { DishesReturnLink } from "../dishes/detail-navigation";
 import type { IngredientUsage } from "./model";
 import { IngredientTagLink } from "./tag-link";
-import { RecipeAssociationNotice, RelatedRecipes } from "./related-recipes";
+import { RelatedRecipes } from "./related-recipes";
 
 export function ItemCookingUsage({ usage }: { usage: IngredientUsage | null }) {
   if (!usage) return null;
@@ -17,7 +17,7 @@ export function ItemCookingUsage({ usage }: { usage: IngredientUsage | null }) {
           view="ingredients"
           className="text-sm text-muted-foreground underline-offset-4 hover:underline"
         >
-          返回烹饪图鉴
+          前往烹饪图鉴
         </DishesReturnLink>
       </div>
       <div className="flex flex-wrap gap-2" aria-label="食材标签">
@@ -25,15 +25,7 @@ export function ItemCookingUsage({ usage }: { usage: IngredientUsage | null }) {
           <IngredientTagLink key={category.id} category={category} />
         ))}
       </div>
-      {usage.dishes.length > 0 && (
-        <>
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium">关联菜肴 · {usage.dishes.length} 道</h3>
-            <RecipeAssociationNotice />
-          </div>
-          <RelatedRecipes matches={usage.dishes} preview />
-        </>
-      )}
+      {usage.dishes.length > 0 && <RelatedRecipes matches={usage.dishes} />}
     </section>
   );
 }
