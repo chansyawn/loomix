@@ -20,7 +20,7 @@ export function IngredientTagLink({
         view: "ingredients",
         ingredients: ingredientFiltersForTag(category.id),
       }}
-      className={className ?? buttonVariants({ variant: "outline", size: "sm" })}
+      className={className ?? buttonVariants({ variant: "secondary", size: "sm" })}
     >
       {children ?? category.name}
     </Link>
