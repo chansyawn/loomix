@@ -12,21 +12,18 @@ import {
   CollectionDetailExtras,
   CollectionDetailLayout,
   CollectionDetailLoading,
+  type CollectionDetailSection,
 } from "@/features/collection/detail-layout";
 import { RecordImage } from "@/features/collection/record-image";
-import type { MiscellaneousItem } from "../collection-view.ts";
 import { MiscellanyReturnLink } from "./detail-navigation";
 import { MiscellanyLoadError } from "./states";
 import { useRouter } from "@tanstack/react-router";
 import { ItemCookingUsage } from "../ingredients/item-usage";
-import type { loadMiscellanyDetail } from "./detail";
+import type { MiscellanyDetail } from "./detail";
+import { MiscellanyFurnitureUses, MiscellanySourceTrees } from "./related-items";
 
-export function MiscellanyDetailPage({
-  detail,
-}: {
-  detail: Awaited<ReturnType<typeof loadMiscellanyDetail>>;
-}) {
-  const item: MiscellaneousItem = detail.record;
+export function MiscellanyDetailPage({ detail }: { detail: MiscellanyDetail }) {
+  const item = detail.record;
   return (
     <CollectionDetailLayout
       image={<RecordImage key={item.image} image={item.image} name={item.name} eager />}
@@ -37,20 +34,31 @@ export function MiscellanyDetailPage({
           {item.description || "描述未提供"}
         </p>
       }
-      fields={[
-        ["编号", String(item.id)],
-        ["获取途径", item.acquisition],
-      ]}
+      fields={[["获取来源", item.acquisition]]}
     >
-      <CollectionDetailExtras
-        sections={
-          detail.cooking
-            ? [{ key: "miscellany-cooking", content: <ItemCookingUsage usage={detail.cooking} /> }]
-            : []
-        }
-      />
+      <MiscellanyExtras key={item.id} detail={detail} />
     </CollectionDetailLayout>
   );
+}
+
+function MiscellanyExtras({ detail }: { detail: MiscellanyDetail }) {
+  const sections: CollectionDetailSection[] = [];
+  if (detail.sourceTrees.length > 0)
+    sections.push({
+      key: "miscellany-source-trees",
+      content: <MiscellanySourceTrees items={detail.sourceTrees} />,
+    });
+  if (detail.cooking)
+    sections.push({
+      key: "miscellany-cooking",
+      content: <ItemCookingUsage usage={detail.cooking} />,
+    });
+  if (detail.furnitureUses.length > 0)
+    sections.push({
+      key: "miscellany-furniture",
+      content: <MiscellanyFurnitureUses uses={detail.furnitureUses} />,
+    });
+  return <CollectionDetailExtras sections={sections} />;
 }
 
 export function MiscellanyDetailLoading() {
