@@ -161,12 +161,12 @@ describe("creature catalog", () => {
       ids(queryCreatures(data, "series", { ...emptyQuery(), q: "春", qualities: ["2"] }).rows),
     ).toEqual([101]);
   });
-  it("previews the first four pictured members in membership order", () => {
-    const pictured = Array.from({ length: 6 }, (_, index) =>
+  it("previews the first six pictured members in membership order", () => {
+    const pictured = Array.from({ length: 8 }, (_, index) =>
       item(index + 1, { image: index === 1 ? null : `image-${index}` }),
     );
-    const group = { ...series[0]!, creatureIds: [6, 2, 5, 4, 3, 1] };
-    expect(ids(seriesPreview(group, pictured))).toEqual([6, 5, 4, 3]);
+    const group = { ...series[0]!, creatureIds: [8, 2, 7, 6, 5, 4, 3, 1] };
+    expect(ids(seriesPreview(group, pictured))).toEqual([8, 7, 6, 5, 4, 3]);
     expect(seriesPreview({ ...group, creatureIds: null }, pictured)).toEqual([]);
     expect(seriesPreview({ ...group, creatureIds: [] }, pictured)).toEqual([]);
     expect(seriesPreview(series[0]!, items)).toEqual([]);

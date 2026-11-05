@@ -144,5 +144,5 @@ export function seriesPreview(series: CreatureSeries, items: CreatureItem[]): Cr
       const item = byId.get(id);
       return item?.image ? [item] : [];
     })
-    .slice(0, 4);
+    .slice(0, 6);
 }
