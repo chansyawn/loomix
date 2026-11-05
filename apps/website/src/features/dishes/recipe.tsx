@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { RecordImage } from "../collection/record-image";
 import { collectionItemLocation } from "../collection/item-route";
-import { QualityBar } from "../collection/quality";
 import type { IngredientItem } from "../collection-view";
 import {
   Accordion,
@@ -25,12 +24,11 @@ function IngredientCard({ item }: { item: IngredientItem }) {
     <Link
       {...collectionItemLocation(item)}
       state={{ dishesOrigin: origin }}
-      className="group/recipe-item block min-w-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      className="group/recipe-item block min-w-0 rounded-xl no-underline outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     >
       <Item variant="muted" size="sm" className="h-full">
-        <div className="relative size-12 shrink-0 overflow-hidden rounded-lg border bg-muted/30">
+        <div className="relative size-10 shrink-0 overflow-hidden rounded-lg border bg-muted/30">
           <RecordImage image={item.image} name={item.name} compact />
-          <QualityBar quality={item.quality} />
         </div>
         <ItemContent className="min-w-0">
           <span className="line-clamp-2 min-w-0 wrap-anywhere whitespace-normal" title={item.name}>
@@ -75,15 +73,15 @@ function ConditionSummary({ slot }: { slot: DishRecipeSlotView }) {
 }
 
 function candidateCountLabel(slot: DishRecipeSlotView): string {
-  if (slot.candidateStatus === "ready") return `${slot.candidates.length} 项候选`;
-  if (slot.candidateStatus === "unconfirmed") return "候选待确认";
-  return "暂无收录食材";
+  if (slot.candidateStatus === "ready") return String(slot.candidates.length);
+  if (slot.candidateStatus === "unconfirmed") return "待确认";
+  return "0";
 }
 
 function CandidateItems({ slot, index }: { slot: DishRecipeSlotView; index: number }) {
   if (slot.candidateStatus !== "ready")
     return (
-      <p className="rounded-xl bg-muted/40 px-4 py-6 text-sm text-muted-foreground">
+      <p className="py-4 text-sm text-muted-foreground">
         {slot.candidateStatus === "unconfirmed" ? "候选食材尚未确认" : "暂无可浏览的收录食材"}
       </p>
     );
@@ -91,7 +89,7 @@ function CandidateItems({ slot, index }: { slot: DishRecipeSlotView; index: numb
   return (
     <ul
       aria-label={`食材条件 ${index + 1} 的候选食材`}
-      className="grid max-h-80 grid-cols-[repeat(auto-fill,minmax(min(100%,9rem),1fr))] gap-2 overflow-y-auto overscroll-contain rounded-2xl bg-muted/20 p-2 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="grid max-h-80 grid-cols-[repeat(auto-fill,minmax(min(100%,11rem),1fr))] gap-2 overflow-y-auto overscroll-contain rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
       tabIndex={0}
     >
       {slot.candidates.map((item) => (
@@ -120,12 +118,9 @@ export function DishRecipe({ detail }: { detail: Extract<DishesDetail, { kind: "
         {slots.map((slot, index) => (
           <AccordionItem key={`${slot.field}-${index}`} value={`${slot.field}-${index}`}>
             <AccordionTrigger className="items-start">
-              <span className="flex min-w-0 flex-1 flex-col gap-2">
-                <span className="flex flex-wrap items-center gap-2">
-                  <span>食材 {index + 1}</span>
-                  <Badge variant="outline">{candidateCountLabel(slot)}</Badge>
-                </span>
+              <span className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                 <ConditionSummary slot={slot} />
+                <Badge variant="outline">{candidateCountLabel(slot)}</Badge>
               </span>
             </AccordionTrigger>
             <AccordionContent>
