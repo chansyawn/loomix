@@ -1,6 +1,6 @@
 import { CarrotIcon, CookingPotIcon, LayersIcon } from "lucide-react";
 import { CollectionCardSkeleton } from "../collection/card-skeleton";
-import { compactGrid } from "../collection/grid-layout";
+import { compactGrid, wideGrid } from "../collection/grid-layout";
 import type { CollectionTab } from "../collection/page";
 import type { DishView, View } from "./search";
 
@@ -17,7 +17,13 @@ export function listPresentation(view: DishView) {
   }[view];
   return {
     ...entry,
-    grid: compactGrid(view === "items" ? 78 : 124),
-    card: <CollectionCardSkeleton description={view === "series"} tags />,
+    grid: view === "items" ? compactGrid(78) : wideGrid(124),
+    card: (
+      <CollectionCardSkeleton
+        imageClassName={view === "series" ? "aspect-2/1" : "aspect-square"}
+        description={view === "series"}
+        tags
+      />
+    ),
   };
 }

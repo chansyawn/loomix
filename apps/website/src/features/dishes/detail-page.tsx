@@ -10,6 +10,7 @@ import {
   EmptyTitle,
 } from "@/ui/components/empty";
 import { RecordImage } from "@/features/collection/record-image";
+import { SeriesImage } from "../collection/series-image";
 import {
   CollectionDetailLayout,
   CollectionDetailLoading,
@@ -46,7 +47,19 @@ export function DishesDetailPage({ detail }: { detail: DishesDetail }) {
 
   return (
     <CollectionDetailLayout
-      image={<RecordImage key={record.image} image={record.image} name={record.name} eager />}
+      image={
+        detail.kind === "item" ? (
+          <RecordImage key={record.image} image={record.image} name={record.name} eager />
+        ) : (
+          <SeriesImage
+            name={record.name}
+            image={record.image}
+            memberIds={detail.record.dishIds}
+            items={detail.items ?? []}
+            eager
+          />
+        )
+      }
       title={record.name}
       quality={record.quality}
       description={
@@ -97,7 +110,7 @@ function DishesRelated({ detail }: { detail: DishesDetail }) {
         <>
           <CollectionDetailRelatedGrid>
             {detail.series.map((series) => (
-              <DishSeriesCard key={series.id} series={series} />
+              <DishSeriesCard key={series.id} series={series} items={detail.catalogItems} />
             ))}
           </CollectionDetailRelatedGrid>
           {detail.hasUnconfirmedSeriesMembership && (

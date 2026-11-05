@@ -80,6 +80,7 @@ describe("dish details", () => {
     expect(dishesDetail(data, "items", 1)).toEqual({
       kind: "item",
       record: first,
+      catalogItems: data.items,
       ingredientCategoriesById: new Map(),
       ingredientItemsById: new Map(),
       series: [group],

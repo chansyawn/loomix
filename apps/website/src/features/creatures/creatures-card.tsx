@@ -3,7 +3,7 @@ import type { CreatureItem, CreatureSeries } from "../collection-view.ts";
 import { RecordImage } from "@/features/collection/record-image";
 import { CollectionCard } from "@/features/collection/collection-card";
 import { useCreaturesOrigin } from "./detail-navigation";
-import { SeriesImage } from "./series-image";
+import { SeriesImage } from "../collection/series-image";
 
 export function CreaturesCard({ item }: { item: CreatureItem }) {
   const origin = useCreaturesOrigin();
@@ -38,7 +38,14 @@ export function CreatureSeriesCard({
     <CollectionCard
       name={series.name}
       quality={series.quality}
-      image={<SeriesImage series={series} items={items} />}
+      image={
+        <SeriesImage
+          name={series.name}
+          image={series.image}
+          memberIds={series.creatureIds}
+          items={items}
+        />
+      }
       titleLink={
         <Link
           to="/collection/creatures/series/$id"

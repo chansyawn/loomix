@@ -136,13 +136,3 @@ export function queryCreatures(data: CreaturesData, view: View, query: ViewQuery
     });
   return { rows: filtered, total: filtered.length };
 }
-
-export function seriesPreview(series: CreatureSeries, items: CreatureItem[]): CreatureItem[] {
-  const byId = new Map(items.map((item) => [item.id, item]));
-  return (series.creatureIds ?? [])
-    .flatMap((id) => {
-      const item = byId.get(id);
-      return item?.image ? [item] : [];
-    })
-    .slice(0, 6);
-}

@@ -22,6 +22,7 @@ export function dishesDetail(data: DishesData, view: View, id: number) {
     return {
       kind: "item" as const,
       record: item,
+      catalogItems: data.items,
       ingredientCategoriesById,
       ingredientItemsById,
       series: membershipIndex(data.series).get(id) ?? [],

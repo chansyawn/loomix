@@ -1,21 +1,23 @@
-import type { CreatureItem, CreatureSeries } from "../collection-view.ts";
-import { RecordImage } from "@/features/collection/record-image";
-import { seriesPreview } from "./query";
+import type { CollectionRecord } from "../collection-view.ts";
+import { RecordImage } from "./record-image";
+import { seriesPreview } from "./series-preview";
 
 export function SeriesImage({
-  series,
+  name,
+  image,
+  memberIds,
   items,
   eager = false,
 }: {
-  series: CreatureSeries;
-  items: CreatureItem[];
+  name: string;
+  image: string | null;
+  memberIds: readonly number[] | null;
+  items: readonly Pick<CollectionRecord, "id" | "name" | "image">[];
   eager?: boolean;
 }) {
-  const preview = seriesPreview(series, items);
-  if (series.image || preview.length === 0)
-    return (
-      <RecordImage key={series.image} image={series.image} name={series.name} scene eager={eager} />
-    );
+  const preview = image ? [] : seriesPreview(memberIds, items);
+  if (image || preview.length === 0)
+    return <RecordImage key={image} image={image} name={name} scene eager={eager} />;
   return (
     <div className="grid aspect-2/1 grid-cols-3 grid-rows-2 gap-1 overflow-hidden bg-muted p-2 [&_img]:p-2 [&>div]:aspect-auto [&>div]:min-h-0">
       {Array.from({ length: 6 }, (_, index) => {

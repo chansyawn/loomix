@@ -107,7 +107,11 @@ export function DishResults({
             layout={presentation.grid}
             getKey={(row) => row.id}
             renderCard={(row) =>
-              "difficulty" in row ? <DishesCard item={row} /> : <DishSeriesCard series={row} />
+              "difficulty" in row ? (
+                <DishesCard item={row} />
+              ) : (
+                <DishSeriesCard series={row} items={data.items} />
+              )
             }
           />
         )

@@ -18,7 +18,7 @@ import {
   type CollectionDetailSection,
 } from "@/features/collection/detail-layout";
 import { CreaturesCard, CreatureSeriesCard } from "./creatures-card";
-import { SeriesImage } from "./series-image";
+import { SeriesImage } from "../collection/series-image";
 import { CreaturesReturnLink } from "./detail-navigation";
 import type { CreaturesDetail } from "./detail";
 import type { View } from "./search";
@@ -52,7 +52,13 @@ export function CreaturesDetailPage({ detail }: { detail: CreaturesDetail }) {
         detail.kind === "item" ? (
           <RecordImage key={record.image} image={record.image} name={record.name} eager />
         ) : (
-          <SeriesImage series={detail.record} items={detail.items ?? []} eager />
+          <SeriesImage
+            name={record.name}
+            image={record.image}
+            memberIds={detail.record.creatureIds}
+            items={detail.items ?? []}
+            eager
+          />
         )
       }
       title={record.name}
