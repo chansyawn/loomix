@@ -19,16 +19,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <Link
           to={homeItem.to}
-          className="flex h-12 min-w-0 items-center gap-2 rounded-lg px-2 text-[15px] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+          className="flex h-12 min-w-0 items-center gap-3 rounded-lg px-2 text-[15px] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
         >
           <img
             src="/logo.png"
             alt=""
-            width={24}
-            height={24}
-            className="size-6 shrink-0 rounded-full object-cover"
+            width={32}
+            height={32}
+            className="size-8 shrink-0 rounded-full object-cover"
           />
-          <span className="whitespace-nowrap">{site.name}</span>
+          <span className="flex min-w-0 flex-col gap-1">
+            <span className="truncate leading-none">{site.name}</span>
+            <span className="truncate text-xs leading-none font-normal text-sidebar-foreground/65">
+              {site.domain}
+            </span>
+          </span>
         </Link>
       </SidebarHeader>
       <SidebarContent>

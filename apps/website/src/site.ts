@@ -1,5 +1,7 @@
 export const site = {
-  name: "loomix 络米小站",
-  title: "loomix 络米小站 - 星布谷地玩家社区",
-  description: "loomix 络米小站是星布谷地非官方玩家社区，当前提供游戏资料与图鉴检索。",
+  name: "络米星集",
+  domain: "loomix.fun",
+  title: "络米星集 loomix.fun - 星布谷地工具与资料站",
+  description:
+    "络米星集是非官方的星布谷地游戏工具与资料站，提供家具、服饰、生物、植物、烹饪和友邻等图鉴与资料查询。",
 } as const;
