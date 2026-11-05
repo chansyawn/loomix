@@ -17,7 +17,7 @@
 
 ## 入口
 
-需要 Node >=22.18.0、仓库锁定的 Vite Plus 1.3.0，以及 `vp install` 安装的依赖。在仓库根目录运行：
+需要仓库锁定的 Node 和 Vite+ 版本，以及 `vp install` 安装的依赖。在仓库根目录运行：
 
 ```sh
 vp run '@loomix/extraction#init'
