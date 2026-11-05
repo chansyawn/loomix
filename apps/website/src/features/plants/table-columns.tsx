@@ -15,6 +15,7 @@ import type { CollectionColumn } from "../collection/table-columns";
 import { usePlantsOrigin } from "./detail-navigation";
 import { membershipIndex, seedSeries, seedSourceLabels } from "./query";
 import type { View } from "./search";
+import { collectionItemLocation, cropDetailLocation } from "../collection/item-route";
 import { PlantSeedLinks } from "./seed-info";
 
 export type PlantsRow = PlantItem | PlantSeries | PlantSeed;
@@ -23,13 +24,14 @@ function isSeedRow(record: PlantsRow): record is PlantSeed {
   return "productIds" in record;
 }
 
-function NameLink({ record, view }: { record: PlantItem | PlantSeries | PlantSeed; view: View }) {
+function NameLink({ record }: { record: PlantsRow }) {
   const origin = usePlantsOrigin();
-  if (view === "seeds" && isSeedRow(record))
-    return (
+  if (isSeedRow(record))
+    return record.cropSeriesId === null ? (
+      <span>{record.name}</span>
+    ) : (
       <Link
-        to="/collection/plants/seeds/$id"
-        params={{ id: String(record.id) }}
+        {...cropDetailLocation(record.cropSeriesId)}
         state={{ plantsOrigin: origin }}
         className={tableLinkClassName}
         title={record.name}
@@ -39,8 +41,13 @@ function NameLink({ record, view }: { record: PlantItem | PlantSeries | PlantSee
     );
   return (
     <Link
-      to={view === "items" ? "/collection/plants/items/$id" : "/collection/plants/series/$id"}
-      params={{ id: String(record.id) }}
+      {...("category" in record
+        ? collectionItemLocation({ ...record, catalogCategory: "plants" })
+        : {
+            to: "/collection/plants/series/$id" as const,
+            params: { id: String(record.id) },
+            search: { tab: undefined },
+          })}
       state={{ plantsOrigin: origin }}
       className={tableLinkClassName}
       title={record.name}
@@ -62,6 +69,7 @@ function MemberLinks({ groups, complete }: { groups: PlantSeries[]; complete: bo
           key={entry.id}
           to="/collection/plants/series/$id"
           params={{ id: String(entry.id) }}
+          search={{ tab: undefined }}
           state={{ plantsOrigin: origin }}
           className={tableLinkClassName}
         >
@@ -114,7 +122,7 @@ function seedTableColumns(
           <div className="w-10 shrink-0 overflow-hidden rounded-md" aria-hidden="true">
             <RecordImage image={record.image} name={record.name} compact />
           </div>
-          <NameLink record={record} view="seeds" />
+          <NameLink record={record} />
         </div>
       ),
       skeleton: (
@@ -171,7 +179,7 @@ export function plantsTableColumns(
 ): CollectionColumn<PlantsRow>[] {
   if (view === "seeds") return seedTableColumns(data);
   const groups = data?.series ?? [];
-  const common = recordColumns<PlantsRow>((record) => <NameLink record={record} view={view} />);
+  const common = recordColumns<PlantsRow>((record) => <NameLink record={record} />);
   const memberships = membershipIndex(groups);
   const facts: CollectionColumn<PlantsRow>[] = [
     textColumn("acquisition", "获取来源", 224, (record) =>

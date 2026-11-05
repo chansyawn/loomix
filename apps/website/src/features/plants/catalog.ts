@@ -50,6 +50,9 @@ export function buildPlantsData(
     const growth = seed.growthId === null ? null : (growths.get(seed.growthId) ?? null);
     return {
       ...seed,
+      cropSeriesId:
+        seed.productIds.map((id) => itemRefs.get(id)?.cropSeriesId).find((id) => id != null) ??
+        null,
       image: image(seed.image),
       detail: {
         description: seed.description,
@@ -113,6 +116,7 @@ export function buildPlantsData(
       const seed = seeds.find((seed) => seed.productIds.includes(record.id));
       const item: Omit<PlantItem, "summary"> = {
         id: record.id,
+        cropSeriesId: itemRefs.get(record.id)?.cropSeriesId ?? null,
         name: record.name,
         image: image(record.image),
         description: record.description,

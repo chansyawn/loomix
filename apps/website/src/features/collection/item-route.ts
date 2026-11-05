@@ -9,6 +9,18 @@ const itemRoutes = {
   dishes: "/collection/dishes/items/$id",
 } as const;
 
-export function collectionItemLocation(item: Pick<IngredientItem, "id" | "catalogCategory">) {
+export function cropDetailLocation(seriesId: number, itemId?: number) {
+  return {
+    to: "/collection/plants/series/$id" as const,
+    params: { id: String(seriesId) },
+    search: { tab: itemId === undefined ? undefined : (`item-${itemId}` as const) },
+  };
+}
+
+export function collectionItemLocation(
+  item: Pick<IngredientItem, "id" | "catalogCategory" | "cropSeriesId">,
+) {
+  if (item.catalogCategory === "plants" && item.cropSeriesId != null)
+    return cropDetailLocation(item.cropSeriesId, item.id);
   return { to: itemRoutes[item.catalogCategory], params: { id: String(item.id) } };
 }

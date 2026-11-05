@@ -18,7 +18,11 @@ function RecipeMatch({ match, hidden }: { match: IngredientDishMatch; hidden: bo
       <CollectionItemCard
         item={dish}
         itemId={dish.id}
-        state={{ dishesOrigin: origin }}
+        link={{
+          to: "/collection/dishes/items/$id",
+          params: { id: String(dish.id) },
+          state: { dishesOrigin: origin },
+        }}
         description={description || "菜肴信息未提供"}
       />
     </div>

@@ -19,20 +19,18 @@ import {
 import { RecordImage } from "@/features/collection/record-image";
 import { PlantsCard, PlantSeriesCard } from "./plants-card";
 import { PlantsReturnLink } from "./detail-navigation";
-import type { PlantsDetail, SeedDetail } from "./detail";
+import type { PlantsDetail } from "./detail";
 import type { View } from "./search";
 import { PlantsLoadError } from "./states";
-import { PlantSeedInfo } from "./seed-info";
-import { PlantGrowthStages } from "./growth-stages";
-import { PlantItemGrowing } from "./item-growing";
 import { PlantDropsInfo, PlantRelatedItems } from "./related-items";
 import { ItemCookingUsage } from "../ingredients/item-usage";
-import { SeedDetailPage } from "./seed-detail-page";
+import { CropDetailPage } from "./crop-detail-page";
+import { plantSeriesFields } from "./series-fields";
 
-type PlantOrSeriesDetail = Exclude<PlantsDetail, SeedDetail>;
+type PlantOrSeriesDetail = Exclude<PlantsDetail, { kind: "crop" }>;
 
 export function PlantsDetailPage({ detail }: { detail: PlantsDetail }) {
-  if (detail.kind === "seed") return <SeedDetailPage detail={detail} />;
+  if (detail.kind === "crop") return <CropDetailPage key={detail.record.id} detail={detail} />;
   return <PlantOrSeriesDetailPage detail={detail} />;
 }
 
@@ -50,17 +48,11 @@ function PlantOrSeriesDetailPage({ detail }: { detail: PlantOrSeriesDetail }) {
             detail.record.harvestCount === null ? null : `${detail.record.harvestCount} 茬`,
           ],
         ]
-      : [
-          ["系列", detail.record.seriesName],
-          ["成员数量", detail.items === null ? null : `${detail.items.length} 种植物`],
-          ["分类", summary.categories.join("、") || null],
-          ["原产星系", summary.galaxies.join("、") || null],
-          ...(summary.harvestCounts.length
-            ? [["收获茬数", `${summary.harvestCounts.join(" / ")} 茬`] as [string, string]]
-            : []),
-        ];
-  if (summary.acquisition.length) fields.push(["获取来源", summary.acquisition.join("、")]);
-  if (summary.flowerColors.length) fields.push(["花色", summary.flowerColors.join("、")]);
+      : plantSeriesFields(detail.record);
+  if (detail.kind === "item" && summary.acquisition.length)
+    fields.push(["获取来源", summary.acquisition.join("、")]);
+  if (detail.kind === "item" && summary.flowerColors.length)
+    fields.push(["花色", summary.flowerColors.join("、")]);
 
   return (
     <CollectionDetailLayout
@@ -84,30 +76,6 @@ function PlantOrSeriesDetailPage({ detail }: { detail: PlantOrSeriesDetail }) {
 function PlantExtras({ detail }: { detail: PlantOrSeriesDetail }) {
   const sections: CollectionDetailSection[] = [];
   const summary = detail.record.summary;
-  if (detail.kind === "item") {
-    if (summary.seeds.length > 0 || detail.record.growth !== null)
-      sections.push({
-        key: "plant-growing",
-        content: (
-          <PlantItemGrowing
-            item={detail.record}
-            series={detail.series}
-            itemRefs={detail.itemRefs}
-          />
-        ),
-      });
-  } else {
-    if (summary.seeds.length > 0)
-      sections.push({
-        key: "plant-seeds",
-        content: <PlantSeedInfo seeds={summary.seeds} itemRefs={detail.itemRefs} />,
-      });
-    if (summary.growths.length > 0)
-      sections.push({
-        key: "plant-growth",
-        content: <PlantGrowthStages groups={summary.growths} itemRefs={detail.itemRefs} />,
-      });
-  }
   if (summary.drops.items.length > 0 || summary.drops.unlistedCount > 0)
     sections.push({
       key: "plant-drops",
@@ -186,9 +154,8 @@ export function PlantsDetailLoading() {
   return <CollectionDetailLoading label="正在加载植物详情" />;
 }
 
-export function PlantsDetailNotFound({ view }: { view: View }) {
-  const title =
-    view === "items" ? "未找到这种植物" : view === "series" ? "未找到这个系列" : "未找到这颗种子";
+export function PlantsDetailNotFound({ view }: { view: Exclude<View, "seeds"> }) {
+  const title = view === "items" ? "未找到这种植物" : "未找到这个系列";
   return (
     <Empty className="min-h-80">
       <EmptyHeader>

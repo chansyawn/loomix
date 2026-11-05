@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { loadPlantsDetail } from "@/features/plants/detail";
+import { cropDetailSearchSchema } from "@/features/plants/crop-detail";
 import {
   PlantsDetailError,
   PlantsDetailLoading,
@@ -9,6 +10,7 @@ import {
 
 export const Route = createFileRoute("/collection/plants_/series/$id")({
   ssr: false,
+  validateSearch: cropDetailSearchSchema,
   loader: ({ params }) => loadPlantsDetail("series", params.id),
   pendingComponent: PlantsDetailLoading,
   errorComponent: PlantsDetailError,

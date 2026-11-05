@@ -158,17 +158,7 @@ export function SiteHeader() {
             <>
               <BreadcrumbItem>
                 <BreadcrumbLink
-                  render={
-                    <PlantsReturnLink
-                      view={
-                        plantsView === "series"
-                          ? "series"
-                          : plantsView === "seeds"
-                            ? "seeds"
-                            : "items"
-                      }
-                    />
-                  }
+                  render={<PlantsReturnLink view={plantsView === "series" ? "series" : "items"} />}
                 >
                   植物
                 </BreadcrumbLink>

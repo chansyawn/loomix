@@ -6,6 +6,7 @@ export type PlantGrowth = Omit<Growth, "id" | "stages"> & {
 };
 export type PlantSeed = Omit<Seed, "image"> & {
   image: string | null;
+  cropSeriesId: number | null;
   detail: {
     description: string | null;
     quality: number | null;
@@ -37,6 +38,7 @@ export interface PlantSummary {
   drops: PlantDrops;
 }
 export type PlantItem = CollectionRecord & {
+  cropSeriesId: number | null;
   category: string | null;
   originGalaxy: string | null;
   maturityPeriod: string | null;

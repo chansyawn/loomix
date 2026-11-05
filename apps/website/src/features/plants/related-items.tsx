@@ -1,5 +1,6 @@
 import type { IngredientItem } from "../collection-view";
 import { CollectionItemCard } from "../collection/collection-item-card";
+import { collectionItemLocation } from "../collection/item-route";
 import { usePlantsOrigin } from "./detail-navigation";
 import type { PlantDrops } from "./model";
 
@@ -20,7 +21,18 @@ export function PlantRelatedItems({
       <ul className="flex flex-wrap gap-3">
         {items.map((item) => (
           <li key={item.id} className="max-w-full min-w-0">
-            <CollectionItemCard item={item} itemId={item.id} state={{ plantsOrigin: origin }} />
+            <CollectionItemCard
+              item={item}
+              itemId={item.id}
+              link={
+                item.listed === false
+                  ? undefined
+                  : {
+                      ...collectionItemLocation(item),
+                      state: { plantsOrigin: origin },
+                    }
+              }
+            />
           </li>
         ))}
       </ul>

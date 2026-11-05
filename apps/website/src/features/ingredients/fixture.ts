@@ -15,6 +15,7 @@ export function ingredientFixture(id: number, name: string, listed = true): Ingr
     description: null,
     quality: null,
     catalogCategory: "plants",
+    cropSeriesId: null,
     listed,
   };
 }

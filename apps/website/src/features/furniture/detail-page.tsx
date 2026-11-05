@@ -19,6 +19,7 @@ import {
 } from "@/features/collection/detail-layout";
 import { RecordImage as FurnitureImage } from "@/features/collection/record-image";
 import { CollectionItemCard } from "@/features/collection/collection-item-card";
+import { collectionItemLocation } from "@/features/collection/item-route";
 import { FurnitureReturnLink } from "./detail-navigation";
 import type { FurnitureItem, FurnitureSet } from "../collection-view";
 import type { FurnitureDetail } from "./detail";
@@ -120,6 +121,11 @@ function FurnitureRecipes({
                       itemId={material.itemId}
                       quantity={material.quantity}
                       fallbackName="未知材料"
+                      link={
+                        material.item && material.item.listed !== false
+                          ? collectionItemLocation(material.item)
+                          : undefined
+                      }
                     />
                   </li>
                 ))}

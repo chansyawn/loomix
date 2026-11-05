@@ -2,8 +2,9 @@ import { notFound } from "@tanstack/react-router";
 import type { PlantsData } from "./data";
 import { loadCollectionView } from "../collection-loader";
 import { buildIngredientsData, ingredientUsage } from "../ingredients/model";
-import type { IngredientUsage } from "../ingredients/model";
-import { membershipIndex, seedSeries } from "./query";
+import type { IngredientsData } from "../ingredients/model";
+import { membershipIndex } from "./query";
+import { cropSeriesDetail } from "./crop-detail";
 import type { View } from "./search";
 
 export function parsePlantId(value: string): number {
@@ -14,19 +15,19 @@ export function parsePlantId(value: string): number {
 
 export function plantsDetail(
   data: PlantsData,
-  view: View,
+  view: Exclude<View, "seeds">,
   id: number,
-  cooking: IngredientUsage | null = null,
+  ingredients: IngredientsData | null = null,
 ) {
   const itemsById = new Map(data.items.map((item) => [item.id, item]));
   if (view === "items") {
     const item = itemsById.get(id);
-    if (!item) throw notFound();
+    if (!item || item.category === "作物") throw notFound();
     const series = membershipIndex(data.series).get(id) ?? [];
     return {
       kind: "item" as const,
       record: item,
-      cooking,
+      cooking: ingredients ? ingredientUsage(ingredients, id) : null,
       series,
       relatedGroups: series.map((group) => ({
         series: group,
@@ -42,39 +43,37 @@ export function plantsDetail(
       hasUnconfirmedSeriesMembership: data.series.some((group) => group.plantIds === null),
     };
   }
-  if (view === "seeds") {
-    const seed = data.seeds.find((row) => row.id === id);
-    if (!seed) throw notFound();
-    return {
-      kind: "seed" as const,
-      record: seed,
-      series: seedSeries(seed, data.series),
-      products: seed.productIds.flatMap((productId) => itemsById.get(productId) ?? []),
-      itemRefs: data.itemRefs,
-      hasUnconfirmedSeriesMembership: data.series.some((group) => group.plantIds === null),
-    };
-  }
   const series = data.series.find((row) => row.id === id);
   if (!series) throw notFound();
+  const items = series.plantIds?.flatMap((id) => itemsById.get(id) ?? []) ?? null;
+  if (items?.some((item) => item.category === "作物"))
+    return cropSeriesDetail(series, items, ingredients);
   return {
     kind: "series" as const,
     record: series,
-    items:
-      series.plantIds === null ? null : series.plantIds.flatMap((id) => itemsById.get(id) ?? []),
+    items,
     itemRefs: data.itemRefs,
   };
 }
 
 export type PlantsDetail = ReturnType<typeof plantsDetail>;
-export type SeedDetail = Extract<PlantsDetail, { kind: "seed" }>;
 
-export async function loadPlantsDetail(view: View, value: string): Promise<PlantsDetail> {
+export async function loadPlantsDetail(
+  view: Exclude<View, "seeds">,
+  value: string,
+): Promise<PlantsDetail> {
   const id = parsePlantId(value);
   const collection = await loadCollectionView();
+  const needsCooking =
+    (view === "items" && collection.plants.items.some((item) => item.id === id)) ||
+    (view === "series" &&
+      collection.plants.series
+        .find((series) => series.id === id)
+        ?.summary.categories.includes("作物"));
   return plantsDetail(
     collection.plants,
     view,
     id,
-    view === "items" ? ingredientUsage(buildIngredientsData(collection), id) : null,
+    needsCooking ? buildIngredientsData(collection) : null,
   );
 }

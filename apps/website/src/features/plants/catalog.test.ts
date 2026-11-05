@@ -1,9 +1,36 @@
 import { expect, test } from "vite-plus/test";
 import { assetsFixture, catalogFixture } from "../collection-fixture";
 import { toCollectionView } from "../collection-view";
-import { plantItemFixture, plantSeriesFixture, plantsDataFixture } from "./fixture";
+import {
+  plantItemFixture,
+  plantSeedFixture,
+  plantSeriesFixture,
+  plantsDataFixture,
+} from "./fixture";
 import { filterGroups, queryPlants } from "./query";
 import { emptyQuery } from "./search";
+
+test("derives crop detail destinations for seeds, products and shared ingredient references", () => {
+  const catalog = catalogFixture({
+    plants: plantsDataFixture({
+      items: [
+        plantItemFixture({ id: 1, category: "作物" }),
+        plantItemFixture({ id: 2, category: "花" }),
+      ],
+      series: [
+        plantSeriesFixture({ id: 10, plantIds: [1] }),
+        plantSeriesFixture({ id: 20, plantIds: [2] }),
+      ],
+      seeds: [plantSeedFixture({ id: 30, productIds: [1] })],
+    }),
+  });
+  const view = toCollectionView(catalog, assetsFixture(catalog));
+  expect(view.plants.items.map((item) => item.cropSeriesId)).toEqual([10, null]);
+  expect(view.plants.seeds[0].cropSeriesId).toBe(10);
+  expect(view.plants.series[0].summary.seeds[0].cropSeriesId).toBe(10);
+  expect(view.ingredientItemsById.get(1)?.cropSeriesId).toBe(10);
+  expect(view.ingredientItemsById.get(2)?.cropSeriesId).toBeNull();
+});
 
 test("summarizes structured origins without parsing punctuation in localized labels", () => {
   const catalog = catalogFixture({

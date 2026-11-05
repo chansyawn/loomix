@@ -12,10 +12,13 @@ import {
   plantItemFixture,
   plantSeedFixture,
   plantSeriesFixture,
+  plantSummaryFixture,
   plantsDataFixture,
 } from "./fixture";
 import type { PlantItem, PlantSeries } from "../collection-view.ts";
 import { plantsDetail, loadPlantsDetail, parsePlantId } from "./detail";
+import { cropDetailSearchSchema, matureCropStage, selectedCropTab } from "./crop-detail";
+import { ingredientsFixture } from "../ingredients/fixture";
 import { plantsOrigin } from "./detail-navigation";
 import { compactPlantsSearchMiddleware, plantsSearchSchema } from "./search";
 
@@ -40,20 +43,8 @@ const group: PlantSeries = plantSeriesFixture({
   seriesName: null,
   plantIds: [2, 1],
 });
-const seedRecord = plantSeedFixture({
-  id: 10,
-  name: "星露种子",
-  productIds: [2, 1],
-});
-seedRecord.acquisition = [{ sourceId: 1, label: "星屿探索", condition: null }];
-seedRecord.detail = {
-  ...seedRecord.detail,
-  description: "能种出星露系列植物。",
-  harvestCount: 3,
-};
 const data = plantsDataFixture({
   items: [first, second],
-  seeds: [seedRecord],
   series: [
     group,
     { ...group, id: 4, name: "空系列", plantIds: [] },
@@ -64,6 +55,69 @@ const data = plantsDataFixture({
 afterEach(() => vi.unstubAllGlobals());
 
 describe("plant details", () => {
+  it("keeps each crop product's cooking uses separate in a single series detail", () => {
+    const items = [1, 4, 8].map((id) => plantItemFixture({ id, category: "作物" }));
+    const series = plantSeriesFixture({ id: 100, plantIds: [4, 1, 8] });
+    const detail = plantsDetail(
+      plantsDataFixture({ items, series: [series] }),
+      "series",
+      100,
+      ingredientsFixture().data,
+    );
+    if (detail.kind !== "crop") throw new Error("Expected crop detail");
+    expect(detail.items.map((item) => item.id)).toEqual([4, 1, 8]);
+    expect(detail.cookingByItemId.get(4)?.dishes.map((match) => match.dish.id)).toEqual([102]);
+    expect(detail.cookingByItemId.get(1)?.dishes.map((match) => match.dish.id)).toEqual([
+      100, 102, 109,
+    ]);
+    expect(detail.cookingByItemId.get(8)).toBeNull();
+  });
+  it("groups a crop seed and its ordered products under the series detail", () => {
+    const crop = plantItemFixture({ id: 6, name: "星露作物", category: "作物", cropSeriesId: 7 });
+    const seed = plantSeedFixture({ id: 8, name: "星露种子", cropSeriesId: 7, productIds: [6] });
+    const cropSeries = plantSeriesFixture({
+      id: 7,
+      name: "星露作物系列",
+      plantIds: [6],
+      summary: plantSummaryFixture({ seeds: [seed] }),
+    });
+    const cropData = plantsDataFixture({ items: [crop], series: [cropSeries], seeds: [seed] });
+    const detail = plantsDetail(cropData, "series", 7);
+
+    expect(detail).toMatchObject({
+      kind: "crop",
+      record: cropSeries,
+      items: [crop],
+      seeds: [seed],
+    });
+    expect(() => plantsDetail(cropData, "items", 6)).toThrow();
+  });
+
+  it("selects only valid series product tabs and resolves mature forms by product ID", () => {
+    const growth = {
+      cycleMode: null,
+      stageIds: [],
+      regrowthStageIds: null,
+      stages: [
+        { id: 11, name: "作物株", image: "first" },
+        { id: 12, name: "作物株", image: "second" },
+      ],
+      matureStages: [
+        { entityId: 11, productId: 6, tag: null, rank: null },
+        { entityId: 12, productId: 9, tag: null, rank: null },
+      ],
+      witheredStageId: null,
+      maturityDays: null,
+      harvestCount: null,
+    };
+    const items = [plantItemFixture({ id: 6 }), plantItemFixture({ id: 9 })];
+    expect(selectedCropTab("item-9", items)).toBe("item-9");
+    expect(selectedCropTab("item-99", items)).toBe("seed");
+    expect(selectedCropTab("item-x", items)).toBe("seed");
+    expect(matureCropStage(growth, 9)?.image).toBe("second");
+    expect(cropDetailSearchSchema.parse({ tab: "invalid" })).toEqual({ tab: undefined });
+  });
+
   it("accepts positive safe integer IDs and rejects malformed addresses", () => {
     expect(parsePlantId("1")).toBe(1);
     for (const value of ["0", "-1", "1.5", "1e2", "01", "", "abc", "9007199254740992"]) {
@@ -95,23 +149,11 @@ describe("plant details", () => {
     expect(plantsDetail(data, "series", 5)).toMatchObject({ items: null });
   });
 
-  it("returns seed products in catalog order with confirmed series memberships", () => {
-    expect(plantsDetail(data, "seeds", 10)).toMatchObject({
-      kind: "seed",
-      record: seedRecord,
-      products: [second, first],
-      series: [group],
-      hasUnconfirmedSeriesMembership: true,
-    });
-  });
-
   it("treats missing records and IDs of the wrong kind as not found", () => {
     for (const [view, id] of [
       ["items", 3],
-      ["seeds", 1],
       ["series", 1],
       ["items", 999],
-      ["seeds", 999],
     ] as const) {
       try {
         plantsDetail(data, view, id);
@@ -125,11 +167,6 @@ describe("plant details", () => {
   it("loads validated content and keeps network or schema failures retryable", async () => {
     vi.stubGlobal("fetch", vi.fn(fixtureRequest(catalogFixture({ plants: data }))));
     expect(await loadPlantsDetail("items", "1")).toMatchObject({ record: { id: 1 } });
-    expect(await loadPlantsDetail("seeds", "10")).toMatchObject({
-      kind: "seed",
-      record: { id: 10 },
-      products: [{ id: 2 }, { id: 1 }],
-    });
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })));
     await expect(loadPlantsDetail("items", "1")).rejects.toThrow("503");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}")));
@@ -153,26 +190,54 @@ function setup(initialEntries: string[]) {
   const seriesRoute = createRoute({
     getParentRoute: () => root,
     path: "/collection/plants/series/$id",
+    validateSearch: cropDetailSearchSchema,
     loader: ({ params }) => plantsDetail(data, "series", parsePlantId(params.id)),
-  });
-  const seedRoute = createRoute({
-    getParentRoute: () => root,
-    path: "/collection/plants/seeds/$id",
-    loader: ({ params }) => plantsDetail(data, "seeds", parsePlantId(params.id)),
   });
   return createRouter({
     history: createMemoryHistory({ initialEntries }),
-    routeTree: root.addChildren([list, item, seriesRoute, seedRoute]),
+    routeTree: root.addChildren([list, item, seriesRoute]),
   });
 }
 
+async function pushMemoryLocation(
+  router: ReturnType<typeof setup>,
+  href: string,
+  state = router.state.location.state,
+) {
+  router.history.push(href, state);
+  await router.load();
+}
+
 describe("plant detail navigation", () => {
+  it("shares product tabs and preserves origin state through history navigation", async () => {
+    const router = setup([
+      "/collection/plants?view=seeds&seeds=%7B%22q%22%3A%22%E7%95%AA%E8%8C%84%22%7D",
+    ]);
+    await router.load();
+    const original = router.state.location;
+    await pushMemoryLocation(router, "/collection/plants/series/3", {
+      ...original.state,
+      plantsOrigin: plantsOrigin(original),
+    });
+    const seedHref = router.state.location.href;
+    await pushMemoryLocation(router, "/collection/plants/series/3?tab=item-2");
+    expect(router.state.location.search).toEqual({ tab: "item-2" });
+    expect(plantsOrigin(router.state.location)).toEqual(plantsOrigin(original));
+    router.history.back();
+    await router.load();
+    expect(router.state.location.href).toBe(seedHref);
+    router.history.forward();
+    await router.load();
+    expect(router.state.location.search).toEqual({ tab: "item-2" });
+    const origin = plantsOrigin(router.state.location)!;
+    router.history.go(origin.index - router.state.location.state.__TSR_index);
+    await router.load();
+    expect(router.state.location.href).toBe(original.href);
+    expect(router.state.location.state.__TSR_key).toBe(original.state.__TSR_key);
+  });
+
   it("opens direct detail addresses without requiring a list origin", async () => {
-    for (const href of [
-      "/collection/plants/items/1",
-      "/collection/plants/series/3",
-      "/collection/plants/seeds/10",
-    ]) {
+    for (const href of ["/collection/plants/items/1", "/collection/plants/series/3"]) {
       const router = setup([href]);
       await router.load();
       expect(router.state.matches.at(-1)?.status).toBe("success");
@@ -186,20 +251,13 @@ describe("plant detail navigation", () => {
     await router.load();
     const original = router.state.location;
     const origin = plantsOrigin(original);
-    await router.navigate({
-      to: "/collection/plants/items/$id",
-      params: { id: "1" },
-      state: { plantsOrigin: origin },
+    await pushMemoryLocation(router, "/collection/plants/items/1", {
+      ...router.state.location.state,
+      plantsOrigin: origin,
     });
-    await router.navigate({
-      to: "/collection/plants/series/$id",
-      params: { id: "3" },
-      state: { plantsOrigin: plantsOrigin(router.state.location) },
-    });
-    await router.navigate({
-      to: "/collection/plants/seeds/$id",
-      params: { id: "10" },
-      state: { plantsOrigin: plantsOrigin(router.state.location) },
+    await pushMemoryLocation(router, "/collection/plants/series/3", {
+      ...router.state.location.state,
+      plantsOrigin: plantsOrigin(router.state.location),
     });
     const retained = plantsOrigin(router.state.location)!;
     expect(defaultParseSearch(retained.href.split("?")[1])).toEqual({ items: { q: "花" } });

@@ -4,6 +4,7 @@ import type { PlantSeed } from "./model";
 import { RecordImage } from "@/features/collection/record-image";
 import { CollectionCard } from "@/features/collection/collection-card";
 import { usePlantsOrigin } from "./detail-navigation";
+import { collectionItemLocation, cropDetailLocation } from "../collection/item-route";
 import { seedSourceLabels } from "./query";
 
 export function PlantsCard({ item }: { item: PlantItem }) {
@@ -15,8 +16,7 @@ export function PlantsCard({ item }: { item: PlantItem }) {
       image={<RecordImage key={item.image} image={item.image} name={item.name} />}
       titleLink={
         <Link
-          to="/collection/plants/items/$id"
-          params={{ id: String(item.id) }}
+          {...collectionItemLocation({ ...item, catalogCategory: "plants" })}
           state={{ plantsOrigin: origin }}
         >
           {item.name}
@@ -38,6 +38,7 @@ export function PlantSeriesCard({ series }: { series: PlantSeries }) {
         <Link
           to="/collection/plants/series/$id"
           params={{ id: String(series.id) }}
+          search={{ tab: undefined }}
           state={{ plantsOrigin: origin }}
         >
           {series.name}
@@ -64,13 +65,13 @@ export function SeedCard({ seed, series }: { seed: PlantSeed; series: PlantSerie
       quality={seed.quality}
       image={<RecordImage key={seed.image} image={seed.image} name={seed.name} />}
       titleLink={
-        <Link
-          to="/collection/plants/seeds/$id"
-          params={{ id: String(seed.id) }}
-          state={{ plantsOrigin: origin }}
-        >
-          {seed.name}
-        </Link>
+        seed.cropSeriesId === null ? (
+          seed.name
+        ) : (
+          <Link {...cropDetailLocation(seed.cropSeriesId)} state={{ plantsOrigin: origin }}>
+            {seed.name}
+          </Link>
+        )
       }
       description={seed.description}
       tags={tags || null}

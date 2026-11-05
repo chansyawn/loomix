@@ -84,6 +84,7 @@ export type CatalogCategory =
   | "miscellaneous";
 export type IngredientItem = CollectionRecord & {
   catalogCategory: CatalogCategory;
+  cropSeriesId: number | null;
   listed?: boolean;
 };
 export interface CollectionView {
@@ -139,6 +140,20 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
       .filter((entry) => entry.entity.kind === "appearance")
       .map((entry) => entry.entity.id),
   );
+  const cropIds = new Set(
+    catalog.items
+      .filter((item) => item.type === "plant" && item.subcategory === "作物")
+      .map((item) => item.id),
+  );
+  const cropSeriesByItemId = new Map(
+    catalog.groups
+      .filter((group) => group.type === "plants.series" && groupIds.has(group.id))
+      .flatMap((group) =>
+        (group.memberIds ?? [])
+          .filter((id) => cropIds.has(id))
+          .map((id) => [id, group.id] as const),
+      ),
+  );
   const view: CollectionView = {
     ingredientCategories: catalog.ingredientCategories,
     ingredientCategoriesById: new Map(
@@ -163,6 +178,7 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
     view.ingredientItemsById.set(record.id, {
       ...common,
       catalogCategory: itemCategory(record),
+      cropSeriesId: cropSeriesByItemId.get(record.id) ?? null,
       listed: listed.has(record.id),
     });
     if (!listed.has(record.id) || record.type === "reference") continue;
