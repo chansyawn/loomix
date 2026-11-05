@@ -1,27 +1,81 @@
 import { useRouter } from "@tanstack/react-router";
+import { SearchXIcon, WifiOffIcon } from "lucide-react";
 import { Button } from "@/ui/components/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/ui/components/empty";
+import { Skeleton } from "@/ui/components/skeleton";
+import { NeighborsGrid, NeighborsListLayout } from "./list-layout";
 import { NeighborsReturnLink } from "./navigation";
 
 export function NeighborsLoading() {
   return (
-    <section aria-busy="true" aria-label="正在加载友邻资料" className="space-y-6 py-8">
-      <div className="h-10 w-40 animate-pulse rounded-xl bg-muted" />
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        {Array.from({ length: 8 }, (_, index) => (
-          <div key={index} className="aspect-3/4 animate-pulse rounded-3xl bg-muted" />
-        ))}
+    <NeighborsListLayout search={{ q: "", galaxy: "" }} total={0} loading>
+      <div aria-hidden="true">
+        <NeighborsGrid>
+          {Array.from({ length: 8 }, (_, index) => (
+            <div key={index} className="min-w-0 rounded-3xl border bg-card p-2">
+              <div className="overflow-hidden rounded-2xl">
+                <Skeleton className="aspect-156/41 w-full" />
+              </div>
+              <div className="space-y-2 px-2 py-4">
+                <Skeleton className="h-7 w-20" />
+                <div>
+                  <Skeleton className="h-5 w-24" />
+                  <Skeleton className="mt-1 h-4 w-16" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </NeighborsGrid>
       </div>
-    </section>
+    </NeighborsListLayout>
   );
 }
+
+export function NeighborsEmpty({ onClear }: { onClear: () => void }) {
+  return (
+    <Empty className="min-h-80">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <SearchXIcon />
+        </EmptyMedia>
+        <EmptyTitle>
+          <h2>没有找到匹配的友邻</h2>
+        </EmptyTitle>
+        <EmptyDescription>试试其他关键词，或减少一些筛选条件。</EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent>
+        <Button variant="outline" onClick={onClear}>
+          清空筛选
+        </Button>
+      </EmptyContent>
+    </Empty>
+  );
+}
+
 export function NeighborsError() {
   const router = useRouter();
   return (
-    <section role="alert" className="space-y-4 py-20 text-center">
-      <h1 className="text-2xl font-semibold">友邻资料暂时无法加载</h1>
-      <p className="text-muted-foreground">请检查网络与资源版本，然后重新加载。</p>
-      <Button onClick={() => void router.invalidate()}>重新加载</Button>
-    </section>
+    <Empty role="alert" className="min-h-80">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <WifiOffIcon />
+        </EmptyMedia>
+        <EmptyTitle>
+          <h1>友邻资料暂时无法加载</h1>
+        </EmptyTitle>
+        <EmptyDescription>请检查网络与资源版本，然后重新加载。</EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent>
+        <Button onClick={() => void router.invalidate()}>重新加载</Button>
+      </EmptyContent>
+    </Empty>
   );
 }
 export function NeighborNotFound() {
