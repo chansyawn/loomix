@@ -4,6 +4,7 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 
 import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import svgr from "vite-plugin-svgr";
 import { lazyPlugins } from "vite-plus";
 import { localResources } from "./scripts/local-resources.ts";
 import { resolveResourceConfig } from "./scripts/resource-config.ts";
@@ -44,6 +45,7 @@ const config = defineConfig(({ mode }) => {
       tailwindcss(),
       mode !== "test" && cloudflare({ viteEnvironment: { name: "ssr" } }),
       tanstackStart(),
+      svgr(),
       viteReact({ compiler: true }),
     ]),
   };

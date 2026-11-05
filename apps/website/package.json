@@ -42,6 +42,7 @@
     "oxc-transform-react": "catalog:",
     "typescript": "catalog:website",
     "vite": "catalog:",
+    "vite-plugin-svgr": "catalog:",
     "vite-plus": "catalog:",
     "wrangler": "catalog:"
   }
