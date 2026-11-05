@@ -24,7 +24,7 @@ import type { DishesDetail } from "./detail";
 import type { DishView as View } from "./search";
 import { DishesLoadError } from "./states";
 import { DishRecipe } from "./recipe";
-import { DishEffects, DishRequirementSource } from "./effects";
+import { DishEffects } from "./effects";
 import { difficultyRequirementLabel, formatTastes } from "./presentation";
 
 export function DishesDetailPage({ detail }: { detail: DishesDetail }) {
@@ -79,11 +79,6 @@ export function DishesDetailPage({ detail }: { detail: DishesDetail }) {
 function DishesExtras({ detail }: { detail: DishesDetail }) {
   const sections: CollectionDetailSection[] = [];
   if (detail.kind === "item") {
-    if (detail.record.difficultyRequirement)
-      sections.push({
-        key: "dish-requirement-source",
-        content: <DishRequirementSource requirement={detail.record.difficultyRequirement} />,
-      });
     if (detail.record.effects?.length)
       sections.push({
         key: "dish-effects",
