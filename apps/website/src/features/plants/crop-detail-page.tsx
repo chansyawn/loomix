@@ -42,20 +42,25 @@ export function CropDetailPage({ detail }: { detail: CropDetail }) {
         }}
         className="min-w-0"
       >
-        <div className="overflow-x-auto p-1 pb-2">
+        <div className="overflow-x-auto">
           <TabsList
             aria-label="种子与作物"
             variant="line"
             className="group-data-horizontal/tabs:h-auto"
           >
-            <TabsTrigger value="seed" className="h-auto shrink-0">
+            <TabsTrigger value="seed" variant="ghost" className="h-auto shrink-0">
               <span aria-hidden="true" className="size-8 overflow-hidden rounded-lg">
                 <RecordImage image={seed?.image ?? null} name="种子" compact />
               </span>
               种子
             </TabsTrigger>
             {detail.items.map((item) => (
-              <TabsTrigger key={item.id} value={`item-${item.id}`} className="h-auto shrink-0">
+              <TabsTrigger
+                key={item.id}
+                value={`item-${item.id}`}
+                variant="ghost"
+                className="h-auto shrink-0"
+              >
                 <span aria-hidden="true" className="size-8 overflow-hidden rounded-lg">
                   <RecordImage image={item.image} name={item.name} compact />
                 </span>
