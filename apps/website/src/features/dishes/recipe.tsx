@@ -119,6 +119,7 @@ export function DishRecipe({ detail }: { detail: Extract<DishesDetail, { kind: "
           <AccordionItem key={`${slot.field}-${index}`} value={`${slot.field}-${index}`}>
             <AccordionTrigger className="items-start">
               <span className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                <span className="shrink-0 whitespace-nowrap">食材 {index + 1}：</span>
                 <ConditionSummary slot={slot} />
                 <Badge variant="outline">{candidateCountLabel(slot)}</Badge>
               </span>
