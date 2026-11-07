@@ -3,7 +3,6 @@ import { CollectionItemCard } from "../collection/collection-item-card";
 import { collectionItemLocation } from "../collection/item-route";
 import { usePlantsOrigin } from "./detail-navigation";
 import type { PlantDrops } from "./model";
-import { dropProbability } from "./drop-probability";
 
 export function PlantRelatedItems({
   title,
@@ -76,11 +75,6 @@ export function PlantDropsInfo({ drops }: { drops: PlantDrops }) {
                         <CollectionItemCard
                           item={entry.item}
                           itemId={entry.itemId}
-                          description={
-                            entry.dropGroupId === null
-                              ? undefined
-                              : "掉落概率 " + dropProbability(entry.probability)
-                          }
                           link={
                             entry.item && entry.item.listed !== false
                               ? {
