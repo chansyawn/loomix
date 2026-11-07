@@ -375,17 +375,10 @@ export function parseNeighborDatabase(input: unknown): NeighborDatabase {
   return NeighborDatabaseSchema.parse(input);
 }
 
-export const AdditionalNeighborImageCategorySchema = z.enum([
-  "avatar",
-  "card",
-  "favour",
-  "house",
-  "island",
-  "outline",
-  "role",
-]);
-
-export type AdditionalNeighborImageCategory = z.infer<typeof AdditionalNeighborImageCategorySchema>;
+export {
+  AdditionalNeighborImageCategorySchema,
+  type AdditionalNeighborImageCategory,
+} from "@loomix/schema/neighbors";
 
 export function neighborImagePaths(database: NeighborDatabase): string[] {
   return [

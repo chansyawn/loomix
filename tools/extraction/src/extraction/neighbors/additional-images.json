@@ -549,6 +549,411 @@
     "pathId": "-3555518341992000194"
   },
   {
+    "category": "starAtlasIcon",
+    "npcId": 11,
+    "assetType": "Sprite",
+    "resourceName": "Img_Icon_StarAtlas_Lock_0011Manman_001",
+    "container": "assets/moleres/rel/sres/uisprite/load/starmap/starmapinfo_icon_3.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/00064679.blk",
+    "pathId": "3750921458462672775"
+  },
+  {
+    "category": "starAtlasIcon",
+    "npcId": 1005,
+    "assetType": "Sprite",
+    "resourceName": "Img_Icon_StarAtlas_Lock_1005Huanxue_001",
+    "container": "assets/moleres/rel/sres/uisprite/load/starmap/starmapinfo_icon_3.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/00064679.blk",
+    "pathId": "8237687110732130042"
+  },
+  {
+    "category": "starAtlasIcon",
+    "npcId": 1008,
+    "assetType": "Sprite",
+    "resourceName": "Img_Icon_StarAtlas_Lock_1008Rebeier_001",
+    "container": "assets/moleres/rel/sres/uisprite/load/starmap/starmapinfo_icon_3.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/00064679.blk",
+    "pathId": "-5127721828872882576"
+  },
+  {
+    "category": "starAtlasIcon",
+    "npcId": 1009,
+    "assetType": "Sprite",
+    "resourceName": "Img_Icon_StarAtlas_Lock_1009Isaki_001",
+    "container": "assets/moleres/rel/sres/uisprite/load/starmap/starmapinfo_icon_3.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/00064679.blk",
+    "pathId": "110932895890589146"
+  },
+  {
+    "category": "starAtlasIcon",
+    "npcId": 1010,
+    "assetType": "Sprite",
+    "resourceName": "Img_Icon_StarAtlas_Lock_1010Yunguo_001",
+    "container": "assets/moleres/rel/sres/uisprite/load/starmap/starmapinfo_icon_3.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/00064679.blk",
+    "pathId": "62719187355941110"
+  },
+  {
+    "category": "starAtlasIcon",
+    "npcId": 1010,
+    "assetType": "Sprite",
+    "resourceName": "Img_Icon_StarAtlas_Lock_1010Yunguo_002",
+    "container": "assets/moleres/rel/sres/uisprite/load/starmap/starmapinfo_icon_3.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/00064679.blk",
+    "pathId": "7435793417884841839"
+  },
+  {
+    "category": "starAtlasIcon",
+    "npcId": 1011,
+    "assetType": "Sprite",
+    "resourceName": "Img_Icon_StarAtlas_Lock_1011Duojielang_001",
+    "container": "assets/moleres/rel/sres/uisprite/load/starmap/starmapinfo_icon_3.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/00064679.blk",
+    "pathId": "9168411189093650468"
+  },
+  {
+    "category": "starAtlasIcon",
+    "npcId": 1013,
+    "assetType": "Sprite",
+    "resourceName": "Img_Icon_StarAtlas_Lock_1013Safeili_001",
+    "container": "assets/moleres/rel/sres/uisprite/load/starmap/starmapinfo_icon_3.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/00064679.blk",
+    "pathId": "-3090637093727824907"
+  },
+  {
+    "category": "starAtlasIcon",
+    "npcId": 1015,
+    "assetType": "Sprite",
+    "resourceName": "Img_Icon_StarAtlas_Lock_1015Naleina_001",
+    "container": "assets/moleres/rel/sres/uisprite/load/starmap/starmapinfo_icon_3.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/00064679.blk",
+    "pathId": "5721402082776920152"
+  },
+  {
+    "category": "starAtlasIcon",
+    "npcId": 1017,
+    "assetType": "Sprite",
+    "resourceName": "Img_Icon_StarAtlas_Lock_1017Hapeinuo_001",
+    "container": "assets/moleres/rel/sres/uisprite/load/starmap/starmapinfo_icon_3.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/00064679.blk",
+    "pathId": "-4771683524406994146"
+  },
+  {
+    "category": "starAtlasIcon",
+    "npcId": 12,
+    "assetType": "Sprite",
+    "resourceName": "Img_Icon_StarAtlas_Lock_12Mianduo_001",
+    "container": "assets/moleres/rel/sres/uisprite/load/starmap/starmapinfo_icon_3.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/00064679.blk",
+    "pathId": "7245002381787977960"
+  },
+  {
+    "category": "starAtlasIcon",
+    "npcId": 12,
+    "assetType": "Sprite",
+    "resourceName": "Img_Icon_StarAtlas_Lock_12Mianduo_002",
+    "container": "assets/moleres/rel/sres/uisprite/load/starmap/starmapinfo_icon_3.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/00064679.blk",
+    "pathId": "-2976061835977198411"
+  },
+  {
+    "category": "diarySticker",
+    "npcId": 11,
+    "assetType": "Sprite",
+    "resourceName": "Img_StarBay_Diary_0011Manman_001",
+    "container": "assets/moleres/rel/sres/uisprite/load/starbay/img_starbay_diary_player_003.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "4553660989578166755"
+  },
+  {
+    "category": "diarySticker",
+    "npcId": 11,
+    "assetType": "Sprite",
+    "resourceName": "Img_StarBay_Diary_0011Manman_002",
+    "container": "assets/moleres/rel/sres/uisprite/load/starbay/img_starbay_diary_player_003.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "-3137256103463950108"
+  },
+  {
+    "category": "diarySticker",
+    "npcId": 12,
+    "assetType": "Sprite",
+    "resourceName": "Img_StarBay_Diary_0012Mianduo_001",
+    "container": "assets/moleres/rel/sres/uisprite/load/starbay/img_starbay_diary_player_003.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "-665426375256121232"
+  },
+  {
+    "category": "diarySticker",
+    "npcId": 12,
+    "assetType": "Sprite",
+    "resourceName": "Img_StarBay_Diary_0012Mianduo_002",
+    "container": "assets/moleres/rel/sres/uisprite/load/starbay/img_starbay_diary_player_003.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "7449917013556724760"
+  },
+  {
+    "category": "diarySticker",
+    "npcId": 1008,
+    "assetType": "Sprite",
+    "resourceName": "Img_StarBay_Diary_1008Reberier_001",
+    "container": "assets/moleres/rel/sres/uisprite/load/starbay/img_starbay_diary_player_003.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "8562705981272079133"
+  },
+  {
+    "category": "diarySticker",
+    "npcId": 1008,
+    "assetType": "Sprite",
+    "resourceName": "Img_StarBay_Diary_1008Reberier_002",
+    "container": "assets/moleres/rel/sres/uisprite/load/starbay/img_starbay_diary_player_003.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "1797350490286940323"
+  },
+  {
+    "category": "diarySticker",
+    "npcId": 1009,
+    "assetType": "Sprite",
+    "resourceName": "Img_StarBay_Diary_1009Isaki_001",
+    "container": "assets/moleres/rel/sres/uisprite/load/starbay/img_starbay_diary_player_003.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "-6796492909454040490"
+  },
+  {
+    "category": "diarySticker",
+    "npcId": 1009,
+    "assetType": "Sprite",
+    "resourceName": "Img_StarBay_Diary_1009Isaki_002",
+    "container": "assets/moleres/rel/sres/uisprite/load/starbay/img_starbay_diary_player_003.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "1623195596201670745"
+  },
+  {
+    "category": "diarySticker",
+    "npcId": 1010,
+    "assetType": "Sprite",
+    "resourceName": "Img_StarBay_Diary_1010Yunguo_001",
+    "container": "assets/moleres/rel/sres/uisprite/load/starbay/img_starbay_diary_player_003.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "3046499485001914673"
+  },
+  {
+    "category": "diarySticker",
+    "npcId": 1010,
+    "assetType": "Sprite",
+    "resourceName": "Img_StarBay_Diary_1010Yunguo_002",
+    "container": "assets/moleres/rel/sres/uisprite/load/starbay/img_starbay_diary_player_003.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "-74414909139814421"
+  },
+  {
+    "category": "diarySticker",
+    "npcId": 1011,
+    "assetType": "Sprite",
+    "resourceName": "Img_StarBay_Diary_1011Duojielang_001",
+    "container": "assets/moleres/rel/sres/uisprite/load/starbay/img_starbay_diary_player_003.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "-287292892330746763"
+  },
+  {
+    "category": "diarySticker",
+    "npcId": 1011,
+    "assetType": "Sprite",
+    "resourceName": "Img_StarBay_Diary_1011Duojielang_002",
+    "container": "assets/moleres/rel/sres/uisprite/load/starbay/img_starbay_diary_player_003.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "-9104048239826084869"
+  },
+  {
+    "category": "diarySticker",
+    "npcId": 1013,
+    "assetType": "Sprite",
+    "resourceName": "Img_StarBay_Diary_1013Safeili_001",
+    "container": "assets/moleres/rel/sres/uisprite/load/starbay/img_starbay_diary_player_003.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "3067350664211548202"
+  },
+  {
+    "category": "diarySticker",
+    "npcId": 1013,
+    "assetType": "Sprite",
+    "resourceName": "Img_StarBay_Diary_1013Safeili_002",
+    "container": "assets/moleres/rel/sres/uisprite/load/starbay/img_starbay_diary_player_003.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "357487398727832465"
+  },
+  {
+    "category": "diarySticker",
+    "npcId": 1015,
+    "assetType": "Sprite",
+    "resourceName": "Img_StarBay_Diary_1015Naleina_001",
+    "container": "assets/moleres/rel/sres/uisprite/load/starbay/img_starbay_diary_player_003.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "-6684173579407564552"
+  },
+  {
+    "category": "diarySticker",
+    "npcId": 1015,
+    "assetType": "Sprite",
+    "resourceName": "Img_StarBay_Diary_1015Naleina_002",
+    "container": "assets/moleres/rel/sres/uisprite/load/starbay/img_starbay_diary_player_003.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "6358160226309387103"
+  },
+  {
+    "category": "diarySticker",
+    "npcId": 1017,
+    "assetType": "Sprite",
+    "resourceName": "Img_StarBay_Diary_1017Hapeinuo_001",
+    "container": "assets/moleres/rel/sres/uisprite/load/starbay/img_starbay_diary_player_003.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "1908345333033360437"
+  },
+  {
+    "category": "diarySticker",
+    "npcId": 1017,
+    "assetType": "Sprite",
+    "resourceName": "Img_StarBay_Diary_1017Hapeinuo_002",
+    "container": "assets/moleres/rel/sres/uisprite/load/starbay/img_starbay_diary_player_003.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "4519895496219805616"
+  },
+  {
+    "category": "diarySticker",
+    "npcId": 1018,
+    "assetType": "Sprite",
+    "resourceName": "Img_StarBay_Diary_1018Tika_001",
+    "container": "assets/moleres/rel/sres/uisprite/load/starbay/img_starbay_diary_player_003.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "-4198120928199877184"
+  },
+  {
+    "category": "diarySticker",
+    "npcId": 1018,
+    "assetType": "Sprite",
+    "resourceName": "Img_StarBay_Diary_1018Tika_002",
+    "container": "assets/moleres/rel/sres/uisprite/load/starbay/img_starbay_diary_player_003.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "-967932541592133239"
+  },
+  {
+    "category": "diarySticker",
+    "npcId": 1019,
+    "assetType": "Sprite",
+    "resourceName": "Img_StarBay_Diary_1019Heyu_001",
+    "container": "assets/moleres/rel/sres/uisprite/load/starbay/img_starbay_diary_player_003.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "-6496817755141912102"
+  },
+  {
+    "category": "diarySticker",
+    "npcId": 1019,
+    "assetType": "Sprite",
+    "resourceName": "Img_StarBay_Diary_1019Heyu_002",
+    "container": "assets/moleres/rel/sres/uisprite/load/starbay/img_starbay_diary_player_003.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "746177873550691887"
+  },
+  {
+    "category": "diaryIllustration",
+    "npcId": 11,
+    "assetType": "Texture2D",
+    "resourceName": "Img_StarBay_Diary_Share_Pic_0011",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_share_pic_0011.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "-5153895834499530280"
+  },
+  {
+    "category": "diaryIllustration",
+    "npcId": 12,
+    "assetType": "Texture2D",
+    "resourceName": "Img_StarBay_Diary_Share_Pic_0012",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_share_pic_0012.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "3941158485170571266"
+  },
+  {
+    "category": "diaryIllustration",
+    "npcId": 1008,
+    "assetType": "Texture2D",
+    "resourceName": "Img_StarBay_Diary_Share_Pic_1008",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_share_pic_1008.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "-3915682390404891604"
+  },
+  {
+    "category": "diaryIllustration",
+    "npcId": 1009,
+    "assetType": "Texture2D",
+    "resourceName": "Img_StarBay_Diary_Share_Pic_1009",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_share_pic_1009.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "-1106750847096913751"
+  },
+  {
+    "category": "diaryIllustration",
+    "npcId": 1010,
+    "assetType": "Texture2D",
+    "resourceName": "Img_StarBay_Diary_Share_Pic_1010",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_share_pic_1010.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "8368210864046947610"
+  },
+  {
+    "category": "diaryIllustration",
+    "npcId": 1011,
+    "assetType": "Texture2D",
+    "resourceName": "Img_StarBay_Diary_Share_Pic_1011",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_share_pic_1011.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "7845446654303616587"
+  },
+  {
+    "category": "diaryIllustration",
+    "npcId": 1013,
+    "assetType": "Texture2D",
+    "resourceName": "Img_StarBay_Diary_Share_Pic_1013",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_share_pic_1013.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "65955314562069997"
+  },
+  {
+    "category": "diaryIllustration",
+    "npcId": 1015,
+    "assetType": "Texture2D",
+    "resourceName": "Img_StarBay_Diary_Share_Pic_1015",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_share_pic_1015.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "-7708360441178484686"
+  },
+  {
+    "category": "diaryIllustration",
+    "npcId": 1017,
+    "assetType": "Texture2D",
+    "resourceName": "Img_StarBay_Diary_Share_Pic_1017",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_share_pic_1017.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "5614001431536634394"
+  },
+  {
+    "category": "diaryIllustration",
+    "npcId": 1018,
+    "assetType": "Texture2D",
+    "resourceName": "Img_StarBay_Diary_Share_Pic_1018",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_share_pic_1018.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "7878436104100960463"
+  },
+  {
+    "category": "diaryIllustration",
+    "npcId": 1019,
+    "assetType": "Texture2D",
+    "resourceName": "Img_StarBay_Diary_Share_Pic_1019",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_share_pic_1019.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "-7798704219468149464"
+  },
+  {
     "category": "island",
     "npcId": null,
     "assetType": "Texture2D",
@@ -637,6 +1042,204 @@
     "container": "assets/moleres/rel/sres/uisprite/load/starexplore/img_starexplore_islet210038.png",
     "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/05379314.blk",
     "pathId": "-5897319774856815681"
+  },
+  {
+    "category": "diaryWatermark",
+    "npcId": 11,
+    "assetType": "Texture2D",
+    "resourceName": "Img_Starbay_Diary_Book_0011_01",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_book_0011_01.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "3784729986300330581"
+  },
+  {
+    "category": "diaryWatermark",
+    "npcId": 11,
+    "assetType": "Texture2D",
+    "resourceName": "Img_Starbay_Diary_Book_0011_02",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_book_0011_02.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "-4243712744283740441"
+  },
+  {
+    "category": "diaryWatermark",
+    "npcId": 12,
+    "assetType": "Texture2D",
+    "resourceName": "Img_Starbay_Diary_Book_0012_01",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_book_0012_01.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "-1931794580369666574"
+  },
+  {
+    "category": "diaryWatermark",
+    "npcId": 12,
+    "assetType": "Texture2D",
+    "resourceName": "Img_Starbay_Diary_Book_0012_02",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_book_0012_02.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "-2994322310486333835"
+  },
+  {
+    "category": "diaryWatermark",
+    "npcId": 1008,
+    "assetType": "Texture2D",
+    "resourceName": "Img_Starbay_Diary_Book_1008_01",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_book_1008_01.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "-7845895304404715218"
+  },
+  {
+    "category": "diaryWatermark",
+    "npcId": 1008,
+    "assetType": "Texture2D",
+    "resourceName": "Img_Starbay_Diary_Book_1008_02",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_book_1008_02.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "-8312496892626918690"
+  },
+  {
+    "category": "diaryWatermark",
+    "npcId": 1009,
+    "assetType": "Texture2D",
+    "resourceName": "Img_Starbay_Diary_Book_1009_01",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_book_1009_01.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "3765134428418105109"
+  },
+  {
+    "category": "diaryWatermark",
+    "npcId": 1009,
+    "assetType": "Texture2D",
+    "resourceName": "Img_Starbay_Diary_Book_1009_02",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_book_1009_02.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "-4117074100371084468"
+  },
+  {
+    "category": "diaryWatermark",
+    "npcId": 1010,
+    "assetType": "Texture2D",
+    "resourceName": "Img_Starbay_Diary_Book_1010_01",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_book_1010_01.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "-6765737205232241245"
+  },
+  {
+    "category": "diaryWatermark",
+    "npcId": 1010,
+    "assetType": "Texture2D",
+    "resourceName": "Img_Starbay_Diary_Book_1010_02",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_book_1010_02.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "-662352371921090735"
+  },
+  {
+    "category": "diaryWatermark",
+    "npcId": 1011,
+    "assetType": "Texture2D",
+    "resourceName": "Img_Starbay_Diary_Book_1011_01",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_book_1011_01.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "-6837778449483122467"
+  },
+  {
+    "category": "diaryWatermark",
+    "npcId": 1011,
+    "assetType": "Texture2D",
+    "resourceName": "Img_Starbay_Diary_Book_1011_02",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_book_1011_02.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "-7684811988851286245"
+  },
+  {
+    "category": "diaryWatermark",
+    "npcId": 1013,
+    "assetType": "Texture2D",
+    "resourceName": "Img_Starbay_Diary_Book_1013_01",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_book_1013_01.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "-6321696305742741240"
+  },
+  {
+    "category": "diaryWatermark",
+    "npcId": 1013,
+    "assetType": "Texture2D",
+    "resourceName": "Img_Starbay_Diary_Book_1013_02",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_book_1013_02.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "2160783006039661850"
+  },
+  {
+    "category": "diaryWatermark",
+    "npcId": 1015,
+    "assetType": "Texture2D",
+    "resourceName": "Img_Starbay_Diary_Book_1015_01",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_book_1015_01.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "240064912791183345"
+  },
+  {
+    "category": "diaryWatermark",
+    "npcId": 1015,
+    "assetType": "Texture2D",
+    "resourceName": "Img_Starbay_Diary_Book_1015_02",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_book_1015_02.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "-462943325549386962"
+  },
+  {
+    "category": "diaryWatermark",
+    "npcId": 1017,
+    "assetType": "Texture2D",
+    "resourceName": "Img_Starbay_Diary_Book_1017_01",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_book_1017_01.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "-106591656139462273"
+  },
+  {
+    "category": "diaryWatermark",
+    "npcId": 1017,
+    "assetType": "Texture2D",
+    "resourceName": "Img_Starbay_Diary_Book_1017_02",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_book_1017_02.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "4272938786643623880"
+  },
+  {
+    "category": "diaryWatermark",
+    "npcId": 1018,
+    "assetType": "Texture2D",
+    "resourceName": "Img_Starbay_Diary_Book_1018_01",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_book_1018_01.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "-6482900741981193578"
+  },
+  {
+    "category": "diaryWatermark",
+    "npcId": 1018,
+    "assetType": "Texture2D",
+    "resourceName": "Img_Starbay_Diary_Book_1018_02",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_book_1018_02.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "-6277360792773158876"
+  },
+  {
+    "category": "diaryWatermark",
+    "npcId": 1019,
+    "assetType": "Texture2D",
+    "resourceName": "Img_Starbay_Diary_Book_1019_01",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_book_1019_01.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "-5722023162626160410"
+  },
+  {
+    "category": "diaryWatermark",
+    "npcId": 1019,
+    "assetType": "Texture2D",
+    "resourceName": "Img_Starbay_Diary_Book_1019_02",
+    "container": "assets/moleres/rel/sres/uisprite/load/bigpic/starbay/img_starbay_diary_book_1019_02.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10795733.blk",
+    "pathId": "6632540018639620328"
   },
   {
     "category": "favour",

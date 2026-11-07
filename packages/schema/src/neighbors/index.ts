@@ -152,6 +152,43 @@ const outfit = z
       ctx.addIssue({ code: "custom", path: ["offers"], message: "Duplicate outfit offer ID" });
   });
 
+export const NeighborSpecificImageCategorySchema = z.enum([
+  "diaryIllustration",
+  "diaryWatermark",
+  "diarySticker",
+  "starAtlasIcon",
+]);
+export const AdditionalNeighborImageCategorySchema = z.enum([
+  "avatar",
+  "card",
+  "favour",
+  "house",
+  "island",
+  "outline",
+  "role",
+  ...NeighborSpecificImageCategorySchema.options,
+]);
+export type AdditionalNeighborImageCategory = z.infer<typeof AdditionalNeighborImageCategorySchema>;
+
+const additionalImage = z
+  .strictObject({
+    key: z.string().min(1),
+    category: AdditionalNeighborImageCategorySchema,
+    neighborId: neighborId.nullable(),
+    image: ImageRefSchema,
+  })
+  .superRefine((value, ctx) => {
+    if (
+      value.neighborId === null &&
+      NeighborSpecificImageCategorySchema.safeParse(value.category).success
+    )
+      ctx.addIssue({
+        code: "custom",
+        path: ["neighborId"],
+        message: "Neighbor-specific images need a neighbor",
+      });
+  });
+
 export const NeighborsSchema = ContextSchema.extend({
   kind: z.literal("neighbors"),
   neighbors: record.array(),
@@ -164,14 +201,7 @@ export const NeighborsSchema = ContextSchema.extend({
   giftPreferenceTags: giftPreferenceTag.array().default([]),
   outfits: outfit.array().default([]),
   resources: asset.array(),
-  additionalImages: z.array(
-    z.strictObject({
-      key: z.string().min(1),
-      category: z.enum(["avatar", "card", "favour", "house", "island", "outline", "role"]),
-      neighborId: neighborId.nullable(),
-      image: ImageRefSchema,
-    }),
-  ),
+  additionalImages: additionalImage.array(),
 });
 export type Neighbors = z.infer<typeof NeighborsSchema>;
 export type NeighborOutfit = z.infer<typeof outfit>;

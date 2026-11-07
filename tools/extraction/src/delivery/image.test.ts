@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import sharp from "sharp";
 import { emptyDataset } from "@loomix/schema/dataset";
+import { parseAssets } from "@loomix/schema/assets";
 import { createAssetRegistry } from "../domains/assets.ts";
 import type { ImageJob } from "../domains/assets.ts";
 import { digest } from "../workflow/hashing.ts";
@@ -182,5 +183,94 @@ test("neighbor images retain full framing and alpha, never upscale and fit withi
     assert.equal(output.height, targetHeight);
     const pixels = await sharp(output.bytes).ensureAlpha().raw().toBuffer();
     assert.equal(pixels[3], 128);
+  }
+});
+
+test("diary and white atlas images are delivered with full references, original size and alpha", async () => {
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-neighbor-images-"));
+  try {
+    const dataset = emptyDataset(
+      { formatVersion: 2, snapshotId: "a".repeat(64), locale: "zh-CN" },
+      { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" },
+    );
+    dataset.neighbors.neighbors.push({
+      id: 11,
+      name: "蛮蛮",
+      bodyType: null,
+      scaleValue: null,
+      avatar: null,
+      npc2Path: "Avatar/NPC2/NPC_11",
+    });
+    const registry = createAssetRegistry();
+    const sizes = [
+      ["diaryIllustration", 452, 534],
+      ["diaryWatermark", 300, 300],
+      ["diarySticker", 78, 108],
+      ["starAtlasIcon", 83, 89],
+    ] as const;
+    for (const [category, width, height] of sizes) {
+      const png = await sharp({
+        create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
+      })
+        .composite([
+          {
+            input: await sharp({
+              create: { width: width - 8, height: height - 8, channels: 4, background: "white" },
+            })
+              .png()
+              .toBuffer(),
+            left: 4,
+            top: 4,
+          },
+        ])
+        .png()
+        .toBuffer();
+      const file = `${category}.png`;
+      fs.writeFileSync(path.join(work, file), png);
+      const image = registry.register({
+        file,
+        sha256: digest(png),
+        width,
+        height,
+        source: "fixture.blk",
+        container: category,
+        assetType: "Sprite",
+        pathId: category,
+      });
+      dataset.neighbors.additionalImages.push({ key: category, category, neighborId: 11, image });
+    }
+    fs.writeFileSync(path.join(work, "dataset.json"), JSON.stringify(dataset));
+    fs.writeFileSync(
+      path.join(work, "image-jobs.json"),
+      JSON.stringify([...registry.jobs.values()]),
+    );
+    await renderImages({ work }, work);
+    const assets = parseAssets(
+      JSON.parse(fs.readFileSync(path.join(work, "staging/assets.json"), "utf8")),
+    );
+    assert.equal(assets.images.length, sizes.length);
+    assert.deepEqual(
+      JSON.parse(fs.readFileSync(path.join(work, "staging/zh-CN/neighbors.json"), "utf8")),
+      dataset.neighbors,
+    );
+    for (const [category, width, height] of sizes) {
+      const reference = dataset.neighbors.additionalImages.find(
+        (image) => image.category === category,
+      )!;
+      const delivered = assets.images.find((image) => image.assetId === reference.image.assetId)!;
+      assert.equal(delivered.variant, "illustration");
+      assert.equal(delivered.width, width);
+      assert.equal(delivered.height, height);
+      const pixels = await sharp(path.join(work, "staging", delivered.file))
+        .ensureAlpha()
+        .raw()
+        .toBuffer();
+      assert.equal(pixels[3], 0);
+      const center = (Math.floor(height / 2) * width + Math.floor(width / 2)) * 4;
+      for (const channel of [0, 1, 2]) assert.ok(pixels[center + channel]! >= 250);
+      assert.equal(pixels[center + 3], 255);
+    }
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
   }
 });
