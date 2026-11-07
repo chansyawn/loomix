@@ -12,8 +12,9 @@ import { Tables } from "../extraction/decode/tables.ts";
 import type { TableRow } from "../extraction/types.ts";
 import { verifyCollectionFields } from "./collection-fields.ts";
 import { verifySeedImages, verifyStageImages } from "./collection-images.ts";
+import { verifyTreeInvestigation } from "./tree-drops.ts";
 
-function verifyProofSources(proof: CollectionEvidence, tables: Tables): void {
+export function verifyProofSources(proof: CollectionEvidence, tables: Tables): void {
   const rows: { row: TableRow; fields: number[] }[] = [];
   const add = (root: number, predicate: (row: TableRow) => boolean, fields: number[]) => {
     for (const row of tables.rows(root).filter(predicate)) rows.push({ row, fields });
@@ -129,13 +130,17 @@ function verifyProofSources(proof: CollectionEvidence, tables: Tables): void {
   }
   if (proof.value !== null)
     for (const { row, fields } of new Map(
-      rows.map((entry) => [`${entry.row.root}:${tables.id(entry.row)}`, entry]),
+      rows.map((entry) => [
+        `${entry.row.root}:${proof.field.startsWith("detail.treeDrops") ? entry.row.rowOffset : tables.id(entry.row)}`,
+        entry,
+      ]),
     ).values())
       assert.ok(
         proof.sources.some(
           (source) =>
             source.table === row.root &&
             source.row === tables.id(row) &&
+            (!proof.field.startsWith("detail.treeDrops") || source.rowOffset === row.rowOffset) &&
             fields.every((field) => source.fields.includes(field)),
         ),
         "Complete joined source rows",
@@ -178,6 +183,7 @@ export async function verifyCollection(
   const investigation = detailInvestigationSchema.parse(
     readJson(path.join(bundle, "collection-investigation.json")),
   );
+  verifyTreeInvestigation(tables, investigation.records);
   assert.deepEqual(
     readJson(path.join(bundle, "evidence/collection-investigation.json")),
     investigation,

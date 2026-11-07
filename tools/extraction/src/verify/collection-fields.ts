@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import type { CollectionObservations, CraftingRecipe } from "../extraction/schema.ts";
 import type { Tables } from "../extraction/decode/tables.ts";
 import { creatureSizeRange, plainText, scaledCreatureSize } from "../extraction/content/model.ts";
+import { verifyTreeDrops } from "./tree-drops.ts";
 
 export function verifyCollectionFields(catalog: CollectionObservations, tables: Tables) {
   const main = tables.byId(318);
@@ -117,8 +118,10 @@ export function verifyCollectionFields(catalog: CollectionObservations, tables: 
       continue;
     }
     if (record.category === "clothing") continue;
-    if (record.category === "plants")
+    if (record.category === "plants") {
       expect("seedId", record.seedId, productSeeds.get(record.id) ?? null);
+      verifyTreeDrops(tables, record.id, detail.treeDrops);
+    }
     if (record.category === "creatures") {
       const row = content.get(record.id);
       const scale = creatureScales.get(record.id);

@@ -76,7 +76,7 @@ function PlantOrSeriesDetailPage({ detail }: { detail: PlantOrSeriesDetail }) {
 function PlantExtras({ detail }: { detail: PlantOrSeriesDetail }) {
   const sections: CollectionDetailSection[] = [];
   const summary = detail.record.summary;
-  if (summary.drops.items.length > 0 || summary.drops.unlistedCount > 0)
+  if (summary.drops.groups.length > 0)
     sections.push({
       key: "plant-drops",
       content: <PlantDropsInfo drops={summary.drops} />,

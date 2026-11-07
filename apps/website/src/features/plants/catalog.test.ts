@@ -91,3 +91,44 @@ test("keeps multiple seeds for a product and shares one growth configuration", (
   expect(data.seeds.map((seed) => seed.id)).toEqual([10, 11]);
   expect(data.seeds[0].detail.harvestCount).toBe(3);
 });
+
+test("掉落保留来源树种、概率和果实，不合并系列成员的概率", () => {
+  const drop = {
+    itemId: 3,
+    dropGroupId: 40000,
+    weight: 25,
+    quantityMin: null,
+    quantityMax: null,
+    probability: 0.025,
+  };
+  const catalog = catalogFixture({
+    plants: plantsDataFixture({
+      items: [
+        plantItemFixture({
+          id: 1,
+          name: "苹果树",
+          treeDrops: [
+            drop,
+            { ...drop, itemId: 4, dropGroupId: null, weight: null, probability: null },
+          ],
+        }),
+        plantItemFixture({
+          id: 2,
+          name: "花树",
+          treeDrops: [{ ...drop, dropGroupId: 40007, probability: 25 / 957 }],
+        }),
+        plantItemFixture({ id: 3, name: "树胶" }),
+        plantItemFixture({ id: 4, name: "果实" }),
+      ],
+      series: [plantSeriesFixture({ id: 10, plantIds: [2, 1] })],
+    }),
+  });
+  catalog.entries = catalog.entries.filter((entry) => entry.entity.id !== 3);
+  const data = toCollectionView(catalog, assetsFixture(catalog)).plants;
+  const groups = data.series[0].summary.drops.groups;
+  expect(groups.map((group) => group.treeId)).toEqual([2, 1]);
+  expect(groups.map((group) => group.entries[0].probability)).toEqual([25 / 957, 0.025]);
+  expect(groups[0].entries[0].item).toMatchObject({ id: 3, name: "树胶", listed: false });
+  expect(groups[1].entries[1]).toMatchObject({ itemId: 4, probability: null, dropGroupId: null });
+  expect(data.sourceTreesByItemId.get(3)?.map((item) => item.id)).toEqual([1, 2]);
+});

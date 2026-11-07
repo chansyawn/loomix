@@ -7,6 +7,8 @@ import type { CollectionEvidenceBuilder, CollectionSource } from "../evidence.ts
 import { localizedSources, tableSource } from "../evidence.ts";
 import type { TableRow } from "../../types.ts";
 
+import { treeDrops } from "./tree-drops.ts";
+
 export interface DetailResult<T> {
   value: T;
   sources: CollectionSource[];
@@ -100,48 +102,6 @@ export function growth(context: ContentContext, row: TableRow | undefined) {
       : null,
     sources,
     reason: "stage_cycle_does_not_confirm_elapsed_days",
-  };
-}
-
-export function treeDrops(
-  context: ContentContext,
-  id: number,
-): DetailResult<CollectionDetail["treeDrops"]> {
-  const { tables } = context;
-  const tree = tables.byId(708).get(id);
-  if (!tree) return { value: null, sources: [], reason: "no_tree_configuration" };
-  const sources = [tableSource(tables, tree, [0, 1, 2, 3, 5])];
-  const groupId = tables.uint(tree, 5);
-  const rows = tables.rows(563).filter((row) => tables.uint(row, 0) === groupId);
-  const value: NonNullable<CollectionDetail["treeDrops"]> = [];
-  const fruitId = tables.uint(tree, 1);
-  if (fruitId !== null)
-    value.push({
-      itemId: fruitId,
-      dropGroupId: null,
-      weight: null,
-      quantityMin: null,
-      quantityMax: null,
-      probability: null,
-    });
-  for (const row of rows) {
-    const itemId = tables.uint(row, 2);
-    if (!itemId || !context.main.has(itemId))
-      throw new Error(`Unresolved tree drop item ${id}:${itemId}`);
-    sources.push(tableSource(tables, row, [0, 1, 2, 3, 4, 5, 15]));
-    value.push({
-      itemId,
-      dropGroupId: groupId,
-      weight: tables.uint(row, 5),
-      quantityMin: null,
-      quantityMax: null,
-      probability: null,
-    });
-  }
-  return {
-    value: value.length ? value : null,
-    sources,
-    reason: "drop_quantity_and_probability_semantics_unconfirmed",
   };
 }
 
@@ -239,7 +199,9 @@ export function recordDetail<T>(
       value,
       result.sources,
       "Explicit client configuration ID/reference join; no name-based association",
-      "Preserve client values; do not infer units, runtime probabilities, or missing defaults",
+      field === "detail.treeDrops"
+        ? "保留客户端条目；模式 2 的概率按条目权重除以整组总权重计算；不推断果实概率、数量和运行限制"
+        : "Preserve client values; do not infer units, runtime probabilities, or missing defaults",
       result.reason,
     );
   };

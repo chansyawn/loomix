@@ -10,7 +10,7 @@ export function plantSummaryFixture(fields: Partial<PlantSummary> = {}): PlantSu
     harvestCounts: [],
     seeds: [],
     growths: [],
-    drops: { items: [], unlistedCount: 0 },
+    drops: { groups: [] },
     ...fields,
   };
 }

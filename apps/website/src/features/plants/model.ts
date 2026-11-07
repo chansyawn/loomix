@@ -19,8 +19,11 @@ export type PlantSeed = Omit<Seed, "image"> & {
 };
 type PlantRecord = Extract<Item, { type: "plant" }>;
 export interface PlantDrops {
-  items: IngredientItem[];
-  unlistedCount: number;
+  groups: {
+    treeId: number;
+    treeName: string;
+    entries: (NonNullable<PlantRecord["drops"]>[number] & { item: IngredientItem | null })[];
+  }[];
 }
 export interface PlantGrowthGroup {
   id: number;

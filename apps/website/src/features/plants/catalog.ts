@@ -89,9 +89,6 @@ export function buildPlantsData(
       if (item.growth && growthId != null && !configurations.has(growthId))
         configurations.set(growthId, { id: growthId, name: item.name, growth: item.growth });
     }
-    const dropIds = unique(
-      items.flatMap((item) => item.treeDrops?.map((drop) => drop.itemId) ?? []),
-    );
     return {
       categories: unique(items.flatMap((item) => (item.category ? [item.category] : []))),
       galaxies: unique(items.flatMap((item) => records.get(item.id)?.origins ?? [])),
@@ -103,10 +100,20 @@ export function buildPlantsData(
       seeds: relatedSeeds,
       growths: [...configurations.values()],
       drops: {
-        items: dropIds.flatMap((id) => itemRefs.get(id) ?? []),
-        unlistedCount: dropIds.filter(
-          (id) => !itemRefs.has(id) || itemRefs.get(id)?.listed === false,
-        ).length,
+        groups: items.flatMap((item) =>
+          item.treeDrops?.length
+            ? [
+                {
+                  treeId: item.id,
+                  treeName: item.name,
+                  entries: item.treeDrops.map((drop) => ({
+                    ...drop,
+                    item: itemRefs.get(drop.itemId) ?? null,
+                  })),
+                },
+              ]
+            : [],
+        ),
       },
     };
   };

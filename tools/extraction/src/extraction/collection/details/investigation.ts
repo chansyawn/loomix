@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { ContentContext } from "../../content/context.ts";
 import { collectionSourceSchema, tableSource } from "../evidence.ts";
+import { treeInvestigation } from "./tree-investigation.ts";
 import { catalogSource } from "../../../profile.ts";
 
 export const detailInvestigationSchema = z.strictObject({
@@ -128,23 +129,9 @@ export function detailInvestigation(context: ContentContext) {
           },
           sources: [tableSource(tables, crop, [0, 3, 4, 6, 10])],
         });
-      const tree = tables.byId(708).get(id);
-      if (tree)
-        records.push({
-          id,
-          field: "detail.treeDrops",
-          status: "unconfirmed",
-          reason: "fruit_count_weights_and_drop_runtime_rules_need_independent_confirmation",
-          candidates: {
-            fruitId: tables.uint(tree, 1),
-            fruitCountCandidate: tables.uint(tree, 2),
-            fruitWeights: tables.string(tree, 3),
-            dropGroupId: tables.uint(tree, 5),
-          },
-          sources: [tableSource(tables, tree, [0, 1, 2, 3, 5])],
-        });
     }
   }
+  records.push(...treeInvestigation(tables));
   const ids = new Set([...scope.ids, ...tables.rows(144).map((row) => tables.id(row))]);
   for (const row of tables.rows(659)) {
     const id = tables.uint(row, 2);

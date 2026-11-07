@@ -1,7 +1,13 @@
 import { expect, test } from "vite-plus/test";
 import type { ContentContext } from "../../content/context.ts";
 import type { TableRow } from "../../types.ts";
-import { acquisition, creatureSize, growth, trade, treeDrops } from "./client.ts";
+import { acquisition, creatureSize, growth, trade } from "./client.ts";
+
+import { treeDrops } from "./tree-drops.ts";
+import { treeInvestigation } from "./tree-investigation.ts";
+import { verifyTreeDrops, verifyTreeInvestigation } from "../../../verify/tree-drops.ts";
+import { verifyProofSources } from "../../../verify/collection.ts";
+import { CollectionEvidenceBuilder } from "../evidence.ts";
 
 interface FakeRow extends TableRow {
   values: Record<number, number | string | number[] | null>;
@@ -146,7 +152,7 @@ test("tree drops join by configured group and leave unsupported quantity and cha
       probability: null,
     },
   ]);
-  expect(result.reason).toBe("drop_quantity_and_probability_semantics_unconfirmed");
+  expect(result.reason).toBe("drop_mode_or_positive_total_weight_unconfirmed");
 });
 
 test("shop offers retain exact IDs and conditions but do not mislabel native fields as prices", () => {
@@ -186,4 +192,110 @@ test("conflicting duplicate source vectors fail rather than merging unconfirmed 
   const second = row(325, 30108, { 2: [104] });
 
   expect(() => acquisition(context([first, second]), 30108)).toThrow(/Conflicting source vectors/);
+});
+
+function weightedTree(weights: number[], mode = 2) {
+  const rewards = weights.map((weight, index) => ({
+    ...row(563, 40000, { 1: mode, 2: 30100 + index, 4: 1, 5: weight, 15: index === 3 ? 1 : null }),
+    rowOffset: 400000 + index,
+  }));
+  return context([
+    row(708, 50193, { 1: 30161, 2: 3, 3: "65,30,5", 5: 40000 }),
+    row(318, 30161, {}),
+    ...weights.map((_, index) => row(318, 30100 + index, {})),
+    ...rewards,
+    row(327, 1, { 1: 2, 2: 2 }),
+  ]);
+}
+
+test.each([
+  [630, 270, 25, 18, 19, 19, 19],
+  [630, 270, 25, 32],
+  [630, 270, 25, 28],
+  [630, 270, 25],
+  [1000],
+  [0, 1000],
+])("砍树概率按完整掉落组归一化，不补空奖或排除附加规则条目：%j", (...weights) => {
+  const source = weightedTree(weights);
+  const result = treeDrops(source, 50193);
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  expect(result.value?.slice(1).map((drop) => drop.probability)).toEqual(
+    weights.map((weight) => weight / total),
+  );
+  expect(result.value?.[0].probability).toBeNull();
+  expect(
+    result.value?.every((drop) => drop.quantityMin === null && drop.quantityMax === null),
+  ).toBe(true);
+  expect(result.sources.filter((entry) => entry.table === 563)).toHaveLength(weights.length);
+  verifyTreeDrops(source.tables, 50193, result.value);
+});
+
+test("未知模式和零总权重保持概率为空，非法配置停止提取", () => {
+  for (const source of [weightedTree([270, 630], 1), weightedTree([0, 0])]) {
+    const result = treeDrops(source, 50193);
+    expect(result.value?.every((drop) => drop.probability === null)).toBe(true);
+    verifyTreeDrops(source.tables, 50193, result.value);
+  }
+  for (const weights of [[-1], [0.5], [Number.NaN]])
+    expect(() => treeDrops(weightedTree(weights), 50193)).toThrow(/Invalid tree drop weight/);
+  expect(() => treeDrops(context([row(708, 1, { 5: 99 })]), 1)).toThrow(/Missing tree drop group/);
+  expect(() => treeDrops(context([row(708, 1, { 1: 99 })]), 1)).toThrow(/Unresolved tree fruit/);
+  expect(() =>
+    treeDrops(context([row(708, 1, { 5: 99 }), row(563, 99, { 1: 2, 2: 3, 5: 1 })]), 1),
+  ).toThrow(/Unresolved tree drop item/);
+  expect(treeDrops(context([row(708, 1, {})]), 1).value).toBeNull();
+});
+
+test("独立校验拒绝概率、权重和掉落条目篡改", () => {
+  const source = weightedTree([630, 270, 25]);
+  const value = treeDrops(source, 50193).value!;
+  for (const changed of [
+    value.slice(0, -1),
+    value.map((drop, index) => (index === 1 ? { ...drop, weight: 629 } : drop)),
+    value.map((drop, index) => (index === 1 ? { ...drop, probability: 0.63 } : drop)),
+  ])
+    expect(() => verifyTreeDrops(source.tables, 50193, changed)).toThrow(/Independent tree drops/);
+});
+
+test("来源验证要求同组每一行参与概率分母", () => {
+  const source = weightedTree([630, 270, 25]);
+  const result = treeDrops(source, 50193);
+  const builder = new CollectionEvidenceBuilder();
+  builder.put(
+    "item",
+    50193,
+    "detail.treeDrops",
+    result.value,
+    result.sources,
+    "ID 关联",
+    "整组权重归一化",
+  );
+  const proof = builder.records[0]!;
+  verifyProofSources(proof, source.tables);
+  expect(() =>
+    verifyProofSources({ ...proof, sources: proof.sources.slice(0, -1) }, source.tables),
+  ).toThrow(/Complete joined source rows/);
+});
+
+test("全树调查保留未确认候选并拒绝遗漏、候选值和来源篡改", () => {
+  const source = weightedTree([630, 270, 25]);
+  const records = treeInvestigation(source.tables);
+  verifyTreeInvestigation(source.tables, records);
+  expect(records[0]?.candidates).toMatchObject({ totalWeight: 925, fruitWeights: "65,30,5" });
+  expect(() => verifyTreeInvestigation(source.tables, [])).toThrow();
+  expect(() =>
+    verifyTreeInvestigation(
+      source.tables,
+      records.map((record) => ({
+        ...record,
+        candidates: { ...record.candidates, fruitWeights: "65,35,5" },
+      })),
+    ),
+  ).toThrow();
+  expect(() =>
+    verifyTreeInvestigation(
+      source.tables,
+      records.map((record) => ({ ...record, sources: record.sources.slice(0, -1) })),
+    ),
+  ).toThrow();
 });
