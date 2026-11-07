@@ -1,3 +1,4 @@
+import type { ImageRef } from "@loomix/schema/assets";
 import { CatalogSchema } from "@loomix/schema/catalog";
 import type { Catalog, Growth, Item, Group } from "@loomix/schema/catalog";
 import type { Dataset } from "@loomix/schema/dataset";
@@ -6,6 +7,7 @@ import type { AssetRegistry } from "./assets.ts";
 import type { ContentContext } from "../extraction/content/context.ts";
 import { plainText, splitTags } from "../extraction/content/model.ts";
 import { ingredientExpressionItemIds } from "../extraction/content/recipes.ts";
+import { readCraftingCards } from "../extraction/cards/read.ts";
 
 export function buildCatalog(
   observations: CollectionObservations,
@@ -13,13 +15,16 @@ export function buildCatalog(
   assets: AssetRegistry,
   identity: Dataset["context"],
   referencedGiftItemIds: readonly number[] = [],
+  cardImages: ReadonlyMap<string, ImageRef> = new Map(),
 ): Catalog {
   const { tables, vocabulary } = context;
+  const references = new Set<number>();
   const catalog: Catalog = {
     ...identity,
     kind: "catalog",
     items: [],
     groups: [],
+    cardSets: [],
     appearances: [],
     seeds: [],
     growths: [],
@@ -109,7 +114,6 @@ export function buildCatalog(
           size: record.attributes.size,
           colors: tags(record.id, 9),
           materials: tags(record.id, 11),
-          craftingRecipes: record.craftingRecipes,
         });
         break;
       case "clothing":
@@ -182,9 +186,25 @@ export function buildCatalog(
       trade: seed.detail.trade,
       acquisition: seed.detail.acquisitionConditions,
     });
+  const crafting = readCraftingCards(context);
+  for (const link of crafting.imageReferences) {
+    const image = cardImages.get(link.reference) ?? null;
+    if (link.owner === "set") {
+      const set = crafting.sets.find((set) => set.id === link.id);
+      if (set && link.field !== "image") set.artwork[link.field] = image;
+    } else {
+      const card = crafting.cards.find((card) => card.id === link.id);
+      if (!card) continue;
+      if (link.field === "image") card.image = image;
+      else if (link.field === "bag" || link.field === "back" || link.field === "background")
+        card.artwork[link.field] = image;
+    }
+  }
+  catalog.cardSets = crafting.sets;
+  catalog.items.push(...crafting.cards);
+  for (const id of crafting.references) references.add(id);
   catalog.growths = [...growths.values()].sort((a, b) => a.id - b.id);
   const items = new Map(catalog.items.map((item) => [item.id, item]));
-  const references = new Set<number>();
   for (const id of referencedGiftItemIds) references.add(id);
   for (const association of context.ingredientCategoryBuild.associations)
     references.add(association.itemId);
@@ -198,9 +218,6 @@ export function buildCatalog(
   );
   for (const item of catalog.items) {
     if (item.type === "plant") for (const drop of item.drops ?? []) references.add(drop.itemId);
-    if (item.type === "furniture")
-      for (const recipe of item.craftingRecipes ?? [])
-        for (const material of recipe.materials ?? []) references.add(material.itemId);
     if (item.type === "dish")
       for (const slot of item.recipe?.slots ?? [])
         if (slot.expression !== null) {

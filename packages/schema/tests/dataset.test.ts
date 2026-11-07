@@ -4,14 +4,14 @@ import { CatalogSchema } from "../src/catalog/index.ts";
 import { parseRelease } from "../src/release/index.ts";
 import { referencedImages } from "../src/dataset/images.ts";
 import { parseNeighbors } from "../src/neighbors/index.ts";
-const context = { formatVersion: 1, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
+const context = { formatVersion: 2, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
 const source = { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" };
 const base = { id: 1, name: "物品", image: null, quality: null, description: null };
 
 test("parsing rejects unknown fields and versions without mutating the input", () => {
   const dataset = emptyDataset(context, source);
   expect(parseDataset(dataset)).toEqual(dataset);
-  expect(() => CatalogSchema.parse({ ...dataset.catalog, formatVersion: 2 })).toThrow();
+  expect(() => CatalogSchema.parse({ ...dataset.catalog, formatVersion: 1 })).toThrow();
   expect(() => CatalogSchema.parse({ ...dataset.catalog, details: [] })).toThrow();
   expect(dataset.catalog.items).toEqual([]);
 });

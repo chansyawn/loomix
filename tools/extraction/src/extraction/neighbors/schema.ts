@@ -49,8 +49,6 @@ const record = z.strictObject({
   npc2Path: path,
   starKeys: z.string().array(),
   storyKeys: z.string().array(),
-  furnishingThemeIds: z.number().int().positive().array(),
-  furnishingThemeKeys: z.string().min(1).array(),
   assetPaths: path.array(),
 });
 
@@ -114,22 +112,6 @@ const friendshipRule = z.strictObject({
 });
 
 const eventTag = z.strictObject({ key: z.string().min(1), textZh: z.string().min(1) });
-
-const furnishingTheme = z.strictObject({
-  id: z.number().int().positive().nullable(),
-  key: z.string().min(1),
-  nameZh: z.string().min(1),
-  neighborIds: neighborId.array(),
-  descriptionZh: z.string().nullable(),
-  cardBagPath: path.nullable(),
-  cardBackgroundPath: path.nullable(),
-  cardBackPath: path.nullable(),
-  topicIconPath: path.nullable(),
-  lockedBackgroundPath: path.nullable(),
-  unlockedBackgroundPath: path.nullable(),
-  themePath: path.nullable(),
-  coverPath: path.nullable(),
-});
 
 const asset = z.strictObject({
   path,
@@ -225,7 +207,6 @@ export const NeighborDatabaseSchema = z
     encounterIslands: encounterIsland.array(),
     friendshipRules: friendshipRule.array(),
     eventTags: eventTag.array(),
-    furnishingThemes: furnishingTheme.array(),
     giftPreferences: giftPreference.array(),
     giftPreferenceTags: giftPreferenceTag.array(),
     outfits: outfit.array(),
@@ -250,11 +231,6 @@ export const NeighborDatabaseSchema = z
         numeric,
         [name],
       );
-    assertSorted(
-      database.furnishingThemes.map((value) => value.key),
-      compareText,
-      ["furnishingThemes"],
-    );
     assertSorted(
       database.eventTags.map((value) => value.key),
       compareText,
@@ -317,7 +293,7 @@ export const NeighborDatabaseSchema = z
         if (value.npcId !== null && !known.has(value.npcId))
           issue([name, index, "npcId"], "Unknown neighbor");
       });
-    for (const name of ["encounterIslands", "furnishingThemes"] as const)
+    for (const name of ["encounterIslands"] as const)
       database[name].forEach((value, index) =>
         checkIds(value.neighborIds, [name, index, "neighborIds"]),
       );
@@ -364,23 +340,11 @@ export const NeighborDatabaseSchema = z
       const expected = {
         starKeys: database.stars.filter((s) => s.npcId === neighbor.id).map((s) => s.key),
         storyKeys: database.stories.filter((s) => s.npcId === neighbor.id).map((s) => s.key),
-        furnishingThemeIds: database.furnishingThemes
-          .flatMap((t) => (t.id !== null && t.neighborIds.includes(neighbor.id) ? [t.id] : []))
-          .sort((a, b) => a - b),
-        furnishingThemeKeys: database.furnishingThemes
-          .filter((t) => t.neighborIds.includes(neighbor.id))
-          .map((t) => t.key),
         assetPaths: database.assets
           .filter((a) => a.relatedNeighborIds.includes(neighbor.id))
           .map((a) => a.path),
       };
-      for (const key of [
-        "starKeys",
-        "storyKeys",
-        "furnishingThemeIds",
-        "furnishingThemeKeys",
-        "assetPaths",
-      ] as const)
+      for (const key of ["starKeys", "storyKeys", "assetPaths"] as const)
         if (JSON.stringify(neighbor[key]) !== JSON.stringify(expected[key]))
           issue(["neighbors", index, key], "Incomplete or dangling association");
     });
@@ -402,18 +366,6 @@ export const NeighborDatabaseSchema = z
       checkPath(i.illustrationPath);
       i.resourcePaths.forEach(checkPath);
     }
-    for (const t of database.furnishingThemes)
-      for (const p of [
-        t.cardBagPath,
-        t.cardBackgroundPath,
-        t.cardBackPath,
-        t.topicIconPath,
-        t.lockedBackgroundPath,
-        t.unlockedBackgroundPath,
-        t.themePath,
-        t.coverPath,
-      ])
-        checkPath(p);
   });
 
 export type NeighborDatabase = z.infer<typeof NeighborDatabaseSchema>;
@@ -443,7 +395,6 @@ export function neighborImagePaths(database: NeighborDatabase): string[] {
         ...database.stories.flatMap((story) =>
           story.paragraphs.map((paragraph) => paragraph.illustrationPath),
         ),
-        ...database.furnishingThemes.map((theme) => theme.coverPath),
         ...database.outfits.map((outfit) => outfit.imagePath),
       ].filter((value): value is string => value !== null),
     ),

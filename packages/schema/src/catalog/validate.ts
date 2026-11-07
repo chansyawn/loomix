@@ -21,6 +21,7 @@ export function validateCatalog(catalog: Catalog): ValidationIssue[] {
   for (const name of [
     "items",
     "groups",
+    "cardSets",
     "appearances",
     "seeds",
     "growths",
@@ -29,6 +30,7 @@ export function validateCatalog(catalog: Catalog): ValidationIssue[] {
     unique<{ id: number }>(catalog[name], (value) => value.id, [name]);
   const items = new Map(catalog.items.map((item) => [item.id, item]));
   const groups = new Map(catalog.groups.map((group) => [group.id, group]));
+  const cardSets = new Set(catalog.cardSets.map((set) => set.id));
   const appearances = new Map(catalog.appearances.map((item) => [item.id, item]));
   const growths = new Map(catalog.growths.map((growth) => [growth.id, growth]));
   const categories = new Map(
@@ -151,16 +153,23 @@ export function validateCatalog(catalog: Catalog): ValidationIssue[] {
       item.size.min > item.size.max
     )
       issue([...path, "size"], "Invalid size range");
-    if (item.type === "furniture") {
-      unique(item.craftingRecipes ?? [], (recipe) => recipe.id, [...path, "craftingRecipes"]);
-      item.craftingRecipes?.forEach((recipe, recipeIndex) =>
-        checkItems(recipe.materials?.map((material) => material.itemId) ?? [], [
-          ...path,
-          "craftingRecipes",
-          recipeIndex,
-          "materials",
-        ]),
+    if (item.type === "craftingCard") {
+      if (
+        item.recipe &&
+        (item.recipe.materials === null) !== (item.recipe.unresolvedReason !== null)
+      )
+        issue([...path, "recipe"], "Unknown crafting materials require a reason");
+      if (item.setId !== null && !cardSets.has(item.setId))
+        issue([...path, "setId"], `Unknown card set ${item.setId}`);
+      checkItems(
+        [item.recipe?.productId].filter((id): id is number => id !== undefined),
+        [...path, "recipe", "productId"],
       );
+      checkItems(item.recipe?.materials?.map((material) => material.itemId) ?? [], [
+        ...path,
+        "recipe",
+        "materials",
+      ]);
     }
     if (item.type === "dish") {
       unique(item.recipe?.slots ?? [], (slot) => slot.field, [...path, "recipe", "slots"]);

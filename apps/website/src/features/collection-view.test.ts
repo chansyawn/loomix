@@ -139,7 +139,6 @@ test("furniture, clothing and materials display structured acquisition condition
       size: null,
       colors: null,
       materials: null,
-      craftingRecipes: null,
     },
     { ...common, id: 2, type: "clothing", colors: null, materials: null, styles: null },
     { ...common, id: 3, type: "material" },

@@ -18,9 +18,6 @@ export function createObservedRecordSchemas(
   const base = createRecordSchemas(image);
   return {
     ...base,
-    "furniture.item": base["furniture.item"].extend({
-      craftingRecipes: CraftingRecipeSchema.array().min(1).nullable(),
-    }),
     "creatures.item": base["creatures.item"].extend({
       attributes: base["creatures.item"].shape.attributes.extend({
         scientificName: text,

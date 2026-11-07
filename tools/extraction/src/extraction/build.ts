@@ -1,3 +1,4 @@
+import { buildCards } from "./cards/build.ts";
 import { assembleDataset } from "../domains/build.ts";
 import fs from "node:fs";
 import path from "node:path";
@@ -124,6 +125,12 @@ export async function extract(environmentId: string): Promise<string> {
           ],
         },
         {
+          name: "cards",
+          dependencies: ["raw-assets"],
+          run: () => buildCards(options),
+          outputs: () => ["card-image-exports.json", "card-audit.json", ...tree("card-exports")],
+        },
+        {
           name: "collection",
           dependencies: ["raw-assets"],
           run: async () => buildCollection(work),
@@ -132,7 +139,6 @@ export async function extract(environmentId: string): Promise<string> {
             "collection-evidence.json",
             "seed-image-candidates.json",
             "stage-image-candidates.json",
-            "crafting-audit.json",
             "collection-missing-fields.json",
             "collection-investigation.json",
           ],
@@ -174,7 +180,7 @@ export async function extract(environmentId: string): Promise<string> {
         },
         {
           name: "source-audit",
-          dependencies: ["neighbor-images", "island-images", "seed-images"],
+          dependencies: ["neighbor-images", "island-images", "seed-images", "cards"],
           run: () => audit(options),
           outputs: () => ["source-audit.json"],
         },
@@ -210,6 +216,7 @@ export async function extract(environmentId: string): Promise<string> {
           "neighbors",
           "islands",
           "raw-assets",
+          "cards",
           "collection",
           "seed-images",
           "neighbor-images",

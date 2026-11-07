@@ -1,5 +1,5 @@
 import { readRoster, readStars, readStories, readTravelReactions } from "./adapters.ts";
-import { readEventTags, readIslands, readRules, readThemes } from "./system.ts";
+import { readEventTags, readIslands, readRules } from "./system.ts";
 import { linkedAssets, readAssets } from "./resources.ts";
 import { readGiftPreferences } from "./preferences.ts";
 import { readNeighborOutfits } from "./outfits.ts";
@@ -41,7 +41,6 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
     encounterIslands: readIslands(tables, records),
     friendshipRules: readRules(tables, records, exclusions),
     eventTags: readEventTags(tables, records),
-    furnishingThemes: readThemes(tables, neighbors, records),
     giftPreferences: giftPreferences.preferences,
     giftPreferenceTags: giftPreferences.tags,
     outfits,
@@ -74,7 +73,6 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
       encounterIslands: result.encounterIslands.length,
       friendshipRules: result.friendshipRules.length,
       eventTags: result.eventTags.length,
-      furnishingThemes: result.furnishingThemes.length,
       giftPreferences: result.giftPreferences.length,
       giftPreferenceItems: Object.fromEntries(
         (["love", "favor", "dislike"] as const).map((level) => [
@@ -131,7 +129,6 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
       associationCounts: {
         stars: result.neighbors.reduce((sum, n) => sum + n.starKeys.length, 0),
         stories: result.neighbors.reduce((sum, n) => sum + n.storyKeys.length, 0),
-        themes: result.neighbors.reduce((sum, n) => sum + n.furnishingThemeKeys.length, 0),
         assets: result.neighbors.reduce((sum, n) => sum + n.assetPaths.length, 0),
       },
     },

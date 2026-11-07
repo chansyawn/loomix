@@ -11,7 +11,6 @@ export type NeighborTravelReaction = NeighborDatabase["travelReactions"][number]
 export type NeighborEncounterIsland = NeighborDatabase["encounterIslands"][number];
 export type NeighborFriendshipRule = NeighborDatabase["friendshipRules"][number];
 export type NeighborEventTag = NeighborDatabase["eventTags"][number];
-export type NeighborFurnishingTheme = NeighborDatabase["furnishingThemes"][number];
 export type NeighborAssetRef = NeighborDatabase["assets"][number];
 export type NeighborGiftPreference = NeighborDatabase["giftPreferences"][number];
 export type NeighborGiftPreferenceTag = NeighborDatabase["giftPreferenceTags"][number];
@@ -49,7 +48,6 @@ export interface NeighborExtractionAudit {
     encounterIslands: number;
     friendshipRules: number;
     eventTags: number;
-    furnishingThemes: number;
     giftPreferences: number;
     giftPreferenceItems: Record<GiftPreferenceLevel, number>;
     giftPreferenceTags: Record<GiftPreferenceLevel, number>;
@@ -71,7 +69,6 @@ export interface NeighborExtractionAudit {
     associationCounts: {
       stars: number;
       stories: number;
-      themes: number;
       assets: number;
     };
   };

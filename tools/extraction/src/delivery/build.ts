@@ -32,7 +32,7 @@ export async function deliver(
     implementation,
     profileHash,
     target,
-    imagePolicy: "Lanczos3-cover-and-neighbor-inside1600-WebP85-alpha100-v2",
+    imagePolicy: "Lanczos3-cover-card-contain256-neighbor-inside1600-WebP85-alpha100-v3",
   });
   const work = identityDirectory("deliveries", id);
   await withLock(artifactOnly ? `${work}.lock` : `${websiteDirectory}.lock`, async () => {

@@ -7,7 +7,7 @@ import { referencedImages } from "@loomix/schema/dataset/images";
 import type { CollectionRecord, CollectionView } from "./collection-view.ts";
 
 export const fixtureContext = {
-  formatVersion: 1,
+  formatVersion: 2,
   snapshotId: "a".repeat(64),
   locale: "zh-CN",
 } as const;
@@ -51,7 +51,28 @@ export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
     });
   };
   const common = { trade: null, acquisition: null };
-  for (const record of view.furniture?.items ?? [])
+  for (const record of view.furniture?.items ?? []) {
+    for (const recipe of record.craftingRecipes ?? [])
+      catalog.items.push({
+        id: recipe.id,
+        type: "craftingCard",
+        name: "创想卡",
+        image: null,
+        description: null,
+        quality: null,
+        subcategory: null,
+        trade: null,
+        acquisition: null,
+        setId: null,
+        neighborIds: [],
+        artwork: { bag: null, back: null, background: null },
+        recipe: {
+          productId: record.id,
+          quantity: 1,
+          materials: recipe.materials,
+          unresolvedReason: recipe.unresolvedReason,
+        },
+      });
     add({
       ...catalogBase(record),
       ...common,
@@ -62,8 +83,8 @@ export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
       colors: values(record.colors),
       materials: values(record.materials),
       acquisition: acquisition(record.acquisition),
-      craftingRecipes: record.craftingRecipes,
     });
+  }
   for (const record of view.furniture?.sets ?? [])
     group(record, "furniture.set", record.componentIds);
   for (const record of view.creatures?.items ?? [])

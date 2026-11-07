@@ -1,3 +1,4 @@
+import type { CardImageExport } from "../extraction/cards/build.ts";
 import { writeDomainEvidence } from "./evidence.ts";
 import path from "node:path";
 import { parseDataset } from "@loomix/schema/dataset";
@@ -37,7 +38,7 @@ function localizeKeys(value: unknown): unknown {
 }
 
 export function buildDataset(work: string) {
-  const identity = { formatVersion: 1, snapshotId: path.basename(work), locale: "zh-CN" } as const;
+  const identity = { formatVersion: 2, snapshotId: path.basename(work), locale: "zh-CN" } as const;
   const observations = RawCollectionObservationsSchema.parse(
     readJson(path.join(work, "raw/images-catalog-observations.json")),
   );
@@ -51,6 +52,12 @@ export function buildDataset(work: string) {
   ])
     for (const image of readJson<ImageManifest[]>(path.join(work, file)))
       assets.register(image, image.group);
+  const cardImages = new Map(
+    readJson<CardImageExport[]>(path.join(work, "card-image-exports.json")).map((image) => [
+      image.reference,
+      assets.register(image, "craftingCard"),
+    ]),
+  );
   const neighborImages = new Map(
     readJson<NeighborImageExport[]>(path.join(work, "neighbor-image-exports.json")).map((image) => [
       image.reference,
@@ -83,15 +90,10 @@ export function buildDataset(work: string) {
     ...neighborData
   } = neighbors;
   const roster = neighborData.neighbors.map(
-    ({
-      starKeys: _stars,
-      storyKeys: _stories,
-      furnishingThemeIds: _themeIds,
-      furnishingThemeKeys: _themeKeys,
-      assetPaths: _paths,
-      avatarPath,
-      ...neighbor
-    }) => ({ ...neighbor, avatar: neighborImage(avatarPath) }),
+    ({ starKeys: _stars, storyKeys: _stories, assetPaths: _paths, avatarPath, ...neighbor }) => ({
+      ...neighbor,
+      avatar: neighborImage(avatarPath),
+    }),
   );
   const publicNeighbors = parseNeighbors({
     ...identity,
@@ -109,10 +111,6 @@ export function buildDataset(work: string) {
           ...paragraph,
           image: neighborImage(illustrationPath),
         })),
-      })),
-      furnishingThemes: neighborData.furnishingThemes.map(({ coverPath, ...theme }) => ({
-        ...theme,
-        cover: neighborImage(coverPath),
       })),
       outfits: neighborData.outfits.map(({ imagePath, ...outfit }) => ({
         ...outfit,
@@ -157,6 +155,7 @@ export function buildDataset(work: string) {
       assets,
       identity,
       neighbors.giftPreferences.flatMap((preference) => preference.itemIds),
+      cardImages,
     ),
     neighbors: publicNeighbors,
     world: publicWorld,

@@ -1,3 +1,5 @@
+import { emptyDataset } from "@loomix/schema/dataset";
+import { fixtureSource } from "../collection-fixture";
 import { parseNeighbors } from "@loomix/schema/neighbors";
 import type { Assets } from "@loomix/schema/assets";
 import { fixtureContext } from "../collection-fixture";
@@ -65,21 +67,6 @@ export function neighborFixture() {
         text: "旅行真开心！",
       },
     ],
-    furnishingThemes: ["theme:a", "theme:b"].map((key, index) => ({
-      id: index === 0 ? null : 7,
-      key,
-      name: `创想卡集${index}`,
-      neighborIds: [4],
-      description: "完成友邻事件\n完成装修请求",
-      cardBagPath: null,
-      cardBackgroundPath: null,
-      cardBackPath: null,
-      topicIconPath: null,
-      lockedBackgroundPath: null,
-      unlockedBackgroundPath: null,
-      themePath: null,
-      cover: { assetId: "star", variant: "illustration" },
-    })),
     friendshipRules: [],
     eventTags: [],
     additionalImages: [],
@@ -104,5 +91,37 @@ export function neighborFixture() {
       height: 100,
     })),
   };
-  return { database, mapping };
+  const catalog = emptyDataset(fixtureContext, fixtureSource).catalog;
+  for (const id of [6, 7]) {
+    catalog.cardSets.push({
+      id,
+      name: `创想卡集${id}`,
+      acquisitionHint: "完成友邻事件",
+      artwork: {
+        cover: { assetId: "star", variant: "illustration" },
+        bag: null,
+        back: null,
+        background: null,
+        icon: null,
+        lockedBackground: null,
+        unlockedBackground: null,
+      },
+    });
+    catalog.items.push({
+      id: id + 100,
+      type: "craftingCard",
+      name: "卡片",
+      image: null,
+      quality: null,
+      description: null,
+      subcategory: null,
+      trade: null,
+      acquisition: null,
+      setId: id,
+      neighborIds: [4],
+      artwork: { bag: null, back: null, background: null },
+      recipe: null,
+    });
+  }
+  return { database, mapping, catalog };
 }

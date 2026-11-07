@@ -118,8 +118,6 @@ export function readRoster(
       npc2Path: requiredText(model, `npc2:${id}`),
       starKeys: [],
       storyKeys: [],
-      furnishingThemeIds: [],
-      furnishingThemeKeys: [],
       assetPaths: [],
     });
     records.push(evidence("neighbors", String(id), row, [0, 1, 2, 3, 4, 5]));

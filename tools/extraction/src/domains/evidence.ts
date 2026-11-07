@@ -213,7 +213,7 @@ export function buildDomainEvidence(
 }
 
 export function readDomainEvidence(work: string, dataset: Dataset) {
-  return buildDomainEvidence(
+  const evidence = buildDomainEvidence(
     dataset,
     [
       ...readJson<ObservedFieldEvidence[]>(path.join(work, "evidence/field-evidence.json")),
@@ -233,6 +233,34 @@ export function readDomainEvidence(work: string, dataset: Dataset) {
       },
     ],
   );
+  const audit = readJson<{
+    proofs: {
+      owner: string;
+      id: number;
+      sources: { file: string; table: number; rowOffset: number; fields: number[] }[];
+    }[];
+  }>(path.join(work, "card-audit.json"));
+  for (const proof of audit.proofs)
+    evidence.fields.push({
+      entity: {
+        collection: proof.owner === "set" ? "catalog.cardSets" : "catalog.items",
+        id: proof.id,
+      },
+      fieldPath: proof.owner.includes(".")
+        ? proof.owner.slice(proof.owner.indexOf(".") + 1)
+        : "entity",
+      status: "confirmed",
+      sources: proof.sources.map(({ file, table, rowOffset, fields }) => ({
+        kind: "table" as const,
+        file,
+        table,
+        rowOffset,
+        fields,
+      })),
+      ruleId: "client.crafting.direct_reference",
+      reasonCode: null,
+    });
+  return EvidenceSchema.parse(evidence);
 }
 
 export function writeDomainEvidence(work: string, dataset: Dataset): void {

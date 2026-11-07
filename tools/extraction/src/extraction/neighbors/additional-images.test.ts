@@ -12,10 +12,9 @@ test("keeps only the approved friend-image categories in the extraction manifest
   const counts: Partial<Record<AdditionalNeighborImageCategory, number>> = {};
   for (const selection of selections)
     counts[selection.category] = (counts[selection.category] ?? 0) + 1;
-  expect(selections).toHaveLength(115);
+  expect(selections).toHaveLength(65);
   expect(counts).toEqual({
     avatar: 12,
-    card: 50,
     favour: 11,
     house: 12,
     island: 10,
@@ -35,7 +34,7 @@ test("selects by the exact frozen asset identity and rejects changed index entri
   const textures = indexed.filter((asset) => asset.Type === "Texture2D");
   const sprites = indexed.filter((asset) => asset.Type === "Sprite");
   const selected = selectAdditionalNeighborImages(textures, sprites);
-  expect(selected).toHaveLength(115);
+  expect(selected).toHaveLength(65);
   expect(selected.map((asset) => asset.resourceName)).toEqual(
     selections.map((selection) => selection.resourceName),
   );

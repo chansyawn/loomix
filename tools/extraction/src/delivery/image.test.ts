@@ -66,6 +66,26 @@ test("furniture banners resize and crop centrally without distortion", async () 
   }
 });
 
+test("crafting card art fits the square canvas without cropping", async () => {
+  const input = await sharp({
+    create: {
+      width: 512,
+      height: 256,
+      channels: 4,
+      background: { r: 220, g: 30, b: 20, alpha: 1 },
+    },
+  })
+    .png()
+    .toBuffer();
+  const output = await processImage(input, "craftingCard");
+  const decoded = await decodeWebp(output.bytes);
+  assert.equal(decoded.width, 256);
+  assert.equal(decoded.height, 256);
+  const pixels = await sharp(output.bytes).ensureAlpha().raw().toBuffer();
+  assert.equal(pixels[(128 * 256 + 128) * 4], 220);
+  assert.equal(pixels[3], 0);
+});
+
 test("corrupt inputs and truncated WebP fail decoding", async () => {
   await assert.rejects(processImage(Buffer.from("broken"), "miscellaneous.item"));
   const png = await sharp({ create: { width: 256, height: 256, channels: 4, background: "red" } })
@@ -80,7 +100,7 @@ test("asset delivery deduplicates identical outputs and separates target dimensi
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-webp-"));
   try {
     const dataset = emptyDataset(
-      { formatVersion: 1, snapshotId: "a".repeat(64), locale: "zh-CN" },
+      { formatVersion: 2, snapshotId: "a".repeat(64), locale: "zh-CN" },
       { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" },
     );
     const png = await sharp({ create: { width: 512, height: 512, channels: 4, background: "red" } })

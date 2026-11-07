@@ -91,7 +91,6 @@ export const profile = {
     encounterIslands: 10,
     friendshipRules: 59,
     eventTags: 12,
-    furnishingThemes: 11,
     housePaths: 21,
     friendStarPaths: 22,
     outfitPaths: 8,

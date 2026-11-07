@@ -97,24 +97,5 @@ export function validateObservedRelations(
         path: ["items", index, "attributes", "tastes"],
         message: "Duplicate taste",
       });
-    if (record.category !== "furniture" || record.craftingRecipes === null) continue;
-    const recipeIds = new Set<number>();
-    for (const [recipeIndex, recipe] of record.craftingRecipes.entries()) {
-      const path = ["items", index, "craftingRecipes", recipeIndex];
-      if (recipeIds.has(recipe.id))
-        ctx.addIssue({ code: "custom", path, message: "Duplicate crafting recipe" });
-      recipeIds.add(recipe.id);
-      const materialIds = new Set<number>();
-      for (const [materialIndex, material] of (recipe.materials ?? []).entries()) {
-        const item = records.get(material.itemId);
-        if (!item || item.kind !== "item" || materialIds.has(material.itemId))
-          ctx.addIssue({
-            code: "custom",
-            path: [...path, "materials", materialIndex],
-            message: "Invalid or duplicate crafting material",
-          });
-        materialIds.add(material.itemId);
-      }
-    }
   }
 }

@@ -109,6 +109,7 @@ export function itemCategory(item: Item): CatalogCategory {
       return "dishes";
     case "material":
     case "reference":
+    case "craftingCard":
       return "miscellaneous";
     default:
       return item.type;
@@ -154,6 +155,17 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
           .map((id) => [id, group.id] as const),
       ),
   );
+  const recipesByProduct = new Map<number, CraftingRecipe[]>();
+  for (const card of catalog.items) {
+    if (card.type !== "craftingCard" || !card.recipe) continue;
+    const recipes = recipesByProduct.get(card.recipe.productId) ?? [];
+    recipes.push({
+      id: card.id,
+      materials: card.recipe.materials,
+      unresolvedReason: card.recipe.unresolvedReason,
+    });
+    recipesByProduct.set(card.recipe.productId, recipes);
+  }
   const view: CollectionView = {
     ingredientCategories: catalog.ingredientCategories,
     ingredientCategoriesById: new Map(
@@ -193,7 +205,7 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
           colors: displayValues(record.colors),
           materials: displayValues(record.materials),
           acquisition: acquisitionText(record.acquisition),
-          craftingRecipes: record.craftingRecipes,
+          craftingRecipes: recipesByProduct.get(record.id) ?? null,
         });
         break;
       case "clothing":

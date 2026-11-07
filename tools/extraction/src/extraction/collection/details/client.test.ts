@@ -215,13 +215,10 @@ test.each([
   [630, 270, 25],
   [1000],
   [0, 1000],
-])("砍树概率按完整掉落组归一化，不补空奖或排除附加规则条目：%j", (...weights) => {
+])("树木保留原始权重，不推断最终掉落概率：%j", (...weights) => {
   const source = weightedTree(weights);
   const result = treeDrops(source, 50193);
-  const total = weights.reduce((sum, weight) => sum + weight, 0);
-  expect(result.value?.slice(1).map((drop) => drop.probability)).toEqual(
-    weights.map((weight) => weight / total),
-  );
+  expect(result.value?.slice(1).map((drop) => drop.probability)).toEqual(weights.map(() => null));
   expect(result.value?.[0].probability).toBeNull();
   expect(
     result.value?.every((drop) => drop.quantityMin === null && drop.quantityMax === null),

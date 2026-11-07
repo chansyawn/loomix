@@ -32,12 +32,10 @@ export function verifyTreeDrops(
     });
   }
   let total = 0;
-  let supported = true;
   for (const row of rewards) {
     const weight = tables.uint(row, 5);
     assert.ok(weight !== null && Number.isSafeInteger(weight) && weight >= 0);
     total += weight;
-    supported &&= tables.uint(row, 1) === 2;
   }
   assert.ok(Number.isSafeInteger(total));
   for (const row of rewards) {
@@ -50,14 +48,10 @@ export function verifyTreeDrops(
       weight,
       quantityMin: null,
       quantityMax: null,
-      probability: supported && total > 0 ? weight / total : null,
+      probability: null,
     });
   }
   assert.deepEqual(actual, expected.length ? expected : null, `Independent tree drops ${id}`);
-  if (supported && total > 0) {
-    const sum = actual!.reduce((value, drop) => value + (drop.probability ?? 0), 0);
-    assert.ok(Math.abs(sum - 1) < 1e-12, `Tree probability sum ${id}`);
-  }
 }
 
 export function verifyTreeInvestigation(

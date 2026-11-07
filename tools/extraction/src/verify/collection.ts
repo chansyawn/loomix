@@ -97,8 +97,6 @@ export function verifyProofSources(proof: CollectionEvidence, tables: Tables): v
         add(563, (row) => tables.uint(row, 0) === groupId, [0, 1, 2, 3, 4, 5, 15]);
       }
     }
-  } else if (proof.field === "craftingRecipes") {
-    add(568, (row) => tables.uint(row, 1) === proof.id, [0, 1, 12, 13, 14, 15, 16, 17, 18, 19]);
   } else {
     add(122, (row) => tables.uint(row, 4) === proof.id, [0, 2, 4, 15]);
     if (proof.field === "difficultyRequirement") {
@@ -167,12 +165,7 @@ export async function verifyCollection(
   assert.deepEqual(baseProjection.source, base.source);
   assert.deepEqual(baseProjection.ingredientCategories, base.ingredientCategories);
   const tables = new Tables(path.join(bundle, "prepared"));
-  const { requiredFields, craftingAudit } = verifyCollectionFields(catalog, tables);
-  assert.deepEqual(
-    readJson(path.join(bundle, "crafting-audit.json")),
-    craftingAudit,
-    "Independent crafting audit including exclusions",
-  );
+  const { requiredFields } = verifyCollectionFields(catalog, tables);
   const proofs = readJson<CollectionEvidence[]>(path.join(bundle, "collection-evidence.json"));
   const missing = proofs.filter((proof) => proof.value === null);
   assert.deepEqual(
@@ -203,7 +196,6 @@ export async function verifyCollection(
       );
     }
   assert.deepEqual(readJson(path.join(bundle, "evidence/collection-evidence.json")), proofs);
-  assert.deepEqual(readJson(path.join(bundle, "evidence/crafting-audit.json")), craftingAudit);
   const seen = new Set<string>();
   const coverage: Record<string, { populated: number; null: number }> = {};
   const withoutStageImages = (value: unknown): unknown => {

@@ -69,22 +69,6 @@ const friendshipRule = z.strictObject({
 
 const eventTag = z.strictObject({ key: z.string().min(1), text: z.string().min(1) });
 
-const furnishingTheme = z.strictObject({
-  id: z.number().int().positive().nullable(),
-  key: z.string().min(1),
-  name: z.string().min(1),
-  neighborIds: neighborId.array(),
-  description: z.string().nullable(),
-  cardBagPath: path.nullable(),
-  cardBackgroundPath: path.nullable(),
-  cardBackPath: path.nullable(),
-  topicIconPath: path.nullable(),
-  lockedBackgroundPath: path.nullable(),
-  unlockedBackgroundPath: path.nullable(),
-  themePath: path.nullable(),
-  cover: ImageRefSchema.nullable(),
-});
-
 const asset = z.strictObject({
   path,
   kind: z.enum([
@@ -176,7 +160,6 @@ export const NeighborsSchema = ContextSchema.extend({
   travelReactions: travelReaction.array(),
   friendshipRules: friendshipRule.array(),
   eventTags: eventTag.array(),
-  furnishingThemes: furnishingTheme.array(),
   giftPreferences: giftPreference.array().default([]),
   giftPreferenceTags: giftPreferenceTag.array().default([]),
   outfits: outfit.array().default([]),

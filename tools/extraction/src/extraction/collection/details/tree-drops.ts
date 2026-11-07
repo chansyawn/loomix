@@ -48,7 +48,7 @@ export function treeDrops(
       weight,
       quantityMin: null,
       quantityMax: null,
-      probability: weighted ? weight / totalWeight : null,
+      probability: null,
     });
   }
   return {

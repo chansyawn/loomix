@@ -6,7 +6,6 @@ import { createContentContext } from "../content/context.ts";
 import type { SelectedImage } from "../types.ts";
 import { readJson, writeJson } from "../../workflow/json.ts";
 import { parseRawContent, RawImageSchema } from "../schemas/raw-content.ts";
-import { readCraftingRecipes } from "./crafting.ts";
 import { CollectionEvidenceBuilder, localizedSources, tableSource } from "./evidence.ts";
 import { readCreatureFields, readDishFields } from "./fields.ts";
 import { buildItemDetail, buildSeedDetail } from "./details/client.ts";
@@ -92,7 +91,6 @@ function cropSeeds(context: ContentContext, proofs: CollectionEvidenceBuilder) {
 
 export function extendCollection(base: Catalog, context: ContentContext) {
   const proofs = new CollectionEvidenceBuilder();
-  const crafting = readCraftingRecipes(context.tables, base);
   const crops = cropSeeds(context, proofs);
   const products = new Map(
     crops.seeds.flatMap((seed) => seed.productIds.map((id) => [id, seed.id] as const)),
@@ -101,21 +99,6 @@ export function extendCollection(base: Catalog, context: ContentContext) {
   const items = base.items.map((record: CatalogRecord) => {
     details.push(buildItemDetail(context, record, proofs));
     if (record.kind !== "item") return record;
-    if (record.category === "furniture") {
-      const entry = crafting.byProduct.get(record.id);
-      const craftingRecipes = entry?.recipes ?? null;
-      proofs.put(
-        "item",
-        record.id,
-        "craftingRecipes",
-        craftingRecipes,
-        entry?.sources ?? [],
-        "568.1=furniture item ID",
-        "568.12/14/16/18 material IDs paired with 13/15/17/19 positive quantities; preserve slot order",
-        "no_crafting_recipe_row",
-      );
-      return { ...record, craftingRecipes };
-    }
     if (record.category === "clothing") return record;
     if (record.category === "creatures") {
       const { scientificName } = readCreatureFields(context, record.id, proofs);
@@ -158,7 +141,6 @@ export function extendCollection(base: Catalog, context: ContentContext) {
     evidence: proofs.records,
     seedImages: crops.images,
     stageImages: crops.stageImages,
-    craftingAudit: crafting.audit,
   };
 }
 
@@ -177,5 +159,4 @@ export function buildCollection(work: string): void {
   );
   writeJson(path.join(work, "seed-image-candidates.json"), result.seedImages);
   writeJson(path.join(work, "stage-image-candidates.json"), result.stageImages);
-  writeJson(path.join(work, "crafting-audit.json"), result.craftingAudit);
 }

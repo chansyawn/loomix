@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import type { CollectionObservations, CraftingRecipe } from "../extraction/schema.ts";
+import type { CollectionObservations } from "../extraction/schema.ts";
 import type { Tables } from "../extraction/decode/tables.ts";
 import { creatureSizeRange, plainText, scaledCreatureSize } from "../extraction/content/model.ts";
 import { verifyTreeDrops } from "./tree-drops.ts";
@@ -28,49 +28,6 @@ export function verifyCollectionFields(catalog: CollectionObservations, tables: 
     "Independent crop seed index",
   );
   const productSeeds = new Map(seeds.flatMap((seed) => seed.productIds.map((id) => [id, seed.id])));
-  const crafting = new Map<number, CraftingRecipe[]>();
-  const audit = [];
-  for (const row of tables.rows(568)) {
-    const productId = tables.uint(row, 1);
-    const product = productId === null ? undefined : records.get(productId);
-    const included = product?.category === "furniture" && product.kind === "item";
-    const materials: NonNullable<CraftingRecipe["materials"]> = [];
-    for (let field = 12; field < 20; field += 2) {
-      const itemId = tables.uint(row, field);
-      const quantity = tables.uint(row, field + 1);
-      if (itemId === null && quantity === null) continue;
-      assert.ok(
-        itemId !== null && quantity !== null && itemId > 0 && quantity > 0,
-        "Crafting ID/quantity pair",
-      );
-      if (included) assert.equal(records.get(itemId)?.kind, "item");
-      materials.push({ itemId, quantity });
-    }
-    const id = tables.id(row);
-    audit.push({
-      id,
-      productId,
-      materials: materials.length ? materials : null,
-      unresolvedReason: materials.length ? null : "material_slots_absent_semantics_unconfirmed",
-      source: {
-        file: "prepared/ed.obb",
-        table: 568,
-        row: id,
-        rowOffset: row.rowOffset,
-        fields: [0, 1, 12, 13, 14, 15, 16, 17, 18, 19],
-      },
-      disposition: included ? "included" : "outside_scope",
-    });
-    if (included && productId !== null) {
-      const entries = crafting.get(productId) ?? [];
-      entries.push({
-        id,
-        materials: materials.length ? materials : null,
-        unresolvedReason: materials.length ? null : "material_slots_absent_semantics_unconfirmed",
-      });
-      crafting.set(productId, entries);
-    }
-  }
   const requiredFields = new Map<string, unknown>();
   const acquisition = (id: number) => {
     const rows = tables.rows(325).filter((row) => tables.id(row) === id);
@@ -112,11 +69,6 @@ export function verifyCollectionFields(catalog: CollectionObservations, tables: 
       assert.deepEqual(actual, expected, `${record.id}.${field}`);
       requiredFields.set(`item:${record.id}:${field}`, actual);
     };
-    if (record.category === "furniture") {
-      const recipes = crafting.get(record.id)?.sort((a, b) => a.id - b.id) ?? null;
-      expect("craftingRecipes", record.craftingRecipes, recipes);
-      continue;
-    }
     if (record.category === "clothing") continue;
     if (record.category === "plants") {
       expect("seedId", record.seedId, productSeeds.get(record.id) ?? null);
@@ -202,5 +154,5 @@ export function verifyCollectionFields(catalog: CollectionObservations, tables: 
       requiredFields.set(`seed:${seed.id}:detail.${field}`, seed.detail[field]);
     }
   }
-  return { requiredFields, craftingAudit: audit };
+  return { requiredFields };
 }

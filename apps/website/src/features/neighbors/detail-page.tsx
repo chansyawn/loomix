@@ -8,7 +8,7 @@ import { NeighborStories, NeighborTravel } from "./reading";
 
 const sections = [
   ["overview", "概览"],
-  ["themes", "创想卡集"],
+  ["themes", "关联创想卡集"],
   ["stories", "友邻故事"],
   ["travel", "旅行台词"],
 ] as const;
@@ -70,7 +70,7 @@ export function NeighborDetailPage({ neighbor }: { neighbor: NeighborDetail }) {
           </section>
           <section id="themes" aria-labelledby="themes-heading" className="scroll-mt-4 space-y-4">
             <h2 id="themes-heading" className="text-2xl font-semibold">
-              创想卡集
+              关联创想卡集
             </h2>
             {neighbor.themes.length ? (
               <div className="grid gap-4 sm:grid-cols-2">

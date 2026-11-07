@@ -46,7 +46,6 @@ export function verifyNeighbors(value: unknown, input: NeighborExtractionInput):
       encounterIslands: database.encounterIslands.length,
       friendshipRules: database.friendshipRules.length,
       eventTags: database.eventTags.length,
-      furnishingThemes: database.furnishingThemes.length,
       housePaths: database.assets.filter((a) => /NPCBldg/i.test(a.path)).length,
       friendStarPaths: database.assets.filter((a) => a.kind === "friendStar").length,
       outfitPaths: database.assets.filter((a) => a.kind === "outfit").length,

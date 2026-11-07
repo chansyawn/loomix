@@ -1,7 +1,7 @@
-import type { RecordType } from "../extraction/schema.ts";
+import type { ImageGroup } from "../domains/assets.ts";
 import sharp from "sharp";
 
-export function imageDimensions(group: RecordType) {
+export function imageDimensions(group: ImageGroup) {
   return group === "furniture.set" ? { width: 1024, height: 512 } : { width: 256, height: 256 };
 }
 
@@ -14,10 +14,17 @@ export async function decodeWebp(bytes: Buffer) {
   return info;
 }
 
-export async function processImage(bytes: Buffer, group: RecordType) {
+export async function processImage(bytes: Buffer, group: ImageGroup) {
   const dimensions = imageDimensions(group);
+  const fit = group === "craftingCard" ? "contain" : "cover";
   const output = await sharp(bytes, { failOn: "warning" })
-    .resize({ ...dimensions, fit: "cover", position: "centre", kernel: "lanczos3" })
+    .resize({
+      ...dimensions,
+      fit,
+      position: "centre",
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+      kernel: "lanczos3",
+    })
     .webp({ quality: 85, alphaQuality: 100, effort: 4 })
     .toBuffer();
   const decoded = await decodeWebp(output);

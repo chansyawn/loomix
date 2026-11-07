@@ -1,3 +1,4 @@
+import { parseCatalog, type Catalog } from "@loomix/schema/catalog";
 import { parseNeighbors } from "@loomix/schema/neighbors";
 import type { Neighbors } from "@loomix/schema/neighbors";
 import { parseAssets, createImageResolver } from "@loomix/schema/assets";
@@ -17,9 +18,15 @@ export const travelEvents: Record<string, string> = {
   Npc_Get_Items_Num_In_Travel: "友邻在旅行中获得物品",
 };
 
-export function toNeighborsView(database: Neighbors, assets: Assets) {
+export function toNeighborsView(database: Neighbors, assets: Assets, catalog: Catalog) {
   if (database.snapshotId !== assets.snapshotId || database.locale !== assets.locale)
     throw new Error("Neighbor assets context mismatch");
+  if (
+    catalog.snapshotId !== database.snapshotId ||
+    catalog.locale !== database.locale ||
+    catalog.formatVersion !== database.formatVersion
+  )
+    throw new Error("Neighbor catalog context mismatch");
   const image = createImageResolver(assets);
   const neighbors = database.neighbors.map((neighbor) => {
     const stars = database.stars
@@ -30,13 +37,22 @@ export function toNeighborsView(database: Neighbors, assets: Assets) {
         galaxy: star.galaxyName,
         image: image(star.image),
       }));
-    const themes = database.furnishingThemes
-      .filter((theme) => theme.neighborIds.includes(neighbor.id))
+    const setIds = new Set(
+      catalog.items.flatMap((item) =>
+        item.type === "craftingCard" &&
+        item.neighborIds.includes(neighbor.id) &&
+        item.setId !== null
+          ? [item.setId]
+          : [],
+      ),
+    );
+    const themes = catalog.cardSets
+      .filter((theme) => setIds.has(theme.id))
       .map((theme) => ({
-        key: theme.key,
+        key: String(theme.id),
         name: theme.name,
-        description: theme.description,
-        image: image(theme.cover),
+        description: theme.acquisitionHint,
+        image: image(theme.artwork.cover),
       }));
     const stories = database.stories
       .filter((story) => story.neighborId === neighbor.id)
@@ -110,9 +126,10 @@ export type NeighborDetail = NeighborsData["neighbors"][number];
 
 export async function loadNeighbors(request: typeof fetch = fetch): Promise<NeighborsData> {
   const load = createResourceReader(request);
-  const [database, assets] = await Promise.all([
+  const [database, assets, catalog] = await Promise.all([
     load("neighbors", parseNeighbors),
     load("assets", parseAssets),
+    load("catalog", parseCatalog),
   ]);
-  return toNeighborsView(database, assets);
+  return toNeighborsView(database, assets, catalog);
 }

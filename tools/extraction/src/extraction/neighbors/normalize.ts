@@ -32,7 +32,6 @@ export function normalizeNeighbors(database: NeighborDatabase): NeighborDatabase
   database.encounterIslands.sort((a, b) => a.id - b.id);
   database.friendshipRules.sort((a, b) => compareText(a.key, b.key));
   database.eventTags.sort((a, b) => compareText(a.key, b.key));
-  database.furnishingThemes.sort((a, b) => compareText(a.key, b.key));
   const preferenceLevelOrder = { love: 1, favor: 2, dislike: 4 } as const;
   database.giftPreferences.sort(
     (a, b) => a.npcId - b.npcId || preferenceLevelOrder[a.level] - preferenceLevelOrder[b.level],
@@ -62,13 +61,6 @@ export function normalizeNeighbors(database: NeighborDatabase): NeighborDatabase
   for (const neighbor of database.neighbors) {
     neighbor.starKeys = database.stars.filter((s) => s.npcId === neighbor.id).map((s) => s.key);
     neighbor.storyKeys = database.stories.filter((s) => s.npcId === neighbor.id).map((s) => s.key);
-    neighbor.furnishingThemeIds = database.furnishingThemes.flatMap((t) =>
-      t.id !== null && t.neighborIds.includes(neighbor.id) ? [t.id] : [],
-    );
-    neighbor.furnishingThemeIds.sort((a, b) => a - b);
-    neighbor.furnishingThemeKeys = database.furnishingThemes
-      .filter((t) => t.neighborIds.includes(neighbor.id))
-      .map((t) => t.key);
     neighbor.assetPaths = database.assets
       .filter((a) => a.relatedNeighborIds.includes(neighbor.id))
       .map((a) => a.path);

@@ -35,7 +35,6 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
     "travelReactions",
     "friendshipRules",
     "eventTags",
-    "furnishingThemes",
     "giftPreferences",
     "additionalImages",
   ] as const)
@@ -87,8 +86,10 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
       issue(["neighbors", "outfits", index, "neighborId"], `Unknown neighbor ${outfit.neighborId}`);
     unique(outfit.offers, (offer) => offer.id, ["neighbors", "outfits", index, "offers"]);
   });
-  for (const theme of neighbors.furnishingThemes)
-    checkNeighbors(theme.neighborIds, ["neighbors", "furnishingThemes"]);
+  catalog.items.forEach((item, index) => {
+    if (item.type === "craftingCard")
+      checkNeighbors(item.neighborIds, ["catalog", "items", index, "neighborIds"]);
+  });
   unique(neighbors.resources, (resource) => resource.path, ["neighbors", "resources"]);
   for (const resource of neighbors.resources)
     checkNeighbors(resource.relatedNeighborIds, ["neighbors", "resources"]);

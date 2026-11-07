@@ -70,17 +70,5 @@ export function linkedAssets(database: NeighborDatabase): NeighborAssetRef[] {
     add(i.illustrationPath, i.neighborIds);
     for (const p of i.resourcePaths) add(p, i.neighborIds);
   }
-  for (const t of database.furnishingThemes)
-    for (const p of [
-      t.cardBagPath,
-      t.cardBackgroundPath,
-      t.cardBackPath,
-      t.topicIconPath,
-      t.lockedBackgroundPath,
-      t.unlockedBackgroundPath,
-      t.themePath,
-      t.coverPath,
-    ])
-      add(p, t.neighborIds);
   return result;
 }

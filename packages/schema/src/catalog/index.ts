@@ -2,7 +2,6 @@ import { z } from "zod";
 import { ContextSchema, IdSchema } from "../common/identity.ts";
 import { ImageRefSchema } from "../assets/index.ts";
 import {
-  CraftingRecipeSchema,
   DifficultyRequirementSchema,
   IngredientCategorySchema,
   RecipeSchema,
@@ -79,12 +78,32 @@ const item = EntityBaseSchema.extend({
 });
 export const ItemSchema = z.discriminatedUnion("type", [
   item.extend({
+    type: z.literal("craftingCard"),
+    setId: IdSchema.nullable(),
+    neighborIds: IdSchema.array(),
+    artwork: z.strictObject({
+      bag: ImageRefSchema.nullable(),
+      back: ImageRefSchema.nullable(),
+      background: ImageRefSchema.nullable(),
+    }),
+    recipe: z
+      .strictObject({
+        productId: IdSchema,
+        quantity: IdSchema.nullable(),
+        materials: z
+          .array(z.strictObject({ itemId: IdSchema, quantity: IdSchema }))
+          .min(1)
+          .nullable(),
+        unresolvedReason: text,
+      })
+      .nullable(),
+  }),
+  item.extend({
     type: z.literal("furniture"),
     furnitureType: text,
     size: text,
     colors: texts,
     materials: texts,
-    craftingRecipes: CraftingRecipeSchema.array().nullable(),
   }),
   item.extend({
     type: z.literal("clothing"),
@@ -170,6 +189,20 @@ export const GroupSchema = EntityBaseSchema.extend({
   ]),
   memberIds: IdSchema.array().nullable(),
 });
+export const CardSetSchema = z.strictObject({
+  id: IdSchema,
+  name: z.string().min(1),
+  acquisitionHint: text,
+  artwork: z.strictObject({
+    cover: ImageRefSchema.nullable(),
+    bag: ImageRefSchema.nullable(),
+    back: ImageRefSchema.nullable(),
+    background: ImageRefSchema.nullable(),
+    icon: ImageRefSchema.nullable(),
+    lockedBackground: ImageRefSchema.nullable(),
+    unlockedBackground: ImageRefSchema.nullable(),
+  }),
+});
 export const AppearanceSchema = EntityBaseSchema.extend({ subcategory: text });
 export const SeedSchema = EntityBaseSchema.extend({
   productIds: IdSchema.array().min(1),
@@ -189,6 +222,7 @@ export const CatalogSchema = ContextSchema.extend({
   kind: z.literal("catalog"),
   items: ItemSchema.array(),
   groups: GroupSchema.array(),
+  cardSets: CardSetSchema.array(),
   appearances: AppearanceSchema.array(),
   seeds: SeedSchema.array(),
   growths: GrowthSchema.array(),
@@ -198,6 +232,7 @@ export const CatalogSchema = ContextSchema.extend({
 export type Catalog = z.infer<typeof CatalogSchema>;
 export type Item = z.infer<typeof ItemSchema>;
 export type Group = z.infer<typeof GroupSchema>;
+export type CardSet = z.infer<typeof CardSetSchema>;
 export type Seed = z.infer<typeof SeedSchema>;
 export type Growth = z.infer<typeof GrowthSchema>;
 export type Quality = z.infer<typeof QualitySchema>;

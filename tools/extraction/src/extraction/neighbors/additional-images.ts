@@ -49,7 +49,11 @@ const selectionFile = fileURLToPath(new URL("./additional-images.json", import.m
 export function additionalNeighborImageSelections(): AdditionalNeighborImageSelection[] {
   return selectionsSchema
     .parse(readJson(selectionFile))
-    .filter((selection) => selection.npcId === null || isAllowedNeighbor(selection.npcId));
+    .filter(
+      (selection) =>
+        selection.category !== "card" &&
+        (selection.npcId === null || isAllowedNeighbor(selection.npcId)),
+    );
 }
 
 export function selectAdditionalNeighborImages(

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { HashSchema, ContextSchema } from "../common/identity.ts";
 
 export const AssetIdSchema = z.string().min(1);
-export const ImageVariantSchema = z.enum(["icon", "banner", "illustration"]);
+export const ImageVariantSchema = z.enum(["icon", "banner", "illustration", "card"]);
 export const ImageRefSchema = z.strictObject({
   assetId: AssetIdSchema,
   variant: ImageVariantSchema,

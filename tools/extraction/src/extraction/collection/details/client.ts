@@ -15,7 +15,13 @@ export interface DetailResult<T> {
   reason: string;
 }
 
-export function acquisition(context: ContentContext, id: number) {
+export function acquisition(
+  context: {
+    tables: ContentContext["tables"];
+    vocabulary: Pick<ContentContext["vocabulary"], "sources">;
+  },
+  id: number,
+) {
   const { tables, vocabulary } = context;
   const rows = tables.rows(325).filter((row) => tables.id(row) === id);
   const signatures = rows.map((row) => JSON.stringify(tables.vector(row, 2)));
@@ -146,7 +152,7 @@ export function dishEffects(
 }
 
 export function trade(
-  context: ContentContext,
+  context: Pick<ContentContext, "tables">,
   id: number,
 ): DetailResult<CollectionDetail["trade"]> {
   const { tables } = context;

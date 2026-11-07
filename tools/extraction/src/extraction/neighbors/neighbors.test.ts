@@ -18,7 +18,6 @@ test("extracts the fixed allowlist independently of dedicated configurations", (
   assert.equal(database.stars.length, 4);
   const huanxue = database.neighbors.find((n) => n.id === 1005)!;
   assert.deepEqual(huanxue.storyKeys, []);
-  assert.deepEqual(huanxue.furnishingThemeIds, []);
   assert.ok(!("rewardItemIds" in huanxue));
   assert.equal(huanxue.avatarPath, null);
   assert.deepEqual(
@@ -96,13 +95,6 @@ test("links explicit themes, excludes test rules and leaves unconfirmed island a
   const { database, audit } = extractNeighborBundle(fixture.input);
   assert.equal(database.friendshipRules.length, 1);
   assert.equal(database.friendshipRules[0]!.level, 7);
-  assert.equal(database.furnishingThemes.length, 1);
-  assert.equal(database.furnishingThemes[0]!.nameZh, "听丰年创想卡集");
-  assert.equal(database.furnishingThemes[0]!.themePath, "UI/Recipe/BgThemeTingFengNian");
-  assert.deepEqual(database.neighbors.find((n) => n.id === 1010)!.furnishingThemeIds, [5]);
-  assert.deepEqual(database.neighbors.find((n) => n.id === 1010)!.furnishingThemeKeys, [
-    "theme:听丰年创想卡集",
-  ]);
   assert.deepEqual(database.encounterIslands[0]!.neighborIds, []);
   assert.equal(database.encounterIslands[0]!.sceneId, 10001010);
   assert.ok(!("rewards" in database));
@@ -252,6 +244,5 @@ test("excludes fully configured non-allowlisted neighbors", (context) => {
   assert.ok(database.stars.every((s) => s.npcId !== 1014));
   assert.ok(database.stories.every((s) => s.npcId !== 1014));
   assert.ok(database.travelReactions.every((r) => r.npcId !== 1014));
-  assert.ok(database.furnishingThemes.every((t) => !t.neighborIds.includes(1014)));
   verifyNeighbors(database, fixture.input);
 });

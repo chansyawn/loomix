@@ -2,6 +2,8 @@ import type { ImageRef } from "@loomix/schema/assets";
 import type { RecordType } from "../extraction/schema.ts";
 import { digest } from "../workflow/hashing.ts";
 
+export type ImageGroup = RecordType | "craftingCard";
+
 export interface OriginalImage {
   file: string;
   sha256: string;
@@ -14,20 +16,27 @@ export interface OriginalImage {
 }
 export interface ImageJob extends ImageRef {
   original: OriginalImage;
-  group: RecordType | null;
+  group: ImageGroup | null;
 }
 
 export function createAssetRegistry() {
   const jobs = new Map<string, ImageJob>();
   const files = new Map<string, ImageRef>();
-  const register = (original: OriginalImage, group: RecordType | null = null): ImageRef => {
+  const register = (original: OriginalImage, group: ImageGroup | null = null): ImageRef => {
     const assetId = digest({
       source: original.source,
       container: original.container,
       assetType: original.assetType,
       pathId: original.pathId,
     });
-    const variant = group === "furniture.set" ? "banner" : group ? "icon" : "illustration";
+    const variant =
+      group === "furniture.set"
+        ? "banner"
+        : group === "craftingCard"
+          ? "card"
+          : group
+            ? "icon"
+            : "illustration";
     const key = `${assetId}:${variant}`;
     const previous = jobs.get(key);
     if (previous && previous.original.sha256 !== original.sha256)
