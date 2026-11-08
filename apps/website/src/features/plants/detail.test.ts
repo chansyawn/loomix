@@ -74,7 +74,7 @@ describe("plant details", () => {
   });
   it("groups a crop seed and its ordered products under the series detail", () => {
     const crop = plantItemFixture({ id: 6, name: "星露作物", category: "作物", cropSeriesId: 7 });
-    const seed = plantSeedFixture({ id: 8, name: "星露种子", cropSeriesId: 7, productIds: [6] });
+    const seed = plantSeedFixture({ id: 8, name: "星露种子", cropSeriesId: 7, plantIds: [6] });
     const cropSeries = plantSeriesFixture({
       id: 7,
       name: "星露作物系列",
@@ -95,16 +95,18 @@ describe("plant details", () => {
 
   it("selects only valid series product tabs and resolves mature forms by product ID", () => {
     const growth = {
+      id: 8,
+      kind: "crop" as const,
       cycleMode: null,
-      stageIds: [],
+      initialStageIds: [11],
       regrowthStageIds: null,
       stages: [
-        { id: 11, name: "作物株", image: "first" },
-        { id: 12, name: "作物株", image: "second" },
+        { id: 11, name: "作物株", image: "first", plantId: 6 },
+        { id: 12, name: "作物株", image: "second", plantId: 9 },
       ],
       matureStages: [
-        { entityId: 11, productId: 6, tag: null, rank: null },
-        { entityId: 12, productId: 9, tag: null, rank: null },
+        { stageId: 11, tag: null, rank: null },
+        { stageId: 12, tag: null, rank: null },
       ],
       witheredStageId: null,
       maturityDays: null,

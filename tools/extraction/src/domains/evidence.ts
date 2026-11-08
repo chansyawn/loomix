@@ -1,3 +1,4 @@
+import { plantingDomainEvidence } from "../extraction/plants/evidence.ts";
 import path from "node:path";
 import { EvidenceSchema } from "../extraction/evidence/domain-schema.ts";
 import type { EvidenceSource, FieldEvidence } from "../extraction/evidence/domain-schema.ts";
@@ -16,7 +17,6 @@ const fields: Record<string, string> = {
   "detail.creatureGrades": "grades",
   "detail.dishEffects": "effects",
   "detail.acquisitionConditions": "acquisition",
-  "detail.growth": "growthId",
 };
 
 interface AuditRecord {
@@ -92,7 +92,7 @@ export function buildDomainEvidence(
     });
   }
   for (const proof of details) {
-    if (proof.field === "seedId" || proof.field === "detail.id") continue;
+    if (proof.field === "detail.id") continue;
     const owner = proof.owner === "seed" ? "catalog.seeds" : collection(proof.id);
     const fieldPath = fields[proof.field] ?? proof.field.replace(/^attributes\.|^detail\./, "");
     // 不适用的来源观测记录不会在领域实体上创建字段。
@@ -104,21 +104,6 @@ export function buildDomainEvidence(
       rowOffset,
       fields,
     }));
-    if (
-      entity &&
-      "growthId" in entity &&
-      typeof entity.growthId === "number" &&
-      proof.field === "detail.growth"
-    ) {
-      add({
-        entity: { collection: "catalog.growths", id: entity.growthId },
-        fieldPath: "$",
-        status: proof.status === "confirmed" ? "confirmed" : "unresolved",
-        sources,
-        ruleId: "client.growth.configuration",
-        reasonCode: proof.reason ?? null,
-      });
-    }
     if (!entity || !(fieldPath in entity)) continue;
     add({
       entity: { collection: owner, id: proof.id },
@@ -260,6 +245,7 @@ export function readDomainEvidence(work: string, dataset: Dataset) {
       ruleId: "client.crafting.direct_reference",
       reasonCode: null,
     });
+  evidence.fields.push(...plantingDomainEvidence(work, dataset));
   return EvidenceSchema.parse(evidence);
 }
 

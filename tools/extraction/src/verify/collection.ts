@@ -1,3 +1,4 @@
+import { verifyPlantings } from "./plants.ts";
 import assert from "node:assert/strict";
 import path from "node:path";
 import { baseCollectionObservations } from "../extraction/schema.ts";
@@ -19,46 +20,11 @@ export function verifyProofSources(proof: CollectionEvidence, tables: Tables): v
   const add = (root: number, predicate: (row: TableRow) => boolean, fields: number[]) => {
     for (const row of tables.rows(root).filter(predicate)) rows.push({ row, fields });
   };
-  if (proof.owner === "seed") {
-    if (proof.field === "name") add(318, (row) => tables.id(row) === proof.id, [0, 1]);
-    else if (proof.field === "detail.description" || proof.field === "detail.quality")
-      add(325, (row) => tables.id(row) === proof.id, [0, 15, 27]);
-    else if (proof.field.startsWith("detail.trade"))
-      add(
-        659,
-        (row) => tables.uint(row, 2) === proof.id,
-        [0, 1, 2, 9, 10, 12, 13, 17, 18, 22, 23, 24],
-      );
-    else if (proof.field.startsWith("detail.acquisitionConditions")) {
-      add(325, (row) => tables.id(row) === proof.id, [0, 2]);
-      const codes = new Set(rows.flatMap(({ row }) => tables.vector(row, 2) ?? []));
-      add(618, (row) => codes.has(tables.id(row)), [0, 1]);
-    } else if (proof.field.startsWith("detail.growth")) {
-      add(144, (row) => tables.id(row) === proof.id, [0, 3, 4, 5, 6, 8, 9, 10]);
-      const stageIds = new Set(rows.flatMap(({ row }) => tables.vector(row, 8) ?? []));
-      add(137, (row) => stageIds.has(tables.id(row)), [0, 1, 2, 3]);
-    } else if (proof.field.startsWith("detail.stageIds"))
-      add(144, (row) => tables.id(row) === proof.id, [0, 4]);
-    else if (proof.field.startsWith("detail.harvestCount"))
-      add(144, (row) => tables.id(row) === proof.id, [0, 5]);
-    else if (proof.field.startsWith("detail.maturityDays"))
-      add(144, (row) => tables.id(row) === proof.id, [0, 3, 4]);
-    else add(144, (row) => tables.id(row) === proof.id, [0, 10]);
-  } else if (proof.field === "attributes.scientificName") {
+  if (proof.field === "attributes.scientificName") {
     add(93, (row) => tables.id(row) === proof.id, [16]);
-  } else if (proof.field === "seedId") {
-    add(144, (row) => tables.vector(row, 10)?.includes(proof.id) ?? false, [0, 10]);
   } else if (proof.field.startsWith("detail.")) {
     if (proof.field === "detail.flowerColors") {
       add(318, (row) => tables.id(row) === proof.id, [0, 9]);
-    } else if (proof.field.startsWith("detail.growth")) {
-      add(
-        144,
-        (row) => tables.vector(row, 10)?.includes(proof.id) ?? false,
-        [0, 3, 4, 5, 6, 8, 9, 10],
-      );
-      const stageIds = new Set(rows.flatMap(({ row }) => tables.vector(row, 8) ?? []));
-      add(137, (row) => stageIds.has(tables.id(row)), [0, 1, 2, 3]);
     } else if (proof.field.startsWith("detail.creatureSize")) {
       add(132, (row) => tables.id(row) === proof.id, [0, 3, 4, 5, 6]);
     } else if (proof.field.startsWith("detail.creatureGrades")) {
@@ -230,8 +196,9 @@ export async function verifyCollection(
     stats[proof.value === null ? "null" : "populated"]++;
   }
   assert.equal(seen.size, requiredFields.size, "Complete collection evidence coverage");
-  await verifySeedImages(catalog, bundle);
-  await verifyStageImages(catalog, bundle);
+  verifyPlantings(catalog, bundle);
+  verifySeedImages(catalog, bundle);
+  verifyStageImages(catalog, bundle);
   if (writeReports) writeJson(path.join(reportRoot, "collection-coverage.json"), coverage);
   return catalog;
 }

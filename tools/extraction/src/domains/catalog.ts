@@ -1,6 +1,6 @@
 import type { ImageRef } from "@loomix/schema/assets";
 import { CatalogSchema } from "@loomix/schema/catalog";
-import type { Catalog, Growth, Item, Group } from "@loomix/schema/catalog";
+import type { Catalog, Item, Group } from "@loomix/schema/catalog";
 import type { Dataset } from "@loomix/schema/dataset";
 import type { CollectionObservations } from "../extraction/schema.ts";
 import type { AssetRegistry } from "./assets.ts";
@@ -33,24 +33,6 @@ export function buildCatalog(
       itemIds: [...category.itemIds],
     })),
     entries: [],
-  };
-  const growths = new Map<number, Growth>();
-  const addGrowth = (
-    id: number,
-    growth: CollectionObservations["details"][number]["growth"],
-  ): number | null => {
-    if (!growth) return null;
-    const value = {
-      id,
-      ...growth,
-      stages:
-        growth.stages?.map((stage) => ({ ...stage, image: assets.image(stage.image) })) ?? null,
-    };
-    const previous = growths.get(id);
-    if (previous && JSON.stringify(previous) !== JSON.stringify(value))
-      throw new Error(`Conflicting growth configuration ${id}`);
-    growths.set(id, value);
-    return id;
   };
   const tags = (id: number, field: number): string[] | null => {
     const values = vocabulary
@@ -141,15 +123,11 @@ export function buildCatalog(
         });
         break;
       case "plants": {
-        const crop = vocabulary.cropsByProduct.get(record.id);
         catalog.items.push({
           ...common,
           type: "plant",
           origins: tags(record.id, 8),
-          maturityPeriod: record.attributes.maturityPeriod,
-          harvestCount: record.attributes.harvestCount,
           flowerColors: detail.flowerColors,
-          growthId: addGrowth(crop ? tables.id(crop) : record.id, detail.growth),
           drops: detail.treeDrops,
           hybridRecipes: detail.hybridRecipes,
         });
@@ -174,18 +152,11 @@ export function buildCatalog(
         break;
     }
   }
-  for (const seed of observations.cropSeeds)
-    catalog.seeds.push({
-      id: seed.id,
-      name: seed.name,
-      image: assets.image(seed.image),
-      description: seed.detail.description,
-      quality: seed.detail.quality,
-      productIds: seed.productIds,
-      growthId: addGrowth(seed.id, seed.detail.growth),
-      trade: seed.detail.trade,
-      acquisition: seed.detail.acquisitionConditions,
-    });
+  catalog.seeds = observations.seeds.map((seed) => ({ ...seed, image: assets.image(seed.image) }));
+  catalog.growths = observations.growths.map((growth) => ({
+    ...growth,
+    stages: growth.stages.map((stage) => ({ ...stage, image: assets.image(stage.image) })),
+  }));
   const crafting = readCraftingCards(context);
   for (const link of crafting.imageReferences) {
     const image = cardImages.get(link.reference) ?? null;
@@ -203,7 +174,6 @@ export function buildCatalog(
   catalog.cardSets = crafting.sets;
   catalog.items.push(...crafting.cards);
   for (const id of crafting.references) references.add(id);
-  catalog.growths = [...growths.values()].sort((a, b) => a.id - b.id);
   const items = new Map(catalog.items.map((item) => [item.id, item]));
   for (const id of referencedGiftItemIds) references.add(id);
   for (const association of context.ingredientCategoryBuild.associations)

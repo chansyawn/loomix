@@ -64,6 +64,7 @@ var/                                              # 运行时数据，整体忽�
     raw/{content.json,images-content.json,catalog-observations.json,images-catalog-observations.json,neighbors.json,islands.json}
     dataset.json                                 # 统一领域快照，严格结构和引用图校验
     image-jobs.json                              # 领域图片引用到原始 PNG 的交付任务
+    plant-{evidence,exclusions,investigation}.json   # 种植字段证据、排除项与未确认参数
     collection-evidence.json                     # 客户端详情与种子索引字段证据
     collection-missing-fields.json               # 未确认详情的空值、原因与来源
     collection-investigation.json                # 客户端候选字段及未确认原因
@@ -97,7 +98,7 @@ manifest 使用 `schemaVersion: 1`，区分 environment、extraction、delivery�
 
 ## 证据与交付约束
 
-唯一共享包为 `@loomix/schema`。`catalog` 保存 items、groups、appearances、seeds、growths、ingredientCategories 和 entries；单品按 type 区分家具、服装、生物、植物、菜肴、材料与仅供引用的物品。entries 独立表达图鉴收录，不将配方引用误认为开放内容。多值属性保存数组，共享生长配置使用 growthId 引用。`neighbors` 与 `world` 保存各自实体和单向关系，不重复保存反向索引或物品名称。
+唯一共享包为 `@loomix/schema`。`catalog` 保存 items、groups、appearances、seeds、growths、ingredientCategories 和 entries；单品按 type 区分家具、服装、生物、植物、菜肴、材料与仅供引用的物品。entries 独立表达图鉴收录，不将配方引用误认为开放内容。多值属性保存数组；种子以 growthId 引用生长配置，阶段以 plantId 关联正式植物，反向关系由消费方派生。`neighbors` 与 `world` 保存各自实体和单向关系，不重复保存反向索引或物品名称。
 
 源观察模型位于 `tools/extraction`，只供提取与来源验收使用；基础观察和详情观察是内部 checkpoint，不是公开交付版本。领域组装读取冻结观察，补全已确认的物品引用，生成 dataset.json，并执行跨领域引用、集合成员类型、分类环、生长阶段和图片覆盖检查。verify 从冻结观察重建领域数据、交付任务与领域证据，防止只修改输出使其自洽。
 
@@ -105,7 +106,7 @@ manifest 使用 `schemaVersion: 1`，区分 environment、extraction、delivery�
 
 发布目录由 release.json 指定四个文档：zh-CN/catalog.json、zh-CN/neighbors.json、zh-CN/world.json 和 assets.json。每个文档绑定相同 formatVersion、snapshotId、locale；manifest 保存实际字节数与 SHA256。领域图片使用 {assetId, variant}，assets.json 解析到按最终字节 SHA256 命名的 WebP、大小和尺寸。同一源图的 icon、banner、illustration 独立登记。当前提取 zh-CN；语言是快照上下文，后续语言无需改变实体字段名。
 
-当前收录 2,340 条（杂物 23 条）。配方引用到范围外物品时可建立 reference 实体，但不增加图鉴 entries。未确认属性保留 null，配方材料缺失不解释为免费制作。
+当前交付 formatVersion 3，收录 2,340 条（杂物 23 条）；另有 79 个种子、79 份生长配置及 317 个阶段，不增加图鉴条目。作物与花树统一种子和阶段契约，生长规则区分 crop/staged；未确认的成熟天数保持 null。配方引用到范围外物品时可建立 reference 实体，但不增加图鉴 entries。未确认属性保留 null，配方材料缺失不解释为免费制作。
 
 图片规则保持不变：按实际像素面积选最高原生分辨率，平手保留大图优先顺序；家具套组 1024×512，其余有图记录 256×256；Lanczos3 等比缩放、居中裁切，WebP 质量 85、alphaQuality 100。原始 PNG 与最终 WebP 均完整解码，交付文件按最终字节 SHA256 命名和去重。
 

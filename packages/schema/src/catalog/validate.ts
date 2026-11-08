@@ -1,3 +1,4 @@
+import { validatePlantings } from "./growth.ts";
 import type { Catalog } from "./index.ts";
 import type { IngredientExpression } from "./recipes.ts";
 import type { ValidationIssue } from "../common/identity.ts";
@@ -32,7 +33,6 @@ export function validateCatalog(catalog: Catalog): ValidationIssue[] {
   const groups = new Map(catalog.groups.map((group) => [group.id, group]));
   const cardSets = new Set(catalog.cardSets.map((set) => set.id));
   const appearances = new Map(catalog.appearances.map((item) => [item.id, item]));
-  const growths = new Map(catalog.growths.map((growth) => [growth.id, growth]));
   const categories = new Map(
     catalog.ingredientCategories.map((category) => [category.id, category]),
   );
@@ -95,28 +95,23 @@ export function validateCatalog(catalog: Catalog): ValidationIssue[] {
     }
   });
   unique(catalog.ingredientCategories, (category) => category.tagName, ["ingredientCategories"]);
-  const checkGrowth = (id: number | null, path: (string | number)[]) => {
-    if (id !== null && !growths.has(id)) issue(path, `Unknown growth ${id}`);
-  };
-  catalog.seeds.forEach((seed, index) => {
-    checkItems(seed.productIds, ["seeds", index, "productIds"], "plant");
-    checkGrowth(seed.growthId, ["seeds", index, "growthId"]);
-  });
-  catalog.growths.forEach((growth, index) => {
-    unique(growth.stages ?? [], (stage) => stage.id, ["growths", index, "stages"]);
-    const stages = new Set(growth.stages?.map((stage) => stage.id));
-    for (const id of [
-      ...(growth.stageIds ?? []),
-      ...(growth.regrowthStageIds ?? []),
-      ...(growth.witheredStageId === null ? [] : [growth.witheredStageId]),
-    ])
-      if (!stages.has(id)) issue(["growths", index], `Unknown growth stage ${id}`);
-    checkItems(
-      [...new Set(growth.matureStages?.map((stage) => stage.productId) ?? [])],
-      ["growths", index, "matureStages"],
-      "plant",
-    );
-  });
+  issues.push(
+    ...validatePlantings(
+      catalog.seeds,
+      catalog.growths,
+      new Set(
+        catalog.items
+          .filter(
+            (item) =>
+              item.type === "plant" &&
+              catalog.entries.some(
+                (entry) => entry.entity.kind === "item" && entry.entity.id === item.id,
+              ),
+          )
+          .map((item) => item.id),
+      ),
+    ).map((entry) => ({ ...entry, path: ["catalog", ...entry.path] })),
+  );
   catalog.items.forEach((item, index) => {
     const path = ["items", index];
     if (item.type === "reference") return;
@@ -127,7 +122,6 @@ export function validateCatalog(catalog: Catalog): ValidationIssue[] {
           [...path, "trade", "offers", offerIndex, "currencyItemId"],
         );
     if (item.type === "plant") {
-      checkGrowth(item.growthId, [...path, "growthId"]);
       checkItems(item.drops?.map((drop) => drop.itemId) ?? [], [...path, "drops"]);
       item.drops?.forEach((drop, dropIndex) => {
         if (

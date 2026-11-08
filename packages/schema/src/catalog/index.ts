@@ -9,6 +9,8 @@ import {
 } from "./recipes.ts";
 
 export * from "./recipes.ts";
+export * from "./growth.ts";
+import { GrowthSchema } from "./growth.ts";
 const text = z.string().min(1).nullable();
 const texts = z.array(z.string().min(1)).nullable();
 export const QualitySchema = z.number().int().min(0).max(4);
@@ -48,21 +50,6 @@ export const DropSchema = z.strictObject({
   quantityMin: IdSchema.nullable(),
   quantityMax: IdSchema.nullable(),
   probability: z.number().min(0).max(1).nullable(),
-});
-export const GrowthSchema = z.strictObject({
-  id: IdSchema,
-  cycleMode: text,
-  stageIds: IdSchema.array().nullable(),
-  regrowthStageIds: IdSchema.array().nullable(),
-  stages: z
-    .array(z.strictObject({ id: IdSchema, name: text, image: ImageRefSchema.nullable() }))
-    .nullable(),
-  matureStages: z
-    .array(z.strictObject({ entityId: IdSchema, productId: IdSchema, tag: text, rank: text }))
-    .nullable(),
-  witheredStageId: IdSchema.nullable(),
-  maturityDays: IdSchema.nullable(),
-  harvestCount: IdSchema.nullable(),
 });
 export const EntityBaseSchema = z.strictObject({
   id: IdSchema,
@@ -140,10 +127,7 @@ export const ItemSchema = z.discriminatedUnion("type", [
   item.extend({
     type: z.literal("plant"),
     origins: texts,
-    maturityPeriod: text,
-    harvestCount: z.number().int().nonnegative().nullable(),
     flowerColors: texts,
-    growthId: IdSchema.nullable(),
     drops: DropSchema.array().nullable(),
     hybridRecipes: z
       .array(
@@ -205,8 +189,7 @@ export const CardSetSchema = z.strictObject({
 });
 export const AppearanceSchema = EntityBaseSchema.extend({ subcategory: text });
 export const SeedSchema = EntityBaseSchema.extend({
-  productIds: IdSchema.array().min(1),
-  growthId: IdSchema.nullable(),
+  growthId: IdSchema,
   trade: TradeSchema.nullable(),
   acquisition: AcquisitionSchema.array().nullable(),
 });
@@ -234,6 +217,5 @@ export type Item = z.infer<typeof ItemSchema>;
 export type Group = z.infer<typeof GroupSchema>;
 export type CardSet = z.infer<typeof CardSetSchema>;
 export type Seed = z.infer<typeof SeedSchema>;
-export type Growth = z.infer<typeof GrowthSchema>;
 export type Quality = z.infer<typeof QualitySchema>;
 export const parseCatalog = (input: unknown): Catalog => CatalogSchema.parse(input);

@@ -4,7 +4,7 @@ import { CatalogSchema } from "../src/catalog/index.ts";
 import { parseRelease } from "../src/release/index.ts";
 import { referencedImages } from "../src/dataset/images.ts";
 import { parseNeighbors } from "../src/neighbors/index.ts";
-const context = { formatVersion: 2, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
+const context = { formatVersion: 3, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
 const source = { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" };
 const base = { id: 1, name: "物品", image: null, quality: null, description: null };
 
@@ -173,4 +173,31 @@ test("all nested image references use the same traversal and asset coverage chec
       assets: { ...context, kind: "assets", images: [] },
     }),
   ).toThrow("Missing image");
+});
+
+test("planting stages cannot target plant entities outside formal entries", () => {
+  const dataset = emptyDataset(context, source);
+  dataset.catalog.items.push({
+    ...base,
+    type: "plant",
+    subcategory: null,
+    trade: null,
+    acquisition: null,
+    origins: null,
+    flowerColors: null,
+    drops: null,
+    hybridRecipes: null,
+  });
+  dataset.catalog.seeds.push({ ...base, id: 10, growthId: 10, trade: null, acquisition: null });
+  dataset.catalog.growths.push({
+    id: 10,
+    kind: "staged",
+    maturityDays: null,
+    stages: [{ id: 20, name: "植株", image: null, plantId: 1 }],
+  });
+  expect(validateDataset(dataset)).toContainEqual(
+    expect.objectContaining({ message: "Unknown plant 1" }),
+  );
+  dataset.catalog.entries.push({ entity: { kind: "item", id: 1 }, encyclopedia: null });
+  expect(validateDataset(dataset)).toEqual([]);
 });

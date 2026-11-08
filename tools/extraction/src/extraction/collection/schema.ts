@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { createGrowthSchema, SeedSchema } from "@loomix/schema/catalog";
 import {
   DropSchema as drop,
   TradeSchema as trade,
@@ -13,40 +14,7 @@ import type { Catalog } from "../content/schema/catalog.ts";
 
 const text = z.string().min(1).nullable();
 const positive = ItemIdSchema;
-function createGrowthSchema(image: z.ZodType<string | null>) {
-  return z.strictObject({
-    cycleMode: text,
-    stageIds: z.array(positive).nullable(),
-    regrowthStageIds: z.array(positive).nullable(),
-    stages: z
-      .array(
-        z.strictObject({
-          id: positive,
-          name: text,
-          image,
-        }),
-      )
-      .nullable(),
-    matureStages: z
-      .array(
-        z.strictObject({
-          entityId: positive,
-          productId: positive,
-          tag: text,
-          rank: text,
-        }),
-      )
-      .nullable(),
-    witheredStageId: positive.nullable(),
-    maturityDays: positive.nullable(),
-    harvestCount: positive.nullable(),
-  });
-}
-
-export const GrowthSchema = createGrowthSchema(DeliveredImageSchema);
-
-function createCollectionDetailSchema(image: z.ZodType<string | null>) {
-  const growth = createGrowthSchema(image);
+function createCollectionDetailSchema() {
   return z.strictObject({
     id: positive,
     flowerColors: z.array(z.string().min(1)).nullable(),
@@ -58,7 +26,6 @@ function createCollectionDetailSchema(image: z.ZodType<string | null>) {
         }),
       )
       .nullable(),
-    growth: growth.nullable(),
     treeDrops: z.array(drop).nullable(),
     creatureSize: z
       .strictObject({
@@ -93,46 +60,23 @@ function createCollectionDetailSchema(image: z.ZodType<string | null>) {
   });
 }
 
-export const CollectionDetailSchema = createCollectionDetailSchema(DeliveredImageSchema);
-
-function createCropSeedDetailSchema(image: z.ZodType<string | null>) {
-  const growth = createGrowthSchema(image);
-  return z.strictObject({
-    id: positive,
-    description: text,
-    quality: z.number().int().min(0).max(4).nullable(),
-    trade: trade.nullable(),
-    acquisitionConditions: z.array(acquisition).nullable(),
-    stageIds: z.array(positive).nullable(),
-    maturityDays: positive.nullable(),
-    harvestCount: positive.nullable(),
-    growth: growth.nullable(),
-  });
-}
-
-export const CropSeedDetailSchema = createCropSeedDetailSchema(DeliveredImageSchema);
+export const CollectionDetailSchema = createCollectionDetailSchema();
 
 export function createCollectionObservationsSchema(
   image: z.ZodType<string | null> = DeliveredImageSchema,
 ) {
   const sourceSchema = createCatalogSchema(image);
-  const collectionDetailSchema = createCollectionDetailSchema(image);
-  const cropSeedDetailSchema = createCropSeedDetailSchema(image);
+  const collectionDetailSchema = createCollectionDetailSchema();
+  const seedSchema = SeedSchema.omit({ image: true }).extend({ image });
+  const growthSchema = createGrowthSchema(image);
   return z
     .strictObject({
       schemaVersion: z.literal(1),
       source: CatalogSourceSchema,
       ingredientCategories: IngredientCategorySchema.array(),
       items: createObservedRecordSchema(image).array(),
-      cropSeeds: z.array(
-        z.strictObject({
-          id: ItemIdSchema,
-          name: z.string().min(1),
-          image,
-          productIds: ItemIdSchema.array().min(1),
-          detail: cropSeedDetailSchema,
-        }),
-      ),
+      seeds: seedSchema.array(),
+      growths: growthSchema.array(),
       details: collectionDetailSchema.array(),
     })
     .superRefine((catalog, ctx) => {
@@ -168,23 +112,12 @@ export function createCollectionObservationsSchema(
           path: ["details"],
           message: "Every catalog item requires a detail record",
         });
-      const seedIds = new Set(catalog.cropSeeds.map((seed) => seed.id));
-      if (
-        catalog.cropSeeds.some((seed) => seed.detail.id !== seed.id) ||
-        seedIds.size !== catalog.cropSeeds.length
-      )
-        ctx.addIssue({
-          code: "custom",
-          path: ["cropSeeds"],
-          message: "Seed detail IDs must match unique seed IDs",
-        });
     });
 }
 
 export const CollectionObservationsSchema = createCollectionObservationsSchema();
 export type CollectionObservations = z.infer<typeof CollectionObservationsSchema>;
 export type CollectionDetail = z.infer<typeof CollectionDetailSchema>;
-export type CropSeedDetail = z.infer<typeof CropSeedDetailSchema>;
 export const parseCollectionObservations = (input: unknown): CollectionObservations =>
   CollectionObservationsSchema.parse(input);
 
@@ -193,27 +126,12 @@ export function emptyCollectionDetail(id: number): CollectionDetail {
     id,
     flowerColors: null,
     hybridRecipes: null,
-    growth: null,
     treeDrops: null,
     creatureSize: null,
     creatureGrades: null,
     trade: null,
     acquisitionConditions: null,
     dishEffects: null,
-  };
-}
-
-export function emptyCropSeedDetail(id: number): CropSeedDetail {
-  return {
-    id,
-    description: null,
-    quality: null,
-    trade: null,
-    acquisitionConditions: null,
-    stageIds: null,
-    maturityDays: null,
-    harvestCount: null,
-    growth: null,
   };
 }
 

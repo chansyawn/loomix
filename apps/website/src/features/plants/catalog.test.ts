@@ -21,7 +21,7 @@ test("derives crop detail destinations for seeds, products and shared ingredient
         plantSeriesFixture({ id: 10, plantIds: [1] }),
         plantSeriesFixture({ id: 20, plantIds: [2] }),
       ],
-      seeds: [plantSeedFixture({ id: 30, productIds: [1] })],
+      seeds: [plantSeedFixture({ id: 30, plantIds: [1] })],
     }),
   });
   const view = toCollectionView(catalog, assetsFixture(catalog));
@@ -54,42 +54,19 @@ test("summarizes structured origins without parsing punctuation in localized lab
   ).toBe(1);
   expect(queryPlants(data, "items", { ...emptyQuery(), acquisition: ["采集"] }).total).toBe(0);
 });
-test("keeps multiple seeds for a product and shares one growth configuration", () => {
+test("derives every seed for a plant from stage references without duplicate product fields", () => {
   const catalog = catalogFixture({
-    plants: plantsDataFixture({ items: [plantItemFixture({ id: 1 })], series: [] }),
+    plants: plantsDataFixture({
+      items: [plantItemFixture({ id: 1 })],
+      series: [],
+      seeds: [plantSeedFixture({ id: 10 }), plantSeedFixture({ id: 11 })],
+    }),
   });
-  catalog.growths.push({
-    id: 9,
-    cycleMode: null,
-    stageIds: [],
-    regrowthStageIds: [],
-    stages: [],
-    matureStages: [],
-    witheredStageId: null,
-    maturityDays: null,
-    harvestCount: 3,
-  });
-  const plant = catalog.items[0];
-  if (plant.type !== "plant") throw new Error("Expected plant");
-  plant.growthId = 9;
-  for (const id of [10, 11])
-    catalog.seeds.push({
-      id,
-      name: `种子${id}`,
-      description: null,
-      quality: null,
-      image: null,
-      productIds: [1],
-      growthId: 9,
-      trade: null,
-      acquisition: null,
-    });
   const data = toCollectionView(catalog, assetsFixture(catalog)).plants;
-  const item = data.items[0];
-  expect(item.summary.seeds.map((seed) => seed.id)).toEqual([10, 11]);
-  expect(item.summary.growths).toHaveLength(1);
-  expect(data.seeds.map((seed) => seed.id)).toEqual([10, 11]);
-  expect(data.seeds[0].detail.harvestCount).toBe(3);
+  expect(data.items[0].summary.seeds.map((seed) => seed.id)).toEqual([10, 11]);
+  expect(data.items[0].summary.growths).toHaveLength(2);
+  expect(data.seeds[0].growth.kind).toBe("staged");
+  expect(catalog.seeds[0]).not.toHaveProperty("productIds");
 });
 
 test("掉落保留来源树种、概率和果实，不合并系列成员的概率", () => {
@@ -131,4 +108,51 @@ test("掉落保留来源树种、概率和果实，不合并系列成员的概�
   expect(groups[0].entries[0].item).toMatchObject({ id: 3, name: "树胶", listed: false });
   expect(groups[1].entries[1]).toMatchObject({ itemId: 4, probability: null, dropGroupId: null });
   expect(data.sourceTreesByItemId.get(3)?.map((item) => item.id)).toEqual([1, 2]);
+});
+
+test("flower and tree stage mappings include formal intermediate shrubs without linking fruit as a seed product", () => {
+  const tree = plantSeedFixture({
+    id: 20,
+    plantIds: [1],
+    growth: {
+      id: 20,
+      kind: "staged",
+      maturityDays: null,
+      stages: [
+        { id: 10, name: "苗", image: null, plantId: null },
+        { id: 1, name: "树", image: null, plantId: 1 },
+        { id: 11, name: "后续形态", image: null, plantId: null },
+      ],
+    },
+  });
+  const flower = plantSeedFixture({ id: 21, plantIds: [3] });
+  const catalog = catalogFixture({
+    plants: plantsDataFixture({
+      items: [
+        plantItemFixture({
+          id: 1,
+          treeDrops: [
+            {
+              itemId: 2,
+              dropGroupId: null,
+              weight: null,
+              quantityMin: null,
+              quantityMax: null,
+              probability: null,
+            },
+          ],
+        }),
+        plantItemFixture({ id: 2 }),
+        plantItemFixture({ id: 3 }),
+      ],
+      series: [plantSeriesFixture({ id: 100, plantIds: [1, 3] })],
+      seeds: [tree, flower],
+    }),
+  });
+  const data = toCollectionView(catalog, assetsFixture(catalog)).plants;
+  expect(data.items[0].summary.seeds.map((seed) => seed.id)).toEqual([20]);
+  expect(data.items[1].summary.seeds).toEqual([]);
+  expect(data.items[2].summary.seeds.map((seed) => seed.id)).toEqual([21]);
+  expect(data.series[0].summary.growths).toHaveLength(2);
+  expect(data.items[0].summary.growths[0].growth.stages.at(-1)?.id).toBe(11);
 });

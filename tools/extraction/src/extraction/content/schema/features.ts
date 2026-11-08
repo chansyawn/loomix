@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createRecordSchemas, DeliveredImageSchema, ItemIdSchema } from "./records.ts";
+import { createRecordSchemas, DeliveredImageSchema } from "./records.ts";
 import {
   CraftingRecipeSchema,
   DifficultyRequirementSchema,
@@ -23,9 +23,7 @@ export function createObservedRecordSchemas(
         scientificName: text,
       }),
     }),
-    "plants.item": base["plants.item"].extend({
-      seedId: ItemIdSchema.nullable(),
-    }),
+    "plants.item": base["plants.item"],
     "dishes.item": base["dishes.item"].extend({
       attributes: base["dishes.item"].shape.attributes.extend({
         tastes: TastesSchema.nullable(),

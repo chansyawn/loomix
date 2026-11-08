@@ -1,7 +1,6 @@
 import { recordFields } from "../schema.ts";
 import type { RecordType } from "../schema.ts";
 import type { Evidence, EvidenceRecord, FieldValue, SelectedImage } from "../types.ts";
-import type { FieldCandidate } from "../evidence/schema.ts";
 export interface Field<T extends FieldValue = FieldValue> {
   value: T;
   evidence: Evidence;
@@ -20,7 +19,6 @@ export class RecordBuilder {
   readonly record: Record<string, unknown>;
   readonly proofs: EvidenceRecord[] = [];
   readonly diagnostics: EvidenceRecord[] = [];
-  readonly candidates: FieldCandidate[] = [];
   readonly images: SelectedImage[] = [];
   readonly group: RecordType;
   readonly id: number;

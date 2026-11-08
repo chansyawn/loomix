@@ -92,7 +92,6 @@ export async function extract(environmentId: string): Promise<string> {
             "field-evidence.json",
             "missing-fields.json",
             "outside-members.json",
-            "field-candidates.json",
             "field-investigation.json",
             "cooking-audit.json",
             "cooking-evidence.json",
@@ -137,6 +136,10 @@ export async function extract(environmentId: string): Promise<string> {
           outputs: () => [
             "raw/catalog-observations.json",
             "collection-evidence.json",
+            "plant-evidence.json",
+            "plant-image-audit.json",
+            "plant-exclusions.json",
+            "plant-investigation.json",
             "seed-image-candidates.json",
             "stage-image-candidates.json",
             "collection-missing-fields.json",

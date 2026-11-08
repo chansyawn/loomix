@@ -1,90 +1,23 @@
 import { expect, test } from "vite-plus/test";
 import { emptyCatalog } from "../content/schema/catalog.ts";
-import { baseObservations } from "./relations.ts";
 import {
   emptyCollectionDetail,
-  emptyCropSeedDetail,
   parseCollectionObservations,
   baseCollectionObservations,
 } from "./schema.ts";
 
-test("Collection observations keeps client-detail records separate from the existing catalog projection", () => {
-  const baseInput = emptyCatalog({
+function fixture() {
+  const base = emptyCatalog({
     gameVersion: "0.95.2",
     dataRevision: 1449213,
     resourceRevision: 1391927,
   });
-  baseInput.items.push({
-    id: 10,
-    name: "Flower",
-    image: null,
-    description: null,
-    quality: null,
-    encyclopediaEntry: null,
-    category: "plants",
-    kind: "item",
-    subcategory: "花",
-    attributes: { originGalaxy: null, maturityPeriod: null, harvestCount: null },
-  });
-  const observed = parseCollectionObservations({
-    ...baseInput,
-    schemaVersion: 1,
-    items: baseInput.items.map((record) => ({
-      ...record,
-      attributes: { originGalaxy: null, maturityPeriod: null, harvestCount: null },
-      seedId: 20,
-    })),
-    cropSeeds: [
-      {
-        id: 20,
-        name: "Flower Seed",
-        image: null,
-        productIds: [10],
-        detail: emptyCropSeedDetail(20),
-      },
-    ],
-    details: [emptyCollectionDetail(10)],
-  });
-  const catalog = parseCollectionObservations({
-    ...observed,
-    schemaVersion: 1,
-    cropSeeds: [
-      {
-        id: 20,
-        name: "Flower Seed",
-        image: null,
-        productIds: [10],
-        detail: emptyCropSeedDetail(20),
-      },
-    ],
-    details: [{ ...emptyCollectionDetail(10), flowerColors: ["White"] }],
-  });
-
-  expect(baseCollectionObservations(catalog)).toEqual(baseObservations(observed));
-});
-
-test("Collection observations requires one detail record per item and matching detail IDs", () => {
-  const observed = emptyCatalog({
-    gameVersion: "0.95.2",
-    dataRevision: 1449213,
-    resourceRevision: 1391927,
-  });
-  expect(() =>
-    parseCollectionObservations({ ...observed, schemaVersion: 1, cropSeeds: [], details: [] }),
-  ).not.toThrow();
-  expect(() =>
-    parseCollectionObservations({ ...observed, schemaVersion: 1, cropSeeds: [] }),
-  ).toThrow();
-});
-
-test("Collection observations rejects duplicate detail identities, missing details, and mismatched seed details", () => {
-  const observed = parseCollectionObservations({
-    ...emptyCatalog({ gameVersion: "0.95.2", dataRevision: 1449213, resourceRevision: 1391927 }),
-    schemaVersion: 1,
+  return {
+    ...base,
     items: [
       {
         id: 10,
-        name: "Flower",
+        name: "花",
         image: null,
         description: null,
         quality: null,
@@ -92,51 +25,53 @@ test("Collection observations rejects duplicate detail identities, missing detai
         category: "plants",
         kind: "item",
         subcategory: "花",
-        attributes: { originGalaxy: null, maturityPeriod: null, harvestCount: null },
-        seedId: null,
+        attributes: { originGalaxy: null },
       },
     ],
-    cropSeeds: [],
-    details: [emptyCollectionDetail(10)],
-  });
-  const base = {
-    ...observed,
-    schemaVersion: 1,
-    cropSeeds: [],
+    seeds: [
+      {
+        id: 20,
+        name: "花种子",
+        image: null,
+        description: null,
+        quality: null,
+        growthId: 20,
+        trade: null,
+        acquisition: null,
+      },
+    ],
+    growths: [
+      {
+        id: 20,
+        kind: "staged",
+        stages: [
+          { id: 30, name: "花苗", image: null, plantId: null },
+          { id: 31, name: "花株", image: null, plantId: 10 },
+        ],
+        maturityDays: null,
+      },
+    ],
     details: [emptyCollectionDetail(10)],
   };
+}
 
-  expect(() =>
-    parseCollectionObservations({
-      ...base,
-      details: [emptyCollectionDetail(10), emptyCollectionDetail(10)],
-    }),
-  ).toThrow(/uniquely reference/);
-  expect(() => parseCollectionObservations({ ...base, details: [] })).toThrow(/Every catalog item/);
-  expect(() =>
-    parseCollectionObservations({
-      ...base,
-      cropSeeds: [
-        { id: 20, name: "Seed", image: null, productIds: [10], detail: emptyCropSeedDetail(21) },
-      ],
-    }),
-  ).toThrow(/match unique seed IDs/);
+test("observations keep planting data separate from the catalog entry projection", () => {
+  const observed = parseCollectionObservations(fixture());
+  expect(baseCollectionObservations(observed)).not.toHaveProperty("seeds");
+  expect(observed.growths[0].stages[1].plantId).toBe(10);
+  expect(observed.details[0]).not.toHaveProperty("growth");
 });
 
-test("Collection observations rejects unknown fields, incompatible versions, and inverted creature size ranges", () => {
-  const observed = emptyCatalog({
-    gameVersion: "0.95.2",
-    dataRevision: 1449213,
-    resourceRevision: 1391927,
-  });
-  const base = { ...observed, schemaVersion: 1, cropSeeds: [], details: [] };
-
-  expect(() => parseCollectionObservations({ ...base, schemaVersion: 9 })).toThrow();
-  expect(() => parseCollectionObservations({ ...base, unexpected: true })).toThrow();
-  expect(() =>
-    parseCollectionObservations({
-      ...base,
-      details: [{ ...emptyCollectionDetail(1), creatureSize: { min: 2, max: 1, unit: null } }],
-    }),
-  ).toThrow(/minimum size/);
+test("observations require complete details and closed planting references", () => {
+  const base = fixture();
+  for (const patch of [
+    { details: [] },
+    { details: [...base.details, ...base.details] },
+    { growths: [] },
+    { seeds: [{ ...base.seeds[0], growthId: 99 }] },
+    { growths: [{ ...base.growths[0], stages: [{ ...base.growths[0].stages[0], plantId: 999 }] }] },
+    { cropSeeds: [] },
+    { schemaVersion: 9 },
+  ])
+    expect(() => parseCollectionObservations({ ...base, ...patch })).toThrow();
 });

@@ -46,8 +46,6 @@ export const attributeSchemas = {
   }),
   plants: z.strictObject({
     originGalaxy: text,
-    maturityPeriod: text,
-    harvestCount: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).nullable(),
   }),
   dishes: z.strictObject({ difficulty: text, galaxyFlavor: text, cookware: text, effects: text }),
   miscellaneous: z.strictObject({}),

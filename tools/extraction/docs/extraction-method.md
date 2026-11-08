@@ -96,9 +96,15 @@ TextMap 特殊处理：根字段 1 解引用到包装层，包装字段 0 解引
 
 显示表存在重复 ID。对最终需要的字段进行语义比较：数值比较数值、向量比较内容、字符串比较文本，不能比较相对引用地址。相同内容可合并；范围内冲突必须停止。范围外冲突不应通过覆盖顺序影响结果。
 
-目前仍未确认一个属性的完整显示规则：
+种子和生长配置使用 formatVersion 3 的正式契约，不计入图鉴 entries。当前共有 79 个种子、79 份生长配置和 317 个阶段：17 个作物种子沿表 144/137 解析；新增 62 个种子（42 个花种子、20 个树木及灌木种子）沿表 334/709/241 解析。
 
-- 成熟周期：144.3 为 DAILY 周期模式，144.4 为生长阶段向量；阶段数量不能独立证明经过的天数或首次收获规则。花和树的周期也需要继续定位，不能套用作物默认值。
+表 334.0 为种子 ID，334.1 仅接受 ITEM_USE_EFFECT_PLANT_TREE_SEEDLING 或 ITEM_USE_EFFECT_PLANT_FIXED_SEEDLING，334.2 是十进制字符串形式的初始植株 ID。以 709.0 为键，沿 709.2 完整遍历后继阶段，直到没有 709 行；循环、悬空 ID、未知效果或参数格式变化均中止。不能在遇到正式植物时截断：栀子花丛、杜鹃花丛、沙漠玫瑰丛、鹤望兰丛、南天竹丛之后仍有配置阶段。
+
+生长配置按 kind 区分 crop 和 staged。作物保留初生向量 initialStageIds、返生向量、成熟形态、枯萎阶段和收获茬数，不推断它们之间的运行时事件；花树的 stages 顺序直接保存来源链。阶段 plantId 由 137.1 的作物产物、241.1/2 的花材，或阶段自身与正式树木／灌木的同 ID 关联确认；冲突即失败。种子不再重复保存 productIds，植物不再保存 growthId、harvestCount 或 maturityPeriod。果实与树木关系继续使用 drops。
+
+只有完整链能连接正式植物的确定性种子才准入。枫叶树种子 30224 缺少使用配置；杂草种子 30228/30238 未关联正式植物；随机种植测试种子 56999 不在本次范围；四项写入 plant-exclusions.json。阶段和种子的名称、描述、品质、图片、交易与来源从对应客户端表读取。缺图不阻断关系，配置匹配后的导出失败仍须中止。
+
+成熟天数 maturityDays 仍未确认，保留 null。表 709.3/4/7 的数值仅保存到 plant-investigation.json，不把阶段数或候选参数解释为天数。plant-evidence.json 保留每个种子和生长字段的表、行偏移及关联依据，正式领域证据同时覆盖图片与未知字段。
 
 生物尺寸经游戏内数据交叉核对后按 `132.4/5 × 132.6` 计算，结果单位为“厘”；132.3 在当前 329 行配置中均为 100，不参与该计算。薄荷炫彩灯鱼（30/50 × 0.05 = 1.5/2.5）、酢漿灰蝶（23/38 × 0.2 = 4.6/7.6）、红石蟹（26/46 × 0.2 = 5.2/9.2）和椰子螺（20/40 × 0.7 = 14/28）均与游戏内查看值相符。132.6 为 32 位浮点数，计算时归一化到两位小数精度，避免二进制浮点误差外显。
 
@@ -114,7 +120,7 @@ UISprite 引用加 assets/moleres/rel/sres/ 前缀，统一斜杠和小写，只
 
 交付契约集中在 `packages/schema/src/`，按 catalog、neighbors、world、assets、dataset、release 和 extraction 组织。源观察与交付领域模型分离，不保留历史版本解析分支。
 
-catalog 的 items 使用 type 判别字段；groups、appearances、seeds、growths 与 entries 各自保存身份。entries 引用领域实体并单独保存 encyclopedia 状态；引用到范围外的已确认物品使用 reference 实体，不计入收录。生长配置只保存一份，植物与种子使用 growthId；反向关系由使用方派生。颜色、材质、来源等多值字段使用数组，不从展示字符串反向拆解。
+catalog 的 items 使用 type 判别字段；groups、appearances、seeds、growths 与 entries 各自保存身份。entries 引用领域实体并单独保存 encyclopedia 状态；引用到范围外的已确认物品使用 reference 实体，不计入收录。种子以 growthId 引用唯一生长配置；阶段的 plantId 是植物关联的唯一权威字段，植物到种子、生长配置的反向关系由使用方派生。颜色、材质、来源等多值字段使用数组，不从展示字符串反向拆解。
 
 领域图片使用 {assetId, variant}，不包含交付路径。assets.json 将引用映射为不可变文件路径、SHA256、大小与尺寸。release.json 指定语言目录下的 catalog.json、neighbors.json、world.json 和共享 assets.json，绑定 formatVersion、snapshotId、locale 及每份文档的实际字节校验值。所有未知值显式为 null，严格拒绝附加字段；null 与已确认空数组含义不同。
 
@@ -122,7 +128,7 @@ catalog 的 items 使用 type 判别字段；groups、appearances、seeds、grow
 
 九条均无系列引用，六种植物的原产星系、成熟周期和收获茬数均未配置，保留 null。肉蛋奶描述未解析到，保留 null。图鉴行缺失不会阻断 UI 描述或图片来源。
 
-`record-evidence.json` 独立记录 `id`、`admissionSources` 和 `encyclopedia`。图鉴收录源含 kind=encyclopedia、file、table=93、rowOffset；人工源含 kind=manual、file、pointer、sha256。图鉴证据为 present（含原始行及 listed）或 absent（含扫描文件及 table=93），不与未知属性混用。字段路径使用 name、subcategory、attributes.harvestCount、memberIds 等；ID 证据统一为 318.0，只有分类字段允许引用冻结清单的 JSON Pointer 和 SHA256。
+`record-evidence.json` 独立记录 `id`、`admissionSources` 和 `encyclopedia`。图鉴收录源含 kind=encyclopedia、file、table=93、rowOffset；人工源含 kind=manual、file、pointer、sha256。图鉴证据为 present（含原始行及 listed）或 absent（含扫描文件及 table=93），不与未知属性混用。字段路径使用 name、subcategory、attributes.originGalaxy、memberIds 等；ID 证据统一为 318.0，只有分类字段允许引用冻结清单的 JSON Pointer 和 SHA256。
 
 前端通过 toCollectionView 从领域实体和资源清单派生页面 DTO；展示层命名不进入共享契约。reference 实体可展示名称，但不生成未收录详情页链接。
 
@@ -163,7 +169,7 @@ environment、extraction、delivery 的 manifest 均采用 schemaVersion 1。输
 
 正式 `evidence/field-evidence.json` 的每条记录包含 `id`、`group`、`field`、`value`、类型明确的原始 `evidence`、`sources`、`association`、`transformation` 和 `status`。`sources` 指向冻结 OBB 的表号、行编号/偏移、字段索引，或原始资源包的 PathID；本地化/标签解析同时保留 TextMap、BinData 的追溯文件。图片还保留配置 reference、精确 Container、来源包、PathID 和原始/最终尺寸及哈希。
 
-`evidence/missing-fields.json` 使用同一字段协议，状态 unconfirmed 且必须带 reason；字段未找到、文本缺失、用途未确认、冲突等均不等价于值不存在。`field-candidates.json` 保留实际候选参数，`outside-members.json` 解释被范围规则排除的关联；它们不回填交付字段。`source-audit.json` 将所有候选图片、BinData 和 OBB 来源绑定到版本清单，不能只审计最后选中的图片。
+`evidence/missing-fields.json` 使用同一字段协议，状态 unconfirmed 且必须带 reason；字段未找到、文本缺失、用途未确认、冲突等均不等价于值不存在。`plant-investigation.json` 保留实际候选参数，`outside-members.json` 解释被范围规则排除的关联；它们不回填交付字段。`source-audit.json` 将所有候选图片、BinData 和 OBB 来源绑定到版本清单，不能只审计最后选中的图片。
 
 raw/content.json 保留结构阶段结果；raw/images-content.json 在不修改结构 checkpoint 输出的情况下加入选中 PNG 的 bundle 相对路径。详情观察保存在 raw/images-catalog-observations.json，领域组装生成统一 dataset 与图片交付任务。交付阶段只读封存 dataset，处理图片并生成领域 JSON、assets.json 和 release.json，不重做业务关联。最终验证从 bundle 中冻结的 OBB 重新核对表 93 与冻结确认清单的收录并集、分类、图鉴状态、品阶及成员，不打开客户端；只有 init、extract 和完整链 verify 会核对实际客户端快照。
 

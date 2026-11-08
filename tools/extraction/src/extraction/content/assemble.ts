@@ -6,8 +6,6 @@ import { catalogSource, expectedCatalog } from "../../profile.ts";
 import { readJson, writeJson } from "../../workflow/json.ts";
 import { removeWithin } from "../../workflow/fs.ts";
 import { validateModel } from "./model.ts";
-import { fieldCandidateSchema } from "../evidence/schema.ts";
-import type { FieldCandidate } from "../evidence/schema.ts";
 import { createContentContext } from "./context.ts";
 import { buildRecord } from "./records/index.ts";
 import type { RecordContext } from "./records/types.ts";
@@ -21,7 +19,6 @@ export async function structure(options: WorkOptions): Promise<void> {
   const proofs: EvidenceRecord[] = [];
   const diagnostics: EvidenceRecord[] = [];
   const candidateImages: SelectedImage[] = [];
-  const candidateFields: FieldCandidate[] = [];
 
   for (const id of [...context.scope.ids].sort((a, b) => a - b)) {
     const row = context.scope.encyclopedia.get(id);
@@ -42,7 +39,6 @@ export async function structure(options: WorkOptions): Promise<void> {
     content.items.push(recordSchemas[group].parse(builder.record));
     proofs.push(...builder.proofs);
     diagnostics.push(...builder.diagnostics);
-    candidateFields.push(...builder.candidates);
     candidateImages.push(...builder.images);
   }
 
@@ -71,10 +67,6 @@ export async function structure(options: WorkOptions): Promise<void> {
   writeJson(path.join(options.work, "field-evidence.json"), proofs);
   writeJson(path.join(options.work, "missing-fields.json"), diagnostics);
   writeJson(path.join(options.work, "outside-members.json"), context.scope.outsideMembers);
-  writeJson(
-    path.join(options.work, "field-candidates.json"),
-    candidateFields.map((candidate) => fieldCandidateSchema.parse(candidate)),
-  );
   writeJson(path.join(options.work, "field-investigation.json"), {
     scope: "Root 93 entries union version-bound confirmed supplemental admissions",
     verified: [

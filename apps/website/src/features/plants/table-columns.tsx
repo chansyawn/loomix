@@ -15,30 +15,18 @@ import type { CollectionColumn } from "../collection/table-columns";
 import { usePlantsOrigin } from "./detail-navigation";
 import { membershipIndex, seedSeries, seedSourceLabels } from "./query";
 import type { View } from "./search";
-import { collectionItemLocation, cropDetailLocation } from "../collection/item-route";
-import { PlantSeedLinks } from "./seed-info";
+import { collectionItemLocation } from "../collection/item-route";
+import { PlantSeedLinks, SeedNameLink } from "./seed-info";
 
 export type PlantsRow = PlantItem | PlantSeries | PlantSeed;
 
 function isSeedRow(record: PlantsRow): record is PlantSeed {
-  return "productIds" in record;
+  return "growthId" in record;
 }
 
 function NameLink({ record }: { record: PlantsRow }) {
   const origin = usePlantsOrigin();
-  if (isSeedRow(record))
-    return record.cropSeriesId === null ? (
-      <span>{record.name}</span>
-    ) : (
-      <Link
-        {...cropDetailLocation(record.cropSeriesId)}
-        state={{ plantsOrigin: origin }}
-        className={tableLinkClassName}
-        title={record.name}
-      >
-        {record.name}
-      </Link>
-    );
+  if (isSeedRow(record)) return <SeedNameLink seed={record} />;
   return (
     <Link
       {...("category" in record
@@ -91,7 +79,7 @@ function SeedProductLinks({
   if (!itemRefs) return null;
   return (
     <div className="flex flex-wrap gap-x-3 gap-y-1">
-      {seed.productIds.map((id) => {
+      {seed.plantIds.map((id) => {
         const product = itemRefs.get(id);
         return product ? (
           <CollectionItemLink key={id} item={product} state={{ plantsOrigin: origin }} />
@@ -158,13 +146,14 @@ function seedTableColumns(
       },
     },
     textColumn("harvestCount", "收获茬数", 112, (record) =>
-      isSeedRow(record) && record.detail.harvestCount !== null
-        ? `${record.detail.harvestCount} 茬`
+      isSeedRow(record) &&
+      (record.growth.kind === "crop" ? record.growth.harvestCount : null) !== null
+        ? `${record.growth.kind === "crop" ? record.growth.harvestCount : null} 茬`
         : null,
     ),
     {
       id: "products",
-      header: "可收获植物",
+      header: "关联植物",
       width: 360,
       cell: (record) =>
         isSeedRow(record) ? <SeedProductLinks seed={record} itemRefs={data?.itemRefs} /> : null,

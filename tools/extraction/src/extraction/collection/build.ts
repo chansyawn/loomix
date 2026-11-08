@@ -1,100 +1,23 @@
+import { readPlantings } from "../plants/read.ts";
+import { plantingImageCandidates } from "../plants/images.ts";
 import path from "node:path";
 import { createCollectionObservationsSchema, type CollectionObservations } from "../schema.ts";
 import type { Catalog, CatalogRecord } from "../schema.ts";
 import type { ContentContext } from "../content/context.ts";
 import { createContentContext } from "../content/context.ts";
-import type { SelectedImage } from "../types.ts";
 import { readJson, writeJson } from "../../workflow/json.ts";
 import { parseRawContent, RawImageSchema } from "../schemas/raw-content.ts";
-import { CollectionEvidenceBuilder, localizedSources, tableSource } from "./evidence.ts";
+import { CollectionEvidenceBuilder } from "./evidence.ts";
 import { readCreatureFields, readDishFields } from "./fields.ts";
-import { buildItemDetail, buildSeedDetail } from "./details/client.ts";
+import { buildItemDetail } from "./details/client.ts";
 import { detailInvestigation } from "./details/investigation.ts";
 
 export const RawCollectionObservationsSchema = createCollectionObservationsSchema(RawImageSchema);
 
-function cropSeeds(context: ContentContext, proofs: CollectionEvidenceBuilder) {
-  const { tables, scope } = context;
-  const seeds: CollectionObservations["cropSeeds"] = [];
-  const images: SelectedImage[] = [];
-  const stageImages: SelectedImage[] = [];
-  const stageIds = new Set<number>();
-  for (const row of tables.rows(144)) {
-    const id = tables.id(row);
-    const productIds = (tables.vector(row, 10) ?? [])
-      .filter((product) => scope.groups.get(product) === "plants.item")
-      .sort((a, b) => a - b);
-    if (!productIds.length) continue;
-    const name = tables.text(context.main.get(id), 1);
-    if (!name) throw new Error(`Unresolved crop seed name ${id}`);
-    const detail = buildSeedDetail(context, row, proofs);
-    for (const stage of detail.growth?.stages ?? []) stageIds.add(stage.id);
-    seeds.push({ id, name, productIds, image: null, detail });
-    proofs.put(
-      "seed",
-      id,
-      "name",
-      name,
-      localizedSources(tables, context.main.get(id), [0, 1]),
-      "144.0 seed = 318.0",
-      "Resolve 318.1 TextMap; seed is a reference, not a catalog admission",
-    );
-    proofs.put(
-      "seed",
-      id,
-      "productIds",
-      productIds,
-      [tableSource(tables, row, [0, 10])],
-      "144.10 contains current plants.item IDs",
-      "Keep formal products; sort ascending; no stage/day inference",
-    );
-    const ui = context.ui.get(id) ?? tables.rows(325).find((entry) => tables.uint(entry, 0) === id);
-    for (const field of [5, 4]) {
-      const reference = tables.string(ui, field);
-      const match = reference ? context.resolveIcon(reference) : null;
-      if (match?.matched && match.source && match.resourceName && match.container && match.pathId)
-        images.push({
-          id,
-          group: "plants.item",
-          reference: reference!,
-          assetType: match.assetType,
-          resourceName: match.resourceName,
-          container: match.container,
-          source: match.source,
-          pathId: match.pathId,
-        });
-    }
-    if (!images.some((image) => image.id === id)) throw new Error(`Missing crop seed icon ${id}`);
-  }
-  for (const id of stageIds) {
-    const ui = tables.rows(325).find((entry) => tables.id(entry) === id);
-    for (const field of [5, 4]) {
-      const reference = tables.string(ui, field);
-      const match = reference ? context.resolveIcon(reference) : null;
-      if (match?.matched && match.source && match.resourceName && match.container && match.pathId)
-        stageImages.push({
-          id,
-          group: "plants.item",
-          reference: reference!,
-          assetType: match.assetType,
-          resourceName: match.resourceName,
-          container: match.container,
-          source: match.source,
-          pathId: match.pathId,
-        });
-    }
-    if (!stageImages.some((image) => image.id === id))
-      throw new Error(`Missing crop stage icon ${id}`);
-  }
-  return { seeds: seeds.sort((a, b) => a.id - b.id), images, stageImages };
-}
-
 export function extendCollection(base: Catalog, context: ContentContext) {
   const proofs = new CollectionEvidenceBuilder();
-  const crops = cropSeeds(context, proofs);
-  const products = new Map(
-    crops.seeds.flatMap((seed) => seed.productIds.map((id) => [id, seed.id] as const)),
-  );
+  const plants = readPlantings(context);
+  const images = plantingImageCandidates(context, plants);
   const details: CollectionObservations["details"] = [];
   const items = base.items.map((record: CatalogRecord) => {
     details.push(buildItemDetail(context, record, proofs));
@@ -112,35 +35,23 @@ export function extendCollection(base: Catalog, context: ContentContext) {
         difficultyRequirement,
       };
     }
-    if (record.category === "plants") {
-      const seedId = products.get(record.id) ?? null;
-      const crop = context.vocabulary.cropsByProduct.get(record.id);
-      proofs.put(
-        "item",
-        record.id,
-        "seedId",
-        seedId,
-        crop ? [tableSource(context.tables, crop, [0, 10])] : [],
-        "144.10 product vector contains plant ID",
-        "Preserve 144.0 seed ID; no new catalog item",
-        "not_in_crop_product_vector",
-      );
-      return { ...record, seedId };
-    }
     return record;
   });
   const catalog: CollectionObservations = RawCollectionObservationsSchema.parse({
     ...base,
     schemaVersion: 1,
     items,
-    cropSeeds: crops.seeds,
+    seeds: plants.seeds,
+    growths: plants.growths,
     details: details.sort((a, b) => a.id - b.id),
   });
   return {
     catalog,
     evidence: proofs.records,
-    seedImages: crops.images,
-    stageImages: crops.stageImages,
+    seedImages: images.seeds,
+    stageImages: images.stages,
+    plants,
+    imageAudit: images.audit,
   };
 }
 
@@ -149,6 +60,10 @@ export function buildCollection(work: string): void {
   const result = extendCollection(base, createContentContext(work));
   writeJson(path.join(work, "raw/catalog-observations.json"), result.catalog);
   writeJson(path.join(work, "collection-evidence.json"), result.evidence);
+  writeJson(path.join(work, "plant-evidence.json"), result.plants.evidence);
+  writeJson(path.join(work, "plant-image-audit.json"), result.imageAudit);
+  writeJson(path.join(work, "plant-exclusions.json"), result.plants.exclusions);
+  writeJson(path.join(work, "plant-investigation.json"), result.plants.investigation);
   writeJson(
     path.join(work, "collection-missing-fields.json"),
     result.evidence.filter((proof) => proof.value === null),

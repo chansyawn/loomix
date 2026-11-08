@@ -5,29 +5,10 @@ import { creatureSizeRange, plainText, scaledCreatureSize } from "../extraction/
 import { verifyTreeDrops } from "./tree-drops.ts";
 
 export function verifyCollectionFields(catalog: CollectionObservations, tables: Tables) {
-  const main = tables.byId(318);
   const content = tables.byId(93);
   const recipeByDish = new Map(tables.rows(122).map((row) => [tables.uint(row, 4), row]));
   const difficulties = tables.byId(121);
   const creatureScales = tables.byId(132);
-  const records = new Map(catalog.items.map((item) => [item.id, item]));
-  const seeds = tables
-    .rows(144)
-    .map((row) => ({
-      id: tables.id(row),
-      name: tables.text(main.get(tables.id(row)), 1),
-      productIds: (tables.vector(row, 10) ?? [])
-        .filter((id) => records.get(id)?.category === "plants" && records.get(id)?.kind === "item")
-        .sort((a, b) => a - b),
-    }))
-    .filter((seed) => seed.productIds.length)
-    .sort((a, b) => a.id - b.id);
-  assert.deepEqual(
-    catalog.cropSeeds.map(({ image: _image, detail: _detail, ...seed }) => seed),
-    seeds,
-    "Independent crop seed index",
-  );
-  const productSeeds = new Map(seeds.flatMap((seed) => seed.productIds.map((id) => [id, seed.id])));
   const requiredFields = new Map<string, unknown>();
   const acquisition = (id: number) => {
     const rows = tables.rows(325).filter((row) => tables.id(row) === id);
@@ -47,7 +28,6 @@ export function verifyCollectionFields(catalog: CollectionObservations, tables: 
     for (const field of [
       "flowerColors",
       "hybridRecipes",
-      "growth",
       "treeDrops",
       "creatureSize",
       "creatureGrades",
@@ -71,7 +51,6 @@ export function verifyCollectionFields(catalog: CollectionObservations, tables: 
     };
     if (record.category === "clothing") continue;
     if (record.category === "plants") {
-      expect("seedId", record.seedId, productSeeds.get(record.id) ?? null);
       verifyTreeDrops(tables, record.id, detail.treeDrops);
     }
     if (record.category === "creatures") {
@@ -131,27 +110,6 @@ export function verifyCollectionFields(catalog: CollectionObservations, tables: 
         requirement = { rawExpression, condition: { kind, ...parameters }, unresolvedReason: null };
       }
       expect("difficultyRequirement", record.difficultyRequirement, requirement);
-    }
-  }
-  for (const seed of catalog.cropSeeds) {
-    assert.deepEqual(
-      seed.detail.acquisitionConditions,
-      acquisition(seed.id),
-      "Independent seed acquisition",
-    );
-    requiredFields.set(`seed:${seed.id}:name`, seed.name);
-    requiredFields.set(`seed:${seed.id}:productIds`, seed.productIds);
-    for (const field of [
-      "description",
-      "quality",
-      "growth",
-      "trade",
-      "acquisitionConditions",
-      "stageIds",
-      "maturityDays",
-      "harvestCount",
-    ] as const) {
-      requiredFields.set(`seed:${seed.id}:detail.${field}`, seed.detail[field]);
     }
   }
   return { requiredFields };

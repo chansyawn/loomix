@@ -5,7 +5,6 @@ import { exportImageAssets } from "../images/export.ts";
 import { highestResolutionImages } from "../images/select.ts";
 import type { SelectedImage, WorkOptions } from "../types.ts";
 import { RawCollectionObservationsSchema } from "./build.ts";
-import type { CollectionEvidence } from "./evidence.ts";
 
 export async function exportSeedImages(options: WorkOptions): Promise<void> {
   const catalog = RawCollectionObservationsSchema.parse(
@@ -32,10 +31,9 @@ export async function exportSeedImages(options: WorkOptions): Promise<void> {
     if (!original) throw new Error(`Missing seed export ${image.id}`);
     return { ...original, ...image };
   });
-  for (const seed of catalog.cropSeeds) {
+  for (const seed of catalog.seeds) {
     const image = manifest.find((entry) => entry.id === seed.id);
-    if (!image) throw new Error(`Missing selected seed image ${seed.id}`);
-    seed.image = image.file;
+    seed.image = image?.file ?? null;
   }
   const stageSelected = highestResolutionImages(stageCandidates, stageOriginals);
   const stageManifest = stageSelected.map((image) => {
@@ -49,33 +47,8 @@ export async function exportSeedImages(options: WorkOptions): Promise<void> {
     return { ...original, ...image };
   });
   const stageFiles = new Map(stageManifest.map((image) => [image.id, image.file]));
-  const applyStageImages = (
-    growth: { stages: { id: number; image: string | null }[] | null } | null,
-  ) => {
-    for (const stage of growth?.stages ?? []) stage.image = stageFiles.get(stage.id) ?? null;
-  };
-  for (const seed of catalog.cropSeeds) applyStageImages(seed.detail.growth);
-  for (const detail of catalog.details) applyStageImages(detail.growth);
-  const detailById = new Map(catalog.details.map((detail) => [detail.id, detail]));
-  const seedById = new Map(catalog.cropSeeds.map((seed) => [seed.id, seed.detail]));
-  const updateProofs = (file: string) => {
-    const proofs = readJson<CollectionEvidence[]>(path.join(options.work, file));
-    const updated = proofs.map((proof) => {
-      if (!proof.field.startsWith("detail.growth")) return proof;
-      const detail = proof.owner === "seed" ? seedById.get(proof.id) : detailById.get(proof.id);
-      if (!detail) return proof;
-      let value: unknown = detail;
-      for (const part of proof.field.split(".").slice(1)) {
-        if (Array.isArray(value)) value = value[Number(part)];
-        else if (value && typeof value === "object") value = Reflect.get(value, part);
-        else return proof;
-      }
-      return { ...proof, value };
-    });
-    writeJson(path.join(options.work, file), updated);
-  };
-  updateProofs("collection-evidence.json");
-  updateProofs("collection-missing-fields.json");
+  for (const growth of catalog.growths)
+    for (const stage of growth.stages) stage.image = stageFiles.get(stage.id) ?? null;
   writeJson(path.join(options.work, "seed-image-originals.json"), originals);
   writeJson(path.join(options.work, "seed-image-manifest.json"), manifest);
   writeJson(path.join(options.work, "stage-image-originals.json"), stageOriginals);

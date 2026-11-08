@@ -5,7 +5,7 @@ import { RecordImage } from "../collection/record-image";
 import { ItemCookingUsage } from "../ingredients/item-usage";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/components/tabs";
 import { matureCropStage, selectedCropTab, type CropDetail } from "./crop-detail";
-import { CropGrowth } from "./crop-growth";
+import { PlantGrowthStages } from "./plant-growth";
 import { plantSeriesFields } from "./series-fields";
 
 const route = getRouteApi("/collection/plants_/series/$id");
@@ -70,10 +70,13 @@ export function CropDetailPage({ detail }: { detail: CropDetail }) {
           </TabsList>
         </div>
         <TabsContent value="seed" className="mt-4">
-          {tab === "seed" ? <CropGrowth detail={detail} state={(previous) => previous} /> : null}
+          {tab === "seed" ? <PlantGrowthStages seeds={detail.seeds} /> : null}
         </TabsContent>
         {detail.items.map((item) => {
-          const stage = matureCropStage(item.growth, item.id);
+          const stage =
+            item.summary.growths.flatMap(
+              ({ growth }) => matureCropStage(growth, item.id) ?? [],
+            )[0] ?? null;
           return (
             <TabsContent key={item.id} value={`item-${item.id}`} className="mt-4">
               {tab === `item-${item.id}` ? (

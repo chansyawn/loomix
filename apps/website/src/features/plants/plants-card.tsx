@@ -1,10 +1,11 @@
+import { SeedNameLink } from "./seed-info";
 import { Link } from "@tanstack/react-router";
 import type { PlantItem, PlantSeries } from "../collection-view.ts";
 import type { PlantSeed } from "./model";
 import { RecordImage } from "@/features/collection/record-image";
 import { CollectionCard } from "@/features/collection/collection-card";
 import { usePlantsOrigin } from "./detail-navigation";
-import { collectionItemLocation, cropDetailLocation } from "../collection/item-route";
+import { collectionItemLocation } from "../collection/item-route";
 import { seedSourceLabels } from "./query";
 
 export function PlantsCard({ item }: { item: PlantItem }) {
@@ -51,10 +52,11 @@ export function PlantSeriesCard({ series }: { series: PlantSeries }) {
 }
 
 export function SeedCard({ seed, series }: { seed: PlantSeed; series: PlantSeries[] }) {
-  const origin = usePlantsOrigin();
   const tags = [
     series.map((group) => group.name).join("、"),
-    seed.detail.harvestCount === null ? null : `${seed.detail.harvestCount} 茬`,
+    (seed.growth.kind === "crop" ? seed.growth.harvestCount : null) === null
+      ? null
+      : `${seed.growth.kind === "crop" ? seed.growth.harvestCount : null} 茬`,
     seedSourceLabels(seed).join("、"),
   ]
     .filter((value): value is string => Boolean(value))
@@ -64,15 +66,7 @@ export function SeedCard({ seed, series }: { seed: PlantSeed; series: PlantSerie
       name={seed.name}
       quality={seed.quality}
       image={<RecordImage key={seed.image} image={seed.image} name={seed.name} />}
-      titleLink={
-        seed.cropSeriesId === null ? (
-          seed.name
-        ) : (
-          <Link {...cropDetailLocation(seed.cropSeriesId)} state={{ plantsOrigin: origin }}>
-            {seed.name}
-          </Link>
-        )
-      }
+      titleLink={<SeedNameLink seed={seed} />}
       description={seed.description}
       tags={tags || null}
     />

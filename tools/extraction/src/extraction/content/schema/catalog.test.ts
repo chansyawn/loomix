@@ -215,26 +215,13 @@ test.each(invalid)("rejects %s", (_name, mutate) => {
   mutate(c);
   expect(CatalogSchema.safeParse(c).success).toBe(false);
 });
-test("plant harvest count must be nonnegative integer and misc has no attributes", () => {
+test("plant attributes reject duplicated growth fields", () => {
   const c = fixture();
-  const plant = c.items.find(
-    (r): r is Extract<CatalogRecord, { category: "plants"; kind: "item" }> =>
-      r.category === "plants" && r.kind === "item",
-  )!;
-  for (const value of [-1, 1.5]) {
-    plant.attributes.harvestCount = value;
-    expect(() => parseCatalog(c)).toThrow();
-  }
-  plant.attributes.harvestCount = 0;
-  expect(parseCatalog(c)).toEqual(c);
-  const misc = c.items.find((r) => r.category === "miscellaneous")!;
-  Object.assign(misc, { attributes: { colors: null } });
+  const plant = c.items.find((r) => r.category === "plants" && r.kind === "item")!;
+  Object.assign(plant, { attributes: { originGalaxy: null, harvestCount: 3 } });
   expect(() => parseCatalog(c)).toThrow();
-});
-test("audit field paths follow the unified model", () => {
-  expect(recordFields("plants.item")).toContain("attributes.harvestCount");
-  expect(recordFields("plants.series")).toContain("memberIds");
-  expect(recordFields("plants.item")).not.toContain("encyclopediaEntry");
+  expect(recordFields("plants.item")).toContain("attributes.originGalaxy");
+  expect(recordFields("plants.item")).not.toContain("attributes.harvestCount");
 });
 
 test("ingredient categories and recursive recipes validate catalog references", () => {

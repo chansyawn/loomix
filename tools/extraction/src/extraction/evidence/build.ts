@@ -49,6 +49,10 @@ export function finalizeEvidence(work: string): void {
   for (const name of [
     "record-evidence",
     "collection-evidence",
+    "plant-evidence",
+    "plant-image-audit",
+    "plant-exclusions",
+    "plant-investigation",
     "collection-investigation",
     "collection-missing-fields",
     "card-audit",
@@ -59,7 +63,6 @@ export function finalizeEvidence(work: string): void {
     "stage-image-candidates",
     "stage-image-originals",
     "stage-image-manifest",
-    "field-candidates",
     "outside-members",
     "image-candidates",
     "selected-images",

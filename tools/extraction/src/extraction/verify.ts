@@ -21,7 +21,7 @@ export async function verifyExtraction(work: string, writeReports = true): Promi
     contentFile: path.join(work, "raw", "images-content.json"),
     parse: parseRawContent,
     writeReports,
-    extraImages: collection.cropSeeds.flatMap((seed) => (seed.image ? [seed.image] : [])),
+    extraImages: collection.seeds.flatMap((seed) => (seed.image ? [seed.image] : [])),
   });
   await verifyCollection(work, work, writeReports);
   const rebuilt = buildDataset(work);

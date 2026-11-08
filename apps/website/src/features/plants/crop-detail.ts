@@ -18,8 +18,11 @@ export function selectedCropTab(tab: string | undefined, items: readonly PlantIt
 }
 
 export function matureCropStage(growth: PlantGrowth | null, productId: number) {
-  const mature = growth?.matureStages?.find((stage) => stage.productId === productId);
-  return growth?.stages?.find((stage) => stage.id === mature?.entityId) ?? null;
+  if (!growth || growth.kind !== "crop") return null;
+  const matureIds = new Set(growth.matureStages.map((stage) => stage.stageId));
+  return (
+    growth.stages.find((stage) => matureIds.has(stage.id) && stage.plantId === productId) ?? null
+  );
 }
 
 export function cropSeriesDetail(

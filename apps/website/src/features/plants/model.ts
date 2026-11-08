@@ -1,21 +1,17 @@
 import type { Growth, Item, Seed } from "@loomix/schema/catalog";
 import type { CollectionRecord, IngredientItem } from "../collection-view";
 
-export type PlantGrowth = Omit<Growth, "id" | "stages"> & {
-  stages: { id: number; name: string | null; image: string | null }[] | null;
-};
+type ResolvedGrowth<G extends Growth = Growth> = G extends Growth
+  ? Omit<G, "stages"> & {
+      stages: (Omit<G["stages"][number], "image"> & { image: string | null })[];
+    }
+  : never;
+export type PlantGrowth = ResolvedGrowth;
 export type PlantSeed = Omit<Seed, "image"> & {
   image: string | null;
   cropSeriesId: number | null;
-  detail: {
-    description: string | null;
-    quality: number | null;
-    trade: Seed["trade"];
-    growth: PlantGrowth | null;
-    stageIds: number[] | null;
-    maturityDays: number | null;
-    harvestCount: number | null;
-  };
+  plantIds: number[];
+  growth: PlantGrowth;
 };
 type PlantRecord = Extract<Item, { type: "plant" }>;
 export interface PlantDrops {
@@ -47,9 +43,7 @@ export type PlantItem = CollectionRecord & {
   maturityPeriod: string | null;
   harvestCount: number | null;
   acquisition: string | null;
-  seedId: number | null;
   flowerColors: PlantRecord["flowerColors"];
-  growth: PlantGrowth | null;
   treeDrops: PlantRecord["drops"];
   summary: PlantSummary;
 };

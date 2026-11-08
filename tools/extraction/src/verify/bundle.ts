@@ -10,7 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import assert from "node:assert/strict";
-import { fieldCandidateSchema, fieldEvidenceSchema } from "../extraction/evidence/schema.ts";
+import { fieldEvidenceSchema } from "../extraction/evidence/schema.ts";
 
 import { within } from "../paths.ts";
 import { PNG } from "pngjs";
@@ -284,21 +284,6 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
     const key = `${proof.id}.${proof.field}`;
     assert.ok(!evidenceKeys.has(key), `Duplicate/conflicting field evidence: ${key}`);
     evidenceKeys.add(key);
-  }
-  const candidates = readJson<import("../extraction/evidence/schema.ts").FieldCandidate[]>(
-    path.join(bundle, "evidence/field-candidates.json"),
-  );
-  for (const input of candidates) {
-    const candidate = fieldCandidateSchema.parse(input);
-    const row = content.items.find(
-      (record) => record.id === candidate.id && recordType(record) === candidate.group,
-    );
-    assert.ok(row, "Candidate record must be in scope");
-    assert.equal(
-      recordField(row, candidate.field),
-      null,
-      "Unconfirmed candidates cannot populate output fields",
-    );
   }
   const proofValues = new Map(proofs.map((p) => [`${p.id}.${p.field}`, p.value]));
   const missingKeys = new Set(missing.filter((p) => p.reason).map((p) => `${p.id}.${p.field}`));

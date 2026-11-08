@@ -38,7 +38,7 @@ function localizeKeys(value: unknown): unknown {
 }
 
 export function buildDataset(work: string) {
-  const identity = { formatVersion: 2, snapshotId: path.basename(work), locale: "zh-CN" } as const;
+  const identity = { formatVersion: 3, snapshotId: path.basename(work), locale: "zh-CN" } as const;
   const observations = RawCollectionObservationsSchema.parse(
     readJson(path.join(work, "raw/images-catalog-observations.json")),
   );

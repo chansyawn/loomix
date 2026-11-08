@@ -47,7 +47,8 @@ test("bundle verification validates the original observations before checking th
       source: { gameVersion: "0.95.2", dataRevision: 1449213, resourceRevision: 1391927 },
       ingredientCategories: [],
       items: [],
-      cropSeeds: [],
+      seeds: [],
+      growths: [],
       details: [],
     }),
   );

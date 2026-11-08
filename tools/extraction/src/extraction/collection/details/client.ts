@@ -1,11 +1,10 @@
 import type { CatalogRecord } from "../../schema.ts";
-import type { CollectionDetail, CropSeedDetail } from "../../schema.ts";
-import { emptyCollectionDetail, emptyCropSeedDetail } from "../../schema.ts";
+import type { CollectionDetail } from "../../schema.ts";
+import { emptyCollectionDetail } from "../../schema.ts";
 import type { ContentContext } from "../../content/context.ts";
 import { plainText, scaledCreatureSize } from "../../content/model.ts";
 import type { CollectionEvidenceBuilder, CollectionSource } from "../evidence.ts";
 import { localizedSources, tableSource } from "../evidence.ts";
-import type { TableRow } from "../../types.ts";
 
 import { treeDrops } from "./tree-drops.ts";
 
@@ -61,53 +60,6 @@ export function creatureSize(
     value: scaledCreatureSize(min, max, multiplier),
     sources,
     reason: "creature_size_configuration_missing",
-  };
-}
-
-export function growth(context: ContentContext, row: TableRow | undefined) {
-  const { tables } = context;
-  const sources = row ? [tableSource(tables, row, [0, 3, 4, 5, 6, 8, 9, 10])] : [];
-  const stageIds = row
-    ? [
-        ...(tables.vector(row, 4) ?? []),
-        ...(tables.vector(row, 6) ?? []),
-        ...(tables.vector(row, 8) ?? []),
-        ...(tables.uint(row, 9) === null ? [] : [tables.uint(row, 9)!]),
-      ]
-    : [];
-  const uniqueStageIds = [...new Set(stageIds)];
-  const stageDetails = row
-    ? uniqueStageIds.map((id) => {
-        const display = tables.byId(318).get(id);
-        return { id, name: plainText(tables.text(display, 1)), image: null };
-      })
-    : null;
-  const matureStageIds = tables.vector(row, 8);
-  const matureStages =
-    matureStageIds?.map((entityId) => {
-      const stage = tables.byId(137).get(entityId);
-      if (!stage) throw new Error(`Unresolved mature crop stage ${entityId}`);
-      const productId = tables.uint(stage, 1);
-      if (!productId || !tables.vector(row, 10)?.includes(productId))
-        throw new Error(`Mature crop stage product mismatch ${entityId}`);
-      sources.push(tableSource(tables, stage, [0, 1, 2, 3]));
-      return { entityId, productId, tag: tables.string(stage, 2), rank: tables.string(stage, 3) };
-    }) ?? null;
-  return {
-    value: row
-      ? {
-          cycleMode: tables.string(row, 3),
-          stageIds: tables.vector(row, 4),
-          regrowthStageIds: tables.vector(row, 6),
-          stages: stageDetails,
-          matureStages,
-          witheredStageId: tables.uint(row, 9),
-          maturityDays: null,
-          harvestCount: tables.uint(row, 5),
-        }
-      : null,
-    sources,
-    reason: "stage_cycle_does_not_confirm_elapsed_days",
   };
 }
 
@@ -258,9 +210,6 @@ export function buildItemDetail(
           reason: "client_flower_mappings_do_not_confirm_parent_to_offspring_recipe",
         });
       }
-      const growing = growth(context, context.vocabulary.cropsByProduct.get(record.id));
-      detail.growth = growing.value;
-      if (growing.value) recordDetail(proofs, "item", record.id, "detail.growth", growing);
       const drops = treeDrops(context, record.id);
       detail.treeDrops = drops.value;
       if (drops.value) recordDetail(proofs, "item", record.id, "detail.treeDrops", drops);
@@ -309,47 +258,5 @@ export function buildItemDetail(
       record.kind !== "item" ? "not_an_item" : `${field}_mapping_unconfirmed_or_inapplicable`,
     );
   }
-  return detail;
-}
-
-export function buildSeedDetail(
-  context: ContentContext,
-  row: TableRow,
-  proofs: CollectionEvidenceBuilder,
-): CropSeedDetail {
-  const { tables } = context;
-  const id = context.tables.id(row);
-  const detail = emptyCropSeedDetail(id);
-  const growing = growth(context, row);
-  const display = context.tables.rows(325).find((entry) => context.tables.id(entry) === id);
-  detail.description = plainText(context.tables.text(display, 27));
-  detail.quality = display ? context.tables.uint(display, 15) : null;
-  for (const field of ["description", "quality"] as const)
-    recordDetail(proofs, "seed", id, `detail.${field}`, {
-      value: detail[field],
-      sources: localizedSources(context.tables, display, [0, 15, 27]),
-      reason: "seed_display_configuration_missing",
-    });
-  detail.growth = growing.value;
-  recordDetail(proofs, "seed", id, "detail.growth", growing);
-  detail.stageIds = tables.vector(row, 4);
-  detail.harvestCount = tables.uint(row, 5);
-  for (const field of ["stageIds", "harvestCount"] as const)
-    recordDetail(proofs, "seed", id, `detail.${field}`, {
-      value: detail[field],
-      sources: [tableSource(tables, row, field === "stageIds" ? [0, 4] : [0, 5])],
-      reason: "crop_stage_configuration_missing",
-    });
-  recordDetail(proofs, "seed", id, "detail.maturityDays", {
-    value: null,
-    sources: [tableSource(tables, row, [0, 3, 4])],
-    reason: "cycle_and_stage_order_do_not_confirm_elapsed_days",
-  });
-  const commerce = trade(context, id);
-  detail.trade = commerce.value;
-  recordDetail(proofs, "seed", id, "detail.trade", commerce);
-  const sources = acquisition(context, id);
-  detail.acquisitionConditions = sources.value;
-  recordDetail(proofs, "seed", id, "detail.acquisitionConditions", sources);
   return detail;
 }

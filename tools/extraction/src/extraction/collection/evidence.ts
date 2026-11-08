@@ -11,7 +11,7 @@ export const collectionSourceSchema = z.strictObject({
 });
 export const collectionEvidenceSchema = z
   .strictObject({
-    owner: z.enum(["item", "seed"]),
+    owner: z.enum(["item", "seed", "growth"]),
     id: z.number().int().positive(),
     field: z.string().min(1),
     value: z.json(),
@@ -69,7 +69,7 @@ export function localizedSources(
 export class CollectionEvidenceBuilder {
   readonly records: CollectionEvidence[] = [];
   put(
-    owner: "item" | "seed",
+    owner: "item" | "seed" | "growth",
     id: number,
     field: string,
     value: unknown,

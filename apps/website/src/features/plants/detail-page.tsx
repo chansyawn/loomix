@@ -1,3 +1,4 @@
+import { PlantGrowthStages } from "./plant-growth";
 import { SearchXIcon } from "lucide-react";
 import { useRouter } from "@tanstack/react-router";
 import { buttonVariants } from "@/ui/components/button";
@@ -76,6 +77,8 @@ function PlantOrSeriesDetailPage({ detail }: { detail: PlantOrSeriesDetail }) {
 function PlantExtras({ detail }: { detail: PlantOrSeriesDetail }) {
   const sections: CollectionDetailSection[] = [];
   const summary = detail.record.summary;
+  if (summary.seeds.length)
+    sections.push({ key: "plant-growth", content: <PlantGrowthStages seeds={summary.seeds} /> });
   if (summary.drops.groups.length > 0)
     sections.push({
       key: "plant-drops",

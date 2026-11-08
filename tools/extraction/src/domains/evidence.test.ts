@@ -4,7 +4,7 @@ import { buildDomainEvidence } from "./evidence.ts";
 
 test("admission evidence separates confirmed absence from unresolved fields", () => {
   const dataset = emptyDataset(
-    { formatVersion: 2, snapshotId: "a".repeat(64), locale: "zh-CN" },
+    { formatVersion: 3, snapshotId: "a".repeat(64), locale: "zh-CN" },
     {
       gameVersion: "test",
       dataRevision: 1,
@@ -45,7 +45,7 @@ test("admission evidence separates confirmed absence from unresolved fields", ()
 
 test("story paragraphs merge their provenance on the actual chapter entity", () => {
   const dataset = emptyDataset(
-    { formatVersion: 2, snapshotId: "a".repeat(64), locale: "zh-CN" },
+    { formatVersion: 3, snapshotId: "a".repeat(64), locale: "zh-CN" },
     {
       gameVersion: "test",
       dataRevision: 1,

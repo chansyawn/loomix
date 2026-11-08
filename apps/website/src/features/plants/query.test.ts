@@ -28,14 +28,32 @@ function item(id: number, fields: Partial<PlantItem> = {}): PlantItem {
 function seed(
   id: number,
   fields: Partial<PlantSeed> = {},
-  detail: Partial<PlantSeed["detail"]> = {},
+  detail: { harvestCount?: number | null } = {},
 ): PlantSeed {
   const record = plantSeedFixture({
     id,
     name: `种子${id}`,
     ...fields,
   });
-  return { ...record, detail: { ...record.detail, ...detail } };
+  return detail.harvestCount === undefined
+    ? record
+    : {
+        ...record,
+        growth: {
+          ...record.growth,
+          kind: "crop",
+          cycleMode: null,
+          initialStageIds: [record.growth.stages[0].id],
+          regrowthStageIds: null,
+          matureStages: record.growth.stages.map((stage) => ({
+            stageId: stage.id,
+            tag: null,
+            rank: null,
+          })),
+          witheredStageId: null,
+          harvestCount: detail.harvestCount,
+        },
+      };
 }
 
 const items = [
@@ -91,7 +109,7 @@ const seeds = [
     10,
     {
       name: "A番茄种子",
-      productIds: [1],
+      plantIds: [1],
       acquisition: [{ sourceId: 1, label: "格连商店购买", condition: null }],
     },
     { harvestCount: 3 },
@@ -100,12 +118,12 @@ const seeds = [
     11,
     {
       name: "B甜瓜种子",
-      productIds: [2],
+      plantIds: [2],
       acquisition: [{ sourceId: 2, label: "星屿探索", condition: "完成探索" }],
     },
     { harvestCount: 1 },
   ),
-  seed(12, { name: "C未知种子", productIds: [999] }),
+  seed(12, { name: "C未知种子", plantIds: [999] }),
 ];
 const seedData = plantsDataFixture({ items, series, seeds });
 const ids = (rows: { id: number }[]) => rows.map((row) => row.id);

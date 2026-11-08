@@ -31,8 +31,8 @@ export function seedSourceLabels(seed: PlantSeed): string[] {
 }
 
 export function seedSeries(seed: PlantSeed, groups: PlantSeries[]): PlantSeries[] {
-  const productIds = new Set(seed.productIds);
-  return groups.filter((group) => group.plantIds?.some((id) => productIds.has(id)));
+  const plantIds = new Set(seed.plantIds);
+  return groups.filter((group) => group.plantIds?.some((id) => plantIds.has(id)));
 }
 
 export function seedSeriesIndex(data: PlantsData): Map<number, PlantSeries[]> {
@@ -64,7 +64,9 @@ export function filterGroups(data: PlantsData, view: View = "items"): FilterGrou
         label: "收获茬数",
         options: options(
           data.seeds.map((seed) =>
-            seed.detail.harvestCount === null ? null : String(seed.detail.harvestCount),
+            (seed.growth.kind === "crop" ? seed.growth.harvestCount : null) === null
+              ? null
+              : String(seed.growth.kind === "crop" ? seed.growth.harvestCount : null),
           ),
         ),
       },
@@ -158,7 +160,9 @@ export function queryPlants(data: PlantsData, view: View, query: ViewQuery) {
         seed.name.toLocaleLowerCase("zh-CN").includes(term) &&
         matches(query.acquisition, acquisition.length > 0 ? acquisition : [missing]) &&
         matches(query.harvestCounts, [
-          seed.detail.harvestCount === null ? missing : String(seed.detail.harvestCount),
+          (seed.growth.kind === "crop" ? seed.growth.harvestCount : null) === null
+            ? missing
+            : String(seed.growth.kind === "crop" ? seed.growth.harvestCount : null),
         ]) &&
         matches(
           query.series,

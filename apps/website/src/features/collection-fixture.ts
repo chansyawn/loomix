@@ -7,7 +7,7 @@ import { referencedImages } from "@loomix/schema/dataset/images";
 import type { CollectionRecord, CollectionView } from "./collection-view.ts";
 
 export const fixtureContext = {
-  formatVersion: 2,
+  formatVersion: 3,
   snapshotId: "a".repeat(64),
   locale: "zh-CN",
 } as const;
@@ -107,54 +107,30 @@ export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
   for (const record of view.creatures?.series ?? [])
     group(record, "creatures.series", record.creatureIds);
   for (const record of view.plants?.items ?? []) {
-    const growthId = record.growth ? (record.seedId ?? record.id) : null;
-    if (
-      record.growth &&
-      growthId !== null &&
-      !catalog.growths.some((growth) => growth.id === growthId)
-    )
-      catalog.growths.push({
-        ...record.growth,
-        id: growthId,
-        stages:
-          record.growth.stages?.map((stage) => ({
-            ...stage,
-            image: stage.image ? { assetId: stage.image, variant: "icon" } : null,
-          })) ?? null,
-      });
     add({
       ...catalogBase(record),
       ...common,
       type: "plant",
       subcategory: record.category,
       origins: values(record.originGalaxy),
-      maturityPeriod: record.maturityPeriod,
-      harvestCount: record.harvestCount,
       acquisition: acquisition(record.acquisition),
       flowerColors: record.flowerColors,
-      growthId,
       drops: record.treeDrops,
       hybridRecipes: null,
     });
   }
   for (const record of view.plants?.seeds ?? []) {
-    if (
-      record.growthId !== null &&
-      record.detail.growth &&
-      !catalog.growths.some((growth) => growth.id === record.growthId)
-    )
+    if (!catalog.growths.some((growth) => growth.id === record.growthId))
       catalog.growths.push({
-        ...record.detail.growth,
+        ...record.growth,
         id: record.growthId,
-        stages:
-          record.detail.growth.stages?.map((stage) => ({
-            ...stage,
-            image: stage.image ? { assetId: stage.image, variant: "icon" } : null,
-          })) ?? null,
+        stages: record.growth.stages.map((stage) => ({
+          ...stage,
+          image: stage.image ? { assetId: stage.image, variant: "icon" } : null,
+        })),
       });
     catalog.seeds.push({
       ...catalogBase(record),
-      productIds: record.productIds,
       growthId: record.growthId,
       trade: record.trade,
       acquisition: record.acquisition,

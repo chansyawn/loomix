@@ -12,7 +12,7 @@ const categories = [
 
 function datasetWithImages() {
   const dataset = emptyDataset(
-    { formatVersion: 2, snapshotId: "a".repeat(64), locale: "zh-CN" },
+    { formatVersion: 3, snapshotId: "a".repeat(64), locale: "zh-CN" },
     { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" },
   );
   dataset.neighbors.neighbors.push({

@@ -1,7 +1,7 @@
 import { expect, test } from "vite-plus/test";
 import type { ContentContext } from "../../content/context.ts";
 import type { TableRow } from "../../types.ts";
-import { acquisition, creatureSize, growth, trade } from "./client.ts";
+import { acquisition, creatureSize, trade } from "./client.ts";
 
 import { treeDrops } from "./tree-drops.ts";
 import { treeInvestigation } from "./tree-investigation.ts";
@@ -90,43 +90,6 @@ test("creature size remains null for incomplete settings and rejects inverted ra
   expect(() => creatureSize(context([row(132, 41001, { 4: 120, 5: 60 })]), 41001)).toThrow(
     /minimum size exceeds maximum/,
   );
-});
-
-test("growth resolves mature crop stages only through configured entity and product IDs", () => {
-  const crop = row(144, 30213, {
-    3: "CYCLE_DAILY",
-    4: [50161],
-    5: 3,
-    6: [50161],
-    8: [50164],
-    9: 50169,
-    10: [30219],
-  });
-  const stage = row(137, 50164, { 1: 30219, 2: "CROP_TOMATO", 3: "RANK_1" });
-  const result = growth(context([crop, stage]), crop);
-
-  expect(result.value).toEqual({
-    cycleMode: "CYCLE_DAILY",
-    stageIds: [50161],
-    regrowthStageIds: [50161],
-    stages: [
-      { id: 50161, name: null, image: null },
-      { id: 50164, name: null, image: null },
-      { id: 50169, name: null, image: null },
-    ],
-    matureStages: [{ entityId: 50164, productId: 30219, tag: "CROP_TOMATO", rank: "RANK_1" }],
-    witheredStageId: 50169,
-    maturityDays: null,
-    harvestCount: 3,
-  });
-  expect(result.reason).toBe("stage_cycle_does_not_confirm_elapsed_days");
-});
-
-test("growth rejects a stage whose product is not referenced by its crop", () => {
-  const crop = row(144, 30213, { 8: [50164], 10: [30219] });
-  const stage = row(137, 50164, { 1: 30220 });
-
-  expect(() => growth(context([crop, stage]), crop)).toThrow(/product mismatch/);
 });
 
 test("tree drops join by configured group and leave unsupported quantity and chance null", () => {

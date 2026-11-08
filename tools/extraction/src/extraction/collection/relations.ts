@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { validatePlantings } from "@loomix/schema/catalog";
 import { attributeSchemas, recordSchemas } from "../content/schema/records.ts";
 import type { CatalogRecord, RecordType } from "../content/schema/records.ts";
 import type { Catalog } from "../content/schema/catalog.ts";
@@ -32,70 +33,18 @@ export function baseObservations(catalog: {
 }
 
 export function validateObservedRelations(
-  catalog: { items: CatalogRecordObserved[]; cropSeeds: { id: number; productIds: number[] }[] },
+  catalog: {
+    items: CatalogRecordObserved[];
+    seeds: { id: number; growthId: number }[];
+    growths: Parameters<typeof validatePlantings>[1];
+  },
   ctx: z.RefinementCtx,
 ): void {
-  const records = new Map(catalog.items.map((record) => [record.id, record]));
-  const seeds = new Map<number, (typeof catalog.cropSeeds)[number]>();
-  const products = new Set<number>();
-  for (const [index, seed] of catalog.cropSeeds.entries()) {
-    if (seeds.has(seed.id) || records.has(seed.id))
-      ctx.addIssue({
-        code: "custom",
-        path: ["cropSeeds", index, "id"],
-        message: "Duplicate seed/catalog ID",
-      });
-    seeds.set(seed.id, seed);
-    for (const [productIndex, id] of seed.productIds.entries()) {
-      const record = records.get(id);
-      if (
-        products.has(id) ||
-        !record ||
-        record.category !== "plants" ||
-        record.kind !== "item" ||
-        record.seedId !== seed.id
-      )
-        ctx.addIssue({
-          code: "custom",
-          path: ["cropSeeds", index, "productIds", productIndex],
-          message: "Invalid or duplicate crop product association",
-        });
-      products.add(id);
-    }
-    if (index > 0 && catalog.cropSeeds[index - 1]!.id >= seed.id)
-      ctx.addIssue({
-        code: "custom",
-        path: ["cropSeeds", index],
-        message: "Seeds must be sorted",
-      });
-    if (seed.productIds.some((id, i) => i > 0 && seed.productIds[i - 1]! >= id))
-      ctx.addIssue({
-        code: "custom",
-        path: ["cropSeeds", index, "productIds"],
-        message: "Products must be sorted and unique",
-      });
-  }
-  for (const [index, record] of catalog.items.entries()) {
-    if (record.kind !== "item") continue;
-    if (
-      record.category === "plants" &&
-      record.seedId !== null &&
-      (!seeds.has(record.seedId) || !products.has(record.id))
-    )
-      ctx.addIssue({
-        code: "custom",
-        path: ["items", index, "seedId"],
-        message: "Unresolved seed reference",
-      });
-    if (
-      record.category === "dishes" &&
-      record.attributes.tastes &&
-      new Set(record.attributes.tastes).size !== record.attributes.tastes.length
-    )
-      ctx.addIssue({
-        code: "custom",
-        path: ["items", index, "attributes", "tastes"],
-        message: "Duplicate taste",
-      });
-  }
+  const plants = new Set(
+    catalog.items
+      .filter((record) => record.category === "plants" && record.kind === "item")
+      .map((record) => record.id),
+  );
+  for (const issue of validatePlantings(catalog.seeds, catalog.growths, plants))
+    ctx.addIssue({ code: "custom", path: issue.path, message: issue.message });
 }
