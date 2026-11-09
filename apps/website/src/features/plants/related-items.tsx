@@ -66,7 +66,7 @@ export function PlantDropsInfo({ drops }: { drops: PlantDrops }) {
               entries.length > 0 && (
                 <div key={title} className="space-y-3">
                   <h4 className="text-sm text-muted-foreground">{title}</h4>
-                  <ul className="flex flex-wrap gap-3">
+                  <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))] gap-3">
                     {entries.map((entry) => (
                       <li
                         key={String(entry.dropGroupId) + ":" + entry.itemId}
