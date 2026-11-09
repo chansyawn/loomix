@@ -1,6 +1,7 @@
 import { useRouter } from "@tanstack/react-router";
 import { SearchXIcon, WifiOffIcon } from "lucide-react";
 import { Button } from "@/ui/components/button";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/ui/components/card";
 import {
   Empty,
   EmptyContent,
@@ -19,18 +20,20 @@ export function NeighborsLoading() {
       <div aria-hidden="true">
         <NeighborsGrid>
           {Array.from({ length: 8 }, (_, index) => (
-            <div key={index} className="min-w-0 rounded-3xl border bg-card p-2">
-              <div className="overflow-hidden rounded-2xl">
-                <Skeleton className="aspect-156/41 w-full" />
+            <Card key={index} padding="flush" className="min-w-0">
+              <div className="mx-2 mt-2 shrink-0 overflow-hidden rounded-md">
+                <Skeleton shape="square" className="aspect-156/41" />
               </div>
-              <div className="space-y-2 px-2 py-4">
-                <Skeleton className="h-7 w-20" />
-                <div>
+              <CardHeader>
+                <CardTitle>
+                  <Skeleton className="my-1 h-4 w-20" />
+                </CardTitle>
+                <CardDescription>
                   <Skeleton className="h-5 w-24" />
                   <Skeleton className="mt-1 h-4 w-16" />
-                </div>
-              </div>
-            </div>
+                </CardDescription>
+              </CardHeader>
+            </Card>
           ))}
         </NeighborsGrid>
       </div>
