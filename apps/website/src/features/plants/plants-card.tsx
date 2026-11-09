@@ -6,7 +6,6 @@ import { RecordImage } from "@/features/collection/record-image";
 import { CollectionCard } from "@/features/collection/collection-card";
 import { usePlantsOrigin } from "./detail-navigation";
 import { collectionItemLocation } from "../collection/item-route";
-import { seedSourceLabels } from "./query";
 
 export function PlantsCard({ item }: { item: PlantItem }) {
   const origin = usePlantsOrigin();
@@ -51,16 +50,7 @@ export function PlantSeriesCard({ series }: { series: PlantSeries }) {
   );
 }
 
-export function SeedCard({ seed, series }: { seed: PlantSeed; series: PlantSeries[] }) {
-  const tags = [
-    series.map((group) => group.name).join("、"),
-    (seed.growth.kind === "crop" ? seed.growth.harvestCount : null) === null
-      ? null
-      : `${seed.growth.kind === "crop" ? seed.growth.harvestCount : null} 茬`,
-    seedSourceLabels(seed).join("、"),
-  ]
-    .filter((value): value is string => Boolean(value))
-    .join(" · ");
+export function SeedCard({ seed }: { seed: PlantSeed }) {
   return (
     <CollectionCard
       name={seed.name}
@@ -68,7 +58,6 @@ export function SeedCard({ seed, series }: { seed: PlantSeed; series: PlantSerie
       image={<RecordImage key={seed.image} image={seed.image} name={seed.name} />}
       titleLink={<SeedNameLink seed={seed} />}
       description={seed.description}
-      tags={tags || null}
     />
   );
 }

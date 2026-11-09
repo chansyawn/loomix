@@ -11,7 +11,7 @@ import type { PlantItem, PlantSeries } from "../collection-view";
 import type { PlantSeed } from "./model";
 import type { PlantsData } from "./data";
 import { PlantsCard, PlantSeriesCard, SeedCard } from "./plants-card";
-import { filterGroups, queryPlants, seedSeries } from "./query";
+import { filterGroups, queryPlants } from "./query";
 import { emptyQuery, seedSortOptions, sortOptions, updateViewQuery } from "./search";
 import type { PlantsSearch, ViewQuery } from "./search";
 import { PlantsEmpty } from "./states";
@@ -109,8 +109,7 @@ export function PlantsPage({
             layout={presentation.grid}
             getKey={(row) => row.id}
             renderCard={(row) => {
-              if ("growthId" in row)
-                return <SeedCard seed={row} series={seedSeries(row, data.series)} />;
+              if ("growthId" in row) return <SeedCard seed={row} />;
               return "category" in row ? (
                 <PlantsCard item={row} />
               ) : (
