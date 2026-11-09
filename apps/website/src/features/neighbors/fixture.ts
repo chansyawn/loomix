@@ -69,7 +69,30 @@ export function neighborFixture() {
     ],
     friendshipRules: [],
     eventTags: [],
-    additionalImages: [],
+    additionalImages: [
+      {
+        key: "favour:1",
+        category: "favour",
+        neighborId: 1,
+        image: { assetId: "favour", variant: "illustration" },
+      },
+      {
+        key: "favour:3",
+        category: "favour",
+        neighborId: 3,
+        image: { assetId: "favour", variant: "illustration" },
+      },
+    ],
+    giftPreferences: [
+      { key: "1:dislike", neighborId: 1, level: "dislike", itemIds: [107], tagIds: [] },
+      { key: "1:love", neighborId: 1, level: "love", itemIds: [106], tagIds: [] },
+      { key: "1:favor", neighborId: 1, level: "favor", itemIds: [], tagIds: [1, 2] },
+      { key: "3:love", neighborId: 3, level: "love", itemIds: [107], tagIds: [] },
+    ],
+    giftPreferenceTags: [
+      { id: 1, name: "树生水果", internalName: "水果" },
+      { id: 2, name: null, internalName: "含水果" },
+    ],
     resources: [
       ...neighbors.map((neighbor) => neighbor.npc2Path),
       "UISprite/Star.png",
@@ -81,11 +104,11 @@ export function neighborFixture() {
   const mapping: Assets = {
     ...fixtureContext,
     kind: "assets",
-    images: ["star", "story"].map((assetId) => ({
+    images: ["star", "story", "favour"].map((assetId, index) => ({
       assetId,
       variant: "illustration",
-      file: `assets/${"a".repeat(64)}.webp`,
-      sha256: "a".repeat(64),
+      file: `assets/${(index === 2 ? "b" : "a").repeat(64)}.webp`,
+      sha256: (index === 2 ? "b" : "a").repeat(64),
       bytes: 1,
       width: 100,
       height: 100,
@@ -93,31 +116,17 @@ export function neighborFixture() {
   };
   const catalog = emptyDataset(fixtureContext, fixtureSource).catalog;
   for (const id of [6, 7]) {
-    catalog.cardSets.push({
-      id,
-      name: `创想卡集${id}`,
-      acquisitionHint: "完成友邻事件",
-      artwork: {
-        cover: { assetId: "star", variant: "illustration" },
-        bag: null,
-        back: null,
-        background: null,
-        icon: null,
-        lockedBackground: null,
-        unlockedBackground: null,
-      },
-    });
     catalog.items.push({
       id: id + 100,
       type: "craftingCard",
-      name: "卡片",
+      name: id === 6 ? "星空卡片" : "海岛卡片",
       image: null,
       quality: null,
       description: null,
       subcategory: null,
       trade: null,
       acquisition: null,
-      setId: id,
+      setId: null,
       neighborIds: [4],
       artwork: { bag: null, back: null, background: null },
       recipe: null,

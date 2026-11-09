@@ -11,7 +11,7 @@ import { StoryText } from "./rich-text";
 export function NeighborStories({ neighbor }: { neighbor: NeighborDetail }) {
   return (
     <section id="stories" className="scroll-mt-4 space-y-4" aria-labelledby="stories-heading">
-      <h2 id="stories-heading" className="text-2xl font-semibold">
+      <h2 id="stories-heading" className="text-lg font-semibold">
         友邻故事
       </h2>
       <p className="text-sm text-muted-foreground">以下内容包含剧情，展开章节后阅读。</p>
@@ -51,7 +51,7 @@ export function NeighborStories({ neighbor }: { neighbor: NeighborDetail }) {
 export function NeighborTravel({ neighbor }: { neighbor: NeighborDetail }) {
   return (
     <section id="travel" className="scroll-mt-4 space-y-4" aria-labelledby="travel-heading">
-      <h2 id="travel-heading" className="text-2xl font-semibold">
+      <h2 id="travel-heading" className="text-lg font-semibold">
         旅行台词
       </h2>
       <p className="text-sm text-muted-foreground">

@@ -6,6 +6,11 @@ import type { Assets } from "@loomix/schema/assets";
 import { createResourceReader } from "@/infrastructure/resources";
 
 const bodyTypes = { small: "小型", medium: "中型", big: "大型" };
+const preferenceLevels = [
+  ["love", "喜爱"],
+  ["favor", "好感"],
+  ["dislike", "反感"],
+] as const;
 export const travelEvents: Record<string, string> = {
   Another_Stellarsea_First_arrival: "初次抵达其他星海",
   Collect_Luzhu_Num_In_Travel: "旅行中收集露珠",
@@ -28,6 +33,10 @@ export function toNeighborsView(database: Neighbors, assets: Assets, catalog: Ca
   )
     throw new Error("Neighbor catalog context mismatch");
   const image = createImageResolver(assets);
+  const items = new Map(catalog.items.map((item) => [item.id, item.name]));
+  const tags = new Map(
+    database.giftPreferenceTags.map((tag) => [tag.id, tag.name || tag.internalName]),
+  );
   const neighbors = database.neighbors.map((neighbor) => {
     const stars = database.stars
       .filter((star) => star.neighborId === neighbor.id)
@@ -37,23 +46,26 @@ export function toNeighborsView(database: Neighbors, assets: Assets, catalog: Ca
         galaxy: star.galaxyName,
         image: image(star.image),
       }));
-    const setIds = new Set(
-      catalog.items.flatMap((item) =>
-        item.type === "craftingCard" &&
-        item.neighborIds.includes(neighbor.id) &&
-        item.setId !== null
-          ? [item.setId]
-          : [],
-      ),
+    const favour = database.additionalImages.find(
+      (entry) => entry.neighborId === neighbor.id && entry.category === "favour",
     );
-    const themes = catalog.cardSets
-      .filter((theme) => setIds.has(theme.id))
-      .map((theme) => ({
-        key: String(theme.id),
-        name: theme.name,
-        description: theme.acquisitionHint,
-        image: image(theme.artwork.cover),
-      }));
+    const preferences = preferenceLevels.map(([level, name]) => {
+      const entries = database.giftPreferences.filter(
+        (entry) => entry.neighborId === neighbor.id && entry.level === level,
+      );
+      return {
+        level,
+        name,
+        items: [...new Set(entries.flatMap((entry) => entry.itemIds))].map((id) => ({
+          id,
+          name: items.get(id) ?? `未收录物品（${id}）`,
+        })),
+        tags: [...new Set(entries.flatMap((entry) => entry.tagIds))].map((id) => ({
+          id,
+          name: tags.get(id) ?? `未收录标签（${id}）`,
+        })),
+      };
+    });
     const stories = database.stories
       .filter((story) => story.neighborId === neighbor.id)
       .sort((a, b) => a.chapter - b.chapter)
@@ -104,7 +116,8 @@ export function toNeighborsView(database: Neighbors, assets: Assets, catalog: Ca
       bodyType: neighbor.bodyType ? bodyTypes[neighbor.bodyType] : null,
       stars,
       image: stars[0]?.image ?? null,
-      themes,
+      favourImage: image(favour?.image ?? null),
+      preferences,
       stories,
       travel: [...groups.values()],
     };

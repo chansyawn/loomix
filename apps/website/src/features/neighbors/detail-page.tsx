@@ -1,100 +1,73 @@
-import { Link } from "@tanstack/react-router";
+import { Fragment } from "react";
 import { ArrowLeftIcon } from "lucide-react";
-import { Badge } from "@/ui/components/badge";
-import { NeighborsReturnLink, useNeighborsOrigin } from "./navigation";
+import { NeighborsReturnLink } from "./navigation";
 import type { NeighborDetail } from "./data";
 import { NeighborImage } from "./image";
+import { NeighborPreferences } from "./preferences";
 import { NeighborStories, NeighborTravel } from "./reading";
 
-const sections = [
-  ["overview", "概览"],
-  ["themes", "关联创想卡集"],
-  ["stories", "友邻故事"],
-  ["travel", "旅行台词"],
-] as const;
+const fieldClassName = "min-w-0 space-y-1.5 rounded-xl bg-muted/40 p-3 sm:p-4";
+
 export function NeighborDetailPage({ neighbor }: { neighbor: NeighborDetail }) {
-  const origin = useNeighborsOrigin();
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 pb-8">
       <NeighborsReturnLink className="inline-flex items-center gap-2 rounded-md text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
-        <ArrowLeftIcon className="size-4" />
+        <ArrowLeftIcon aria-hidden="true" className="size-4" />
         返回友邻列表
       </NeighborsReturnLink>
-      <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
-        <nav
-          aria-label="友邻详情目录"
-          className="flex flex-wrap gap-2 lg:sticky lg:top-4 lg:order-last lg:w-36 lg:shrink-0 lg:flex-col"
-        >
-          {sections.map(([id, label]) => (
-            <Link
-              key={id}
-              to="/neighbors/$id"
-              params={{ id: String(neighbor.id) }}
-              hash={id}
-              state={{ neighborsOrigin: origin }}
-              replace
-              resetScroll={false}
-              className="rounded-full border px-4 py-2 text-sm outline-none hover:bg-primary focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              {label}
-            </Link>
-          ))}
-        </nav>
-        <div className="min-w-0 flex-1 space-y-12">
-          <section
-            id="overview"
-            aria-labelledby="neighbor-heading"
-            className="scroll-mt-4 overflow-hidden rounded-3xl border"
-          >
-            <NeighborImage
-              image={neighbor.image}
-              name={`${neighbor.name}的星湾插画`}
-              eager
-              className="aspect-156/41 rounded-none"
-            />
-            <div className="space-y-4 p-5 md:p-8">
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 id="neighbor-heading" className="text-3xl font-semibold tracking-tight">
-                  {neighbor.name}
-                </h1>
-                <Badge variant="secondary">
-                  {neighbor.bodyType ? `${neighbor.bodyType}体型` : "体型资料暂未收录"}
-                </Badge>
-              </div>
-              {neighbor.stars.map((star) => (
-                <p key={star.key} className="text-muted-foreground">
-                  {star.name} · {star.galaxy ? `${star.galaxy}星系` : "星系资料暂未收录"}
-                </p>
-              ))}
-            </div>
-          </section>
-          <section id="themes" aria-labelledby="themes-heading" className="scroll-mt-4 space-y-4">
-            <h2 id="themes-heading" className="text-2xl font-semibold">
-              关联创想卡集
-            </h2>
-            {neighbor.themes.length ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {neighbor.themes.map((theme) => (
-                  <article key={theme.key} className="overflow-hidden rounded-2xl border p-3">
-                    <NeighborImage image={theme.image} name={theme.name} className="aspect-2/1" />
-                    <div className="space-y-3 p-2 pt-4">
-                      <h3 className="font-semibold">{theme.name}</h3>
-                      <p className="text-sm whitespace-pre-wrap text-muted-foreground">
-                        {theme.description ?? "当前资料暂未收录获取说明"}
-                      </p>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <p className="rounded-2xl border p-6 text-muted-foreground">
-                当前资料暂未收录关联卡集
-              </p>
-            )}
-          </section>
-          <NeighborStories neighbor={neighbor} />
-          <NeighborTravel neighbor={neighbor} />
+      <section
+        id="overview"
+        aria-labelledby="neighbor-heading"
+        className="grid items-start gap-8 lg:grid-cols-[minmax(18rem,26rem)_minmax(0,1fr)] lg:gap-12"
+      >
+        <div className="mx-auto w-full max-w-104 overflow-hidden rounded-4xl border bg-muted/30 lg:sticky lg:top-6 lg:mx-0">
+          <NeighborImage
+            image={neighbor.favourImage}
+            name={`${neighbor.name}的好感插画`}
+            eager
+            className="aspect-square rounded-none bg-transparent p-4 sm:p-6"
+          />
         </div>
+        <div className="min-w-0 space-y-4">
+          <h1
+            id="neighbor-heading"
+            className="text-3xl/tight font-semibold tracking-tight wrap-break-word sm:text-4xl"
+          >
+            {neighbor.name}
+          </h1>
+          <dl className="grid grid-cols-1 gap-3 text-sm/6 sm:grid-cols-2 sm:gap-4">
+            <div className={`${fieldClassName} sm:col-span-2`}>
+              <dt className="text-xs text-muted-foreground">体型</dt>
+              <dd>{neighbor.bodyType ? `${neighbor.bodyType}体型` : "体型资料暂未收录"}</dd>
+            </div>
+            {neighbor.stars.length ? (
+              neighbor.stars.map((star) => (
+                <Fragment key={star.key}>
+                  <div className={fieldClassName}>
+                    <dt className="text-xs text-muted-foreground">所属星球</dt>
+                    <dd className="wrap-break-word">{star.name}</dd>
+                  </div>
+                  <div className={fieldClassName}>
+                    <dt className="text-xs text-muted-foreground">所属星系</dt>
+                    <dd className="wrap-break-word">
+                      {star.galaxy ? `${star.galaxy}星系` : "星系资料暂未收录"}
+                    </dd>
+                  </div>
+                </Fragment>
+              ))
+            ) : (
+              <div className={`${fieldClassName} sm:col-span-2`}>
+                <dt className="text-xs text-muted-foreground">所属星球与星系</dt>
+                <dd>星球与星系资料暂未收录</dd>
+              </div>
+            )}
+          </dl>
+        </div>
+      </section>
+      <div className="mt-10 space-y-10 border-t-3 border-dotted pt-8">
+        <NeighborPreferences preferences={neighbor.preferences} />
+        <NeighborStories neighbor={neighbor} />
+        <NeighborTravel neighbor={neighbor} />
       </div>
     </div>
   );
