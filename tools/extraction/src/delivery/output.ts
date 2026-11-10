@@ -67,7 +67,7 @@ export function safeOutput(output: string) {
         if (stat.isDirectory() && ["assets", "zh-CN", "en-US"].includes(key)) visit(file, key);
         else if (
           !stat.isFile() ||
-          !/^(?:\.gitkeep|release\.json|assets\.json|(?:zh-CN|en-US)\/(?:catalog|neighbors|world)\.json|assets\/[a-f0-9]{64}\.webp)$/.test(
+          !/^(?:\.gitkeep|release\.json|assets\.json|(?:zh-CN|en-US)\/(?:catalog|gameplay-tags|neighbors|world)\.json|assets\/[a-f0-9]{64}\.webp)$/.test(
             key,
           )
         )
