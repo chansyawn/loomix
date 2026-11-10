@@ -1,5 +1,5 @@
 import type { RecordType } from "../schema.ts";
-import type { TagNode } from "../types.ts";
+import type { GameplayTagIndex } from "@loomix/schema/gameplay-tags";
 import assert from "node:assert/strict";
 import { recordTypes, recordType, parseCatalog } from "../schema.ts";
 
@@ -56,18 +56,11 @@ export function creatureSizeRange(
   const size = scaledCreatureSize(min, max, multiplier);
   return size ? `${size.min}–${size.max}${size.unit}` : null;
 }
-export function expandTags(names: string[], nodes: Record<number, TagNode>) {
-  const byName = new Map(Object.values(nodes).map((n) => [n.TagName, n]));
+export function expandTags(names: string[], index: GameplayTagIndex) {
   const expanded = new Set(names);
   for (const name of names) {
-    let node = byName.get(name);
-    const visited = new Set();
-    while (node) {
-      if (visited.has(node.TagId)) throw new Error(`Tag inheritance cycle: ${name}`);
-      visited.add(node.TagId);
-      expanded.add(node.TagName);
-      node = nodes[node.ParentId];
-    }
+    const tag = index.findByName(name);
+    if (tag) for (const ancestor of index.ancestors(tag.id)) expanded.add(ancestor.internalName);
   }
   return expanded;
 }

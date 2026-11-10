@@ -1,3 +1,9 @@
+import {
+  createGameplayTagIndex,
+  parseGameplayTags,
+  tagLabel,
+  type GameplayTags,
+} from "@loomix/schema/gameplay-tags";
 import { parseCatalog, type Catalog } from "@loomix/schema/catalog";
 import { parseNeighbors } from "@loomix/schema/neighbors";
 import type { Neighbors } from "@loomix/schema/neighbors";
@@ -23,7 +29,12 @@ export const travelEvents: Record<string, string> = {
   Npc_Get_Items_Num_In_Travel: "友邻在旅行中获得物品",
 };
 
-export function toNeighborsView(database: Neighbors, assets: Assets, catalog: Catalog) {
+export function toNeighborsView(
+  database: Neighbors,
+  assets: Assets,
+  catalog: Catalog,
+  gameplayTags: GameplayTags,
+) {
   if (database.snapshotId !== assets.snapshotId || database.locale !== assets.locale)
     throw new Error("Neighbor assets context mismatch");
   if (
@@ -36,9 +47,13 @@ export function toNeighborsView(database: Neighbors, assets: Assets, catalog: Ca
   const items = new Map(
     [...catalog.records, ...catalog.references].map((item) => [item.id, item.name]),
   );
-  const tags = new Map(
-    database.giftPreferenceTags.map((tag) => [tag.id, tag.name || tag.internalName]),
-  );
+  if (
+    gameplayTags.snapshotId !== database.snapshotId ||
+    gameplayTags.locale !== database.locale ||
+    gameplayTags.formatVersion !== database.formatVersion
+  )
+    throw new Error("Neighbor tags context mismatch");
+  const tags = createGameplayTagIndex(gameplayTags.tags);
   const neighbors = database.neighbors.map((neighbor) => {
     const stars = database.stars
       .filter((star) => star.neighborId === neighbor.id)
@@ -64,7 +79,7 @@ export function toNeighborsView(database: Neighbors, assets: Assets, catalog: Ca
         })),
         tags: [...new Set(entries.flatMap((entry) => entry.tagIds))].map((id) => ({
           id,
-          name: tags.get(id) ?? `未收录标签（${id}）`,
+          name: tagLabel(tags.get(id)),
         })),
       };
     });
@@ -141,10 +156,11 @@ export type NeighborDetail = NeighborsData["neighbors"][number];
 
 export async function loadNeighbors(request: typeof fetch = fetch): Promise<NeighborsData> {
   const load = createResourceReader(request);
-  const [database, assets, catalog] = await Promise.all([
+  const [database, assets, catalog, gameplayTags] = await Promise.all([
     load("neighbors", parseNeighbors),
     load("assets", parseAssets),
     load("catalog", parseCatalog),
+    load("gameplay-tags", parseGameplayTags),
   ]);
-  return toNeighborsView(database, assets, catalog);
+  return toNeighborsView(database, assets, catalog, gameplayTags);
 }

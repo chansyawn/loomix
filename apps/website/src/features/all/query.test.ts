@@ -6,15 +6,24 @@ import { createCollectionCatalog } from "../collection/catalog";
 import { queryAll, filterGroups } from "./query";
 import { allSearchSchema, compactAllSearch, emptyQuery } from "./search";
 function data() {
-  const catalog = catalogFixture();
-  catalog.gameplayTags.push(
-    { id: 10, name: "植物", enumName: "Plant", parentId: null, displayName: "植物" },
-    { id: 11, name: "颜色_花红", enumName: "RedFlower", parentId: 10, displayName: "红色花朵" },
-    { id: 12, name: "材质_木", enumName: "Wood", parentId: null, displayName: "木质" },
-    { id: 13, name: "风格_自然", enumName: "Natural", parentId: null, displayName: "自然" },
+  const { catalog, gameplayTags } = catalogFixture();
+  gameplayTags.tags.push(
+    { id: 1, internalName: "颜色", enumName: null, parentId: null, displayName: null },
+    { id: 2, internalName: "材质", enumName: null, parentId: null, displayName: null },
+    { id: 3, internalName: "艺术风格", enumName: null, parentId: null, displayName: null },
+    {
+      id: 11,
+      internalName: "颜色_花红",
+      enumName: "RedFlower",
+      parentId: 1,
+      displayName: "红色花朵",
+    },
+    { id: 12, internalName: "材质_木", enumName: "Wood", parentId: 2, displayName: "木质" },
+    { id: 13, internalName: "风格_自然", enumName: "Natural", parentId: 3, displayName: "自然" },
   );
   addFixtureRecords(
     catalog,
+    gameplayTags,
     {
       id: 1,
       name: "花材",
@@ -25,10 +34,7 @@ function data() {
       subcategory: null,
       trade: null,
       acquisition: [{ sourceId: 5, label: "采集", condition: null }],
-      gameplayTagGroups: ([6, 7, 8, 9, 10, 11, 12, 13, 14, 15] as const).map((field) => ({
-        field,
-        tagIds: field === 9 ? [11] : field === 11 ? [12] : field === 12 ? [13] : [],
-      })),
+      tagIds: [11, 12, 13],
     },
     {
       id: 2,
@@ -43,7 +49,7 @@ function data() {
     },
   );
   catalog.references.push({ id: 99, name: "隐藏材料" });
-  return createCollectionCatalog(catalog, assetsFixture(catalog));
+  return createCollectionCatalog(catalog, assetsFixture(catalog), gameplayTags);
 }
 test("搜索只查询正式记录的编号、名称和介绍", () => {
   const source = data();

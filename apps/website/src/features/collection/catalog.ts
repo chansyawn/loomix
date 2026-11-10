@@ -3,10 +3,12 @@ import {
   recordCategory,
   recordKind,
   recordTarget,
-  createTagResolver,
+  createRecordTagResolver,
   type Catalog,
   type CatalogRecord,
 } from "@loomix/schema/catalog";
+import { createGameplayTagIndex, tagLabel } from "@loomix/schema/gameplay-tags";
+import type { GameplayTags } from "@loomix/schema/gameplay-tags";
 import { toCollectionView } from "../collection-view";
 import { acquisitionText } from "../collection/acquisition";
 
@@ -19,9 +21,20 @@ export const categoryNames = {
   miscellaneous: "杂物",
 };
 export const kindNames = { item: "单品", group: "套组／系列", appearance: "外观", seed: "种子" };
-export function createCollectionCatalog(catalog: Catalog, assets: Assets) {
+export function createCollectionCatalog(
+  catalog: Catalog,
+  assets: Assets,
+  gameplayTags: GameplayTags,
+) {
   const image = createImageResolver(assets);
-  const tagsFor = createTagResolver(catalog);
+  if (
+    gameplayTags.snapshotId !== catalog.snapshotId ||
+    gameplayTags.locale !== catalog.locale ||
+    gameplayTags.formatVersion !== catalog.formatVersion
+  )
+    throw new Error("Catalog tags context mismatch");
+  const tagIndex = createGameplayTagIndex(gameplayTags.tags);
+  const tagsFor = createRecordTagResolver(tagIndex);
   const rows = catalog.records.map((record) => {
     const target = recordTarget(catalog, record.id);
     if (!target) throw new Error(`Missing formal target ${record.id}`);
@@ -33,9 +46,9 @@ export function createCollectionCatalog(catalog: Catalog, assets: Assets) {
       quality: record.quality,
       category: recordCategory(record),
       kind: recordKind(record),
-      colors: tagsFor(record, 9),
-      materials: tagsFor(record, 11),
-      styles: tagsFor(record, 12),
+      colors: tagsFor(record, "colors").map(tagLabel),
+      materials: tagsFor(record, "materials").map(tagLabel),
+      styles: tagsFor(record, "styles").map(tagLabel),
       acquisition: record.acquisition,
       acquisitionText: acquisitionText(record.acquisition),
       target,
@@ -46,7 +59,7 @@ export function createCollectionCatalog(catalog: Catalog, assets: Assets) {
     catalog,
     rows,
     byId: new Map(rows.map((row) => [row.id, row])),
-    view: toCollectionView(catalog, assets),
+    view: toCollectionView(catalog, assets, tagIndex),
   };
 }
 export type CollectionCatalog = ReturnType<typeof createCollectionCatalog>;

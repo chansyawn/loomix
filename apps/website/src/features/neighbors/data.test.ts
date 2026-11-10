@@ -3,15 +3,15 @@ import { toNeighborsView } from "./data";
 import { neighborFixture } from "./fixture";
 
 test("derives neighbor relationships from their owning entities", () => {
-  const { database, mapping, catalog } = neighborFixture();
-  const view = toNeighborsView(database, mapping, catalog);
+  const { database, mapping, catalog, gameplayTags } = neighborFixture();
+  const view = toNeighborsView(database, mapping, catalog, gameplayTags);
   expect(view.neighbors).toHaveLength(4);
   expect(view.neighbors[0].stories.map((story) => story.chapter)).toEqual([1, 2]);
   expect(view.neighbors[0].travel[0].reactions[0].text).toBe("旅行真开心！");
 });
 
 test("uses only the current neighbor's favour illustration without changing the list image", () => {
-  const { database, mapping, catalog } = neighborFixture();
+  const { database, mapping, catalog, gameplayTags } = neighborFixture();
   database.additionalImages.unshift(
     {
       key: "shared:favour",
@@ -26,7 +26,7 @@ test("uses only the current neighbor's favour illustration without changing the 
       image: { assetId: "star", variant: "illustration" },
     },
   );
-  const view = toNeighborsView(database, mapping, catalog);
+  const view = toNeighborsView(database, mapping, catalog, gameplayTags);
   expect(view.neighbors[0].image).toBe(`assets/${"a".repeat(64)}.webp`);
   expect(view.neighbors[0].favourImage).toBe(`assets/${"b".repeat(64)}.webp`);
   expect(view.neighbors[1].favourImage).toBeNull();
@@ -35,14 +35,14 @@ test("uses only the current neighbor's favour illustration without changing the 
     ...mapping,
     images: mapping.images.filter((entry) => entry.assetId !== "favour"),
   };
-  const missingView = toNeighborsView(database, missingAssets, catalog);
+  const missingView = toNeighborsView(database, missingAssets, catalog, gameplayTags);
   expect(missingView.neighbors[0].favourImage).toBeNull();
   expect(missingView.neighbors[0].image).toBe(view.neighbors[0].image);
 });
 
 test("resolves ordered preferences without mixing neighbors or expanding tags into items", () => {
-  const { database, mapping, catalog } = neighborFixture();
-  const view = toNeighborsView(database, mapping, catalog);
+  const { database, mapping, catalog, gameplayTags } = neighborFixture();
+  const view = toNeighborsView(database, mapping, catalog, gameplayTags);
   expect(view.neighbors[0].preferences).toEqual([
     { level: "love", name: "喜爱", items: [{ id: 106, name: "星空卡片" }], tags: [] },
     {
@@ -64,8 +64,8 @@ test("resolves ordered preferences without mixing neighbors or expanding tags in
   ]);
 });
 
-test("preserves unresolved preference references and removes duplicate IDs", () => {
-  const { database, mapping, catalog } = neighborFixture();
+test("rejects unknown tags and deduplicates known preference references", () => {
+  const { database, mapping, catalog, gameplayTags } = neighborFixture();
   database.giftPreferences.push({
     key: "1:love:extra",
     neighborId: 1,
@@ -73,22 +73,28 @@ test("preserves unresolved preference references and removes duplicate IDs", () 
     itemIds: [106, 999],
     tagIds: [999],
   });
-  expect(toNeighborsView(database, mapping, catalog).neighbors[0].preferences[0]).toEqual({
+  expect(() => toNeighborsView(database, mapping, catalog, gameplayTags)).toThrow(
+    "Unknown GameplayTag 999",
+  );
+  database.giftPreferences.at(-1)!.tagIds = [1, 1];
+  expect(
+    toNeighborsView(database, mapping, catalog, gameplayTags).neighbors[0].preferences[0],
+  ).toEqual({
     level: "love",
     name: "喜爱",
     items: [
       { id: 106, name: "星空卡片" },
       { id: 999, name: "未收录物品（999）" },
     ],
-    tags: [{ id: 999, name: "未收录标签（999）" }],
+    tags: [{ id: 1, name: "树生水果" }],
   });
 });
 test("resolves image references through the common asset directory", () => {
-  const { database, mapping, catalog } = neighborFixture();
-  expect(toNeighborsView(database, mapping, catalog).neighbors[0].image).toBe(
+  const { database, mapping, catalog, gameplayTags } = neighborFixture();
+  expect(toNeighborsView(database, mapping, catalog, gameplayTags).neighbors[0].image).toBe(
     `assets/${"a".repeat(64)}.webp`,
   );
   expect(
-    toNeighborsView(database, { ...mapping, images: [] }, catalog).neighbors[0].image,
+    toNeighborsView(database, { ...mapping, images: [] }, catalog, gameplayTags).neighbors[0].image,
   ).toBeNull();
 });

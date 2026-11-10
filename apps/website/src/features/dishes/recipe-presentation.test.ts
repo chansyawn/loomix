@@ -1,5 +1,6 @@
-import type { IngredientCategory, IngredientExpression, Recipe } from "@loomix/schema/catalog";
+import type { IngredientExpression, Recipe } from "@loomix/schema/catalog";
 import { describe, expect, it } from "vite-plus/test";
+import type { IngredientCategory } from "../ingredients/category";
 import type { IngredientItem } from "../collection-view";
 import { buildDishRecipeSlots, type RecipeConditionToken } from "./recipe-presentation";
 
@@ -57,11 +58,7 @@ function recipe(...slots: RecipeSlot[]): Recipe {
 function conditionText(tokens: RecipeConditionToken[]): string {
   return tokens
     .map((token) =>
-      token.kind === "category"
-        ? token.label
-        : token.kind === "operator"
-          ? token.value
-          : token.value,
+      token.kind === "tag" ? token.label : token.kind === "operator" ? token.value : token.value,
     )
     .join(" ");
 }
@@ -77,11 +74,11 @@ describe("dish recipe presentation", () => {
               {
                 kind: "any",
                 terms: [
-                  { kind: "category", categoryId: 10 },
-                  { kind: "category", categoryId: 20 },
+                  { kind: "tag", tagId: 10 },
+                  { kind: "tag", tagId: 20 },
                 ],
               },
-              { kind: "category", categoryId: 30 },
+              { kind: "tag", tagId: 30 },
             ],
           },
           [1],
@@ -93,7 +90,7 @@ describe("dish recipe presentation", () => {
 
     expect(conditionText(view!.conditionTokens)).toBe("( 蔬菜 或 紫色 ) 且 未收录类别");
     expect(view?.conditionTokens.at(-1)).toMatchObject({
-      kind: "category",
+      kind: "tag",
       resolved: false,
     });
   });
@@ -106,7 +103,7 @@ describe("dish recipe presentation", () => {
       ]),
     );
     const [view] = buildDishRecipeSlots(
-      recipe(slot({ kind: "category", categoryId: 10 }, [3, 1, 3, 999, 2])),
+      recipe(slot({ kind: "tag", tagId: 10 }, [3, 1, 3, 999, 2])),
       categoriesById,
       items,
     );
@@ -130,10 +127,7 @@ describe("dish recipe presentation", () => {
 
   it("distinguishes unconfirmed and empty candidate lists", () => {
     const views = buildDishRecipeSlots(
-      recipe(
-        slot({ kind: "category", categoryId: 10 }, null, 20),
-        slot({ kind: "category", categoryId: 10 }, [], 25),
-      ),
+      recipe(slot({ kind: "tag", tagId: 10 }, null, 20), slot({ kind: "tag", tagId: 10 }, [], 25)),
       categoriesById,
       new Map(),
     );

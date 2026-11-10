@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import type { GameplayTags } from "@loomix/schema/gameplay-tags";
 import { RecordSchema, type Catalog, type Item, type Group } from "@loomix/schema/catalog";
 import type { Assets, ImageRef } from "@loomix/schema/assets";
 import { emptyDataset } from "@loomix/schema/dataset";
@@ -7,7 +8,7 @@ import { referencedImages } from "@loomix/schema/dataset/images";
 import type { CollectionRecord, CollectionView } from "./collection-view.ts";
 
 export const fixtureContext = {
-  formatVersion: 4,
+  formatVersion: 5,
   snapshotId: "a".repeat(64),
   locale: "zh-CN",
 } as const;
@@ -37,10 +38,20 @@ export function catalogBase(record: CollectionRecord) {
     quality: record.quality,
   };
 }
-export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
+export function catalogFixture(view: Partial<CollectionView> = {}) {
   const catalog = emptyDataset(fixtureContext, fixtureSource).catalog;
-  catalog.ingredientCategories = view.ingredientCategories ?? [];
-  const add = (...items: object[]) => addFixtureRecords(catalog, ...items);
+  const gameplayTags = tagsFixture();
+  for (const category of view.ingredientCategories ?? []) {
+    gameplayTags.tags.push({
+      id: category.id,
+      internalName: category.tagName,
+      displayName: category.name,
+      enumName: null,
+      parentId: category.parentId,
+    });
+    catalog.ingredientCategories.push({ tagId: category.id, itemIds: category.itemIds });
+  }
+  const add = (...items: object[]) => addFixtureRecords(catalog, gameplayTags, ...items);
   const group = (record: CollectionRecord, type: Group["type"], memberIds: number[] | null) =>
     add({ ...catalogBase(record), type, memberIds, acquisition: null });
   const common = { trade: null, acquisition: null };
@@ -158,7 +169,7 @@ export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
       subcategory: null,
       acquisition: acquisition(record.acquisition),
     });
-  return catalog;
+  return { catalog, gameplayTags };
 }
 export function assetsFixture(catalog: Catalog): Assets {
   const dataset = emptyDataset(fixtureContext, fixtureSource);
@@ -176,10 +187,17 @@ export function assetsFixture(catalog: Catalog): Assets {
     })),
   };
 }
-export function fixtureRequest(catalog: Catalog): typeof fetch {
+export function fixtureRequest({
+  catalog,
+  gameplayTags,
+}: {
+  catalog: Catalog;
+  gameplayTags: GameplayTags;
+}): typeof fetch {
   const dataset = emptyDataset(fixtureContext, fixtureSource);
   dataset.catalog = catalog;
   const documents = {
+    "gameplay-tags": gameplayTags,
     catalog,
     neighbors: dataset.neighbors,
     world: dataset.world,
@@ -216,13 +234,17 @@ export function fixtureMetadata() {
     admissionReasons: ["manual" as const],
     clientType: 1,
     clientSecondaryType: null,
-    gameplayTagGroups: ([6, 7, 8, 9, 10, 11, 12, 13, 14, 15] as const).map((field) => ({
-      field,
-      tagIds: [] as number[],
-    })),
+    tagIds: [] as number[],
   };
 }
-export function addFixtureRecords(catalog: Catalog, ...items: object[]) {
+export function tagsFixture(): GameplayTags {
+  return { ...fixtureContext, kind: "gameplay-tags", tags: [] };
+}
+export function addFixtureRecords(
+  catalog: Catalog,
+  gameplayTags: GameplayTags,
+  ...items: object[]
+) {
   for (const input of items) {
     const raw: Record<string, unknown> = { ...input };
     if (raw.type === "reference") {
@@ -230,12 +252,12 @@ export function addFixtureRecords(catalog: Catalog, ...items: object[]) {
       continue;
     }
     const meta = fixtureMetadata();
-    for (const [key, field] of [
-      ["colors", 9],
-      ["materials", 11],
-      ["styles", 12],
-      ["origins", 8],
-      ["galaxyFlavor", 8],
+    for (const [key, rootName] of [
+      ["colors", "颜色"],
+      ["materials", "材质"],
+      ["styles", "艺术风格"],
+      ["origins", "产区分类"],
+      ["galaxyFlavor", "产区分类"],
     ] as const) {
       const value = raw[key];
       delete raw[key];
@@ -246,34 +268,35 @@ export function addFixtureRecords(catalog: Catalog, ...items: object[]) {
           : [];
       for (const label of values) {
         if (typeof label !== "string") continue;
-        let tag = catalog.gameplayTags.find((tag) => tag.name === label);
-        if (!tag) {
-          tag = {
-            id: catalog.gameplayTags.length + 1,
-            name: label,
-            displayName: label,
+        let root = gameplayTags.tags.find((tag) => tag.internalName === rootName);
+        if (!root) {
+          root = {
+            id: Math.max(0, ...gameplayTags.tags.map((tag) => tag.id)) + 1,
+            internalName: rootName,
+            displayName: rootName,
             enumName: null,
             parentId: null,
           };
-          catalog.gameplayTags.push(tag);
+          gameplayTags.tags.push(root);
         }
-        meta.gameplayTagGroups.find((group) => group.field === field)!.tagIds.push(tag.id);
+        let tag = gameplayTags.tags.find(
+          (tag) => tag.internalName === label && tag.parentId === root.id,
+        );
+        if (!tag) {
+          tag = {
+            id: Math.max(0, ...gameplayTags.tags.map((tag) => tag.id)) + 1,
+            internalName: label,
+            displayName: label,
+            enumName: null,
+            parentId: root.id,
+          };
+          gameplayTags.tags.push(tag);
+        }
+        meta.tagIds.push(tag.id);
       }
     }
     if (raw.type === "furniture") delete raw.size;
-    const existing = raw.gameplayTagGroups;
-    const groups =
-      Array.isArray(existing) &&
-      existing.some(
-        (group) =>
-          group &&
-          typeof group === "object" &&
-          "tagIds" in group &&
-          Array.isArray(group.tagIds) &&
-          group.tagIds.length,
-      )
-        ? existing
-        : meta.gameplayTagGroups;
-    catalog.records.push(RecordSchema.parse({ ...meta, ...raw, gameplayTagGroups: groups }));
+    const tagIds = Array.isArray(raw.tagIds) && raw.tagIds.length ? raw.tagIds : meta.tagIds;
+    catalog.records.push(RecordSchema.parse({ ...meta, ...raw, tagIds }));
   }
 }

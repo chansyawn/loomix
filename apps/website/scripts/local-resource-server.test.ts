@@ -19,6 +19,8 @@ test("serves WebP resources with the correct MIME type for GET and HEAD", async 
     await writeFile(path.join(directory, key), bytes);
     await writeFile(path.join(directory, "release.json"), "{}");
     await writeFile(path.join(directory, "assets.json"), "{}");
+    await mkdir(path.join(directory, "zh-CN"));
+    await writeFile(path.join(directory, "zh-CN/gameplay-tags.json"), JSON.stringify({ tags: [] }));
     server.listen(0, "127.0.0.1");
     await once(server, "listening");
     const address = server.address();
@@ -35,6 +37,9 @@ test("serves WebP resources with the correct MIME type for GET and HEAD", async 
     const images = await fetch(base + "assets.json");
     expect(images.status).toBe(200);
     expect(images.headers.get("content-type")).toBe("application/json; charset=utf-8");
+    const tags = await fetch(base + "zh-CN/gameplay-tags.json");
+    expect(tags.status).toBe(200);
+    expect(await tags.json()).toEqual({ tags: [] });
     const head = await fetch(base + key, { method: "HEAD" });
     expect(head.headers.get("content-type")).toBe("image/webp");
     expect(head.headers.get("content-length")).toBe(String(bytes.length));

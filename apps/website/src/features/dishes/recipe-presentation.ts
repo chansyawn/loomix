@@ -1,12 +1,13 @@
-import type { IngredientCategory, IngredientExpression, Recipe } from "@loomix/schema/catalog";
+import type { IngredientExpression, Recipe } from "@loomix/schema/catalog";
+import type { IngredientCategory } from "../ingredients/category";
 import type { IngredientItem } from "../collection-view";
 
 type RecipeSlot = NonNullable<Recipe["slots"]>[number];
 
 export type RecipeConditionToken =
   | {
-      kind: "category";
-      categoryId: number;
+      kind: "tag";
+      tagId: number;
       label: string;
       resolved: boolean;
     }
@@ -27,11 +28,11 @@ function appendConditionTokens(
   tokens: RecipeConditionToken[],
   wrapComposite: boolean,
 ): void {
-  if (expression.kind === "category") {
-    const category = categories.get(expression.categoryId);
+  if (expression.kind === "tag") {
+    const category = categories.get(expression.tagId);
     tokens.push({
-      kind: "category",
-      categoryId: expression.categoryId,
+      kind: "tag",
+      tagId: expression.tagId,
       label: category?.name ?? "未收录类别",
       resolved: category !== undefined,
     });
@@ -45,7 +46,7 @@ function appendConditionTokens(
         kind: "operator",
         value: expression.kind === "all" ? "且" : "或",
       });
-    appendConditionTokens(term, categories, tokens, term.kind !== "category");
+    appendConditionTokens(term, categories, tokens, term.kind !== "tag");
   });
   if (wrapComposite) tokens.push({ kind: "punctuation", value: ")" });
 }

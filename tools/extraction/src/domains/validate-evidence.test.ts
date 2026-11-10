@@ -4,7 +4,7 @@ import { validateDomainEvidence } from "./validate-evidence.ts";
 import type { FieldEvidence } from "../extraction/evidence/domain-schema.ts";
 const dataset = () =>
   emptyDataset(
-    { formatVersion: 4, snapshotId: "a".repeat(64), locale: "zh-CN" },
+    { formatVersion: 5, snapshotId: "a".repeat(64), locale: "zh-CN" },
     { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" },
   );
 const proof: FieldEvidence = {
@@ -31,4 +31,22 @@ test("证据必须指向真实实体及字段，拒绝旧集合和冲突状态",
       { ...proof, status: "unresolved", reasonCode: "missing" },
     ]),
   ).toThrow("Conflicting evidence status");
+});
+
+test("统一标签证据指向独立文档，旧局部字典不再接受", () => {
+  const data = dataset();
+  data.gameplayTags.tags.push({
+    id: 1,
+    internalName: "食材",
+    enumName: null,
+    parentId: null,
+    displayName: null,
+  });
+  const tagProof = { ...proof, entity: { collection: "gameplayTags.tags", id: 1 }, fieldPath: "$" };
+  expect(validateDomainEvidence(data, [tagProof])).toEqual([tagProof]);
+  expect(() =>
+    validateDomainEvidence(data, [
+      { ...tagProof, entity: { collection: "catalog.gameplayTags", id: 1 } },
+    ]),
+  ).toThrow("Unknown evidence entity");
 });

@@ -5,7 +5,7 @@ import { CatalogSchema } from "../src/catalog/index.ts";
 import { parseRelease } from "../src/release/index.ts";
 import { referencedImages } from "../src/dataset/images.ts";
 import { parseNeighbors } from "../src/neighbors/index.ts";
-const context = { formatVersion: 4, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
+const context = { formatVersion: 5, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
 const source = { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" };
 const base = {
   ...recordMetadata(),
@@ -56,7 +56,7 @@ test("reference identity is separate from formal admission", () => {
   ).toBe(true);
   expect(() => CatalogSchema.parse({ ...dataset.catalog, entries: [] })).toThrow();
 });
-test("gift preferences reference known neighbors, items, and a distinct tag dictionary", () => {
+test("gift preferences reference known neighbors, items, and the shared tag dictionary", () => {
   const dataset = emptyDataset(context, source);
   dataset.neighbors.neighbors.push({
     id: 11,
@@ -74,7 +74,13 @@ test("gift preferences reference known neighbors, items, and a distinct tag dict
     itemIds: [50000],
     tagIds: [50000],
   });
-  dataset.neighbors.giftPreferenceTags.push({ id: 50000, internalName: "食物", name: "食物" });
+  dataset.gameplayTags.tags.push({
+    id: 50000,
+    internalName: "食物",
+    displayName: "食物",
+    enumName: null,
+    parentId: null,
+  });
   expect(parseDataset(dataset).neighbors.giftPreferences).toEqual(
     dataset.neighbors.giftPreferences,
   );
@@ -82,9 +88,8 @@ test("gift preferences reference known neighbors, items, and a distinct tag dict
     parseNeighbors({
       ...dataset.neighbors,
       giftPreferences: undefined,
-      giftPreferenceTags: undefined,
     }),
-  ).toMatchObject({ giftPreferences: [], giftPreferenceTags: [] });
+  ).toMatchObject({ giftPreferences: [] });
   dataset.neighbors.giftPreferences[0]!.tagIds = [50001];
   expect(validateDataset(dataset)).toContainEqual(
     expect.objectContaining({ message: "Unknown preference tag 50001" }),
@@ -152,16 +157,20 @@ test("duplicate entities, dangling groups and ingredient cycles are reported tog
     memberIds: [99],
   });
   dataset.catalog.ingredientCategories.push({
-    id: 2,
-    name: "类别",
-    tagName: "tag",
-    parentId: 2,
+    tagId: 2,
     itemIds: [],
+  });
+  dataset.gameplayTags.tags.push({
+    id: 2,
+    internalName: "食材",
+    displayName: null,
+    enumName: null,
+    parentId: 2,
   });
   const messages = validateDataset(dataset).map((issue) => issue.message);
   expect(messages).toContain("Duplicate identity 1");
   expect(messages).toContain("Unknown furniture 99");
-  expect(messages).toContain("Ingredient category cycle");
+  expect(messages).toContain("Tag parent cycle");
 });
 test("unknown member sets remain distinct from confirmed empty sets", () => {
   const catalog = emptyDataset(context, source).catalog;
@@ -191,7 +200,7 @@ test("all nested image references use the same traversal and asset coverage chec
       manifest: {
         ...context,
         source,
-        files: ["catalog", "neighbors", "world", "assets"].map((kind) => ({
+        files: ["gameplay-tags", "catalog", "neighbors", "world", "assets"].map((kind) => ({
           kind,
           path: kind === "assets" ? "assets.json" : `zh-CN/${kind}.json`,
           sha256: "b".repeat(64),

@@ -1,4 +1,5 @@
-import type { IngredientCategory, IngredientExpression } from "@loomix/schema/catalog";
+import type { IngredientExpression } from "@loomix/schema/catalog";
+import type { IngredientCategory } from "./category";
 import type { CollectionView, DishItem, IngredientItem } from "../collection-view";
 
 export type IngredientDimension = "type" | "color" | "quality" | "group";
@@ -153,11 +154,10 @@ export function ingredientConditionLabel(
   expression: IngredientExpression,
   categories: ReadonlyMap<number, IngredientCategory>,
 ): string {
-  if (expression.kind === "category")
-    return categories.get(expression.categoryId)?.name ?? "未收录类别";
+  if (expression.kind === "tag") return categories.get(expression.tagId)?.name ?? "未收录类别";
   const labels = expression.terms.map((term) => {
     const label = ingredientConditionLabel(term, categories);
-    return term.kind !== "category" && term.kind !== expression.kind ? `（${label}）` : label;
+    return term.kind !== "tag" && term.kind !== expression.kind ? `（${label}）` : label;
   });
   return labels.join(expression.kind === "all" ? " 且 " : " 或 ");
 }

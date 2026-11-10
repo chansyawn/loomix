@@ -1,8 +1,16 @@
+import { DocumentKindSchema, documentPath } from "@loomix/schema/release";
 import { createReadStream } from "node:fs";
 import { realpath, stat } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
+
+const documentPaths = new Set([
+  "release.json",
+  ...["zh-CN", "en-US"].flatMap((locale) =>
+    DocumentKindSchema.options.map((kind) => documentPath(kind, locale)),
+  ),
+]);
 
 async function serveResource(
   request: IncomingMessage,
@@ -21,12 +29,7 @@ async function serveResource(
     return;
   }
   const key = pathname.slice("/resources/".length);
-  if (
-    key !== "release.json" &&
-    key !== "assets.json" &&
-    !/^(?:zh-CN|en-US)\/(?:catalog|neighbors|world)\.json$/.test(key) &&
-    !/^assets\/[a-f0-9]{64}\.webp$/.test(key)
-  ) {
+  if (!documentPaths.has(key) && !/^assets\/[a-f0-9]{64}\.webp$/.test(key)) {
     response.writeHead(404).end();
     return;
   }

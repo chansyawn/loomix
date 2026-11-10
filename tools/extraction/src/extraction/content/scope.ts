@@ -35,7 +35,7 @@ export function classify(
   tables: Pick<Tables, "rows" | "id" | "uint" | "byte" | "text">,
   vocabulary: Pick<
     Vocabulary,
-    "tags" | "tree" | "renderTags" | "setTags" | "subgroups" | "groupNames"
+    "tags" | "tagIndex" | "renderTags" | "setTags" | "subgroups" | "groupNames"
   >,
   main: Map<number | null, TableRow>,
   admissions: FrozenAdmissions,
@@ -55,7 +55,7 @@ export function classify(
     let category: string | null = null;
     if (tables.byte(row, profile.fields.content.appearanceFlag, 0) === 1) {
       group = "clothing.appearance";
-      const expanded = expandTags(itemTags, vocabulary.tree);
+      const expanded = expandTags(itemTags, vocabulary.tagIndex);
       const matches = ["发型", "眼睛", "眉毛", "面饰", "肤色"].filter((name) => expanded.has(name));
       if (matches.length !== 1) throw new Error(`Unclassified appearance ${id}`);
       category = vocabulary.renderTags(matches) ?? matches[0];
@@ -64,7 +64,7 @@ export function classify(
       if (matches.length !== 1) throw new Error(`Unclassified set ${id}`);
       group = vocabulary.setTags[matches[0]];
     } else {
-      const expanded = expandTags([...itemTags, ...vocabulary.tags(item, 15)], vocabulary.tree);
+      const expanded = expandTags([...itemTags, ...vocabulary.tags(item, 15)], vocabulary.tagIndex);
       const matches = vocabulary.subgroups.filter((subgroup) =>
         subgroup.filters.some((name) => expanded.has(name)),
       );

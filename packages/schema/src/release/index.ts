@@ -1,3 +1,4 @@
+import { GameplayTagsSchema } from "../gameplay-tags/index.ts";
 import { z } from "zod";
 import { AssetsSchema, imageKey } from "../assets/index.ts";
 import { CatalogSchema } from "../catalog/index.ts";
@@ -9,13 +10,20 @@ import { NeighborsSchema } from "../neighbors/index.ts";
 import { WorldSchema } from "../world/index.ts";
 
 export const documentSchemas = {
+  "gameplay-tags": GameplayTagsSchema,
   catalog: CatalogSchema,
   neighbors: NeighborsSchema,
   world: WorldSchema,
   assets: AssetsSchema,
 };
 export type DocumentKind = keyof typeof documentSchemas;
-export const DocumentKindSchema = z.enum(["catalog", "neighbors", "world", "assets"]);
+export const DocumentKindSchema = z.enum([
+  "gameplay-tags",
+  "catalog",
+  "neighbors",
+  "world",
+  "assets",
+]);
 export const ReleaseIdSchema = z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/);
 export const ReleaseMarkerSchema = z.strictObject({
   release: ReleaseIdSchema,
@@ -23,7 +31,7 @@ export const ReleaseMarkerSchema = z.strictObject({
 });
 export const FileSchema = z.strictObject({
   kind: DocumentKindSchema,
-  path: z.string().regex(/^(?:[a-z]{2}-[A-Z]{2}\/)?[a-z]+\.json$/),
+  path: z.string().regex(/^(?:[a-z]{2}-[A-Z]{2}\/)?[a-z]+(?:-[a-z]+)*\.json$/),
   sha256: HashSchema,
   bytes: z.number().int().positive(),
 });
@@ -118,6 +126,7 @@ export function assembleRelease(
         locale: manifest.locale,
       },
       source: manifest.source,
+      gameplayTags: documents.get("gameplay-tags"),
       catalog: documents.get("catalog"),
       neighbors: documents.get("neighbors"),
       world: documents.get("world"),

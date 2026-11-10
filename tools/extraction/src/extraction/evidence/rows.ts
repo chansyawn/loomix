@@ -1,4 +1,4 @@
-import type { Evidence, EvidenceRecord, TableEvidence, TagNode, TableRow } from "../types.ts";
+import type { Evidence, EvidenceRecord, TableEvidence, TableRow } from "../types.ts";
 import { expandTags, splitTags } from "../content/model.ts";
 import { Tables } from "../decode/tables.ts";
 import { profile } from "../../profile.ts";
@@ -51,7 +51,7 @@ export function relatedRows(
   proof: EvidenceRecord,
   hint: TableEvidence,
   tables: Tables,
-  tree: Record<string, TagNode>,
+  tree: import("@loomix/schema/gameplay-tags").GameplayTagIndex,
   index: EvidenceIndex,
 ) {
   const ui = index.uiById.get(proof.id);

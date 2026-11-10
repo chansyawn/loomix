@@ -13,7 +13,7 @@ export const webp = Buffer.from(
 );
 export const imageKey = `assets/${sha256(webp)}.webp`;
 
-export const context = { formatVersion: 4, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
+export const context = { formatVersion: 5, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
 export const source = {
   gameVersion: "test",
   dataRevision: 1,
@@ -28,6 +28,7 @@ export function emptyRelease() {
 }
 export async function writeDocuments(directory: string, dataset: Dataset, assets: Assets) {
   const documents = {
+    "gameplay-tags": dataset.gameplayTags,
     catalog: dataset.catalog,
     neighbors: dataset.neighbors,
     world: dataset.world,

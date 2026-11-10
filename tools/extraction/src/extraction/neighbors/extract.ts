@@ -26,7 +26,7 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
   const giftPreferences = readGiftPreferences(
     tables,
     accepted,
-    input.preferenceTags,
+    input.tagIndex,
     records,
     exclusions,
   );
@@ -41,8 +41,7 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
     encounterIslands: readIslands(tables, records),
     friendshipRules: readRules(tables, records, exclusions),
     eventTags: readEventTags(tables, records),
-    giftPreferences: giftPreferences.preferences,
-    giftPreferenceTags: giftPreferences.tags,
+    giftPreferences,
     outfits,
     assets: readAssets(tables, records, exclusions),
   };

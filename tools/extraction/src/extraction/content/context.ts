@@ -3,7 +3,9 @@ import type { TableRow, BinDataAsset, IndexedAsset, IconMatch } from "../types.t
 import { readJson } from "../../workflow/json.ts";
 import { profile } from "../../profile.ts";
 import { Tables } from "../decode/tables.ts";
-import { parseBinData } from "../decode/bindata.ts";
+import { parseCreatureDisplay } from "../decode/bindata.ts";
+import { loadClientGameplayTags } from "../gameplay-tags/client.ts";
+import type { ClientGameplayTags } from "../gameplay-tags/client.ts";
 import { createIconResolver } from "../images/resolve.ts";
 import { createVocabulary } from "./vocabulary.ts";
 import type { Vocabulary } from "./vocabulary.ts";
@@ -16,6 +18,7 @@ import type { IngredientCategoryBuild } from "./recipes.ts";
 export interface ContentContext {
   tables: Tables;
   vocabulary: Vocabulary;
+  gameplayTags: ClientGameplayTags;
   scope: Scope;
   main: Map<number | null, TableRow>;
   ui: Map<number | null, TableRow>;
@@ -53,12 +56,9 @@ export function createContentContext(work: string): ContentContext {
     const file = manifests.find((asset) => asset.Name === name)?.file ?? "missing-bindata";
     return readJson(path.isAbsolute(file) ? file : path.join(work, file));
   };
-  const { tree, tagDisplay, display } = parseBinData(
-    bin(profile.binData.tags),
-    bin(profile.binData.tagDisplay),
-    bin(profile.binData.creatureDisplay),
-  );
-  const vocabulary = createVocabulary(tables, tree, tagDisplay, display);
+  const gameplayTags = loadClientGameplayTags(work, tables);
+  const display = parseCreatureDisplay(bin(profile.binData.creatureDisplay));
+  const vocabulary = createVocabulary(tables, gameplayTags.index, display);
   const main = tables.byId(profile.roots.items);
   const creatures = tables.byId(profile.roots.creatures);
   const classification = classify(tables, vocabulary, main, readAdmissions(work));
@@ -83,6 +83,7 @@ export function createContentContext(work: string): ContentContext {
   return {
     tables,
     vocabulary,
+    gameplayTags,
     scope,
     main,
     ui,

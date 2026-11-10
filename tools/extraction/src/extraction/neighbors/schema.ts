@@ -136,11 +136,6 @@ const giftPreference = z.strictObject({
   itemIds: z.number().int().positive().array(),
   tagIds: z.number().int().positive().array(),
 });
-const giftPreferenceTag = z.strictObject({
-  id: z.number().int().positive(),
-  internalName: z.string().min(1),
-  nameZh: z.string().min(1).nullable(),
-});
 
 const outfitOffer = z.strictObject({
   id: z.number().int().positive(),
@@ -208,7 +203,6 @@ export const NeighborDatabaseSchema = z
     friendshipRules: friendshipRule.array(),
     eventTags: eventTag.array(),
     giftPreferences: giftPreference.array(),
-    giftPreferenceTags: giftPreferenceTag.array(),
     outfits: outfit.array(),
     assets: asset.array(),
   })
@@ -248,11 +242,6 @@ export const NeighborDatabaseSchema = z
         ["love", "favor", "dislike"].indexOf(a.level) -
           ["love", "favor", "dislike"].indexOf(b.level),
       ["giftPreferences"],
-    );
-    assertSorted(
-      database.giftPreferenceTags.map((tag) => tag.id),
-      numeric,
-      ["giftPreferenceTags"],
     );
     assertSorted(
       database.outfits.map((value) => value.id),
@@ -300,8 +289,6 @@ export const NeighborDatabaseSchema = z
     database.assets.forEach((value, index) =>
       checkIds(value.relatedNeighborIds, ["assets", index, "relatedNeighborIds"]),
     );
-    const preferenceTagIds = new Set(database.giftPreferenceTags.map((tag) => tag.id));
-    const referencedPreferenceTags = new Set<number>();
     database.giftPreferences.forEach((preference, index) => {
       if (!known.has(preference.npcId))
         issue(["giftPreferences", index, "npcId"], "Unknown neighbor");
@@ -309,17 +296,7 @@ export const NeighborDatabaseSchema = z
         issue(["giftPreferences", index, "key"], "Invalid preference key");
       assertSorted(preference.itemIds, numeric, ["giftPreferences", index, "itemIds"]);
       assertSorted(preference.tagIds, numeric, ["giftPreferences", index, "tagIds"]);
-      for (const id of preference.tagIds) {
-        if (!preferenceTagIds.has(id))
-          issue(["giftPreferences", index, "tagIds"], `Unknown preference tag ${id}`);
-        referencedPreferenceTags.add(id);
-      }
     });
-    if (
-      referencedPreferenceTags.size !== preferenceTagIds.size ||
-      [...preferenceTagIds].some((id) => !referencedPreferenceTags.has(id))
-    )
-      issue(["giftPreferenceTags"], "Preference tag dictionary must match referenced tags");
     database.stories.forEach((value, index) => {
       if (!value.paragraphs.length) issue(["stories", index, "paragraphs"], "Empty story chapter");
       assertSorted(

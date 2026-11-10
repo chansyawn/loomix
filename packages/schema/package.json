@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./gameplay-tags": "./src/gameplay-tags/index.ts",
     "./catalog": "./src/catalog/index.ts",
     "./neighbors": "./src/neighbors/index.ts",
     "./world": "./src/world/index.ts",

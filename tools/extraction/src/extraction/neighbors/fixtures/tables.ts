@@ -1,3 +1,4 @@
+import { createGameplayTagIndex } from "@loomix/schema/gameplay-tags";
 import { neighborAllowlist } from "../allowlist.ts";
 import fs from "node:fs";
 import os from "node:os";
@@ -271,13 +272,9 @@ export function createFixture(rows = fixtureRows()): {
       content,
       source,
       assetIndex: [],
-      preferenceTags: {
-        tags: new Map([[50000, { internalName: "食物", nameZh: "食物", textId: null }]]),
-        sources: {
-          tree: { kind: "asset", file: "bindata/tags.json", pathId: "633e15d6" },
-          display: { kind: "asset", file: "bindata/tag-display.json", pathId: "b429c67e" },
-        },
-      },
+      tagIndex: createGameplayTagIndex([
+        { id: 50000, internalName: "食物", displayName: "食物", enumName: null, parentId: null },
+      ]),
     },
     cleanup: () => fs.rmSync(directory, { recursive: true, force: true }),
   };

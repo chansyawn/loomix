@@ -60,33 +60,11 @@ export const EntityBaseSchema = z.strictObject({
   quality: QualitySchema.nullable(),
 });
 export const AdmissionReasonSchema = z.enum(["encyclopedia", "manual", "deterministicSeed"]);
-export const GameplayTagGroupSchema = z.strictObject({
-  field: z.union([
-    z.literal(6),
-    z.literal(7),
-    z.literal(8),
-    z.literal(9),
-    z.literal(10),
-    z.literal(11),
-    z.literal(12),
-    z.literal(13),
-    z.literal(14),
-    z.literal(15),
-  ]),
-  tagIds: IdSchema.array(),
-});
-export const GameplayTagSchema = z.strictObject({
-  id: IdSchema,
-  name: z.string().min(1),
-  enumName: text,
-  parentId: IdSchema.nullable(),
-  displayName: text,
-});
 const metadata = z.strictObject({
   admissionReasons: AdmissionReasonSchema.array().min(1),
   clientType: z.number().int().nonnegative(),
   clientSecondaryType: z.number().int().nonnegative().nullable(),
-  gameplayTagGroups: GameplayTagGroupSchema.array().length(10),
+  tagIds: IdSchema.array(),
 });
 const item = EntityBaseSchema.extend({
   ...metadata.shape,
@@ -195,7 +173,6 @@ export const CatalogSchema = ContextSchema.extend({
   kind: z.literal("catalog"),
   records: RecordSchema.array(),
   references: ItemReferenceSchema.array(),
-  gameplayTags: GameplayTagSchema.array(),
   craftingRecipes: CraftingRecipeSchema.extend({
     productId: IdSchema,
     quantity: IdSchema.nullable(),
@@ -209,14 +186,9 @@ export type Item = z.infer<typeof ItemSchema>;
 export type Group = z.infer<typeof GroupSchema>;
 export type Seed = Extract<CatalogRecord, { type: "seed" }>;
 export type ItemReference = z.infer<typeof ItemReferenceSchema>;
-export type GameplayTag = z.infer<typeof GameplayTagSchema>;
 export type Quality = z.infer<typeof QualitySchema>;
 export const parseCatalog = (input: unknown): Catalog => CatalogSchema.parse(input);
-export {
-  isGroupRecord,
-  recordCategory,
-  recordKind,
-  resolveItem,
-  createTagResolver,
-} from "./records.ts";
+export { isGroupRecord, recordCategory, recordKind, resolveItem } from "./records.ts";
 export { recordTarget, recordFocus } from "./location.ts";
+
+export { createRecordTagResolver } from "./tags.ts";

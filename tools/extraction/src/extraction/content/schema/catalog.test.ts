@@ -250,11 +250,11 @@ test("ingredient categories and recursive recipes validate catalog references", 
             {
               kind: "all",
               terms: [
-                { kind: "category", categoryId: 101 },
-                { kind: "category", categoryId: 102 },
+                { kind: "tag", tagId: 101 },
+                { kind: "tag", tagId: 102 },
               ],
             },
-            { kind: "category", categoryId: 101 },
+            { kind: "tag", tagId: 101 },
           ],
         },
         itemIds: [],
@@ -303,7 +303,7 @@ test("ingredient and recipe references reject duplicates, invalid kinds, and unk
           {
             field: 20,
             rawExpression: "食材_A",
-            expression: { kind: "category", categoryId: 999 },
+            expression: { kind: "tag", tagId: 999 },
             itemIds: [],
             quantity: null,
           },
@@ -320,7 +320,7 @@ test("ingredient and recipe references reject duplicates, invalid kinds, and unk
           {
             field: 20,
             rawExpression: "食材_A",
-            expression: { kind: "category", categoryId: 101 },
+            expression: { kind: "tag", tagId: 101 },
             itemIds: null,
             quantity: null,
           },

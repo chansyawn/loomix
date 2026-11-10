@@ -49,6 +49,7 @@ export async function renderImages(options: WorkOptions, extraction: string): Pr
   }
   const assets = AssetsSchema.parse({ ...dataset.context, kind: "assets", images });
   const documents = {
+    "gameplay-tags": dataset.gameplayTags,
     catalog: dataset.catalog,
     neighbors: dataset.neighbors,
     world: dataset.world,

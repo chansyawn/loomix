@@ -1,3 +1,4 @@
+import { GameplayTagsSchema } from "../gameplay-tags/index.ts";
 import { z } from "zod";
 import { CatalogSchema } from "../catalog/index.ts";
 import { NeighborsSchema } from "../neighbors/index.ts";
@@ -9,6 +10,7 @@ export { validateDataset } from "./validate.ts";
 export const DatasetSchema = z.strictObject({
   context: ContextSchema,
   source: SourceSchema,
+  gameplayTags: GameplayTagsSchema,
   catalog: CatalogSchema,
   neighbors: NeighborsSchema,
   world: WorldSchema,
@@ -18,12 +20,12 @@ export function emptyDataset(context: Dataset["context"], source: Dataset["sourc
   return {
     context: { ...context },
     source: { ...source },
+    gameplayTags: { ...context, kind: "gameplay-tags", tags: [] },
     catalog: {
       ...context,
       kind: "catalog",
       records: [],
       references: [],
-      gameplayTags: [],
       craftingRecipes: [],
       growths: [],
       ingredientCategories: [],
@@ -38,7 +40,6 @@ export function emptyDataset(context: Dataset["context"], source: Dataset["sourc
       friendshipRules: [],
       eventTags: [],
       giftPreferences: [],
-      giftPreferenceTags: [],
       outfits: [],
       resources: [],
       additionalImages: [],

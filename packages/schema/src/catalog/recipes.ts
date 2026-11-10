@@ -1,12 +1,12 @@
 import { z } from "zod";
 import { IdSchema as ItemIdSchema } from "../common/identity.ts";
 export type IngredientExpression =
-  | { kind: "category"; categoryId: number }
+  | { kind: "tag"; tagId: number }
   | { kind: "all"; terms: IngredientExpression[] }
   | { kind: "any"; terms: IngredientExpression[] };
 const ingredientExpressionSchema: z.ZodType<IngredientExpression> = z.lazy(() =>
   z.discriminatedUnion("kind", [
-    z.strictObject({ kind: z.literal("category"), categoryId: ItemIdSchema }),
+    z.strictObject({ kind: z.literal("tag"), tagId: ItemIdSchema }),
     z.strictObject({ kind: z.literal("all"), terms: ingredientExpressionSchema.array().min(2) }),
     z.strictObject({ kind: z.literal("any"), terms: ingredientExpressionSchema.array().min(2) }),
   ]),
@@ -21,10 +21,7 @@ export const RecipeSlotSchema = z.strictObject({
 });
 export const RecipeSchema = z.strictObject({ slots: RecipeSlotSchema.array().nullable() });
 export const IngredientCategorySchema = z.strictObject({
-  id: ItemIdSchema,
-  tagName: z.string().min(1),
-  name: z.string().min(1),
-  parentId: ItemIdSchema.nullable(),
+  tagId: ItemIdSchema,
   itemIds: z.array(ItemIdSchema),
 });
 const text = z.string().min(1).nullable();

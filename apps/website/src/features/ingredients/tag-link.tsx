@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 import { Link } from "@tanstack/react-router";
-import type { IngredientCategory } from "@loomix/schema/catalog";
+import type { IngredientCategory } from "./category";
 import { buttonVariants } from "@/ui/components/button";
 import { ingredientFiltersForTag } from "./search";
 

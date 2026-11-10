@@ -5,7 +5,12 @@ export function validateDomainEvidence(dataset: Dataset, fields: FieldEvidence[]
   const merged = new Map<string, FieldEvidence>();
   for (const proof of fields) {
     const [domain, name] = proof.entity.collection.split(".");
-    if (domain !== "catalog" && domain !== "neighbors" && domain !== "world")
+    if (
+      domain !== "catalog" &&
+      domain !== "neighbors" &&
+      domain !== "world" &&
+      domain !== "gameplayTags"
+    )
       throw new Error(`Unknown evidence domain ${domain}`);
     const values: unknown = Reflect.get(dataset[domain], name!);
     const entity: unknown = Array.isArray(values)

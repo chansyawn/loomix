@@ -5,7 +5,7 @@ import { Tables } from "../decode/tables.ts";
 import type { IndexedAsset } from "../types.ts";
 import { extractNeighborBundle } from "./extract.ts";
 import type { NeighborExtractionInput } from "./types.ts";
-import { loadPreferenceTagCatalog } from "./preferences.ts";
+import { loadClientGameplayTags } from "../gameplay-tags/client.ts";
 
 export function neighborInput(work: string): NeighborExtractionInput {
   const tables = new Tables(path.join(work, "prepared"));
@@ -13,7 +13,7 @@ export function neighborInput(work: string): NeighborExtractionInput {
     tables,
     source: { ...catalogSource, manifestId: profile.manifestId },
     assetIndex: readJson<IndexedAsset[]>(path.join(work, "prepared/asset-index.json")),
-    preferenceTags: loadPreferenceTagCatalog(work, tables),
+    tagIndex: loadClientGameplayTags(work, tables).index,
   };
 }
 

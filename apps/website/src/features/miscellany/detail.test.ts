@@ -1,3 +1,4 @@
+import { createGameplayTagIndex } from "@loomix/schema/gameplay-tags";
 import { isNotFound } from "@tanstack/react-router";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { assetsFixture, catalogFixture, fixtureRequest } from "../collection-fixture.ts";
@@ -135,8 +136,12 @@ describe("miscellany details", () => {
   });
 
   it("resolves source trees in catalog order without repeating a tree for multiple drop groups", () => {
-    const catalog = relatedCatalog();
-    const collection = toCollectionView(catalog, assetsFixture(catalog));
+    const { catalog, gameplayTags } = relatedCatalog();
+    const collection = toCollectionView(
+      catalog,
+      assetsFixture(catalog),
+      createGameplayTagIndex(gameplayTags.tags),
+    );
     const detail = buildMiscellanyDetail(collection, item.id);
     expect(detail.sourceTrees.map((tree) => [tree.id, tree.name])).toEqual([
       [2, "杉树"],
@@ -147,8 +152,12 @@ describe("miscellany details", () => {
   });
 
   it("lists only direct furniture uses once and preserves every matching recipe's position and quantity", () => {
-    const catalog = relatedCatalog();
-    const collection = toCollectionView(catalog, assetsFixture(catalog));
+    const { catalog, gameplayTags } = relatedCatalog();
+    const collection = toCollectionView(
+      catalog,
+      assetsFixture(catalog),
+      createGameplayTagIndex(gameplayTags.tags),
+    );
     const detail = buildMiscellanyDetail(collection, item.id);
     expect(
       detail.furnitureUses.map(({ furniture, recipes }) => ({ id: furniture.id, recipes })),

@@ -1,7 +1,8 @@
 import type { RecordType } from "../schema.ts";
-import type { TagNode, Row, TableRow } from "../types.ts";
+import type { GameplayTagIndex } from "@loomix/schema/gameplay-tags";
+import type { Row, TableRow } from "../types.ts";
 import type { Tables } from "../decode/tables.ts";
-import type { TagDisplay, CreatureDisplayMap } from "../decode/bindata.ts";
+import type { CreatureDisplayMap } from "../decode/bindata.ts";
 import { profile } from "../../profile.ts";
 import { splitTags } from "./model.ts";
 
@@ -13,7 +14,7 @@ export interface Subgroup {
 }
 
 export interface Vocabulary {
-  tree: Record<number, TagNode>;
+  tagIndex: GameplayTagIndex;
   qualityLabels: Map<number, string | null>;
   subgroups: Subgroup[];
   groupNames: Record<number, RecordType>;
@@ -52,20 +53,11 @@ const SET_TAGS: Record<string, RecordType> = {
 
 export function createVocabulary(
   tables: Tables,
-  tree: Record<number, TagNode>,
-  tagDisplay: TagDisplay,
+  tagIndex: GameplayTagIndex,
   display: CreatureDisplayMap,
 ): Vocabulary {
-  const tagByName = new Map(Object.values(tree).map((node) => [node.TagName, node]));
-  const tagByEnum = new Map(
-    Object.values(tree)
-      .filter((node): node is TagNode & { EnumName: string } => !!node.EnumName)
-      .map((node) => [node.EnumName, node]),
-  );
-  const translateTag = (name: string): string | null => {
-    const id = tagByName.get(name)?.TagId;
-    return tables.key(id == null ? null : tagDisplay[id]?.nameInGame?.textId) ?? null;
-  };
+  const translateTag = (name: string): string | null =>
+    tagIndex.findByName(name)?.displayName ?? null;
   const tags = (row: Row, field: number) => splitTags(tables.string(row, field));
   const renderTags = (values: string[]): string | null => {
     const translated = values.map(translateTag);
@@ -74,11 +66,23 @@ export function createVocabulary(
   const renderDisplay = (value: string | null): string | null => {
     const keys = splitTags(value);
     const values = keys.map((key) => {
-      const node = tagByEnum.get(key.replace(/^CHabitat_/, ""));
+      const direct = tables.key(display[key]?.textContent?.textId ?? key);
+      if (direct !== null) return direct;
+      const habitat = tagIndex.findByName("栖息地");
+      const candidates = tagIndex.findByEnumName(key.replace(/^CHabitat_/, ""));
+      const matches = key.startsWith("CHabitat_")
+        ? habitat
+          ? tagIndex.select(
+              candidates.map((tag) => tag.id),
+              habitat.id,
+            )
+          : []
+        : candidates;
+      if (matches.length > 1) throw new Error(`Ambiguous ecological GameplayTag ${key}`);
+      const node = matches[0];
       return (
-        tables.key(display[key]?.textContent?.textId ?? key) ??
-        tables.key(node ? tagDisplay[node.TagId]?.nameInGame?.textId : null) ??
-        (key.startsWith("CHabitat_") && node ? tables.key(`TagDisplayName_${node.EnumName}`) : null)
+        node?.displayName ??
+        (key.startsWith("CHabitat_") && node ? tables.key(`TagDisplayName_${node.enumName}`) : null)
       );
     });
     return keys.length && values.every(Boolean) ? [...new Set(values)].join("，") : null;
@@ -102,7 +106,7 @@ export function createVocabulary(
   }));
 
   return {
-    tree,
+    tagIndex,
     qualityLabels,
     subgroups,
     groupNames: GROUP_NAMES,

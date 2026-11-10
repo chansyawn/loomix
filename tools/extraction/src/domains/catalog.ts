@@ -20,18 +20,17 @@ export function buildCatalog(
   referencedGiftItemIds: readonly number[] = [],
 ): Catalog {
   const { tables } = context;
-  const { metadata, dictionary } = createRecordMetadata(context);
+  const metadata = createRecordMetadata(context);
   const references = new Set<number>();
   const catalog: Catalog = {
     ...identity,
     kind: "catalog",
     records: [],
     references: [],
-    gameplayTags: [],
     craftingRecipes: [],
     growths: [],
     ingredientCategories: observations.ingredientCategories.map((category) => ({
-      ...category,
+      tagId: category.id,
       itemIds: [...category.itemIds],
     })),
   };
@@ -159,11 +158,11 @@ export function buildCatalog(
     references.add(association.itemId);
   for (const category of catalog.ingredientCategories)
     category.itemIds = context.ingredientCategoryBuild.associations
-      .filter((association) => association.categoryId === category.id)
+      .filter((association) => association.categoryId === category.tagId)
       .map((association) => association.itemId)
       .sort((a, b) => a - b);
   const categories = new Map(
-    catalog.ingredientCategories.map((category) => [category.id, category]),
+    catalog.ingredientCategories.map((category) => [category.tagId, category]),
   );
   for (const item of catalog.records) {
     if ("trade" in item)
@@ -185,7 +184,6 @@ export function buildCatalog(
     catalog.references.push({ id, name });
   }
   catalog.records.sort((a, b) => a.id - b.id);
-  catalog.gameplayTags = dictionary();
   assert.deepEqual(
     new Set(catalog.records.map((record) => record.id)),
     catalogAdmissionIds(context),

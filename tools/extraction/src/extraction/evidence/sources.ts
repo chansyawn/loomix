@@ -1,10 +1,4 @@
-import type {
-  EvidenceRecord,
-  SourceReference,
-  TableEvidence,
-  TagNode,
-  BinDataAsset,
-} from "../types.ts";
+import type { EvidenceRecord, SourceReference, TableEvidence, BinDataAsset } from "../types.ts";
 import { plainText } from "../content/model.ts";
 import { Tables } from "../decode/tables.ts";
 import { profile } from "../../profile.ts";
@@ -14,7 +8,7 @@ export function evidenceSources(
   proof: EvidenceRecord,
   hints: TableEvidence[],
   tables: Tables,
-  tree: Record<string, TagNode>,
+  tree: import("@loomix/schema/gameplay-tags").GameplayTagIndex,
   bindata: BinDataAsset[],
   index: EvidenceIndex,
 ): SourceReference[] {

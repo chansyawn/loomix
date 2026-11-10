@@ -1,3 +1,4 @@
+import { createGameplayTagIndex } from "@loomix/schema/gameplay-tags";
 import { expect, test } from "vite-plus/test";
 import { assetsFixture, catalogFixture } from "../collection-fixture";
 import { toCollectionView } from "../collection-view";
@@ -11,7 +12,7 @@ import { filterGroups, queryPlants } from "./query";
 import { emptyQuery } from "./search";
 
 test("derives crop detail destinations for seeds, products and shared ingredient references", () => {
-  const catalog = catalogFixture({
+  const { catalog, gameplayTags } = catalogFixture({
     plants: plantsDataFixture({
       items: [
         plantItemFixture({ id: 1, category: "作物" }),
@@ -24,7 +25,11 @@ test("derives crop detail destinations for seeds, products and shared ingredient
       seeds: [plantSeedFixture({ id: 30, plantIds: [1] })],
     }),
   });
-  const view = toCollectionView(catalog, assetsFixture(catalog));
+  const view = toCollectionView(
+    catalog,
+    assetsFixture(catalog),
+    createGameplayTagIndex(gameplayTags.tags),
+  );
   expect(view.plants.items.map((item) => item.cropSeriesId)).toEqual([10, null]);
   expect(view.plants.seeds[0].cropSeriesId).toBe(10);
   expect(view.plants.series[0].summary.seeds[0].cropSeriesId).toBe(10);
@@ -33,7 +38,7 @@ test("derives crop detail destinations for seeds, products and shared ingredient
 });
 
 test("summarizes structured origins without parsing punctuation in localized labels", () => {
-  const catalog = catalogFixture({
+  const { catalog, gameplayTags } = catalogFixture({
     plants: plantsDataFixture({
       items: [plantItemFixture({ id: 1, name: "植物", category: "作物" })],
       series: [plantSeriesFixture({ id: 2, plantIds: [1] })],
@@ -41,13 +46,25 @@ test("summarizes structured origins without parsing punctuation in localized lab
   });
   const plant = catalog.records[0];
   if (plant.type !== "plant") throw new Error("Expected plant");
-  catalog.gameplayTags.push(
-    { id: 1001, name: "禾夏，星系", displayName: "禾夏，星系", enumName: null, parentId: null },
-    { id: 1002, name: "帕沙", displayName: "帕沙", enumName: null, parentId: null },
+  const rootId = 1000;
+  gameplayTags.tags.push(
+    { id: rootId, internalName: "产区分类", displayName: null, enumName: null, parentId: null },
+    {
+      id: 1001,
+      internalName: "禾夏，星系",
+      displayName: "禾夏，星系",
+      enumName: null,
+      parentId: rootId,
+    },
+    { id: 1002, internalName: "帕沙", displayName: "帕沙", enumName: null, parentId: rootId },
   );
-  plant.gameplayTagGroups.find((group) => group.field === 8)!.tagIds = [1001, 1002];
+  plant.tagIds = [1001, 1002];
   plant.acquisition = [{ sourceId: 1, label: "采集，限时活动", condition: null }];
-  const data = toCollectionView(catalog, assetsFixture(catalog)).plants;
+  const data = toCollectionView(
+    catalog,
+    assetsFixture(catalog),
+    createGameplayTagIndex(gameplayTags.tags),
+  ).plants;
   expect(data.series[0].summary.galaxies).toEqual(["禾夏，星系", "帕沙"]);
   expect(data.series[0].summary.acquisition).toEqual(["采集，限时活动"]);
   expect(filterGroups(data).find((group) => group.key === "acquisition")?.options).toEqual([
@@ -59,14 +76,18 @@ test("summarizes structured origins without parsing punctuation in localized lab
   expect(queryPlants(data, "items", { ...emptyQuery(), acquisition: ["采集"] }).total).toBe(0);
 });
 test("derives every seed for a plant from stage references without duplicate product fields", () => {
-  const catalog = catalogFixture({
+  const { catalog, gameplayTags } = catalogFixture({
     plants: plantsDataFixture({
       items: [plantItemFixture({ id: 1 })],
       series: [],
       seeds: [plantSeedFixture({ id: 10 }), plantSeedFixture({ id: 11 })],
     }),
   });
-  const data = toCollectionView(catalog, assetsFixture(catalog)).plants;
+  const data = toCollectionView(
+    catalog,
+    assetsFixture(catalog),
+    createGameplayTagIndex(gameplayTags.tags),
+  ).plants;
   expect(data.items[0].summary.seeds.map((seed) => seed.id)).toEqual([10, 11]);
   expect(data.items[0].summary.growths).toHaveLength(2);
   expect(data.seeds[0].growth.kind).toBe("staged");
@@ -82,7 +103,7 @@ test("掉落保留来源树种、概率和果实，不合并系列成员的概�
     quantityMax: null,
     probability: 0.025,
   };
-  const catalog = catalogFixture({
+  const { catalog, gameplayTags } = catalogFixture({
     plants: plantsDataFixture({
       items: [
         plantItemFixture({
@@ -106,7 +127,11 @@ test("掉落保留来源树种、概率和果实，不合并系列成员的概�
   });
   catalog.records = catalog.records.filter((record) => record.id !== 3);
   catalog.references.push({ id: 3, name: "树胶" });
-  const data = toCollectionView(catalog, assetsFixture(catalog)).plants;
+  const data = toCollectionView(
+    catalog,
+    assetsFixture(catalog),
+    createGameplayTagIndex(gameplayTags.tags),
+  ).plants;
   const groups = data.series[0].summary.drops.groups;
   expect(groups.map((group) => group.treeId)).toEqual([2, 1]);
   expect(groups.map((group) => group.entries[0].probability)).toEqual([25 / 957, 0.025]);
@@ -131,7 +156,7 @@ test("flower and tree stage mappings include formal intermediate shrubs without 
     },
   });
   const flower = plantSeedFixture({ id: 21, plantIds: [3] });
-  const catalog = catalogFixture({
+  const { catalog, gameplayTags } = catalogFixture({
     plants: plantsDataFixture({
       items: [
         plantItemFixture({
@@ -154,7 +179,11 @@ test("flower and tree stage mappings include formal intermediate shrubs without 
       seeds: [tree, flower],
     }),
   });
-  const data = toCollectionView(catalog, assetsFixture(catalog)).plants;
+  const data = toCollectionView(
+    catalog,
+    assetsFixture(catalog),
+    createGameplayTagIndex(gameplayTags.tags),
+  ).plants;
   expect(data.items[0].summary.seeds.map((seed) => seed.id)).toEqual([20]);
   expect(data.items[1].summary.seeds).toEqual([]);
   expect(data.items[2].summary.seeds.map((seed) => seed.id)).toEqual([21]);

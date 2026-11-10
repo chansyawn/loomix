@@ -2,7 +2,7 @@ import { expect, test } from "vite-plus/test";
 import { emptyDataset, validateDataset } from "../src/dataset/index.ts";
 import { RecordSchema, recordTarget, recordFocus, resolveItem } from "../src/catalog/index.ts";
 import { recordMetadata } from "./fixture.ts";
-const context = { formatVersion: 4, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
+const context = { formatVersion: 5, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
 function fixture() {
   const catalog = emptyDataset(context, {
     gameVersion: "test",
@@ -100,7 +100,7 @@ test("目的地歧义必须在数据验收阶段失败", () => {
     validateDataset(dataset).some((issue) => issue.message.includes("Ambiguous plant series")),
   ).toBe(true);
 });
-test("分组标签保留直接配置，拒绝重复分组与悬空父级", () => {
+test("直接标签拒绝重复引用与悬空父级", () => {
   const catalog = fixture(),
     dataset = emptyDataset(context, {
       gameVersion: "test",
@@ -109,16 +109,15 @@ test("分组标签保留直接配置，拒绝重复分组与悬空父级", () =>
       manifestId: "1",
     });
   dataset.catalog = catalog;
-  catalog.gameplayTags.push({
+  dataset.gameplayTags.tags.push({
     id: 77,
-    name: "红色",
+    internalName: "红色",
     displayName: "红色",
     enumName: "Red",
     parentId: 78,
   });
-  catalog.records[0]!.gameplayTagGroups[0]!.tagIds = [77];
-  catalog.records[0]!.gameplayTagGroups[1]!.field = 6;
+  catalog.records[0]!.tagIds = [77, 77];
   const issues = validateDataset(dataset).map((issue) => issue.message);
-  expect(issues).toContain("Unknown parent tag");
-  expect(issues).toContain("Duplicate identity 6");
+  expect(issues).toContain("Unknown parent tag 78");
+  expect(issues).toContain("Duplicate identity 77");
 });

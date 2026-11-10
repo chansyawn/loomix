@@ -50,6 +50,7 @@ test("downloads and validates every document declared by the immutable release",
 test.each([
   "release.json",
   "zh-CN/catalog.json",
+  "zh-CN/gameplay-tags.json",
   "zh-CN/neighbors.json",
   "zh-CN/world.json",
   "assets.json",

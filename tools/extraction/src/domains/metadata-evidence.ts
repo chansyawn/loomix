@@ -1,5 +1,4 @@
 import { localizedSources } from "../extraction/collection/evidence.ts";
-import { hashTextKey } from "../extraction/decode/tables.ts";
 import { acquisition } from "../extraction/collection/details/client.ts";
 import path from "node:path";
 import type { Dataset } from "@loomix/schema/dataset";
@@ -8,7 +7,6 @@ import { createContentContext } from "../extraction/content/context.ts";
 import { readJson } from "../workflow/json.ts";
 import type { RecordEvidence } from "../extraction/content/admissions.ts";
 import type { CollectionEvidence } from "../extraction/collection/evidence.ts";
-import type { BinDataAsset } from "../extraction/types.ts";
 
 function tableProof({
   file,
@@ -71,9 +69,7 @@ export function metadataEvidence(work: string, dataset: Dataset): FieldEvidence[
     add("catalog.records", record.id, "clientType", [source([2])]);
     if (record.clientSecondaryType !== null)
       add("catalog.records", record.id, "clientSecondaryType", [source([3])]);
-    add("catalog.records", record.id, "gameplayTagGroups", [
-      source([6, 7, 8, 9, 10, 11, 12, 13, 14, 15]),
-    ]);
+    add("catalog.records", record.id, "tagIds", [source([6, 7, 8, 9, 10, 11, 12, 13, 14, 15])]);
     const proof = admissions.get(record.id);
     const sources: FieldEvidence["sources"] =
       proof?.admissionSources.map((entry) =>
@@ -104,32 +100,8 @@ export function metadataEvidence(work: string, dataset: Dataset): FieldEvidence[
       localizedSources(context.tables, row, [0, 1]).map(tableProof),
     );
   }
-  const manifests = readJson<BinDataAsset[]>(path.join(work, "bindata-manifest.json"));
-  const tree = manifests.find((asset) => asset.Name === "633e15d6");
-  const display = manifests.find((asset) => asset.Name === "b429c67e");
-  if (!tree || !display) throw new Error("Missing GameplayTag provenance");
-  const displayData = readJson<
-    Record<string, Record<string, { nameInGame?: { textId?: string | null } | null }>>
-  >(path.join(work, display.file!));
-  const displayMap = Object.values(displayData)[0]!;
-  for (const tag of dataset.catalog.gameplayTags) {
-    const sources: FieldEvidence["sources"] = [tree, display].map((asset) => ({
-      kind: "asset",
-      file: asset.Source,
-      pathId: String(asset.PathID),
-    }));
-    const key = displayMap[String(tag.id)]?.nameInGame?.textId;
-    const localized = key ? context.tables.textmap[hashTextKey(key)] : undefined;
-    if (localized && tag.displayName !== null)
-      sources.push({
-        kind: "table",
-        file: "prepared/ed.obb",
-        table: 1,
-        rowOffset: localized.rowOffset,
-        fields: [1],
-      });
-    add("catalog.gameplayTags", tag.id, "$", sources);
-  }
+  for (const tag of dataset.gameplayTags.tags)
+    add("gameplayTags.tags", tag.id, "$", context.gameplayTags.sources(tag.id));
   const recipes = readJson<{
     proofs: {
       id: number;

@@ -76,17 +76,12 @@ test("extracts gift rules by namespace, normalizes category rows, and audits non
       { key: "11:dislike", npcId: 11, level: "dislike", itemIds: [], tagIds: [50000] },
     ],
   );
-  assert.deepEqual(database.giftPreferenceTags, [
-    { id: 50000, internalName: "食物", nameZh: "食物" },
-  ]);
+  assert.equal(fixture.input.tagIndex.get(50000).internalName, "食物");
   assert.deepEqual(
     audit.exclusions.filter((entry) => entry.kind === "giftPreference").map((entry) => entry.key),
     ["1020:love"],
   );
-  assert.equal(
-    audit.records.filter((entry) => entry.collection === "giftPreferenceTags").length,
-    2,
-  );
+  assert.ok(audit.records.some((entry) => entry.collection === "giftPreferences"));
 });
 
 test("links explicit themes, excludes test rules and leaves unconfirmed island associations empty", (context) => {

@@ -1,3 +1,4 @@
+import { createGameplayTagIndex } from "@loomix/schema/gameplay-tags";
 import { expect, test } from "vite-plus/test";
 import { classify } from "./scope.ts";
 import { parseAdmissions } from "./admissions.ts";
@@ -22,7 +23,7 @@ function fixture() {
   };
   const vocabulary = {
     tags: () => ["采摘"],
-    tree: {},
+    tagIndex: createGameplayTagIndex([]),
     renderTags: () => "采摘材料",
     setTags: {},
     subgroups: [{ id: 304, group: 2, name: "采摘材料", filters: ["采摘"] }],

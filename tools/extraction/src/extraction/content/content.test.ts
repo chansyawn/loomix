@@ -1,3 +1,4 @@
+import { createClientGameplayTags } from "../gameplay-tags/client.ts";
 import { emptyCatalog, recordSchemas } from "../schema.ts";
 import type { ScalarMethod, TableRow } from "../types.ts";
 import assert from "node:assert/strict";
@@ -55,12 +56,18 @@ test("creature ranges apply the configured factor and normalize float precision"
 });
 test("tag ancestry preserves class membership and detects cycles", () => {
   const nodes = {
-    1: { TagId: 1, TagName: "家具", ParentId: 0 },
+    1: { TagId: 1, TagName: "家具", ParentId: 4294967295 },
     2: { TagId: 2, TagName: "盆栽", ParentId: 1 },
   };
-  assert.deepEqual([...expandTags(["盆栽"], nodes)], ["盆栽", "家具"]);
+  assert.deepEqual(
+    [...expandTags(["盆栽"], createClientGameplayTags(nodes, {}, { key: () => null }).index)],
+    ["盆栽", "家具"],
+  );
   nodes[1].ParentId = 2;
-  assert.throws(() => expandTags(["盆栽"], nodes), /cycle/);
+  assert.throws(
+    () => expandTags(["盆栽"], createClientGameplayTags(nodes, {}, { key: () => null }).index),
+    /cycle/,
+  );
 });
 test("field whitelist and same-category member references are strict", () => {
   const content = emptyCatalog({

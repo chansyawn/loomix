@@ -1,10 +1,10 @@
 import { furnitureSize } from "./furniture/size";
-import { isGroupRecord, recordCategory, createTagResolver } from "@loomix/schema/catalog";
+import { isGroupRecord, recordCategory, createRecordTagResolver } from "@loomix/schema/catalog";
 import type {
   Catalog,
+  CatalogRecord,
   CraftingRecipe,
   DifficultyRequirement,
-  IngredientCategory,
   Item,
   Quality,
   Recipe,
@@ -12,6 +12,10 @@ import type {
 import type { Assets } from "@loomix/schema/assets";
 import { createImageResolver } from "@loomix/schema/assets";
 import { acquisitionText } from "./collection/acquisition";
+import { tagLabel } from "@loomix/schema/gameplay-tags";
+import type { GameplayTagIndex } from "@loomix/schema/gameplay-tags";
+import { ingredientCategories } from "./ingredients/category";
+import type { IngredientCategory } from "./ingredients/category";
 import { buildPlantsData } from "./plants/catalog";
 import type { PlantsData } from "./plants/model";
 export type { PlantItem, PlantSeries } from "./plants/model";
@@ -115,12 +119,18 @@ export function itemCategory(item: Item): CatalogCategory {
       return item.type;
   }
 }
-export function toCollectionView(catalog: Catalog, assets: Assets): CollectionView {
+export function toCollectionView(
+  catalog: Catalog,
+  assets: Assets,
+  tagIndex: GameplayTagIndex,
+): CollectionView {
   if (catalog.snapshotId !== assets.snapshotId || catalog.locale !== assets.locale)
     throw new Error("Catalog assets context mismatch");
   const image = createImageResolver(assets);
-  const tagsFor = createTagResolver(catalog);
-  const tagsById = new Map(catalog.gameplayTags.map((tag) => [tag.id, tag]));
+  const resolveTags = createRecordTagResolver(tagIndex);
+  const tagsFor = (record: CatalogRecord, facet: Parameters<typeof resolveTags>[1]) =>
+    resolveTags(record, facet).map(tagLabel);
+  const categories = ingredientCategories(catalog.ingredientCategories, tagIndex);
   const base = (
     record: Pick<Item, "id" | "name" | "description" | "quality" | "image">,
   ): CollectionRecord => ({
@@ -153,10 +163,8 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
     recipesByProduct.set(recipe.productId, recipes);
   }
   const view: CollectionView = {
-    ingredientCategories: catalog.ingredientCategories,
-    ingredientCategoriesById: new Map(
-      catalog.ingredientCategories.map((category) => [category.id, category]),
-    ),
+    ingredientCategories: categories,
+    ingredientCategoriesById: new Map(categories.map((category) => [category.id, category])),
     ingredientItemsById: new Map(),
     furniture: { sets: [], items: [] },
     creatures: { series: [], items: [] },
@@ -197,13 +205,9 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
           ...common,
           category,
           type: record.furnitureType,
-          size: furnitureSize(
-            (record.gameplayTagGroups.find((group) => group.field === 14)?.tagIds ?? []).flatMap(
-              (id) => tagsById.get(id)?.name ?? [],
-            ),
-          ),
-          colors: displayValues(tagsFor(record, 9)),
-          materials: displayValues(tagsFor(record, 11)),
+          size: furnitureSize(resolveTags(record, "size").map((tag) => tag.internalName)),
+          colors: displayValues(tagsFor(record, "colors")),
+          materials: displayValues(tagsFor(record, "materials")),
           acquisition: acquisitionText(record.acquisition),
           craftingRecipes: recipesByProduct.get(record.id) ?? null,
         });
@@ -212,9 +216,9 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
         view.clothing.items.push({
           ...common,
           category,
-          colors: displayValues(tagsFor(record, 9)),
-          materials: displayValues(tagsFor(record, 11)),
-          styles: displayValues(tagsFor(record, 12)),
+          colors: displayValues(tagsFor(record, "colors")),
+          materials: displayValues(tagsFor(record, "materials")),
+          styles: displayValues(tagsFor(record, "styles")),
           acquisition: acquisitionText(record.acquisition),
         });
         break;
@@ -236,7 +240,7 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
         view.dishes.items.push({
           ...common,
           difficulty: record.difficulty,
-          galaxyFlavor: displayValues(tagsFor(record, 8)),
+          galaxyFlavor: displayValues(tagsFor(record, "origins")),
           cookware: displayValues(record.cookware),
           effectsText: record.effectsText,
           effects: record.effects,
@@ -287,6 +291,6 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
   view.clothing.appearances = catalog.records
     .filter((record) => record.type === "appearance")
     .map((record) => ({ ...base(record), category: record.subcategory }));
-  view.plants = buildPlantsData(catalog, assets, view.ingredientItemsById);
+  view.plants = buildPlantsData(catalog, assets, view.ingredientItemsById, tagIndex);
   return view;
 }

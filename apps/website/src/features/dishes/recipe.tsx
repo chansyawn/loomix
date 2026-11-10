@@ -41,7 +41,7 @@ function IngredientCard({ item }: { item: IngredientItem }) {
 }
 
 function ConditionToken({ token }: { token: RecipeConditionToken }) {
-  if (token.kind === "category")
+  if (token.kind === "tag")
     return <Badge variant={token.resolved ? "secondary" : "outline"}>{token.label}</Badge>;
   return (
     <span
@@ -58,7 +58,7 @@ function ConditionSummary({ slot }: { slot: DishRecipeSlotView }) {
   if (slot.conditionStatus === "unparsed")
     return <span className="text-xs text-muted-foreground">条件未收录</span>;
   const conditionText = slot.conditionTokens
-    .map((token) => (token.kind === "category" ? token.label : token.value))
+    .map((token) => (token.kind === "tag" ? token.label : token.value))
     .join(" ");
   return (
     <span className="min-w-0">

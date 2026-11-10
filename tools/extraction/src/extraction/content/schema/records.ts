@@ -14,14 +14,16 @@ export const CatalogSourceSchema = z.strictObject({
   dataRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
   resourceRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
 });
-export {
-  IngredientExpressionSchema,
-  RecipeSlotSchema,
-  RecipeSchema,
-  IngredientCategorySchema,
-} from "@loomix/schema/catalog";
+export { IngredientExpressionSchema, RecipeSlotSchema, RecipeSchema } from "@loomix/schema/catalog";
 export type { IngredientExpression } from "@loomix/schema/catalog";
-import { RecipeSchema, RecipeSlotSchema, IngredientCategorySchema } from "@loomix/schema/catalog";
+import { RecipeSchema, RecipeSlotSchema } from "@loomix/schema/catalog";
+export const IngredientCategorySchema = z.strictObject({
+  id: ItemIdSchema,
+  tagName: z.string().min(1),
+  name: z.string().min(1),
+  parentId: ItemIdSchema.nullable(),
+  itemIds: ItemIdSchema.array(),
+});
 const text = z.string().nullable();
 const members = z.array(ItemIdSchema).nullable();
 export const DeliveredImageSchema = z

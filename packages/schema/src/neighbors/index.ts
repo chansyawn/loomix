@@ -92,11 +92,6 @@ const giftPreference = z.strictObject({
   itemIds: neighborId.array(),
   tagIds: neighborId.array(),
 });
-const giftPreferenceTag = z.strictObject({
-  id: neighborId,
-  internalName: z.string().min(1),
-  name: z.string().min(1).nullable(),
-});
 
 const outfitOffer = z.strictObject({
   id: neighborId,
@@ -198,7 +193,6 @@ export const NeighborsSchema = ContextSchema.extend({
   friendshipRules: friendshipRule.array(),
   eventTags: eventTag.array(),
   giftPreferences: giftPreference.array().default([]),
-  giftPreferenceTags: giftPreferenceTag.array().default([]),
   outfits: outfit.array().default([]),
   resources: asset.array(),
   additionalImages: additionalImage.array(),

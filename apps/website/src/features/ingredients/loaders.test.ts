@@ -34,7 +34,7 @@ function setupResources() {
     quality: null,
     acquisition: null,
   };
-  const catalog = catalogFixture({
+  const { catalog, gameplayTags } = catalogFixture({
     ingredientCategories: [
       { id: 10, name: "食材", tagName: "食材", parentId: null, itemIds: [1, 2, 3] },
       { id: 11, name: "测试食材类", tagName: "食材_测试", parentId: 10, itemIds: [1, 2, 3] },
@@ -47,7 +47,7 @@ function setupResources() {
       series: [],
     },
   });
-  const request = vi.fn(fixtureRequest(catalog));
+  const request = vi.fn(fixtureRequest({ catalog, gameplayTags }));
   vi.stubGlobal("fetch", request);
   return request;
 }
@@ -59,23 +59,23 @@ describe("ingredient data loading", () => {
     const request = setupResources();
     const dishes = await loadDishes();
     expect(dishes.ingredients.itemsById.size).toBe(3);
-    expect(request).toHaveBeenCalledTimes(3);
+    expect(request).toHaveBeenCalledTimes(4);
   });
 
   it("adds cooking usage to existing plant, creature and miscellaneous detail routes without separate requests", async () => {
     const request = setupResources();
     const plant = await loadPlantsDetail("items", "1");
     expect(plant.kind === "item" && plant.cooking?.dishes[0].dish.id).toBe(100);
-    expect(request).toHaveBeenCalledTimes(3);
+    expect(request).toHaveBeenCalledTimes(4);
     request.mockClear();
     const creature = await loadCreaturesDetail("items", "2");
     expect(creature.kind === "item" && creature.cooking?.dishes[0].dish.id).toBe(100);
-    expect(request).toHaveBeenCalledTimes(3);
+    expect(request).toHaveBeenCalledTimes(4);
     request.mockClear();
     const material = await loadMiscellanyDetail("3");
     expect(material.record.id).toBe(3);
     expect(material.cooking?.dishes[0].dish.id).toBe(100);
-    expect(request).toHaveBeenCalledTimes(3);
+    expect(request).toHaveBeenCalledTimes(4);
   });
 
   it("keeps ingredient-backed resource failures retryable", async () => {

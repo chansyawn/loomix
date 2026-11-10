@@ -37,7 +37,7 @@ function localizeKeys(value: unknown): unknown {
 }
 
 export function buildDataset(work: string) {
-  const identity = { formatVersion: 4, snapshotId: path.basename(work), locale: "zh-CN" } as const;
+  const identity = { formatVersion: 5, snapshotId: path.basename(work), locale: "zh-CN" } as const;
   const observations = RawCollectionObservationsSchema.parse(
     readJson(path.join(work, "raw/images-catalog-observations.json")),
   );
@@ -139,12 +139,14 @@ export function buildDataset(work: string) {
       stationImage: islandImage(stationImagePath),
     })),
   });
+  const context = createContentContext(work);
   const dataset = parseDataset({
+    gameplayTags: { ...identity, kind: "gameplay-tags", tags: context.gameplayTags.tags },
     context: identity,
     source: neighbors.source,
     catalog: buildCatalog(
       observations,
-      createContentContext(work),
+      context,
       assets,
       identity,
       neighbors.giftPreferences.flatMap((preference) => preference.itemIds),

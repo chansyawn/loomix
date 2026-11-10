@@ -3,9 +3,8 @@ import fs from "node:fs";
 import type { EvidenceRecord, BinDataAsset } from "../types.ts";
 import { readJson, writeJson } from "../../workflow/json.ts";
 import { fieldEvidenceSchema } from "./schema.ts";
-import { parseBinData } from "../decode/bindata.ts";
+import { loadClientGameplayTags } from "../gameplay-tags/client.ts";
 import { Tables } from "../decode/tables.ts";
-import { profile } from "../../profile.ts";
 import { associationRule, transformationRule } from "./rules.ts";
 import { createEvidenceIndex, evidenceHints } from "./rows.ts";
 import { evidenceSources } from "./sources.ts";
@@ -13,15 +12,7 @@ import { evidenceSources } from "./sources.ts";
 export function finalizeEvidence(work: string): void {
   const tables = new Tables(path.join(work, "prepared"));
   const bindata = readJson<BinDataAsset[]>(path.join(work, "bindata-manifest.json"));
-  const bin = (name: string) => {
-    const file = bindata.find((asset) => asset.Name === name)?.file ?? "missing-bindata";
-    return readJson(path.isAbsolute(file) ? file : path.join(work, file));
-  };
-  const { tree } = parseBinData(
-    bin(profile.binData.tags),
-    bin(profile.binData.tagDisplay),
-    bin(profile.binData.creatureDisplay),
-  );
+  const tree = loadClientGameplayTags(work, tables).index;
   const index = createEvidenceIndex(tables);
   const enrich = (proof: EvidenceRecord) => {
     const hints = evidenceHints(proof);

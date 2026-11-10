@@ -9,7 +9,7 @@ type ResolvedGrowth<G extends Growth = Growth> = G extends Growth
 export type PlantGrowth = ResolvedGrowth;
 export type PlantSeed = Omit<
   Seed,
-  "image" | "type" | "admissionReasons" | "clientType" | "clientSecondaryType" | "gameplayTagGroups"
+  "image" | "type" | "admissionReasons" | "clientType" | "clientSecondaryType" | "tagIds"
 > & {
   image: string | null;
   cropSeriesId: number | null;

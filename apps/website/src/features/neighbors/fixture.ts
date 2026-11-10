@@ -89,10 +89,6 @@ export function neighborFixture() {
       { key: "1:favor", neighborId: 1, level: "favor", itemIds: [], tagIds: [1, 2] },
       { key: "3:love", neighborId: 3, level: "love", itemIds: [107], tagIds: [] },
     ],
-    giftPreferenceTags: [
-      { id: 1, name: "树生水果", internalName: "水果" },
-      { id: 2, name: null, internalName: "含水果" },
-    ],
     resources: [
       ...neighbors.map((neighbor) => neighbor.npc2Path),
       "UISprite/Star.png",
@@ -118,5 +114,13 @@ export function neighborFixture() {
   for (const id of [6, 7]) {
     catalog.references.push({ id: id + 100, name: id === 6 ? "星空卡片" : "海岛卡片" });
   }
-  return { database, mapping, catalog };
+  const gameplayTags = {
+    ...fixtureContext,
+    kind: "gameplay-tags" as const,
+    tags: [
+      { id: 1, displayName: "树生水果", internalName: "水果", enumName: null, parentId: null },
+      { id: 2, displayName: null, internalName: "含水果", enumName: null, parentId: null },
+    ],
+  };
+  return { database, mapping, catalog, gameplayTags };
 }

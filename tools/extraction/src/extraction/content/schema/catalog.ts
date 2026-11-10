@@ -118,13 +118,13 @@ export function createCatalogSchema(image: z.ZodType<string | null> = DeliveredI
         value: z.infer<typeof IngredientExpressionSchema>,
         path: (string | number)[],
       ) => {
-        if (value.kind === "category" && !categories.has(value.categoryId))
+        if (value.kind === "tag" && !categories.has(value.tagId))
           ctx.addIssue({
             code: "custom",
             path: [...path, "categoryId"],
-            message: `Unknown ingredient category ${value.categoryId}`,
+            message: `Unknown ingredient category ${value.tagId}`,
           });
-        if (value.kind !== "category")
+        if (value.kind !== "tag")
           value.terms.forEach((term, termIndex) =>
             validateExpression(term, [...path, "terms", termIndex]),
           );

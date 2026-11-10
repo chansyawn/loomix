@@ -1,5 +1,7 @@
-import { growthPlantIds, createTagResolver, isGroupRecord } from "@loomix/schema/catalog";
+import { growthPlantIds, createRecordTagResolver, isGroupRecord } from "@loomix/schema/catalog";
 import type { Catalog } from "@loomix/schema/catalog";
+import { tagLabel } from "@loomix/schema/gameplay-tags";
+import type { GameplayTagIndex } from "@loomix/schema/gameplay-tags";
 import { acquisitionLabels } from "../collection/acquisition";
 import { createImageResolver } from "@loomix/schema/assets";
 import type { Assets } from "@loomix/schema/assets";
@@ -44,9 +46,10 @@ export function buildPlantsData(
   catalog: Catalog,
   assets: Assets,
   itemRefs: ReadonlyMap<number, IngredientItem>,
+  tagIndex: GameplayTagIndex,
 ): PlantsData {
   const image = createImageResolver(assets);
-  const tagsFor = createTagResolver(catalog);
+  const tagsFor = createRecordTagResolver(tagIndex);
   const growths = new Map<number, PlantGrowth>(
     catalog.growths.map((growth) => [
       growth.id,
@@ -99,7 +102,9 @@ export function buildPlantsData(
     return {
       categories: unique(items.flatMap((item) => (item.category ? [item.category] : []))),
       galaxies: unique(
-        items.flatMap((item) => (records.has(item.id) ? tagsFor(records.get(item.id)!, 8) : [])),
+        items.flatMap((item) =>
+          records.has(item.id) ? tagsFor(records.get(item.id)!, "origins").map(tagLabel) : [],
+        ),
       ),
       acquisition: unique(items.flatMap((item) => itemAcquisitionLabels(item.id))),
       flowerColors: unique(items.flatMap((item) => item.flowerColors ?? [])),
@@ -152,7 +157,7 @@ export function buildPlantsData(
         description: record.description,
         quality: record.quality,
         category: record.subcategory,
-        originGalaxy: tagsFor(record, 8).join("，") || null,
+        originGalaxy: tagsFor(record, "origins").map(tagLabel).join("，") || null,
         maturityPeriod: days.length ? days.map((day) => `${day} 天`).join(" / ") : null,
         harvestCount: harvestCounts.length === 1 ? harvestCounts[0] : null,
         acquisition: itemAcquisitionLabels(record.id).join("，") || null,

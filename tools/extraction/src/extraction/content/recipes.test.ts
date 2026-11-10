@@ -13,21 +13,21 @@ const byId = new Map(categories.map((category) => [category.id, category]));
 
 test("parses category, all, any and mixed expressions with & precedence", () => {
   assert.deepEqual(parseIngredientExpression("食材_A", byName).expression, {
-    kind: "category",
-    categoryId: 1,
+    kind: "tag",
+    tagId: 1,
   });
   assert.deepEqual(parseIngredientExpression("食材_A&食材_B", byName).expression, {
     kind: "all",
     terms: [
-      { kind: "category", categoryId: 1 },
-      { kind: "category", categoryId: 2 },
+      { kind: "tag", tagId: 1 },
+      { kind: "tag", tagId: 2 },
     ],
   });
   assert.deepEqual(parseIngredientExpression("食材_A|食材_B", byName).expression, {
     kind: "any",
     terms: [
-      { kind: "category", categoryId: 1 },
-      { kind: "category", categoryId: 2 },
+      { kind: "tag", tagId: 1 },
+      { kind: "tag", tagId: 2 },
     ],
   });
   assert.deepEqual(parseIngredientExpression("食材_A&食材_B|食材_C", byName).expression, {
@@ -36,11 +36,11 @@ test("parses category, all, any and mixed expressions with & precedence", () => 
       {
         kind: "all",
         terms: [
-          { kind: "category", categoryId: 1 },
-          { kind: "category", categoryId: 2 },
+          { kind: "tag", tagId: 1 },
+          { kind: "tag", tagId: 2 },
         ],
       },
-      { kind: "category", categoryId: 3 },
+      { kind: "tag", tagId: 3 },
     ],
   });
   assert.deepEqual(

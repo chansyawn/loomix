@@ -1,10 +1,11 @@
-import type { IngredientCategory, IngredientExpression } from "@loomix/schema/catalog";
+import type { IngredientExpression } from "@loomix/schema/catalog";
+import type { IngredientCategory } from "./category";
 import type { DishItem, IngredientItem } from "../collection-view";
 import { buildIngredientsData } from "./model";
 
 export const categoryExpression = (categoryId: number): IngredientExpression => ({
-  kind: "category",
-  categoryId,
+  kind: "tag",
+  tagId: categoryId,
 });
 
 export function ingredientFixture(id: number, name: string, listed = true): IngredientItem {

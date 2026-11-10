@@ -1,4 +1,4 @@
-import type { IngredientCategory } from "@loomix/schema/catalog";
+import type { IngredientCategory } from "./category";
 import type { DishItem } from "../collection-view";
 import type { FilterGroup, FilterOption } from "../collection/filter-panel";
 import type { IngredientsData } from "./model";

@@ -21,19 +21,11 @@ export function validateCatalog(catalog: Catalog): ValidationIssue[] {
       seen.add(id);
     });
   };
-  for (const name of [
-    "records",
-    "references",
-    "gameplayTags",
-    "craftingRecipes",
-    "growths",
-    "ingredientCategories",
-  ] as const)
+  for (const name of ["records", "references", "craftingRecipes", "growths"] as const)
     unique<{ id: number }>(catalog[name], (value) => value.id, [name]);
   const records = new Map(catalog.records.map((record) => [record.id, record]));
-  const tags = new Map(catalog.gameplayTags.map((tag) => [tag.id, tag]));
   const categories = new Map(
-    catalog.ingredientCategories.map((category) => [category.id, category]),
+    catalog.ingredientCategories.map((category) => [category.tagId, category]),
   );
   const checkItems = (ids: readonly number[], path: (string | number)[], type?: string) => {
     unique(ids, (value) => value, path);
@@ -46,24 +38,9 @@ export function validateCatalog(catalog: Catalog): ValidationIssue[] {
   for (const [index, reference] of catalog.references.entries())
     if (records.has(reference.id))
       issue(["references", index], "Reference duplicates a formal record");
-  for (const [index, tag] of catalog.gameplayTags.entries()) {
-    const seen = new Set<number>();
-    let current: typeof tag | undefined = tag;
-    while (current) {
-      if (seen.has(current.id)) {
-        issue(["gameplayTags", index], "Tag parent cycle");
-        break;
-      }
-      seen.add(current.id);
-      if (current.parentId !== null && !tags.has(current.parentId))
-        issue(["gameplayTags", index], "Unknown parent tag");
-      current = current.parentId === null ? undefined : tags.get(current.parentId);
-    }
-  }
   const expression = (value: IngredientExpression, path: (string | number)[]) => {
-    if (value.kind === "category") {
-      if (!categories.has(value.categoryId))
-        issue(path, `Unknown ingredient category ${value.categoryId}`);
+    if (value.kind === "tag") {
+      if (!categories.has(value.tagId)) issue(path, `Unknown ingredient category ${value.tagId}`);
     } else value.terms.forEach((term, index) => expression(term, [...path, "terms", index]));
   };
   catalog.records.forEach((record, index) => {
@@ -74,11 +51,7 @@ export function validateCatalog(catalog: Catalog): ValidationIssue[] {
       issue(path, error instanceof Error ? error.message : "Invalid record destination");
     }
     unique(record.admissionReasons, (reason) => reason, [...path, "admissionReasons"]);
-    unique(record.gameplayTagGroups, (group) => group.field, [...path, "gameplayTagGroups"]);
-    for (const group of record.gameplayTagGroups) {
-      unique(group.tagIds, (id) => id, [...path, "gameplayTagGroups", group.field]);
-      for (const id of group.tagIds) if (!tags.has(id)) issue(path, `Unknown tag ${id}`);
-    }
+    unique(record.tagIds, (id) => id, [...path, "tagIds"]);
     if (isGroupRecord(record)) {
       if (record.memberIds !== null) {
         const type = {
@@ -131,22 +104,8 @@ export function validateCatalog(catalog: Catalog): ValidationIssue[] {
   });
   for (const [index, category] of catalog.ingredientCategories.entries()) {
     checkItems(category.itemIds, ["ingredientCategories", index, "itemIds"]);
-    const seen = new Set<number>();
-    let id: number | null = category.id;
-    while (id !== null) {
-      if (seen.has(id)) {
-        issue(["ingredientCategories", index], "Ingredient category cycle");
-        break;
-      }
-      seen.add(id);
-      const parent = categories.get(id);
-      if (!parent) {
-        issue(["ingredientCategories", index], `Unknown ingredient category ${id}`);
-        break;
-      }
-      id = parent.parentId;
-    }
   }
+  unique(catalog.ingredientCategories, (category) => category.tagId, ["ingredientCategories"]);
   for (const [index, recipe] of catalog.craftingRecipes.entries()) {
     if (!records.has(recipe.productId))
       issue(["craftingRecipes", index], "Crafting product is outside formal records");

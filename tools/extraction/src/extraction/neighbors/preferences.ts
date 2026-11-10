@@ -1,10 +1,7 @@
-import path from "node:path";
 import { profile } from "../../profile.ts";
-import type { BinDataAsset } from "../types.ts";
-import { parseTagBinData } from "../decode/bindata.ts";
-import { hashTextKey, Tables } from "../decode/tables.ts";
+import { Tables } from "../decode/tables.ts";
 import type { TableRow } from "../types.ts";
-import { readJson } from "../../workflow/json.ts";
+import type { GameplayTagIndex } from "@loomix/schema/gameplay-tags";
 import { evidence } from "./adapters.ts";
 import { assertLayout, requiredId, requiredText } from "./fields.ts";
 import type {
@@ -13,8 +10,6 @@ import type {
   NeighborEvidenceSource,
   NeighborExclusion,
   NeighborGiftPreference,
-  NeighborGiftPreferenceTag,
-  PreferenceTagCatalog,
 } from "./types.ts";
 
 const preferenceLevels = new Map<number, { level: GiftPreferenceLevel; name: string }>([
@@ -53,43 +48,13 @@ function tableSource(row: TableRow, fields: number[]): NeighborEvidenceSource {
   };
 }
 
-export function loadPreferenceTagCatalog(work: string, tables: Tables): PreferenceTagCatalog {
-  const manifest = readJson<BinDataAsset[]>(path.join(work, "bindata-manifest.json"));
-  const findAsset = (name: string) => {
-    const asset = manifest.find((entry) => entry.Name === name);
-    if (!asset) throw new Error(`Missing preference BinData ${name}`);
-    return {
-      value: readJson(path.join(work, asset.file)),
-      source: { kind: "asset" as const, file: asset.file, pathId: asset.PathID },
-    };
-  };
-  const treeAsset = findAsset(profile.binData.tags);
-  const displayAsset = findAsset(profile.binData.tagDisplay);
-  const { tree, tagDisplay } = parseTagBinData(treeAsset.value, displayAsset.value);
-  const tags = new Map<
-    number,
-    { internalName: string; nameZh: string | null; textId: string | null }
-  >();
-  for (const node of Object.values(tree)) {
-    if (!Number.isSafeInteger(node.TagId) || node.TagId <= 0 || tags.has(node.TagId))
-      throw new Error(`Invalid or duplicate GameplayTag ${node.TagId}`);
-    const textId = tagDisplay[node.TagId]?.nameInGame?.textId ?? null;
-    const nameZh = tables.key(textId);
-    tags.set(node.TagId, { internalName: node.TagName, nameZh, textId });
-  }
-  return {
-    tags,
-    sources: { tree: treeAsset.source, display: displayAsset.source },
-  };
-}
-
 export function readGiftPreferences(
   tables: Tables,
   neighborIds: ReadonlySet<number>,
-  tagCatalog: PreferenceTagCatalog,
+  tagIndex: GameplayTagIndex,
   records: NeighborEvidence[],
   exclusions: NeighborExclusion[],
-): { preferences: NeighborGiftPreference[]; tags: NeighborGiftPreferenceTag[] } {
+): NeighborGiftPreference[] {
   const categories = new Map<number, string>();
   for (const row of tables.rows(profile.roots.neighborPreferenceCategories)) {
     assertLayout(tables, row, { id: [0, "uint"], icon: [1, "string"], name: [2, "text"] }, 6);
@@ -105,7 +70,6 @@ export function readGiftPreferences(
 
   const itemIds = new Set(tables.byId(profile.roots.items).keys());
   const preferences: NeighborGiftPreference[] = [];
-  const usedTagIds = new Set<number>();
   for (const row of tables.rows(profile.roots.neighborGiftPreferences)) {
     assertLayout(tables, row, preferenceLayout, 5);
     const neighborId = requiredId(tables, row, 0);
@@ -132,8 +96,7 @@ export function readGiftPreferences(
     for (const id of itemIdsForPreference)
       if (!itemIds.has(id)) throw new Error(`Unknown preference item ${key}/${id}`);
     for (const id of tagIds) {
-      if (!tagCatalog.tags.has(id)) throw new Error(`Unknown preference GameplayTag ${key}/${id}`);
-      usedTagIds.add(id);
+      tagIndex.get(id);
     }
     preferences.push({
       key,
@@ -145,29 +108,5 @@ export function readGiftPreferences(
     records.push(evidence("giftPreferences", key, row, sourceFields));
   }
 
-  const tags = [...usedTagIds]
-    .sort((a, b) => a - b)
-    .map((id) => {
-      const tag = tagCatalog.tags.get(id)!;
-      const key = String(id);
-      records.push({ collection: "giftPreferenceTags", key, source: tagCatalog.sources.tree });
-      records.push({ collection: "giftPreferenceTags", key, source: tagCatalog.sources.display });
-      if (tag.textId !== null) {
-        const text = tables.textmap[hashTextKey(tag.textId)];
-        if (text?.nameZh)
-          records.push({
-            collection: "giftPreferenceTags",
-            key,
-            source: {
-              kind: "table",
-              file: "prepared/ed.obb",
-              table: profile.roots.textmap,
-              rowOffset: text.rowOffset,
-              fields: [profile.fields.textmap.zh],
-            },
-          });
-      }
-      return { id, internalName: tag.internalName, nameZh: tag.nameZh };
-    });
-  return { preferences, tags };
+  return preferences;
 }

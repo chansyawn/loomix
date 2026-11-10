@@ -124,12 +124,7 @@ export interface EvidenceRecord {
   status?: "confirmed" | "unconfirmed";
   reason?: string;
 }
-export interface TagNode {
-  TagId: number;
-  TagName: string;
-  ParentId: number;
-  EnumName?: string;
-}
+export type TagNode = import("./decode/bindata.ts").TagTree["AllNodes"][string];
 export interface SourceCheck {
   expected?: { md5: string; bytes: number };
   source: string;

@@ -1,13 +1,15 @@
+import { createGameplayTagIndex, validateGameplayTags } from "../gameplay-tags/index.ts";
 import type { Dataset } from "./index.ts";
 import { resolveItem } from "../catalog/records.ts";
 import { validateCatalog } from "../catalog/validate.ts";
 import type { ValidationIssue } from "../common/identity.ts";
 
 export function validateDataset(dataset: Dataset): ValidationIssue[] {
-  const issues = validateCatalog(dataset.catalog);
+  const treeIssues = validateGameplayTags(dataset.gameplayTags.tags);
+  const issues = [...validateCatalog(dataset.catalog), ...treeIssues];
   const issue = (path: (string | number)[], message: string) =>
     issues.push({ code: "invalid_reference", path, message });
-  for (const domain of ["catalog", "neighbors", "world"] as const)
+  for (const domain of ["gameplayTags", "catalog", "neighbors", "world"] as const)
     for (const field of ["snapshotId", "locale", "formatVersion"] as const)
       if (dataset[domain][field] !== dataset.context[field])
         issue([domain, field], "Dataset context mismatch");
@@ -40,7 +42,6 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
     "additionalImages",
   ] as const)
     unique<{ key: string }>(neighbors[name], (value) => value.key, ["neighbors", name]);
-  unique(neighbors.giftPreferenceTags, (tag) => tag.id, ["neighbors", "giftPreferenceTags"]);
   unique(neighbors.outfits, (outfit) => outfit.id, ["neighbors", "outfits"]);
   for (const name of ["stars", "stories", "travelReactions", "additionalImages"] as const)
     neighbors[name].forEach((value, index) => {
@@ -62,8 +63,21 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
       issue(["neighbors", "travelReactions", index], "Invalid reaction key");
   });
   const items = new Map(catalog.records.map((item) => [item.id, item]));
-  const preferenceTags = new Set(neighbors.giftPreferenceTags.map((tag) => tag.id));
-  const referencedPreferenceTags = new Set<number>();
+  const tags = new Set(dataset.gameplayTags.tags.map((tag) => tag.id));
+  catalog.records.forEach((record, index) => {
+    for (const id of record.tagIds)
+      if (!tags.has(id)) issue(["catalog", "records", index, "tagIds"], `Unknown tag ${id}`);
+  });
+  const tagIndex = treeIssues.length ? null : createGameplayTagIndex(dataset.gameplayTags.tags);
+  const root = tagIndex?.findByName("食材");
+  const ingredientIds = new Set(root ? tagIndex!.subtree(root.id).map((tag) => tag.id) : []);
+  catalog.ingredientCategories.forEach((category, index) => {
+    if (!ingredientIds.has(category.tagId))
+      issue(
+        ["catalog", "ingredientCategories", index, "tagId"],
+        `Invalid ingredient tag ${category.tagId}`,
+      );
+  });
   neighbors.giftPreferences.forEach((preference, index) => {
     const path = ["neighbors", "giftPreferences", index];
     if (!ids.has(preference.neighborId))
@@ -75,13 +89,9 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
     for (const id of preference.itemIds)
       if (!resolveItem(catalog, id)) issue([...path, "itemIds"], `Unknown item ${id}`);
     for (const id of preference.tagIds) {
-      if (!preferenceTags.has(id)) issue([...path, "tagIds"], `Unknown preference tag ${id}`);
-      referencedPreferenceTags.add(id);
+      if (!tags.has(id)) issue([...path, "tagIds"], `Unknown preference tag ${id}`);
     }
   });
-  for (const id of preferenceTags)
-    if (!referencedPreferenceTags.has(id))
-      issue(["neighbors", "giftPreferenceTags"], `Unreferenced preference tag ${id}`);
   neighbors.outfits.forEach((outfit, index) => {
     if (outfit.neighborId !== null && !ids.has(outfit.neighborId))
       issue(["neighbors", "outfits", index, "neighborId"], `Unknown neighbor ${outfit.neighborId}`);

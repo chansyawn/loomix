@@ -1,5 +1,5 @@
 import type { IngredientCategory, IngredientExpression, ItemId, RecipeSlot } from "../schema.ts";
-import type { TagNode, Row, TableRow } from "../types.ts";
+import type { Row, TableRow } from "../types.ts";
 import type { Tables } from "../decode/tables.ts";
 import type { Vocabulary } from "./vocabulary.ts";
 import type { Scope } from "./scope.ts";
@@ -22,42 +22,26 @@ export interface ParsedIngredientExpression {
   reason: string | null;
 }
 
-function parentChain(node: TagNode, tree: Record<number, TagNode>): TagNode[] {
-  const result: TagNode[] = [];
-  const visited = new Set<number>();
-  let current: TagNode | undefined = node;
-  while (current) {
-    if (visited.has(current.TagId)) throw new Error(`Tag inheritance cycle: ${current.TagName}`);
-    visited.add(current.TagId);
-    result.push(current);
-    current = tree[current.ParentId];
-  }
-  return result;
-}
-
 function fallbackCategoryName(tagName: string): string {
   return tagName.replace(/^食材_?/, "") || tagName;
 }
 
 export function buildIngredientCategories(
   tables: Pick<Tables, "rows" | "string" | "uint">,
-  vocabulary: Pick<Vocabulary, "tree" | "tags" | "translateTag">,
+  vocabulary: Pick<Vocabulary, "tagIndex" | "tags" | "translateTag">,
   scope: Pick<Scope, "groups" | "ids">,
 ): IngredientCategoryBuild {
-  const tree = vocabulary.tree;
-  const nodesByName = new Map(Object.values(tree).map((node) => [node.TagName, node]));
-  const root = nodesByName.get("食材");
+  const index = vocabulary.tagIndex;
+  const root = index.findByName("食材");
   if (!root) throw new Error("Missing 食材 GameplayTag root");
-  const categories = Object.values(tree).filter((node) => {
-    return parentChain(node, tree).some((ancestor) => ancestor.TagId === root.TagId);
-  });
-  const categoryIds = new Set(categories.map((node) => node.TagId));
+  const categories = index.subtree(root.id);
+  const categoryIds = new Set(categories.map((node) => node.id));
   const formalIds = new Set([...scope.ids].filter((id) => scope.groups.get(id)?.endsWith(".item")));
   const allIdsByCategory = new Map<number, Set<number>>(
-    categories.map((node) => [node.TagId, new Set<number>()]),
+    categories.map((node) => [node.id, new Set<number>()]),
   );
   const formalIdsByCategory = new Map<number, Set<number>>(
-    categories.map((node) => [node.TagId, new Set<number>()]),
+    categories.map((node) => [node.id, new Set<number>()]),
   );
   const associations: IngredientCategoryBuild["associations"] = [];
   for (const row of tables.rows(profile.roots.items)) {
@@ -69,10 +53,10 @@ export function buildIngredientCategories(
     ];
     const matched = new Set<number>();
     for (const tagName of tags) {
-      const node = nodesByName.get(tagName);
+      const node = index.findByName(tagName);
       if (!node) continue;
-      for (const ancestor of parentChain(node, tree))
-        if (categoryIds.has(ancestor.TagId)) matched.add(ancestor.TagId);
+      for (const ancestor of index.ancestors(node.id))
+        if (categoryIds.has(ancestor.id)) matched.add(ancestor.id);
     }
     for (const categoryId of matched) {
       allIdsByCategory.get(categoryId)!.add(id);
@@ -82,13 +66,13 @@ export function buildIngredientCategories(
     }
   }
   const result = categories
-    .sort((a, b) => a.TagId - b.TagId)
+    .sort((a, b) => a.id - b.id)
     .map((node): IngredientCategory => ({
-      id: node.TagId,
-      tagName: node.TagName,
-      name: vocabulary.translateTag(node.TagName) ?? fallbackCategoryName(node.TagName),
-      parentId: categoryIds.has(node.ParentId) ? node.ParentId : null,
-      itemIds: [...formalIdsByCategory.get(node.TagId)!].sort((a, b) => a - b),
+      id: node.id,
+      tagName: node.internalName,
+      name: vocabulary.translateTag(node.internalName) ?? fallbackCategoryName(node.internalName),
+      parentId: node.parentId !== null && categoryIds.has(node.parentId) ? node.parentId : null,
+      itemIds: [...formalIdsByCategory.get(node.id)!].sort((a, b) => a - b),
     }));
   const byTagName = new Map(result.map((category) => [category.tagName, category]));
   const unlistedReferences = result
@@ -124,7 +108,7 @@ export function parseIngredientExpression(
       if (!/^[^&|()]+$/.test(tagName)) return { expression: null, reason: "invalid_expression" };
       const category = categories.get(tagName);
       if (!category) return { expression: null, reason: `unknown_category:${tagName}` };
-      terms.push({ kind: "category", categoryId: category.id });
+      terms.push({ kind: "tag", tagId: category.id });
     }
     parsedAlternatives.push(terms.length === 1 ? terms[0] : { kind: "all", terms });
   }
@@ -139,10 +123,9 @@ export function parseIngredientExpression(
 
 export function ingredientExpressionItemIds(
   expression: IngredientExpression,
-  categories: ReadonlyMap<number, IngredientCategory>,
+  categories: ReadonlyMap<number, { itemIds: number[] }>,
 ): ItemId[] {
-  if (expression.kind === "category")
-    return [...(categories.get(expression.categoryId)?.itemIds ?? [])];
+  if (expression.kind === "tag") return [...(categories.get(expression.tagId)?.itemIds ?? [])];
   const values = expression.terms.map(
     (term) => new Set(ingredientExpressionItemIds(term, categories)),
   );
@@ -193,11 +176,11 @@ export interface CookingAuditInput {
   recipeRows: TableRow[];
   scope: Pick<Scope, "groups">;
   categoryBuild: IngredientCategoryBuild;
-  bindataFiles: { tags: string; tagDisplay: string };
+  tagSources: (id: number) => import("../evidence/domain-schema.ts").EvidenceSource[];
 }
 
 export function buildCookingAudit(input: CookingAuditInput) {
-  const { tables, recipeRows, scope, categoryBuild, bindataFiles } = input;
+  const { tables, recipeRows, scope, categoryBuild, tagSources } = input;
   const categoriesById = new Map(
     categoryBuild.categories.map((category) => [category.id, category]),
   );
@@ -278,8 +261,7 @@ export function buildCookingAudit(input: CookingAuditInput) {
           fields: [0, profile.fields.items.category, 15],
           note: "Item GameplayTags expanded through the GameplayTag ancestry tree",
         },
-        { file: bindataFiles.tags, pathId: "633e15d6" },
-        { file: bindataFiles.tagDisplay, pathId: "b429c67e" },
+        ...tagSources(category.id),
       ],
     })),
     categoryAssociations: categoryBuild.associations.map((association) => ({

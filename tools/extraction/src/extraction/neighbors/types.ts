@@ -13,26 +13,17 @@ export type NeighborFriendshipRule = NeighborDatabase["friendshipRules"][number]
 export type NeighborEventTag = NeighborDatabase["eventTags"][number];
 export type NeighborAssetRef = NeighborDatabase["assets"][number];
 export type NeighborGiftPreference = NeighborDatabase["giftPreferences"][number];
-export type NeighborGiftPreferenceTag = NeighborDatabase["giftPreferenceTags"][number];
 export type NeighborOutfit = NeighborDatabase["outfits"][number];
 export type NeighborBodyType = NonNullable<NeighborRecord["bodyType"]>;
 export type NeighborStoryParagraph = NeighborStoryChapter["paragraphs"][number];
 
 export type GiftPreferenceLevel = "love" | "favor" | "dislike";
 
-export interface PreferenceTagCatalog {
-  tags: Map<number, { internalName: string; nameZh: string | null; textId: string | null }>;
-  sources: {
-    tree: Extract<NeighborEvidenceSource, { kind: "asset" }>;
-    display: Extract<NeighborEvidenceSource, { kind: "asset" }>;
-  };
-}
-
 export interface NeighborExtractionInput {
   tables: Tables;
   source: NeighborSource;
   assetIndex: readonly IndexedAsset[];
-  preferenceTags: PreferenceTagCatalog;
+  tagIndex: import("@loomix/schema/gameplay-tags").GameplayTagIndex;
 }
 
 export interface NeighborExtractionAudit {

@@ -1,16 +1,15 @@
 import fs from "node:fs";
 import path from "node:path";
 import { emptyCatalog, recordSchemas } from "../schema.ts";
-import type { WorkOptions, EvidenceRecord, SelectedImage, BinDataAsset } from "../types.ts";
+import type { WorkOptions, EvidenceRecord, SelectedImage } from "../types.ts";
 import { catalogSource, expectedCatalog } from "../../profile.ts";
-import { readJson, writeJson } from "../../workflow/json.ts";
+import { writeJson } from "../../workflow/json.ts";
 import { removeWithin } from "../../workflow/fs.ts";
 import { validateModel } from "./model.ts";
 import { createContentContext } from "./context.ts";
 import { buildRecord } from "./records/index.ts";
 import type { RecordContext } from "./records/types.ts";
 import { buildCookingAudit } from "./recipes.ts";
-import { profile } from "../../profile.ts";
 
 export async function structure(options: WorkOptions): Promise<void> {
   const context = createContentContext(options.work);
@@ -95,18 +94,12 @@ export async function structure(options: WorkOptions): Promise<void> {
       },
     ],
   });
-  const bindata = readJson<BinDataAsset[]>(path.join(options.work, "bindata-manifest.json"));
-  const bindataFile = (name: string) =>
-    bindata.find((asset) => asset.Name === name)?.file ?? `bindata/${name}.json`;
   const cookingAudit = buildCookingAudit({
     tables: context.tables,
     recipeRows: context.recipeRows,
     scope: context.scope,
     categoryBuild: context.ingredientCategoryBuild,
-    bindataFiles: {
-      tags: bindataFile(profile.binData.tags),
-      tagDisplay: bindataFile(profile.binData.tagDisplay),
-    },
+    tagSources: context.gameplayTags.sources,
   });
   if (
     cookingAudit.counts.dishRecipes !== 121 ||
