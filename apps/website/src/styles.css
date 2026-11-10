@@ -134,6 +134,29 @@ body {
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+@theme {
+  --animate-flip-top: flip-top 150ms ease-in both;
+  --animate-flip-bottom: flip-bottom 150ms ease-out 150ms both;
+
+  @keyframes flip-top {
+    from {
+      transform: rotateX(0deg);
+    }
+    to {
+      transform: rotateX(-90deg);
+    }
+  }
+
+  @keyframes flip-bottom {
+    from {
+      transform: rotateX(90deg);
+    }
+    to {
+      transform: rotateX(0deg);
+    }
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
