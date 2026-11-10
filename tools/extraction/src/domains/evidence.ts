@@ -1,3 +1,5 @@
+import { validateDomainEvidence } from "./validate-evidence.ts";
+import { metadataEvidence } from "./metadata-evidence.ts";
 import { plantingDomainEvidence } from "../extraction/plants/evidence.ts";
 import path from "node:path";
 import { EvidenceSchema } from "../extraction/evidence/domain-schema.ts";
@@ -31,21 +33,15 @@ export function buildDomainEvidence(
   dataset: Dataset,
   observed: ObservedFieldEvidence[],
   details: CollectionEvidence[],
-  admissions: RecordEvidence[],
+  _admissions: RecordEvidence[],
   audits: { domain: "neighbors" | "world"; records: AuditRecord[] }[],
 ) {
   const records = new Map<string, FieldEvidence>();
-  const collection = (id: number) =>
-    dataset.catalog.items.some((item) => item.id === id)
-      ? "catalog.items"
-      : dataset.catalog.groups.some((group) => group.id === id)
-        ? "catalog.groups"
-        : "catalog.appearances";
-  const entities = new Map(
-    (["items", "groups", "appearances", "seeds", "growths"] as const).flatMap((name) => {
-      const entries = dataset.catalog[name];
-      return entries.map((entity) => [`catalog.${name}:${entity.id}`, entity] as const);
-    }),
+  const collection = (_id: number) => "catalog.records";
+  const entities = new Map<string, object>(
+    (["records", "references", "growths"] as const).flatMap((name) =>
+      dataset.catalog[name].map((entity) => [`catalog.${name}:${entity.id}`, entity] as const),
+    ),
   );
   const add = (proof: FieldEvidence) => {
     const key = `${proof.entity.collection}:${proof.entity.id}:${proof.fieldPath}`;
@@ -93,10 +89,16 @@ export function buildDomainEvidence(
   }
   for (const proof of details) {
     if (proof.field === "detail.id") continue;
-    const owner = proof.owner === "seed" ? "catalog.seeds" : collection(proof.id);
+    const owner = collection(proof.id);
     const fieldPath = fields[proof.field] ?? proof.field.replace(/^attributes\.|^detail\./, "");
     // 不适用的来源观测记录不会在领域实体上创建字段。
     const entity = entities.get(`${owner}:${proof.id}`);
+    if (
+      fieldPath === "acquisition" &&
+      entity &&
+      ("memberIds" in entity || ("type" in entity && entity.type === "appearance"))
+    )
+      continue;
     const sources: EvidenceSource[] = proof.sources.map(({ file, table, rowOffset, fields }) => ({
       kind: "table",
       file,
@@ -112,51 +114,6 @@ export function buildDomainEvidence(
       sources,
       ruleId: `client.${proof.owner}.${proof.field}`,
       reasonCode: proof.reason ?? null,
-    });
-  }
-  for (const proof of admissions) {
-    const entry = dataset.catalog.entries.find((entry) => entry.entity.id === proof.id);
-    if (!entry) throw new Error(`Missing admitted entity ${proof.id}`);
-    const entity = {
-      collection: "catalog.entries",
-      id: `${entry.entity.kind}:${proof.id}`,
-    };
-    add({
-      entity,
-      fieldPath: "entity",
-      status: "confirmed",
-      sources: proof.admissionSources.map((source) =>
-        source.kind === "manual"
-          ? source
-          : {
-              kind: "table",
-              file: source.file,
-              table: source.table,
-              rowOffset: source.rowOffset,
-              fields: [0],
-            },
-      ),
-      ruleId: "client.catalog.admission",
-      reasonCode: null,
-    });
-    const encyclopedia = proof.encyclopedia;
-    add({
-      entity,
-      fieldPath: "encyclopedia",
-      status: encyclopedia.state === "present" ? "confirmed" : "absent",
-      sources: [
-        encyclopedia.state === "present"
-          ? {
-              kind: "table",
-              file: encyclopedia.file,
-              table: encyclopedia.table,
-              rowOffset: encyclopedia.rowOffset,
-              fields: [0, 1],
-            }
-          : { kind: "tableScan", file: encyclopedia.file, table: encyclopedia.table },
-      ],
-      ruleId: "client.catalog.encyclopedia",
-      reasonCode: encyclopedia.state === "absent" ? "not_in_complete_encyclopedia_table" : null,
     });
   }
   for (const { domain, records: audit } of audits) {
@@ -218,35 +175,12 @@ export function readDomainEvidence(work: string, dataset: Dataset) {
       },
     ],
   );
-  const audit = readJson<{
-    proofs: {
-      owner: string;
-      id: number;
-      sources: { file: string; table: number; rowOffset: number; fields: number[] }[];
-    }[];
-  }>(path.join(work, "card-audit.json"));
-  for (const proof of audit.proofs)
-    evidence.fields.push({
-      entity: {
-        collection: proof.owner === "set" ? "catalog.cardSets" : "catalog.items",
-        id: proof.id,
-      },
-      fieldPath: proof.owner.includes(".")
-        ? proof.owner.slice(proof.owner.indexOf(".") + 1)
-        : "entity",
-      status: "confirmed",
-      sources: proof.sources.map(({ file, table, rowOffset, fields }) => ({
-        kind: "table" as const,
-        file,
-        table,
-        rowOffset,
-        fields,
-      })),
-      ruleId: "client.crafting.direct_reference",
-      reasonCode: null,
-    });
+  evidence.fields.push(...metadataEvidence(work, dataset));
   evidence.fields.push(...plantingDomainEvidence(work, dataset));
-  return EvidenceSchema.parse(evidence);
+  return EvidenceSchema.parse({
+    ...evidence,
+    fields: validateDomainEvidence(dataset, evidence.fields),
+  });
 }
 
 export function writeDomainEvidence(work: string, dataset: Dataset): void {

@@ -1,28 +1,13 @@
-import { SearchXIcon } from "lucide-react";
-import { useRouter } from "@tanstack/react-router";
-import { buttonVariants } from "@/ui/components/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/ui/components/empty";
 import { RecordImage } from "@/features/collection/record-image";
 import { SeriesImage } from "../collection/series-image";
 import {
   CollectionDetailLayout,
-  CollectionDetailLoading,
   CollectionDetailRelatedGrid,
   CollectionDetailExtras,
   type CollectionDetailSection,
 } from "@/features/collection/detail-layout";
 import { DishesCard, DishSeriesCard } from "./dishes-card";
-import { DishesReturnLink } from "./detail-navigation";
 import type { DishesDetail } from "./detail";
-import type { DishView as View } from "./search";
-import { DishesLoadError } from "./states";
 import { DishRecipe } from "./recipe";
 import { DishEffects } from "./effects";
 import { difficultyRequirementLabel, formatTastes } from "./presentation";
@@ -121,34 +106,4 @@ function DishesRelated({ detail }: { detail: DishesDetail }) {
       )}
     </section>
   );
-}
-
-export function DishesDetailLoading() {
-  return <CollectionDetailLoading label="正在加载菜肴详情" />;
-}
-
-export function DishesDetailNotFound({ view }: { view: View }) {
-  return (
-    <Empty className="min-h-80">
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <SearchXIcon />
-        </EmptyMedia>
-        <EmptyTitle>
-          <h1>{view === "items" ? "未找到这道菜肴" : "未找到这个烹饪系列"}</h1>
-        </EmptyTitle>
-        <EmptyDescription>该条目不存在，请返回图鉴查找其他菜肴。</EmptyDescription>
-      </EmptyHeader>
-      <EmptyContent>
-        <DishesReturnLink view={view} className={buttonVariants({ variant: "outline" })}>
-          返回菜肴列表
-        </DishesReturnLink>
-      </EmptyContent>
-    </Empty>
-  );
-}
-
-export function DishesDetailRouteError() {
-  const router = useRouter();
-  return <DishesLoadError onRetry={() => void router.invalidate()} />;
 }

@@ -1,11 +1,11 @@
 import { CollectionItemCard } from "../collection/collection-item-card";
 import { CollectionExpandableGrid } from "../collection/expandable-grid";
-import { useDishesOrigin } from "../dishes/detail-navigation";
+import { useCollectionOrigin } from "@/features/collection/navigation";
 import { effectSummary } from "../dishes/presentation";
 import type { IngredientDishMatch } from "./model";
 
 function RecipeMatch({ match }: { match: IngredientDishMatch }) {
-  const origin = useDishesOrigin();
+  const origin = useCollectionOrigin();
   const { dish } = match;
   const description = [dish.difficulty, dish.cookware, effectSummary(dish)]
     .filter(Boolean)
@@ -15,9 +15,9 @@ function RecipeMatch({ match }: { match: IngredientDishMatch }) {
       item={dish}
       itemId={dish.id}
       link={{
-        to: "/collection/dishes/items/$id",
+        to: "/collections/records/$id",
         params: { id: String(dish.id) },
-        state: { dishesOrigin: origin },
+        state: { collectionOrigin: origin },
       }}
       description={description || "菜肴信息未提供"}
     />

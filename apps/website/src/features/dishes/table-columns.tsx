@@ -7,20 +7,20 @@ import {
   MembershipCell,
 } from "../collection/table-columns";
 import type { CollectionColumn } from "../collection/table-columns";
-import { useDishesOrigin } from "./detail-navigation";
+import { useCollectionOrigin } from "@/features/collection/navigation";
 import { membershipIndex } from "./query";
 import { difficultyRequirementLabel, effectSummary, formatTastes } from "./presentation";
 import type { DishView as View } from "./search";
 
 export type DishesRow = DishItem | DishSeries;
 
-function NameLink({ record, view }: { record: DishesRow; view: View }) {
-  const origin = useDishesOrigin();
+function NameLink({ record }: { record: DishesRow }) {
+  const origin = useCollectionOrigin();
   return (
     <Link
-      to={view === "items" ? "/collection/dishes/items/$id" : "/collection/dishes/series/$id"}
+      to="/collections/records/$id"
       params={{ id: String(record.id) }}
-      state={{ dishesOrigin: origin }}
+      state={{ collectionOrigin: origin }}
       className={tableLinkClassName}
       title={record.name}
     >
@@ -30,7 +30,7 @@ function NameLink({ record, view }: { record: DishesRow; view: View }) {
 }
 
 function MemberLinks({ groups, complete }: { groups: DishSeries[]; complete: boolean }) {
-  const origin = useDishesOrigin();
+  const origin = useCollectionOrigin();
   return (
     <MembershipCell
       groups={groups}
@@ -39,9 +39,9 @@ function MemberLinks({ groups, complete }: { groups: DishSeries[]; complete: boo
       renderLink={(entry) => (
         <Link
           key={entry.id}
-          to="/collection/dishes/series/$id"
+          to="/collections/records/$id"
           params={{ id: String(entry.id) }}
-          state={{ dishesOrigin: origin }}
+          state={{ collectionOrigin: origin }}
           className={tableLinkClassName}
         >
           {entry.name}
@@ -55,7 +55,7 @@ export function dishesTableColumns(
   view: View,
   groups: DishSeries[] = [],
 ): CollectionColumn<DishesRow>[] {
-  const common = recordColumns<DishesRow>((record) => <NameLink record={record} view={view} />);
+  const common = recordColumns<DishesRow>((record) => <NameLink record={record} />);
   if (view === "series")
     return [
       ...common,

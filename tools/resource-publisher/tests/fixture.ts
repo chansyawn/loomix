@@ -1,3 +1,4 @@
+import { recordMetadata } from "../../../packages/schema/tests/fixture.ts";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { emptyDataset } from "@loomix/schema/dataset";
@@ -12,7 +13,7 @@ export const webp = Buffer.from(
 );
 export const imageKey = `assets/${sha256(webp)}.webp`;
 
-export const context = { formatVersion: 3, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
+export const context = { formatVersion: 4, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
 export const source = {
   gameVersion: "test",
   dataRevision: 1,
@@ -56,10 +57,14 @@ export async function writeFixture(directory: string, imageCount = 1, payloads?:
     const hash = sha256(bytes),
       file = `assets/${hash}.webp`;
     const image = { assetId: `image-${i}`, variant: "icon" as const };
-    dataset.catalog.items.push({
+    dataset.catalog.records.push({
+      ...recordMetadata(),
+      subcategory: null,
+      trade: null,
+      acquisition: null,
       id: i + 1,
       name: "Image",
-      type: "reference",
+      type: "material",
       description: null,
       quality: null,
       image,

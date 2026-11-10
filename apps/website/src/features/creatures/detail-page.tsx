@@ -1,28 +1,13 @@
-import { SearchXIcon } from "lucide-react";
-import { useRouter } from "@tanstack/react-router";
-import { buttonVariants } from "@/ui/components/button";
-import {
-  Empty,
-  EmptyHeader,
-  EmptyTitle,
-  EmptyDescription,
-  EmptyContent,
-  EmptyMedia,
-} from "@/ui/components/empty";
 import { RecordImage } from "@/features/collection/record-image";
 import {
   CollectionDetailLayout,
-  CollectionDetailLoading,
   CollectionDetailRelatedGrid,
   CollectionDetailExtras,
   type CollectionDetailSection,
 } from "@/features/collection/detail-layout";
 import { CreaturesCard, CreatureSeriesCard } from "./creatures-card";
 import { SeriesImage } from "../collection/series-image";
-import { CreaturesReturnLink } from "./detail-navigation";
 import type { CreaturesDetail } from "./detail";
-import type { View } from "./search";
-import { CreaturesLoadError } from "./states";
 import { ItemCookingUsage } from "../ingredients/item-usage";
 
 export function CreaturesDetailPage({ detail }: { detail: CreaturesDetail }) {
@@ -113,32 +98,4 @@ function CreaturesRelated({ detail }: { detail: CreaturesDetail }) {
       )}
     </section>
   );
-}
-
-export function CreaturesDetailLoading() {
-  return <CollectionDetailLoading label="正在加载生物详情" />;
-}
-export function CreaturesDetailNotFound({ view }: { view: View }) {
-  return (
-    <Empty className="min-h-80">
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <SearchXIcon />
-        </EmptyMedia>
-        <EmptyTitle>
-          <h1>{view === "items" ? "未找到这种生物" : "未找到这个系列"}</h1>
-        </EmptyTitle>
-        <EmptyDescription>该条目不存在，请返回图鉴查找其他生物。</EmptyDescription>
-      </EmptyHeader>
-      <EmptyContent>
-        <CreaturesReturnLink view={view} className={buttonVariants({ variant: "outline" })}>
-          返回生物列表
-        </CreaturesReturnLink>
-      </EmptyContent>
-    </Empty>
-  );
-}
-export function CreaturesDetailError() {
-  const router = useRouter();
-  return <CreaturesLoadError onRetry={() => void router.invalidate()} />;
 }

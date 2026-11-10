@@ -4,11 +4,11 @@ import type { PlantItem, PlantSeries } from "../collection-view.ts";
 import type { PlantSeed } from "./model";
 import { RecordImage } from "@/features/collection/record-image";
 import { CollectionCard } from "@/features/collection/collection-card";
-import { usePlantsOrigin } from "./detail-navigation";
+import { useCollectionOrigin } from "@/features/collection/navigation";
 import { collectionItemLocation } from "../collection/item-route";
 
 export function PlantsCard({ item }: { item: PlantItem }) {
-  const origin = usePlantsOrigin();
+  const origin = useCollectionOrigin();
   return (
     <CollectionCard
       name={item.name}
@@ -17,7 +17,7 @@ export function PlantsCard({ item }: { item: PlantItem }) {
       titleLink={
         <Link
           {...collectionItemLocation({ ...item, catalogCategory: "plants" })}
-          state={{ plantsOrigin: origin }}
+          state={{ collectionOrigin: origin }}
         >
           {item.name}
         </Link>
@@ -28,7 +28,7 @@ export function PlantsCard({ item }: { item: PlantItem }) {
 }
 
 export function PlantSeriesCard({ series }: { series: PlantSeries }) {
-  const origin = usePlantsOrigin();
+  const origin = useCollectionOrigin();
   return (
     <CollectionCard
       name={series.name}
@@ -36,10 +36,10 @@ export function PlantSeriesCard({ series }: { series: PlantSeries }) {
       image={<RecordImage key={series.image} image={series.image} name={series.name} />}
       titleLink={
         <Link
-          to="/collection/plants/series/$id"
+          to="/collections/records/$id"
           params={{ id: String(series.id) }}
-          search={{ tab: undefined }}
-          state={{ plantsOrigin: origin }}
+          search={{ focus: undefined }}
+          state={{ collectionOrigin: origin }}
         >
           {series.name}
         </Link>

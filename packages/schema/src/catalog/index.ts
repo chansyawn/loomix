@@ -6,6 +6,7 @@ import {
   IngredientCategorySchema,
   RecipeSchema,
   TastesSchema,
+  CraftingRecipeSchema,
 } from "./recipes.ts";
 
 export * from "./recipes.ts";
@@ -58,45 +59,48 @@ export const EntityBaseSchema = z.strictObject({
   description: text,
   quality: QualitySchema.nullable(),
 });
+export const AdmissionReasonSchema = z.enum(["encyclopedia", "manual", "deterministicSeed"]);
+export const GameplayTagGroupSchema = z.strictObject({
+  field: z.union([
+    z.literal(6),
+    z.literal(7),
+    z.literal(8),
+    z.literal(9),
+    z.literal(10),
+    z.literal(11),
+    z.literal(12),
+    z.literal(13),
+    z.literal(14),
+    z.literal(15),
+  ]),
+  tagIds: IdSchema.array(),
+});
+export const GameplayTagSchema = z.strictObject({
+  id: IdSchema,
+  name: z.string().min(1),
+  enumName: text,
+  parentId: IdSchema.nullable(),
+  displayName: text,
+});
+const metadata = z.strictObject({
+  admissionReasons: AdmissionReasonSchema.array().min(1),
+  clientType: z.number().int().nonnegative(),
+  clientSecondaryType: z.number().int().nonnegative().nullable(),
+  gameplayTagGroups: GameplayTagGroupSchema.array().length(10),
+});
 const item = EntityBaseSchema.extend({
+  ...metadata.shape,
   subcategory: text,
   trade: TradeSchema.nullable(),
   acquisition: AcquisitionSchema.array().nullable(),
 });
 export const ItemSchema = z.discriminatedUnion("type", [
   item.extend({
-    type: z.literal("craftingCard"),
-    setId: IdSchema.nullable(),
-    neighborIds: IdSchema.array(),
-    artwork: z.strictObject({
-      bag: ImageRefSchema.nullable(),
-      back: ImageRefSchema.nullable(),
-      background: ImageRefSchema.nullable(),
-    }),
-    recipe: z
-      .strictObject({
-        productId: IdSchema,
-        quantity: IdSchema.nullable(),
-        materials: z
-          .array(z.strictObject({ itemId: IdSchema, quantity: IdSchema }))
-          .min(1)
-          .nullable(),
-        unresolvedReason: text,
-      })
-      .nullable(),
-  }),
-  item.extend({
     type: z.literal("furniture"),
     furnitureType: text,
-    size: text,
-    colors: texts,
-    materials: texts,
   }),
   item.extend({
     type: z.literal("clothing"),
-    colors: texts,
-    materials: texts,
-    styles: texts,
   }),
   item.extend({
     type: z.literal("creature"),
@@ -126,7 +130,6 @@ export const ItemSchema = z.discriminatedUnion("type", [
   }),
   item.extend({
     type: z.literal("plant"),
-    origins: texts,
     flowerColors: texts,
     drops: DropSchema.array().nullable(),
     hybridRecipes: z
@@ -141,7 +144,6 @@ export const ItemSchema = z.discriminatedUnion("type", [
   item.extend({
     type: z.literal("dish"),
     difficulty: text,
-    galaxyFlavor: text,
     cookware: texts,
     effectsText: text,
     tastes: TastesSchema.nullable(),
@@ -161,7 +163,6 @@ export const ItemSchema = z.discriminatedUnion("type", [
       .nullable(),
   }),
   item.extend({ type: z.literal("material") }),
-  EntityBaseSchema.extend({ type: z.literal("reference") }),
 ]);
 export const GroupSchema = EntityBaseSchema.extend({
   type: z.enum([
@@ -173,49 +174,49 @@ export const GroupSchema = EntityBaseSchema.extend({
   ]),
   memberIds: IdSchema.array().nullable(),
 });
-export const CardSetSchema = z.strictObject({
-  id: IdSchema,
-  name: z.string().min(1),
-  acquisitionHint: text,
-  artwork: z.strictObject({
-    cover: ImageRefSchema.nullable(),
-    bag: ImageRefSchema.nullable(),
-    back: ImageRefSchema.nullable(),
-    background: ImageRefSchema.nullable(),
-    icon: ImageRefSchema.nullable(),
-    lockedBackground: ImageRefSchema.nullable(),
-    unlockedBackground: ImageRefSchema.nullable(),
-  }),
-});
 export const AppearanceSchema = EntityBaseSchema.extend({ subcategory: text });
-export const SeedSchema = EntityBaseSchema.extend({
+export const SeedDataSchema = EntityBaseSchema.extend({
   growthId: IdSchema,
   trade: TradeSchema.nullable(),
   acquisition: AcquisitionSchema.array().nullable(),
 });
-export const EntrySchema = z.strictObject({
-  entity: z.discriminatedUnion("kind", [
-    z.strictObject({ kind: z.literal("item"), id: IdSchema }),
-    z.strictObject({ kind: z.literal("group"), id: IdSchema }),
-    z.strictObject({ kind: z.literal("appearance"), id: IdSchema }),
-  ]),
-  encyclopedia: z.strictObject({ listed: z.boolean() }).nullable(),
-});
+export const RecordSchema = z.discriminatedUnion("type", [
+  ...ItemSchema.options,
+  GroupSchema.extend({ ...metadata.shape, acquisition: AcquisitionSchema.array().nullable() }),
+  AppearanceSchema.extend({
+    ...metadata.shape,
+    type: z.literal("appearance"),
+    acquisition: AcquisitionSchema.array().nullable(),
+  }),
+  SeedDataSchema.extend({ ...metadata.shape, type: z.literal("seed") }),
+]);
+export const ItemReferenceSchema = z.strictObject({ id: IdSchema, name: z.string().min(1) });
 export const CatalogSchema = ContextSchema.extend({
   kind: z.literal("catalog"),
-  items: ItemSchema.array(),
-  groups: GroupSchema.array(),
-  cardSets: CardSetSchema.array(),
-  appearances: AppearanceSchema.array(),
-  seeds: SeedSchema.array(),
+  records: RecordSchema.array(),
+  references: ItemReferenceSchema.array(),
+  gameplayTags: GameplayTagSchema.array(),
+  craftingRecipes: CraftingRecipeSchema.extend({
+    productId: IdSchema,
+    quantity: IdSchema.nullable(),
+  }).array(),
   growths: GrowthSchema.array(),
   ingredientCategories: IngredientCategorySchema.array(),
-  entries: EntrySchema.array(),
 });
 export type Catalog = z.infer<typeof CatalogSchema>;
+export type CatalogRecord = z.infer<typeof RecordSchema>;
 export type Item = z.infer<typeof ItemSchema>;
 export type Group = z.infer<typeof GroupSchema>;
-export type CardSet = z.infer<typeof CardSetSchema>;
-export type Seed = z.infer<typeof SeedSchema>;
+export type Seed = Extract<CatalogRecord, { type: "seed" }>;
+export type ItemReference = z.infer<typeof ItemReferenceSchema>;
+export type GameplayTag = z.infer<typeof GameplayTagSchema>;
 export type Quality = z.infer<typeof QualitySchema>;
 export const parseCatalog = (input: unknown): Catalog => CatalogSchema.parse(input);
+export {
+  isGroupRecord,
+  recordCategory,
+  recordKind,
+  resolveItem,
+  createTagResolver,
+} from "./records.ts";
+export { recordTarget, recordFocus } from "./location.ts";

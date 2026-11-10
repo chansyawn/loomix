@@ -1,17 +1,8 @@
-import { z } from "zod";
 import type { IngredientUsage, IngredientsData } from "../ingredients/model";
 import { ingredientUsage } from "../ingredients/model";
 import type { PlantGrowth, PlantItem, PlantSeries } from "./model";
 
 export type CropTab = "seed" | `item-${number}`;
-export const cropDetailSearchSchema = z.object({
-  tab: z
-    .string()
-    .regex(/^item-[1-9]\d*$/)
-    .optional()
-    .catch(undefined),
-});
-
 export function selectedCropTab(tab: string | undefined, items: readonly PlantItem[]): CropTab {
   const item = items.find((item) => tab === `item-${item.id}`);
   return item ? `item-${item.id}` : "seed";

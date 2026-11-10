@@ -14,11 +14,11 @@ import {
   creaturesSearchSchema,
 } from "./search";
 
-function setup(initialEntry = "/collection/creatures") {
+function setup(initialEntry = "/collections/creatures") {
   const root = createRootRoute({ validateSearch: z.object({ lang: z.string().optional() }) });
   const creatures = createRoute({
     getParentRoute: () => root,
-    path: "/collection/creatures",
+    path: "/collections/creatures",
     validateSearch: creaturesSearchSchema,
     search: { middlewares: [compactCreaturesSearchMiddleware] },
   });
@@ -34,14 +34,14 @@ describe("compact creatures URLs", () => {
   it("omits all defaults and only serializes meaningful nested fields", () => {
     const { router } = setup();
     const empty = router.buildLocation({
-      to: "/collection/creatures",
-      from: "/collection/creatures",
+      to: "/collections/creatures",
+      from: "/collections/creatures",
       search: creaturesSearchSchema.parse({}),
     });
-    expect(empty.href).toBe("/collection/creatures");
+    expect(empty.href).toBe("/collections/creatures");
     const selected = router.buildLocation({
-      to: "/collection/creatures",
-      from: "/collection/creatures",
+      to: "/collections/creatures",
+      from: "/collections/creatures",
       search: creaturesSearchSchema.parse({
         items: { q: "鱼", regions: ["禾夏"], sort: "quality-desc" },
       }),
@@ -72,12 +72,12 @@ describe("compact creatures URLs", () => {
 
   it("preserves parent parameters while discarding unsupported query parameters", async () => {
     const { router } = setup(
-      `/collection/creatures${defaultStringifySearch({ lang: "zh", items: { categories: ["水生生物"], page: 4 } })}`,
+      `/collections/creatures${defaultStringifySearch({ lang: "zh", items: { categories: ["水生生物"], page: 4 } })}`,
     );
     await router.load();
     const location = router.buildLocation({
-      to: "/collection/creatures",
-      from: "/collection/creatures",
+      to: "/collections/creatures",
+      from: "/collections/creatures",
       search: (previous) => ({ ...previous, ...creaturesSearchSchema.parse(previous) }),
     });
     expect(defaultParseSearch(location.searchStr)).toEqual({
@@ -97,10 +97,10 @@ describe("layout URL overrides", () => {
       expect(
         creaturesSearchSchema.parse(defaultParseSearch(defaultStringifySearch(compact))),
       ).toEqual(search);
-      const location = router.buildLocation({ to: "/collection/creatures", search });
+      const location = router.buildLocation({ to: "/collections/creatures", search });
       expect(defaultParseSearch(location.searchStr)).toMatchObject({ layout });
       const cleared = router.buildLocation({
-        to: "/collection/creatures",
+        to: "/collections/creatures",
         search: creaturesSearchSchema.parse({ ...search, items: {} }),
       });
       expect(defaultParseSearch(cleared.searchStr)).toEqual({ layout });

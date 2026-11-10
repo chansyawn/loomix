@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { Catalog, Item, Group } from "@loomix/schema/catalog";
+import { RecordSchema, type Catalog, type Item, type Group } from "@loomix/schema/catalog";
 import type { Assets, ImageRef } from "@loomix/schema/assets";
 import { emptyDataset } from "@loomix/schema/dataset";
 import { documentPath } from "@loomix/schema/release";
@@ -7,7 +7,7 @@ import { referencedImages } from "@loomix/schema/dataset/images";
 import type { CollectionRecord, CollectionView } from "./collection-view.ts";
 
 export const fixtureContext = {
-  formatVersion: 3,
+  formatVersion: 4,
   snapshotId: "a".repeat(64),
   locale: "zh-CN",
 } as const;
@@ -29,6 +29,7 @@ const acquisition = (value: string | null): MaterialItem["acquisition"] =>
       }));
 export function catalogBase(record: CollectionRecord) {
   return {
+    ...fixtureMetadata(),
     id: record.id,
     name: record.name,
     image: record.image === null ? null : { assetId: record.image, variant: "icon" as const },
@@ -39,40 +40,13 @@ export function catalogBase(record: CollectionRecord) {
 export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
   const catalog = emptyDataset(fixtureContext, fixtureSource).catalog;
   catalog.ingredientCategories = view.ingredientCategories ?? [];
-  const add = (item: Item) => {
-    catalog.items.push(item);
-    catalog.entries.push({ entity: { kind: "item", id: item.id }, encyclopedia: { listed: true } });
-  };
-  const group = (record: CollectionRecord, type: Group["type"], memberIds: number[] | null) => {
-    catalog.groups.push({ ...catalogBase(record), type, memberIds });
-    catalog.entries.push({
-      entity: { kind: "group", id: record.id },
-      encyclopedia: { listed: true },
-    });
-  };
+  const add = (...items: object[]) => addFixtureRecords(catalog, ...items);
+  const group = (record: CollectionRecord, type: Group["type"], memberIds: number[] | null) =>
+    add({ ...catalogBase(record), type, memberIds, acquisition: null });
   const common = { trade: null, acquisition: null };
   for (const record of view.furniture?.items ?? []) {
     for (const recipe of record.craftingRecipes ?? [])
-      catalog.items.push({
-        id: recipe.id,
-        type: "craftingCard",
-        name: "创想卡",
-        image: null,
-        description: null,
-        quality: null,
-        subcategory: null,
-        trade: null,
-        acquisition: null,
-        setId: null,
-        neighborIds: [],
-        artwork: { bag: null, back: null, background: null },
-        recipe: {
-          productId: record.id,
-          quantity: 1,
-          materials: recipe.materials,
-          unresolvedReason: recipe.unresolvedReason,
-        },
-      });
+      catalog.craftingRecipes.push({ ...recipe, productId: record.id, quantity: 1 });
     add({
       ...catalogBase(record),
       ...common,
@@ -129,8 +103,10 @@ export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
           image: stage.image ? { assetId: stage.image, variant: "icon" } : null,
         })),
       });
-    catalog.seeds.push({
+    add({
+      type: "seed",
       ...catalogBase(record),
+      admissionReasons: ["deterministicSeed"],
       growthId: record.growthId,
       trade: record.trade,
       acquisition: record.acquisition,
@@ -167,13 +143,13 @@ export function catalogFixture(view: Partial<CollectionView> = {}): Catalog {
     });
   for (const record of view.clothing?.sets ?? [])
     group(record, "clothing.set", record.componentIds);
-  for (const record of view.clothing?.appearances ?? []) {
-    catalog.appearances.push({ ...catalogBase(record), subcategory: record.category });
-    catalog.entries.push({
-      entity: { kind: "appearance", id: record.id },
-      encyclopedia: { listed: false },
+  for (const record of view.clothing?.appearances ?? [])
+    add({
+      ...catalogBase(record),
+      type: "appearance",
+      subcategory: record.category,
+      acquisition: null,
     });
-  }
   for (const record of view.miscellaneous ?? [])
     add({
       ...catalogBase(record),
@@ -233,4 +209,71 @@ export function fixtureRequest(catalog: Catalog): typeof fetch {
     const entry = [...responses].find(([key]) => url.endsWith(key));
     return Promise.resolve(new Response(entry?.[1] ?? "missing", { status: entry ? 200 : 404 }));
   };
+}
+
+export function fixtureMetadata() {
+  return {
+    admissionReasons: ["manual" as const],
+    clientType: 1,
+    clientSecondaryType: null,
+    gameplayTagGroups: ([6, 7, 8, 9, 10, 11, 12, 13, 14, 15] as const).map((field) => ({
+      field,
+      tagIds: [] as number[],
+    })),
+  };
+}
+export function addFixtureRecords(catalog: Catalog, ...items: object[]) {
+  for (const input of items) {
+    const raw: Record<string, unknown> = { ...input };
+    if (raw.type === "reference") {
+      catalog.references.push({ id: Number(raw.id), name: String(raw.name) });
+      continue;
+    }
+    const meta = fixtureMetadata();
+    for (const [key, field] of [
+      ["colors", 9],
+      ["materials", 11],
+      ["styles", 12],
+      ["origins", 8],
+      ["galaxyFlavor", 8],
+    ] as const) {
+      const value = raw[key];
+      delete raw[key];
+      const values = Array.isArray(value)
+        ? value
+        : typeof value === "string"
+          ? value.split("，")
+          : [];
+      for (const label of values) {
+        if (typeof label !== "string") continue;
+        let tag = catalog.gameplayTags.find((tag) => tag.name === label);
+        if (!tag) {
+          tag = {
+            id: catalog.gameplayTags.length + 1,
+            name: label,
+            displayName: label,
+            enumName: null,
+            parentId: null,
+          };
+          catalog.gameplayTags.push(tag);
+        }
+        meta.gameplayTagGroups.find((group) => group.field === field)!.tagIds.push(tag.id);
+      }
+    }
+    if (raw.type === "furniture") delete raw.size;
+    const existing = raw.gameplayTagGroups;
+    const groups =
+      Array.isArray(existing) &&
+      existing.some(
+        (group) =>
+          group &&
+          typeof group === "object" &&
+          "tagIds" in group &&
+          Array.isArray(group.tagIds) &&
+          group.tagIds.length,
+      )
+        ? existing
+        : meta.gameplayTagGroups;
+    catalog.records.push(RecordSchema.parse({ ...meta, ...raw, gameplayTagGroups: groups }));
+  }
 }

@@ -7,25 +7,19 @@ import {
   MembershipCell,
 } from "../collection/table-columns";
 import type { CollectionColumn } from "../collection/table-columns";
-import { useClothingOrigin } from "./detail-navigation";
+import { useCollectionOrigin } from "@/features/collection/navigation";
 import { membershipIndex } from "./query";
 import type { View } from "./search";
 
 export type ClothingRow = ClothingItem | ClothingSet | ClothingAppearance;
 
-function NameLink({ record, view }: { record: ClothingRow; view: View }) {
-  const origin = useClothingOrigin();
+function NameLink({ record }: { record: ClothingRow }) {
+  const origin = useCollectionOrigin();
   return (
     <Link
-      to={
-        view === "items"
-          ? "/collection/clothing/items/$id"
-          : view === "sets"
-            ? "/collection/clothing/sets/$id"
-            : "/collection/clothing/appearances/$id"
-      }
+      to="/collections/records/$id"
       params={{ id: String(record.id) }}
-      state={{ clothingOrigin: origin }}
+      state={{ collectionOrigin: origin }}
       className={tableLinkClassName}
       title={record.name}
     >
@@ -35,7 +29,7 @@ function NameLink({ record, view }: { record: ClothingRow; view: View }) {
 }
 
 function MemberLinks({ groups, complete }: { groups: ClothingSet[]; complete: boolean }) {
-  const origin = useClothingOrigin();
+  const origin = useCollectionOrigin();
   return (
     <MembershipCell
       groups={groups}
@@ -44,9 +38,9 @@ function MemberLinks({ groups, complete }: { groups: ClothingSet[]; complete: bo
       renderLink={(entry) => (
         <Link
           key={entry.id}
-          to="/collection/clothing/sets/$id"
+          to="/collections/records/$id"
           params={{ id: String(entry.id) }}
-          state={{ clothingOrigin: origin }}
+          state={{ collectionOrigin: origin }}
           className={tableLinkClassName}
         >
           {entry.name}
@@ -60,7 +54,7 @@ export function clothingTableColumns(
   view: View,
   groups: ClothingSet[] = [],
 ): CollectionColumn<ClothingRow>[] {
-  const common = recordColumns<ClothingRow>((record) => <NameLink record={record} view={view} />);
+  const common = recordColumns<ClothingRow>((record) => <NameLink record={record} />);
   if (view === "sets")
     return [
       ...common,

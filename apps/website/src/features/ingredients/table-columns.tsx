@@ -3,16 +3,16 @@ import type { IngredientItem } from "../collection-view";
 import { collectionItemLocation } from "../collection/item-route";
 import { recordColumns, tableLinkClassName, textColumn } from "../collection/table-columns";
 import type { CollectionColumn } from "../collection/table-columns";
-import { useDishesOrigin } from "../dishes/detail-navigation";
+import { useCollectionOrigin } from "@/features/collection/navigation";
 import { ingredientLeafTags } from "./model";
 import type { IngredientsData } from "./model";
 
 function IngredientLink({ item }: { item: IngredientItem }) {
-  const origin = useDishesOrigin();
+  const origin = useCollectionOrigin();
   return (
     <Link
       {...collectionItemLocation(item)}
-      state={{ dishesOrigin: origin }}
+      state={{ collectionOrigin: origin }}
       className={tableLinkClassName}
       title={item.name}
     >

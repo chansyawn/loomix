@@ -1,28 +1,13 @@
 import { PlantGrowthStages } from "./plant-growth";
-import { SearchXIcon } from "lucide-react";
-import { useRouter } from "@tanstack/react-router";
-import { buttonVariants } from "@/ui/components/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/ui/components/empty";
 import {
   CollectionDetailLayout,
-  CollectionDetailLoading,
   CollectionDetailRelatedGrid,
   CollectionDetailExtras,
   type CollectionDetailSection,
 } from "@/features/collection/detail-layout";
 import { RecordImage } from "@/features/collection/record-image";
 import { PlantsCard, PlantSeriesCard } from "./plants-card";
-import { PlantsReturnLink } from "./detail-navigation";
 import type { PlantsDetail } from "./detail";
-import type { View } from "./search";
-import { PlantsLoadError } from "./states";
 import { PlantDropsInfo, PlantRelatedItems } from "./related-items";
 import { ItemCookingUsage } from "../ingredients/item-usage";
 import { CropDetailPage } from "./crop-detail-page";
@@ -30,8 +15,24 @@ import { plantSeriesFields } from "./series-fields";
 
 type PlantOrSeriesDetail = Exclude<PlantsDetail, { kind: "crop" }>;
 
-export function PlantsDetailPage({ detail }: { detail: PlantsDetail }) {
-  if (detail.kind === "crop") return <CropDetailPage key={detail.record.id} detail={detail} />;
+export function PlantsDetailPage({
+  detail,
+  focus,
+  onFocusChange,
+}: {
+  detail: PlantsDetail;
+  focus?: number;
+  onFocusChange: (focus?: number) => void;
+}) {
+  if (detail.kind === "crop")
+    return (
+      <CropDetailPage
+        key={detail.record.id}
+        detail={detail}
+        focus={focus}
+        onFocusChange={onFocusChange}
+      />
+    );
   return <PlantOrSeriesDetailPage detail={detail} />;
 }
 
@@ -151,35 +152,4 @@ function PlantSeriesRelated({
       )}
     </section>
   );
-}
-
-export function PlantsDetailLoading() {
-  return <CollectionDetailLoading label="正在加载植物详情" />;
-}
-
-export function PlantsDetailNotFound({ view }: { view: Exclude<View, "seeds"> }) {
-  const title = view === "items" ? "未找到这种植物" : "未找到这个系列";
-  return (
-    <Empty className="min-h-80">
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <SearchXIcon />
-        </EmptyMedia>
-        <EmptyTitle>
-          <h1>{title}</h1>
-        </EmptyTitle>
-        <EmptyDescription>该条目不存在，请返回图鉴查找其他植物。</EmptyDescription>
-      </EmptyHeader>
-      <EmptyContent>
-        <PlantsReturnLink view={view} className={buttonVariants({ variant: "outline" })}>
-          返回植物列表
-        </PlantsReturnLink>
-      </EmptyContent>
-    </Empty>
-  );
-}
-
-export function PlantsDetailError() {
-  const router = useRouter();
-  return <PlantsLoadError onRetry={() => void router.invalidate()} />;
 }

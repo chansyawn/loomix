@@ -3,6 +3,7 @@ import type { LinkProps } from "@tanstack/react-router";
 import { Card, CardContent } from "@/ui/components/card";
 import type { CollectionRecord } from "../collection-view";
 import { RecordImage } from "./record-image";
+import { useCollectionOrigin } from "./navigation";
 
 export function CollectionItemCard({
   item,
@@ -21,6 +22,7 @@ export function CollectionItemCard({
   fullDescription?: boolean;
   fallbackName?: string;
 }) {
+  const origin = useCollectionOrigin();
   const name = item?.name ?? `${fallbackName} #${itemId}`;
   const content = (
     <div className="flex items-center gap-3">
@@ -53,6 +55,7 @@ export function CollectionItemCard({
         {link ? (
           <Link
             {...link}
+            state={link.state ?? { collectionOrigin: origin }}
             className="flex items-center gap-3 outline-none after:absolute after:inset-0 after:rounded-xl"
           >
             {content}

@@ -3,6 +3,7 @@ import type { LinkProps } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import type { IngredientItem } from "../collection-view";
 import { collectionItemLocation } from "./item-route";
+import { useCollectionOrigin } from "./navigation";
 
 export function CollectionItemLink({
   item,
@@ -15,11 +16,12 @@ export function CollectionItemLink({
   children?: ReactNode;
   className?: string;
 }) {
+  const origin = useCollectionOrigin();
   if (item.listed === false) return <span className={className}>{children ?? item.name}</span>;
   return (
     <Link
       {...collectionItemLocation(item)}
-      state={state}
+      state={state ?? { collectionOrigin: origin }}
       className={
         className ??
         "rounded-sm text-sm underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"

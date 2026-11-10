@@ -1,3 +1,5 @@
+import { useRouterState } from "@tanstack/react-router";
+import { collectionOrigin, collectionListPath } from "../collection/navigation";
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
 import GithubIcon from "@/assets/icons/github.svg?react";
@@ -17,6 +19,12 @@ import {
 } from "@/ui/components/sidebar";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const activePath = useRouterState({
+    select: (state) =>
+      state.location.pathname.startsWith("/collections/records/")
+        ? collectionListPath(collectionOrigin(state.location)?.href ?? "/collections/all")
+        : state.location.pathname,
+  });
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
@@ -74,7 +82,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               return (
                 <SidebarMenuItem key={item.to}>
                   <SidebarMenuButton
-                    render={<Link to={item.to} activeProps={{ "data-active": true }} />}
+                    render={
+                      <Link
+                        to={item.to}
+                        data-active={activePath === item.to || undefined}
+                        activeOptions={{ exact: true }}
+                      />
+                    }
                   >
                     <Icon />
                     <span>{item.title}</span>
@@ -90,6 +104,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <Button
             variant="ghost"
             size="icon"
+            nativeButton={false}
             aria-label="GitHub"
             title="GitHub"
             render={

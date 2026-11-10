@@ -2,11 +2,11 @@ import { Link } from "@tanstack/react-router";
 import type { CreatureItem, CreatureSeries } from "../collection-view.ts";
 import { RecordImage } from "@/features/collection/record-image";
 import { CollectionCard } from "@/features/collection/collection-card";
-import { useCreaturesOrigin } from "./detail-navigation";
+import { useCollectionOrigin } from "@/features/collection/navigation";
 import { SeriesImage } from "../collection/series-image";
 
 export function CreaturesCard({ item }: { item: CreatureItem }) {
-  const origin = useCreaturesOrigin();
+  const origin = useCollectionOrigin();
   return (
     <CollectionCard
       name={item.name}
@@ -14,9 +14,9 @@ export function CreaturesCard({ item }: { item: CreatureItem }) {
       image={<RecordImage key={item.image} image={item.image} name={item.name} />}
       titleLink={
         <Link
-          to="/collection/creatures/items/$id"
+          to="/collections/records/$id"
           params={{ id: String(item.id) }}
-          state={{ creaturesOrigin: origin }}
+          state={{ collectionOrigin: origin }}
         >
           {item.name}
         </Link>
@@ -33,7 +33,7 @@ export function CreatureSeriesCard({
   series: CreatureSeries;
   items: CreatureItem[];
 }) {
-  const origin = useCreaturesOrigin();
+  const origin = useCollectionOrigin();
   return (
     <CollectionCard
       name={series.name}
@@ -48,9 +48,9 @@ export function CreatureSeriesCard({
       }
       titleLink={
         <Link
-          to="/collection/creatures/series/$id"
+          to="/collections/records/$id"
           params={{ id: String(series.id) }}
-          state={{ creaturesOrigin: origin }}
+          state={{ collectionOrigin: origin }}
         >
           {series.name}
         </Link>

@@ -1,12 +1,18 @@
 import { expect, test } from "vite-plus/test";
 import { emptyDataset } from "@loomix/schema/dataset";
-import { assetsFixture, fixtureContext, fixtureSource } from "./collection-fixture";
+import {
+  assetsFixture,
+  fixtureContext,
+  fixtureSource,
+  addFixtureRecords,
+} from "./collection-fixture";
 import { toCollectionView } from "./collection-view";
 
 test("catalog entries control listing while reference entities remain available to relationships", () => {
   const catalog = emptyDataset(fixtureContext, fixtureSource).catalog;
   const base = { name: "材料", image: null, quality: null, description: null };
-  catalog.items.push(
+  addFixtureRecords(
+    catalog,
     {
       ...base,
       id: 1,
@@ -20,7 +26,6 @@ test("catalog entries control listing while reference entities remain available 
     },
     { ...base, id: 2, type: "reference" },
   );
-  catalog.entries.push({ entity: { kind: "item", id: 1 }, encyclopedia: null });
   const view = toCollectionView(catalog, assetsFixture(catalog));
   expect(view.miscellaneous.map((item) => item.id)).toEqual([1]);
   expect(view.miscellaneous[0]?.acquisition).toBe("来源甲，来源乙");
@@ -29,7 +34,9 @@ test("catalog entries control listing while reference entities remain available 
 
 test("external appearance records retain their identity without entering item lists", () => {
   const catalog = emptyDataset(fixtureContext, fixtureSource).catalog;
-  catalog.appearances.push({
+  addFixtureRecords(catalog, {
+    type: "appearance",
+    acquisition: null,
     id: 8,
     name: "发型",
     subcategory: "发型",
@@ -37,13 +44,12 @@ test("external appearance records retain their identity without entering item li
     quality: null,
     description: null,
   });
-  catalog.entries.push({ entity: { kind: "appearance", id: 8 }, encyclopedia: { listed: false } });
   expect(toCollectionView(catalog, assetsFixture(catalog)).clothing.appearances[0].id).toBe(8);
 });
 
 test("creature details retain scientific names and localized acquisition labels", () => {
   const catalog = emptyDataset(fixtureContext, fixtureSource).catalog;
-  catalog.items.push({
+  addFixtureRecords(catalog, {
     id: 1,
     name: "三色锦鲤",
     type: "creature",
@@ -66,7 +72,6 @@ test("creature details retain scientific names and localized acquisition labels"
     size: null,
     grades: null,
   });
-  catalog.entries.push({ entity: { kind: "item", id: 1 }, encyclopedia: { listed: true } });
 
   expect(toCollectionView(catalog, assetsFixture(catalog)).creatures.items[0]).toMatchObject({
     scientificName: "Cyprinus carpio",
@@ -76,7 +81,7 @@ test("creature details retain scientific names and localized acquisition labels"
 
 test("dish details retain tastes, structured effects, unlock requirements and acquisition", () => {
   const catalog = emptyDataset(fixtureContext, fixtureSource).catalog;
-  catalog.items.push({
+  addFixtureRecords(catalog, {
     id: 1,
     name: "星露烤鱼",
     type: "dish",
@@ -108,7 +113,6 @@ test("dish details retain tastes, structured effects, unlock requirements and ac
       },
     ],
   });
-  catalog.entries.push({ entity: { kind: "item", id: 1 }, encyclopedia: { listed: true } });
 
   expect(toCollectionView(catalog, assetsFixture(catalog)).dishes.items[0]).toMatchObject({
     effectsText: "增加 40 力气",
@@ -131,7 +135,8 @@ test("furniture, clothing and materials display structured acquisition condition
     trade: null,
     acquisition: [{ sourceId: 1, label: "星屿探索", condition: "完成探索" }],
   };
-  catalog.items.push(
+  addFixtureRecords(
+    catalog,
     {
       ...common,
       type: "furniture",
@@ -143,8 +148,6 @@ test("furniture, clothing and materials display structured acquisition condition
     { ...common, id: 2, type: "clothing", colors: null, materials: null, styles: null },
     { ...common, id: 3, type: "material" },
   );
-  for (const item of catalog.items)
-    catalog.entries.push({ entity: { kind: "item", id: item.id }, encyclopedia: null });
   const view = toCollectionView(catalog, assetsFixture(catalog));
   for (const item of [view.furniture.items[0], view.clothing.items[0], view.miscellaneous[0]]) {
     expect(item.acquisition).toBe("星屿探索（完成探索）");

@@ -2,17 +2,17 @@ import { Link } from "@tanstack/react-router";
 import type { MiscellaneousItem } from "../collection-view";
 import { recordColumns, textColumn, tableLinkClassName } from "../collection/table-columns";
 import type { CollectionColumn } from "../collection/table-columns";
-import { useMiscellanyOrigin } from "./detail-navigation";
+import { useCollectionOrigin } from "@/features/collection/navigation";
 
 export type MiscellanyRow = MiscellaneousItem;
 
 function NameLink({ record }: { record: MiscellanyRow }) {
-  const origin = useMiscellanyOrigin();
+  const origin = useCollectionOrigin();
   return (
     <Link
-      to={"/collection/miscellany/items/$id"}
+      to={"/collections/records/$id"}
       params={{ id: String(record.id) }}
-      state={{ miscellanyOrigin: origin }}
+      state={{ collectionOrigin: origin }}
       className={tableLinkClassName}
       title={record.name}
     >

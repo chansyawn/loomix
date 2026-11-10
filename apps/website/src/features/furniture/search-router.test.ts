@@ -14,11 +14,11 @@ import {
   furnitureSearchSchema,
 } from "./search";
 
-function setup(initialEntry = "/collection/furniture") {
+function setup(initialEntry = "/collections/furniture") {
   const root = createRootRoute({ validateSearch: z.object({ lang: z.string().optional() }) });
   const furniture = createRoute({
     getParentRoute: () => root,
-    path: "/collection/furniture",
+    path: "/collections/furniture",
     validateSearch: furnitureSearchSchema,
     search: { middlewares: [compactFurnitureSearchMiddleware] },
   });
@@ -34,14 +34,14 @@ describe("compact furniture URLs", () => {
   it("omits all defaults and only serializes meaningful nested fields", () => {
     const { router } = setup();
     const empty = router.buildLocation({
-      to: "/collection/furniture",
-      from: "/collection/furniture",
+      to: "/collections/furniture",
+      from: "/collections/furniture",
       search: furnitureSearchSchema.parse({}),
     });
-    expect(empty.href).toBe("/collection/furniture");
+    expect(empty.href).toBe("/collections/furniture");
     const selected = router.buildLocation({
-      to: "/collection/furniture",
-      from: "/collection/furniture",
+      to: "/collections/furniture",
+      from: "/collections/furniture",
       search: furnitureSearchSchema.parse({
         items: { q: "桌", colors: ["白色"], sort: "quality-desc" },
       }),
@@ -69,25 +69,25 @@ describe("compact furniture URLs", () => {
   it("serializes both explicit layouts so links override local preferences", () => {
     const { router } = setup();
     const grid = router.buildLocation({
-      to: "/collection/furniture",
+      to: "/collections/furniture",
       search: furnitureSearchSchema.parse({ layout: "grid" }),
     });
-    expect(grid.href).toBe("/collection/furniture?layout=grid");
+    expect(grid.href).toBe("/collections/furniture?layout=grid");
     const table = router.buildLocation({
-      to: "/collection/furniture",
+      to: "/collections/furniture",
       search: furnitureSearchSchema.parse({ layout: "table" }),
     });
-    expect(table.href).toBe("/collection/furniture?layout=table");
+    expect(table.href).toBe("/collections/furniture?layout=table");
   });
 
   it("preserves parent parameters while normalizing old furniture URLs", async () => {
     const { router } = setup(
-      `/collection/furniture${defaultStringifySearch({ lang: "zh", items: { category: "起居", page: 4 } })}`,
+      `/collections/furniture${defaultStringifySearch({ lang: "zh", items: { category: "起居", page: 4 } })}`,
     );
     await router.load();
     const location = router.buildLocation({
-      to: "/collection/furniture",
-      from: "/collection/furniture",
+      to: "/collections/furniture",
+      from: "/collections/furniture",
       search: (previous) => ({ ...previous, ...furnitureSearchSchema.parse(previous) }),
     });
     expect(defaultParseSearch(location.searchStr)).toEqual({
@@ -107,10 +107,10 @@ describe("layout URL overrides", () => {
       expect(
         furnitureSearchSchema.parse(defaultParseSearch(defaultStringifySearch(compact))),
       ).toEqual(search);
-      const location = router.buildLocation({ to: "/collection/furniture", search });
+      const location = router.buildLocation({ to: "/collections/furniture", search });
       expect(defaultParseSearch(location.searchStr)).toMatchObject({ layout });
       const cleared = router.buildLocation({
-        to: "/collection/furniture",
+        to: "/collections/furniture",
         search: furnitureSearchSchema.parse({ ...search, items: {} }),
       });
       expect(defaultParseSearch(cleared.searchStr)).toEqual({ layout });

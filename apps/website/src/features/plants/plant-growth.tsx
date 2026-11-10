@@ -1,6 +1,6 @@
 import { CollectionItemCard } from "../collection/collection-item-card";
 import { collectionItemLocation } from "../collection/item-route";
-import { usePlantsOrigin } from "./detail-navigation";
+import { useCollectionOrigin } from "@/features/collection/navigation";
 import type { PlantSeed, PlantGrowth } from "./model";
 
 function stageGroups(growth: PlantGrowth) {
@@ -15,7 +15,7 @@ function stageGroups(growth: PlantGrowth) {
 }
 
 export function PlantGrowthStages({ seeds }: { seeds: PlantSeed[] }) {
-  const origin = usePlantsOrigin();
+  const origin = useCollectionOrigin();
   return (
     <section aria-labelledby="plant-growth-heading" className="space-y-6">
       <h2 id="plant-growth-heading" className="text-lg font-semibold">
@@ -58,7 +58,7 @@ export function PlantGrowthStages({ seeds }: { seeds: PlantSeed[] }) {
                                     catalogCategory: "plants",
                                     cropSeriesId: seed.cropSeriesId,
                                   }),
-                                  state: { plantsOrigin: origin },
+                                  state: { collectionOrigin: origin },
                                 }
                           }
                         />

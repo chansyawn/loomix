@@ -1,11 +1,4 @@
-import {
-  createMemoryHistory,
-  createRootRoute,
-  createRoute,
-  createRouter,
-  defaultParseSearch,
-  isNotFound,
-} from "@tanstack/react-router";
+import { isNotFound } from "@tanstack/react-router";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { catalogFixture, fixtureRequest } from "../collection-fixture.ts";
 import {
@@ -17,10 +10,8 @@ import {
 } from "./fixture";
 import type { PlantItem, PlantSeries } from "../collection-view.ts";
 import { plantsDetail, loadPlantsDetail, parsePlantId } from "./detail";
-import { cropDetailSearchSchema, matureCropStage, selectedCropTab } from "./crop-detail";
+import { matureCropStage, selectedCropTab } from "./crop-detail";
 import { ingredientsFixture } from "../ingredients/fixture";
-import { plantsOrigin } from "./detail-navigation";
-import { compactPlantsSearchMiddleware, plantsSearchSchema } from "./search";
 
 const first: PlantItem = plantItemFixture({
   id: 1,
@@ -117,7 +108,6 @@ describe("plant details", () => {
     expect(selectedCropTab("item-99", items)).toBe("seed");
     expect(selectedCropTab("item-x", items)).toBe("seed");
     expect(matureCropStage(growth, 9)?.image).toBe("second");
-    expect(cropDetailSearchSchema.parse({ tab: "invalid" })).toEqual({ tab: undefined });
   });
 
   it("accepts positive safe integer IDs and rejects malformed addresses", () => {
@@ -173,114 +163,5 @@ describe("plant details", () => {
     await expect(loadPlantsDetail("items", "1")).rejects.toThrow("503");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}")));
     await expect(loadPlantsDetail("items", "1")).rejects.toThrow();
-  });
-});
-
-function setup(initialEntries: string[]) {
-  const root = createRootRoute();
-  const list = createRoute({
-    getParentRoute: () => root,
-    path: "/collection/plants",
-    validateSearch: plantsSearchSchema,
-    search: { middlewares: [compactPlantsSearchMiddleware] },
-  });
-  const item = createRoute({
-    getParentRoute: () => root,
-    path: "/collection/plants/items/$id",
-    loader: ({ params }) => plantsDetail(data, "items", parsePlantId(params.id)),
-  });
-  const seriesRoute = createRoute({
-    getParentRoute: () => root,
-    path: "/collection/plants/series/$id",
-    validateSearch: cropDetailSearchSchema,
-    loader: ({ params }) => plantsDetail(data, "series", parsePlantId(params.id)),
-  });
-  return createRouter({
-    history: createMemoryHistory({ initialEntries }),
-    routeTree: root.addChildren([list, item, seriesRoute]),
-  });
-}
-
-async function pushMemoryLocation(
-  router: ReturnType<typeof setup>,
-  href: string,
-  state = router.state.location.state,
-) {
-  router.history.push(href, state);
-  await router.load();
-}
-
-describe("plant detail navigation", () => {
-  it("shares product tabs and preserves origin state through history navigation", async () => {
-    const router = setup([
-      "/collection/plants?view=seeds&seeds=%7B%22q%22%3A%22%E7%95%AA%E8%8C%84%22%7D",
-    ]);
-    await router.load();
-    const original = router.state.location;
-    await pushMemoryLocation(router, "/collection/plants/series/3", {
-      ...original.state,
-      plantsOrigin: plantsOrigin(original),
-    });
-    const seedHref = router.state.location.href;
-    await pushMemoryLocation(router, "/collection/plants/series/3?tab=item-2");
-    expect(router.state.location.search).toEqual({ tab: "item-2" });
-    expect(plantsOrigin(router.state.location)).toEqual(plantsOrigin(original));
-    router.history.back();
-    await router.load();
-    expect(router.state.location.href).toBe(seedHref);
-    router.history.forward();
-    await router.load();
-    expect(router.state.location.search).toEqual({ tab: "item-2" });
-    const origin = plantsOrigin(router.state.location)!;
-    router.history.go(origin.index - router.state.location.state.__TSR_index);
-    await router.load();
-    expect(router.state.location.href).toBe(original.href);
-    expect(router.state.location.state.__TSR_key).toBe(original.state.__TSR_key);
-  });
-
-  it("opens direct detail addresses without requiring a list origin", async () => {
-    for (const href of ["/collection/plants/items/1", "/collection/plants/series/3"]) {
-      const router = setup([href]);
-      await router.load();
-      expect(router.state.matches.at(-1)?.status).toBe("success");
-      expect(plantsOrigin(router.state.location)).toBeUndefined();
-      expect(router.state.matches).toHaveLength(2);
-    }
-  });
-
-  it("returns through related details to the original filtered list", async () => {
-    const router = setup(["/collection/plants?items=%7B%22q%22%3A%22花%22%7D"]);
-    await router.load();
-    const original = router.state.location;
-    const origin = plantsOrigin(original);
-    await pushMemoryLocation(router, "/collection/plants/items/1", {
-      ...router.state.location.state,
-      plantsOrigin: origin,
-    });
-    await pushMemoryLocation(router, "/collection/plants/series/3", {
-      ...router.state.location.state,
-      plantsOrigin: plantsOrigin(router.state.location),
-    });
-    const retained = plantsOrigin(router.state.location)!;
-    expect(defaultParseSearch(retained.href.split("?")[1])).toEqual({ items: { q: "花" } });
-    router.history.go(retained.index - router.state.location.state.__TSR_index);
-    await router.load();
-    expect(router.state.location.href).toBe(original.href);
-    expect(router.state.location.state.__TSR_key).toBe(original.state.__TSR_key);
-  });
-
-  it("ignores origins that do not point to an earlier plant list", async () => {
-    const router = setup(["/collection/plants/items/1"]);
-    await router.load();
-    const location = router.state.location;
-    for (const origin of [
-      { href: "https://example.com", index: 0 },
-      { href: "/collection/plants", index: 100 },
-      { href: "/collection/plants/items/2", index: 0 },
-    ]) {
-      expect(
-        plantsOrigin({ ...location, state: { ...location.state, plantsOrigin: origin } }),
-      ).toBeUndefined();
-    }
   });
 });

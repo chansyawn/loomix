@@ -1,31 +1,24 @@
-import { describe, expect, it, test } from "vite-plus/test";
+import { expect, test } from "vite-plus/test";
 import { collectionItemLocation, cropDetailLocation } from "./item-route";
-
-describe("catalog item destinations", () => {
-  it.each([
-    ["plants", "plants"],
-    ["miscellaneous", "miscellany"],
-    ["creatures", "creatures"],
-    ["furniture", "furniture"],
-    ["clothing", "clothing"],
-    ["dishes", "dishes"],
-  ] as const)("routes %s items to their existing detail page", (catalogCategory, segment) => {
+test.each(["plants", "miscellaneous", "creatures", "furniture", "clothing", "dishes"] as const)(
+  "所有类别 %s 使用统一记录地址",
+  (catalogCategory) => {
     expect(collectionItemLocation({ id: 42, catalogCategory, cropSeriesId: null })).toEqual({
-      to: `/collection/${segment}/items/$id`,
+      to: "/collections/records/$id",
       params: { id: "42" },
+      search: { focus: undefined },
     });
-  });
-});
-
-test("routes crop products to their series and selected product tab", () => {
+  },
+);
+test("作物产物使用所属系列及统一focus", () => {
   expect(collectionItemLocation({ id: 42, catalogCategory: "plants", cropSeriesId: 9 })).toEqual({
-    to: "/collection/plants/series/$id",
+    to: "/collections/records/$id",
     params: { id: "9" },
-    search: { tab: "item-42" },
+    search: { focus: 42 },
   });
   expect(cropDetailLocation(9)).toEqual({
-    to: "/collection/plants/series/$id",
+    to: "/collections/records/$id",
     params: { id: "9" },
-    search: { tab: undefined },
+    search: { focus: undefined },
   });
 });

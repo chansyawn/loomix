@@ -1,13 +1,16 @@
-import type { ImageRef } from "@loomix/schema/assets";
+import assert from "node:assert/strict";
+import { catalogAdmissionIds } from "../extraction/content/catalog-admissions.ts";
+import { acquisition } from "../extraction/collection/details/client.ts";
 import { CatalogSchema } from "@loomix/schema/catalog";
-import type { Catalog, Item, Group } from "@loomix/schema/catalog";
+import type { Catalog, Group } from "@loomix/schema/catalog";
 import type { Dataset } from "@loomix/schema/dataset";
 import type { CollectionObservations } from "../extraction/schema.ts";
 import type { AssetRegistry } from "./assets.ts";
 import type { ContentContext } from "../extraction/content/context.ts";
 import { plainText, splitTags } from "../extraction/content/model.ts";
 import { ingredientExpressionItemIds } from "../extraction/content/recipes.ts";
-import { readCraftingCards } from "../extraction/cards/read.ts";
+import { readCraftingRecipes } from "../extraction/crafting/read.ts";
+import { createRecordMetadata } from "./catalog-tags.ts";
 
 export function buildCatalog(
   observations: CollectionObservations,
@@ -15,36 +18,26 @@ export function buildCatalog(
   assets: AssetRegistry,
   identity: Dataset["context"],
   referencedGiftItemIds: readonly number[] = [],
-  cardImages: ReadonlyMap<string, ImageRef> = new Map(),
 ): Catalog {
-  const { tables, vocabulary } = context;
+  const { tables } = context;
+  const { metadata, dictionary } = createRecordMetadata(context);
   const references = new Set<number>();
   const catalog: Catalog = {
     ...identity,
     kind: "catalog",
-    items: [],
-    groups: [],
-    cardSets: [],
-    appearances: [],
-    seeds: [],
+    records: [],
+    references: [],
+    gameplayTags: [],
+    craftingRecipes: [],
     growths: [],
     ingredientCategories: observations.ingredientCategories.map((category) => ({
       ...category,
       itemIds: [...category.itemIds],
     })),
-    entries: [],
-  };
-  const tags = (id: number, field: number): string[] | null => {
-    const values = vocabulary
-      .tags(context.main.get(id), field)
-      .map((tag) => vocabulary.translateTag(tag));
-    return values.length && values.every((value): value is string => value !== null)
-      ? [...new Set(values)]
-      : null;
   };
   const display = (id: number, field: number): string[] | null => {
     const values = splitTags(tables.string(context.ui.get(id), field)).map((key) =>
-      vocabulary.renderDisplay(key),
+      context.vocabulary.renderDisplay(key),
     );
     return values.length && values.every((value): value is string => value !== null)
       ? [...new Set(values)]
@@ -52,6 +45,8 @@ export function buildCatalog(
   };
   for (const record of observations.items) {
     const base = {
+      ...metadata(record.id),
+      acquisition: acquisition(context, record.id).value,
       id: record.id,
       name: record.name,
       description: record.description,
@@ -61,18 +56,12 @@ export function buildCatalog(
         record.category === "furniture" && record.kind === "set" ? "banner" : "icon",
       ),
     };
-    const kind =
-      record.kind === "item" ? "item" : record.kind === "appearance" ? "appearance" : "group";
-    catalog.entries.push({
-      entity: { kind, id: record.id },
-      encyclopedia: record.encyclopediaEntry,
-    });
     if (record.kind === "appearance") {
-      catalog.appearances.push({ ...base, subcategory: record.subcategory });
+      catalog.records.push({ ...base, type: "appearance", subcategory: record.subcategory });
       continue;
     }
     if (record.kind !== "item") {
-      catalog.groups.push({
+      catalog.records.push({
         ...base,
         type: `${record.category}.${record.kind}` as Group["type"],
         memberIds: record.memberIds,
@@ -89,26 +78,20 @@ export function buildCatalog(
     };
     switch (record.category) {
       case "furniture":
-        catalog.items.push({
+        catalog.records.push({
           ...common,
           type: "furniture",
           furnitureType: record.attributes.type,
-          size: record.attributes.size,
-          colors: tags(record.id, 9),
-          materials: tags(record.id, 11),
         });
         break;
       case "clothing":
-        catalog.items.push({
+        catalog.records.push({
           ...common,
           type: "clothing",
-          colors: tags(record.id, 9),
-          materials: tags(record.id, 11),
-          styles: tags(record.id, 12),
         });
         break;
       case "creatures":
-        catalog.items.push({
+        catalog.records.push({
           ...common,
           type: "creature",
           region: display(record.id, 31),
@@ -123,10 +106,9 @@ export function buildCatalog(
         });
         break;
       case "plants": {
-        catalog.items.push({
+        catalog.records.push({
           ...common,
           type: "plant",
-          origins: tags(record.id, 8),
           flowerColors: detail.flowerColors,
           drops: detail.treeDrops,
           hybridRecipes: detail.hybridRecipes,
@@ -134,11 +116,10 @@ export function buildCatalog(
         break;
       }
       case "dishes":
-        catalog.items.push({
+        catalog.records.push({
           ...common,
           type: "dish",
           difficulty: record.attributes.difficulty,
-          galaxyFlavor: record.attributes.galaxyFlavor,
           cookware: record.attributes.cookware === null ? null : [record.attributes.cookware],
           effectsText: record.attributes.effects,
           tastes: record.attributes.tastes,
@@ -148,33 +129,31 @@ export function buildCatalog(
         });
         break;
       case "miscellaneous":
-        catalog.items.push({ ...common, type: "material" });
+        catalog.records.push({ ...common, type: "material" });
         break;
     }
   }
-  catalog.seeds = observations.seeds.map((seed) => ({ ...seed, image: assets.image(seed.image) }));
+  for (const seed of observations.seeds) {
+    if (catalog.records.some((record) => record.id === seed.id))
+      throw new Error(`Seed classification conflict ${seed.id}`);
+    catalog.records.push({
+      ...seed,
+      ...metadata(seed.id, true),
+      type: "seed",
+      image: assets.image(seed.image),
+    });
+  }
   catalog.growths = observations.growths.map((growth) => ({
     ...growth,
     stages: growth.stages.map((stage) => ({ ...stage, image: assets.image(stage.image) })),
   }));
-  const crafting = readCraftingCards(context);
-  for (const link of crafting.imageReferences) {
-    const image = cardImages.get(link.reference) ?? null;
-    if (link.owner === "set") {
-      const set = crafting.sets.find((set) => set.id === link.id);
-      if (set && link.field !== "image") set.artwork[link.field] = image;
-    } else {
-      const card = crafting.cards.find((card) => card.id === link.id);
-      if (!card) continue;
-      if (link.field === "image") card.image = image;
-      else if (link.field === "bag" || link.field === "back" || link.field === "background")
-        card.artwork[link.field] = image;
-    }
-  }
-  catalog.cardSets = crafting.sets;
-  catalog.items.push(...crafting.cards);
-  for (const id of crafting.references) references.add(id);
-  const items = new Map(catalog.items.map((item) => [item.id, item]));
+  catalog.craftingRecipes = readCraftingRecipes(
+    context,
+    new Set(catalog.records.map((record) => record.id)),
+  ).recipes;
+  for (const recipe of catalog.craftingRecipes)
+    for (const material of recipe.materials ?? []) references.add(material.itemId);
+  const items = new Map(catalog.records.map((record) => [record.id, record]));
   for (const id of referencedGiftItemIds) references.add(id);
   for (const association of context.ingredientCategoryBuild.associations)
     references.add(association.itemId);
@@ -186,7 +165,10 @@ export function buildCatalog(
   const categories = new Map(
     catalog.ingredientCategories.map((category) => [category.id, category]),
   );
-  for (const item of catalog.items) {
+  for (const item of catalog.records) {
+    if ("trade" in item)
+      for (const offer of item.trade?.offers ?? [])
+        if (offer.currencyItemId !== null) references.add(offer.currencyItemId);
     if (item.type === "plant") for (const drop of item.drops ?? []) references.add(drop.itemId);
     if (item.type === "dish")
       for (const slot of item.recipe?.slots ?? [])
@@ -200,17 +182,14 @@ export function buildCatalog(
     const row = context.main.get(id);
     const name = plainText(tables.text(row, 1));
     if (!row || !name) throw new Error(`Unresolved referenced item ${id}`);
-    const item: Item = {
-      id,
-      type: "reference",
-      name,
-      description: null,
-      quality: null,
-      image: null,
-    };
-    catalog.items.push(item);
-    items.set(id, item);
+    catalog.references.push({ id, name });
   }
-  catalog.items.sort((a, b) => a.id - b.id);
+  catalog.records.sort((a, b) => a.id - b.id);
+  catalog.gameplayTags = dictionary();
+  assert.deepEqual(
+    new Set(catalog.records.map((record) => record.id)),
+    catalogAdmissionIds(context),
+    "Exact catalog admission union",
+  );
   return CatalogSchema.parse(catalog);
 }

@@ -7,19 +7,19 @@ import {
   MembershipCell,
 } from "../collection/table-columns";
 import type { CollectionColumn } from "../collection/table-columns";
-import { useFurnitureOrigin } from "./detail-navigation";
+import { useCollectionOrigin } from "@/features/collection/navigation";
 import { membershipIndex } from "./query";
 import type { View } from "./search";
 
 export type FurnitureRow = FurnitureItem | FurnitureSet;
 
 function NameLink({ record, view }: { record: FurnitureRow; view: View }) {
-  const origin = useFurnitureOrigin();
+  const origin = useCollectionOrigin();
   return (
     <Link
-      to={view === "items" ? "/collection/furniture/items/$id" : "/collection/furniture/sets/$id"}
+      to={view === "items" ? "/collections/records/$id" : "/collections/records/$id"}
       params={{ id: String(record.id) }}
-      state={{ furnitureOrigin: origin }}
+      state={{ collectionOrigin: origin }}
       className={tableLinkClassName}
       title={record.name}
     >
@@ -29,7 +29,7 @@ function NameLink({ record, view }: { record: FurnitureRow; view: View }) {
 }
 
 function MemberLinks({ groups, complete }: { groups: FurnitureSet[]; complete: boolean }) {
-  const origin = useFurnitureOrigin();
+  const origin = useCollectionOrigin();
   return (
     <MembershipCell
       groups={groups}
@@ -38,9 +38,9 @@ function MemberLinks({ groups, complete }: { groups: FurnitureSet[]; complete: b
       renderLink={(entry) => (
         <Link
           key={entry.id}
-          to="/collection/furniture/sets/$id"
+          to="/collections/records/$id"
           params={{ id: String(entry.id) }}
-          state={{ furnitureOrigin: origin }}
+          state={{ collectionOrigin: origin }}
           className={tableLinkClassName}
         >
           {entry.name}

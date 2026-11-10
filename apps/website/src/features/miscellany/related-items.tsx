@@ -37,7 +37,7 @@ function FurnitureUseCard({ usage }: { usage: MiscellanyFurnitureUse }) {
           : recipes.map((recipe) => `配方 ${recipe.position}：× ${recipe.quantity}`).join("\n")
       }
       fullDescription
-      link={{ to: "/collection/furniture/items/$id", params: { id: String(furniture.id) } }}
+      link={{ to: "/collections/records/$id", params: { id: String(furniture.id) } }}
     />
   );
 }

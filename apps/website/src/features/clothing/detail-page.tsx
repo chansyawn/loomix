@@ -1,27 +1,12 @@
-import { SearchXIcon } from "lucide-react";
-import { useRouter } from "@tanstack/react-router";
-import { buttonVariants } from "@/ui/components/button";
-import {
-  Empty,
-  EmptyHeader,
-  EmptyTitle,
-  EmptyDescription,
-  EmptyContent,
-  EmptyMedia,
-} from "@/ui/components/empty";
 import { ClothingCard } from "./clothing-card";
 import {
   CollectionDetailLayout,
-  CollectionDetailLoading,
   CollectionDetailRelatedGrid,
   CollectionDetailExtras,
   type CollectionDetailSection,
 } from "@/features/collection/detail-layout";
 import { RecordImage } from "@/features/collection/record-image";
-import { ClothingReturnLink } from "./detail-navigation";
 import type { ClothingDetail } from "./detail";
-import type { View } from "./search";
-import { ClothingLoadError } from "./states";
 
 export function ClothingDetailPage({ detail }: { detail: ClothingDetail }) {
   const { record } = detail;
@@ -92,40 +77,4 @@ function ClothingExtras({ detail }: { detail: ClothingDetail }) {
       ),
     });
   return <CollectionDetailExtras sections={sections} />;
-}
-
-export function ClothingDetailLoading() {
-  return <CollectionDetailLoading label="正在加载服饰详情" />;
-}
-
-export function ClothingDetailNotFound({ view }: { view: View }) {
-  return (
-    <Empty className="min-h-80">
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <SearchXIcon />
-        </EmptyMedia>
-        <EmptyTitle>
-          <h1>
-            {view === "items"
-              ? "未找到这件服装"
-              : view === "sets"
-                ? "未找到这个套装"
-                : "未找到这项外观"}
-          </h1>
-        </EmptyTitle>
-        <EmptyDescription>该条目不存在，请返回图鉴查找其他服饰。</EmptyDescription>
-      </EmptyHeader>
-      <EmptyContent>
-        <ClothingReturnLink view={view} className={buttonVariants({ variant: "outline" })}>
-          返回服饰列表
-        </ClothingReturnLink>
-      </EmptyContent>
-    </Empty>
-  );
-}
-
-export function ClothingDetailError() {
-  const router = useRouter();
-  return <ClothingLoadError onRetry={() => void router.invalidate()} />;
 }

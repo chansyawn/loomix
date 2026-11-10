@@ -14,11 +14,11 @@ import {
   miscellanySearchSchema,
 } from "./search";
 
-function setup(initialEntry = "/collection/miscellany") {
+function setup(initialEntry = "/collections/miscellany") {
   const root = createRootRoute({ validateSearch: z.object({ lang: z.string().optional() }) });
   const miscellany = createRoute({
     getParentRoute: () => root,
-    path: "/collection/miscellany",
+    path: "/collections/miscellany",
     validateSearch: miscellanySearchSchema,
     search: { middlewares: [compactMiscellanySearchMiddleware] },
   });
@@ -32,15 +32,15 @@ describe("compact miscellany URLs", () => {
   it("omits defaults and serializes meaningful search and filter state", () => {
     const router = setup();
     const empty = router.buildLocation({
-      to: "/collection/miscellany",
-      from: "/collection/miscellany",
+      to: "/collections/miscellany",
+      from: "/collections/miscellany",
       search: miscellanySearchSchema.parse({}),
     });
-    expect(empty.href).toBe("/collection/miscellany");
+    expect(empty.href).toBe("/collections/miscellany");
 
     const selected = router.buildLocation({
-      to: "/collection/miscellany",
-      from: "/collection/miscellany",
+      to: "/collections/miscellany",
+      from: "/collections/miscellany",
       search: miscellanySearchSchema.parse({
         items: { q: "木 & + #", qualities: ["1"], sort: "quality-desc" },
       }),
@@ -66,15 +66,15 @@ describe("compact miscellany URLs", () => {
 
   it("preserves parent parameters while stripping unsupported fields", async () => {
     const router = setup(
-      `/collection/miscellany${defaultStringifySearch({
+      `/collections/miscellany${defaultStringifySearch({
         lang: "zh",
         items: { qualities: ["2"], page: 4 },
       })}`,
     );
     await router.load();
     const location = router.buildLocation({
-      to: "/collection/miscellany",
-      from: "/collection/miscellany",
+      to: "/collections/miscellany",
+      from: "/collections/miscellany",
       search: (previous) => ({ ...previous, ...miscellanySearchSchema.parse(previous) }),
     });
     expect(defaultParseSearch(location.searchStr)).toEqual({
@@ -94,10 +94,10 @@ describe("layout URL overrides", () => {
       expect(
         miscellanySearchSchema.parse(defaultParseSearch(defaultStringifySearch(compact))),
       ).toEqual(search);
-      const location = router.buildLocation({ to: "/collection/miscellany", search });
+      const location = router.buildLocation({ to: "/collections/miscellany", search });
       expect(defaultParseSearch(location.searchStr)).toMatchObject({ layout });
       const cleared = router.buildLocation({
-        to: "/collection/miscellany",
+        to: "/collections/miscellany",
         search: miscellanySearchSchema.parse({ ...search, items: {} }),
       });
       expect(defaultParseSearch(cleared.searchStr)).toEqual({ layout });

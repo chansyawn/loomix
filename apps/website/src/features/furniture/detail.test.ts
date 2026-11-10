@@ -1,17 +1,8 @@
-import {
-  createMemoryHistory,
-  createRootRoute,
-  createRoute,
-  createRouter,
-  isNotFound,
-  defaultParseSearch,
-} from "@tanstack/react-router";
+import { isNotFound } from "@tanstack/react-router";
 import { describe, expect, it, vi, afterEach } from "vite-plus/test";
 import { catalogFixture, fixtureRequest } from "../collection-fixture.ts";
 import type { FurnitureItem, FurnitureSet } from "../collection-view.ts";
 import { furnitureDetail, loadFurnitureDetail, parseFurnitureId } from "./detail";
-import { furnitureOrigin } from "./detail-navigation";
-import { furnitureSearchSchema, compactFurnitureSearchMiddleware } from "./search";
 
 const first: FurnitureItem = {
   id: 1,
@@ -161,78 +152,5 @@ describe("furniture details", () => {
     await expect(loadFurnitureDetail("items", "1")).rejects.toThrow("503");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}")));
     await expect(loadFurnitureDetail("items", "1")).rejects.toThrow();
-  });
-});
-
-function setup(initialEntries: string[]) {
-  const root = createRootRoute();
-  const list = createRoute({
-    getParentRoute: () => root,
-    path: "/collection/furniture",
-    validateSearch: furnitureSearchSchema,
-    search: { middlewares: [compactFurnitureSearchMiddleware] },
-  });
-  const item = createRoute({
-    getParentRoute: () => root,
-    path: "/collection/furniture/items/$id",
-    loader: ({ params }) => furnitureDetail(data, "items", parseFurnitureId(params.id)),
-  });
-  const suite = createRoute({
-    getParentRoute: () => root,
-    path: "/collection/furniture/sets/$id",
-    loader: ({ params }) => furnitureDetail(data, "sets", parseFurnitureId(params.id)),
-  });
-  return createRouter({
-    history: createMemoryHistory({ initialEntries }),
-    routeTree: root.addChildren([list, item, suite]),
-  });
-}
-
-describe("detail navigation", () => {
-  it("opens direct and refreshed detail addresses without a list origin", async () => {
-    for (const href of ["/collection/furniture/items/1", "/collection/furniture/sets/3"]) {
-      const router = setup([href]);
-      await router.load();
-      expect(router.state.matches.at(-1)?.status).toBe("success");
-      expect(furnitureOrigin(router.state.location)).toBeUndefined();
-      expect(router.state.matches).toHaveLength(2);
-    }
-  });
-  it("preserves the original filtered list across related details and history return", async () => {
-    const router = setup(["/collection/furniture?items=%7B%22q%22%3A%22木%22%7D"]);
-    await router.load();
-    const original = router.state.location;
-    const origin = furnitureOrigin(original);
-    await router.navigate({
-      to: "/collection/furniture/items/$id",
-      params: { id: "1" },
-      state: { furnitureOrigin: origin },
-    });
-    expect(furnitureOrigin(router.state.location)).toEqual(origin);
-    await router.navigate({
-      to: "/collection/furniture/sets/$id",
-      params: { id: "3" },
-      state: { furnitureOrigin: furnitureOrigin(router.state.location) },
-    });
-    const retained = furnitureOrigin(router.state.location)!;
-    expect(defaultParseSearch(retained.href.split("?")[1])).toEqual({ items: { q: "木" } });
-    router.history.go(retained.index - router.state.location.state.__TSR_index);
-    await router.load();
-    expect(router.state.location.href).toBe(original.href);
-    expect(router.state.location.state.__TSR_key).toBe(original.state.__TSR_key);
-  });
-  it("ignores origins that cannot refer to an earlier furniture list", async () => {
-    const router = setup(["/collection/furniture/items/1"]);
-    await router.load();
-    const location = router.state.location;
-    for (const origin of [
-      { href: "https://example.com", index: 0 },
-      { href: "/collection/furniture", index: 100 },
-      { href: "/collection/furniture/items/2", index: 0 },
-    ]) {
-      expect(
-        furnitureOrigin({ ...location, state: { ...location.state, furnitureOrigin: origin } }),
-      ).toBeUndefined();
-    }
   });
 });

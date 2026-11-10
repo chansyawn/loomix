@@ -10,11 +10,11 @@ import { describe, expect, it } from "vite-plus/test";
 import { z } from "zod";
 import { compactPlantsSearch, compactPlantsSearchMiddleware, plantsSearchSchema } from "./search";
 
-function setup(initialEntry = "/collection/plants") {
+function setup(initialEntry = "/collections/plants") {
   const root = createRootRoute({ validateSearch: z.object({ lang: z.string().optional() }) });
   const plants = createRoute({
     getParentRoute: () => root,
-    path: "/collection/plants",
+    path: "/collections/plants",
     validateSearch: plantsSearchSchema,
     search: { middlewares: [compactPlantsSearchMiddleware] },
   });
@@ -28,14 +28,14 @@ describe("compact plant URLs", () => {
   it("omits defaults and serializes only meaningful view fields", () => {
     const router = setup();
     const empty = router.buildLocation({
-      to: "/collection/plants",
-      from: "/collection/plants",
+      to: "/collections/plants",
+      from: "/collections/plants",
       search: plantsSearchSchema.parse({}),
     });
-    expect(empty.href).toBe("/collection/plants");
+    expect(empty.href).toBe("/collections/plants");
     const selected = router.buildLocation({
-      to: "/collection/plants",
-      from: "/collection/plants",
+      to: "/collections/plants",
+      from: "/collections/plants",
       search: plantsSearchSchema.parse({
         items: { q: "花", galaxies: ["禾夏"], harvestCounts: ["2"] },
       }),
@@ -81,7 +81,7 @@ describe("compact plant URLs", () => {
         harvestCounts: ["3"],
       },
     });
-    const location = router.buildLocation({ to: "/collection/plants", search });
+    const location = router.buildLocation({ to: "/collections/plants", search });
     expect(defaultParseSearch(location.searchStr)).toEqual({
       view: "seeds",
       seeds: {
@@ -95,7 +95,7 @@ describe("compact plant URLs", () => {
 
   it("preserves parent parameters and removes unsupported nested values", async () => {
     const router = setup(
-      `/collection/plants${defaultStringifySearch({
+      `/collections/plants${defaultStringifySearch({
         lang: "zh",
         items: { categories: ["作物"], page: 4 },
         seeds: { categories: ["作物"], acquisition: ["星屿探索"], page: 4 },
@@ -103,8 +103,8 @@ describe("compact plant URLs", () => {
     );
     await router.load();
     const location = router.buildLocation({
-      to: "/collection/plants",
-      from: "/collection/plants",
+      to: "/collections/plants",
+      from: "/collections/plants",
       search: (previous) => ({ ...previous, ...plantsSearchSchema.parse(previous) }),
     });
     expect(defaultParseSearch(location.searchStr)).toEqual({
@@ -125,10 +125,10 @@ describe("layout URL overrides", () => {
       expect(plantsSearchSchema.parse(defaultParseSearch(defaultStringifySearch(compact)))).toEqual(
         search,
       );
-      const location = router.buildLocation({ to: "/collection/plants", search });
+      const location = router.buildLocation({ to: "/collections/plants", search });
       expect(defaultParseSearch(location.searchStr)).toMatchObject({ layout });
       const cleared = router.buildLocation({
-        to: "/collection/plants",
+        to: "/collections/plants",
         search: plantsSearchSchema.parse({ ...search, items: {} }),
       });
       expect(defaultParseSearch(cleared.searchStr)).toEqual({ layout });

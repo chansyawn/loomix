@@ -2,10 +2,10 @@ import { Link } from "@tanstack/react-router";
 import type { MiscellaneousItem } from "../collection-view.ts";
 import { CollectionCard } from "@/features/collection/collection-card";
 import { RecordImage } from "@/features/collection/record-image";
-import { useMiscellanyOrigin } from "./detail-navigation";
+import { useCollectionOrigin } from "@/features/collection/navigation";
 
 export function MiscellanyCard({ item }: { item: MiscellaneousItem }) {
-  const origin = useMiscellanyOrigin();
+  const origin = useCollectionOrigin();
   return (
     <CollectionCard
       name={item.name}
@@ -13,9 +13,9 @@ export function MiscellanyCard({ item }: { item: MiscellaneousItem }) {
       image={<RecordImage key={item.image} image={item.image} name={item.name} />}
       titleLink={
         <Link
-          to="/collection/miscellany/items/$id"
+          to="/collections/records/$id"
           params={{ id: String(item.id) }}
-          state={{ miscellanyOrigin: origin }}
+          state={{ collectionOrigin: origin }}
         >
           {item.name}
         </Link>

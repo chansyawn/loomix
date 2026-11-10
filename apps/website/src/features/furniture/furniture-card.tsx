@@ -1,11 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { RecordImage as FurnitureImage } from "@/features/collection/record-image";
-import { useFurnitureOrigin } from "./detail-navigation";
+import { useCollectionOrigin } from "@/features/collection/navigation";
 import type { FurnitureItem, FurnitureSet } from "../collection-view.ts";
 import { CollectionCard } from "@/features/collection/collection-card";
 
 export function FurnitureCard({ item }: { item: FurnitureItem }) {
-  const origin = useFurnitureOrigin();
+  const origin = useCollectionOrigin();
   return (
     <CollectionCard
       name={item.name}
@@ -13,9 +13,9 @@ export function FurnitureCard({ item }: { item: FurnitureItem }) {
       image={<FurnitureImage key={item.image} image={item.image} name={item.name} />}
       titleLink={
         <Link
-          to="/collection/furniture/items/$id"
+          to="/collections/records/$id"
           params={{ id: String(item.id) }}
-          state={{ furnitureOrigin: origin }}
+          state={{ collectionOrigin: origin }}
         >
           {item.name}
         </Link>
@@ -26,7 +26,7 @@ export function FurnitureCard({ item }: { item: FurnitureItem }) {
 }
 
 export function FurnitureSetCard({ set }: { set: FurnitureSet }) {
-  const origin = useFurnitureOrigin();
+  const origin = useCollectionOrigin();
   return (
     <CollectionCard
       name={set.name}
@@ -34,9 +34,9 @@ export function FurnitureSetCard({ set }: { set: FurnitureSet }) {
       image={<FurnitureImage key={set.image} image={set.image} name={set.name} scene />}
       titleLink={
         <Link
-          to="/collection/furniture/sets/$id"
+          to="/collections/records/$id"
           params={{ id: String(set.id) }}
-          state={{ furnitureOrigin: origin }}
+          state={{ collectionOrigin: origin }}
         >
           {set.name}
         </Link>

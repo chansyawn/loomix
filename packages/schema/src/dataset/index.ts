@@ -21,14 +21,12 @@ export function emptyDataset(context: Dataset["context"], source: Dataset["sourc
     catalog: {
       ...context,
       kind: "catalog",
-      items: [],
-      groups: [],
-      cardSets: [],
-      appearances: [],
-      seeds: [],
+      records: [],
+      references: [],
+      gameplayTags: [],
+      craftingRecipes: [],
       growths: [],
       ingredientCategories: [],
-      entries: [],
     },
     neighbors: {
       ...context,

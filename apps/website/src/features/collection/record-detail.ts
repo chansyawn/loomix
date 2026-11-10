@@ -1,0 +1,89 @@
+import { notFound } from "@tanstack/react-router";
+import type { CollectionCatalog } from "./catalog";
+import { furnitureDetail } from "../furniture/detail";
+import { clothingDetail } from "../clothing/detail";
+import { creaturesDetail } from "../creatures/detail";
+import { plantsDetail } from "../plants/detail";
+import { dishesDetail } from "../dishes/detail";
+import { buildMiscellanyDetail } from "../miscellany/detail";
+import { buildIngredientsData, ingredientUsage } from "../ingredients/model";
+
+export function parseRecordId(value: string) {
+  const id = Number(value);
+  return /^[1-9]\d*$/.test(value) && Number.isSafeInteger(id) ? id : null;
+}
+export function collectionDetail(data: CollectionCatalog, id: number) {
+  const record = data.byId.get(id);
+  if (!record) throw notFound();
+  const view = data.view;
+  switch (record.record.type) {
+    case "furniture":
+    case "furniture.set":
+      return {
+        category: "furniture" as const,
+        detail: furnitureDetail(
+          { ...view.furniture, ingredientItemsById: view.ingredientItemsById },
+          record.record.type === "furniture" ? "items" : "sets",
+          id,
+        ),
+      };
+    case "clothing":
+    case "clothing.set":
+    case "appearance":
+      return {
+        category: "clothing" as const,
+        detail: clothingDetail(
+          view.clothing,
+          record.record.type === "appearance"
+            ? "appearances"
+            : record.record.type === "clothing"
+              ? "items"
+              : "sets",
+          id,
+        ),
+      };
+    case "creature":
+    case "creatures.series":
+      return {
+        category: "creatures" as const,
+        detail: creaturesDetail(
+          view.creatures,
+          record.record.type === "creature" ? "items" : "series",
+          id,
+          record.record.type === "creature"
+            ? ingredientUsage(buildIngredientsData(view), id)
+            : null,
+        ),
+      };
+    case "plant":
+    case "plants.series":
+      return {
+        category: "plants" as const,
+        detail: plantsDetail(
+          view.plants,
+          record.record.type === "plant" ? "items" : "series",
+          id,
+          buildIngredientsData(view),
+        ),
+      };
+    case "dish":
+    case "dishes.series":
+      return {
+        category: "dishes" as const,
+        detail: dishesDetail(
+          {
+            ...view.dishes,
+            ingredientItemsById: view.ingredientItemsById,
+            ingredientCategoriesById: view.ingredientCategoriesById,
+          },
+          record.record.type === "dish" ? "items" : "series",
+          id,
+        ),
+      };
+    case "material":
+      return { category: "miscellaneous" as const, detail: buildMiscellanyDetail(view, id) };
+    case "seed":
+      throw new Error("Seed detail requires canonical resolution");
+  }
+}
+export type RecordDetail = ReturnType<typeof collectionDetail>;

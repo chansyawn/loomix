@@ -1,3 +1,5 @@
+import { furnitureSize } from "./furniture/size";
+import { isGroupRecord, recordCategory, createTagResolver } from "@loomix/schema/catalog";
 import type {
   Catalog,
   CraftingRecipe,
@@ -108,8 +110,6 @@ export function itemCategory(item: Item): CatalogCategory {
     case "dish":
       return "dishes";
     case "material":
-    case "reference":
-    case "craftingCard":
       return "miscellaneous";
     default:
       return item.type;
@@ -119,6 +119,8 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
   if (catalog.snapshotId !== assets.snapshotId || catalog.locale !== assets.locale)
     throw new Error("Catalog assets context mismatch");
   const image = createImageResolver(assets);
+  const tagsFor = createTagResolver(catalog);
+  const tagsById = new Map(catalog.gameplayTags.map((tag) => [tag.id, tag]));
   const base = (
     record: Pick<Item, "id" | "name" | "description" | "quality" | "image">,
   ): CollectionRecord => ({
@@ -128,26 +130,15 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
     quality: record.quality,
     image: image(record.image),
   });
-  const listed = new Set(
-    catalog.entries.filter((entry) => entry.entity.kind === "item").map((entry) => entry.entity.id),
-  );
-  const groupIds = new Set(
-    catalog.entries
-      .filter((entry) => entry.entity.kind === "group")
-      .map((entry) => entry.entity.id),
-  );
-  const appearanceIds = new Set(
-    catalog.entries
-      .filter((entry) => entry.entity.kind === "appearance")
-      .map((entry) => entry.entity.id),
-  );
+  const groups = catalog.records.filter(isGroupRecord);
+  const groupIds = new Set(groups.map((record) => record.id));
   const cropIds = new Set(
-    catalog.items
+    catalog.records
       .filter((item) => item.type === "plant" && item.subcategory === "作物")
       .map((item) => item.id),
   );
   const cropSeriesByItemId = new Map(
-    catalog.groups
+    groups
       .filter((group) => group.type === "plants.series" && groupIds.has(group.id))
       .flatMap((group) =>
         (group.memberIds ?? [])
@@ -156,15 +147,10 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
       ),
   );
   const recipesByProduct = new Map<number, CraftingRecipe[]>();
-  for (const card of catalog.items) {
-    if (card.type !== "craftingCard" || !card.recipe) continue;
-    const recipes = recipesByProduct.get(card.recipe.productId) ?? [];
-    recipes.push({
-      id: card.id,
-      materials: card.recipe.materials,
-      unresolvedReason: card.recipe.unresolvedReason,
-    });
-    recipesByProduct.set(card.recipe.productId, recipes);
+  for (const recipe of catalog.craftingRecipes) {
+    const recipes = recipesByProduct.get(recipe.productId) ?? [];
+    recipes.push(recipe);
+    recipesByProduct.set(recipe.productId, recipes);
   }
   const view: CollectionView = {
     ingredientCategories: catalog.ingredientCategories,
@@ -185,15 +171,25 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
     clothing: { sets: [], items: [], appearances: [] },
     miscellaneous: [],
   };
-  for (const record of catalog.items) {
+  for (const reference of catalog.references)
+    view.ingredientItemsById.set(reference.id, {
+      ...reference,
+      image: null,
+      description: null,
+      quality: null,
+      catalogCategory: "miscellaneous",
+      cropSeriesId: null,
+      listed: false,
+    });
+  for (const record of catalog.records) {
     const common = base(record);
     view.ingredientItemsById.set(record.id, {
       ...common,
-      catalogCategory: itemCategory(record),
+      catalogCategory: recordCategory(record),
       cropSeriesId: cropSeriesByItemId.get(record.id) ?? null,
-      listed: listed.has(record.id),
+      listed: true,
     });
-    if (!listed.has(record.id) || record.type === "reference") continue;
+    if (isGroupRecord(record) || record.type === "appearance" || record.type === "seed") continue;
     const category = record.subcategory;
     switch (record.type) {
       case "furniture":
@@ -201,9 +197,13 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
           ...common,
           category,
           type: record.furnitureType,
-          size: record.size,
-          colors: displayValues(record.colors),
-          materials: displayValues(record.materials),
+          size: furnitureSize(
+            (record.gameplayTagGroups.find((group) => group.field === 14)?.tagIds ?? []).flatMap(
+              (id) => tagsById.get(id)?.name ?? [],
+            ),
+          ),
+          colors: displayValues(tagsFor(record, 9)),
+          materials: displayValues(tagsFor(record, 11)),
           acquisition: acquisitionText(record.acquisition),
           craftingRecipes: recipesByProduct.get(record.id) ?? null,
         });
@@ -212,9 +212,9 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
         view.clothing.items.push({
           ...common,
           category,
-          colors: displayValues(record.colors),
-          materials: displayValues(record.materials),
-          styles: displayValues(record.styles),
+          colors: displayValues(tagsFor(record, 9)),
+          materials: displayValues(tagsFor(record, 11)),
+          styles: displayValues(tagsFor(record, 12)),
           acquisition: acquisitionText(record.acquisition),
         });
         break;
@@ -236,7 +236,7 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
         view.dishes.items.push({
           ...common,
           difficulty: record.difficulty,
-          galaxyFlavor: record.galaxyFlavor,
+          galaxyFlavor: displayValues(tagsFor(record, 8)),
           cookware: displayValues(record.cookware),
           effectsText: record.effectsText,
           effects: record.effects,
@@ -256,7 +256,7 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
         break;
     }
   }
-  for (const group of catalog.groups) {
+  for (const group of groups) {
     if (!groupIds.has(group.id)) continue;
     const common = base(group);
     switch (group.type) {
@@ -284,8 +284,8 @@ export function toCollectionView(catalog: Catalog, assets: Assets): CollectionVi
         break;
     }
   }
-  view.clothing.appearances = catalog.appearances
-    .filter((record) => appearanceIds.has(record.id))
+  view.clothing.appearances = catalog.records
+    .filter((record) => record.type === "appearance")
     .map((record) => ({ ...base(record), category: record.subcategory }));
   view.plants = buildPlantsData(catalog, assets, view.ingredientItemsById);
   return view;

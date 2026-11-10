@@ -11,7 +11,7 @@ import {
 import { Badge } from "@/ui/components/badge";
 import { Item, ItemContent } from "@/ui/components/item";
 import type { DishesDetail } from "./detail";
-import { useDishesOrigin } from "./detail-navigation";
+import { useCollectionOrigin } from "@/features/collection/navigation";
 import {
   buildDishRecipeSlots,
   type DishRecipeSlotView,
@@ -19,11 +19,11 @@ import {
 } from "./recipe-presentation";
 
 function IngredientCard({ item }: { item: IngredientItem }) {
-  const origin = useDishesOrigin();
+  const origin = useCollectionOrigin();
   return (
     <Link
       {...collectionItemLocation(item)}
-      state={{ dishesOrigin: origin }}
+      state={{ collectionOrigin: origin }}
       className="group/recipe-item block min-w-0 rounded-xl no-underline outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     >
       <Item variant="muted" size="sm" className="h-full">

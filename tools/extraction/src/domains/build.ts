@@ -1,4 +1,3 @@
-import type { CardImageExport } from "../extraction/cards/build.ts";
 import { writeDomainEvidence } from "./evidence.ts";
 import path from "node:path";
 import { parseDataset } from "@loomix/schema/dataset";
@@ -38,7 +37,7 @@ function localizeKeys(value: unknown): unknown {
 }
 
 export function buildDataset(work: string) {
-  const identity = { formatVersion: 3, snapshotId: path.basename(work), locale: "zh-CN" } as const;
+  const identity = { formatVersion: 4, snapshotId: path.basename(work), locale: "zh-CN" } as const;
   const observations = RawCollectionObservationsSchema.parse(
     readJson(path.join(work, "raw/images-catalog-observations.json")),
   );
@@ -52,12 +51,6 @@ export function buildDataset(work: string) {
   ])
     for (const image of readJson<ImageManifest[]>(path.join(work, file)))
       assets.register(image, image.group);
-  const cardImages = new Map(
-    readJson<CardImageExport[]>(path.join(work, "card-image-exports.json")).map((image) => [
-      image.reference,
-      assets.register(image, "craftingCard"),
-    ]),
-  );
   const neighborImages = new Map(
     readJson<NeighborImageExport[]>(path.join(work, "neighbor-image-exports.json")).map((image) => [
       image.reference,
@@ -155,7 +148,6 @@ export function buildDataset(work: string) {
       assets,
       identity,
       neighbors.giftPreferences.flatMap((preference) => preference.itemIds),
-      cardImages,
     ),
     neighbors: publicNeighbors,
     world: publicWorld,

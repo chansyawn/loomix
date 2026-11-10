@@ -2,50 +2,9 @@ import { expect, test } from "vite-plus/test";
 import { emptyDataset } from "@loomix/schema/dataset";
 import { buildDomainEvidence } from "./evidence.ts";
 
-test("admission evidence separates confirmed absence from unresolved fields", () => {
-  const dataset = emptyDataset(
-    { formatVersion: 3, snapshotId: "a".repeat(64), locale: "zh-CN" },
-    {
-      gameVersion: "test",
-      dataRevision: 1,
-      resourceRevision: 1,
-      manifestId: "1",
-    },
-  );
-  dataset.catalog.entries.push({ entity: { kind: "item", id: 1 }, encyclopedia: null });
-  const result = buildDomainEvidence(
-    dataset,
-    [],
-    [],
-    [
-      {
-        id: 1,
-        admissionSources: [
-          {
-            kind: "manual",
-            file: "admissions.json",
-            pointer: "/entries/0",
-            sha256: "b".repeat(64),
-          },
-        ],
-        encyclopedia: { state: "absent", file: "prepared/ed.obb", table: 93 },
-      },
-    ],
-    [],
-  );
-  expect(result.fields).toContainEqual(
-    expect.objectContaining({
-      entity: { collection: "catalog.entries", id: "item:1" },
-      fieldPath: "encyclopedia",
-      status: "absent",
-      sources: [{ kind: "tableScan", file: "prepared/ed.obb", table: 93 }],
-    }),
-  );
-});
-
 test("story paragraphs merge their provenance on the actual chapter entity", () => {
   const dataset = emptyDataset(
-    { formatVersion: 3, snapshotId: "a".repeat(64), locale: "zh-CN" },
+    { formatVersion: 4, snapshotId: "a".repeat(64), locale: "zh-CN" },
     {
       gameVersion: "test",
       dataRevision: 1,

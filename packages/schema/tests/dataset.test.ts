@@ -1,19 +1,27 @@
+import { recordMetadata } from "./fixture.ts";
 import { expect, test } from "vite-plus/test";
 import { emptyDataset, parseDataset, validateDataset } from "../src/dataset/index.ts";
 import { CatalogSchema } from "../src/catalog/index.ts";
 import { parseRelease } from "../src/release/index.ts";
 import { referencedImages } from "../src/dataset/images.ts";
 import { parseNeighbors } from "../src/neighbors/index.ts";
-const context = { formatVersion: 3, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
+const context = { formatVersion: 4, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
 const source = { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" };
-const base = { id: 1, name: "物品", image: null, quality: null, description: null };
+const base = {
+  ...recordMetadata(),
+  id: 1,
+  name: "物品",
+  image: null,
+  quality: null,
+  description: null,
+};
 
 test("parsing rejects unknown fields and versions without mutating the input", () => {
   const dataset = emptyDataset(context, source);
   expect(parseDataset(dataset)).toEqual(dataset);
   expect(() => CatalogSchema.parse({ ...dataset.catalog, formatVersion: 1 })).toThrow();
   expect(() => CatalogSchema.parse({ ...dataset.catalog, details: [] })).toThrow();
-  expect(dataset.catalog.items).toEqual([]);
+  expect(dataset.catalog.records).toEqual([]);
 });
 test("acquisition is the only item acquisition field and neighbor rewards are removed", () => {
   const dataset = emptyDataset(context, source);
@@ -22,24 +30,31 @@ test("acquisition is the only item acquisition field and neighbor rewards are re
     { sourceId: 143, label: "摇晃果树或伐木后拾取获得", condition: null },
   ];
   const item = { ...base, type: "material" as const, subcategory: null, trade: null, acquisition };
-  dataset.catalog.items.push(item);
-  expect(parseDataset(dataset).catalog.items[0]).toEqual(item);
+  dataset.catalog.records.push(item);
+  expect(parseDataset(dataset).catalog.records[0]).toEqual(item);
   expect(() =>
-    CatalogSchema.parse({ ...dataset.catalog, items: [{ ...item, sources: [] }] }),
+    CatalogSchema.parse({ ...dataset.catalog, records: [{ ...item, sources: [] }] }),
   ).toThrow();
   expect(dataset.neighbors).not.toHaveProperty("rewards");
   expect(() =>
     parseDataset({ ...dataset, neighbors: { ...dataset.neighbors, rewards: [] } }),
   ).toThrow();
 });
-test("reference items can participate in relationships but cannot become catalog entries", () => {
+test("reference identity is separate from formal admission", () => {
   const dataset = emptyDataset(context, source);
-  dataset.catalog.items.push({ ...base, type: "reference" });
+  dataset.catalog.references.push({ id: 1, name: "材料" });
   expect(validateDataset(dataset)).toEqual([]);
-  dataset.catalog.entries.push({ entity: { kind: "item", id: 1 }, encyclopedia: null });
-  expect(validateDataset(dataset)).toContainEqual(
-    expect.objectContaining({ message: "Entry requires a classified entity" }),
-  );
+  dataset.catalog.records.push({
+    ...base,
+    type: "material",
+    subcategory: null,
+    trade: null,
+    acquisition: null,
+  });
+  expect(
+    validateDataset(dataset).some((issue) => issue.message.includes("Reference duplicates")),
+  ).toBe(true);
+  expect(() => CatalogSchema.parse({ ...dataset.catalog, entries: [] })).toThrow();
 });
 test("gift preferences reference known neighbors, items, and a distinct tag dictionary", () => {
   const dataset = emptyDataset(context, source);
@@ -51,7 +66,7 @@ test("gift preferences reference known neighbors, items, and a distinct tag dict
     avatar: null,
     npc2Path: "Avatar/NPC2/NPC_11",
   });
-  dataset.catalog.items.push({ ...base, id: 50000, type: "reference" });
+  dataset.catalog.references.push({ id: 50000, name: "物品" });
   dataset.neighbors.giftPreferences.push({
     key: "11:love",
     neighborId: 11,
@@ -129,8 +144,13 @@ test("neighbor outfit data is backward-compatible and keeps configured prices di
 });
 test("duplicate entities, dangling groups and ingredient cycles are reported together", () => {
   const dataset = emptyDataset(context, source);
-  dataset.catalog.items.push({ ...base, type: "reference" }, { ...base, type: "reference" });
-  dataset.catalog.groups.push({ ...base, type: "furniture.set", memberIds: [99] });
+  dataset.catalog.references.push({ id: 1, name: "物品" }, { id: 1, name: "物品" });
+  dataset.catalog.records.push({
+    ...base,
+    type: "furniture.set",
+    acquisition: null,
+    memberIds: [99],
+  });
   dataset.catalog.ingredientCategories.push({
     id: 2,
     name: "类别",
@@ -145,17 +165,26 @@ test("duplicate entities, dangling groups and ingredient cycles are reported tog
 });
 test("unknown member sets remain distinct from confirmed empty sets", () => {
   const catalog = emptyDataset(context, source).catalog;
-  catalog.groups.push(
-    { ...base, type: "plants.series", memberIds: null },
-    { ...base, id: 2, type: "plants.series", memberIds: [] },
+  catalog.records.push(
+    { ...base, type: "plants.series", acquisition: null, memberIds: null },
+    { ...base, id: 2, type: "plants.series", acquisition: null, memberIds: [] },
   );
   const result = CatalogSchema.parse(catalog);
-  expect(result.groups.map((group) => group.memberIds)).toEqual([null, []]);
+  expect(
+    result.records.filter((group) => "memberIds" in group).map((group) => group.memberIds),
+  ).toEqual([null, []]);
 });
 test("all nested image references use the same traversal and asset coverage check", () => {
   const dataset = emptyDataset(context, source);
   const image = { assetId: "source-image", variant: "icon" as const };
-  dataset.catalog.items.push({ ...base, type: "reference", image });
+  dataset.catalog.records.push({
+    ...base,
+    type: "material",
+    subcategory: null,
+    trade: null,
+    acquisition: null,
+    image,
+  });
   expect(referencedImages(dataset)).toEqual([image]);
   expect(() =>
     parseRelease({
@@ -175,29 +204,35 @@ test("all nested image references use the same traversal and asset coverage chec
   ).toThrow("Missing image");
 });
 
-test("planting stages cannot target plant entities outside formal entries", () => {
+test("planting stages must target formal plants, not auxiliary references", () => {
   const dataset = emptyDataset(context, source);
-  dataset.catalog.items.push({
+  dataset.catalog.references.push({ id: 1, name: "植物" });
+  dataset.catalog.records.push({
     ...base,
-    type: "plant",
-    subcategory: null,
+    id: 10,
+    type: "seed",
+    growthId: 10,
     trade: null,
     acquisition: null,
-    origins: null,
-    flowerColors: null,
-    drops: null,
-    hybridRecipes: null,
+    admissionReasons: ["deterministicSeed"],
   });
-  dataset.catalog.seeds.push({ ...base, id: 10, growthId: 10, trade: null, acquisition: null });
   dataset.catalog.growths.push({
     id: 10,
     kind: "staged",
     maturityDays: null,
     stages: [{ id: 20, name: "植株", image: null, plantId: 1 }],
   });
-  expect(validateDataset(dataset)).toContainEqual(
-    expect.objectContaining({ message: "Unknown plant 1" }),
-  );
-  dataset.catalog.entries.push({ entity: { kind: "item", id: 1 }, encyclopedia: null });
+  expect(validateDataset(dataset).some((issue) => issue.message === "Unknown plant 1")).toBe(true);
+  dataset.catalog.references = [];
+  dataset.catalog.records.push({
+    ...base,
+    type: "plant",
+    subcategory: null,
+    trade: null,
+    acquisition: null,
+    flowerColors: null,
+    drops: null,
+    hybridRecipes: null,
+  });
   expect(validateDataset(dataset)).toEqual([]);
 });

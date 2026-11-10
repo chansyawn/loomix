@@ -1,18 +1,6 @@
-import { SearchXIcon } from "lucide-react";
-import { useRouter } from "@tanstack/react-router";
-import { buttonVariants } from "@/ui/components/button";
-import {
-  Empty,
-  EmptyHeader,
-  EmptyTitle,
-  EmptyDescription,
-  EmptyContent,
-  EmptyMedia,
-} from "@/ui/components/empty";
 import { FurnitureCard, FurnitureSetCard } from "./furniture-card";
 import {
   CollectionDetailLayout,
-  CollectionDetailLoading,
   CollectionDetailRelatedGrid,
   CollectionDetailExtras,
   type CollectionDetailSection,
@@ -20,11 +8,8 @@ import {
 import { RecordImage as FurnitureImage } from "@/features/collection/record-image";
 import { CollectionItemCard } from "@/features/collection/collection-item-card";
 import { collectionItemLocation } from "@/features/collection/item-route";
-import { FurnitureReturnLink } from "./detail-navigation";
 import type { FurnitureItem, FurnitureSet } from "../collection-view";
 import type { FurnitureDetail } from "./detail";
-import type { View } from "./search";
-import { FurnitureLoadError } from "./states";
 
 export function FurnitureDetailPage({ detail }: { detail: FurnitureDetail }) {
   const { record } = detail;
@@ -183,34 +168,4 @@ function FurnitureItemGrid({ items }: { items: FurnitureItem[] }) {
       ))}
     </div>
   );
-}
-
-export function FurnitureDetailLoading() {
-  return <CollectionDetailLoading label="正在加载家具详情" />;
-}
-
-export function FurnitureDetailNotFound({ view }: { view: View }) {
-  return (
-    <Empty className="min-h-80">
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <SearchXIcon />
-        </EmptyMedia>
-        <EmptyTitle>
-          <h1>{view === "items" ? "未找到这件家具" : "未找到这个套组"}</h1>
-        </EmptyTitle>
-        <EmptyDescription>该条目不存在，请返回图鉴查找其他家具。</EmptyDescription>
-      </EmptyHeader>
-      <EmptyContent>
-        <FurnitureReturnLink view={view} className={buttonVariants({ variant: "outline" })}>
-          返回家具列表
-        </FurnitureReturnLink>
-      </EmptyContent>
-    </Empty>
-  );
-}
-
-export function FurnitureDetailError() {
-  const router = useRouter();
-  return <FurnitureLoadError onRetry={() => void router.invalidate()} />;
 }

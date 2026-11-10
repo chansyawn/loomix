@@ -12,7 +12,7 @@ import {
   MembershipCell,
 } from "../collection/table-columns";
 import type { CollectionColumn } from "../collection/table-columns";
-import { usePlantsOrigin } from "./detail-navigation";
+import { useCollectionOrigin } from "@/features/collection/navigation";
 import { membershipIndex, seedSeries, seedSourceLabels } from "./query";
 import type { View } from "./search";
 import { collectionItemLocation } from "../collection/item-route";
@@ -25,18 +25,18 @@ function isSeedRow(record: PlantsRow): record is PlantSeed {
 }
 
 function NameLink({ record }: { record: PlantsRow }) {
-  const origin = usePlantsOrigin();
+  const origin = useCollectionOrigin();
   if (isSeedRow(record)) return <SeedNameLink seed={record} />;
   return (
     <Link
       {...("category" in record
         ? collectionItemLocation({ ...record, catalogCategory: "plants" })
         : {
-            to: "/collection/plants/series/$id" as const,
+            to: "/collections/records/$id" as const,
             params: { id: String(record.id) },
-            search: { tab: undefined },
+            search: { focus: undefined },
           })}
-      state={{ plantsOrigin: origin }}
+      state={{ collectionOrigin: origin }}
       className={tableLinkClassName}
       title={record.name}
     >
@@ -46,7 +46,7 @@ function NameLink({ record }: { record: PlantsRow }) {
 }
 
 function MemberLinks({ groups, complete }: { groups: PlantSeries[]; complete: boolean }) {
-  const origin = usePlantsOrigin();
+  const origin = useCollectionOrigin();
   return (
     <MembershipCell
       groups={groups}
@@ -55,10 +55,10 @@ function MemberLinks({ groups, complete }: { groups: PlantSeries[]; complete: bo
       renderLink={(entry) => (
         <Link
           key={entry.id}
-          to="/collection/plants/series/$id"
+          to="/collections/records/$id"
           params={{ id: String(entry.id) }}
-          search={{ tab: undefined }}
-          state={{ plantsOrigin: origin }}
+          search={{ focus: undefined }}
+          state={{ collectionOrigin: origin }}
           className={tableLinkClassName}
         >
           {entry.name}
@@ -75,14 +75,14 @@ function SeedProductLinks({
   seed: PlantSeed;
   itemRefs: PlantsData["itemRefs"] | undefined;
 }) {
-  const origin = usePlantsOrigin();
+  const origin = useCollectionOrigin();
   if (!itemRefs) return null;
   return (
     <div className="flex flex-wrap gap-x-3 gap-y-1">
       {seed.plantIds.map((id) => {
         const product = itemRefs.get(id);
         return product ? (
-          <CollectionItemLink key={id} item={product} state={{ plantsOrigin: origin }} />
+          <CollectionItemLink key={id} item={product} state={{ collectionOrigin: origin }} />
         ) : (
           <span key={id} className="text-muted-foreground">
             未收录

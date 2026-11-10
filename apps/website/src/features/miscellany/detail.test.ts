@@ -1,11 +1,4 @@
-import {
-  createMemoryHistory,
-  createRootRoute,
-  createRoute,
-  createRouter,
-  defaultParseSearch,
-  isNotFound,
-} from "@tanstack/react-router";
+import { isNotFound } from "@tanstack/react-router";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { assetsFixture, catalogFixture, fixtureRequest } from "../collection-fixture.ts";
 import { toCollectionView } from "../collection-view.ts";
@@ -18,8 +11,6 @@ import {
   loadMiscellanyDetail,
   parseMiscellanyId,
 } from "./detail";
-import { miscellanyOrigin } from "./detail-navigation";
-import { miscellanySearchSchema, compactMiscellanySearchMiddleware } from "./search";
 
 const item: MiscellaneousItem = {
   id: 30031,
@@ -195,44 +186,5 @@ describe("miscellany details", () => {
     expect(detail.sourceTrees.map((tree) => tree.id)).toEqual([2, 1]);
     expect(detail.furnitureUses.map(({ furniture }) => furniture.id)).toEqual([100, 101]);
     expect(detail.cooking?.dishes.map(({ dish }) => dish.id)).toEqual([900]);
-  });
-});
-
-function setup(initialEntries: string[]) {
-  const root = createRootRoute();
-  const list = createRoute({
-    getParentRoute: () => root,
-    path: "/collection/miscellany",
-    validateSearch: miscellanySearchSchema,
-    search: { middlewares: [compactMiscellanySearchMiddleware] },
-  });
-  const detail = createRoute({
-    getParentRoute: () => root,
-    path: "/collection/miscellany/items/$id",
-  });
-  return createRouter({
-    history: createMemoryHistory({ initialEntries }),
-    routeTree: root.addChildren([list, detail]),
-  });
-}
-
-describe("miscellany detail navigation", () => {
-  it("carries the filtered list origin through details and ignores direct detail visits", async () => {
-    const router = setup(["/collection/miscellany?items=%7B%22q%22%3A%22木%22%7D"]);
-    await router.load();
-    const origin = miscellanyOrigin(router.state.location);
-    expect(origin?.href).toContain("q");
-
-    await router.navigate({
-      to: "/collection/miscellany/items/$id",
-      params: { id: String(item.id) },
-      state: { miscellanyOrigin: origin },
-    });
-    expect(miscellanyOrigin(router.state.location)).toEqual(origin);
-    expect(defaultParseSearch(origin?.href.split("?")[1] ?? "")).toEqual({ items: { q: "木" } });
-
-    const direct = setup(["/collection/miscellany/items/30031"]);
-    await direct.load();
-    expect(miscellanyOrigin(direct.state.location)).toBeUndefined();
   });
 });

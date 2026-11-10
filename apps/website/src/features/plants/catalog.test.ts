@@ -39,9 +39,13 @@ test("summarizes structured origins without parsing punctuation in localized lab
       series: [plantSeriesFixture({ id: 2, plantIds: [1] })],
     }),
   });
-  const plant = catalog.items[0];
+  const plant = catalog.records[0];
   if (plant.type !== "plant") throw new Error("Expected plant");
-  plant.origins = ["禾夏，星系", "帕沙"];
+  catalog.gameplayTags.push(
+    { id: 1001, name: "禾夏，星系", displayName: "禾夏，星系", enumName: null, parentId: null },
+    { id: 1002, name: "帕沙", displayName: "帕沙", enumName: null, parentId: null },
+  );
+  plant.gameplayTagGroups.find((group) => group.field === 8)!.tagIds = [1001, 1002];
   plant.acquisition = [{ sourceId: 1, label: "采集，限时活动", condition: null }];
   const data = toCollectionView(catalog, assetsFixture(catalog)).plants;
   expect(data.series[0].summary.galaxies).toEqual(["禾夏，星系", "帕沙"]);
@@ -66,7 +70,7 @@ test("derives every seed for a plant from stage references without duplicate pro
   expect(data.items[0].summary.seeds.map((seed) => seed.id)).toEqual([10, 11]);
   expect(data.items[0].summary.growths).toHaveLength(2);
   expect(data.seeds[0].growth.kind).toBe("staged");
-  expect(catalog.seeds[0]).not.toHaveProperty("productIds");
+  expect(catalog.records.find((record) => record.type === "seed")).not.toHaveProperty("productIds");
 });
 
 test("掉落保留来源树种、概率和果实，不合并系列成员的概率", () => {
@@ -100,7 +104,8 @@ test("掉落保留来源树种、概率和果实，不合并系列成员的概�
       series: [plantSeriesFixture({ id: 10, plantIds: [2, 1] })],
     }),
   });
-  catalog.entries = catalog.entries.filter((entry) => entry.entity.id !== 3);
+  catalog.records = catalog.records.filter((record) => record.id !== 3);
+  catalog.references.push({ id: 3, name: "树胶" });
   const data = toCollectionView(catalog, assetsFixture(catalog)).plants;
   const groups = data.series[0].summary.drops.groups;
   expect(groups.map((group) => group.treeId)).toEqual([2, 1]);

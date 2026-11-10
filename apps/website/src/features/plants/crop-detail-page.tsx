@@ -1,4 +1,3 @@
-import { getRouteApi } from "@tanstack/react-router";
 import { CollectionDetailLayout } from "../collection/detail-layout";
 import { CollectionItemCard } from "../collection/collection-item-card";
 import { RecordImage } from "../collection/record-image";
@@ -8,12 +7,16 @@ import { matureCropStage, selectedCropTab, type CropDetail } from "./crop-detail
 import { PlantGrowthStages } from "./plant-growth";
 import { plantSeriesFields } from "./series-fields";
 
-const route = getRouteApi("/collection/plants_/series/$id");
-
-export function CropDetailPage({ detail }: { detail: CropDetail }) {
-  const search = route.useSearch();
-  const navigate = route.useNavigate();
-  const tab = selectedCropTab(search.tab, detail.items);
+export function CropDetailPage({
+  detail,
+  focus,
+  onFocusChange,
+}: {
+  detail: CropDetail;
+  focus?: number;
+  onFocusChange: (focus?: number) => void;
+}) {
+  const tab = selectedCropTab(focus === undefined ? undefined : `item-${focus}`, detail.items);
   const { record } = detail;
   const seed = detail.seeds[0];
   return (
@@ -34,11 +37,7 @@ export function CropDetailPage({ detail }: { detail: CropDetail }) {
         value={tab}
         onValueChange={(value) => {
           if (typeof value !== "string" || selectedCropTab(value, detail.items) !== value) return;
-          void navigate({
-            search: (previous) => ({ ...previous, tab: value === "seed" ? undefined : value }),
-            state: (previous) => previous,
-            resetScroll: false,
-          });
+          onFocusChange(value === "seed" ? detail.seeds[0]?.id : Number(value.slice(5)));
         }}
         className="min-w-0"
       >

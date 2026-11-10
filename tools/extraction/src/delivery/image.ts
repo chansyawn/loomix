@@ -16,11 +16,10 @@ export async function decodeWebp(bytes: Buffer) {
 
 export async function processImage(bytes: Buffer, group: ImageGroup) {
   const dimensions = imageDimensions(group);
-  const fit = group === "craftingCard" ? "contain" : "cover";
   const output = await sharp(bytes, { failOn: "warning" })
     .resize({
       ...dimensions,
-      fit,
+      fit: "cover",
       position: "centre",
       background: { r: 0, g: 0, b: 0, alpha: 0 },
       kernel: "lanczos3",

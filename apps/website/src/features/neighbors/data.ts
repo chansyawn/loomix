@@ -33,7 +33,9 @@ export function toNeighborsView(database: Neighbors, assets: Assets, catalog: Ca
   )
     throw new Error("Neighbor catalog context mismatch");
   const image = createImageResolver(assets);
-  const items = new Map(catalog.items.map((item) => [item.id, item.name]));
+  const items = new Map(
+    [...catalog.records, ...catalog.references].map((item) => [item.id, item.name]),
+  );
   const tags = new Map(
     database.giftPreferenceTags.map((tag) => [tag.id, tag.name || tag.internalName]),
   );

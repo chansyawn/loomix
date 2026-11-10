@@ -1,17 +1,8 @@
-import {
-  createMemoryHistory,
-  createRootRoute,
-  createRoute,
-  createRouter,
-  isNotFound,
-  defaultParseSearch,
-} from "@tanstack/react-router";
+import { isNotFound } from "@tanstack/react-router";
 import { describe, expect, it, vi, afterEach } from "vite-plus/test";
 import { catalogFixture, fixtureRequest } from "../collection-fixture.ts";
 import type { ClothingItem, ClothingSet } from "../collection-view.ts";
 import { clothingDetail, loadClothingDetail, parseClothingId } from "./detail";
-import { clothingOrigin } from "./detail-navigation";
-import { clothingSearchSchema, compactClothingSearchMiddleware } from "./search";
 
 const first: ClothingItem = {
   id: 1,
@@ -103,87 +94,5 @@ describe("clothing details", () => {
     await expect(loadClothingDetail("items", "1")).rejects.toThrow("503");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}")));
     await expect(loadClothingDetail("items", "1")).rejects.toThrow();
-  });
-});
-
-function setup(initialEntries: string[]) {
-  const root = createRootRoute();
-  const list = createRoute({
-    getParentRoute: () => root,
-    path: "/collection/clothing",
-    validateSearch: clothingSearchSchema,
-    search: { middlewares: [compactClothingSearchMiddleware] },
-  });
-  const item = createRoute({
-    getParentRoute: () => root,
-    path: "/collection/clothing/items/$id",
-    loader: ({ params }) => clothingDetail(data, "items", parseClothingId(params.id)),
-  });
-  const appearance = createRoute({
-    getParentRoute: () => root,
-    path: "/collection/clothing/appearances/$id",
-    loader: ({ params }) => clothingDetail(data, "appearances", parseClothingId(params.id)),
-  });
-  const suite = createRoute({
-    getParentRoute: () => root,
-    path: "/collection/clothing/sets/$id",
-    loader: ({ params }) => clothingDetail(data, "sets", parseClothingId(params.id)),
-  });
-  return createRouter({
-    history: createMemoryHistory({ initialEntries }),
-    routeTree: root.addChildren([list, item, suite, appearance]),
-  });
-}
-
-describe("detail navigation", () => {
-  it("opens direct and refreshed detail addresses without a list origin", async () => {
-    for (const href of [
-      "/collection/clothing/items/1",
-      "/collection/clothing/sets/3",
-      "/collection/clothing/appearances/5",
-    ]) {
-      const router = setup([href]);
-      await router.load();
-      expect(router.state.matches.at(-1)?.status).toBe("success");
-      expect(clothingOrigin(router.state.location)).toBeUndefined();
-      expect(router.state.matches).toHaveLength(2);
-    }
-  });
-  it("preserves the original filtered list across related details and history return", async () => {
-    const router = setup(["/collection/clothing?items=%7B%22q%22%3A%22木%22%7D"]);
-    await router.load();
-    const original = router.state.location;
-    const origin = clothingOrigin(original);
-    await router.navigate({
-      to: "/collection/clothing/items/$id",
-      params: { id: "1" },
-      state: { clothingOrigin: origin },
-    });
-    expect(clothingOrigin(router.state.location)).toEqual(origin);
-    await router.navigate({
-      to: "/collection/clothing/sets/$id",
-      params: { id: "3" },
-      state: { clothingOrigin: clothingOrigin(router.state.location) },
-    });
-    const retained = clothingOrigin(router.state.location)!;
-    expect(defaultParseSearch(retained.href.split("?")[1])).toEqual({ items: { q: "木" } });
-    router.history.go(retained.index - router.state.location.state.__TSR_index);
-    await router.load();
-    expect(router.state.location.href).toBe(original.href);
-    expect(router.state.location.state.__TSR_key).toBe(original.state.__TSR_key);
-  });
-  it("ignores origins that cannot refer to an earlier clothing list", async () => {
-    const router = setup(["/collection/clothing/items/1"]);
-    await router.load();
-    const location = router.state.location;
-    for (const origin of [
-      { href: "https://example.com", index: 0 },
-      { href: "/collection/clothing", index: 100 },
-      { href: "/collection/clothing/items/2", index: 0 },
-    ]) {
-      expect(
-        clothingOrigin({ ...location, state: { ...location.state, clothingOrigin: origin } }),
-      ).toBeUndefined();
-    }
   });
 });

@@ -3,11 +3,11 @@ import type { DishItem, DishSeries } from "../collection-view.ts";
 import { RecordImage } from "@/features/collection/record-image";
 import { CollectionCard } from "@/features/collection/collection-card";
 import { SeriesImage } from "../collection/series-image";
-import { useDishesOrigin } from "./detail-navigation";
+import { useCollectionOrigin } from "@/features/collection/navigation";
 import { formatTastes } from "./presentation";
 
 export function DishesCard({ item }: { item: DishItem }) {
-  const origin = useDishesOrigin();
+  const origin = useCollectionOrigin();
   const attributes = [formatTastes(item.tastes), item.difficulty, item.cookware]
     .filter(Boolean)
     .join(" · ");
@@ -18,9 +18,9 @@ export function DishesCard({ item }: { item: DishItem }) {
       image={<RecordImage key={item.image} image={item.image} name={item.name} />}
       titleLink={
         <Link
-          to="/collection/dishes/items/$id"
+          to="/collections/records/$id"
           params={{ id: String(item.id) }}
-          state={{ dishesOrigin: origin }}
+          state={{ collectionOrigin: origin }}
         >
           {item.name}
         </Link>
@@ -31,7 +31,7 @@ export function DishesCard({ item }: { item: DishItem }) {
 }
 
 export function DishSeriesCard({ series, items }: { series: DishSeries; items: DishItem[] }) {
-  const origin = useDishesOrigin();
+  const origin = useCollectionOrigin();
   return (
     <CollectionCard
       name={series.name}
@@ -46,9 +46,9 @@ export function DishSeriesCard({ series, items }: { series: DishSeries; items: D
       }
       titleLink={
         <Link
-          to="/collection/dishes/series/$id"
+          to="/collections/records/$id"
           params={{ id: String(series.id) }}
-          state={{ dishesOrigin: origin }}
+          state={{ collectionOrigin: origin }}
         >
           {series.name}
         </Link>

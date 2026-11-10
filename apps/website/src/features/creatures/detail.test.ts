@@ -1,17 +1,8 @@
-import {
-  createMemoryHistory,
-  createRootRoute,
-  createRoute,
-  createRouter,
-  isNotFound,
-  defaultParseSearch,
-} from "@tanstack/react-router";
+import { isNotFound } from "@tanstack/react-router";
 import { describe, expect, it, vi, afterEach } from "vite-plus/test";
 import { catalogFixture, fixtureRequest } from "../collection-fixture.ts";
 import type { CreatureItem, CreatureSeries } from "../collection-view.ts";
 import { creaturesDetail, loadCreaturesDetail, parseCreaturesId } from "./detail";
-import { creaturesOrigin } from "./detail-navigation";
-import { creaturesSearchSchema, compactCreaturesSearchMiddleware } from "./search";
 
 const first: CreatureItem = {
   id: 1,
@@ -95,78 +86,5 @@ describe("creatures details", () => {
     await expect(loadCreaturesDetail("items", "1")).rejects.toThrow("503");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}")));
     await expect(loadCreaturesDetail("items", "1")).rejects.toThrow();
-  });
-});
-
-function setup(initialEntries: string[]) {
-  const root = createRootRoute();
-  const list = createRoute({
-    getParentRoute: () => root,
-    path: "/collection/creatures",
-    validateSearch: creaturesSearchSchema,
-    search: { middlewares: [compactCreaturesSearchMiddleware] },
-  });
-  const item = createRoute({
-    getParentRoute: () => root,
-    path: "/collection/creatures/items/$id",
-    loader: ({ params }) => creaturesDetail(data, "items", parseCreaturesId(params.id)),
-  });
-  const seriesRoute = createRoute({
-    getParentRoute: () => root,
-    path: "/collection/creatures/series/$id",
-    loader: ({ params }) => creaturesDetail(data, "series", parseCreaturesId(params.id)),
-  });
-  return createRouter({
-    history: createMemoryHistory({ initialEntries }),
-    routeTree: root.addChildren([list, item, seriesRoute]),
-  });
-}
-
-describe("detail navigation", () => {
-  it("opens direct and refreshed detail addresses without a list origin", async () => {
-    for (const href of ["/collection/creatures/items/1", "/collection/creatures/series/3"]) {
-      const router = setup([href]);
-      await router.load();
-      expect(router.state.matches.at(-1)?.status).toBe("success");
-      expect(creaturesOrigin(router.state.location)).toBeUndefined();
-      expect(router.state.matches).toHaveLength(2);
-    }
-  });
-  it("preserves the original filtered list across related details and history return", async () => {
-    const router = setup(["/collection/creatures?items=%7B%22q%22%3A%22鱼%22%7D"]);
-    await router.load();
-    const original = router.state.location;
-    const origin = creaturesOrigin(original);
-    await router.navigate({
-      to: "/collection/creatures/items/$id",
-      params: { id: "1" },
-      state: { creaturesOrigin: origin },
-    });
-    expect(creaturesOrigin(router.state.location)).toEqual(origin);
-    await router.navigate({
-      to: "/collection/creatures/series/$id",
-      params: { id: "3" },
-      state: { creaturesOrigin: creaturesOrigin(router.state.location) },
-    });
-    const retained = creaturesOrigin(router.state.location)!;
-    expect(defaultParseSearch(retained.href.split("?")[1])).toEqual({ items: { q: "鱼" } });
-    router.history.go(retained.index - router.state.location.state.__TSR_index);
-    await router.load();
-    expect(router.state.location.href).toBe(original.href);
-    expect(router.state.location.state.__TSR_key).toBe(original.state.__TSR_key);
-  });
-  it("ignores origins that cannot refer to an earlier creatures list", async () => {
-    const router = setup(["/collection/creatures/items/1"]);
-    await router.load();
-    const location = router.state.location;
-    for (const origin of [
-      { href: "https://example.com", index: 0 },
-      { href: "/collection/creatures", index: 100 },
-      { href: "/collection/creatures/items/2", index: 0 },
-    ]) {
-      expect(
-        creaturesOrigin({ ...location, state: { ...location.state, creaturesOrigin: origin } }),
-      ).toBeUndefined();
-    }
   });
 });

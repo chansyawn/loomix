@@ -2,7 +2,7 @@ import type { ImageRef } from "@loomix/schema/assets";
 import type { RecordType } from "../extraction/schema.ts";
 import { digest } from "../workflow/hashing.ts";
 
-export type ImageGroup = RecordType | "craftingCard";
+export type ImageGroup = RecordType;
 
 export interface OriginalImage {
   file: string;
@@ -29,14 +29,7 @@ export function createAssetRegistry() {
       assetType: original.assetType,
       pathId: original.pathId,
     });
-    const variant =
-      group === "furniture.set"
-        ? "banner"
-        : group === "craftingCard"
-          ? "card"
-          : group
-            ? "icon"
-            : "illustration";
+    const variant = group === "furniture.set" ? "banner" : group ? "icon" : "illustration";
     const key = `${assetId}:${variant}`;
     const previous = jobs.get(key);
     if (previous && previous.original.sha256 !== original.sha256)

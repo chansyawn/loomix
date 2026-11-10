@@ -7,19 +7,19 @@ import {
   MembershipCell,
 } from "../collection/table-columns";
 import type { CollectionColumn } from "../collection/table-columns";
-import { useCreaturesOrigin } from "./detail-navigation";
+import { useCollectionOrigin } from "@/features/collection/navigation";
 import { membershipIndex } from "./query";
 import type { View } from "./search";
 
 export type CreaturesRow = CreatureItem | CreatureSeries;
 
-function NameLink({ record, view }: { record: CreaturesRow; view: View }) {
-  const origin = useCreaturesOrigin();
+function NameLink({ record }: { record: CreaturesRow }) {
+  const origin = useCollectionOrigin();
   return (
     <Link
-      to={view === "items" ? "/collection/creatures/items/$id" : "/collection/creatures/series/$id"}
+      to="/collections/records/$id"
       params={{ id: String(record.id) }}
-      state={{ creaturesOrigin: origin }}
+      state={{ collectionOrigin: origin }}
       className={tableLinkClassName}
       title={record.name}
     >
@@ -29,7 +29,7 @@ function NameLink({ record, view }: { record: CreaturesRow; view: View }) {
 }
 
 function MemberLinks({ groups, complete }: { groups: CreatureSeries[]; complete: boolean }) {
-  const origin = useCreaturesOrigin();
+  const origin = useCollectionOrigin();
   return (
     <MembershipCell
       groups={groups}
@@ -38,9 +38,9 @@ function MemberLinks({ groups, complete }: { groups: CreatureSeries[]; complete:
       renderLink={(entry) => (
         <Link
           key={entry.id}
-          to="/collection/creatures/series/$id"
+          to="/collections/records/$id"
           params={{ id: String(entry.id) }}
-          state={{ creaturesOrigin: origin }}
+          state={{ collectionOrigin: origin }}
           className={tableLinkClassName}
         >
           {entry.name}
@@ -54,7 +54,7 @@ export function creaturesTableColumns(
   view: View,
   groups: CreatureSeries[] = [],
 ): CollectionColumn<CreaturesRow>[] {
-  const common = recordColumns<CreaturesRow>((record) => <NameLink record={record} view={view} />);
+  const common = recordColumns<CreaturesRow>((record) => <NameLink record={record} />);
   if (view === "series")
     return [
       ...common,

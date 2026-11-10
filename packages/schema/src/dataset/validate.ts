@@ -1,4 +1,5 @@
 import type { Dataset } from "./index.ts";
+import { resolveItem } from "../catalog/records.ts";
 import { validateCatalog } from "../catalog/validate.ts";
 import type { ValidationIssue } from "../common/identity.ts";
 
@@ -60,7 +61,7 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
     if (reaction.key !== `${reaction.neighborId ?? "fallback"}:${reaction.variantId}`)
       issue(["neighbors", "travelReactions", index], "Invalid reaction key");
   });
-  const items = new Map(catalog.items.map((item) => [item.id, item]));
+  const items = new Map(catalog.records.map((item) => [item.id, item]));
   const preferenceTags = new Set(neighbors.giftPreferenceTags.map((tag) => tag.id));
   const referencedPreferenceTags = new Set<number>();
   neighbors.giftPreferences.forEach((preference, index) => {
@@ -72,7 +73,7 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
     unique(preference.itemIds, (id) => id, [...path, "itemIds"]);
     unique(preference.tagIds, (id) => id, [...path, "tagIds"]);
     for (const id of preference.itemIds)
-      if (!items.has(id)) issue([...path, "itemIds"], `Unknown item ${id}`);
+      if (!resolveItem(catalog, id)) issue([...path, "itemIds"], `Unknown item ${id}`);
     for (const id of preference.tagIds) {
       if (!preferenceTags.has(id)) issue([...path, "tagIds"], `Unknown preference tag ${id}`);
       referencedPreferenceTags.add(id);
@@ -85,10 +86,6 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
     if (outfit.neighborId !== null && !ids.has(outfit.neighborId))
       issue(["neighbors", "outfits", index, "neighborId"], `Unknown neighbor ${outfit.neighborId}`);
     unique(outfit.offers, (offer) => offer.id, ["neighbors", "outfits", index, "offers"]);
-  });
-  catalog.items.forEach((item, index) => {
-    if (item.type === "craftingCard")
-      checkNeighbors(item.neighborIds, ["catalog", "items", index, "neighborIds"]);
   });
   unique(neighbors.resources, (resource) => resource.path, ["neighbors", "resources"]);
   for (const resource of neighbors.resources)

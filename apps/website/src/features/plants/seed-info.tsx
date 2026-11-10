@@ -1,26 +1,14 @@
 import { Link } from "@tanstack/react-router";
-import { seedLocations } from "./seed-location";
-import { usePlantsOrigin } from "./detail-navigation";
+import { seedLocation } from "./seed-location";
+import { useCollectionOrigin } from "@/features/collection/navigation";
 import type { PlantSeed } from "./model";
 
 export function SeedNameLink({ seed }: { seed: PlantSeed }) {
-  const origin = usePlantsOrigin();
-  const locations = seedLocations(seed);
-  if (locations.length === 1)
-    return (
-      <Link {...locations[0]} state={{ plantsOrigin: origin }}>
-        {seed.name}
-      </Link>
-    );
+  const origin = useCollectionOrigin();
   return (
-    <span className="inline-flex flex-wrap gap-x-2 gap-y-1">
+    <Link {...seedLocation(seed)} state={{ collectionOrigin: origin }}>
       {seed.name}
-      {locations.map((location, index) => (
-        <Link key={location.params.id} {...location} state={{ plantsOrigin: origin }}>
-          植物 {index + 1}
-        </Link>
-      ))}
-    </span>
+    </Link>
   );
 }
 

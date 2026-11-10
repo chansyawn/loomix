@@ -1,4 +1,4 @@
-import { growthPlantIds } from "@loomix/schema/catalog";
+import { growthPlantIds, createTagResolver, isGroupRecord } from "@loomix/schema/catalog";
 import type { Catalog } from "@loomix/schema/catalog";
 import { acquisitionLabels } from "../collection/acquisition";
 import { createImageResolver } from "@loomix/schema/assets";
@@ -46,6 +46,7 @@ export function buildPlantsData(
   itemRefs: ReadonlyMap<number, IngredientItem>,
 ): PlantsData {
   const image = createImageResolver(assets);
+  const tagsFor = createTagResolver(catalog);
   const growths = new Map<number, PlantGrowth>(
     catalog.growths.map((growth) => [
       growth.id,
@@ -55,28 +56,30 @@ export function buildPlantsData(
       },
     ]),
   );
-  const seeds: PlantSeed[] = catalog.seeds.map((seed) => {
-    const growth = growths.get(seed.growthId);
-    if (!growth) throw new Error(`Missing seed growth ${seed.id}`);
-    const plantIds = growthPlantIds(growth);
-    const destinations = [...new Set(plantIds.map((id) => itemRefs.get(id)?.cropSeriesId ?? null))];
-    return {
-      ...seed,
-      plantIds,
-      growth,
-      image: image(seed.image),
-      cropSeriesId: destinations.length === 1 ? destinations[0] : null,
-    };
-  });
+  const seeds: PlantSeed[] = catalog.records
+    .filter((record) => record.type === "seed")
+    .map((seed) => {
+      const growth = growths.get(seed.growthId);
+      if (!growth) throw new Error(`Missing seed growth ${seed.id}`);
+      const plantIds = growthPlantIds(growth);
+      const destinations = [
+        ...new Set(plantIds.map((id) => itemRefs.get(id)?.cropSeriesId ?? null)),
+      ];
+      return {
+        ...seed,
+        plantIds,
+        growth,
+        image: image(seed.image),
+        cropSeriesId: destinations.length === 1 ? destinations[0] : null,
+      };
+    });
   const seedsByPlant = new Map<number, PlantSeed[]>();
   for (const seed of seeds)
     for (const id of seed.plantIds) seedsByPlant.set(id, [...(seedsByPlant.get(id) ?? []), seed]);
   const records = new Map(
-    catalog.items.filter((item) => item.type === "plant").map((item) => [item.id, item]),
+    catalog.records.filter((item) => item.type === "plant").map((item) => [item.id, item]),
   );
-  const listed = new Set(
-    catalog.entries.filter((entry) => entry.entity.kind === "item").map((entry) => entry.entity.id),
-  );
+  const listed = new Set(catalog.records.map((record) => record.id));
   const itemAcquisitionLabels = (id: number): string[] =>
     acquisitionLabels(records.get(id)?.acquisition ?? null);
   const summarize = (items: Omit<PlantItem, "summary">[]): PlantSummary => {
@@ -95,7 +98,9 @@ export function buildPlantsData(
       });
     return {
       categories: unique(items.flatMap((item) => (item.category ? [item.category] : []))),
-      galaxies: unique(items.flatMap((item) => records.get(item.id)?.origins ?? [])),
+      galaxies: unique(
+        items.flatMap((item) => (records.has(item.id) ? tagsFor(records.get(item.id)!, 8) : [])),
+      ),
       acquisition: unique(items.flatMap((item) => itemAcquisitionLabels(item.id))),
       flowerColors: unique(items.flatMap((item) => item.flowerColors ?? [])),
       harvestCounts: unique(
@@ -147,7 +152,7 @@ export function buildPlantsData(
         description: record.description,
         quality: record.quality,
         category: record.subcategory,
-        originGalaxy: record.origins?.join("，") || null,
+        originGalaxy: tagsFor(record, 8).join("，") || null,
         maturityPeriod: days.length ? days.map((day) => `${day} 天`).join(" / ") : null,
         harvestCount: harvestCounts.length === 1 ? harvestCounts[0] : null,
         acquisition: itemAcquisitionLabels(record.id).join("，") || null,
@@ -157,13 +162,9 @@ export function buildPlantsData(
       return { ...item, summary: summarize([item]) };
     });
   const itemsById = new Map(items.map((item) => [item.id, item]));
-  const listedGroups = new Set(
-    catalog.entries
-      .filter((entry) => entry.entity.kind === "group")
-      .map((entry) => entry.entity.id),
-  );
-  const series = catalog.groups
-    .filter((group) => group.type === "plants.series" && listedGroups.has(group.id))
+  const series = catalog.records
+    .filter(isGroupRecord)
+    .filter((group) => group.type === "plants.series")
     .map((group) => {
       const members = group.memberIds?.flatMap((id) => itemsById.get(id) ?? []) ?? [];
       return {

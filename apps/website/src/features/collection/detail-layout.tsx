@@ -1,3 +1,4 @@
+import { RecordCommonExtras, RecordFocusedExtras, useRecordCommonFields } from "./record-context";
 import { Fragment, type ReactNode } from "react";
 import { InfoIcon } from "lucide-react";
 import { QualityMarker } from "./quality";
@@ -31,6 +32,7 @@ export function CollectionDetailLayout({
   fields: readonly DetailField[];
   children?: ReactNode;
 }) {
+  const commonFields = useRecordCommonFields(fields);
   return (
     <section className="pb-8">
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(18rem,26rem)_minmax(0,1fr)] lg:gap-12">
@@ -47,7 +49,7 @@ export function CollectionDetailLayout({
           </div>
           {description}
           <dl className="grid grid-cols-1 gap-3 @min-[24rem]/detail-fields:grid-cols-2 @min-[24rem]/detail-fields:gap-4">
-            {fields.map(([label, value]) => (
+            {commonFields.map(([label, value]) => (
               <div
                 key={label}
                 className="min-w-0 space-y-1.5 rounded-xl bg-muted/40 p-3 @min-[24rem]/detail-fields:p-4"
@@ -59,7 +61,11 @@ export function CollectionDetailLayout({
               </div>
             ))}
           </dl>
+          <RecordCommonExtras />
         </div>
+      </div>
+      <div className="mt-6">
+        <RecordFocusedExtras />
       </div>
       {children && <div className="mt-10 space-y-6 border-t-3 border-dotted pt-8">{children}</div>}
     </section>

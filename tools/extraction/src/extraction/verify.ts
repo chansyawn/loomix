@@ -1,3 +1,6 @@
+import { catalogAdmissionIds } from "./content/catalog-admissions.ts";
+import { readCraftingRecipes } from "./crafting/read.ts";
+import { createContentContext } from "./content/context.ts";
 import assert from "node:assert/strict";
 import { parseDataset } from "@loomix/schema/dataset";
 import { EvidenceSchema } from "./evidence/domain-schema.ts";
@@ -24,6 +27,22 @@ export async function verifyExtraction(work: string, writeReports = true): Promi
     extraImages: collection.seeds.flatMap((seed) => (seed.image ? [seed.image] : [])),
   });
   await verifyCollection(work, work, writeReports);
+  const craftingContext = createContentContext(work);
+  const { audit, proofs } = readCraftingRecipes(
+    craftingContext,
+    catalogAdmissionIds(craftingContext),
+  );
+  const expectedCrafting = { recipes: audit, proofs };
+  assert.deepEqual(
+    readJson(path.join(work, "crafting-recipes-audit.json")),
+    expectedCrafting,
+    "Fresh crafting provenance",
+  );
+  assert.deepEqual(
+    readJson(path.join(work, "evidence/crafting-recipes-audit.json")),
+    expectedCrafting,
+    "Sealed crafting provenance",
+  );
   const rebuilt = buildDataset(work);
   assert.deepEqual(
     parseDataset(readJson(path.join(work, "dataset.json"))),

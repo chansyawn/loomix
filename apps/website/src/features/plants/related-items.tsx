@@ -1,7 +1,7 @@
 import type { IngredientItem } from "../collection-view";
 import { CollectionItemCard } from "../collection/collection-item-card";
 import { collectionItemLocation } from "../collection/item-route";
-import { usePlantsOrigin } from "./detail-navigation";
+import { useCollectionOrigin } from "@/features/collection/navigation";
 import type { PlantDrops } from "./model";
 
 export function PlantRelatedItems({
@@ -13,7 +13,7 @@ export function PlantRelatedItems({
   items: IngredientItem[];
   unlistedCount?: number;
 }) {
-  const origin = usePlantsOrigin();
+  const origin = useCollectionOrigin();
   if (!items.length && !unlistedCount) return null;
   return (
     <section aria-label={title} className="space-y-4">
@@ -29,7 +29,7 @@ export function PlantRelatedItems({
                   ? undefined
                   : {
                       ...collectionItemLocation(item),
-                      state: { plantsOrigin: origin },
+                      state: { collectionOrigin: origin },
                     }
               }
             />
@@ -44,7 +44,7 @@ export function PlantRelatedItems({
 }
 
 export function PlantDropsInfo({ drops }: { drops: PlantDrops }) {
-  const origin = usePlantsOrigin();
+  const origin = useCollectionOrigin();
   if (!drops.groups.length) return null;
   return (
     <section aria-label="产物与掉落" className="space-y-4">
@@ -79,7 +79,7 @@ export function PlantDropsInfo({ drops }: { drops: PlantDrops }) {
                             entry.item && entry.item.listed !== false
                               ? {
                                   ...collectionItemLocation(entry.item),
-                                  state: { plantsOrigin: origin },
+                                  state: { collectionOrigin: origin },
                                 }
                               : undefined
                           }

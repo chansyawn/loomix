@@ -4,12 +4,12 @@ import { compactGrid } from "../collection/grid-layout";
 import { CollectionCard } from "../collection/collection-card";
 import { RecordImage } from "../collection/record-image";
 import { collectionItemLocation } from "../collection/item-route";
-import { useDishesOrigin } from "../dishes/detail-navigation";
+import { useCollectionOrigin } from "@/features/collection/navigation";
 import { ingredientLeafTags } from "./model";
 import type { IngredientsData } from "./model";
 
 function IngredientCard({ item, data }: { item: IngredientItem; data: IngredientsData }) {
-  const origin = useDishesOrigin();
+  const origin = useCollectionOrigin();
   const tags = ingredientLeafTags(data, item.id);
   return (
     <CollectionCard
@@ -17,7 +17,7 @@ function IngredientCard({ item, data }: { item: IngredientItem; data: Ingredient
       quality={item.quality}
       image={<RecordImage image={item.image} name={item.name} />}
       titleLink={
-        <Link {...collectionItemLocation(item)} state={{ dishesOrigin: origin }}>
+        <Link {...collectionItemLocation(item)} state={{ collectionOrigin: origin }}>
           {item.name}
         </Link>
       }

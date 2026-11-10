@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createGrowthSchema, SeedSchema } from "@loomix/schema/catalog";
+import { createGrowthSchema, SeedDataSchema } from "@loomix/schema/catalog";
 import {
   DropSchema as drop,
   TradeSchema as trade,
@@ -67,7 +67,7 @@ export function createCollectionObservationsSchema(
 ) {
   const sourceSchema = createCatalogSchema(image);
   const collectionDetailSchema = createCollectionDetailSchema();
-  const seedSchema = SeedSchema.omit({ image: true }).extend({ image });
+  const seedSchema = SeedDataSchema.omit({ image: true }).extend({ image });
   const growthSchema = createGrowthSchema(image);
   return z
     .strictObject({

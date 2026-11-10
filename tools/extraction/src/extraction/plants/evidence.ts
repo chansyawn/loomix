@@ -11,7 +11,7 @@ export function plantingDomainEvidence(work: string, dataset: Dataset): FieldEvi
     path.join(work, "plant-evidence.json"),
   ).map((proof) => ({
     entity: {
-      collection: proof.owner === "seed" ? "catalog.seeds" : "catalog.growths",
+      collection: proof.owner === "seed" ? "catalog.records" : "catalog.growths",
       id: proof.id,
     },
     fieldPath: proof.field,
@@ -74,8 +74,8 @@ export function plantingDomainEvidence(work: string, dataset: Dataset): FieldEvi
       ruleId: "client.planting.exact_image_reference",
       reasonCode: original ? null : audit.reason,
     });
-  for (const seed of dataset.catalog.seeds)
-    add("catalog.seeds", seed.id, "image", seeds.get(seed.id), audits.get(`seed:${seed.id}`)!);
+  for (const seed of dataset.catalog.records.filter((record) => record.type === "seed"))
+    add("catalog.records", seed.id, "image", seeds.get(seed.id), audits.get(`seed:${seed.id}`)!);
   for (const growth of dataset.catalog.growths)
     growth.stages.forEach((stage, index) =>
       add(

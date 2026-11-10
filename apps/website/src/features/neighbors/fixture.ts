@@ -116,21 +116,7 @@ export function neighborFixture() {
   };
   const catalog = emptyDataset(fixtureContext, fixtureSource).catalog;
   for (const id of [6, 7]) {
-    catalog.items.push({
-      id: id + 100,
-      type: "craftingCard",
-      name: id === 6 ? "星空卡片" : "海岛卡片",
-      image: null,
-      quality: null,
-      description: null,
-      subcategory: null,
-      trade: null,
-      acquisition: null,
-      setId: null,
-      neighborIds: [4],
-      artwork: { bag: null, back: null, background: null },
-      recipe: null,
-    });
+    catalog.references.push({ id: id + 100, name: id === 6 ? "星空卡片" : "海岛卡片" });
   }
   return { database, mapping, catalog };
 }
