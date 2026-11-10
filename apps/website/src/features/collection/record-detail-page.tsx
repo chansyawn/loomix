@@ -29,7 +29,6 @@ export function RecordDetailPage({
   return (
     <RecordDetailContext
       value={{
-        data,
         record: data.byId.get(id)!,
         focus: selectedFocus === undefined ? undefined : data.byId.get(selectedFocus),
       }}

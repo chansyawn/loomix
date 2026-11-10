@@ -1,4 +1,4 @@
-import type { FilterGroup, FilterOption } from "../collection/filter-types";
+import type { FilterGroup } from "../collection/filter-types";
 import { qualityNames } from "../collection/quality";
 import type { AllQuery, FilterKey } from "./search";
 import {
@@ -10,19 +10,10 @@ import {
 
 const intersects = (selected: string[], values: string[]) =>
   !selected.length || values.some((value) => selected.includes(value));
-export function queryAll(data: CollectionCatalog, input: AllQuery) {
-  const query = normalizeAllQuery(data, input);
+export function queryAll(data: CollectionCatalog, query: AllQuery) {
   const term = query.q.trim().toLocaleLowerCase("zh-CN");
   const rows = data.rows.filter((row) => {
-    const text = [
-      String(row.id),
-      row.name,
-      row.description,
-      ...row.directTags.flatMap((id) => {
-        const tag = data.tagsById.get(id);
-        return tag ? [tag.name, tag.enumName, tag.displayName] : [];
-      }),
-    ]
+    const text = [String(row.id), row.name, row.description]
       .filter(Boolean)
       .join(" ")
       .toLocaleLowerCase("zh-CN");
@@ -34,11 +25,7 @@ export function queryAll(data: CollectionCatalog, input: AllQuery) {
       intersects(query.colors, row.colors) &&
       intersects(query.materials, row.materials) &&
       intersects(query.styles, row.styles) &&
-      intersects(
-        query.acquisition,
-        row.acquisition?.map((source) => String(source.sourceId)) ?? [],
-      ) &&
-      intersects(query.gameplayTags, [...row.inheritedTags].map(String))
+      intersects(query.acquisition, row.acquisition?.map((source) => String(source.sourceId)) ?? [])
     );
   });
   if (query.sort !== "original")
@@ -60,19 +47,6 @@ export function filterGroups(data: CollectionCatalog): FilterGroup<FilterKey>[] 
     [...new Set(data.rows.flatMap((row) => row[key]))]
       .sort((a, b) => a.localeCompare(b, "zh-CN"))
       .map((value) => ({ value, label: value }));
-  const nodes = new Map<number, FilterOption>(
-    data.catalog.gameplayTags.map((tag) => [
-      tag.id,
-      { value: String(tag.id), label: tag.displayName ?? tag.name, children: [] },
-    ]),
-  );
-  const roots: FilterOption[] = [];
-  for (const tag of data.catalog.gameplayTags) {
-    const node = nodes.get(tag.id)!;
-    const parent = tag.parentId === null ? undefined : nodes.get(tag.parentId);
-    if (parent) parent.children!.push(node);
-    else roots.push(node);
-  }
   const sources = new Map(
     data.rows
       .flatMap((row) => row.acquisition ?? [])
@@ -99,28 +73,8 @@ export function filterGroups(data: CollectionCatalog): FilterGroup<FilterKey>[] 
       label: "获取来源",
       options: [...sources].map(([value, label]) => ({ value, label })),
     },
-    { key: "gameplayTags", label: "GameplayTag", options: roots, tree: true, fullWidth: true },
   ];
 }
 export function overviewTags(row: OverviewRecord) {
   return `${categoryNames[row.category]} · ${kindNames[row.kind]}`;
-}
-
-export function normalizeAllQuery(data: CollectionCatalog, query: AllQuery): AllQuery {
-  const selected = new Set<number>();
-  const children = new Map<number, number[]>();
-  for (const tag of data.catalog.gameplayTags) {
-    if (tag.parentId === null) continue;
-    const values = children.get(tag.parentId) ?? [];
-    values.push(tag.id);
-    children.set(tag.parentId, values);
-  }
-  const pending = query.gameplayTags.map(Number).filter((id) => data.tagsById.has(id));
-  while (pending.length) {
-    const id = pending.pop()!;
-    if (selected.has(id)) continue;
-    selected.add(id);
-    pending.push(...(children.get(id) ?? []));
-  }
-  return { ...query, gameplayTags: [...selected].sort((a, b) => a - b).map(String) };
 }

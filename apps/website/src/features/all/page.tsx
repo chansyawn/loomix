@@ -11,7 +11,7 @@ import { AllCard, allColumns } from "./presentation";
 import { CollectionVirtualGrid } from "../collection/virtual-grid";
 import { compactGrid } from "../collection/grid-layout";
 import { CollectionEmpty } from "../collection/states";
-import { filterGroups, queryAll, normalizeAllQuery } from "./query";
+import { filterGroups, queryAll } from "./query";
 import { emptyQuery, sortOptions } from "./search";
 import type { AllSearch, AllQuery } from "./search";
 const title = "全部";
@@ -28,7 +28,7 @@ export function AllPage({
   search: AllSearch;
   onSearchChange: (update: SearchUpdate, replace?: boolean) => Promise<void>;
 }) {
-  const query = normalizeAllQuery(data, search.items);
+  const query = search.items;
   const layout = useCollectionLayout(search.layout);
   const result = queryAll(data, query);
   const groups = filterGroups(data);
@@ -49,7 +49,7 @@ export function AllPage({
       <CollectionToolbar
         title={title}
         searchLabel="搜索全部物品"
-        placeholder="搜索编号、名称、介绍或标签"
+        placeholder="搜索编号、名称或介绍"
         query={query.q}
         onQueryChange={(q, replace) => update({ q }, replace)}
         sort={query.sort}

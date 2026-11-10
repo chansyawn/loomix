@@ -10,7 +10,6 @@ export const filterKeys = [
   "materials",
   "styles",
   "acquisition",
-  "gameplayTags",
 ] as const;
 export type FilterKey = (typeof filterKeys)[number];
 const list = z
@@ -31,7 +30,6 @@ const querySchema = z.object({
   materials: list,
   styles: list,
   acquisition: list,
-  gameplayTags: list,
 });
 export const emptyQuery = () => querySchema.parse({});
 export const allSearchSchema = z.object({

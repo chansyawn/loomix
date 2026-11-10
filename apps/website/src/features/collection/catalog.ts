@@ -22,17 +22,7 @@ export const kindNames = { item: "单品", group: "套组／系列", appearance:
 export function createCollectionCatalog(catalog: Catalog, assets: Assets) {
   const image = createImageResolver(assets);
   const tagsFor = createTagResolver(catalog);
-  const tagsById = new Map(catalog.gameplayTags.map((tag) => [tag.id, tag]));
   const rows = catalog.records.map((record) => {
-    const directTags = [...new Set(record.gameplayTagGroups.flatMap((group) => group.tagIds))];
-    const inheritedTags = new Set<number>();
-    for (const id of directTags) {
-      let tag = tagsById.get(id);
-      while (tag && !inheritedTags.has(tag.id)) {
-        inheritedTags.add(tag.id);
-        tag = tag.parentId === null ? undefined : tagsById.get(tag.parentId);
-      }
-    }
     const target = recordTarget(catalog, record.id);
     if (!target) throw new Error(`Missing formal target ${record.id}`);
     return {
@@ -48,15 +38,12 @@ export function createCollectionCatalog(catalog: Catalog, assets: Assets) {
       styles: tagsFor(record, 12),
       acquisition: record.acquisition,
       acquisitionText: acquisitionText(record.acquisition),
-      directTags,
-      inheritedTags,
       target,
       record,
     };
   });
   return {
     catalog,
-    tagsById,
     rows,
     byId: new Map(rows.map((row) => [row.id, row])),
     view: toCollectionView(catalog, assets),
@@ -64,17 +51,6 @@ export function createCollectionCatalog(catalog: Catalog, assets: Assets) {
 }
 export type CollectionCatalog = ReturnType<typeof createCollectionCatalog>;
 export type OverviewRecord = CollectionCatalog["rows"][number];
-export function tagPath(data: Pick<CollectionCatalog, "tagsById">, id: number) {
-  const path: string[] = [],
-    seen = new Set<number>();
-  let tag = data.tagsById.get(id);
-  while (tag && !seen.has(tag.id)) {
-    seen.add(tag.id);
-    path.unshift(tag.displayName ?? tag.name);
-    tag = tag.parentId === null ? undefined : data.tagsById.get(tag.parentId);
-  }
-  return path.join(" / ");
-}
 export function recordLocation(record: Pick<OverviewRecord, "target">) {
   return {
     to: "/collections/records/$id" as const,

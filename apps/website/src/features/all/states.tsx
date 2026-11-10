@@ -18,7 +18,7 @@ export function AllLoading() {
       card={<CollectionCardSkeleton description tags />}
       columns={allColumns()}
       searchLabel="搜索全部物品"
-      placeholder="搜索编号、名称、介绍或标签"
+      placeholder="搜索编号、名称或介绍"
       query={search.items.q}
       sort={search.items.sort}
       sortOptions={sortOptions}
