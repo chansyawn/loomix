@@ -15,6 +15,7 @@ export type FilterGroup<K extends string> = {
   options: FilterOption[];
   fullWidth?: boolean;
   tree?: boolean;
+  selectionMode?: "cascade" | "independent";
   description?: string;
 };
 
@@ -65,7 +66,31 @@ export function filterSelectionValues<K extends string>(
   group: FilterGroup<K>,
   selected: string[],
 ): string[] {
-  return group.tree ? summarizeFilterTreeSelection(group.options, selected) : selected;
+  return group.tree && group.selectionMode !== "independent"
+    ? summarizeFilterTreeSelection(group.options, selected)
+    : selected;
+}
+
+export function toggleFilterSelection<K extends string>(
+  group: FilterGroup<K>,
+  value: string,
+  checked: boolean,
+  selected: string[],
+): string[] {
+  if (group.tree && group.selectionMode !== "independent")
+    return toggleFilterTreeSelection(group.options, value, checked, selected);
+  return checked ? [...new Set([...selected, value])] : selected.filter((item) => item !== value);
+}
+
+export function expandedFilterTreeValues(options: FilterOption[], selected: string[]): Set<string> {
+  const expanded = new Set<string>();
+  const visit = (option: FilterOption): boolean => {
+    const childSelected = (option.children ?? []).map(visit).some(Boolean);
+    if (option.defaultExpanded || childSelected) expanded.add(option.value);
+    return selected.includes(option.value) || childSelected;
+  };
+  options.forEach(visit);
+  return expanded;
 }
 
 export function toggleFilterTreeSelection(

@@ -1,5 +1,5 @@
 import { SlidersHorizontalIcon } from "lucide-react";
-import { useId, useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -23,7 +23,8 @@ import {
   filterSelectionValues,
   filterTree,
   flattenFilterOptions,
-  toggleFilterTreeSelection,
+  toggleFilterSelection,
+  expandedFilterTreeValues,
 } from "./filter-types";
 import type { FilterGroup } from "./filter-types";
 import { FilterTreeOption } from "./filter-tree";
@@ -34,20 +35,23 @@ function FilterOptions<K extends string>({
   group,
   selected,
   onChange,
+  controls,
 }: {
   group: FilterGroup<K>;
   selected: string[];
   onChange: (values: string[]) => void;
+  controls?: ReactNode;
 }) {
   const [term, setTerm] = useState("");
-  const [expanded, setExpanded] = useState(
-    () =>
-      new Set(
-        flattenFilterOptions(group.options)
-          .filter((option) => option.defaultExpanded)
-          .map((option) => option.value),
-      ),
+  const [expansionOverrides, setExpansionOverrides] = useState(() => new Map<string, boolean>());
+  const expanded = expandedFilterTreeValues(
+    group.options,
+    group.selectionMode === "independent" ? selected : [],
   );
+  for (const [value, open] of expansionOverrides) {
+    if (open) expanded.add(value);
+    else expanded.delete(value);
+  }
   const id = useId();
   const normalizedTerm = term.trim();
   const options = group.tree
@@ -58,10 +62,9 @@ function FilterOptions<K extends string>({
     (option) => option.selectable !== false,
   ).length;
   const setExpandedValue = (value: string, open: boolean) =>
-    setExpanded((previous) => {
-      const next = new Set(previous);
-      if (open) next.add(value);
-      else next.delete(value);
+    setExpansionOverrides((previous) => {
+      const next = new Map(previous);
+      next.set(value, open);
       return next;
     });
   return (
@@ -89,6 +92,7 @@ function FilterOptions<K extends string>({
       <AccordionContent>
         <fieldset className="space-y-3">
           <legend className="sr-only">{group.label}</legend>
+          {controls}
           {selectableCount > 10 && (
             <Input
               aria-label={`搜索${group.label}`}
@@ -110,8 +114,9 @@ function FilterOptions<K extends string>({
                   selected={selected}
                   expanded={expanded}
                   searchActive={normalizedTerm.length > 0}
+                  selectionMode={group.selectionMode}
                   onToggleValue={(value, checked) =>
-                    onChange(toggleFilterTreeSelection(group.options, value, checked, selected))
+                    onChange(toggleFilterSelection(group, value, checked, selected))
                   }
                   onExpandedChange={setExpandedValue}
                 />
@@ -129,9 +134,7 @@ function FilterOptions<K extends string>({
                     checked={selected.includes(option.value)}
                     onCheckedChange={(checked) =>
                       onChange(
-                        checked
-                          ? [...selected, option.value]
-                          : selected.filter((value) => value !== option.value),
+                        toggleFilterSelection(group, option.value, checked === true, selected),
                       )
                     }
                   />
@@ -156,6 +159,7 @@ export function FilterPanel<K extends string>({
   total,
   onFilter,
   onClear,
+  renderGroupControls,
 }: {
   title: string;
   groups: FilterGroup<K>[];
@@ -163,6 +167,7 @@ export function FilterPanel<K extends string>({
   total: number;
   onFilter: (key: K, values: string[]) => void;
   onClear: () => void;
+  renderGroupControls?: (group: FilterGroup<K>) => ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const count = groups.reduce(
@@ -191,6 +196,7 @@ export function FilterPanel<K extends string>({
                 key={group.key}
                 group={group}
                 selected={query[group.key]}
+                controls={renderGroupControls?.(group)}
                 onChange={(values) => onFilter(group.key, values)}
               />
             ))}

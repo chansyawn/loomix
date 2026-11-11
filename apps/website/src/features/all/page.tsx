@@ -14,6 +14,7 @@ import { CollectionEmpty } from "../collection/states";
 import { filterGroups, queryAll } from "./query";
 import { emptyQuery, sortOptions } from "./search";
 import type { AllSearch, AllQuery } from "./search";
+import { ToggleGroup, ToggleGroupItem } from "@/ui/components/toggle-group";
 const title = "全部";
 const grid = compactGrid(164);
 
@@ -31,7 +32,7 @@ export function AllPage({
   const query = search.items;
   const layout = useCollectionLayout(search.layout);
   const result = queryAll(data, query);
-  const groups = filterGroups(data);
+  const groups = filterGroups(data, query.tags);
   const resultKey = JSON.stringify([layout, query]);
   const update = (patch: Partial<AllQuery>, replace = false) =>
     void onSearchChange(
@@ -68,6 +69,21 @@ export function AllPage({
             total={result.total}
             onFilter={(key, values) => update({ [key]: values })}
             onClear={clear}
+            renderGroupControls={(group) =>
+              group.key === "tags" ? (
+                <ToggleGroup
+                  aria-label="标签匹配方式"
+                  variant="outline"
+                  value={[query.tagMode]}
+                  onValueChange={([mode]) => {
+                    if (mode === "and" || mode === "or") update({ tagMode: mode });
+                  }}
+                >
+                  <ToggleGroupItem value="and">满足全部（AND）</ToggleGroupItem>
+                  <ToggleGroupItem value="or">满足任一（OR）</ToggleGroupItem>
+                </ToggleGroup>
+              ) : null
+            }
           />
         }
       />

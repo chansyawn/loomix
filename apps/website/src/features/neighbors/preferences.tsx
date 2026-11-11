@@ -1,5 +1,7 @@
 import { Badge } from "@/ui/components/badge";
 import type { NeighborDetail } from "./data";
+import { Link } from "@tanstack/react-router";
+import { allSearchForTag } from "../all/search";
 
 export function NeighborPreferences({
   preferences,
@@ -44,6 +46,7 @@ export function NeighborPreferences({
                           key={tag.id}
                           variant="secondary"
                           className="max-w-full wrap-anywhere whitespace-normal"
+                          render={<Link to="/collections/all" search={allSearchForTag(tag.id)} />}
                         >
                           {tag.name}
                         </Badge>

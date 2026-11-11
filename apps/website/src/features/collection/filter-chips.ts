@@ -1,8 +1,4 @@
-import {
-  filterSelectionValues,
-  flattenFilterOptions,
-  toggleFilterTreeSelection,
-} from "./filter-types";
+import { filterSelectionValues, flattenFilterOptions, toggleFilterSelection } from "./filter-types";
 import type { FilterGroup } from "./filter-types";
 
 export interface FilterChip {
@@ -24,12 +20,7 @@ export function collectionFilterChips<K extends string>(
         key: `${group.key}-${value}`,
         label: option?.chipLabel ?? `${group.label}：${option?.label ?? value}`,
         remove: () =>
-          onFilter(
-            group.key,
-            group.tree
-              ? toggleFilterTreeSelection(group.options, value, false, selected[group.key])
-              : selected[group.key].filter((item) => item !== value),
-          ),
+          onFilter(group.key, toggleFilterSelection(group, value, false, selected[group.key])),
       };
     }),
   );

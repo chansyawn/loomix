@@ -21,9 +21,7 @@ export function queryAll(data: CollectionCatalog, query: AllQuery) {
       text.includes(term) &&
       intersects(query.categories, [row.category]) &&
       intersects(query.qualities, [row.quality === null ? "__missing" : String(row.quality)]) &&
-      intersects(query.colors, row.colors) &&
-      intersects(query.materials, row.materials) &&
-      intersects(query.styles, row.styles) &&
+      data.tags.matches(row.id, query.tags, query.tagMode) &&
       intersects(query.acquisition, row.acquisition?.map((source) => String(source.sourceId)) ?? [])
     );
   });
@@ -39,20 +37,27 @@ export function queryAll(data: CollectionCatalog, query: AllQuery) {
   else rows.sort((a, b) => a.id - b.id);
   return { rows, total: rows.length };
 }
-export function filterGroups(data: CollectionCatalog): FilterGroup<FilterKey>[] {
+export function filterGroups(
+  data: CollectionCatalog,
+  selectedTags: string[] = [],
+): FilterGroup<FilterKey>[] {
   const rows = allRecords(data);
   const options = (values: Record<string, string>) =>
     Object.entries(values).map(([value, label]) => ({ value, label }));
-  const properties = (key: "colors" | "materials" | "styles") =>
-    [...new Set(rows.flatMap((row) => row[key]))]
-      .sort((a, b) => a.localeCompare(b, "zh-CN"))
-      .map((value) => ({ value, label: value }));
   const sources = new Map(
     rows
       .flatMap((row) => row.acquisition ?? [])
       .map((source) => [String(source.sourceId), source.label]),
   );
   return [
+    {
+      key: "tags",
+      label: "标签",
+      tree: true,
+      selectionMode: "independent",
+      description: "每个标签包含自身及子级；可选择同时满足全部标签，或满足任一标签。",
+      options: data.tags.options(selectedTags),
+    },
     { key: "categories", label: "类别", options: options(categoryNames) },
     {
       key: "qualities",
@@ -64,9 +69,6 @@ export function filterGroups(data: CollectionCatalog): FilterGroup<FilterKey>[] 
           : []),
       ],
     },
-    { key: "colors", label: "颜色", options: properties("colors") },
-    { key: "materials", label: "材质", options: properties("materials") },
-    { key: "styles", label: "风格", options: properties("styles") },
     {
       key: "acquisition",
       label: "获取来源",

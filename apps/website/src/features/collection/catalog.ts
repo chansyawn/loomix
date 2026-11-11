@@ -10,6 +10,7 @@ import { createGameplayTagIndex, tagLabel } from "@loomix/schema/gameplay-tags";
 import type { GameplayTags } from "@loomix/schema/gameplay-tags";
 import { toCollectionView } from "../collection-view";
 import { acquisitionText } from "../collection/acquisition";
+import { createCollectionTagFilter } from "./tags";
 
 export const categoryNames = {
   furniture: "家具",
@@ -54,6 +55,7 @@ export function createCollectionCatalog(
   });
   return {
     catalog,
+    tags: createCollectionTagFilter(gameplayTags.tags, tagIndex, catalog.records),
     rows,
     byId: new Map(rows.map((row) => [row.id, row])),
     view: toCollectionView(catalog, assets, tagIndex),

@@ -18,6 +18,7 @@ export function FilterTreeOption({
   selected,
   expanded,
   searchActive,
+  selectionMode = "cascade",
   onToggleValue,
   onExpandedChange,
 }: {
@@ -26,6 +27,7 @@ export function FilterTreeOption({
   selected: string[];
   expanded: ReadonlySet<string>;
   searchActive: boolean;
+  selectionMode?: "cascade" | "independent";
   onToggleValue: (value: string, checked: boolean) => void;
   onExpandedChange: (value: string, open: boolean) => void;
 }) {
@@ -34,7 +36,10 @@ export function FilterTreeOption({
   const children = option.children ?? [];
   const checked = selectable && selected.includes(option.value);
   const indeterminate =
-    selectable && !checked && children.some((child) => subtreeContainsSelected(child, selected));
+    selectionMode === "cascade" &&
+    selectable &&
+    !checked &&
+    children.some((child) => subtreeContainsSelected(child, selected));
   const disabled = selectable && !selected.includes(option.value) && Boolean(option.disabled);
   const isOpen = children.length > 0 && (searchActive || expanded.has(option.value));
 
@@ -97,6 +102,7 @@ export function FilterTreeOption({
               selected={selected}
               expanded={expanded}
               searchActive={searchActive}
+              selectionMode={selectionMode}
               onToggleValue={onToggleValue}
               onExpandedChange={onExpandedChange}
             />

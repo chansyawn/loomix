@@ -3,6 +3,8 @@ import {
   filterSelectionValues,
   summarizeFilterTreeSelection,
   toggleFilterTreeSelection,
+  toggleFilterSelection,
+  expandedFilterTreeValues,
 } from "./filter-types";
 import type { FilterOption } from "./filter-types";
 
@@ -100,5 +102,39 @@ describe("tree filter selection", () => {
         "crab",
       ]),
     ).toEqual([]);
+  });
+});
+
+describe("独立树选择", () => {
+  const group = {
+    key: "tags",
+    label: "标签",
+    options,
+    tree: true,
+    selectionMode: "independent" as const,
+  };
+  it("独立选择只切换当前节点，不选中后代或合并父节点摘要", () => {
+    expect(toggleFilterSelection(group, "animal", true, [])).toEqual(["animal"]);
+    expect(toggleFilterSelection(group, "animal", false, ["animal", "fish", "salmon"])).toEqual([
+      "fish",
+      "salmon",
+    ]);
+    expect(toggleFilterSelection(group, "salmon", true, ["fish"])).toEqual(["fish", "salmon"]);
+    expect(filterSelectionValues(group, ["animal", "fish", "salmon"])).toEqual([
+      "animal",
+      "fish",
+      "salmon",
+    ]);
+  });
+  it("自动展开已选节点的祖先路径，同时保留默认展开分支", () => {
+    expect([...expandedFilterTreeValues(options, ["salmon"])]).toEqual([
+      "fish",
+      "animal",
+      "__food",
+    ]);
+    expect([...expandedFilterTreeValues(options, [])]).toEqual([]);
+    expect([
+      ...expandedFilterTreeValues([{ value: "default", label: "默认", defaultExpanded: true }], []),
+    ]).toEqual(["default"]);
   });
 });

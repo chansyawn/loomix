@@ -85,30 +85,28 @@ test("原始标签名称、枚举及显示名不参与文本搜索", () => {
     expect(queryAll(source, { ...emptyQuery(), q }).total).toBe(0);
   }
 });
-test("标签派生的公共属性仍可跨类别筛选，同组OR跨组AND", () => {
+test("标签与文本、类别、品阶及获取来源取交集", () => {
   const source = data();
   expect(
     queryAll(source, {
       ...emptyQuery(),
-      colors: ["蓝色", "红色花朵"],
-      materials: ["木质"],
-      styles: ["自然"],
+      tags: ["11", "12", "13"],
+      q: "花材",
+      categories: ["miscellaneous"],
       qualities: ["2"],
+      acquisition: ["5"],
     }).rows.map((row) => row.id),
   ).toEqual([1]);
-  expect(
-    queryAll(source, { ...emptyQuery(), colors: ["红色花朵"], materials: ["金属"] }).total,
-  ).toBe(0);
-  for (const [key, value] of [
-    ["colors", "红色花朵"],
-    ["materials", "木质"],
-    ["styles", "自然"],
-  ] as const) {
-    expect(filterGroups(source).find((group) => group.key === key)?.options).toContainEqual({
-      value,
-      label: value,
-    });
+  expect(queryAll(source, { ...emptyQuery(), tags: ["11"], qualities: ["1"] }).total).toBe(0);
+  for (const patch of [{ q: "不存在" }, { categories: ["clothing"] }, { acquisition: ["999"] }]) {
+    expect(queryAll(source, { ...emptyQuery(), tags: ["11"], ...patch }).total).toBe(0);
   }
+  expect(filterGroups(source).map((group) => group.key)).toEqual([
+    "tags",
+    "categories",
+    "qualities",
+    "acquisition",
+  ]);
 });
 test("未知品阶在升降序都排后，查询URL可往返并压缩默认值", () => {
   const source = data();
@@ -116,32 +114,13 @@ test("未知品阶在升降序都排后，查询URL可往返并压缩默认值",
     expect(queryAll(source, { ...emptyQuery(), sort }).rows.map((row) => row.id)).toEqual([1, 2]);
   const search = allSearchSchema.parse({
       layout: "table",
-      items: { q: "花 & #", colors: ["红色花朵", "红色花朵"] },
+      items: { q: "花 & #", tags: ["11", "11"], tagMode: "or" },
     }),
     compact = compactAllSearch(search);
   expect(allSearchSchema.parse(defaultParseSearch(defaultStringifySearch(compact)))).toEqual(
     search,
   );
   expect(compactAllSearch({})).toEqual({});
-});
-
-test("旧URL中的标签筛选被忽略，保留其他查询条件且不再写回", () => {
-  const search = allSearchSchema.parse({
-    layout: "table",
-    items: { gameplayTags: ["999"], q: "花材", colors: ["红色花朵"], sort: "name-desc" },
-  });
-  expect(search).toEqual({
-    layout: "table",
-    items: { ...emptyQuery(), q: "花材", colors: ["红色花朵"], sort: "name-desc" },
-  });
-  expect(compactAllSearch(search)).toEqual({
-    layout: "table",
-    items: { q: "花材", colors: ["红色花朵"], sort: "name-desc" },
-  });
-  expect(queryAll(data(), search.items).rows.map((row) => row.id)).toEqual([1]);
-  const legacyOnly = allSearchSchema.parse({ items: { gameplayTags: ["999"] } });
-  expect(queryAll(data(), legacyOnly.items).total).toBe(2);
-  expect(compactAllSearch(legacyOnly)).toEqual({});
 });
 
 test.each([{ memberIds: [] }, { memberIds: null }])(
@@ -167,8 +146,7 @@ test("只有集合时结果为空，动态筛选排除集合属性及空品阶",
   const source = createCollectionCatalog(catalog, assetsFixture(catalog), gameplayTags);
   expect(queryAll(source, emptyQuery())).toEqual({ rows: [], total: 0 });
   const groups = filterGroups(source);
-  for (const key of ["colors", "materials", "styles", "acquisition"])
-    expect(groups.find((group) => group.key === key)?.options).toEqual([]);
+  expect(groups.find((group) => group.key === "acquisition")?.options).toEqual([]);
   expect(groups.find((group) => group.key === "qualities")?.options).not.toContainEqual({
     value: "__missing",
     label: "未提供",
@@ -204,43 +182,12 @@ test("集合黑名单允许外观和种子参与搜索与类别筛选", () => {
     ).toEqual([id]);
 });
 
-test("旧URL中的记录形式被忽略，保留其他条件且不再写回或生成摘要", () => {
-  const source = data(...groupRecords(null));
-  const raw = {
-    layout: "table",
-    items: { kinds: ["group"], q: "花材", colors: ["红色花朵"], sort: "name-desc" },
-  };
-  const search = allSearchSchema.parse(raw);
-  expect(search).toEqual({
-    layout: "table",
-    items: { ...emptyQuery(), q: "花材", colors: ["红色花朵"], sort: "name-desc" },
-  });
-  const compact = compactAllSearch(search);
-  expect(compact).toEqual({
-    layout: "table",
-    items: { q: "花材", colors: ["红色花朵"], sort: "name-desc" },
-  });
-  expect(allSearchSchema.parse(defaultParseSearch(defaultStringifySearch(compact)))).toEqual(
-    search,
-  );
-  expect(queryAll(source, search.items).rows.map((row) => row.id)).toEqual([1]);
-  const legacyOnly = allSearchSchema.parse({ items: { kinds: ["group"] } });
-  expect(queryAll(source, legacyOnly.items).rows.map((row) => row.id)).toEqual([1, 2]);
-  expect(compactAllSearch(legacyOnly)).toEqual({});
-  expect(
-    collectionFilterChips(filterGroups(source), legacyOnly.items, () => {}, {
-      value: "",
-      clear: () => {},
-    }),
-  ).toEqual([]);
-});
-
-test("旧标签参数不产生筛选摘要，剩余业务筛选可单独移除或清空", () => {
+test("标签路径和未知标签产生可独立移除的摘要", () => {
   const source = data(),
     query = allSearchSchema.parse({
-      items: { gameplayTags: ["10"], colors: ["红色花朵"] },
+      items: { tags: ["1", "11", "999"] },
     }).items,
-    groups = filterGroups(source);
+    groups = filterGroups(source, query.tags);
   const removed: { key: string; values: string[] }[] = [];
   const chips = collectionFilterChips(
     groups,
@@ -248,9 +195,15 @@ test("旧标签参数不产生筛选摘要，剩余业务筛选可单独移除�
     (key, values) => removed.push({ key, values }),
     { value: "", clear: () => {} },
   );
-  expect(chips.map((chip) => chip.label)).toEqual(["颜色：红色花朵"]);
+  expect(chips.map((chip) => chip.label)).toEqual([
+    "标签：颜色",
+    "标签：颜色 / 红色花朵",
+    "未知标签（999）",
+  ]);
   chips[0]!.remove();
-  expect(removed).toEqual([{ key: "colors", values: [] }]);
+  expect(removed).toEqual([{ key: "tags", values: ["11", "999"] }]);
+  expect(queryAll(source, query).total).toBe(0);
+  expect(queryAll(source, { ...query, tagMode: "or" }).rows.map((row) => row.id)).toEqual([1]);
   expect(
     collectionFilterChips(groups, emptyQuery(), () => {}, { value: "", clear: () => {} }),
   ).toEqual([]);
