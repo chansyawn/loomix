@@ -21,16 +21,10 @@ export function RecordDetailPage({
   model: RecordDetail;
   onFocusChange: (focus?: number) => void;
 }) {
-  const selectedFocus =
-    focus ??
-    (model.category === "plants" && model.detail.kind === "crop"
-      ? model.detail.seeds[0]?.id
-      : undefined);
   return (
     <RecordDetailContext
       value={{
         record: data.byId.get(id)!,
-        focus: selectedFocus === undefined ? undefined : data.byId.get(selectedFocus),
       }}
     >
       <DetailContent model={model} focus={focus} onFocusChange={onFocusChange} />

@@ -1,4 +1,4 @@
-import { RecordFocusedExtras, useRecordCommonFields } from "./record-context";
+import { useRecordCommonFields } from "./record-context";
 import { Fragment, type ReactNode } from "react";
 import { InfoIcon } from "lucide-react";
 import { QualityMarker } from "./quality";
@@ -63,7 +63,6 @@ export function CollectionDetailLayout({
           </dl>
         </div>
       </div>
-      <RecordFocusedExtras />
       {children && <div className="mt-10 space-y-6 border-t-3 border-dotted pt-8">{children}</div>}
     </section>
   );
