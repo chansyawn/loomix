@@ -5,7 +5,7 @@ import { CatalogSchema } from "../src/catalog/index.ts";
 import { parseRelease } from "../src/release/index.ts";
 import { referencedImages } from "../src/dataset/images.ts";
 import { parseNeighbors } from "../src/neighbors/index.ts";
-const context = { formatVersion: 5, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
+const context = { formatVersion: 6, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
 const source = { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" };
 const base = {
   ...recordMetadata(),

@@ -98,3 +98,12 @@ test("resolves image references through the common asset directory", () => {
     toNeighborsView(database, { ...mapping, images: [] }, catalog, gameplayTags).neighbors[0].image,
   ).toBeNull();
 });
+
+test("preserves story layout intent when illustrations cannot be resolved", () => {
+  const { database, mapping, catalog, gameplayTags } = neighborFixture();
+  const view = toNeighborsView(database, { ...mapping, images: [] }, catalog, gameplayTags);
+  expect(view.neighbors[0].stories.map((story) => story.paragraphs[0])).toEqual([
+    expect.objectContaining({ layout: "image-left", image: null }),
+    expect.objectContaining({ layout: "image", image: null }),
+  ]);
+});

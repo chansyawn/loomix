@@ -38,6 +38,7 @@ export function neighborFixture() {
       paragraphs: [
         {
           sequence: 1,
+          layout: chapter === 1 ? "image-left" : "image",
           text: chapter === 1 ? "<i>第一行\n<b>第二行</b></i>" : null,
           image: { assetId: "story", variant: "illustration" },
         },

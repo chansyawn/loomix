@@ -97,6 +97,13 @@ export const profile = {
     hubPaths: 15,
     favourMissionPaths: 24,
   },
+  expectedStoryLayouts: {
+    text: 132,
+    image: 33,
+    "portrait-image": 0,
+    "image-left": 30,
+    "image-right": 25,
+  },
   expectedNeighborPreferences: {
     groups: 36,
     items: { love: 43, favor: 1, dislike: 4 },

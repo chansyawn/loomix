@@ -44,9 +44,50 @@ test("groups all story rows by chapter, sorts paragraphs and preserves styled te
     ],
   );
   assert.deepEqual(database.stories[0]!.paragraphs, [
-    { sequence: 1, bodyZh: null, illustrationPath: "UISprite/Story.png" },
-    { sequence: 2, bodyZh: "<i>原始正文\n第二段</i>", illustrationPath: null },
+    { sequence: 1, bodyZh: null, illustrationPath: "UISprite/Story.png", layout: "image" },
+    { sequence: 2, bodyZh: "<i>原始正文\n第二段</i>", illustrationPath: null, layout: "text" },
   ]);
+});
+
+test("decodes story layout flags and records their source fields", (context) => {
+  const rows = fixtureRows();
+  rows[668] = [
+    [1010, 1, { text: "布局" }, 1, { text: "左图" }, "UISprite/Left.png", null, 1],
+    [1010, 1, null, 2, { text: "右图" }, "UISprite/Right.png"],
+    [1010, 1, null, 3, null, "UISprite/Portrait.png", 1],
+    [1010, 1, null, 4, null, "UISprite/Square.png"],
+    [1010, 1, null, 5, { text: "正文" }, null],
+  ];
+  const fixture = createFixture(rows);
+  context.onTestFinished(fixture.cleanup);
+  const { database, audit } = extractNeighborBundle(fixture.input);
+  assert.deepEqual(
+    database.stories[0]!.paragraphs.map((p) => p.layout),
+    ["image-left", "image-right", "portrait-image", "image", "text"],
+  );
+  for (const record of audit.records.filter((r) => r.collection === "stories")) {
+    assert.equal(record.source.kind, "table");
+    assert.deepEqual(record.source.fields, [0, 1, 2, 3, 4, 5, 6, 7]);
+  }
+});
+
+for (const field of [6, 7]) {
+  test(`rejects unsupported story layout flag in field ${field}`, (context) => {
+    const rows = fixtureRows();
+    rows[668]![1]!.push(null, null);
+    rows[668]![1]![field] = 2;
+    const fixture = createFixture(rows);
+    context.onTestFinished(fixture.cleanup);
+    assert.throws(() => extractNeighbors(fixture.input), /Invalid story layout flags/);
+  });
+}
+
+test("rejects empty story paragraphs", (context) => {
+  const rows = fixtureRows();
+  rows[668]![0]![4] = null;
+  const fixture = createFixture(rows);
+  context.onTestFinished(fixture.cleanup);
+  assert.throws(() => extractNeighbors(fixture.input), /Empty story paragraph/);
 });
 
 test("separates the speaker from variant IDs and keeps resource travel conditions distinct from gift preferences", (context) => {

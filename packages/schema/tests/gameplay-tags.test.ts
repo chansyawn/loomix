@@ -5,7 +5,7 @@ import { createRecordTagResolver } from "../src/catalog/index.ts";
 import { emptyDataset, parseDataset, validateDataset } from "../src/dataset/index.ts";
 import { recordMetadata } from "./fixture.ts";
 
-const context = { formatVersion: 5, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
+const context = { formatVersion: 6, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
 const tag = (id: number, internalName: string, parentId: number | null = null): GameplayTag => ({
   id,
   internalName,

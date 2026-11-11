@@ -32,7 +32,7 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
   );
   const outfits = readNeighborOutfits(tables, accepted, records, exclusions);
   const database: NeighborDatabase = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     source: { ...source },
     neighbors,
     stars: readStars(tables, accepted, records),

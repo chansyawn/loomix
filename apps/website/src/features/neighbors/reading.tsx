@@ -5,8 +5,7 @@ import {
   AccordionTrigger,
 } from "@/ui/components/accordion";
 import type { NeighborDetail } from "./data";
-import { NeighborImage } from "./image";
-import { StoryText } from "./rich-text";
+import { StoryParagraph } from "./story-paragraph";
 
 export function NeighborStories({ neighbor }: { neighbor: NeighborDetail }) {
   return (
@@ -23,19 +22,16 @@ export function NeighborStories({ neighbor }: { neighbor: NeighborDetail }) {
                 第 {story.chapter} 章 · {story.title}
               </AccordionTrigger>
               <AccordionContent>
-                <div className="space-y-6 px-3 md:px-6">
-                  {story.paragraphs.map((paragraph) => (
-                    <div key={paragraph.sequence} className="space-y-4">
-                      {paragraph.text && <StoryText text={paragraph.text} />}
-                      {paragraph.hasIllustration && (
-                        <NeighborImage
-                          image={paragraph.image}
-                          name={`${story.title} · 插图 ${paragraph.sequence}`}
-                          className="min-h-32"
-                        />
-                      )}
-                    </div>
-                  ))}
+                <div className="@container mx-auto max-w-240 px-3 md:px-6">
+                  <div className="space-y-6 text-base [&_p]:mb-0!">
+                    {story.paragraphs.map((paragraph) => (
+                      <StoryParagraph
+                        key={paragraph.sequence}
+                        paragraph={paragraph}
+                        title={story.title}
+                      />
+                    ))}
+                  </div>
                 </div>
               </AccordionContent>
             </AccordionItem>

@@ -12,7 +12,7 @@ export function NeighborCard({ neighbor }: { neighbor: NeighborDetail }) {
         <NeighborImage
           image={neighbor.image}
           name={`${neighbor.name}的星湾插画`}
-          className="aspect-156/41 rounded-none"
+          className="aspect-156/41 bg-muted/50"
         />
       </div>
       <CardHeader>

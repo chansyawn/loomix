@@ -33,18 +33,41 @@ const star = z.strictObject({
   image: ImageRefSchema.nullable(),
 });
 
+export const StoryLayoutSchema = z.enum([
+  "text",
+  "image",
+  "portrait-image",
+  "image-left",
+  "image-right",
+]);
+export type StoryLayout = z.infer<typeof StoryLayoutSchema>;
+
+const storyParagraph = z
+  .strictObject({
+    sequence: z.number().int().positive(),
+    text: z.string().nullable(),
+    image: ImageRefSchema.nullable(),
+    layout: StoryLayoutSchema,
+  })
+  .superRefine((paragraph, ctx) => {
+    const hasText = Boolean(paragraph.text?.trim());
+    const needsText = ["text", "image-left", "image-right"].includes(paragraph.layout);
+    if (hasText !== needsText)
+      ctx.addIssue({ code: "custom", path: ["text"], message: "Story text contradicts layout" });
+    if (paragraph.layout === "text" && paragraph.image !== null)
+      ctx.addIssue({
+        code: "custom",
+        path: ["image"],
+        message: "Text layout cannot have an image",
+      });
+  });
+
 const story = z.strictObject({
   key: z.string().min(1),
   neighborId: neighborId,
   chapter: z.number().int().positive(),
   title: z.string().min(1),
-  paragraphs: z
-    .strictObject({
-      sequence: z.number().int().positive(),
-      text: z.string().nullable(),
-      image: ImageRefSchema.nullable(),
-    })
-    .array(),
+  paragraphs: storyParagraph.array(),
 });
 
 const travelReaction = z.strictObject({

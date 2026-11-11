@@ -25,7 +25,7 @@ export function NeighborDetailPage({ neighbor }: { neighbor: NeighborDetail }) {
             image={neighbor.favourImage}
             name={`${neighbor.name}的好感插画`}
             eager
-            className="aspect-square rounded-none bg-transparent p-4 sm:p-6"
+            className="aspect-square p-4 sm:p-6"
           />
         </div>
         <div className="min-w-0 space-y-4">

@@ -15,9 +15,7 @@ export function NeighborImage({
 }) {
   const [failedImage, setFailedImage] = useState<string | null>(null);
   return (
-    <div
-      className={`flex items-center justify-center overflow-hidden rounded-2xl bg-muted/50 ${className}`}
-    >
+    <div className={`flex items-center justify-center overflow-hidden ${className}`}>
       {image && image !== failedImage ? (
         <img
           src={resourceUrl(image)}

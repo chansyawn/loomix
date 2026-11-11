@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { StoryLayoutSchema } from "@loomix/schema/neighbors";
 
 type NeighborTravelReaction = {
   npcId: number | null;
@@ -76,6 +77,22 @@ const story = z.strictObject({
       sequence: z.number().int().positive(),
       bodyZh: z.string().nullable(),
       illustrationPath: path.nullable(),
+      layout: StoryLayoutSchema,
+    })
+    .superRefine((paragraph, ctx) => {
+      const needsText = ["text", "image-left", "image-right"].includes(paragraph.layout);
+      if (Boolean(paragraph.bodyZh?.trim()) !== needsText)
+        ctx.addIssue({
+          code: "custom",
+          path: ["bodyZh"],
+          message: "Story text contradicts layout",
+        });
+      if ((paragraph.illustrationPath !== null) !== (paragraph.layout !== "text"))
+        ctx.addIssue({
+          code: "custom",
+          path: ["illustrationPath"],
+          message: "Story illustration contradicts layout",
+        });
     })
     .array(),
 });
@@ -193,7 +210,7 @@ const outfit = z
 
 export const NeighborDatabaseSchema = z
   .strictObject({
-    schemaVersion: z.literal(1),
+    schemaVersion: z.literal(2),
     source,
     neighbors: record.array(),
     stars: star.array(),

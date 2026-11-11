@@ -1,5 +1,6 @@
 import { isAllowedNeighbor, neighborAllowlist } from "./allowlist.ts";
 import { profile } from "../../profile.ts";
+import type { StoryLayout } from "@loomix/schema/neighbors";
 import type { Tables } from "../decode/tables.ts";
 import type { TableRow } from "../types.ts";
 import { assertLayout, localized, normalizedPath, requiredId, requiredText } from "./fields.ts";
@@ -42,6 +43,8 @@ const layouts = {
     sequence: [3, "uint"],
     body: [4, "text"],
     illustration: [5, "string"],
+    isVertical: [6, "uint"],
+    isImageLeft: [7, "uint"],
   },
   reaction: {
     npc: [0, "uint"],
@@ -166,6 +169,21 @@ export function readStars(
   return stars;
 }
 
+function storyLayout(
+  tables: Tables,
+  row: TableRow,
+  text: string | null,
+  image: string | null,
+): StoryLayout {
+  const isVertical = tables.uint(row, 6, 0);
+  const isImageLeft = tables.uint(row, 7, 0);
+  if (![0, 1].includes(isVertical) || ![0, 1].includes(isImageLeft))
+    throw new Error(`Invalid story layout flags: ${row.root}/${row.rowOffset}`);
+  if (text?.trim()) return image ? (isImageLeft === 1 ? "image-left" : "image-right") : "text";
+  if (image) return isVertical === 1 ? "portrait-image" : "image";
+  throw new Error(`Empty story paragraph: ${row.root}/${row.rowOffset}`);
+}
+
 export function readStories(
   tables: Tables,
   accepted: Set<number>,
@@ -188,13 +206,16 @@ export function readStories(
     const sequence = requiredId(tables, row, 3);
     if (entry.paragraphs.some((p) => p.sequence === sequence))
       throw new Error(`Duplicate story paragraph ${key}/${sequence}`);
+    const bodyZh = localized(tables, row, 4);
+    const illustrationPath = normalizedPath(tables.string(row, 5));
     entry.paragraphs.push({
       sequence,
-      bodyZh: localized(tables, row, 4),
-      illustrationPath: normalizedPath(tables.string(row, 5)),
+      bodyZh,
+      illustrationPath,
+      layout: storyLayout(tables, row, bodyZh, illustrationPath),
     });
     chapters.set(key, entry);
-    records.push(evidence("stories", `${key}:${sequence}`, row, [0, 1, 2, 3, 4, 5]));
+    records.push(evidence("stories", `${key}:${sequence}`, row, [0, 1, 2, 3, 4, 5, 6, 7]));
   }
   for (const entry of chapters.values()) requiredText(entry.titleZh, entry.key);
   return [...chapters.values()];

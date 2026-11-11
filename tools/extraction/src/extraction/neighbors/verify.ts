@@ -1,6 +1,7 @@
 import { neighborAllowlist, isAllowedNeighbor } from "./allowlist.ts";
 import assert from "node:assert/strict";
 import { profile } from "../../profile.ts";
+import { StoryLayoutSchema } from "@loomix/schema/neighbors";
 import { extractNeighbors } from "./extract.ts";
 import { parseNeighborDatabase } from "./schema.ts";
 import type { NeighborDatabase, NeighborExtractionInput } from "./types.ts";
@@ -56,6 +57,17 @@ export function verifyNeighbors(value: unknown, input: NeighborExtractionInput):
       counts,
       profile.expectedNeighbors,
       "Neighbor snapshot counts changed; re-confirm the layout and profile",
+    );
+    const paragraphs = database.stories.flatMap((story) => story.paragraphs);
+    assert.deepEqual(
+      Object.fromEntries(
+        StoryLayoutSchema.options.map((layout) => [
+          layout,
+          paragraphs.filter((paragraph) => paragraph.layout === layout).length,
+        ]),
+      ),
+      profile.expectedStoryLayouts,
+      "Neighbor story layouts changed; re-confirm the client snapshot",
     );
     const preferenceCounts = {
       groups: database.giftPreferences.length,

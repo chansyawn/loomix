@@ -93,8 +93,8 @@ export function toNeighborsView(
         paragraphs: story.paragraphs.map((paragraph) => ({
           sequence: paragraph.sequence,
           text: paragraph.text,
+          layout: paragraph.layout,
           image: image(paragraph.image),
-          hasIllustration: paragraph.image !== null,
         })),
       }));
     const groups = new Map<
