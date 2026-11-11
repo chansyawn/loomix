@@ -3,13 +3,7 @@ import { CollectionCard } from "../collection/collection-card";
 import { RecordImage } from "../collection/record-image";
 import { recordColumns, textColumn, tableLinkClassName } from "../collection/table-columns";
 import { useCollectionOrigin } from "../collection/navigation";
-import {
-  recordLocation,
-  categoryNames,
-  kindNames,
-  type OverviewRecord,
-} from "../collection/catalog";
-import { overviewTags } from "./query";
+import { recordLocation, categoryNames, type OverviewRecord } from "../collection/catalog";
 
 export function RecordNameLink({ record }: { record: OverviewRecord }) {
   const origin = useCollectionOrigin();
@@ -30,7 +24,7 @@ export function AllCard({ record }: { record: OverviewRecord }) {
       image={<RecordImage image={record.image} name={record.name} />}
       quality={record.quality}
       description={record.description}
-      tags={overviewTags(record)}
+      tags={categoryNames[record.category]}
       titleLink={<RecordNameLink record={record} />}
     />
   );
@@ -40,7 +34,6 @@ export function allColumns() {
     ...recordColumns<OverviewRecord>((record) => <RecordNameLink record={record} />),
     textColumn<OverviewRecord>("id", "编号", 112, (record) => record.id),
     textColumn<OverviewRecord>("category", "类别", 100, (record) => categoryNames[record.category]),
-    textColumn<OverviewRecord>("kind", "记录形式", 140, (record) => kindNames[record.kind]),
     ...(
       [
         ["colors", "颜色"],

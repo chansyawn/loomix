@@ -30,12 +30,6 @@ export function recordCategory(
   }
 }
 
-export function recordKind(record: CatalogRecord): "item" | "group" | "appearance" | "seed" {
-  if (isGroupRecord(record)) return "group";
-  if (record.type === "appearance" || record.type === "seed") return record.type;
-  return "item";
-}
-
 export function resolveItem(catalog: Pick<Catalog, "records" | "references">, id: number) {
   const record = catalog.records.find((record) => record.id === id);
   if (record) return { kind: "record" as const, value: record };

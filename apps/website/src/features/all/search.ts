@@ -4,7 +4,6 @@ import { collectionLayoutSchema } from "../collection/layout";
 export { sortOptions } from "../furniture/search";
 export const filterKeys = [
   "categories",
-  "kinds",
   "qualities",
   "colors",
   "materials",
@@ -24,7 +23,6 @@ const querySchema = z.object({
     .catch("original")
     .default("original"),
   categories: list,
-  kinds: list,
   qualities: list,
   colors: list,
   materials: list,

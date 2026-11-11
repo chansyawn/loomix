@@ -1,18 +1,18 @@
+import { isGroupRecord } from "@loomix/schema/catalog";
 import type { FilterGroup } from "../collection/filter-types";
 import { qualityNames } from "../collection/quality";
 import type { AllQuery, FilterKey } from "./search";
-import {
-  categoryNames,
-  kindNames,
-  type CollectionCatalog,
-  type OverviewRecord,
-} from "../collection/catalog";
+import { categoryNames, type CollectionCatalog } from "../collection/catalog";
+
+function allRecords(data: CollectionCatalog) {
+  return data.rows.filter((row) => !isGroupRecord(row.record));
+}
 
 const intersects = (selected: string[], values: string[]) =>
   !selected.length || values.some((value) => selected.includes(value));
 export function queryAll(data: CollectionCatalog, query: AllQuery) {
   const term = query.q.trim().toLocaleLowerCase("zh-CN");
-  const rows = data.rows.filter((row) => {
+  const rows = allRecords(data).filter((row) => {
     const text = [String(row.id), row.name, row.description]
       .filter(Boolean)
       .join(" ")
@@ -20,7 +20,6 @@ export function queryAll(data: CollectionCatalog, query: AllQuery) {
     return (
       text.includes(term) &&
       intersects(query.categories, [row.category]) &&
-      intersects(query.kinds, [row.kind]) &&
       intersects(query.qualities, [row.quality === null ? "__missing" : String(row.quality)]) &&
       intersects(query.colors, row.colors) &&
       intersects(query.materials, row.materials) &&
@@ -41,26 +40,26 @@ export function queryAll(data: CollectionCatalog, query: AllQuery) {
   return { rows, total: rows.length };
 }
 export function filterGroups(data: CollectionCatalog): FilterGroup<FilterKey>[] {
+  const rows = allRecords(data);
   const options = (values: Record<string, string>) =>
     Object.entries(values).map(([value, label]) => ({ value, label }));
   const properties = (key: "colors" | "materials" | "styles") =>
-    [...new Set(data.rows.flatMap((row) => row[key]))]
+    [...new Set(rows.flatMap((row) => row[key]))]
       .sort((a, b) => a.localeCompare(b, "zh-CN"))
       .map((value) => ({ value, label: value }));
   const sources = new Map(
-    data.rows
+    rows
       .flatMap((row) => row.acquisition ?? [])
       .map((source) => [String(source.sourceId), source.label]),
   );
   return [
     { key: "categories", label: "类别", options: options(categoryNames) },
-    { key: "kinds", label: "记录形式", options: options(kindNames) },
     {
       key: "qualities",
       label: "品阶",
       options: [
         ...qualityNames.map((label, id) => ({ value: String(id), label })),
-        ...(data.rows.some((row) => row.quality === null)
+        ...(rows.some((row) => row.quality === null)
           ? [{ value: "__missing", label: "未提供" }]
           : []),
       ],
@@ -74,7 +73,4 @@ export function filterGroups(data: CollectionCatalog): FilterGroup<FilterKey>[] 
       options: [...sources].map(([value, label]) => ({ value, label })),
     },
   ];
-}
-export function overviewTags(row: OverviewRecord) {
-  return `${categoryNames[row.category]} · ${kindNames[row.kind]}`;
 }

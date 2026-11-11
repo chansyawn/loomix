@@ -188,7 +188,7 @@ export type Seed = Extract<CatalogRecord, { type: "seed" }>;
 export type ItemReference = z.infer<typeof ItemReferenceSchema>;
 export type Quality = z.infer<typeof QualitySchema>;
 export const parseCatalog = (input: unknown): Catalog => CatalogSchema.parse(input);
-export { isGroupRecord, recordCategory, recordKind, resolveItem } from "./records.ts";
+export { isGroupRecord, recordCategory, resolveItem } from "./records.ts";
 export { recordTarget, recordFocus } from "./location.ts";
 
 export { createRecordTagResolver } from "./tags.ts";

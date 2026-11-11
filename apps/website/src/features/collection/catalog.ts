@@ -1,7 +1,6 @@
 import { createImageResolver, type Assets } from "@loomix/schema/assets";
 import {
   recordCategory,
-  recordKind,
   recordTarget,
   createRecordTagResolver,
   type Catalog,
@@ -20,7 +19,6 @@ export const categoryNames = {
   dishes: "烹饪",
   miscellaneous: "杂物",
 };
-export const kindNames = { item: "单品", group: "套组／系列", appearance: "外观", seed: "种子" };
 export function createCollectionCatalog(
   catalog: Catalog,
   assets: Assets,
@@ -45,7 +43,6 @@ export function createCollectionCatalog(
       image: image(record.image),
       quality: record.quality,
       category: recordCategory(record),
-      kind: recordKind(record),
       colors: tagsFor(record, "colors").map(tagLabel),
       materials: tagsFor(record, "materials").map(tagLabel),
       styles: tagsFor(record, "styles").map(tagLabel),
@@ -75,7 +72,6 @@ export function recordFields(row: OverviewRecord): [string, string | null][] {
   return [
     ["编号", String(row.id)],
     ["类别", categoryNames[row.category]],
-    ["记录形式", kindNames[row.kind]],
     ...(
       [
         ["颜色", row.colors],

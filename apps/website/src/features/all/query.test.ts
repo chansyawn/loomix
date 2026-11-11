@@ -5,7 +5,27 @@ import { catalogFixture, assetsFixture, addFixtureRecords } from "../collection-
 import { createCollectionCatalog } from "../collection/catalog";
 import { queryAll, filterGroups } from "./query";
 import { allSearchSchema, compactAllSearch, emptyQuery } from "./search";
-function data() {
+import { plantItemFixture, plantSeedFixture, plantsDataFixture } from "../plants/fixture";
+
+function groupRecords(memberIds: number[] | null) {
+  return (
+    ["furniture.set", "clothing.set", "creatures.series", "plants.series", "dishes.series"] as const
+  ).map((type, index) => ({
+    id: 1000 + index,
+    name: `集合${type}`,
+    description: "集合专属介绍",
+    image: null,
+    quality: null,
+    type,
+    memberIds,
+    colors: ["集合专属颜色"],
+    materials: ["集合专属材质"],
+    styles: ["集合专属风格"],
+    acquisition: [{ sourceId: 99, label: "集合专属来源", condition: null }],
+  }));
+}
+
+function data(...records: object[]) {
   const { catalog, gameplayTags } = catalogFixture();
   gameplayTags.tags.push(
     { id: 1, internalName: "颜色", enumName: null, parentId: null, displayName: null },
@@ -48,6 +68,7 @@ function data() {
       acquisition: null,
     },
   );
+  addFixtureRecords(catalog, gameplayTags, ...records);
   catalog.references.push({ id: 99, name: "隐藏材料" });
   return createCollectionCatalog(catalog, assetsFixture(catalog), gameplayTags);
 }
@@ -121,6 +142,97 @@ test("旧URL中的标签筛选被忽略，保留其他查询条件且不再写�
   const legacyOnly = allSearchSchema.parse({ items: { gameplayTags: ["999"] } });
   expect(queryAll(data(), legacyOnly.items).total).toBe(2);
   expect(compactAllSearch(legacyOnly)).toEqual({});
+});
+
+test.each([{ memberIds: [] }, { memberIds: null }])(
+  "全部页通过黑名单排除五类集合，成员为 $memberIds",
+  ({ memberIds }) => {
+    const groups = groupRecords(memberIds);
+    const source = data(...groups);
+    const result = queryAll(source, emptyQuery());
+    expect(result.rows.map((row) => row.id)).toEqual([1, 2]);
+    expect(result.total).toBe(source.rows.length - groups.length);
+    for (const group of groups) {
+      for (const q of [String(group.id), group.name, group.description])
+        expect(queryAll(source, { ...emptyQuery(), q }).total).toBe(0);
+    }
+    for (const category of ["furniture", "clothing", "creatures", "plants", "dishes"])
+      expect(queryAll(source, { ...emptyQuery(), categories: [category] }).total).toBe(0);
+  },
+);
+
+test("只有集合时结果为空，动态筛选排除集合属性及空品阶", () => {
+  const { catalog, gameplayTags } = catalogFixture();
+  addFixtureRecords(catalog, gameplayTags, ...groupRecords(null));
+  const source = createCollectionCatalog(catalog, assetsFixture(catalog), gameplayTags);
+  expect(queryAll(source, emptyQuery())).toEqual({ rows: [], total: 0 });
+  const groups = filterGroups(source);
+  for (const key of ["colors", "materials", "styles", "acquisition"])
+    expect(groups.find((group) => group.key === key)?.options).toEqual([]);
+  expect(groups.find((group) => group.key === "qualities")?.options).not.toContainEqual({
+    value: "__missing",
+    label: "未提供",
+  });
+});
+
+test("集合黑名单允许外观和种子参与搜索与类别筛选", () => {
+  const { catalog, gameplayTags } = catalogFixture({
+    plants: plantsDataFixture({
+      items: [plantItemFixture({ id: 10, name: "植株" })],
+      series: [],
+      seeds: [plantSeedFixture({ id: 20, name: "种子", plantIds: [10] })],
+    }),
+  });
+  addFixtureRecords(catalog, gameplayTags, {
+    id: 30,
+    name: "发型",
+    description: null,
+    quality: null,
+    image: null,
+    type: "appearance",
+    subcategory: "发型",
+    acquisition: null,
+  });
+  const source = createCollectionCatalog(catalog, assetsFixture(catalog), gameplayTags);
+  expect(queryAll(source, emptyQuery()).rows.map((row) => row.id)).toEqual([10, 20, 30]);
+  for (const [q, category, id] of [
+    ["种子", "plants", 20],
+    ["发型", "clothing", 30],
+  ] as const)
+    expect(
+      queryAll(source, { ...emptyQuery(), q, categories: [category] }).rows.map((row) => row.id),
+    ).toEqual([id]);
+});
+
+test("旧URL中的记录形式被忽略，保留其他条件且不再写回或生成摘要", () => {
+  const source = data(...groupRecords(null));
+  const raw = {
+    layout: "table",
+    items: { kinds: ["group"], q: "花材", colors: ["红色花朵"], sort: "name-desc" },
+  };
+  const search = allSearchSchema.parse(raw);
+  expect(search).toEqual({
+    layout: "table",
+    items: { ...emptyQuery(), q: "花材", colors: ["红色花朵"], sort: "name-desc" },
+  });
+  const compact = compactAllSearch(search);
+  expect(compact).toEqual({
+    layout: "table",
+    items: { q: "花材", colors: ["红色花朵"], sort: "name-desc" },
+  });
+  expect(allSearchSchema.parse(defaultParseSearch(defaultStringifySearch(compact)))).toEqual(
+    search,
+  );
+  expect(queryAll(source, search.items).rows.map((row) => row.id)).toEqual([1]);
+  const legacyOnly = allSearchSchema.parse({ items: { kinds: ["group"] } });
+  expect(queryAll(source, legacyOnly.items).rows.map((row) => row.id)).toEqual([1, 2]);
+  expect(compactAllSearch(legacyOnly)).toEqual({});
+  expect(
+    collectionFilterChips(filterGroups(source), legacyOnly.items, () => {}, {
+      value: "",
+      clear: () => {},
+    }),
+  ).toEqual([]);
 });
 
 test("旧标签参数不产生筛选摘要，剩余业务筛选可单独移除或清空", () => {
