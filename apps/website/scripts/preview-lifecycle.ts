@@ -1,5 +1,6 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { setTimeout as delay } from "node:timers/promises";
 import { z } from "zod";
 import { verifyPreview, retryPreview } from "./verify-preview.ts";
 import { requireRemoteResources, resolveResourceConfig } from "./resource-config.ts";
@@ -41,6 +42,28 @@ async function github(path: string, method = "GET", body?: unknown): Promise<unk
 
 async function currentPullRequest(number: number) {
   return pullRequestSchema.parse(await github(`pulls/${number}`));
+}
+
+async function waitForVerification(): Promise<void> {
+  const run = environment("GITHUB_RUN_ID");
+  const jobsSchema = z.object({
+    jobs: z.array(
+      z.object({ name: z.string(), status: z.string(), conclusion: z.string().nullable() }),
+    ),
+  });
+  for (let attempt = 0; attempt < 120; attempt++) {
+    const { jobs } = jobsSchema.parse(
+      await github(`actions/runs/${run}/jobs?filter=latest&per_page=100`),
+    );
+    const verification = jobs.find((job) => job.name === "Verify website");
+    if (verification?.status === "completed") {
+      if (verification.conclusion !== "success")
+        throw new Error("Website verification did not succeed");
+      return;
+    }
+    await delay(5_000);
+  }
+  throw new Error("Timed out waiting for website verification");
 }
 
 async function comment(number: number, message: string): Promise<void> {
@@ -129,12 +152,19 @@ async function deploy(number: number, sha: string): Promise<void> {
 
 if (import.meta.main) {
   const number = z.coerce.number().int().positive().parse(environment("PR_NUMBER"));
-  const mode = z.enum(["deploy", "cleanup"]).parse(process.argv[2]);
+  const mode = z.enum(["deploy", "cleanup", "wait", "failure"]).parse(process.argv[2]);
   const sha = environment("PR_HEAD_SHA");
   try {
+    if (mode === "wait") await waitForVerification();
     if (mode === "deploy") await deploy(number, sha);
     if (mode === "cleanup" && (await currentPullRequest(number)).state === "closed") {
       await removePreview(number);
+    }
+    if (mode === "failure") {
+      const current = await currentPullRequest(number);
+      if (current.state === "open" && current.head.sha === sha) {
+        await comment(number, `预览发布失败，请查看本次 Actions 日志。\n\n提交 ${sha}`);
+      }
     }
   } catch (error) {
     console.error(error);

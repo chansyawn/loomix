@@ -3,7 +3,7 @@ name: Preview website
 on:
   pull_request:
     branches: [master]
-    types: [opened, reopened, synchronize, closed]
+    types: [opened, reopened, synchronize]
 
 permissions:
   contents: read
@@ -15,7 +15,6 @@ env:
 jobs:
   verify:
     name: Verify website
-    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     concurrency:
@@ -55,19 +54,26 @@ jobs:
           overwrite: true
 
   deploy:
-    name: Deploy preview
-    needs: verify
-    if: github.event.action != 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    name: Preview website
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     permissions:
       contents: read
+      actions: read
       pull-requests: write
     concurrency:
       group: preview-website-${{ github.event.pull_request.number }}
       cancel-in-progress: false
       queue: max
     steps:
+      - name: Require a same-repository branch
+        env:
+          SAME_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+        run: |
+          if [ "$SAME_REPOSITORY" != "true" ]; then
+            echo "::error::Fork PR 需要由维护者转入同仓库分支，完成预览后合并。"
+            exit 1
+          fi
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
@@ -78,6 +84,11 @@ jobs:
           run-install: false
           cache: true
       - run: vp install --frozen-lockfile
+      - name: Wait for verified build
+        working-directory: apps/website
+        run: vp exec node scripts/preview-lifecycle.ts wait
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/download-artifact@v8.0.2
         with:
           name: website-preview-${{ github.run_id }}
@@ -97,77 +108,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-
-  result:
-    name: Preview website
-    needs: [verify, deploy]
-    if: always() && github.event.action != 'closed'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      pull-requests: write
-    concurrency:
-      group: preview-website-${{ github.event.pull_request.number }}
-      cancel-in-progress: false
-      queue: max
-    steps:
       - name: Report failed Preview
-        if: github.event.pull_request.head.repo.full_name == github.repository && (needs.verify.result != 'success' || needs.deploy.result != 'success')
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          current="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq '.state + " " + .head.sha')"
-          if [ "$current" != "open $PR_HEAD_SHA" ]; then exit 0; fi
-          comment_id="$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" \
-            --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("<!-- loomix-website-preview -->"))) | .id')"
-          jq -n --arg sha "$PR_HEAD_SHA" \
-            '{body: ("<!-- loomix-website-preview -->\n预览发布失败，请查看本次 Actions 日志。\n\n提交 " + $sha)}' \
-            > "$RUNNER_TEMP/preview-comment.json"
-          if [ -n "$comment_id" ]; then
-            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$comment_id" --input "$RUNNER_TEMP/preview-comment.json" --silent
-          else
-            gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" --input "$RUNNER_TEMP/preview-comment.json" --silent
-          fi
-      - name: Require a verified Preview
-        env:
-          SAME_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
-          VERIFY_RESULT: ${{ needs.verify.result }}
-          DEPLOY_RESULT: ${{ needs.deploy.result }}
-        run: |
-          if [ "$SAME_REPOSITORY" != "true" ]; then
-            echo "::error::Fork PR 需要由维护者转入同仓库分支，完成预览后合并。"
-            exit 1
-          fi
-          test "$VERIFY_RESULT" = success
-          test "$DEPLOY_RESULT" = success
-
-  cleanup:
-    name: Clean up Preview
-    if: github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-      pull-requests: write
-    concurrency:
-      group: preview-website-${{ github.event.pull_request.number }}
-      cancel-in-progress: false
-      queue: max
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.repository.default_branch }}
-          persist-credentials: false
-      - uses: voidzero-dev/setup-vp@v1.21.2
-        with:
-          node-version: "24"
-          run-install: false
-          cache: true
-      - run: vp install --frozen-lockfile
-      - name: Delete closed PR Preview
+        if: failure() && github.event.pull_request.head.repo.full_name == github.repository
         working-directory: apps/website
-        run: vp exec node scripts/preview-lifecycle.ts cleanup
+        run: vp exec node scripts/preview-lifecycle.ts failure
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
