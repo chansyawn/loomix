@@ -4,6 +4,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { z } from "zod";
 import { verifyPreview, retryPreview } from "./verify-preview.ts";
 import { requireRemoteResources, resolveResourceConfig } from "./resource-config.ts";
+import { selectPreviewUrl } from "../src/infrastructure/preview-domain.ts";
 
 const execute = promisify(execFile);
 const worker = "loomix-website";
@@ -140,9 +141,7 @@ async function deploy(number: number, sha: string): Promise<void> {
   const output = z
     .object({ urls: z.array(z.string().url()) })
     .parse(await previewRequest(number, "GET"));
-  const hostname = `pr-${number}-${worker}.chansyawn.workers.dev`;
-  const url = output.urls.find((value) => new URL(value).hostname === hostname);
-  if (!url) throw new Error("Cloudflare did not return the expected stable Preview URL");
+  const url = selectPreviewUrl(number, output.urls);
   const resourceBase = requireRemoteResources(resolveResourceConfig("production"));
   await retryPreview(() => verifyPreview(url, resourceBase));
   const latest = await currentPullRequest(number);

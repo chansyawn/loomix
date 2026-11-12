@@ -1,6 +1,7 @@
 import { setTimeout as delay } from "node:timers/promises";
 import { downloadRelease } from "@loomix/resource-publisher/release";
 import { requireRemoteResources, resolveResourceConfig } from "./resource-config.ts";
+import { isPreviewHostname } from "../src/infrastructure/preview-domain.ts";
 
 export async function verifyPreview(
   value: string,
@@ -10,6 +11,9 @@ export async function verifyPreview(
   const preview = new URL(value);
   if (preview.protocol !== "https:" || preview.username || preview.password) {
     throw new Error("Preview URL must use HTTPS without credentials");
+  }
+  if (!isPreviewHostname(preview.hostname)) {
+    throw new Error("Preview URL must use the preview.loomix.fun domain");
   }
   for (const [pathname, contentType] of [
     ["/", "text/html"],
@@ -23,6 +27,10 @@ export async function verifyPreview(
     if (!response.ok) throw new Error(`Preview ${pathname} returned HTTP ${response.status}`);
     if (response.headers.get("content-type")?.split(";")[0].trim() !== contentType) {
       throw new Error(`Preview ${pathname} must return ${contentType}`);
+    }
+    const directives = response.headers.get("x-robots-tag")?.split(",");
+    if (!directives?.some((value) => value.trim().toLowerCase() === "noindex")) {
+      throw new Error(`Preview ${pathname} is missing noindex`);
     }
   }
   await downloadRelease(resourceBase, request, preview.origin);
