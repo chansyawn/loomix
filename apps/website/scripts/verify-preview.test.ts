@@ -17,7 +17,10 @@ test.each(["http://example.com", "https://user@example.com"])(
 test.each(["/", "/logo.png"])("rejects an unavailable Preview endpoint %s", async (pathname) => {
   const request = vi.fn<typeof fetch>().mockImplementation(async (input) => {
     const url = new URL(input instanceof Request ? input.url : input);
-    return new Response(null, { status: url.pathname === pathname ? 503 : 200 });
+    return new Response(null, {
+      status: url.pathname === pathname ? 503 : 200,
+      headers: { "content-type": url.pathname === "/" ? "text/html" : "image/png" },
+    });
   });
   await expect(
     verifyPreview(
@@ -26,6 +29,19 @@ test.each(["/", "/logo.png"])("rejects an unavailable Preview endpoint %s", asyn
       request,
     ),
   ).rejects.toThrow(`Preview ${pathname} returned HTTP 503`);
+});
+
+test("rejects HTML fallback responses for a static asset", async () => {
+  const request = vi
+    .fn<typeof fetch>()
+    .mockResolvedValue(new Response("fallback", { headers: { "content-type": "text/html" } }));
+  await expect(
+    verifyPreview(
+      "https://preview.example.com",
+      "https://assets.example.com/releases/r1/",
+      request,
+    ),
+  ).rejects.toThrow("Preview /logo.png must return image/png");
 });
 
 test("retries a temporary failure and returns after recovery", async () => {

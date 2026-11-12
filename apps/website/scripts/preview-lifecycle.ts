@@ -122,18 +122,12 @@ async function deploy(number: number, sha: string): Promise<void> {
 
 if (import.meta.main) {
   const number = z.coerce.number().int().positive().parse(environment("PR_NUMBER"));
-  const mode = z.enum(["deploy", "cleanup", "failure"]).parse(process.argv[2]);
+  const mode = z.enum(["deploy", "cleanup"]).parse(process.argv[2]);
   const sha = environment("PR_HEAD_SHA");
   try {
     if (mode === "deploy") await deploy(number, sha);
     if (mode === "cleanup" && (await currentPullRequest(number)).state === "closed") {
       await removePreview(number);
-    }
-    if (mode === "failure") {
-      const current = await currentPullRequest(number);
-      if (current.state === "open" && current.head.sha === sha) {
-        await comment(number, `预览发布失败，请查看本次 Actions 日志。\n\n提交 ${sha}`);
-      }
     }
   } catch (error) {
     console.error(error);

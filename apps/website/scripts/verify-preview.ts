@@ -11,13 +11,19 @@ export async function verifyPreview(
   if (preview.protocol !== "https:" || preview.username || preview.password) {
     throw new Error("Preview URL must use HTTPS without credentials");
   }
-  for (const pathname of ["/", "/logo.png"]) {
+  for (const [pathname, contentType] of [
+    ["/", "text/html"],
+    ["/logo.png", "image/png"],
+  ]) {
     const response = await request(new URL(pathname, preview), {
       signal: AbortSignal.timeout(30_000),
       redirect: "error",
     });
     await response.body?.cancel();
     if (!response.ok) throw new Error(`Preview ${pathname} returned HTTP ${response.status}`);
+    if (response.headers.get("content-type")?.split(";")[0].trim() !== contentType) {
+      throw new Error(`Preview ${pathname} must return ${contentType}`);
+    }
   }
   await downloadRelease(resourceBase, request, preview.origin);
 }
