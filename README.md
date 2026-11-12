@@ -41,6 +41,8 @@
 
 维护中的提取实现和文档位于 [tools/extraction](tools/extraction/README.md)。准备本地输入后，按该文档依次运行 init、extract、deliver 和 verify。入口使用 `vp run '@loomix/extraction#<入口>'`；提取与交付需传入前一阶段打印的身份 ID。用 `vp run '@loomix/extraction#test'` 运行不依赖客户端的测试。
 
+运行 `vp run '@loomix/extraction#refresh'` 可从当前客户端重新生成 `resources/website/`；Codex 的 `loomix` Local Environment 会在创建 managed worktree 时自动运行。
+
 目录只保留当前客户端，游戏版本、配置与资源 revision 保留在脚本配置和产物元数据中。提取任务使用仓库 Node 环境，不需要 Python。
 
 ## 本地开发

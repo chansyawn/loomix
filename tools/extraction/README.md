@@ -24,6 +24,7 @@ vp run '@loomix/extraction#init'
 vp run '@loomix/extraction#extract' --environment <environment-id>
 vp run '@loomix/extraction#deliver' --extraction <extraction-id> --artifact-only
 vp run '@loomix/extraction#verify' --delivery <delivery-id>
+vp run '@loomix/extraction#refresh'
 vp run '@loomix/extraction#test'
 vp check
 ```
@@ -34,6 +35,9 @@ vp check
 - `extract` 只接受已初始化 environment，重新核对客户端快照完整文件集合与 SHA256；内部按 admissions + decode → structure → raw-assets → collection → seed-images，以及 neighbors → neighbor-images → source-audit → extraction-verify 自动恢复。输出源观察、dataset.json、image-jobs.json、原始 PNG、证据和审计，完成后封存 manifest，不发布网站资源。
 - `deliver --artifact-only` 只读已验证 extraction bundle，处理图片、按最终字节 SHA256 去重，在 `var/artifacts/deliveries/<id>/staging/` 封存 JSON 与 WebP；不访问网站交付目录。不带此选项时，验证后替换本地 resources/website/。
 - `verify` 核对整个 manifest 依赖链、实际客户端输入、表范围、字段证据和图片。manifest 的 `deliveryMode: artifact-only` 仅验收封存产物；网站发布模式额外核对已发布字节。
+- `refresh` 顺序执行 `init`、`extract` 和网站模式 `deliver`，从当前 `resources/game-client/` 生成并验证 `resources/website/`，最后打印三阶段 ID。
+
+Codex 桌面端的 `loomix` Local Environment 会在新建 managed worktree 时安装依赖并运行 `refresh`；`.worktreeinclude` 只复制约 14 GB 的 `resources/game-client/`，仅适用于本地 managed worktree。
 
 仓库根配置默认不缓存 package scripts，因此每次都会执行入口并重新验证真实输入。内部 checkpoint 是提取恢复协议，与 Vite Task 缓存无关；`logs/`、`checkpoints/` 和 `run-report.json` 不属于 manifest 的语义输出。
 

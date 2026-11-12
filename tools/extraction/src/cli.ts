@@ -20,21 +20,28 @@ async function main(): Promise<void> {
   });
   if (values.help) {
     console.log(
-      "客户端提取：init | extract --environment ID | deliver --extraction ID [--artifact-only] | verify --delivery ID\n默认交付：resources/website/；--artifact-only 仅封存版本化产物，不发布网站。所有路径相对仓库，内部 checkpoint 自动恢复。",
+      "客户端提取：init | extract --environment ID | deliver --extraction ID [--artifact-only] | refresh | verify --delivery ID\nrefresh 从当前客户端执行 init、extract 和 website deliver。默认交付：resources/website/；--artifact-only 仅封存版本化产物，不发布网站。所有路径相对仓库，内部 checkpoint 自动恢复。",
     );
     return;
   }
   if (command === "init") console.log(`environment-id: ${await init()}`);
   else if (command === "extract" && values.environment)
     console.log(`extraction-id: ${await extract(values.environment)}`);
-  else if (command === "deliver" && values.extraction)
+  else if (command === "refresh") {
+    const environmentId = await init();
+    const extractionId = await extract(environmentId);
+    const deliveryId = await deliver(extractionId);
+    console.log(
+      `environment-id: ${environmentId}\nextraction-id: ${extractionId}\ndelivery-id: ${deliveryId}`,
+    );
+  } else if (command === "deliver" && values.extraction)
     console.log(
       `delivery-id: ${await deliver(values.extraction, { artifactOnly: values["artifact-only"] })}`,
     );
   else if (command === "verify" && values.delivery) await verify(values.delivery);
   else
     throw new Error(
-      "Use init, extract --environment ID, deliver --extraction ID, or verify --delivery ID; --help for usage",
+      "Use init, extract --environment ID, deliver --extraction ID, refresh, or verify --delivery ID; --help for usage",
     );
 }
 

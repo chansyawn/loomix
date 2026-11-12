@@ -6,6 +6,7 @@
     "init": "node src/cli.ts init",
     "extract": "node src/cli.ts extract",
     "deliver": "node src/cli.ts deliver",
+    "refresh": "node src/cli.ts refresh",
     "verify": "node src/cli.ts verify",
     "test": "vp exec vp test run"
   },
