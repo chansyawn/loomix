@@ -44,14 +44,19 @@ async function currentPullRequest(number: number) {
   return pullRequestSchema.parse(await github(`pulls/${number}`));
 }
 
-async function waitForVerification(): Promise<void> {
+async function waitForVerification(number: number, sha: string): Promise<void> {
   const run = environment("GITHUB_RUN_ID");
   const jobsSchema = z.object({
     jobs: z.array(
       z.object({ name: z.string(), status: z.string(), conclusion: z.string().nullable() }),
     ),
   });
-  for (let attempt = 0; attempt < 120; attempt++) {
+  const deadline = Date.now() + 20 * 60_000;
+  while (Date.now() < deadline) {
+    const current = await currentPullRequest(number);
+    if (current.state === "closed" || current.head.sha !== sha) {
+      throw new Error("PR is closed or this workflow has been superseded");
+    }
     const { jobs } = jobsSchema.parse(
       await github(`actions/runs/${run}/jobs?filter=latest&per_page=100`),
     );
@@ -155,7 +160,7 @@ if (import.meta.main) {
   const mode = z.enum(["deploy", "cleanup", "wait", "failure"]).parse(process.argv[2]);
   const sha = environment("PR_HEAD_SHA");
   try {
-    if (mode === "wait") await waitForVerification();
+    if (mode === "wait") await waitForVerification(number, sha);
     if (mode === "deploy") await deploy(number, sha);
     if (mode === "cleanup" && (await currentPullRequest(number)).state === "closed") {
       await removePreview(number);
