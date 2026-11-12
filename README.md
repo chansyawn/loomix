@@ -4,6 +4,8 @@
 
 网站域名：`loomix.fun`。
 
+协作与发布：[贡献指南](CONTRIBUTE.md) · [CI/CD 与部署](docs/deployment.md)。
+
 ## 目录结构
 
 ```text
