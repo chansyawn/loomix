@@ -36,16 +36,17 @@ export function parseReleaseBase(value: string): URL {
 export async function downloadRelease(
   value: string,
   request: typeof fetch = fetch,
+  origin = "https://loomix.fun",
 ): Promise<Release> {
   const base = parseReleaseBase(value);
   const fetchFile = async (name: string): Promise<Buffer> => {
     const response = await request(new URL(name, base), {
       signal: AbortSignal.timeout(30_000),
-      headers: { Origin: "https://loomix.fun" },
+      headers: { Origin: origin },
     });
     if (!response.ok) throw new Error(`Resource ${name} returned HTTP ${response.status}`);
-    const origin = response.headers.get("access-control-allow-origin");
-    if (origin !== "*" && origin !== "https://loomix.fun")
+    const allowedOrigin = response.headers.get("access-control-allow-origin");
+    if (allowedOrigin !== "*" && allowedOrigin !== origin)
       throw new Error(`Resource ${name} is missing website CORS access`);
     return Buffer.from(await response.arrayBuffer());
   };
