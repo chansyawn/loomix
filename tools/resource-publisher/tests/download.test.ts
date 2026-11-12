@@ -85,3 +85,28 @@ test("rejects resources without website CORS access", async () => {
   };
   await expect(downloadRelease(base, withoutCors)).rejects.toThrow("CORS");
 });
+
+test("checks every resource against the requested Preview origin", async () => {
+  const { request, dataset } = await fixture();
+  const origin = "https://pr-3-loomix-website.chansyawn.workers.dev";
+  const previewRequest: typeof fetch = async (input, init) => {
+    expect(new Headers(init?.headers).get("Origin")).toBe(origin);
+    const response = await request(input, init);
+    response.headers.set("access-control-allow-origin", origin);
+    return response;
+  };
+  expect((await downloadRelease(base, previewRequest, origin)).dataset).toEqual(dataset);
+  await expect(downloadRelease(base, request, origin)).rejects.toThrow("CORS");
+});
+
+test("accepts resources with wildcard CORS access", async () => {
+  const { request } = await fixture();
+  const wildcardRequest: typeof fetch = async (input, init) => {
+    const response = await request(input, init);
+    response.headers.set("access-control-allow-origin", "*");
+    return response;
+  };
+  await expect(
+    downloadRelease(base, wildcardRequest, "https://pr-3-loomix-website.chansyawn.workers.dev"),
+  ).resolves.toBeDefined();
+});
