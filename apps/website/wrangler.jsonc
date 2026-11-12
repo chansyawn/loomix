@@ -2,11 +2,19 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "loomix-website",
   "account_id": "52939426cdcbf0f5c4f22f64f0c35731",
-  "main": "@tanstack/react-start/server-entry",
+  "main": "src/server.ts",
   "compatibility_date": "2026-10-19",
   "compatibility_flags": ["nodejs_compat"],
-  "preview_urls": true,
+  "preview_urls": false,
   "previews": {},
-  "routes": [{ "pattern": "loomix.fun", "custom_domain": true }],
+  "routes": [
+    { "pattern": "loomix.fun", "custom_domain": true, "enabled": true, "previews_enabled": false },
+    {
+      "pattern": "preview.loomix.fun",
+      "custom_domain": true,
+      "enabled": false,
+      "previews_enabled": true,
+    },
+  ],
   "observability": { "enabled": true, "head_sampling_rate": 1 },
 }
