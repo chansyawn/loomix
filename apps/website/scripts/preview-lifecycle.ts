@@ -61,19 +61,26 @@ async function comment(number: number, message: string): Promise<void> {
   await github(`issues/${number}/comments`, "POST", { body });
 }
 
-async function removePreview(number: number): Promise<void> {
+async function previewRequest(number: number, method: "GET" | "DELETE"): Promise<unknown> {
   const account = environment("CLOUDFLARE_ACCOUNT_ID");
   const response = await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${account}/workers/workers/${worker}/previews/pr-${number}`,
     {
-      method: "DELETE",
+      method,
       headers: { Authorization: `Bearer ${environment("CLOUDFLARE_API_TOKEN")}` },
       signal: AbortSignal.timeout(30_000),
     },
   );
-  if (!response.ok && response.status !== 404) {
-    throw new Error(`Deleting Preview returned HTTP ${response.status}`);
-  }
+  if (method === "DELETE" && response.status === 404) return;
+  if (!response.ok)
+    throw new Error(`Cloudflare Preview ${method} returned HTTP ${response.status}`);
+  const body = z.object({ success: z.boolean(), result: z.unknown() }).parse(await response.json());
+  if (!body.success) throw new Error(`Cloudflare Preview ${method} failed`);
+  return body.result;
+}
+
+async function removePreview(number: number): Promise<void> {
+  await previewRequest(number, "DELETE");
   await comment(number, "预览环境已清理。");
 }
 
@@ -88,7 +95,7 @@ async function deploy(number: number, sha: string): Promise<void> {
   }
   if (current.head.sha !== sha) throw new Error("PR changed; a newer workflow must deploy it");
   await comment(number, `正在发布预览。\n\n提交 ${sha}`);
-  const { stdout } = await execute(
+  await execute(
     process.execPath,
     [
       "node_modules/wrangler/bin/wrangler.js",
@@ -103,10 +110,10 @@ async function deploy(number: number, sha: string): Promise<void> {
     { maxBuffer: 10 * 1024 * 1024 },
   );
   const output = z
-    .object({ preview: z.object({ urls: z.array(z.string().url()) }) })
-    .parse(JSON.parse(stdout));
+    .object({ urls: z.array(z.string().url()) })
+    .parse(await previewRequest(number, "GET"));
   const hostname = `pr-${number}-${worker}.chansyawn.workers.dev`;
-  const url = output.preview.urls.find((value) => new URL(value).hostname === hostname);
+  const url = output.urls.find((value) => new URL(value).hostname === hostname);
   if (!url) throw new Error("Cloudflare did not return the expected stable Preview URL");
   const resourceBase = requireRemoteResources(resolveResourceConfig("production"));
   await retryPreview(() => verifyPreview(url, resourceBase));
