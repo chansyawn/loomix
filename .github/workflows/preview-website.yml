@@ -1,0 +1,116 @@
+name: Preview website
+
+on:
+  pull_request:
+    branches: [master]
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+
+env:
+  PR_NUMBER: ${{ github.event.pull_request.number }}
+  PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+
+jobs:
+  verify:
+    name: Verify website
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: verify-website-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: voidzero-dev/setup-vp@v1.21.2
+        with:
+          node-version: "24"
+          run-install: false
+          cache: true
+      - run: vp install --frozen-lockfile
+      - run: vp run --no-cache website#verify-release
+      - run: vp check
+      - run: vp run --no-cache -r test
+      - run: vp run --no-cache website#build
+      - run: vp run --no-cache website#verify-build
+      - run: vp run --no-cache website#deploy:check
+      - name: Record build identity
+        env:
+          BUILD_SHA: ${{ github.sha }}
+        run: |
+          jq -n --arg head "$PR_HEAD_SHA" --arg build "$BUILD_SHA" \
+            --arg run "$GITHUB_RUN_ID" --arg attempt "$GITHUB_RUN_ATTEMPT" \
+            '{pr_head_sha: $head, build_sha: $build, run_id: $run, run_attempt: $attempt}' \
+            > apps/website/dist/preview-build.json
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: website-preview-${{ github.run_id }}
+          path: apps/website/dist
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+          overwrite: true
+
+  deploy:
+    name: Preview website
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
+    concurrency:
+      group: preview-website-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+      queue: max
+    steps:
+      - name: Require a same-repository branch
+        env:
+          SAME_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+        run: |
+          if [ "$SAME_REPOSITORY" != "true" ]; then
+            echo "::error::Fork PR 需要由维护者转入同仓库分支，完成预览后合并。"
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: voidzero-dev/setup-vp@v1.21.2
+        with:
+          node-version: "24"
+          run-install: false
+          cache: true
+      - run: vp install --frozen-lockfile
+      - name: Wait for verified build
+        working-directory: apps/website
+        run: vp exec node scripts/preview-lifecycle.ts wait
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/download-artifact@v8.0.2
+        with:
+          name: website-preview-${{ github.run_id }}
+          path: apps/website/dist
+      - name: Verify build identity
+        env:
+          BUILD_SHA: ${{ github.sha }}
+        run: |
+          jq -e --arg head "$PR_HEAD_SHA" --arg build "$BUILD_SHA" \
+            --arg run "$GITHUB_RUN_ID" \
+            '.pr_head_sha == $head and .build_sha == $build and .run_id == $run' \
+            apps/website/dist/preview-build.json
+      - name: Deploy and verify Preview
+        working-directory: apps/website
+        run: vp exec node scripts/preview-lifecycle.ts deploy
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - name: Report failed Preview
+        if: failure() && github.event.pull_request.head.repo.full_name == github.repository
+        working-directory: apps/website
+        run: vp exec node scripts/preview-lifecycle.ts failure
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

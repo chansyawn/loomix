@@ -1,5 +1,6 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { setTimeout as delay } from "node:timers/promises";
 import { z } from "zod";
 import { verifyPreview, retryPreview } from "./verify-preview.ts";
 import { requireRemoteResources, resolveResourceConfig } from "./resource-config.ts";
@@ -43,6 +44,33 @@ async function currentPullRequest(number: number) {
   return pullRequestSchema.parse(await github(`pulls/${number}`));
 }
 
+async function waitForVerification(number: number, sha: string): Promise<void> {
+  const run = environment("GITHUB_RUN_ID");
+  const jobsSchema = z.object({
+    jobs: z.array(
+      z.object({ name: z.string(), status: z.string(), conclusion: z.string().nullable() }),
+    ),
+  });
+  const deadline = Date.now() + 20 * 60_000;
+  while (Date.now() < deadline) {
+    const current = await currentPullRequest(number);
+    if (current.state === "closed" || current.head.sha !== sha) {
+      throw new Error("PR is closed or this workflow has been superseded");
+    }
+    const { jobs } = jobsSchema.parse(
+      await github(`actions/runs/${run}/jobs?filter=latest&per_page=100`),
+    );
+    const verification = jobs.find((job) => job.name === "Verify website");
+    if (verification?.status === "completed") {
+      if (verification.conclusion !== "success")
+        throw new Error("Website verification did not succeed");
+      return;
+    }
+    await delay(5_000);
+  }
+  throw new Error("Timed out waiting for website verification");
+}
+
 async function comment(number: number, message: string): Promise<void> {
   const body = `${marker}\n${message}`;
   for (let page = 1; ; page++) {
@@ -61,19 +89,26 @@ async function comment(number: number, message: string): Promise<void> {
   await github(`issues/${number}/comments`, "POST", { body });
 }
 
-async function removePreview(number: number): Promise<void> {
+async function previewRequest(number: number, method: "GET" | "DELETE"): Promise<unknown> {
   const account = environment("CLOUDFLARE_ACCOUNT_ID");
   const response = await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${account}/workers/workers/${worker}/previews/pr-${number}`,
     {
-      method: "DELETE",
+      method,
       headers: { Authorization: `Bearer ${environment("CLOUDFLARE_API_TOKEN")}` },
       signal: AbortSignal.timeout(30_000),
     },
   );
-  if (!response.ok && response.status !== 404) {
-    throw new Error(`Deleting Preview returned HTTP ${response.status}`);
-  }
+  if (method === "DELETE" && response.status === 404) return;
+  if (!response.ok)
+    throw new Error(`Cloudflare Preview ${method} returned HTTP ${response.status}`);
+  const body = z.object({ success: z.boolean(), result: z.unknown() }).parse(await response.json());
+  if (!body.success) throw new Error(`Cloudflare Preview ${method} failed`);
+  return body.result;
+}
+
+async function removePreview(number: number): Promise<void> {
+  await previewRequest(number, "DELETE");
   await comment(number, "预览环境已清理。");
 }
 
@@ -88,7 +123,7 @@ async function deploy(number: number, sha: string): Promise<void> {
   }
   if (current.head.sha !== sha) throw new Error("PR changed; a newer workflow must deploy it");
   await comment(number, `正在发布预览。\n\n提交 ${sha}`);
-  const { stdout } = await execute(
+  await execute(
     process.execPath,
     [
       "node_modules/wrangler/bin/wrangler.js",
@@ -103,10 +138,10 @@ async function deploy(number: number, sha: string): Promise<void> {
     { maxBuffer: 10 * 1024 * 1024 },
   );
   const output = z
-    .object({ preview: z.object({ urls: z.array(z.string().url()) }) })
-    .parse(JSON.parse(stdout));
+    .object({ urls: z.array(z.string().url()) })
+    .parse(await previewRequest(number, "GET"));
   const hostname = `pr-${number}-${worker}.chansyawn.workers.dev`;
-  const url = output.preview.urls.find((value) => new URL(value).hostname === hostname);
+  const url = output.urls.find((value) => new URL(value).hostname === hostname);
   if (!url) throw new Error("Cloudflare did not return the expected stable Preview URL");
   const resourceBase = requireRemoteResources(resolveResourceConfig("production"));
   await retryPreview(() => verifyPreview(url, resourceBase));
@@ -122,12 +157,19 @@ async function deploy(number: number, sha: string): Promise<void> {
 
 if (import.meta.main) {
   const number = z.coerce.number().int().positive().parse(environment("PR_NUMBER"));
-  const mode = z.enum(["deploy", "cleanup"]).parse(process.argv[2]);
+  const mode = z.enum(["deploy", "cleanup", "wait", "failure"]).parse(process.argv[2]);
   const sha = environment("PR_HEAD_SHA");
   try {
+    if (mode === "wait") await waitForVerification(number, sha);
     if (mode === "deploy") await deploy(number, sha);
     if (mode === "cleanup" && (await currentPullRequest(number)).state === "closed") {
       await removePreview(number);
+    }
+    if (mode === "failure") {
+      const current = await currentPullRequest(number);
+      if (current.state === "open" && current.head.sha === sha) {
+        await comment(number, `预览发布失败，请查看本次 Actions 日志。\n\n提交 ${sha}`);
+      }
     }
   } catch (error) {
     console.error(error);
