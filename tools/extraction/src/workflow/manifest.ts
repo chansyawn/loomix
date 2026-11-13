@@ -16,6 +16,7 @@ export const manifestSchema = z
     kind: z.enum(["environment", "extraction", "delivery"]),
     deliveryMode: z.enum(["website", "artifact-only"]).optional(),
     id: hash,
+    clientSnapshotId: hash.optional(),
     status: z.literal("verified"),
     createdAt: z.string().datetime(),
     inputs: z.object({ id: z.string(), sha256: hash, files: z.array(fileHash) }).strict(),

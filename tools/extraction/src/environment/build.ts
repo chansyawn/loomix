@@ -2,8 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { buildAssetIndex } from "../client/asset-map.ts";
 import { buildAssetMap, ensureAnimeStudio } from "../client/anime-studio/index.ts";
-import { clientRoot, snapshotClient } from "../client/snapshot.ts";
-import { identityDirectory, repoRoot } from "../paths.ts";
+import {
+  clientRoot,
+  selectedSnapshotId,
+  snapshotClient,
+  resolveClientPath,
+} from "../client/snapshot.ts";
+import { identityDirectory } from "../paths.ts";
 import { profile } from "../profile.ts";
 import { digest, inventory } from "../workflow/hashing.ts";
 import { implementationRevision, profileHash, toolIdentity } from "../workflow/identity.ts";
@@ -16,9 +21,12 @@ import { selectConfigSource } from "./config-source.ts";
 import { validateResourceManifests } from "./resource-audit.ts";
 
 export async function init(): Promise<string> {
-  if (!fs.existsSync(clientRoot)) throw new Error(`Missing client snapshot: ${clientRoot}`);
+  const clientSnapshotId = selectedSnapshotId();
+  const selectedClientRoot = clientRoot(clientSnapshotId);
+  if (!fs.existsSync(selectedClientRoot))
+    throw new Error(`Missing client snapshot: ${selectedClientRoot}`);
   console.log("Hashing client snapshot");
-  const snapshot = await snapshotClient();
+  const snapshot = await snapshotClient(selectedClientRoot);
   const animeStudio = await ensureAnimeStudio();
   const tool = toolIdentity();
   const implementation = await implementationRevision();
@@ -44,10 +52,10 @@ export async function init(): Promise<string> {
     fs.rmSync(staging, { recursive: true, force: true });
     fs.mkdirSync(staging, { recursive: true });
     try {
-      const gameRoot = path.resolve(repoRoot, profile.paths.gameRoot);
+      const gameRoot = resolveClientPath(profile.paths.gameRoot, clientSnapshotId);
       const configSource = selectConfigSource(
         gameRoot,
-        path.resolve(repoRoot, profile.paths.clientIni),
+        resolveClientPath(profile.paths.clientIni, clientSnapshotId),
       );
       writeJson(path.join(staging, "config-source.json"), configSource);
 
@@ -74,7 +82,7 @@ export async function init(): Promise<string> {
       });
       fs.rmSync(map, { force: true });
 
-      if (digest((await snapshotClient()).files) !== identity.client)
+      if (digest((await snapshotClient(selectedClientRoot)).files) !== identity.client)
         throw new Error("Client changed during initialization");
       const outputs = await inventory(staging, [
         "config-source.json",
@@ -86,6 +94,7 @@ export async function init(): Promise<string> {
         schemaVersion: 1,
         kind: "environment",
         id,
+        clientSnapshotId,
         status: "verified",
         createdAt: new Date().toISOString(),
         inputs: { id: profile.gameVersion, sha256: identity.client, files: snapshot.files },

@@ -10,12 +10,17 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { profile } from "../profile.ts";
-import { repoRoot } from "../paths.ts";
+import { resolveClientPath, clientRoot } from "../client/snapshot.ts";
+import { readManifest } from "../workflow/manifest.ts";
 import { readJson, writeJson } from "../workflow/json.ts";
 import { manifestEntry, readManifestMaps } from "../client/versions.ts";
 
 export async function audit(options: WorkOptions) {
-  const root = path.resolve(repoRoot, profile.paths.gameRoot);
+  if (!options.environment) throw new Error("Environment directory is required for source audit");
+  const environment = await readManifest(options.environment, "environment");
+  const snapshotId = environment.clientSnapshotId ?? environment.inputs.sha256;
+  const root = resolveClientPath(profile.paths.gameRoot, snapshotId);
+  const rootDirectory = clientRoot(snapshotId);
   const manifests = readManifestMaps(root, profile.manifestId);
   const images = readJson<ImageManifest[]>(path.join(options.work, "image-candidates.json"));
   const bindata = readJson<BinDataAsset[]>(path.join(options.work, "bindata-manifest.json"));
@@ -70,7 +75,7 @@ export async function audit(options: WorkOptions) {
     if (!relative || (scope !== "StreamingAssets" && scope !== "Persistent"))
       throw new Error(`Invalid package source: ${source}`);
     const expected = manifestEntry(manifests, scope, relative);
-    const absolute = path.resolve(repoRoot, source);
+    const absolute = path.resolve(rootDirectory, source.replace(/^resources\/game-client\//, ""));
     const hash = crypto.createHash("md5");
     for await (const bytes of fs.createReadStream(absolute)) hash.update(bytes);
     const md5 = hash.digest("hex"),

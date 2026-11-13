@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import sax from "sax";
-import { repoRoot } from "../paths.ts";
 
 export interface AssetMapAsset {
   Name?: string;
@@ -143,7 +142,10 @@ export async function buildAssetIndex(
     const absolute = resolveAssetSource(asset.Source, gameRoot);
     entries.push({
       ...asset,
-      Source: path.relative(repoRoot, absolute).split(path.sep).join("/"),
+      Source: path.posix.join(
+        "resources/game-client",
+        path.relative(path.dirname(gameRoot), absolute).split(path.sep).join("/"),
+      ),
     });
   }
   const audit = { assets, indexed: entries.length, types, baseSources, persistentSources };

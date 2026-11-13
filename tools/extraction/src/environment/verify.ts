@@ -1,10 +1,9 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { assertClientUnchanged } from "../client/snapshot.ts";
+import { assertClientUnchanged, resolveClientPath } from "../client/snapshot.ts";
 import { assertAssetMapCoverage } from "../client/asset-map.ts";
 import { profile } from "../profile.ts";
-import { repoRoot } from "../paths.ts";
 import { readJson } from "../workflow/json.ts";
 import { readManifest } from "../workflow/manifest.ts";
 import type { Manifest } from "../workflow/manifest.ts";
@@ -25,7 +24,8 @@ interface ResourceAudit {
 export async function verifyEnvironment(directory: string): Promise<Manifest> {
   const manifest = await readManifest(directory, "environment");
   await assertClientUnchanged(manifest);
-  const gameRoot = path.resolve(repoRoot, profile.paths.gameRoot);
+  const snapshotId = manifest.clientSnapshotId ?? manifest.inputs.sha256;
+  const gameRoot = resolveClientPath(profile.paths.gameRoot, snapshotId);
   const source = readJson<ConfigSource>(path.join(directory, "config-source.json"));
   if (
     source.dataRevision !== profile.dataRevision ||

@@ -55,6 +55,7 @@ export async function exportImageAssets<T extends ImageAsset>(
       input: source,
       output: exported,
       game: profile.animeGame,
+      clientSnapshotId: options.clientSnapshotId,
       types: [assetType],
       names: [`^(?:${[...new Set(batch.map((a) => a.resourceName))].map(escapeRegex).join("|")})$`],
       containers: [

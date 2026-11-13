@@ -21,34 +21,38 @@
 
 ```sh
 vp run '@loomix/extraction#init'
+vp run '@loomix/extraction#client' -- import --source resources/game-client
+vp run '@loomix/extraction#client' -- select --snapshot <snapshot-id>
 vp run '@loomix/extraction#extract' --environment <environment-id>
-vp run '@loomix/extraction#deliver' --extraction <extraction-id> --artifact-only
+vp run '@loomix/extraction#deliver' --extraction <extraction-id>
+vp run '@loomix/extraction#materialize' --delivery <delivery-id>
 vp run '@loomix/extraction#verify' --delivery <delivery-id>
 vp run '@loomix/extraction#refresh'
 vp run '@loomix/extraction#test'
 vp check
 ```
 
-每个入口成功时打印下一阶段需要的完整 SHA256 ID。将 `<…-id>` 替换为打印值。所有路径相对仓库解析，与执行命令的工作目录无关；`--help` 不初始化工具。`verify` 是显式验收入口。
+提取任务要求设置绝对路径 `LOOMIX_DATA_ROOT`。复制仓库根目录的 `.env.example` 为未跟踪的 `.env` 并填写本机路径；代码不设平台默认值。首次使用先运行 `vp run '@loomix/extraction#client' -- import --source resources/game-client`，再运行 `vp run '@loomix/extraction#client' -- select --snapshot <snapshot-id>`。snapshot 目录按完整文件清单 SHA256 寻址并只读保存；environment 固定绑定创建时所选的 snapshot。
+
+每个入口成功时打印下一阶段需要的完整 SHA256 ID。将 `<…-id>` 替换为打印值。共享数据路径来自 `LOOMIX_DATA_ROOT`；客户端选择保存在该根目录中；网站交付目标和项目代码路径相对仓库根解析，与执行命令的工作目录无关。`--help` 不初始化工具。`verify` 是显式验收入口。
 
 - `init` 校验客户端版本、revision、配置对和本地资源清单，准备固定 AnimeStudio，建立覆盖 StreamingAssets 与 Persistent 的 Asset Map，压缩为资源索引，验证后原子发布 environment。相同身份复用已验证环境。
 - `extract` 只接受已初始化 environment，重新核对客户端快照完整文件集合与 SHA256；内部按 admissions + decode → structure → raw-assets → collection → seed-images，以及 neighbors → neighbor-images → source-audit → extraction-verify 自动恢复。输出源观察、dataset.json、image-jobs.json、原始 PNG、证据和审计，完成后封存 manifest，不发布网站资源。
-- `deliver --artifact-only` 只读已验证 extraction bundle，处理图片、按最终字节 SHA256 去重，在 `var/artifacts/deliveries/<id>/staging/` 封存 JSON 与 WebP；不访问网站交付目录。不带此选项时，验证后替换本地 resources/website/。
+- `deliver` 只读已验证 extraction bundle，处理图片、按最终字节 SHA256 去重，在 `$LOOMIX_DATA_ROOT/artifacts/deliveries/<id>/staging/` 封存 JSON 与 WebP；默认不访问网站交付目录。使用 `--website` 可直接替换当前 worktree 的本地 `resources/website/`。
+- `materialize --delivery` 验证共享的 artifact-only 交付后，将其原子发布到当前 worktree 的 `resources/website/`。网站开发、测试和本地构建继续只读此目录。
 - `verify` 核对整个 manifest 依赖链、实际客户端输入、表范围、字段证据和图片。manifest 的 `deliveryMode: artifact-only` 仅验收封存产物；网站发布模式额外核对已发布字节。
-- `refresh` 顺序执行 `init`、`extract` 和网站模式 `deliver`，从当前 `resources/game-client/` 生成并验证 `resources/website/`，最后打印三阶段 ID。
+- `refresh` 顺序执行 `init`、`extract` 和 artifact-only `deliver`，从选定客户端快照生成不可变交付，最后打印三阶段 ID。要更新当前 worktree 网站资源，再执行 `materialize --delivery <delivery-id>`。
 
-Codex 桌面端的 `loomix` Local Environment 会在新建 managed worktree 时安装依赖并运行 `refresh`；`.worktreeinclude` 只复制约 14 GB 的 `resources/game-client/`，仅适用于本地 managed worktree。
+Codex 桌面端的 `loomix` Local Environment 在新建 managed worktree 时只安装依赖；`.worktreeinclude` 复制 `.env` 和本地网站资源，不复制客户端。跨 worktree 的 AnimeStudio 缓存、environment/extraction/delivery 产物位于共享数据根；`var/scratch/` 仍留在当前 worktree。
 
 仓库根配置默认不缓存 package scripts，因此每次都会执行入口并重新验证真实输入。内部 checkpoint 是提取恢复协议，与 Vite Task 缓存无关；`logs/`、`checkpoints/` 和 `run-report.json` 不属于 manifest 的语义输出。
 
 ## 输入、缓存与产物
 
 ```text
-resources/game-client/                          # 本地客户端快照（只读输入）
-  config.ini
-  PetitPlanet_Data/{StreamingAssets,Persistent}/
-resources/website/{release.json,assets.json,zh-CN/,assets/} # 固定默认交付目录
-var/                                              # 运行时数据，整体忽略
+<LOOMIX_DATA_ROOT>/
+  clients/<snapshot-id>/game-client/             # 按完整文件清单哈希寻址的只读客户端快照
+  selections/client.json                         # 当前选定的 snapshot ID
   cache/anime-studio/<rid>/<tool-key>/            # 已验证 CLI/runtime、ready.json
   cache/anime-studio/<rid>/<tool-key>.work/       # 下载、源码、补丁后源码、SDK
   cache/anime-studio/logs/                        # 初始化与默认工具日志
@@ -89,10 +93,14 @@ var/                                              # 运行时数据，整体忽�
     coverage.json
     validation.json
     run-report.json
-  scratch/                                        # 失败运行、探针、一次性调查
+worktree/
+  resources/website/                              # 当前 worktree 的本地网站资源
+  var/scratch/                                    # 临时调查与失败运行
 ```
 
-快照保持在 `resources/game-client/`，environment 绑定其完整文件清单、大小与 SHA256，不复制整个客户端。输入新增、删除或字节变化会改变身份；旧 environment 的 extract/verify 会拒绝已变化的快照，须先重新 init。每次 extract 前后都核对，运行期间不要更新客户端。
+首次导入的客户端来源通常是仓库内 `resources/game-client/`；导入成功后，提取只读取共享根中的不可变快照。
+
+`client import` 将客户端复制到共享根的哈希快照目录，复制后重算文件清单与 SHA256；一致后写 snapshot manifest 并将文件设为只读。`client select` 校验完整快照并原子更新 `selections/client.json`。environment manifest 记录 snapshot ID，extract/verify 总是回读该 ID 对应的快照，不跟随之后的当前选择；每次 extract 前后仍核对输入。客户端更新会产生新目录，旧快照保留以便追溯。
 
 更新清单包含基础包、未安装的可选下载及未落地的 overlay。init 校验清单格式与已安装条目的 MD5/大小，data manifest 优先于同路径 res manifest；记录未安装项和 MD5 为 0 的无校验值条目；配置对必须完整匹配当前 data manifest。extract 进一步强制核验实际使用的全部图片候选包、BinData 来源包和两份 OBB；未安装项不视为“内容不存在”的证明。
 
@@ -122,7 +130,7 @@ manifest 使用 `schemaVersion: 1`，区分 environment、extraction、delivery�
 
 Windows x64 使用固定下载和局部 runtime；macOS arm64/x64 使用相同源码提交、补丁和局部 SDK 构建。其他平台/架构明确报错。首次准备需要网络、Git 与归档解压工具。下载包校验摘要，生成内容在 `.staging` 完成探测和哈希验证后才发布；ready marker 和 `--version` 探测都通过后才复用。缓存版本同时考虑平台、架构和补丁。Windows Actions 下载过期须显式更新固定版本，不能自动跟随最新构建。
 
-客户端、`var/` 下的缓存/产物/临时文件和日志均忽略，不提交游戏资源或大型生成文件。无运行任务时可以删除失败的 `.staging`、旧 environment/extraction/delivery 或整个 `var/cache/anime-studio`；删除缓存后 init 会重新准备工具。删除 extraction 会使依赖它的 delivery 无法进行完整追溯验收。保留当前在用的整条链。旧 `resources/extraction-tools/`、`resources/temp/extraction/` 和旧 `runs/` 已不再读取，可直接删除。
+客户端、共享缓存/产物、`var/` 下的临时文件和日志均不提交。首次运行 init/refresh 时会在共享根创建迁移标记，并只复制通过 manifest 与完整哈希校验的旧缓存和产物；旧 `var/` 来源保留不删除。无运行任务时可以删除失败的 `.staging`、旧 environment/extraction/delivery 或共享 AnimeStudio 缓存；删除 extraction 会使依赖它的 delivery 无法进行完整追溯验收。保留当前在用的整条链。
 
 详细范围和关联规则见[提取原理](docs/extraction-method.md)。
 

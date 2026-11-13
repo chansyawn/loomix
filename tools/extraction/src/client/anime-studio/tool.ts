@@ -5,7 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import readline from "node:readline";
-import { cacheRoot, patchFile, repoRoot, runtimeIdentifier, version } from "./config.ts";
+import { animeStudioCacheRoot, patchFile, repoRoot, runtimeIdentifier, version } from "./config.ts";
 import { preparePlatform } from "./platforms.ts";
 import { runProcess } from "../../workflow/process.ts";
 import { withLock } from "../../workflow/lock.ts";
@@ -13,10 +13,11 @@ import { inventory, filesWithin, digest } from "../../workflow/hashing.ts";
 import { verifyFiles, atomicJson } from "../../workflow/manifest.ts";
 import { z } from "zod";
 import { inspectAssetMap } from "../asset-map.ts";
+import { resolveClientPath } from "../snapshot.ts";
 
 // 平台准备与进程执行的替换点仅供模块测试使用，任务通过 index.ts 调用。
 export function createAnimeStudio({
-  root = cacheRoot,
+  root,
   platform = process.platform,
   architecture = process.arch,
   prepare = preparePlatform,
@@ -24,7 +25,9 @@ export function createAnimeStudio({
   patch = fs.readFileSync(patchFile),
 }: ToolOptions = {}): AnimeStudio {
   let pending: Promise<{ executable: string; env: NodeJS.ProcessEnv }> | undefined;
+  const cacheRoot = () => root ?? animeStudioCacheRoot();
   async function initialize() {
+    const cache = cacheRoot();
     const rid = runtimeIdentifier(platform, architecture);
     const identity = {
       version,
@@ -36,10 +39,10 @@ export function createAnimeStudio({
       .update(JSON.stringify(identity))
       .digest("hex")
       .slice(0, 20);
-    const directory = path.join(root, rid, key);
+    const directory = path.join(cache, rid, key);
     const work = `${directory}.work`;
     const staging = `${directory}.staging`;
-    const logFile = path.join(root, "logs", `${rid}-${key}.log`);
+    const logFile = path.join(cache, "logs", `${rid}-${key}.log`);
     const contextAt = (base: string) => ({
       executable: path.join(
         base,
@@ -129,15 +132,18 @@ export function createAnimeStudio({
     });
     return pending;
   }
-  async function execute({ input, output, game, logFile }: ExtractionOptions, flags: string[]) {
-    const source = path.resolve(repoRoot, input);
+  async function execute(
+    { input, output, game, logFile, clientSnapshotId }: ExtractionOptions,
+    flags: string[],
+  ) {
+    const source = path.isAbsolute(input) ? input : resolveClientPath(input, clientSnapshotId);
     const destination = path.resolve(repoRoot, output);
     if (!game) throw new Error("AnimeStudio game is required");
     if (!fs.existsSync(source)) throw new Error(`Missing extraction input: ${source}`);
     const context = await ensure();
     const log = logFile
       ? path.resolve(repoRoot, logFile)
-      : path.join(root, "logs", `extract-${crypto.randomUUID()}.log`);
+      : path.join(cacheRoot(), "logs", `extract-${crypto.randomUUID()}.log`);
     fs.mkdirSync(path.dirname(log), { recursive: true });
     fs.writeFileSync(log, "");
     await run(context.executable, [source, destination, "--game", game, ...flags], {
