@@ -143,7 +143,7 @@ catalog.records 使用 type 判别联合统一保存正式单品、集合、外�
 ## 三阶段证据链与版本协议
 
 ```text
-`LOOMIX_DATA_ROOT/clients/<snapshot-id>/game-client/` 中的客户端文件
+$LOOMIX_DATA_ROOT/clients/<snapshot-id>/game-client/ 中的客户端文件
   → config.ini、revision、branch、资源清单校验（init）
   → 完整文件集合、SHA256、profile、工具字节与实现摘要
   → 覆盖基础包和 Persistent 的 Asset Map、environment-manifest.json
@@ -157,11 +157,12 @@ catalog.records 使用 type 判别联合统一保存正式单品、集合、外�
   → extraction-verify、extraction-manifest.json
   → 只读取 extraction bundle 的图片缩放、裁切、WebP 编码（deliver）
   → 最终 JSON 与按最终字节 SHA256 去重的 WebP
-  → 交付验证、delivery-manifest.json、目录发布与失败回滚
-  → verify 对输入、整条 manifest 链及已发布字节进行验收
+  → 交付验证与 delivery-manifest.json 封存（deliver）
+  → verify 核对实际客户端及整条 manifest 链
+  → materialize 将已验证交付发布到当前 worktree，失败时恢复旧目录
 ```
 
-版本化产物统一位于 `$LOOMIX_DATA_ROOT/artifacts/{environments,extractions,deliveries}/<id>/`，工具缓存位于 `$LOOMIX_DATA_ROOT/cache/anime-studio/`；客户端输入位于 `$LOOMIX_DATA_ROOT/clients/<snapshot-id>/game-client/`，网站本地交付位于当前 worktree 的 `resources/website/`。不同版本或提取需求通过内容身份区分，不按交付路径创建工作区。
+存储目录与运行命令见[提取工具说明](../README.md#输入缓存与产物)。版本通过内容身份区分，不按交付路径创建工作区；默认 deliver 只封存共享交付，materialize 才更新 worktree 网站资源。`--website` 直接发布模式的 verify 还会核对已发布字节。
 
 environment、extraction、delivery 的 manifest 均采用 schemaVersion 1。输出项使用相对 manifest 所在目录的 `path`、SHA256 和 `bytes`；输入清单也有整体 SHA256。实现摘要覆盖维护源码、共享契约、提取包配置和仓库 lockfile，profile 摘要不受资源索引路径影响。状态只有全部验证成功后才写为 verified。manifest 使用临时文件加 rename 发布，不以 marker 存在代替字节验证。
 

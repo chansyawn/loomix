@@ -39,13 +39,9 @@
 
 `resources/` 与 `var/` 下的本地数据均由根目录 `.gitignore` 忽略。
 
-维护中的提取实现和文档位于 [tools/extraction](tools/extraction/README.md)。首次使用时运行 `vp run '@loomix/extraction#client' -- import --source resources/game-client`，再运行 `vp run '@loomix/extraction#client' -- select --snapshot <snapshot-id>`。之后依次运行 init、extract、deliver 和 verify；提取与交付需传入前一阶段打印的身份 ID。用 `vp run '@loomix/extraction#test'` 运行不依赖客户端的测试。
+首次配置和提取命令见[客户端资源提取说明](tools/extraction/README.md)。`refresh` 从选定快照生成共享交付，`materialize` 将指定交付发布到当前 worktree 的 `resources/website/`。
 
-运行 `vp run '@loomix/extraction#refresh'` 可从选定的只读客户端快照生成不可变交付。运行 `vp run '@loomix/extraction#materialize' --delivery <delivery-id>` 可将该交付发布到当前 worktree 的 `resources/website/`。普通 managed worktree 只安装依赖并携带网站资源，不自动运行提取。
-
-客户端快照、AnimeStudio 缓存和版本化提取产物存放在 `LOOMIX_DATA_ROOT` 指定的本机共享目录。本机路径配置保存在未跟踪的 `.env`；新 worktree 通过 `.worktreeinclude` 取得此配置和网站资源。
-
-每份客户端快照按完整文件清单 SHA256 版本化保存；environment 绑定使用的 snapshot ID。游戏版本、配置与资源 revision 保留在脚本配置和产物元数据中。提取任务使用仓库 Node 环境，不需要 Python。
+Codex managed worktree 通过 `.worktreeinclude` 携带 `.env` 和网站资源，setup 只安装依赖；客户端、工具缓存和提取产物由同机 worktree 共享。
 
 ## 本地开发
 
