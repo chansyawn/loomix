@@ -11,7 +11,6 @@
 - `src/extraction/`：解码、源观察、图片、证据和来源审计；
 - `src/domains/`：领域组装、引用闭包、资源登记和统一证据映射；
 - `src/delivery/`：WebP、交付 JSON、发布和交付验收；
-- `src/storage/`：旧缓存与产物迁移；
 - `src/verify.ts`：整条 manifest 链与已发布字节的最终验收。
 
 `src/workflow/process.ts` 通过 execa 统一执行 AnimeStudio、构建工具和准备步骤，直接将 stdout/stderr 写入同一日志，支持追加或覆盖，不缓冲完整进程输出。`src/client/asset-map.ts` 通过 sax 流式读取 Asset Map，统一处理 XML 实体、CDATA、跨块文本、必需字段和 Persistent overlay；环境构建把它压缩为只含 Texture2D、Sprite、MiHoYoBinData 的 `asset-index.json`。AnimeStudio 退出码为 0 但日志报错时仍判定失败。
@@ -128,7 +127,7 @@ worktree/
 
 Windows x64 使用固定下载和局部 runtime；macOS arm64/x64 使用相同源码提交、补丁和局部 SDK 构建。其他平台/架构明确报错。首次准备需要网络、Git 与归档解压工具。下载包校验摘要，生成内容在 `.staging` 完成探测和哈希验证后才发布；ready marker 和 `--version` 探测都通过后才复用。缓存版本同时考虑平台、架构和补丁。Windows Actions 下载过期须显式更新固定版本，不能自动跟随最新构建。
 
-客户端、共享缓存/产物、`var/` 下的临时文件和日志均不提交。首次执行提取、交付或验收入口时会迁移通过校验的旧 `var/cache/anime-studio/` 和 `var/artifacts/`，完成后写入共享根的 `migration-v1.json`；旧来源保留不删除。无运行任务时可以删除失败的 `.staging`、旧 environment/extraction/delivery 或共享 AnimeStudio 缓存；删除 extraction 会使依赖它的 delivery 无法进行完整追溯验收。保留当前在用的整条链。
+客户端、共享缓存/产物、`var/` 下的临时文件和日志均不提交。无运行任务时可以删除失败的 `.staging`、旧 environment/extraction/delivery 或共享 AnimeStudio 缓存；删除 extraction 会使依赖它的 delivery 无法进行完整追溯验收。保留当前在用的整条链。
 
 详细范围和关联规则见[提取原理](docs/extraction-method.md)。
 

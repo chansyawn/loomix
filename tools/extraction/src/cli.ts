@@ -8,7 +8,6 @@ import { verify } from "./verify.ts";
 import { errorDetails } from "./workflow/errors.ts";
 import { repoRoot } from "./paths.ts";
 import { importClient, selectClient } from "./client/snapshot.ts";
-import { migrateLegacyStorage } from "./storage/migrate.ts";
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2).filter((argument) => argument !== "--");
@@ -42,8 +41,6 @@ async function main(): Promise<void> {
     console.log(`selected-client-snapshot-id: ${values.snapshot}`);
     return;
   }
-  if (["init", "extract", "deliver", "materialize", "refresh", "verify"].includes(command ?? ""))
-    await migrateLegacyStorage();
   if (command === "init") {
     console.log(`environment-id: ${await init()}`);
   } else if (command === "extract" && values.environment)
