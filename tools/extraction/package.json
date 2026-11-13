@@ -6,7 +6,10 @@
     "init": "node src/cli.ts init",
     "extract": "node src/cli.ts extract",
     "deliver": "node src/cli.ts deliver",
+    "materialize": "node src/cli.ts materialize",
+    "refresh": "node src/cli.ts refresh",
     "verify": "node src/cli.ts verify",
+    "client": "node src/cli.ts client",
     "test": "vp exec vp test run"
   },
   "dependencies": {

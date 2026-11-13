@@ -3,6 +3,7 @@ import type { RecordType, Recipe } from "./schema.ts";
 export interface WorkOptions {
   work: string;
   environment?: string;
+  clientSnapshotId?: string;
 }
 export interface ContentOptions extends WorkOptions {
   output: string;

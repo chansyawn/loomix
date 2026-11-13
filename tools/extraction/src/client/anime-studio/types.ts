@@ -43,6 +43,7 @@ export interface ExtractionOptions {
   output: string;
   game: string;
   logFile?: string;
+  clientSnapshotId?: string;
 }
 export interface ExportOptions extends ExtractionOptions {
   types: string[];

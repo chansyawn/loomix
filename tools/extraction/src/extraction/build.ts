@@ -62,7 +62,11 @@ export async function extract(environmentId: string): Promise<string> {
     fs.rmSync(manifestFile, { force: true });
     const tree = (directory: string) =>
       filesWithin(path.join(work, directory)).map((file) => `${directory}/${file}`);
-    const options = { work, environment: environmentDirectory };
+    const options = {
+      work,
+      environment: environmentDirectory,
+      clientSnapshotId: environment.clientSnapshotId ?? environment.inputs.sha256,
+    };
     try {
       await runCheckpoints(work, id, [
         {
