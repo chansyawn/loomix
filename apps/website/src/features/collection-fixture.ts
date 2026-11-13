@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import type { GameplayTags } from "@loomix/schema/gameplay-tags";
 import { RecordSchema, type Catalog, type Item, type Group } from "@loomix/schema/catalog";
 import type { Assets, ImageRef } from "@loomix/schema/assets";
+import type { Neighbors } from "@loomix/schema/neighbors";
 import { emptyDataset } from "@loomix/schema/dataset";
 import { documentPath } from "@loomix/schema/release";
 import { referencedImages } from "@loomix/schema/dataset/images";
@@ -190,16 +191,18 @@ export function assetsFixture(catalog: Catalog): Assets {
 export function fixtureRequest({
   catalog,
   gameplayTags,
+  neighbors,
 }: {
   catalog: Catalog;
   gameplayTags: GameplayTags;
+  neighbors?: Neighbors;
 }): typeof fetch {
   const dataset = emptyDataset(fixtureContext, fixtureSource);
   dataset.catalog = catalog;
   const documents = {
     "gameplay-tags": gameplayTags,
     catalog,
-    neighbors: dataset.neighbors,
+    neighbors: neighbors ?? dataset.neighbors,
     world: dataset.world,
     assets: assetsFixture(catalog),
   };

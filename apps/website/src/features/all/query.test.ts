@@ -6,6 +6,7 @@ import { createCollectionCatalog } from "../collection/catalog";
 import { queryAll, filterGroups } from "./query";
 import { allSearchSchema, compactAllSearch, emptyQuery } from "./search";
 import { plantItemFixture, plantSeedFixture, plantsDataFixture } from "../plants/fixture";
+import { flattenFilterOptions } from "../collection/filter-types";
 
 function groupRecords(memberIds: number[] | null) {
   return (
@@ -28,7 +29,7 @@ function groupRecords(memberIds: number[] | null) {
 function data(...records: object[]) {
   const { catalog, gameplayTags } = catalogFixture();
   gameplayTags.tags.push(
-    { id: 1, internalName: "颜色", enumName: null, parentId: null, displayName: null },
+    { id: 1, internalName: "颜色", enumName: null, parentId: null, displayName: "颜色" },
     { id: 2, internalName: "材质", enumName: null, parentId: null, displayName: null },
     { id: 3, internalName: "艺术风格", enumName: null, parentId: null, displayName: null },
     {
@@ -182,7 +183,7 @@ test("集合黑名单允许外观和种子参与搜索与类别筛选", () => {
     ).toEqual([id]);
 });
 
-test("标签路径和未知标签产生可独立移除的摘要", () => {
+test("公开标签路径和不可用标签产生可独立移除的摘要", () => {
   const source = data(),
     query = allSearchSchema.parse({
       items: { tags: ["1", "11", "999"] },
@@ -198,7 +199,7 @@ test("标签路径和未知标签产生可独立移除的摘要", () => {
   expect(chips.map((chip) => chip.label)).toEqual([
     "标签：颜色",
     "标签：颜色 / 红色花朵",
-    "未知标签（999）",
+    "不可用标签（999）",
   ]);
   chips[0]!.remove();
   expect(removed).toEqual([{ key: "tags", values: ["11", "999"] }]);
@@ -207,4 +208,40 @@ test("标签路径和未知标签产生可独立移除的摘要", () => {
   expect(
     collectionFilterChips(groups, emptyQuery(), () => {}, { value: "", clear: () => {} }),
   ).toEqual([]);
+});
+
+test("只有集合使用的标签不进入筛选，也不影响物品计数", () => {
+  const { catalog, gameplayTags } = catalogFixture();
+  gameplayTags.tags.push(
+    { id: 1, internalName: "颜色", enumName: null, parentId: null, displayName: "颜色" },
+    { id: 2, internalName: "集合专属颜色", enumName: null, parentId: 1, displayName: "集合色" },
+    { id: 3, internalName: "红", enumName: null, parentId: 1, displayName: "红" },
+  );
+  addFixtureRecords(
+    catalog,
+    gameplayTags,
+    ...groupRecords(null).map((record) => ({ ...record, tagIds: [2, 3] })),
+    {
+      id: 10,
+      name: "物品",
+      type: "material",
+      tagIds: [3],
+      image: null,
+      description: null,
+      quality: null,
+      subcategory: null,
+      trade: null,
+      acquisition: null,
+    },
+  );
+  const source = createCollectionCatalog(catalog, assetsFixture(catalog), gameplayTags);
+  const options = flattenFilterOptions(source.tags.options());
+  expect(options.map((option) => [option.value, option.count])).toEqual([
+    ["1", 1],
+    ["3", 1],
+  ]);
+  expect(queryAll(source, { ...emptyQuery(), tags: ["2"] }).total).toBe(0);
+  expect(queryAll(source, { ...emptyQuery(), tags: ["1"] }).rows.map((row) => row.id)).toEqual([
+    10,
+  ]);
 });

@@ -1,0 +1,18 @@
+export const collectionTagBranches = [
+  { name: "生物", label: "生物" },
+  { name: "素材", label: "素材" },
+  { name: "家具", label: "家具" },
+  { name: "服装", label: "服装" },
+  { name: "手持物", label: "工具与手持物" },
+  { name: "食品分类", label: "菜品类型" },
+  { name: "荤素情况", label: "荤素" },
+  { name: "食材", label: "食材" },
+  { name: "食材_毒性", label: "有毒食材" },
+  { name: "颜色", label: "颜色" },
+  { name: "材质", label: "材质" },
+  { name: "艺术风格", label: "艺术风格" },
+  { name: "尺寸", label: "家具尺寸" },
+  { name: "体型", label: "生物体型" },
+  { name: "生物花纹", label: "生物花纹" },
+  { name: "产区分类", label: "产区" },
+] as const;

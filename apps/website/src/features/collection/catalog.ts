@@ -3,6 +3,7 @@ import {
   recordCategory,
   recordTarget,
   createRecordTagResolver,
+  isGroupRecord,
   type Catalog,
   type CatalogRecord,
 } from "@loomix/schema/catalog";
@@ -24,6 +25,7 @@ export function createCollectionCatalog(
   catalog: Catalog,
   assets: Assets,
   gameplayTags: GameplayTags,
+  preferenceTagIds: readonly number[] = [],
 ) {
   const image = createImageResolver(assets);
   if (
@@ -55,7 +57,12 @@ export function createCollectionCatalog(
   });
   return {
     catalog,
-    tags: createCollectionTagFilter(gameplayTags.tags, tagIndex, catalog.records),
+    tags: createCollectionTagFilter(
+      gameplayTags.tags,
+      tagIndex,
+      catalog.records.filter((record) => !isGroupRecord(record)),
+      preferenceTagIds,
+    ),
     rows,
     byId: new Map(rows.map((row) => [row.id, row])),
     view: toCollectionView(catalog, assets, tagIndex),
