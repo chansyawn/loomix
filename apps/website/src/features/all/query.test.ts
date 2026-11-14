@@ -1,4 +1,5 @@
 import { collectionFilterChips } from "../collection/filter-chips";
+import { flattenFilterOptions } from "../collection/filter-types";
 import { expect, test } from "vite-plus/test";
 import { defaultParseSearch, defaultStringifySearch } from "@tanstack/react-router";
 import { catalogFixture, assetsFixture, addFixtureRecords } from "../collection-fixture";
@@ -204,6 +205,60 @@ test("友邻服饰进入全部页搜索和独立类别筛选", () => {
       (row) => row.id,
     ),
   ).toEqual([40]);
+});
+
+test("白名单策略隐藏白名单外根与未引用分支，并静默丢弃隐藏标签", () => {
+  const { catalog, gameplayTags } = catalogFixture();
+  gameplayTags.tags.push(
+    { id: 1, internalName: "颜色", enumName: null, parentId: null, displayName: null },
+    { id: 2, internalName: "食材_红色", enumName: null, parentId: 1, displayName: null },
+    { id: 3, internalName: "未使用", enumName: null, parentId: 1, displayName: null },
+    { id: 4, internalName: "饮食", enumName: null, parentId: null, displayName: null },
+    { id: 5, internalName: "食材_杯", enumName: null, parentId: 4, displayName: null },
+  );
+  addFixtureRecords(
+    catalog,
+    gameplayTags,
+    {
+      id: 1,
+      name: "红杯",
+      description: null,
+      quality: null,
+      image: null,
+      kind: "material",
+      displayCategory: null,
+      trade: null,
+      acquisition: null,
+      tagIds: [2, 5],
+    },
+    {
+      id: 2,
+      name: "空标签",
+      description: null,
+      quality: null,
+      image: null,
+      kind: "material",
+      displayCategory: null,
+      trade: null,
+      acquisition: null,
+      tagIds: [],
+    },
+  );
+  const source = createCollectionCatalog(catalog, assetsFixture(catalog), gameplayTags, {
+    tagPolicy: {
+      rootNames: ["颜色"],
+      labelOverrides: { 食材_红色: "红色" },
+      labelPrefixes: ["食材_", "容器_"],
+    },
+  });
+  const tagGroup = filterGroups(source).find((group) => group.key === "tags")!;
+  const options = flattenFilterOptions(tagGroup.options);
+  expect(options.map((option) => option.value)).toEqual(["1", "2"]);
+  expect(options[1]).toMatchObject({ label: "红色", chipLabel: "标签：颜色 / 红色" });
+  expect(source.tags.acceptSelection(["1", "2", "5", "999"])).toEqual(["1", "2"]);
+  expect(
+    queryAll(source, { ...emptyQuery(), tags: source.tags.acceptSelection(["5"]) }).total,
+  ).toBe(2);
 });
 
 test("标签路径和未知标签产生可独立移除的摘要", () => {

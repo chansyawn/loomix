@@ -29,7 +29,11 @@ export function AllPage({
   search: AllSearch;
   onSearchChange: (update: SearchUpdate, replace?: boolean) => Promise<void>;
 }) {
-  const query = search.items;
+  const selectedTags = data.tags.acceptSelection(search.items.tags);
+  const query =
+    selectedTags.length === search.items.tags.length
+      ? search.items
+      : { ...search.items, tags: selectedTags };
   const layout = useCollectionLayout(search.layout);
   const result = queryAll(data, query);
   const groups = filterGroups(data, query.tags);
