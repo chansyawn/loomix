@@ -1,3 +1,4 @@
+import { verifyCatalogMetadata } from "../verify/catalog-metadata.ts";
 import { catalogAdmissionIds } from "./content/catalog-admissions.ts";
 import { readCraftingRecipes } from "./crafting/read.ts";
 import { createContentContext } from "./content/context.ts";
@@ -61,9 +62,11 @@ export async function verifyExtraction(work: string, writeReports = true): Promi
     rebuilt.jobs,
     "Image jobs must match the complete reference graph",
   );
+  const domainEvidence = readDomainEvidence(work, rebuilt.dataset);
+  verifyCatalogMetadata(rebuilt.dataset.catalog, domainEvidence.fields);
   assert.deepEqual(
     EvidenceSchema.parse(readJson(path.join(work, "evidence/domain-fields.json"))),
-    readDomainEvidence(work, rebuilt.dataset),
+    domainEvidence,
     "Domain evidence must match the frozen source evidence",
   );
 }

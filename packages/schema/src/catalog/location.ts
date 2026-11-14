@@ -11,23 +11,23 @@ export function recordTarget(
   const seriesFor = (ids: number[]) => {
     const groups = catalog.records.filter(
       (record) =>
-        record.type === "plants.series" &&
+        record.kind === "plants.series" &&
         ids.length > 0 &&
         ids.every((id) => record.memberIds?.includes(id)),
     );
     if (groups.length !== 1) throw new Error(`Ambiguous plant series for ${id}`);
     return { recordId: groups[0]!.id, focus: id };
   };
-  if (record.type === "seed") {
+  if (record.kind === "seed") {
     const growth = catalog.growths.find((growth) => growth.id === record.growthId);
     if (!growth) throw new Error(`Missing seed growth ${id}`);
     const plants = growthPlantIds(growth);
     if (growth.kind === "crop" || plants.length !== 1) return seriesFor(plants);
     const target = catalog.records.find((record) => record.id === plants[0]);
-    if (target?.type !== "plant") throw new Error(`Missing seed plant ${id}`);
+    if (target?.kind !== "plant") throw new Error(`Missing seed plant ${id}`);
     return { recordId: target.id, focus: id };
   }
-  if (record.type === "plant" && record.subcategory === "作物") return seriesFor([id]);
+  if (record.kind === "plant" && record.displayCategory === "作物") return seriesFor([id]);
   return { recordId: id };
 }
 export function recordFocus(
@@ -38,8 +38,8 @@ export function recordFocus(
   if (focus === undefined || focus === recordId) return undefined;
   const candidate = catalog.records.find((record) => record.id === focus);
   if (
-    candidate?.type !== "seed" &&
-    !(candidate?.type === "plant" && candidate.subcategory === "作物")
+    candidate?.kind !== "seed" &&
+    !(candidate?.kind === "plant" && candidate.displayCategory === "作物")
   )
     return undefined;
   const target = recordTarget(catalog, focus);

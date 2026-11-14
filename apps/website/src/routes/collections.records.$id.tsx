@@ -39,7 +39,7 @@ export const Route = createFileRoute("/collections/records/$id")({
       });
     const row = data.byId.get(id);
     if (!row) throw notFound();
-    const neighborId = row.record.type === "neighborClothing" ? row.record.neighborId : null;
+    const neighborId = row.record.kind === "neighborClothing" ? row.record.neighborId : null;
     const neighborName =
       neighborId !== null
         ? parseNeighbors(await load("neighbors", parseNeighbors)).neighbors.find(

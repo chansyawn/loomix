@@ -49,7 +49,7 @@ export function classify(
     const id = tables.id(row);
     const item = main.get(id);
     if (!item) throw new Error(`No main item ${id}`);
-    const itemTags = vocabulary.tags(item, profile.fields.items.category);
+    const itemTags = vocabulary.tags(item, profile.fields.items.tagType);
     const type = tables.uint(item, profile.fields.items.type);
     let group: RecordType;
     let category: string | null = null;

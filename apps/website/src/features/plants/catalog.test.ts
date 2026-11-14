@@ -45,7 +45,7 @@ test("summarizes structured origins without parsing punctuation in localized lab
     }),
   });
   const plant = catalog.records[0];
-  if (plant.type !== "plant") throw new Error("Expected plant");
+  if (plant.kind !== "plant") throw new Error("Expected plant");
   const rootId = 1000;
   gameplayTags.tags.push(
     { id: rootId, internalName: "产区分类", displayName: null, enumName: null, parentId: null },
@@ -91,7 +91,7 @@ test("derives every seed for a plant from stage references without duplicate pro
   expect(data.items[0].summary.seeds.map((seed) => seed.id)).toEqual([10, 11]);
   expect(data.items[0].summary.growths).toHaveLength(2);
   expect(data.seeds[0].growth.kind).toBe("staged");
-  expect(catalog.records.find((record) => record.type === "seed")).not.toHaveProperty("productIds");
+  expect(catalog.records.find((record) => record.kind === "seed")).not.toHaveProperty("productIds");
 });
 
 test("掉落保留来源树种、概率和果实，不合并系列成员的概率", () => {

@@ -96,7 +96,7 @@ TextMap 特殊处理：根字段 1 解引用到包装层，包装字段 0 解引
 
 显示表存在重复 ID。对最终需要的字段进行语义比较：数值比较数值、向量比较内容、字符串比较文本，不能比较相对引用地址。相同内容可合并；范围内冲突必须停止。范围外冲突不应通过覆盖顺序影响结果。
 
-种子和生长配置使用 formatVersion 7 的正式契约。通过确定性种植关系校验的种子合入正式 records，不改写原图鉴收录事实。当前共有 79 个种子、79 份生长配置和 317 个阶段：17 个作物种子沿表 144/137 解析；新增 62 个种子（42 个花种子、20 个树木及灌木种子）沿表 334/709/241 解析。友邻服饰同样作为 catalog.records 的 neighborClothing 正式记录交付；候选数据先经过准入清单筛选，保留 131 条正式记录，并以 neighborId、playerItemId 和交易信息保存可验证的关系。
+种子和生长配置使用 formatVersion 8 的正式契约。通过确定性种植关系校验的种子合入正式 records，不改写原图鉴收录事实。当前共有 79 个种子、79 份生长配置和 317 个阶段：17 个作物种子沿表 144/137 解析；新增 62 个种子（42 个花种子、20 个树木及灌木种子）沿表 334/709/241 解析。友邻服饰同样作为 catalog.records 的 neighborClothing 正式记录交付；候选数据先经过准入清单筛选，保留 131 条正式记录，并以 neighborId、playerItemId 和交易信息保存可验证的关系。
 
 表 334.0 为种子 ID，334.1 仅接受 ITEM_USE_EFFECT_PLANT_TREE_SEEDLING 或 ITEM_USE_EFFECT_PLANT_FIXED_SEEDLING，334.2 是十进制字符串形式的初始植株 ID。以 709.0 为键，沿 709.2 完整遍历后继阶段，直到没有 709 行；循环、悬空 ID、未知效果或参数格式变化均中止。不能在遇到正式植物时截断：栀子花丛、杜鹃花丛、沙漠玫瑰丛、鹤望兰丛、南天竹丛之后仍有配置阶段。
 
@@ -120,9 +120,9 @@ UISprite 引用加 assets/moleres/rel/sres/ 前缀，统一斜杠和小写，只
 
 交付契约集中在 `packages/schema/src/`，按 catalog、neighbors、world、assets、dataset、release 和 extraction 组织。源观察与交付领域模型分离，不保留历史版本解析分支。
 
-catalog.records 使用 type 判别联合统一保存正式单品、集合、外观和种子，每个物品 ID 只出现一次。admissionReasons 保存图鉴、人工白名单和确定性种子的准入原因；原始图鉴标记保留在来源证据中。范围外物品仅保存为 references 的 ID 和名称，不计入收录、不生成详情。craftingRecipes 保存正式产物的有效制作关系，growths 保留阶段上下文。种子以 growthId 引用唯一生长配置；阶段的 plantId 是植物关联的唯一权威字段，植物到种子、生长配置的反向关系由使用方派生。正式记录将 318.6–15 按字段顺序合并为稳定去重的直接 tagIds，不展开祖先。独立 gameplay-tags 文档保存完整标签树的内部名、EnumName、父级和显示文本；颜色、材质、风格由对应子树派生，食材分类仅保存 tagId 与成员，偏好和食谱直接引用统一标签，原始分组可从封存来源和字段证据追溯；来源等多值字段使用数组，不从展示字符串反向拆解。
+catalog.records 使用 kind 判别联合统一保存正式单品、集合、外观和种子，每个物品 ID 只出现一次。admissionReasons 保存图鉴、人工白名单和确定性种子的准入原因；原始图鉴标记保留在来源证据中。范围外物品仅保存为 references 的 ID 和名称，不计入收录、不生成详情。craftingRecipes 保存正式产物的有效制作关系，growths 保留阶段上下文。种子以 growthId 引用唯一生长配置；阶段的 plantId 是植物关联的唯一权威字段，植物到种子、生长配置的反向关系由使用方派生。正式记录以 tagFields 保留 318.6–17 的十二组直接标签，按字段顺序展开，再追加 client.type 对应的 716.10 typetag，稳定去重为 tagIds，不展开祖先。client 保留原始 type、idType、subtype、subtypeName；catalog.clientTypes 保存完整 BTypeCfg 类型字典，仅通过 type 关联，不以 idType 作为外键。展示分类与家具分类分别通过 displayCategory、furnitureCategory 交付。独立 gameplay-tags 文档保存完整标签树的内部名、EnumName、父级和显示文本；颜色、材质、风格由对应子树派生，食材分类仅保存 tagId 与成员，偏好和食谱直接引用统一标签，原始分组可从 tagFields、封存来源和字段证据追溯；来源等多值字段使用数组，不从展示字符串反向拆解。
 
-领域图片使用 {assetId, variant}，不包含交付路径。assets.json 将引用映射为不可变文件路径、SHA256、大小与尺寸。release.json 指定语言目录下的 catalog.json、neighbors.json、world.json 和共享 assets.json，绑定 formatVersion、snapshotId、locale 及每份文档的实际字节校验值。所有未知值显式为 null，严格拒绝附加字段；null 与已确认空数组含义不同。
+领域图片使用 {assetId, variant}，不包含交付路径。assets.json 将引用映射为不可变文件路径、SHA256、大小与尺寸。release.json 指定语言目录下的 gameplay-tags.json、catalog.json、neighbors.json、world.json 和共享 assets.json，绑定 formatVersion、snapshotId、locale 及每份文档的实际字节校验值。所有未知值显式为 null，严格拒绝附加字段；null 与已确认空数组含义不同。
 
 补充清单位于 `src/extraction/content/supplemental-admissions.json`，schemaVersion 为 1，source 绑定同一客户端版本，confirmation 保存人工确认说明。entries 仅含 `id`、`expectedName`、`category`、`subcategory`：苹果 30161、李子 30169、牛油果 30265、芒果 30266、仙人掌果 30267、竹笋 30268 为 plants/采摘材料；肉 2000050、蛋 2000051、奶 2000052，以及寒松木 30115、陨星矿石 30136、雪晶 30299、纯净雪花 30300 为 miscellaneous/null。名称、描述、图片和品质始终从客户端提取，不从清单复制。缺失主表、版本或名称错配、重复 ID、与图鉴分类冲突均中止提取；重叠 ID 只生成一次且保存双方依据。
 

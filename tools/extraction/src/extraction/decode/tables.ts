@@ -102,7 +102,11 @@ export class Tables {
     const p = this.fields(row)[field];
     if (p == null || !row) return null;
     const value = this.reader.string(p);
-    if (!value) throw new Error(`Invalid string: ${row.root}.${field}`);
+    if (!value) {
+      // 空字符串是已知字符串字段的有效值；候选探测仍由 reader.string 排除空串。
+      if (this.reader.bytesAtRef(p, 20000)?.length === 0) return "";
+      throw new Error(`Invalid string: ${row.root}.${field}`);
+    }
     return value.text;
   }
   vector(row: Row, field: number) {

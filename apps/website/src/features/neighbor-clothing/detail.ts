@@ -21,7 +21,7 @@ export function neighborClothingDetail(
   return {
     record: row,
     neighborName: neighborName ?? null,
-    slotName: row.record.subcategory,
+    slotName: row.record.displayCategory,
     modelSizes: sizes.join("、"),
     counterpartId: row.record.playerItemId,
   };

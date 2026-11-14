@@ -5,7 +5,7 @@ export function isGroupRecord(record: CatalogRecord): record is CatalogRecord & 
 }
 
 export function recordCategory(
-  record: Pick<CatalogRecord, "type">,
+  record: Pick<CatalogRecord, "kind">,
 ):
   | "furniture"
   | "clothing"
@@ -14,7 +14,7 @@ export function recordCategory(
   | "plants"
   | "dishes"
   | "miscellaneous" {
-  switch (record.type) {
+  switch (record.kind) {
     case "furniture":
     case "furniture.set":
       return "furniture";

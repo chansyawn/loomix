@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { IdSchema } from "../common/identity.ts";
 import { ImageRefSchema } from "../assets/index.ts";
+import { ClientClassificationSchema, RecordTagFieldsSchema } from "./classification.ts";
 
 const text = z.string().min(1).nullable();
 
@@ -57,13 +58,13 @@ export const AdmissionReasonSchema = z.enum([
 ]);
 export const RecordMetadataSchema = z.strictObject({
   admissionReasons: AdmissionReasonSchema.array().min(1),
-  clientType: z.number().int().nonnegative(),
-  clientSecondaryType: z.number().int().nonnegative().nullable(),
+  client: ClientClassificationSchema,
+  tagFields: RecordTagFieldsSchema,
   tagIds: IdSchema.array(),
 });
 export const CatalogItemBaseSchema = EntityBaseSchema.extend({
   ...RecordMetadataSchema.shape,
-  subcategory: text,
+  displayCategory: text,
   trade: TradeSchema.nullable(),
   acquisition: AcquisitionSchema.array().nullable(),
 });

@@ -3,7 +3,7 @@ import { IdSchema } from "../common/identity.ts";
 import { CatalogItemBaseSchema } from "./common.ts";
 
 export const NeighborClothingSchema = CatalogItemBaseSchema.extend({
-  type: z.literal("neighborClothing"),
+  kind: z.literal("neighborClothing"),
   slotCode: IdSchema,
   neighborId: IdSchema.nullable(),
   playerItemId: IdSchema.nullable(),

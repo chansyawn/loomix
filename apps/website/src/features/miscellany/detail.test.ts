@@ -34,7 +34,7 @@ function furnitureFixture(
     description: null,
     quality: null,
     category: null,
-    type: null,
+    furnitureCategory: null,
     size: null,
     colors: null,
     materials: item.name,

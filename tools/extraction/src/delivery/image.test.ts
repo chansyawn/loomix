@@ -1,11 +1,10 @@
-import { recordMetadata } from "../../../../packages/schema/tests/fixture.ts";
+import { datasetFixture, recordMetadata } from "../../../../packages/schema/tests/fixture.ts";
 import assert from "node:assert/strict";
 import { test } from "vite-plus/test";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import sharp from "sharp";
-import { emptyDataset } from "@loomix/schema/dataset";
 import { parseAssets } from "@loomix/schema/assets";
 import { createAssetRegistry } from "../domains/assets.ts";
 import type { ImageJob } from "../domains/assets.ts";
@@ -81,8 +80,8 @@ test("corrupt inputs and truncated WebP fail decoding", async () => {
 test("asset delivery deduplicates identical outputs and separates target dimensions", async () => {
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-webp-"));
   try {
-    const dataset = emptyDataset(
-      { formatVersion: 7, snapshotId: "a".repeat(64), locale: "zh-CN" },
+    const dataset = datasetFixture(
+      { formatVersion: 8, snapshotId: "a".repeat(64), locale: "zh-CN" },
       { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" },
     );
     const png = await sharp({ create: { width: 512, height: 512, channels: 4, background: "red" } })
@@ -111,13 +110,13 @@ test("asset delivery deduplicates identical outputs and separates target dimensi
       description: null,
     };
     dataset.catalog.records.push(
-      { ...base, id: 1, type: "material", subcategory: null, trade: null, image: first },
-      { ...base, id: 2, type: "material", subcategory: null, trade: null, image: second },
+      { ...base, id: 1, kind: "material", displayCategory: null, trade: null, image: first },
+      { ...base, id: 2, kind: "material", displayCategory: null, trade: null, image: second },
     );
     dataset.catalog.records.push({
       ...base,
       id: 3,
-      type: "furniture.set",
+      kind: "furniture.set",
       image: banner,
       memberIds: null,
     });
@@ -176,8 +175,8 @@ test("neighbor images retain full framing and alpha, never upscale and fit withi
 test("diary and white atlas images are delivered with full references, original size and alpha", async () => {
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-neighbor-images-"));
   try {
-    const dataset = emptyDataset(
-      { formatVersion: 7, snapshotId: "a".repeat(64), locale: "zh-CN" },
+    const dataset = datasetFixture(
+      { formatVersion: 8, snapshotId: "a".repeat(64), locale: "zh-CN" },
       { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" },
     );
     dataset.neighbors.neighbors.push({
