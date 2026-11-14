@@ -15,6 +15,7 @@ import { createCollectionTagFilter } from "./tags";
 export const categoryNames = {
   furniture: "家具",
   clothing: "服饰",
+  neighborClothing: "友邻服饰",
   creatures: "生物",
   plants: "植物",
   dishes: "烹饪",

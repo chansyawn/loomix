@@ -115,7 +115,7 @@ worktree/
 
 发布目录由 release.json 指定四个文档：zh-CN/catalog.json、zh-CN/neighbors.json、zh-CN/world.json 和 assets.json。每个文档绑定相同 formatVersion、snapshotId、locale；manifest 保存实际字节数与 SHA256。领域图片使用 {assetId, variant}，assets.json 解析到按最终字节 SHA256 命名的 WebP、大小和尺寸。同一源图的 icon、banner、illustration 独立登记。当前提取 zh-CN；语言是快照上下文，后续语言无需改变实体字段名。
 
-当前交付 formatVersion 6，正式记录 2,419 条，包括图鉴与白名单的 2,340 条（杂物 23 条）以及 79 个确定性种子；另保留 79 份生长配置及 317 个关联阶段。作物与花树统一种子和阶段契约，生长规则区分 crop/staged；未确认的成熟天数保持 null。配方、掉落、货币和友邻等引用到范围外物品时只建立最小 references，不递归提取其详情，也不扩大正式集合。制作配方只保留正式产物需要的有效卡片关联，不交付非准入制作卡、卡组或专属图片。未确认属性保留 null，配方材料缺失不解释为免费制作。
+当前交付 formatVersion 7，正式记录 2,550 条，包括图鉴与白名单的 2,340 条（杂物 23 条）、79 个确定性种子以及 131 条正式友邻服饰；另保留 79 份生长配置及 317 个关联阶段。作物与花树统一种子和阶段契约，生长规则区分 crop/staged；未确认的成熟天数保持 null。配方、掉落、货币和友邻等引用到范围外物品时只建立最小 references，不递归提取其详情，也不扩大正式集合。制作配方只保留正式产物需要的有效卡片关联，不交付非准入制作卡、卡组或专属图片。未确认属性保留 null，配方材料缺失不解释为免费制作。友邻服饰作为 catalog.records 的 neighborClothing 正式记录交付，并通过 neighborId、playerItemId 与交易信息表达关联。
 
 图片规则保持不变：按实际像素面积选最高原生分辨率，平手保留大图优先顺序；家具套组 1024×512，其余有图记录 256×256；Lanczos3 等比缩放、居中裁切，WebP 质量 85、alphaQuality 100。原始 PNG 与最终 WebP 均完整解码，交付文件按最终字节 SHA256 命名和去重。
 

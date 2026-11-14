@@ -3,7 +3,11 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { PNG } from "pngjs";
-import { neighborImagePaths, type NeighborDatabase } from "../extraction/neighbors/schema.ts";
+import {
+  neighborImagePaths,
+  parseNeighborClothingDatabase,
+  type NeighborDatabase,
+} from "../extraction/neighbors/schema.ts";
 import type {
   AdditionalNeighborImageExport,
   NeighborImageExport,
@@ -18,6 +22,9 @@ export async function verifyNeighborImages(
   database: NeighborDatabase,
   bundle: string,
 ): Promise<void> {
+  const clothing = parseNeighborClothingDatabase(
+    readJson(path.join(bundle, "raw/neighbor-clothing.json")),
+  );
   const originals = readJson<NeighborImageExport[]>(
     path.join(bundle, "neighbor-image-exports.json"),
   );
@@ -33,7 +40,9 @@ export async function verifyNeighborImages(
     path.join(bundle, "neighbor-additional-image-exports.json"),
   );
   assert.deepEqual(audit.additionalImages, additionalOriginals);
-  const references = neighborImagePaths(database);
+  const references = [
+    ...new Set([...neighborImagePaths(database), ...clothing.items.map((item) => item.imagePath)]),
+  ].sort();
   const textures = readJson<IndexedAsset[]>(path.join(bundle, "prepared/textures.json"));
   const sprites = readJson<IndexedAsset[]>(path.join(bundle, "prepared/sprites.json"));
   const resolver = createIconResolver(textures, sprites);

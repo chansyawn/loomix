@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "vite-plus/test";
 import { extractNeighborBundle } from "./extract.ts";
-import { extractNeighbors, parseNeighborDatabase, verifyNeighbors } from "./index.ts";
+import {
+  extractNeighbors,
+  parseNeighborClothingDatabase,
+  verifyNeighborClothing,
+  verifyNeighbors,
+} from "./index.ts";
 import { neighborImagePaths } from "./schema.ts";
 import { createFixture, fixtureRows, type FixtureRows } from "./fixtures/tables.ts";
 
@@ -62,15 +67,15 @@ function outfitRows(): FixtureRows {
 test("extracts confirmed outfits, explicit counterparts, configured offers and complete table evidence", (context) => {
   const fixture = createFixture(outfitRows());
   context.onTestFinished(fixture.cleanup);
-  const { database, audit } = extractNeighborBundle(fixture.input);
+  const { database, clothing, audit } = extractNeighborBundle(fixture.input);
   assert.deepEqual(
-    database.outfits.map(({ id, relationship, neighborId }) => [id, relationship, neighborId]),
+    clothing.map(({ id, relationship, neighborId }) => [id, relationship, neighborId]),
     [
       [60002, "neighbor-specific", 11],
       [1160001, "matching", null],
     ],
   );
-  const matching = database.outfits[1]!;
+  const matching = clothing[1]!;
   assert.equal(matching.playerItemId, 60001);
   assert.equal(matching.playerItemNameZh, "玩家同款帽子");
   assert.equal(matching.slotNameZh, "头戴物");
@@ -86,7 +91,7 @@ test("extracts confirmed outfits, explicit counterparts, configured offers and c
     { id: 50001, goodsGroupId: 500, configuredPrice: 120, currencyItemId: 200014 },
     { id: 50601, goodsGroupId: 506, configuredPrice: 120, currencyItemId: 200014 },
   ]);
-  const native = database.outfits[0]!;
+  const native = clothing[0]!;
   assert.equal(native.playerItemId, 60003);
   assert.equal(native.playerItemNameZh, null);
   assert.deepEqual(native.specialTags, ["友邻专属"]);
@@ -118,9 +123,16 @@ test("extracts confirmed outfits, explicit counterparts, configured offers and c
     ].sort((a, b) => a - b),
     [318, 325, 416, 474, 659],
   );
-  for (const outfit of database.outfits)
-    assert.ok(neighborImagePaths(database).includes(outfit.imagePath));
+  assert.ok(
+    neighborImagePaths(database).every(
+      (imagePath) => !clothing.some((item) => item.imagePath === imagePath),
+    ),
+  );
   verifyNeighbors(database, fixture.input);
+  verifyNeighborClothing(
+    { schemaVersion: 1, source: database.source, items: clothing },
+    fixture.input,
+  );
 });
 
 test("outfit serialization is stable across row order and equivalent duplicate displays", (context) => {
@@ -215,36 +227,43 @@ for (const { name, change, error } of invalidSources)
 test("outfit validation and frozen-source verification reject incomplete or tampered records", (context) => {
   const fixture = createFixture(outfitRows());
   context.onTestFinished(fixture.cleanup);
-  const database = extractNeighbors(fixture.input);
+  const bundle = extractNeighborBundle(fixture.input);
+  const clothingData = {
+    schemaVersion: 1 as const,
+    source: bundle.database.source,
+    items: bundle.clothing,
+  };
   for (const change of [
-    (value: typeof database) => {
-      value.outfits[1]!.playerItemId = null;
+    (value: typeof clothingData) => {
+      value.items[1]!.playerItemId = null;
     },
-    (value: typeof database) => {
-      value.outfits[0]!.neighborId = null;
+    (value: typeof clothingData) => {
+      value.items[0]!.neighborId = null;
     },
-    (value: typeof database) => {
-      value.outfits[0]!.neighborId = 999;
+    (value: typeof clothingData) => {
+      value.items[0]!.neighborId = 999;
     },
-    (value: typeof database) => {
-      value.outfits[0]!.modelPaths = { small: null, medium: null, big: null };
+    (value: typeof clothingData) => {
+      value.items[0]!.modelPaths = { small: null, medium: null, big: null };
     },
-    (value: typeof database) => {
-      value.outfits.push(value.outfits[0]!);
+    (value: typeof clothingData) => {
+      value.items.push(value.items[0]!);
     },
-    (value: typeof database) => {
-      value.outfits[1]!.offers.push(value.outfits[1]!.offers[0]!);
+    (value: typeof clothingData) => {
+      value.items[1]!.offers.push(value.items[1]!.offers[0]!);
     },
   ]) {
-    const invalid = structuredClone(database);
+    const invalid = structuredClone(clothingData);
     change(invalid);
-    assert.throws(() => parseNeighborDatabase(invalid));
+    assert.throws(() => {
+      parseNeighborClothingDatabase(invalid);
+      verifyNeighborClothing(invalid, fixture.input);
+    });
   }
-  const missing = structuredClone(database);
-  missing.outfits.pop();
-  parseNeighborDatabase(missing);
-  assert.throws(() => verifyNeighbors(missing, fixture.input), /frozen sources/);
-  const changed = structuredClone(database);
-  changed.outfits[1]!.offers[0]!.configuredPrice = 121;
-  assert.throws(() => verifyNeighbors(changed, fixture.input), /frozen sources/);
+  const missing = structuredClone(clothingData);
+  missing.items.pop();
+  assert.throws(() => verifyNeighborClothing(missing, fixture.input), /frozen sources/);
+  const changed = structuredClone(clothingData);
+  changed.items[1]!.offers[0]!.configuredPrice = 121;
+  assert.throws(() => verifyNeighborClothing(changed, fixture.input), /frozen sources/);
 });

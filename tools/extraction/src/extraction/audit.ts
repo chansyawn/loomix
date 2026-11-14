@@ -27,6 +27,9 @@ export async function audit(options: WorkOptions) {
   const neighborImages = readJson<{ source: string }[]>(
     path.join(options.work, "neighbor-image-exports.json"),
   );
+  const neighborClothingImages = readJson<{ source: string }[]>(
+    path.join(options.work, "neighbor-image-exports.json"),
+  );
   const additionalNeighborImages = readJson<{ source: string }[]>(
     path.join(options.work, "neighbor-additional-image-exports.json"),
   );
@@ -42,6 +45,7 @@ export async function audit(options: WorkOptions) {
     ),
     ...images.map((a) => a.source),
     ...neighborImages.map((a) => a.source),
+    ...neighborClothingImages.map((a) => a.source),
     ...additionalNeighborImages.map((a) => a.source),
     ...islandImageExports.map((image) => image.source),
     ...bindata.map((a) => a.Source),

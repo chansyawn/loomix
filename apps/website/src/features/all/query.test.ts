@@ -182,6 +182,30 @@ test("集合黑名单允许外观和种子参与搜索与类别筛选", () => {
     ).toEqual([id]);
 });
 
+test("友邻服饰进入全部页搜索和独立类别筛选", () => {
+  const source = data({
+    id: 40,
+    name: "云果手套",
+    description: "友邻服饰",
+    quality: 1,
+    image: null,
+    type: "neighborClothing",
+    subcategory: "手套",
+    trade: null,
+    acquisition: null,
+    slotCode: 6001,
+    neighborId: 1010,
+    playerItemId: null,
+    modelPaths: { small: null, medium: "NpcOutfits/Medium/40", big: null },
+  });
+  expect(queryAll(source, { ...emptyQuery(), q: "云果" }).rows.map((row) => row.id)).toEqual([40]);
+  expect(
+    queryAll(source, { ...emptyQuery(), categories: ["neighborClothing"] }).rows.map(
+      (row) => row.id,
+    ),
+  ).toEqual([40]);
+});
+
 test("标签路径和未知标签产生可独立移除的摘要", () => {
   const source = data(),
     query = allSearchSchema.parse({

@@ -1,6 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
-import { neighborImagePaths, parseNeighborDatabase } from "./schema.ts";
+import {
+  neighborImagePaths,
+  parseNeighborClothingDatabase,
+  parseNeighborDatabase,
+} from "./schema.ts";
 import { readJson, writeJson } from "../../workflow/json.ts";
 import type { IndexedAsset, ImageManifest, WorkOptions } from "../types.ts";
 import { createIconResolver } from "../images/resolve.ts";
@@ -25,14 +29,20 @@ export type AdditionalNeighborImageExport = NeighborImageExport & {
 
 export async function exportNeighborImages(options: WorkOptions): Promise<void> {
   const database = parseNeighborDatabase(readJson(path.join(options.work, "raw/neighbors.json")));
+  const clothing = parseNeighborClothingDatabase(
+    readJson(path.join(options.work, "raw/neighbor-clothing.json")),
+  );
   const textures = readJson<IndexedAsset[]>(path.join(options.work, "prepared/textures.json"));
   const sprites = readJson<IndexedAsset[]>(path.join(options.work, "prepared/sprites.json"));
   const resolve = createIconResolver(textures, sprites);
   const reusable = readJson<ImageManifest[]>(path.join(options.work, "image-candidates.json"));
   const selected: ImageAsset[] = [];
   const unresolved: { path: string; reason: string }[] = [];
-  const requiredOutfitIcons = new Set(database.outfits.map((outfit) => outfit.imagePath));
-  for (const reference of neighborImagePaths(database)) {
+  const clothingImagePaths = clothing.items.map((item) => item.imagePath);
+  const requiredOutfitIcons = new Set(clothingImagePaths);
+  for (const reference of [
+    ...new Set([...neighborImagePaths(database), ...clothingImagePaths]),
+  ].sort()) {
     const match = resolve(reference);
     if (
       !match?.matched ||

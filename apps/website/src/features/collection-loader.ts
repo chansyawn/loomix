@@ -4,8 +4,11 @@ import { parseAssets } from "@loomix/schema/assets";
 import { createResourceReader } from "../infrastructure/resources.ts";
 import { createCollectionCatalog } from "./collection/catalog";
 
-export async function loadCollectionCatalog() {
-  const load = createResourceReader();
+export function loadCollectionCatalog(): Promise<ReturnType<typeof createCollectionCatalog>>;
+export function loadCollectionCatalog(
+  load: ReturnType<typeof createResourceReader>,
+): Promise<ReturnType<typeof createCollectionCatalog>>;
+export async function loadCollectionCatalog(load = createResourceReader()) {
   const [catalog, assets, gameplayTags] = await Promise.all([
     load("catalog", parseCatalog),
     load("assets", parseAssets),

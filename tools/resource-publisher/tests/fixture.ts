@@ -13,7 +13,7 @@ export const webp = Buffer.from(
 );
 export const imageKey = `assets/${sha256(webp)}.webp`;
 
-export const context = { formatVersion: 6, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
+export const context = { formatVersion: 7, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
 export const source = {
   gameVersion: "test",
   dataRevision: 1,

@@ -42,7 +42,6 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
     "additionalImages",
   ] as const)
     unique<{ key: string }>(neighbors[name], (value) => value.key, ["neighbors", name]);
-  unique(neighbors.outfits, (outfit) => outfit.id, ["neighbors", "outfits"]);
   for (const name of ["stars", "stories", "travelReactions", "additionalImages"] as const)
     neighbors[name].forEach((value, index) => {
       if (value.neighborId !== null)
@@ -92,10 +91,15 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
       if (!tags.has(id)) issue([...path, "tagIds"], `Unknown preference tag ${id}`);
     }
   });
-  neighbors.outfits.forEach((outfit, index) => {
-    if (outfit.neighborId !== null && !ids.has(outfit.neighborId))
-      issue(["neighbors", "outfits", index, "neighborId"], `Unknown neighbor ${outfit.neighborId}`);
-    unique(outfit.offers, (offer) => offer.id, ["neighbors", "outfits", index, "offers"]);
+  catalog.records.forEach((record, index) => {
+    if (record.type !== "neighborClothing") return;
+    if (record.neighborId !== null && !ids.has(record.neighborId))
+      issue(["catalog", "records", index, "neighborId"], `Unknown neighbor ${record.neighborId}`);
+    if (record.playerItemId !== null) {
+      const playerItem = items.get(record.playerItemId);
+      if (playerItem && playerItem.type !== "clothing")
+        issue(["catalog", "records", index, "playerItemId"], "Counterpart must be player clothing");
+    }
   });
   unique(neighbors.resources, (resource) => resource.path, ["neighbors", "resources"]);
   for (const resource of neighbors.resources)

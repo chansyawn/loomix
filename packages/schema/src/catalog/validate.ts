@@ -68,6 +68,16 @@ export function validateCatalog(catalog: Catalog): ValidationIssue[] {
     if ("trade" in record)
       for (const offer of record.trade?.offers ?? [])
         if (offer.currencyItemId !== null) checkItems([offer.currencyItemId], [...path, "trade"]);
+    if (record.type === "neighborClothing" && record.playerItemId !== null) {
+      const counterpart = records.get(record.playerItemId);
+      if (counterpart && counterpart.type !== "clothing")
+        issue([...path, "playerItemId"], "Counterpart must be player clothing");
+      if (
+        !counterpart &&
+        !catalog.references.some((reference) => reference.id === record.playerItemId)
+      )
+        issue([...path, "playerItemId"], `Unknown player clothing ${record.playerItemId}`);
+    }
     if (record.type === "plant") {
       checkItems(record.drops?.map((drop) => drop.itemId) ?? [], [...path, "drops"]);
       for (const drop of record.drops ?? [])

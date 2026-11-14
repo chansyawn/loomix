@@ -31,6 +31,21 @@ export function metadataEvidence(work: string, dataset: Dataset): FieldEvidence[
     ]),
   );
   const seedProofs = readJson<CollectionEvidence[]>(path.join(work, "plant-evidence.json"));
+  const neighborAudit = readJson<{
+    records: {
+      collection: string;
+      key: string;
+      source: { kind: "table"; file: string; table: number; rowOffset: number; fields: number[] };
+    }[];
+  }>(path.join(work, "neighbor-audit.json"));
+  const neighborClothingSources = new Map<number, FieldEvidence["sources"]>();
+  for (const proof of neighborAudit.records) {
+    if (proof.collection !== "outfits") continue;
+    const id = Number(proof.key);
+    const sources = neighborClothingSources.get(id) ?? [];
+    sources.push(proof.source);
+    neighborClothingSources.set(id, sources);
+  }
   const output: FieldEvidence[] = [];
   const add = (
     collection: string,
@@ -71,18 +86,19 @@ export function metadataEvidence(work: string, dataset: Dataset): FieldEvidence[
       add("catalog.records", record.id, "clientSecondaryType", [source([3])]);
     add("catalog.records", record.id, "tagIds", [source([6, 7, 8, 9, 10, 11, 12, 13, 14, 15])]);
     const proof = admissions.get(record.id);
-    const sources: FieldEvidence["sources"] =
-      proof?.admissionSources.map((entry) =>
-        entry.kind === "manual"
-          ? entry
-          : {
-              kind: "table",
-              file: entry.file,
-              table: entry.table,
-              rowOffset: entry.rowOffset,
-              fields: [0],
-            },
-      ) ?? [];
+    const sources: FieldEvidence["sources"] = proof
+      ? proof.admissionSources.map((entry) =>
+          entry.kind === "manual"
+            ? entry
+            : {
+                kind: "table",
+                file: entry.file,
+                table: entry.table,
+                rowOffset: entry.rowOffset,
+                fields: [0],
+              },
+        )
+      : (neighborClothingSources.get(record.id) ?? []);
     if (record.type === "seed")
       for (const entry of seedProofs.filter(
         (proof) => proof.owner === "growth" && proof.id === record.id,

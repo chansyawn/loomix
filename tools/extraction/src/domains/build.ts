@@ -4,7 +4,10 @@ import { parseDataset } from "@loomix/schema/dataset";
 import { referencedImages } from "@loomix/schema/dataset/images";
 import { imageKey } from "@loomix/schema/assets";
 import { RawCollectionObservationsSchema } from "../extraction/collection/build.ts";
-import { parseNeighborDatabase } from "../extraction/neighbors/schema.ts";
+import {
+  parseNeighborClothingDatabase,
+  parseNeighborDatabase,
+} from "../extraction/neighbors/schema.ts";
 import { parseIslandDatabase } from "../extraction/islands/schema.ts";
 import { parseNeighbors } from "@loomix/schema/neighbors";
 import { parseWorld } from "@loomix/schema/world";
@@ -37,11 +40,14 @@ function localizeKeys(value: unknown): unknown {
 }
 
 export function buildDataset(work: string) {
-  const identity = { formatVersion: 6, snapshotId: path.basename(work), locale: "zh-CN" } as const;
+  const identity = { formatVersion: 7, snapshotId: path.basename(work), locale: "zh-CN" } as const;
   const observations = RawCollectionObservationsSchema.parse(
     readJson(path.join(work, "raw/images-catalog-observations.json")),
   );
   const neighbors = parseNeighborDatabase(readJson(path.join(work, "raw/neighbors.json")));
+  const neighborClothing = parseNeighborClothingDatabase(
+    readJson(path.join(work, "raw/neighbor-clothing.json")),
+  );
   const islands = parseIslandDatabase(readJson(path.join(work, "raw/islands.json")));
   const assets = createAssetRegistry();
   for (const file of [
@@ -56,6 +62,11 @@ export function buildDataset(work: string) {
       image.reference,
       assets.register(image),
     ]),
+  );
+  const neighborClothingImages = new Map(
+    readJson<NeighborImageExport[]>(path.join(work, "neighbor-image-exports.json"))
+      .filter((image) => neighborClothing.items.some((item) => item.imagePath === image.reference))
+      .map((image) => [image.reference, assets.register(image, "neighborClothing")]),
   );
   const islandImages = new Map(
     readJson<IslandImageExport[]>(path.join(work, "island-image-exports.json")).map((image) => [
@@ -105,10 +116,6 @@ export function buildDataset(work: string) {
           image: neighborImage(illustrationPath),
         })),
       })),
-      outfits: neighborData.outfits.map(({ imagePath, ...outfit }) => ({
-        ...outfit,
-        image: neighborImage(imagePath),
-      })),
     }) as object),
     resources,
     additionalImages,
@@ -150,6 +157,8 @@ export function buildDataset(work: string) {
       assets,
       identity,
       neighbors.giftPreferences.flatMap((preference) => preference.itemIds),
+      neighborClothing.items,
+      (reference) => neighborClothingImages.get(reference) ?? null,
     ),
     neighbors: publicNeighbors,
     world: publicWorld,

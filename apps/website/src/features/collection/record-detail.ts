@@ -7,12 +7,15 @@ import { plantsDetail } from "../plants/detail";
 import { dishesDetail } from "../dishes/detail";
 import { buildMiscellanyDetail } from "../miscellany/detail";
 import { buildIngredientsData, ingredientUsage } from "../ingredients/model";
+import { neighborClothingDetail } from "../neighbor-clothing/detail";
+import type { OverviewRecord } from "./catalog";
+import type { NeighborClothing } from "@loomix/schema/catalog";
 
 export function parseRecordId(value: string) {
   const id = Number(value);
   return /^[1-9]\d*$/.test(value) && Number.isSafeInteger(id) ? id : null;
 }
-export function collectionDetail(data: CollectionCatalog, id: number) {
+export function collectionDetail(data: CollectionCatalog, id: number, neighborName?: string) {
   const record = data.byId.get(id);
   if (!record) throw notFound();
   const view = data.view;
@@ -82,6 +85,14 @@ export function collectionDetail(data: CollectionCatalog, id: number) {
       };
     case "material":
       return { category: "miscellaneous" as const, detail: buildMiscellanyDetail(view, id) };
+    case "neighborClothing":
+      return {
+        category: "neighborClothing" as const,
+        detail: neighborClothingDetail(
+          record as OverviewRecord & { record: NeighborClothing },
+          neighborName,
+        ),
+      };
     case "seed":
       throw new Error("Seed detail requires canonical resolution");
   }

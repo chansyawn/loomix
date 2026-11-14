@@ -13,7 +13,7 @@ export type NeighborFriendshipRule = NeighborDatabase["friendshipRules"][number]
 export type NeighborEventTag = NeighborDatabase["eventTags"][number];
 export type NeighborAssetRef = NeighborDatabase["assets"][number];
 export type NeighborGiftPreference = NeighborDatabase["giftPreferences"][number];
-export type NeighborOutfit = NeighborDatabase["outfits"][number];
+export type NeighborOutfit = import("./schema.ts").NeighborOutfit;
 export type NeighborBodyType = NonNullable<NeighborRecord["bodyType"]>;
 export type NeighborStoryParagraph = NeighborStoryChapter["paragraphs"][number];
 
@@ -83,7 +83,7 @@ export type NeighborEvidenceSource =
   | { kind: "asset"; file: string; pathId: string };
 
 export interface NeighborEvidence {
-  collection: keyof Omit<NeighborDatabase, "source" | "schemaVersion">;
+  collection: keyof Omit<NeighborDatabase, "source" | "schemaVersion"> | "outfits";
   key: string;
   source: NeighborEvidenceSource;
 }

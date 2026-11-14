@@ -7,6 +7,8 @@ import { RecordDetailPage } from "@/features/collection/record-detail-page";
 import { CollectionDetailLoading } from "@/features/collection/detail-layout";
 import { CollectionLoadError } from "@/features/collection/states";
 import { CollectionReturnLink } from "@/features/collection/navigation";
+import { createResourceReader } from "@/infrastructure/resources";
+import { parseNeighbors } from "@loomix/schema/neighbors";
 export const Route = createFileRoute("/collections/records/$id")({
   ssr: false,
   validateSearch: z.object({
@@ -22,8 +24,9 @@ export const Route = createFileRoute("/collections/records/$id")({
   loader: async ({ params, deps, location }) => {
     const id = parseRecordId(params.id);
     if (id === null) throw notFound();
-    const data = await loadCollectionCatalog(),
-      target = recordTarget(data.catalog, id);
+    const load = createResourceReader();
+    const data = await loadCollectionCatalog(load);
+    const target = recordTarget(data.catalog, id);
     if (!target) throw notFound();
     const focus = target.focus ?? recordFocus(data.catalog, target.recordId, deps.focus);
     if (target.recordId !== id || Reflect.get(location.search, "focus") !== focus)
@@ -34,7 +37,16 @@ export const Route = createFileRoute("/collections/records/$id")({
         replace: true,
         state: location.state,
       });
-    return { data, record: data.byId.get(id)!, model: collectionDetail(data, id), focus };
+    const row = data.byId.get(id);
+    if (!row) throw notFound();
+    const neighborId = row.record.type === "neighborClothing" ? row.record.neighborId : null;
+    const neighborName =
+      neighborId !== null
+        ? parseNeighbors(await load("neighbors", parseNeighbors)).neighbors.find(
+            (neighbor) => neighbor.id === neighborId,
+          )?.name
+        : undefined;
+    return { data, record: row, model: collectionDetail(data, id, neighborName), focus };
   },
   pendingComponent: () => <CollectionDetailLoading label="正在加载物品详情" />,
   errorComponent: DetailError,

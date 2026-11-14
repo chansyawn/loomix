@@ -20,7 +20,7 @@ import { readJson, writeJson } from "../workflow/json.ts";
 import { validateModel } from "../extraction/content/model.ts";
 import { verifyAdmissions } from "./admissions.ts";
 import { highestResolutionImages } from "../extraction/images/select.ts";
-import { verifyNeighbors } from "../extraction/neighbors/verify.ts";
+import { verifyNeighborClothing, verifyNeighbors } from "../extraction/neighbors/verify.ts";
 import { verifyNeighborImages } from "./neighbor-images.ts";
 import { neighborInput } from "../extraction/neighbors/build.ts";
 import { verifyIslandBundle } from "../extraction/islands/verify-bundle.ts";
@@ -46,6 +46,10 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
   const { all, counts } = validateModel(input, scope, expectedCatalog, qualities, parse);
   const neighbors = verifyNeighbors(
     readJson(path.join(staging, "neighbors.json")),
+    neighborInput(bundle),
+  );
+  verifyNeighborClothing(
+    readJson(path.join(staging, "neighbor-clothing.json")),
     neighborInput(bundle),
   );
   const islands = verifyIslandBundle(bundle, staging);

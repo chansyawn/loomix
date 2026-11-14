@@ -208,6 +208,21 @@ const outfit = z
       ctx.addIssue({ code: "custom", path: ["offers"], message: "Duplicate outfit offer ID" });
   });
 
+export const NeighborClothingDatabaseSchema = z
+  .strictObject({
+    schemaVersion: z.literal(1),
+    source,
+    items: outfit.array(),
+  })
+  .superRefine((database, ctx) => {
+    const ids = database.items.map((item) => item.id);
+    if (new Set(ids).size !== ids.length)
+      ctx.addIssue({ code: "custom", path: ["items"], message: "Duplicate neighbor clothing ID" });
+    for (let index = 1; index < ids.length; index++)
+      if (ids[index - 1]! >= ids[index]!)
+        ctx.addIssue({ code: "custom", path: ["items"], message: "Items must be sorted by ID" });
+  });
+
 export const NeighborDatabaseSchema = z
   .strictObject({
     schemaVersion: z.literal(2),
@@ -220,7 +235,6 @@ export const NeighborDatabaseSchema = z
     friendshipRules: friendshipRule.array(),
     eventTags: eventTag.array(),
     giftPreferences: giftPreference.array(),
-    outfits: outfit.array(),
     assets: asset.array(),
   })
   .superRefine((database, ctx) => {
@@ -261,11 +275,6 @@ export const NeighborDatabaseSchema = z
       ["giftPreferences"],
     );
     assertSorted(
-      database.outfits.map((value) => value.id),
-      numeric,
-      ["outfits"],
-    );
-    assertSorted(
       database.stars,
       (a, b) =>
         a.npcId - b.npcId ||
@@ -286,10 +295,6 @@ export const NeighborDatabaseSchema = z
     if (new Set(preferenceKeys).size !== preferenceKeys.length)
       issue(["giftPreferences"], "Duplicate key");
     const known = new Set(database.neighbors.map((value) => value.id));
-    database.outfits.forEach((value, index) => {
-      if (value.neighborId !== null && !known.has(value.neighborId))
-        issue(["outfits", index, "neighborId"], "Unknown neighbor");
-    });
     const checkIds = (ids: number[], path: (string | number)[]) => {
       assertSorted(ids, numeric, path);
       if (ids.some((id) => !known.has(id))) issue(path, "Unknown neighbor");
@@ -364,9 +369,14 @@ export const NeighborDatabaseSchema = z
 
 export type NeighborDatabase = z.infer<typeof NeighborDatabaseSchema>;
 export type NeighborOutfit = z.infer<typeof outfit>;
+export type NeighborClothingDatabase = z.infer<typeof NeighborClothingDatabaseSchema>;
 
 export function parseNeighborDatabase(input: unknown): NeighborDatabase {
   return NeighborDatabaseSchema.parse(input);
+}
+
+export function parseNeighborClothingDatabase(input: unknown): NeighborClothingDatabase {
+  return NeighborClothingDatabaseSchema.parse(input);
 }
 
 export {
@@ -382,7 +392,6 @@ export function neighborImagePaths(database: NeighborDatabase): string[] {
         ...database.stories.flatMap((story) =>
           story.paragraphs.map((paragraph) => paragraph.illustrationPath),
         ),
-        ...database.outfits.map((outfit) => outfit.imagePath),
       ].filter((value): value is string => value !== null),
     ),
   ].sort();

@@ -12,6 +12,7 @@ import { parseRawContent } from "./schemas/raw-content.ts";
 import { verifyCollection } from "../verify/collection.ts";
 import { readJson } from "../workflow/json.ts";
 import type { CollectionObservations } from "./schema.ts";
+import { parseNeighborClothingDatabase } from "./neighbors/schema.ts";
 
 export async function verifyExtraction(work: string, writeReports = true): Promise<void> {
   const collection = readJson<CollectionObservations>(
@@ -28,9 +29,15 @@ export async function verifyExtraction(work: string, writeReports = true): Promi
   });
   await verifyCollection(work, work, writeReports);
   const craftingContext = createContentContext(work);
+  const clothing = parseNeighborClothingDatabase(
+    readJson(path.join(work, "raw/neighbor-clothing.json")),
+  );
   const { audit, proofs } = readCraftingRecipes(
     craftingContext,
-    catalogAdmissionIds(craftingContext),
+    catalogAdmissionIds(
+      craftingContext,
+      clothing.items.map((item) => item.id),
+    ),
   );
   const expectedCrafting = { recipes: audit, proofs };
   assert.deepEqual(

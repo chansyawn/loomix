@@ -3,8 +3,8 @@ import { readEventTags, readIslands, readRules } from "./system.ts";
 import { linkedAssets, readAssets } from "./resources.ts";
 import { readGiftPreferences } from "./preferences.ts";
 import { readNeighborOutfits } from "./outfits.ts";
-import { compareText, normalizeNeighbors } from "./normalize.ts";
-import { parseNeighborDatabase } from "./schema.ts";
+import { compareText, normalizeNeighborClothing, normalizeNeighbors } from "./normalize.ts";
+import { parseNeighborClothingDatabase, parseNeighborDatabase } from "./schema.ts";
 import { profile } from "../../profile.ts";
 import type {
   NeighborDatabase,
@@ -12,10 +12,12 @@ import type {
   NeighborExclusion,
   NeighborExtractionAudit,
   NeighborExtractionInput,
+  NeighborOutfit,
 } from "./types.ts";
 
 export function extractNeighborBundle(input: NeighborExtractionInput): {
   database: NeighborDatabase;
+  clothing: NeighborOutfit[];
   audit: NeighborExtractionAudit;
 } {
   const { tables, source, assetIndex } = input;
@@ -30,7 +32,14 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
     records,
     exclusions,
   );
-  const outfits = readNeighborOutfits(tables, accepted, records, exclusions);
+  const outfits = normalizeNeighborClothing(
+    readNeighborOutfits(tables, accepted, records, exclusions),
+  );
+  const clothing = parseNeighborClothingDatabase({
+    schemaVersion: 1,
+    source,
+    items: outfits,
+  }).items;
   const database: NeighborDatabase = {
     schemaVersion: 2,
     source: { ...source },
@@ -42,7 +51,6 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
     friendshipRules: readRules(tables, records, exclusions),
     eventTags: readEventTags(tables, records),
     giftPreferences,
-    outfits,
     assets: readAssets(tables, records, exclusions),
   };
   database.assets = linkedAssets(database);
@@ -89,13 +97,13 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
             .reduce((sum, preference) => sum + preference.tagIds.length, 0),
         ]),
       ) as NeighborExtractionAudit["counts"]["giftPreferenceTags"],
-      outfits: result.outfits.length,
-      matchingOutfits: result.outfits.filter((outfit) => outfit.relationship === "matching").length,
-      neighborSpecificOutfits: result.outfits.filter(
+      outfits: clothing.length,
+      matchingOutfits: clothing.filter((outfit) => outfit.relationship === "matching").length,
+      neighborSpecificOutfits: clothing.filter(
         (outfit) => outfit.relationship === "neighbor-specific",
       ).length,
-      tokenPricedOutfits: result.outfits.filter((outfit) => outfit.offers.length > 0).length,
-      tokenPricedOffers: result.outfits.reduce((sum, outfit) => sum + outfit.offers.length, 0),
+      tokenPricedOutfits: clothing.filter((outfit) => outfit.offers.length > 0).length,
+      tokenPricedOffers: clothing.reduce((sum, outfit) => sum + outfit.offers.length, 0),
       assets: result.assets.length,
     },
     exclusions: exclusions.sort((a, b) => compareText(a.kind, b.kind) || compareText(a.key, b.key)),
@@ -132,7 +140,7 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
       },
     },
   };
-  return { database: result, audit };
+  return { database: result, clothing, audit };
 }
 
 export function extractNeighbors(input: NeighborExtractionInput): NeighborDatabase {

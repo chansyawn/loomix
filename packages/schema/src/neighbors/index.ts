@@ -116,60 +116,6 @@ const giftPreference = z.strictObject({
   tagIds: neighborId.array(),
 });
 
-const outfitOffer = z.strictObject({
-  id: neighborId,
-  goodsGroupId: neighborId,
-  configuredPrice: z.number().int().nonnegative(),
-  currencyItemId: neighborId,
-});
-
-const outfit = z
-  .strictObject({
-    id: neighborId,
-    name: z.string().min(1),
-    relationship: z.enum(["matching", "neighbor-specific"]),
-    neighborId: neighborId.nullable(),
-    slotCode: neighborId,
-    slotName: z.string().min(1),
-    modelPaths: z.strictObject({
-      small: path.nullable(),
-      medium: path.nullable(),
-      big: path.nullable(),
-    }),
-    playerItemId: neighborId.nullable(),
-    playerItemName: z.string().min(1).nullable(),
-    colors: z.string().min(1).array(),
-    materials: z.string().min(1).array(),
-    styles: z.string().min(1).array(),
-    specialTags: z.string().min(1).array(),
-    image: ImageRefSchema,
-    description: z.string().nullable(),
-    offers: outfitOffer.array(),
-  })
-  .superRefine((value, ctx) => {
-    if (!value.modelPaths.small && !value.modelPaths.medium && !value.modelPaths.big)
-      ctx.addIssue({
-        code: "custom",
-        path: ["modelPaths"],
-        message: "At least one model size is required",
-      });
-    if (value.relationship === "matching" && value.playerItemId === null)
-      ctx.addIssue({
-        code: "custom",
-        path: ["playerItemId"],
-        message: "Matching outfits need an explicit player item",
-      });
-    if (value.relationship === "neighbor-specific" && value.neighborId === null)
-      ctx.addIssue({
-        code: "custom",
-        path: ["neighborId"],
-        message: "Neighbor-specific outfits need a neighbor",
-      });
-    const offerIds = value.offers.map((offer) => offer.id);
-    if (new Set(offerIds).size !== offerIds.length)
-      ctx.addIssue({ code: "custom", path: ["offers"], message: "Duplicate outfit offer ID" });
-  });
-
 export const NeighborSpecificImageCategorySchema = z.enum([
   "diaryIllustration",
   "diaryWatermark",
@@ -216,10 +162,8 @@ export const NeighborsSchema = ContextSchema.extend({
   friendshipRules: friendshipRule.array(),
   eventTags: eventTag.array(),
   giftPreferences: giftPreference.array().default([]),
-  outfits: outfit.array().default([]),
   resources: asset.array(),
   additionalImages: additionalImage.array(),
 });
 export type Neighbors = z.infer<typeof NeighborsSchema>;
-export type NeighborOutfit = z.infer<typeof outfit>;
 export const parseNeighbors = (input: unknown): Neighbors => NeighborsSchema.parse(input);

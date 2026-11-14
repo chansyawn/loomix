@@ -3,7 +3,7 @@ import type { ContentContext } from "../extraction/content/context.ts";
 
 export function createRecordMetadata(context: ContentContext) {
   const { tables, vocabulary, gameplayTags } = context;
-  return (id: number, seed = false) => {
+  return (id: number, seed = false, extraReason?: "neighborClothing") => {
     const row = context.main.get(id);
     const clientType = tables.uint(row, 2);
     if (!row || clientType === null) throw new Error(`Missing main item/type ${id}`);
@@ -11,6 +11,7 @@ export function createRecordMetadata(context: ContentContext) {
     if (context.scope.encyclopedia.has(id)) admissionReasons.push("encyclopedia");
     if (context.scope.manual.has(id)) admissionReasons.push("manual");
     if (seed) admissionReasons.push("deterministicSeed");
+    if (extraReason) admissionReasons.push(extraReason);
     if (!admissionReasons.length) throw new Error(`Item is outside admission scope ${id}`);
     const tagIds = [
       ...new Set(

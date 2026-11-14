@@ -2,7 +2,7 @@ import type { ImageRef } from "@loomix/schema/assets";
 import type { RecordType } from "../extraction/schema.ts";
 import { digest } from "../workflow/hashing.ts";
 
-export type ImageGroup = RecordType;
+export type ImageGroup = RecordType | "neighborClothing";
 
 export interface OriginalImage {
   file: string;
