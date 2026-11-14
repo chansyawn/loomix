@@ -7,16 +7,20 @@ import tailwindcss from "@tailwindcss/vite";
 import svgr from "vite-plugin-svgr";
 import { lazyPlugins } from "vite-plus";
 import { localResources } from "./scripts/local-resources.ts";
-import { resolveResourceConfig } from "./scripts/resource-config.ts";
+import { repoRoot, resolveResourceConfig } from "./scripts/resource-config.ts";
 
 const config = defineConfig(({ mode }) => {
   const resources = resolveResourceConfig(mode);
   return {
+    envDir: repoRoot,
     run: {
       tasks: {
         "verify-release": { command: "node scripts/verify-release.ts", cache: false },
         "verify-build": { command: "node scripts/verify-build.ts", cache: false },
-        deploy: { command: "wrangler deploy --config dist/server/wrangler.json", cache: false },
+        deploy: {
+          command: "wrangler deploy --cwd ../.. --config apps/website/dist/server/wrangler.json",
+          cache: false,
+        },
         release: {
           command: [
             "vp run website#verify-release",
@@ -31,7 +35,8 @@ const config = defineConfig(({ mode }) => {
           cache: false,
         },
         "deploy:check": {
-          command: "wrangler deploy --config dist/server/wrangler.json --dry-run",
+          command:
+            "wrangler deploy --cwd ../.. --config apps/website/dist/server/wrangler.json --dry-run",
           cache: false,
         },
       },

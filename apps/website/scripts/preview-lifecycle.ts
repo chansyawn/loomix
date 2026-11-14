@@ -129,8 +129,10 @@ async function deploy(number: number, sha: string): Promise<void> {
     [
       "node_modules/wrangler/bin/wrangler.js",
       "preview",
+      "--cwd",
+      "../..",
       "--config",
-      "dist/server/wrangler.json",
+      "apps/website/dist/server/wrangler.json",
       "--name",
       `pr-${number}`,
       "--json",

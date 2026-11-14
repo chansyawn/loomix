@@ -15,7 +15,7 @@ delete env.R2_SECRET_ACCESS_KEY;
 test("help describes automatic configuration without requiring credentials", () => {
   const result = spawnSync(process.execPath, [cli, "--help"], { env, encoding: "utf8" });
   expect(result.status, result.stderr).toBe(0);
-  expect(result.stdout).toContain("tools/resource-publisher/.env");
+  expect(result.stdout).toContain("repository-root .env");
   expect(result.stdout).not.toContain("--no-cache");
   expect(result.stderr).toBe("");
 });

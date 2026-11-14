@@ -4,13 +4,13 @@
 
 ## 配置凭证
 
-复制示例文件并填写 Cloudflare R2 凭证：
+若尚未创建根目录 `.env`，复制根目录示例文件，再填写 Cloudflare R2 凭证：
 
 ```sh
-cp tools/resource-publisher/.env.example tools/resource-publisher/.env
+cp .env.example .env
 ```
 
-需要配置 `CLOUDFLARE_ACCOUNT_ID`、`R2_ACCESS_KEY_ID` 和 `R2_SECRET_ACCESS_KEY`。也可通过同名环境变量提供；环境变量优先于 `.env`。`.env` 已被 Git 忽略，请勿提交凭证。
+需要配置 `CLOUDFLARE_ACCOUNT_ID`、`R2_ACCESS_KEY_ID` 和 `R2_SECRET_ACCESS_KEY`。也可通过同名环境变量提供；环境变量优先于根目录 `.env`。发布器不读取子目录配置、`.env.local` 或模式文件。`.env` 已被 Git 忽略，请勿提交凭证。
 
 ## 校验与发布
 

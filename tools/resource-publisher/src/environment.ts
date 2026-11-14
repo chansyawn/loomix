@@ -1,6 +1,8 @@
 import { loadEnvFile } from "node:process";
 
-export function loadEnvironment(file: string | URL = new URL("../.env", import.meta.url)): void {
+export function loadEnvironment(
+  file: string | URL = new URL("../../../.env", import.meta.url),
+): void {
   try {
     loadEnvFile(file);
   } catch (error) {

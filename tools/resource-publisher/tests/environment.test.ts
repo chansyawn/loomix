@@ -13,17 +13,18 @@ afterEach(async () => {
   );
 });
 
-test("loads the publisher's .env independently of cwd and preserves existing variables", async () => {
+test("从仓库根目录加载配置，不依赖工作目录且保留进程变量", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "loomix-env-"));
   directories.push(root);
-  await mkdir(path.join(root, "publisher/src"), { recursive: true });
+  await mkdir(path.join(root, "tools/resource-publisher/src"), { recursive: true });
   await mkdir(path.join(root, "elsewhere"));
-  const module = path.join(root, "publisher/src/environment.mts");
+  const module = path.join(root, "tools/resource-publisher/src/environment.mts");
   await copyFile(new URL("../src/environment.ts", import.meta.url), module);
   await writeFile(
-    path.join(root, "publisher/.env"),
+    path.join(root, ".env"),
     'LOOMIX_ENV_FIXTURE="from file"\nLOOMIX_ENV_OVERRIDE=file\n',
   );
+  await writeFile(path.join(root, "tools/resource-publisher/.env"), "LOOMIX_ENV_FIXTURE=legacy\n");
   await writeFile(path.join(root, "elsewhere/.env"), "LOOMIX_ENV_FIXTURE=wrong\n");
   const script = `import { loadEnvironment } from ${JSON.stringify(pathToFileURL(module).href)}; loadEnvironment(); console.log(JSON.stringify([process.env.LOOMIX_ENV_FIXTURE, process.env.LOOMIX_ENV_OVERRIDE]));`;
   const result = spawnSync(process.execPath, ["--input-type=module", "-e", script], {
