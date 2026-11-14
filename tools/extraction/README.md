@@ -17,7 +17,7 @@
 
 ## 首次配置
 
-使用仓库锁定的 Node 和 Vite+ 版本，先运行 `vp install`。复制根目录 `.env.example` 为 `.env`，填写共享数据目录的绝对路径 `LOOMIX_DATA_ROOT`；代码不设默认路径，已有进程环境变量优先于 `.env`。
+使用仓库锁定的 Node 和 Vite+ 版本，先运行 `vp install`。复制根目录 `.env.example` 为 `.env`，填写共享数据目录的绝对路径 `LOOMIX_DATA_ROOT`；代码不设默认路径，已有进程环境变量优先于 `.env`。该文件与网站、资源发布工具共用；提取器不读取 `.env.local` 或模式文件。
 
 在仓库根目录导入并选择客户端；来源也可以是仓库外的绝对路径：
 

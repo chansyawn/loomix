@@ -32,7 +32,7 @@ PR 合并或关闭时自动删除预览，并更新原评论；重新打开后�
 
 也可在 GitHub **Actions → Deploy website → Run workflow** 手动触发，选择 `master`。
 
-如需本地发布，先完成 Wrangler 登录或配置 Cloudflare 凭证，再在仓库根目录运行完整发布流程：
+如需本地发布，先完成 Wrangler 登录，或在仓库根目录 `.env` 中配置 `CLOUDFLARE_ACCOUNT_ID`、`CLOUDFLARE_API_TOKEN`，再运行完整发布流程。部署、部署 dry-run 和预览发布的 Wrangler 命令通过 `--cwd` 在仓库根目录执行，读取根 `.env` 和可选的 `.env.local`；进程环境变量优先，CI 继续使用 GitHub Secrets：
 
 ```bash
 vp install --frozen-lockfile

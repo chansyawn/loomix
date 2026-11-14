@@ -6,12 +6,14 @@ import { z } from "zod";
 import { parseReleaseBase } from "@loomix/resource-publisher/release";
 
 export const websiteRoot = fileURLToPath(new URL("../", import.meta.url));
+export const repoRoot = path.resolve(websiteRoot, "../..");
 export type ResourceConfig =
   | { source: "local"; directory: string; resourceBaseUrl: "/resources/" }
   | { source: "remote"; resourceBaseUrl: string };
 
 export function resolveResourceConfig(mode: string, root: string = websiteRoot): ResourceConfig {
-  const env = loadEnv(mode, root, "VITE_");
+  const repository = path.resolve(root, "../..");
+  const env = loadEnv(mode, repository, "VITE_");
   let value = env.VITE_RESOURCE_BASE_URL;
   if (value === undefined) {
     if (mode === "development" || mode === "test") {
@@ -40,7 +42,7 @@ export function resolveResourceConfig(mode: string, root: string = websiteRoot):
   }
   return {
     source: "local",
-    directory: path.resolve(root, "../..", value),
+    directory: path.resolve(repository, value),
     resourceBaseUrl: "/resources/",
   };
 }
