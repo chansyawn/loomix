@@ -1,6 +1,6 @@
 import type { Item } from "@loomix/schema/catalog";
 
-type Acquisition = Exclude<Item, { type: "reference" }>["acquisition"];
+type Acquisition = Item["acquisition"];
 
 export function acquisitionLabels(acquisition: Acquisition): string[] {
   return [

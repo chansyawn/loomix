@@ -11,7 +11,8 @@ import type { RecordEvidence } from "../extraction/content/admissions.ts";
 import { readJson, writeJson } from "../workflow/json.ts";
 
 const fields: Record<string, string> = {
-  "attributes.type": "furnitureType",
+  "attributes.type": "furnitureCategory",
+  subcategory: "displayCategory",
   "attributes.originGalaxy": "origins",
   "attributes.effects": "effectsText",
   "detail.treeDrops": "drops",
@@ -56,7 +57,7 @@ export function buildDomainEvidence(
     records.set(key, proof);
   };
   for (const proof of observed) {
-    if (["category", "kind", "encyclopediaEntry"].includes(proof.field)) continue;
+    if (proof.field === "encyclopediaEntry") continue;
     const sources: EvidenceSource[] = proof.sources.flatMap((source): EvidenceSource[] => {
       if (source.table !== undefined && source.rowOffset !== undefined && source.fields?.length)
         return [
@@ -75,15 +76,31 @@ export function buildDomainEvidence(
         ];
       return [];
     });
-    const fieldPath = fields[proof.field] ?? proof.field.replace(/^attributes\./, "");
+    const classification = proof.field === "category" || proof.field === "kind";
+    const fieldPath = classification
+      ? "kind"
+      : (fields[proof.field] ?? proof.field.replace(/^attributes\./, ""));
     const entity = entities.get(`${collection(proof.id)}:${proof.id}`);
     if (!entity || !(fieldPath in entity)) continue;
+    if (classification) {
+      const expected = proof.group.endsWith(".item")
+        ? ({ creatures: "creature", plants: "plant", dishes: "dish", miscellaneous: "material" }[
+            proof.group.split(".")[0]!
+          ] ?? proof.group.split(".")[0])
+        : proof.group === "clothing.appearance"
+          ? "appearance"
+          : proof.group;
+      if (Reflect.get(entity, "kind") !== expected)
+        throw new Error(`Classification evidence mismatch ${proof.id}: ${proof.group}`);
+    }
     add({
       entity: { collection: collection(proof.id), id: proof.id },
       fieldPath,
       status: proof.status === "confirmed" ? "confirmed" : "unresolved",
       sources,
-      ruleId: `client.${proof.group}.${proof.field}`,
+      ruleId: classification
+        ? `client.catalog.classification.${proof.group}`
+        : `client.${proof.group}.${proof.field}`,
       reasonCode: proof.reason ?? (proof.status === "unconfirmed" ? "unconfirmed_mapping" : null),
     });
   }
@@ -96,7 +113,7 @@ export function buildDomainEvidence(
     if (
       fieldPath === "acquisition" &&
       entity &&
-      ("memberIds" in entity || ("type" in entity && entity.type === "appearance"))
+      ("memberIds" in entity || ("kind" in entity && entity.kind === "appearance"))
     )
       continue;
     const sources: EvidenceSource[] = proof.sources.map(({ file, table, rowOffset, fields }) => ({

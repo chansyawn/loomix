@@ -20,7 +20,7 @@ export function FurnitureCard({ item }: { item: FurnitureItem }) {
           {item.name}
         </Link>
       }
-      tags={item.type}
+      tags={item.furnitureCategory}
     />
   );
 }

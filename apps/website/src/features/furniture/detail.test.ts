@@ -11,7 +11,7 @@ const first: FurnitureItem = {
   quality: null,
   description: null,
   category: null,
-  type: null,
+  furnitureCategory: null,
   size: null,
   colors: null,
   materials: null,

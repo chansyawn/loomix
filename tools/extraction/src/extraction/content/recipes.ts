@@ -48,7 +48,7 @@ export function buildIngredientCategories(
     const id = tables.uint(row, 0);
     if (id === null) continue;
     const tags = [
-      ...vocabulary.tags(row, profile.fields.items.category),
+      ...vocabulary.tags(row, profile.fields.items.tagType),
       ...vocabulary.tags(row, 15),
     ];
     const matched = new Set<number>();
@@ -258,7 +258,7 @@ export function buildCookingAudit(input: CookingAuditInput) {
         {
           file: "prepared/ed.obb",
           table: profile.roots.items,
-          fields: [0, profile.fields.items.category, 15],
+          fields: [0, profile.fields.items.tagType, 15],
           note: "Item GameplayTags expanded through the GameplayTag ancestry tree",
         },
         ...tagSources(category.id),
@@ -273,7 +273,7 @@ export function buildCookingAudit(input: CookingAuditInput) {
         table: profile.roots.items,
         row: association.itemId,
         rowOffset: association.rowOffset,
-        fields: [profile.fields.items.id, profile.fields.items.category, 15],
+        fields: [profile.fields.items.id, profile.fields.items.tagType, 15],
       },
     })),
     records,

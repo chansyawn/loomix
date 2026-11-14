@@ -72,7 +72,9 @@ export function furnitureTableColumns(
     textColumn("category", "分类", 112, (record) =>
       "category" in record ? record.category : null,
     ),
-    textColumn("type", "类型", 160, (record) => ("category" in record ? record.type : null)),
+    textColumn("type", "类型", 160, (record) =>
+      "category" in record ? record.furnitureCategory : null,
+    ),
     textColumn("size", "尺寸", 112, (record) => ("category" in record ? record.size : null)),
     textColumn("colors", "颜色", 144, (record) => ("category" in record ? record.colors : null)),
     textColumn("materials", "材质", 144, (record) =>

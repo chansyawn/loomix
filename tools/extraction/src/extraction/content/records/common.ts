@@ -119,7 +119,7 @@ export function buildCategory(
     context.scope.manual.get(record.id) ??
       evidence(
         appearance ? profile.roots.items : profile.roots.categories,
-        appearance ? profile.fields.items.category : 4,
+        appearance ? profile.fields.items.tagType : 4,
       ),
   );
 }

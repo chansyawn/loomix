@@ -74,7 +74,7 @@ export function plantingDomainEvidence(work: string, dataset: Dataset): FieldEvi
       ruleId: "client.planting.exact_image_reference",
       reasonCode: original ? null : audit.reason,
     });
-  for (const seed of dataset.catalog.records.filter((record) => record.type === "seed"))
+  for (const seed of dataset.catalog.records.filter((record) => record.kind === "seed"))
     add("catalog.records", seed.id, "image", seeds.get(seed.id), audits.get(`seed:${seed.id}`)!);
   for (const growth of dataset.catalog.growths)
     growth.stages.forEach((stage, index) =>

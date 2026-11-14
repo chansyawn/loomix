@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ClientTypeSchema } from "./classification.ts";
 import { ContextSchema, IdSchema } from "../common/identity.ts";
 import {
   AcquisitionSchema,
@@ -31,18 +32,26 @@ export {
   EntityBaseSchema,
   AdmissionReasonSchema,
 } from "./common.ts";
+export {
+  ClientClassificationSchema,
+  ClientTypeSchema,
+  RecordTagFieldsSchema,
+  RECORD_TAG_FIELD_NAMES,
+  mergeRecordTagIds,
+} from "./classification.ts";
+export type { ClientType, RecordTagFields } from "./classification.ts";
 const metadata = RecordMetadataSchema;
 const item = CatalogItemBaseSchema;
-export const ItemSchema = z.discriminatedUnion("type", [
+export const ItemSchema = z.discriminatedUnion("kind", [
   item.extend({
-    type: z.literal("furniture"),
-    furnitureType: text,
+    kind: z.literal("furniture"),
+    furnitureCategory: text,
   }),
   item.extend({
-    type: z.literal("clothing"),
+    kind: z.literal("clothing"),
   }),
   item.extend({
-    type: z.literal("creature"),
+    kind: z.literal("creature"),
     region: texts,
     habitat: texts,
     activeSeasons: texts,
@@ -68,7 +77,7 @@ export const ItemSchema = z.discriminatedUnion("type", [
       .nullable(),
   }),
   item.extend({
-    type: z.literal("plant"),
+    kind: z.literal("plant"),
     flowerColors: texts,
     drops: DropSchema.array().nullable(),
     hybridRecipes: z
@@ -81,7 +90,7 @@ export const ItemSchema = z.discriminatedUnion("type", [
       .nullable(),
   }),
   item.extend({
-    type: z.literal("dish"),
+    kind: z.literal("dish"),
     difficulty: text,
     cookware: texts,
     effectsText: text,
@@ -101,11 +110,11 @@ export const ItemSchema = z.discriminatedUnion("type", [
       )
       .nullable(),
   }),
-  item.extend({ type: z.literal("material") }),
+  item.extend({ kind: z.literal("material") }),
   NeighborClothingSchema,
 ]);
 export const GroupSchema = EntityBaseSchema.extend({
-  type: z.enum([
+  kind: z.enum([
     "furniture.set",
     "clothing.set",
     "creatures.series",
@@ -114,27 +123,28 @@ export const GroupSchema = EntityBaseSchema.extend({
   ]),
   memberIds: IdSchema.array().nullable(),
 });
-export const AppearanceSchema = EntityBaseSchema.extend({ subcategory: text });
+export const AppearanceSchema = EntityBaseSchema.extend({ displayCategory: text });
 export const SeedDataSchema = EntityBaseSchema.extend({
   growthId: IdSchema,
   trade: TradeSchema.nullable(),
   acquisition: AcquisitionSchema.array().nullable(),
 });
-export const RecordSchema = z.discriminatedUnion("type", [
+export const RecordSchema = z.discriminatedUnion("kind", [
   ...ItemSchema.options,
   GroupSchema.extend({ ...metadata.shape, acquisition: AcquisitionSchema.array().nullable() }),
   AppearanceSchema.extend({
     ...metadata.shape,
-    type: z.literal("appearance"),
+    kind: z.literal("appearance"),
     acquisition: AcquisitionSchema.array().nullable(),
   }),
-  SeedDataSchema.extend({ ...metadata.shape, type: z.literal("seed") }),
+  SeedDataSchema.extend({ ...metadata.shape, kind: z.literal("seed") }),
 ]);
 export const ItemReferenceSchema = z.strictObject({ id: IdSchema, name: z.string().min(1) });
 export const CatalogSchema = ContextSchema.extend({
   kind: z.literal("catalog"),
   records: RecordSchema.array(),
   references: ItemReferenceSchema.array(),
+  clientTypes: ClientTypeSchema.array(),
   craftingRecipes: CraftingRecipeSchema.extend({
     productId: IdSchema,
     quantity: IdSchema.nullable(),
@@ -146,7 +156,7 @@ export type Catalog = z.infer<typeof CatalogSchema>;
 export type CatalogRecord = z.infer<typeof RecordSchema>;
 export type Item = z.infer<typeof ItemSchema>;
 export type Group = z.infer<typeof GroupSchema>;
-export type Seed = Extract<CatalogRecord, { type: "seed" }>;
+export type Seed = Extract<CatalogRecord, { kind: "seed" }>;
 export type ItemReference = z.infer<typeof ItemReferenceSchema>;
 export type Quality = z.infer<typeof QualitySchema>;
 export { NeighborClothingSchema } from "./neighbor-clothing.ts";

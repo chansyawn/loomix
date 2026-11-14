@@ -13,7 +13,7 @@ export const webp = Buffer.from(
 );
 export const imageKey = `assets/${sha256(webp)}.webp`;
 
-export const context = { formatVersion: 7, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
+export const context = { formatVersion: 8, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
 export const source = {
   gameVersion: "test",
   dataRevision: 1,
@@ -21,8 +21,10 @@ export const source = {
   manifestId: "1",
 };
 export function emptyRelease() {
+  const dataset = emptyDataset(context, source);
+  dataset.catalog.clientTypes = [{ id: 1, name: null, tagIds: [] }];
   return {
-    dataset: emptyDataset(context, source),
+    dataset,
     assets: { ...context, kind: "assets" as const, images: [] } as Assets,
   };
 }
@@ -60,12 +62,12 @@ export async function writeFixture(directory: string, imageCount = 1, payloads?:
     const image = { assetId: `image-${i}`, variant: "icon" as const };
     dataset.catalog.records.push({
       ...recordMetadata(),
-      subcategory: null,
+      displayCategory: null,
       trade: null,
       acquisition: null,
       id: i + 1,
       name: "Image",
-      type: "material",
+      kind: "material",
       description: null,
       quality: null,
       image,

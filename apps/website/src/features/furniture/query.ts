@@ -37,7 +37,11 @@ export function filterGroups(data: FurnitureData): FilterGroup[] {
       label: "分类",
       options: categories.map((value) => ({ value, label: value })),
     },
-    { key: "types", label: "类型", options: options(data.items.map((row) => row.type)) },
+    {
+      key: "types",
+      label: "类型",
+      options: options(data.items.map((row) => row.furnitureCategory)),
+    },
     {
       key: "qualities",
       label: "品阶",
@@ -93,7 +97,7 @@ export function queryFurniture(data: FurnitureData, view: View, query: ViewQuery
     const memberSets = memberships.get(row.id);
     return (
       matches(query.categories, [row.category ?? missing]) &&
-      matches(query.types, [row.type ?? missing]) &&
+      matches(query.types, [row.furnitureCategory ?? missing]) &&
       matches(query.sets, memberSets?.map((set) => String(set.id)) ?? [ungrouped]) &&
       matches(query.colors, splitValues(row.colors)) &&
       matches(query.materials, splitValues(row.materials)) &&

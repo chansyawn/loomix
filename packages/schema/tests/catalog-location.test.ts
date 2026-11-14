@@ -1,10 +1,10 @@
 import { expect, test } from "vite-plus/test";
-import { emptyDataset, validateDataset } from "../src/dataset/index.ts";
+import { validateDataset } from "../src/dataset/index.ts";
 import { RecordSchema, recordTarget, recordFocus, resolveItem } from "../src/catalog/index.ts";
-import { recordMetadata } from "./fixture.ts";
-const context = { formatVersion: 7, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
+import { datasetFixture, recordMetadata } from "./fixture.ts";
+const context = { formatVersion: 8, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
 function fixture() {
-  const catalog = emptyDataset(context, {
+  const catalog = datasetFixture(context, {
     gameVersion: "test",
     dataRevision: 1,
     resourceRevision: 1,
@@ -22,8 +22,8 @@ function fixture() {
     RecordSchema.parse({
       ...base,
       id: 1,
-      type: "plant",
-      subcategory: "作物",
+      kind: "plant",
+      displayCategory: "作物",
       trade: null,
       flowerColors: null,
       drops: null,
@@ -32,18 +32,18 @@ function fixture() {
     RecordSchema.parse({
       ...base,
       id: 2,
-      type: "plant",
-      subcategory: "作物",
+      kind: "plant",
+      displayCategory: "作物",
       trade: null,
       flowerColors: null,
       drops: null,
       hybridRecipes: null,
     }),
-    RecordSchema.parse({ ...base, id: 10, type: "plants.series", memberIds: [1, 2] }),
+    RecordSchema.parse({ ...base, id: 10, kind: "plants.series", memberIds: [1, 2] }),
     RecordSchema.parse({
       ...base,
       id: 20,
-      type: "seed",
+      kind: "seed",
       growthId: 20,
       trade: null,
       admissionReasons: ["deterministicSeed"],
@@ -84,7 +84,7 @@ test("种子与产物的canonical定位幂等，外来focus不合法", () => {
 });
 test("目的地歧义必须在数据验收阶段失败", () => {
   const catalog = fixture(),
-    dataset = emptyDataset(context, {
+    dataset = datasetFixture(context, {
       gameVersion: "test",
       dataRevision: 1,
       resourceRevision: 1,
@@ -93,7 +93,7 @@ test("目的地歧义必须在数据验收阶段失败", () => {
   dataset.catalog = catalog;
   expect(validateDataset(dataset)).toEqual([]);
   catalog.records.push({
-    ...catalog.records.find((record) => record.type === "plants.series")!,
+    ...catalog.records.find((record) => record.kind === "plants.series")!,
     id: 11,
   });
   expect(
@@ -102,7 +102,7 @@ test("目的地歧义必须在数据验收阶段失败", () => {
 });
 test("直接标签拒绝重复引用与悬空父级", () => {
   const catalog = fixture(),
-    dataset = emptyDataset(context, {
+    dataset = datasetFixture(context, {
       gameVersion: "test",
       dataRevision: 1,
       resourceRevision: 1,

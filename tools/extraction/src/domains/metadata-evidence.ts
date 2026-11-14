@@ -1,3 +1,4 @@
+import { readCatalogMetadata } from "../source/client/catalog-metadata.ts";
 import { localizedSources } from "../extraction/collection/evidence.ts";
 import { acquisition } from "../extraction/collection/details/client.ts";
 import path from "node:path";
@@ -24,6 +25,7 @@ function tableProof({
 
 export function metadataEvidence(work: string, dataset: Dataset): FieldEvidence[] {
   const context = createContentContext(work);
+  const metadata = readCatalogMetadata(context.tables, context.gameplayTags.index);
   const admissions = new Map(
     readJson<RecordEvidence[]>(path.join(work, "record-evidence.json")).map((proof) => [
       proof.id,
@@ -72,7 +74,7 @@ export function metadataEvidence(work: string, dataset: Dataset): FieldEvidence[
       fields,
     });
     const origin = acquisition(context, record.id);
-    if (record.type === "appearance" || "memberIds" in record)
+    if (record.kind === "appearance" || "memberIds" in record)
       output.push({
         entity: { collection: "catalog.records", id: record.id },
         fieldPath: "acquisition",
@@ -81,10 +83,8 @@ export function metadataEvidence(work: string, dataset: Dataset): FieldEvidence[
         ruleId: "client.catalog.acquisition",
         reasonCode: origin.value === null ? origin.reason : null,
       });
-    add("catalog.records", record.id, "clientType", [source([2])]);
-    if (record.clientSecondaryType !== null)
-      add("catalog.records", record.id, "clientSecondaryType", [source([3])]);
-    add("catalog.records", record.id, "tagIds", [source([6, 7, 8, 9, 10, 11, 12, 13, 14, 15])]);
+    for (const proof of metadata.record(record.id).proofs)
+      output.push({ entity: { collection: "catalog.records", id: record.id }, ...proof });
     const proof = admissions.get(record.id);
     const sources: FieldEvidence["sources"] = proof
       ? proof.admissionSources.map((entry) =>
@@ -99,13 +99,30 @@ export function metadataEvidence(work: string, dataset: Dataset): FieldEvidence[
               },
         )
       : (neighborClothingSources.get(record.id) ?? []);
-    if (record.type === "seed")
+    if (record.kind === "seed")
       for (const entry of seedProofs.filter(
-        (proof) => proof.owner === "growth" && proof.id === record.id,
+        (proof) =>
+          (proof.owner === "seed" && proof.id === record.id) ||
+          (record.kind === "seed" && proof.owner === "growth" && proof.id === record.growthId),
       ))
         sources.push(...entry.sources.map(tableProof));
     add("catalog.records", record.id, "admissionReasons", sources);
+    if (record.kind === "seed" || record.kind === "neighborClothing")
+      output.push({
+        entity: { collection: "catalog.records", id: record.id },
+        fieldPath: "kind",
+        status: "confirmed",
+        sources: [source([0, 2]), ...sources],
+        ruleId:
+          record.kind === "seed"
+            ? "client.catalog.deterministic_seed"
+            : "client.catalog.neighbor_outfit",
+        reasonCode: null,
+      });
   }
+  for (const type of dataset.catalog.clientTypes)
+    for (const proof of metadata.clientTypeProofs(type.id))
+      output.push({ entity: { collection: "catalog.clientTypes", id: type.id }, ...proof });
   for (const reference of dataset.catalog.references) {
     const row = context.main.get(reference.id);
     if (!row) throw new Error(`Missing reference ${reference.id}`);

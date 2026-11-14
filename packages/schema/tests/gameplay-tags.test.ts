@@ -2,10 +2,10 @@ import { expect, test } from "vite-plus/test";
 import { createGameplayTagIndex, parseGameplayTags, tagLabel } from "../src/gameplay-tags/index.ts";
 import type { GameplayTag } from "../src/gameplay-tags/index.ts";
 import { createRecordTagResolver } from "../src/catalog/index.ts";
-import { emptyDataset, parseDataset, validateDataset } from "../src/dataset/index.ts";
-import { recordMetadata } from "./fixture.ts";
+import { parseDataset, validateDataset } from "../src/dataset/index.ts";
+import { datasetFixture, recordMetadata } from "./fixture.ts";
 
-const context = { formatVersion: 7, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
+const context = { formatVersion: 8, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
 const tag = (id: number, internalName: string, parentId: number | null = null): GameplayTag => ({
   id,
   internalName,
@@ -50,7 +50,7 @@ test("目录属性由直接标签的子树派生，并保留显示顺序", () =>
 });
 
 test("物品、偏好和食谱引用同一标签身份，食谱受食材子树约束", () => {
-  const dataset = emptyDataset(context, {
+  const dataset = datasetFixture(context, {
     gameVersion: "test",
     dataRevision: 1,
     resourceRevision: 1,
@@ -66,13 +66,14 @@ test("物品、偏好和食谱引用同一标签身份，食谱受食材子树�
     ...recordMetadata(),
     id: 2,
     name: "菜肴",
-    type: "dish",
+    kind: "dish",
     image: null,
     description: null,
     quality: null,
-    subcategory: null,
+    displayCategory: null,
     trade: null,
     acquisition: null,
+    tagFields: { ...recordMetadata().tagFields, ingredients: [11] },
     tagIds: [11],
     difficulty: null,
     cookware: null,

@@ -63,7 +63,14 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
   });
   const items = new Map(catalog.records.map((item) => [item.id, item]));
   const tags = new Set(dataset.gameplayTags.tags.map((tag) => tag.id));
+  for (const [index, type] of catalog.clientTypes.entries())
+    for (const id of type.tagIds)
+      if (!tags.has(id)) issue(["catalog", "clientTypes", index, "tagIds"], `Unknown tag ${id}`);
   catalog.records.forEach((record, index) => {
+    for (const [field, ids] of Object.entries(record.tagFields))
+      for (const id of ids)
+        if (!tags.has(id))
+          issue(["catalog", "records", index, "tagFields", field], `Unknown tag ${id}`);
     for (const id of record.tagIds)
       if (!tags.has(id)) issue(["catalog", "records", index, "tagIds"], `Unknown tag ${id}`);
   });
@@ -92,12 +99,12 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
     }
   });
   catalog.records.forEach((record, index) => {
-    if (record.type !== "neighborClothing") return;
+    if (record.kind !== "neighborClothing") return;
     if (record.neighborId !== null && !ids.has(record.neighborId))
       issue(["catalog", "records", index, "neighborId"], `Unknown neighbor ${record.neighborId}`);
     if (record.playerItemId !== null) {
       const playerItem = items.get(record.playerItemId);
-      if (playerItem && playerItem.type !== "clothing")
+      if (playerItem && playerItem.kind !== "clothing")
         issue(["catalog", "records", index, "playerItemId"], "Counterpart must be player clothing");
     }
   });
@@ -122,7 +129,7 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
       unique(island[field], (id) => id, [...path, field]);
       for (const id of island[field]) {
         const item = items.get(id);
-        if (!item || (field === "displayCreatureIds" && item.type !== "creature"))
+        if (!item || (field === "displayCreatureIds" && item.kind !== "creature"))
           issue([...path, field], `Unknown island item ${id}`);
       }
     }

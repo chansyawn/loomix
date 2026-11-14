@@ -1,6 +1,13 @@
 import { createHash } from "node:crypto";
 import type { GameplayTags } from "@loomix/schema/gameplay-tags";
-import { RecordSchema, type Catalog, type Item, type Group } from "@loomix/schema/catalog";
+import {
+  RecordSchema,
+  mergeRecordTagIds,
+  type Catalog,
+  type CatalogRecord,
+  type Item,
+  type Group,
+} from "@loomix/schema/catalog";
 import type { Assets, ImageRef } from "@loomix/schema/assets";
 import { emptyDataset } from "@loomix/schema/dataset";
 import { documentPath } from "@loomix/schema/release";
@@ -8,7 +15,7 @@ import { referencedImages } from "@loomix/schema/dataset/images";
 import type { CollectionRecord, CollectionView } from "./collection-view.ts";
 
 export const fixtureContext = {
-  formatVersion: 7,
+  formatVersion: 8,
   snapshotId: "a".repeat(64),
   locale: "zh-CN",
 } as const;
@@ -19,7 +26,7 @@ export const fixtureSource = {
   manifestId: "5662883",
 };
 const values = (value: string | null): string[] | null => value?.split("，") ?? null;
-type MaterialItem = Extract<Item, { type: "material" }>;
+type MaterialItem = Extract<Item, { kind: "material" }>;
 const acquisition = (value: string | null): MaterialItem["acquisition"] =>
   value === null
     ? null
@@ -30,7 +37,6 @@ const acquisition = (value: string | null): MaterialItem["acquisition"] =>
       }));
 export function catalogBase(record: CollectionRecord) {
   return {
-    ...fixtureMetadata(),
     id: record.id,
     name: record.name,
     image: record.image === null ? null : { assetId: record.image, variant: "icon" as const },
@@ -40,6 +46,7 @@ export function catalogBase(record: CollectionRecord) {
 }
 export function catalogFixture(view: Partial<CollectionView> = {}) {
   const catalog = emptyDataset(fixtureContext, fixtureSource).catalog;
+  catalog.clientTypes = [{ id: 1, name: null, tagIds: [] }];
   const gameplayTags = tagsFixture();
   for (const category of view.ingredientCategories ?? []) {
     gameplayTags.tags.push({
@@ -52,8 +59,8 @@ export function catalogFixture(view: Partial<CollectionView> = {}) {
     catalog.ingredientCategories.push({ tagId: category.id, itemIds: category.itemIds });
   }
   const add = (...items: object[]) => addFixtureRecords(catalog, gameplayTags, ...items);
-  const group = (record: CollectionRecord, type: Group["type"], memberIds: number[] | null) =>
-    add({ ...catalogBase(record), type, memberIds, acquisition: null });
+  const group = (record: CollectionRecord, kind: Group["kind"], memberIds: number[] | null) =>
+    add({ ...catalogBase(record), kind, memberIds, acquisition: null });
   const common = { trade: null, acquisition: null };
   for (const record of view.furniture?.items ?? []) {
     for (const recipe of record.craftingRecipes ?? [])
@@ -61,9 +68,9 @@ export function catalogFixture(view: Partial<CollectionView> = {}) {
     add({
       ...catalogBase(record),
       ...common,
-      type: "furniture",
-      subcategory: record.category,
-      furnitureType: record.type,
+      kind: "furniture",
+      displayCategory: record.category,
+      furnitureCategory: record.furnitureCategory,
       size: record.size,
       colors: values(record.colors),
       materials: values(record.materials),
@@ -76,8 +83,8 @@ export function catalogFixture(view: Partial<CollectionView> = {}) {
     add({
       ...catalogBase(record),
       ...common,
-      type: "creature",
-      subcategory: record.category,
+      kind: "creature",
+      displayCategory: record.category,
       region: values(record.region),
       habitat: values(record.habitat),
       activeSeasons: values(record.activeSeasons),
@@ -95,8 +102,8 @@ export function catalogFixture(view: Partial<CollectionView> = {}) {
     add({
       ...catalogBase(record),
       ...common,
-      type: "plant",
-      subcategory: record.category,
+      kind: "plant",
+      displayCategory: record.category,
       origins: values(record.originGalaxy),
       acquisition: acquisition(record.acquisition),
       flowerColors: record.flowerColors,
@@ -115,7 +122,7 @@ export function catalogFixture(view: Partial<CollectionView> = {}) {
         })),
       });
     add({
-      type: "seed",
+      kind: "seed",
       ...catalogBase(record),
       admissionReasons: ["deterministicSeed"],
       growthId: record.growthId,
@@ -128,8 +135,8 @@ export function catalogFixture(view: Partial<CollectionView> = {}) {
     add({
       ...catalogBase(record),
       ...common,
-      type: "dish",
-      subcategory: null,
+      kind: "dish",
+      displayCategory: null,
       difficulty: record.difficulty,
       galaxyFlavor: record.galaxyFlavor,
       cookware: values(record.cookware),
@@ -145,8 +152,8 @@ export function catalogFixture(view: Partial<CollectionView> = {}) {
     add({
       ...catalogBase(record),
       ...common,
-      type: "clothing",
-      subcategory: record.category,
+      kind: "clothing",
+      displayCategory: record.category,
       colors: values(record.colors),
       materials: values(record.materials),
       styles: values(record.styles),
@@ -157,16 +164,16 @@ export function catalogFixture(view: Partial<CollectionView> = {}) {
   for (const record of view.clothing?.appearances ?? [])
     add({
       ...catalogBase(record),
-      type: "appearance",
-      subcategory: record.category,
+      kind: "appearance",
+      displayCategory: record.category,
       acquisition: null,
     });
   for (const record of view.miscellaneous ?? [])
     add({
       ...catalogBase(record),
       ...common,
-      type: "material",
-      subcategory: null,
+      kind: "material",
+      displayCategory: null,
       acquisition: acquisition(record.acquisition),
     });
   return { catalog, gameplayTags };
@@ -229,11 +236,27 @@ export function fixtureRequest({
   };
 }
 
-export function fixtureMetadata() {
+export function fixtureMetadata(): Pick<
+  CatalogRecord,
+  "admissionReasons" | "client" | "tagFields" | "tagIds"
+> {
   return {
     admissionReasons: ["manual" as const],
-    clientType: 1,
-    clientSecondaryType: null,
+    client: { type: 1, idType: 0, subtype: 0, subtypeName: null },
+    tagFields: {
+      type: [],
+      showType: [],
+      area: [],
+      color: [],
+      creature: [],
+      material: [],
+      style: [],
+      property: [],
+      size: [],
+      ingredients: [],
+      foodMaterials: [],
+      npcFurnitureCategory: [],
+    },
     tagIds: [] as number[],
   };
 }
@@ -247,17 +270,17 @@ export function addFixtureRecords(
 ) {
   for (const input of items) {
     const raw: Record<string, unknown> = { ...input };
-    if (raw.type === "reference") {
+    if (raw.kind === "reference") {
       catalog.references.push({ id: Number(raw.id), name: String(raw.name) });
       continue;
     }
     const meta = fixtureMetadata();
-    for (const [key, rootName] of [
-      ["colors", "颜色"],
-      ["materials", "材质"],
-      ["styles", "艺术风格"],
-      ["origins", "产区分类"],
-      ["galaxyFlavor", "产区分类"],
+    for (const [key, rootName, field] of [
+      ["colors", "颜色", "color"],
+      ["materials", "材质", "material"],
+      ["styles", "艺术风格", "style"],
+      ["origins", "产区分类", "area"],
+      ["galaxyFlavor", "产区分类", "area"],
     ] as const) {
       const value = raw[key];
       delete raw[key];
@@ -292,11 +315,16 @@ export function addFixtureRecords(
           };
           gameplayTags.tags.push(tag);
         }
-        meta.tagIds.push(tag.id);
+        meta.tagFields[field].push(tag.id);
       }
     }
-    if (raw.type === "furniture") delete raw.size;
-    const tagIds = Array.isArray(raw.tagIds) && raw.tagIds.length ? raw.tagIds : meta.tagIds;
-    catalog.records.push(RecordSchema.parse({ ...meta, ...raw, tagIds }));
+    if (raw.kind === "furniture") delete raw.size;
+    const tagIds =
+      Array.isArray(raw.tagIds) && raw.tagIds.length
+        ? raw.tagIds
+        : mergeRecordTagIds(meta.tagFields, []);
+    if (!raw.tagFields && Array.isArray(raw.tagIds) && raw.tagIds.length)
+      meta.tagFields.type = [...raw.tagIds] as number[];
+    catalog.records.push(RecordSchema.parse({ ...meta, ...raw, tagIds: [...new Set(tagIds)] }));
   }
 }

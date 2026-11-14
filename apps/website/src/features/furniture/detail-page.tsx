@@ -17,7 +17,7 @@ export function FurnitureDetailPage({ detail }: { detail: FurnitureDetail }) {
     detail.kind === "item"
       ? [
           ["分类", detail.record.category],
-          ["类型", detail.record.type],
+          ["类型", detail.record.furnitureCategory],
           ["尺寸", detail.record.size],
           ["颜色", detail.record.colors],
           ["材质", detail.record.materials],

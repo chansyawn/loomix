@@ -37,7 +37,7 @@ test("共享目录保留集合详情及作物和种子的系列定位，公共�
   });
   const data = createCollectionCatalog(catalog, assetsFixture(catalog), gameplayTags);
   expect(data.rows).toHaveLength(3);
-  expect(data.byId.get(10)?.record).toMatchObject({ type: "plants.series", memberIds: [1] });
+  expect(data.byId.get(10)?.record).toMatchObject({ kind: "plants.series", memberIds: [1] });
   expect(collectionDetail(data, 10)).toMatchObject({
     category: "plants",
     detail: { kind: "crop", record: { id: 10 } },
@@ -67,8 +67,8 @@ test("友邻服饰详情保留体型、友邻和玩家对应款信息", () => {
     description: "友邻服饰",
     quality: 1,
     image: null,
-    type: "neighborClothing",
-    subcategory: "连衣裙",
+    kind: "neighborClothing",
+    displayCategory: "连衣裙",
     trade: null,
     acquisition: null,
     slotCode: 1004,
@@ -82,8 +82,8 @@ test("友邻服饰详情保留体型、友邻和玩家对应款信息", () => {
     description: null,
     quality: 1,
     image: null,
-    type: "clothing",
-    subcategory: "连衣裙",
+    kind: "clothing",
+    displayCategory: "连衣裙",
     trade: null,
     acquisition: null,
     colors: null,

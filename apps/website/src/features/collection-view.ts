@@ -29,7 +29,7 @@ export interface CollectionRecord {
 }
 type CategorizedRecord = CollectionRecord & { category: string | null };
 export type FurnitureItem = CategorizedRecord & {
-  type: string | null;
+  furnitureCategory: string | null;
   size: string | null;
   colors: string | null;
   materials: string | null;
@@ -46,14 +46,14 @@ export type CreatureItem = CategorizedRecord & {
   activeWeather: string | null;
   sizeRange: string | null;
 };
-export type DishEffect = NonNullable<Extract<Item, { type: "dish" }>["effects"]>[number];
+export type DishEffect = NonNullable<Extract<Item, { kind: "dish" }>["effects"]>[number];
 export type DishItem = CollectionRecord & {
   difficulty: string | null;
   galaxyFlavor: string | null;
   cookware: string | null;
   effectsText: string | null;
   effects: DishEffect[] | null;
-  tastes: Extract<Item, { type: "dish" }>["tastes"];
+  tastes: Extract<Item, { kind: "dish" }>["tastes"];
   difficultyRequirement: DifficultyRequirement | null;
   acquisition: string | null;
   recipe: Recipe | null;
@@ -107,7 +107,7 @@ export interface CollectionView {
 }
 export const displayValues = (values: string[] | null): string | null => values?.join("，") || null;
 export function itemCategory(item: Item): CatalogCategory {
-  switch (item.type) {
+  switch (item.kind) {
     case "creature":
       return "creatures";
     case "plant":
@@ -119,7 +119,7 @@ export function itemCategory(item: Item): CatalogCategory {
     case "neighborClothing":
       return "neighborClothing";
     default:
-      return item.type;
+      return item.kind;
   }
 }
 export function toCollectionView(
@@ -147,12 +147,12 @@ export function toCollectionView(
   const groupIds = new Set(groups.map((record) => record.id));
   const cropIds = new Set(
     catalog.records
-      .filter((item) => item.type === "plant" && item.subcategory === "作物")
+      .filter((item) => item.kind === "plant" && item.displayCategory === "作物")
       .map((item) => item.id),
   );
   const cropSeriesByItemId = new Map(
     groups
-      .filter((group) => group.type === "plants.series" && groupIds.has(group.id))
+      .filter((group) => group.kind === "plants.series" && groupIds.has(group.id))
       .flatMap((group) =>
         (group.memberIds ?? [])
           .filter((id) => cropIds.has(id))
@@ -198,16 +198,16 @@ export function toCollectionView(
       ...common,
       catalogCategory: recordCategory(record),
       cropSeriesId: cropSeriesByItemId.get(record.id) ?? null,
-      listed: record.type !== "neighborClothing",
+      listed: record.kind !== "neighborClothing",
     });
-    if (isGroupRecord(record) || record.type === "appearance" || record.type === "seed") continue;
-    const category = record.subcategory;
-    switch (record.type) {
+    if (isGroupRecord(record) || record.kind === "appearance" || record.kind === "seed") continue;
+    const category = record.displayCategory;
+    switch (record.kind) {
       case "furniture":
         view.furniture.items.push({
           ...common,
           category,
-          type: record.furnitureType,
+          furnitureCategory: record.furnitureCategory,
           size: furnitureSize(resolveTags(record, "size").map((tag) => tag.internalName)),
           colors: displayValues(tagsFor(record, "colors")),
           materials: displayValues(tagsFor(record, "materials")),
@@ -266,7 +266,7 @@ export function toCollectionView(
   for (const group of groups) {
     if (!groupIds.has(group.id)) continue;
     const common = base(group);
-    switch (group.type) {
+    switch (group.kind) {
       case "furniture.set":
         view.furniture.sets.push({
           ...common,
@@ -292,8 +292,8 @@ export function toCollectionView(
     }
   }
   view.clothing.appearances = catalog.records
-    .filter((record) => record.type === "appearance")
-    .map((record) => ({ ...base(record), category: record.subcategory }));
+    .filter((record) => record.kind === "appearance")
+    .map((record) => ({ ...base(record), category: record.displayCategory }));
   view.plants = buildPlantsData(catalog, assets, view.ingredientItemsById, tagIndex);
   return view;
 }

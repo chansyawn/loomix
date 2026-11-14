@@ -10,7 +10,7 @@ import type { ContentContext } from "../extraction/content/context.ts";
 import { plainText, splitTags } from "../extraction/content/model.ts";
 import { ingredientExpressionItemIds } from "../extraction/content/recipes.ts";
 import { readCraftingRecipes } from "../extraction/crafting/read.ts";
-import { createRecordMetadata } from "./catalog-tags.ts";
+import { createCatalogMetadata } from "./catalog-metadata.ts";
 import type { NeighborOutfit } from "../extraction/neighbors/types.ts";
 
 export function buildCatalog(
@@ -23,13 +23,14 @@ export function buildCatalog(
   neighborImage: (reference: string) => ReturnType<AssetRegistry["image"]>,
 ): Catalog {
   const { tables } = context;
-  const metadata = createRecordMetadata(context);
+  const { clientTypes, metadata } = createCatalogMetadata(context);
   const references = new Set<number>();
   const catalog: Catalog = {
     ...identity,
     kind: "catalog",
     records: [],
     references: [],
+    clientTypes,
     craftingRecipes: [],
     growths: [],
     ingredientCategories: observations.ingredientCategories.map((category) => ({
@@ -59,13 +60,13 @@ export function buildCatalog(
       ),
     };
     if (record.kind === "appearance") {
-      catalog.records.push({ ...base, type: "appearance", subcategory: record.subcategory });
+      catalog.records.push({ ...base, kind: "appearance", displayCategory: record.subcategory });
       continue;
     }
     if (record.kind !== "item") {
       catalog.records.push({
         ...base,
-        type: `${record.category}.${record.kind}` as Group["type"],
+        kind: `${record.category}.${record.kind}` as Group["kind"],
         memberIds: record.memberIds,
       });
       continue;
@@ -74,7 +75,7 @@ export function buildCatalog(
     if (!detail) throw new Error(`Missing observed detail ${record.id}`);
     const common = {
       ...base,
-      subcategory: record.subcategory,
+      displayCategory: record.subcategory,
       trade: detail.trade,
       acquisition: detail.acquisitionConditions,
     };
@@ -82,20 +83,20 @@ export function buildCatalog(
       case "furniture":
         catalog.records.push({
           ...common,
-          type: "furniture",
-          furnitureType: record.attributes.type,
+          kind: "furniture",
+          furnitureCategory: record.attributes.type,
         });
         break;
       case "clothing":
         catalog.records.push({
           ...common,
-          type: "clothing",
+          kind: "clothing",
         });
         break;
       case "creatures":
         catalog.records.push({
           ...common,
-          type: "creature",
+          kind: "creature",
           region: display(record.id, 31),
           habitat: display(record.id, 30),
           activeSeasons: display(record.id, 34),
@@ -110,7 +111,7 @@ export function buildCatalog(
       case "plants": {
         catalog.records.push({
           ...common,
-          type: "plant",
+          kind: "plant",
           flowerColors: detail.flowerColors,
           drops: detail.treeDrops,
           hybridRecipes: detail.hybridRecipes,
@@ -120,7 +121,7 @@ export function buildCatalog(
       case "dishes":
         catalog.records.push({
           ...common,
-          type: "dish",
+          kind: "dish",
           difficulty: record.attributes.difficulty,
           cookware: record.attributes.cookware === null ? null : [record.attributes.cookware],
           effectsText: record.attributes.effects,
@@ -131,7 +132,7 @@ export function buildCatalog(
         });
         break;
       case "miscellaneous":
-        catalog.records.push({ ...common, type: "material" });
+        catalog.records.push({ ...common, kind: "material" });
         break;
     }
   }
@@ -141,7 +142,7 @@ export function buildCatalog(
     catalog.records.push({
       ...seed,
       ...metadata(seed.id, true),
-      type: "seed",
+      kind: "seed",
       image: assets.image(seed.image),
     });
   }
@@ -174,10 +175,10 @@ export function buildCatalog(
       description: outfit.descriptionZh,
       quality,
       ...metadata(outfit.id, false, "neighborClothing"),
-      subcategory: outfit.slotNameZh,
+      displayCategory: outfit.slotNameZh,
       trade: offers.length ? { sellPrice: null, offers } : null,
       acquisition: source,
-      type: "neighborClothing",
+      kind: "neighborClothing",
       slotCode: outfit.slotCode,
       neighborId: outfit.neighborId,
       playerItemId:
@@ -213,8 +214,8 @@ export function buildCatalog(
     if ("trade" in item)
       for (const offer of item.trade?.offers ?? [])
         if (offer.currencyItemId !== null) references.add(offer.currencyItemId);
-    if (item.type === "plant") for (const drop of item.drops ?? []) references.add(drop.itemId);
-    if (item.type === "dish")
+    if (item.kind === "plant") for (const drop of item.drops ?? []) references.add(drop.itemId);
+    if (item.kind === "dish")
       for (const slot of item.recipe?.slots ?? [])
         if (slot.expression !== null) {
           slot.itemIds = ingredientExpressionItemIds(slot.expression, categories);

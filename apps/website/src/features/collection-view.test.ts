@@ -18,15 +18,15 @@ test("catalog entries control listing while reference entities remain available 
     {
       ...base,
       id: 1,
-      type: "material",
-      subcategory: null,
+      kind: "material",
+      displayCategory: null,
       trade: null,
       acquisition: [
         { sourceId: 1, label: "来源甲", condition: null },
         { sourceId: 2, label: "来源乙", condition: null },
       ],
     },
-    { ...base, id: 2, type: "reference" },
+    { ...base, id: 2, kind: "reference" },
   );
   const view = toCollectionView(
     catalog,
@@ -41,11 +41,11 @@ test("catalog entries control listing while reference entities remain available 
 test("external appearance records retain their identity without entering item lists", () => {
   const { catalog, gameplayTags } = emptyDataset(fixtureContext, fixtureSource);
   addFixtureRecords(catalog, gameplayTags, {
-    type: "appearance",
+    kind: "appearance",
     acquisition: null,
     id: 8,
     name: "发型",
-    subcategory: "发型",
+    displayCategory: "发型",
     image: null,
     quality: null,
     description: null,
@@ -61,8 +61,8 @@ test("友邻服饰保留独立分类并且不进入玩家服饰或普通食材�
   addFixtureRecords(catalog, gameplayTags, {
     id: 9,
     name: "云果手套",
-    type: "neighborClothing",
-    subcategory: "手套",
+    kind: "neighborClothing",
+    displayCategory: "手套",
     image: null,
     description: "友邻专属服饰",
     quality: 1,
@@ -91,8 +91,8 @@ test("creature details retain scientific names and localized acquisition labels"
   addFixtureRecords(catalog, gameplayTags, {
     id: 1,
     name: "三色锦鲤",
-    type: "creature",
-    subcategory: "水生生物",
+    kind: "creature",
+    displayCategory: "水生生物",
     image: null,
     description: null,
     quality: 2,
@@ -126,8 +126,8 @@ test("dish details retain tastes, structured effects, unlock requirements and ac
   addFixtureRecords(catalog, gameplayTags, {
     id: 1,
     name: "星露烤鱼",
-    type: "dish",
-    subcategory: null,
+    kind: "dish",
+    displayCategory: null,
     image: null,
     description: null,
     quality: 2,
@@ -176,7 +176,7 @@ test("furniture, clothing and materials display structured acquisition condition
     image: null,
     quality: null,
     description: null,
-    subcategory: null,
+    displayCategory: null,
     trade: null,
     acquisition: [{ sourceId: 1, label: "星屿探索", condition: "完成探索" }],
   };
@@ -185,14 +185,14 @@ test("furniture, clothing and materials display structured acquisition condition
     gameplayTags,
     {
       ...common,
-      type: "furniture",
-      furnitureType: null,
+      kind: "furniture",
+      furnitureCategory: null,
       size: null,
       colors: null,
       materials: null,
     },
-    { ...common, id: 2, type: "clothing", colors: null, materials: null, styles: null },
-    { ...common, id: 3, type: "material" },
+    { ...common, id: 2, kind: "clothing", colors: null, materials: null, styles: null },
+    { ...common, id: 3, kind: "material" },
   );
   const view = toCollectionView(
     catalog,

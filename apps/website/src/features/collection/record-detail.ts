@@ -19,14 +19,14 @@ export function collectionDetail(data: CollectionCatalog, id: number, neighborNa
   const record = data.byId.get(id);
   if (!record) throw notFound();
   const view = data.view;
-  switch (record.record.type) {
+  switch (record.record.kind) {
     case "furniture":
     case "furniture.set":
       return {
         category: "furniture" as const,
         detail: furnitureDetail(
           { ...view.furniture, ingredientItemsById: view.ingredientItemsById },
-          record.record.type === "furniture" ? "items" : "sets",
+          record.record.kind === "furniture" ? "items" : "sets",
           id,
         ),
       };
@@ -37,9 +37,9 @@ export function collectionDetail(data: CollectionCatalog, id: number, neighborNa
         category: "clothing" as const,
         detail: clothingDetail(
           view.clothing,
-          record.record.type === "appearance"
+          record.record.kind === "appearance"
             ? "appearances"
-            : record.record.type === "clothing"
+            : record.record.kind === "clothing"
               ? "items"
               : "sets",
           id,
@@ -51,9 +51,9 @@ export function collectionDetail(data: CollectionCatalog, id: number, neighborNa
         category: "creatures" as const,
         detail: creaturesDetail(
           view.creatures,
-          record.record.type === "creature" ? "items" : "series",
+          record.record.kind === "creature" ? "items" : "series",
           id,
-          record.record.type === "creature"
+          record.record.kind === "creature"
             ? ingredientUsage(buildIngredientsData(view), id)
             : null,
         ),
@@ -64,7 +64,7 @@ export function collectionDetail(data: CollectionCatalog, id: number, neighborNa
         category: "plants" as const,
         detail: plantsDetail(
           view.plants,
-          record.record.type === "plant" ? "items" : "series",
+          record.record.kind === "plant" ? "items" : "series",
           id,
           buildIngredientsData(view),
         ),
@@ -79,7 +79,7 @@ export function collectionDetail(data: CollectionCatalog, id: number, neighborNa
             ingredientItemsById: view.ingredientItemsById,
             ingredientCategoriesById: view.ingredientCategoriesById,
           },
-          record.record.type === "dish" ? "items" : "series",
+          record.record.kind === "dish" ? "items" : "series",
           id,
         ),
       };

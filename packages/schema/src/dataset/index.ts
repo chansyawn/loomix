@@ -26,6 +26,7 @@ export function emptyDataset(context: Dataset["context"], source: Dataset["sourc
       kind: "catalog",
       records: [],
       references: [],
+      clientTypes: [],
       craftingRecipes: [],
       growths: [],
       ingredientCategories: [],

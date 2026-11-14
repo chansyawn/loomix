@@ -9,14 +9,14 @@ type ResolvedGrowth<G extends Growth = Growth> = G extends Growth
 export type PlantGrowth = ResolvedGrowth;
 export type PlantSeed = Omit<
   Seed,
-  "image" | "type" | "admissionReasons" | "clientType" | "clientSecondaryType" | "tagIds"
+  "image" | "kind" | "admissionReasons" | "client" | "tagFields" | "tagIds"
 > & {
   image: string | null;
   cropSeriesId: number | null;
   plantIds: number[];
   growth: PlantGrowth;
 };
-type PlantRecord = Extract<Item, { type: "plant" }>;
+type PlantRecord = Extract<Item, { kind: "plant" }>;
 export interface PlantDrops {
   groups: {
     treeId: number;
