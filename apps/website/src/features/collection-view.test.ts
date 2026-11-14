@@ -56,6 +56,36 @@ test("external appearance records retain their identity without entering item li
   ).toBe(8);
 });
 
+test("友邻服饰保留独立分类并且不进入玩家服饰或普通食材列表", () => {
+  const { catalog, gameplayTags } = emptyDataset(fixtureContext, fixtureSource);
+  addFixtureRecords(catalog, gameplayTags, {
+    id: 9,
+    name: "云果手套",
+    type: "neighborClothing",
+    subcategory: "手套",
+    image: null,
+    description: "友邻专属服饰",
+    quality: 1,
+    trade: null,
+    acquisition: null,
+    slotCode: 6001,
+    neighborId: 1010,
+    playerItemId: null,
+    modelPaths: { small: null, medium: "NpcOutfits/Medium/9", big: null },
+  });
+  const view = toCollectionView(
+    catalog,
+    assetsFixture(catalog),
+    createGameplayTagIndex(gameplayTags.tags),
+  );
+  expect(view.clothing.items).toEqual([]);
+  expect(view.clothing.appearances).toEqual([]);
+  expect(view.ingredientItemsById.get(9)).toMatchObject({
+    catalogCategory: "neighborClothing",
+    listed: false,
+  });
+});
+
 test("creature details retain scientific names and localized acquisition labels", () => {
   const { catalog, gameplayTags } = emptyDataset(fixtureContext, fixtureSource);
   addFixtureRecords(catalog, gameplayTags, {

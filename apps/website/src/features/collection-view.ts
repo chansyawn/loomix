@@ -84,6 +84,7 @@ export type DishSeries = CollectionRecord & { seriesName: string | null; dishIds
 export type CatalogCategory =
   | "furniture"
   | "clothing"
+  | "neighborClothing"
   | "creatures"
   | "plants"
   | "dishes"
@@ -115,6 +116,8 @@ export function itemCategory(item: Item): CatalogCategory {
       return "dishes";
     case "material":
       return "miscellaneous";
+    case "neighborClothing":
+      return "neighborClothing";
     default:
       return item.type;
   }
@@ -195,7 +198,7 @@ export function toCollectionView(
       ...common,
       catalogCategory: recordCategory(record),
       cropSeriesId: cropSeriesByItemId.get(record.id) ?? null,
-      listed: true,
+      listed: record.type !== "neighborClothing",
     });
     if (isGroupRecord(record) || record.type === "appearance" || record.type === "seed") continue;
     const category = record.subcategory;

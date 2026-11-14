@@ -4,7 +4,7 @@ import { buildDomainEvidence } from "./evidence.ts";
 
 test("story paragraphs merge their provenance on the actual chapter entity", () => {
   const dataset = emptyDataset(
-    { formatVersion: 6, snapshotId: "a".repeat(64), locale: "zh-CN" },
+    { formatVersion: 7, snapshotId: "a".repeat(64), locale: "zh-CN" },
     {
       gameVersion: "test",
       dataRevision: 1,

@@ -1,6 +1,15 @@
 import { z } from "zod";
 import { ContextSchema, IdSchema } from "../common/identity.ts";
-import { ImageRefSchema } from "../assets/index.ts";
+import {
+  AcquisitionSchema,
+  CatalogItemBaseSchema,
+  DropSchema,
+  EntityBaseSchema,
+  RecordMetadataSchema,
+  TradeSchema,
+  QualitySchema,
+} from "./common.ts";
+import { NeighborClothingSchema } from "./neighbor-clothing.ts";
 import {
   DifficultyRequirementSchema,
   IngredientCategorySchema,
@@ -14,64 +23,16 @@ export * from "./growth.ts";
 import { GrowthSchema } from "./growth.ts";
 const text = z.string().min(1).nullable();
 const texts = z.array(z.string().min(1)).nullable();
-export const QualitySchema = z.number().int().min(0).max(4);
-export const AcquisitionSchema = z.strictObject({
-  sourceId: IdSchema,
-  label: z.string().min(1),
-  condition: text,
-});
-export const TradeSchema = z.strictObject({
-  sellPrice: z.number().nonnegative().nullable(),
-  offers: z
-    .array(
-      z.strictObject({
-        id: IdSchema,
-        goodsGroupId: IdSchema,
-        buyPrice: z.number().nonnegative().nullable(),
-        currencyItemId: IdSchema.nullable(),
-        stock: z.number().nonnegative().nullable(),
-        refresh: text,
-        conditions: z
-          .array(
-            z.strictObject({
-              field: z.number().int().nonnegative(),
-              kind: z.string().min(1),
-              parameters: text,
-            }),
-          )
-          .nullable(),
-      }),
-    )
-    .nullable(),
-});
-export const DropSchema = z.strictObject({
-  itemId: IdSchema,
-  dropGroupId: IdSchema.nullable(),
-  weight: z.number().nonnegative().nullable(),
-  quantityMin: IdSchema.nullable(),
-  quantityMax: IdSchema.nullable(),
-  probability: z.number().min(0).max(1).nullable(),
-});
-export const EntityBaseSchema = z.strictObject({
-  id: IdSchema,
-  name: z.string().min(1),
-  image: ImageRefSchema.nullable(),
-  description: text,
-  quality: QualitySchema.nullable(),
-});
-export const AdmissionReasonSchema = z.enum(["encyclopedia", "manual", "deterministicSeed"]);
-const metadata = z.strictObject({
-  admissionReasons: AdmissionReasonSchema.array().min(1),
-  clientType: z.number().int().nonnegative(),
-  clientSecondaryType: z.number().int().nonnegative().nullable(),
-  tagIds: IdSchema.array(),
-});
-const item = EntityBaseSchema.extend({
-  ...metadata.shape,
-  subcategory: text,
-  trade: TradeSchema.nullable(),
-  acquisition: AcquisitionSchema.array().nullable(),
-});
+export {
+  QualitySchema,
+  AcquisitionSchema,
+  TradeSchema,
+  DropSchema,
+  EntityBaseSchema,
+  AdmissionReasonSchema,
+} from "./common.ts";
+const metadata = RecordMetadataSchema;
+const item = CatalogItemBaseSchema;
 export const ItemSchema = z.discriminatedUnion("type", [
   item.extend({
     type: z.literal("furniture"),
@@ -141,6 +102,7 @@ export const ItemSchema = z.discriminatedUnion("type", [
       .nullable(),
   }),
   item.extend({ type: z.literal("material") }),
+  NeighborClothingSchema,
 ]);
 export const GroupSchema = EntityBaseSchema.extend({
   type: z.enum([
@@ -187,6 +149,8 @@ export type Group = z.infer<typeof GroupSchema>;
 export type Seed = Extract<CatalogRecord, { type: "seed" }>;
 export type ItemReference = z.infer<typeof ItemReferenceSchema>;
 export type Quality = z.infer<typeof QualitySchema>;
+export { NeighborClothingSchema } from "./neighbor-clothing.ts";
+export type { NeighborClothing } from "./neighbor-clothing.ts";
 export const parseCatalog = (input: unknown): Catalog => CatalogSchema.parse(input);
 export { isGroupRecord, recordCategory, resolveItem } from "./records.ts";
 export { recordTarget, recordFocus } from "./location.ts";

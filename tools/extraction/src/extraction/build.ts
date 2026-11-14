@@ -106,7 +106,12 @@ export async function extract(environmentId: string): Promise<string> {
           name: "neighbors",
           dependencies: ["structure"],
           run: () => buildNeighbors(work),
-          outputs: () => ["raw/neighbors.json", "neighbor-audit.json", "neighbor-exclusions.json"],
+          outputs: () => [
+            "raw/neighbors.json",
+            "raw/neighbor-clothing.json",
+            "neighbor-audit.json",
+            "neighbor-exclusions.json",
+          ],
         },
         {
           name: "islands",

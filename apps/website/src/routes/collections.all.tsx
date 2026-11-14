@@ -8,7 +8,7 @@ export const Route = createFileRoute("/collections/all")({
   ssr: false,
   validateSearch: allSearchSchema,
   search: { middlewares: [compactAllSearchMiddleware] },
-  loader: loadCollectionCatalog,
+  loader: () => loadCollectionCatalog(),
   pendingComponent: AllLoading,
   errorComponent: AllError,
   component: AllRoute,

@@ -40,7 +40,6 @@ export function emptyDataset(context: Dataset["context"], source: Dataset["sourc
       friendshipRules: [],
       eventTags: [],
       giftPreferences: [],
-      outfits: [],
       resources: [],
       additionalImages: [],
     },

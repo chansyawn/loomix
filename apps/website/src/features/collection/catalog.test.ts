@@ -1,5 +1,5 @@
 import { expect, test } from "vite-plus/test";
-import { assetsFixture, catalogFixture } from "../collection-fixture";
+import { addFixtureRecords, assetsFixture, catalogFixture } from "../collection-fixture";
 import {
   plantItemFixture,
   plantSeedFixture,
@@ -57,4 +57,47 @@ test("共享目录保留集合详情及作物和种子的系列定位，公共�
       ["获取来源", null],
     ]);
   }
+});
+
+test("友邻服饰详情保留体型、友邻和玩家对应款信息", () => {
+  const { catalog, gameplayTags } = catalogFixture();
+  addFixtureRecords(catalog, gameplayTags, {
+    id: 40,
+    name: "丰年连衣裙",
+    description: "友邻服饰",
+    quality: 1,
+    image: null,
+    type: "neighborClothing",
+    subcategory: "连衣裙",
+    trade: null,
+    acquisition: null,
+    slotCode: 1004,
+    neighborId: 1010,
+    playerItemId: 41,
+    modelPaths: { small: null, medium: "NpcOutfits/Medium/40", big: "NpcOutfits/Big/40" },
+  });
+  addFixtureRecords(catalog, gameplayTags, {
+    id: 41,
+    name: "丰年连衣裙（玩家）",
+    description: null,
+    quality: 1,
+    image: null,
+    type: "clothing",
+    subcategory: "连衣裙",
+    trade: null,
+    acquisition: null,
+    colors: null,
+    materials: null,
+    styles: null,
+  });
+  const data = createCollectionCatalog(catalog, assetsFixture(catalog), gameplayTags);
+  expect(collectionDetail(data, 40)).toMatchObject({
+    category: "neighborClothing",
+    detail: {
+      neighborName: null,
+      slotName: "连衣裙",
+      modelSizes: "中型、大型",
+      counterpartId: 41,
+    },
+  });
 });

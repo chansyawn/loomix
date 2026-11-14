@@ -36,8 +36,6 @@ export function normalizeNeighbors(database: NeighborDatabase): NeighborDatabase
   database.giftPreferences.sort(
     (a, b) => a.npcId - b.npcId || preferenceLevelOrder[a.level] - preferenceLevelOrder[b.level],
   );
-  database.outfits.sort((a, b) => a.id - b.id);
-  for (const outfit of database.outfits) outfit.offers.sort((a, b) => a.id - b.id);
   for (const preference of database.giftPreferences) {
     preference.itemIds = uniqueNumbers(preference.itemIds);
     preference.tagIds = uniqueNumbers(preference.tagIds);
@@ -65,4 +63,12 @@ export function normalizeNeighbors(database: NeighborDatabase): NeighborDatabase
       .map((a) => a.path);
   }
   return database;
+}
+
+export function normalizeNeighborClothing<T extends { id: number; offers: { id: number }[] }>(
+  clothing: T[],
+): T[] {
+  clothing.sort((a, b) => a.id - b.id);
+  for (const item of clothing) item.offers.sort((a, b) => a.id - b.id);
+  return clothing;
 }

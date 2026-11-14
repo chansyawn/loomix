@@ -8,7 +8,7 @@ import { referencedImages } from "@loomix/schema/dataset/images";
 import type { CollectionRecord, CollectionView } from "./collection-view.ts";
 
 export const fixtureContext = {
-  formatVersion: 6,
+  formatVersion: 7,
   snapshotId: "a".repeat(64),
   locale: "zh-CN",
 } as const;

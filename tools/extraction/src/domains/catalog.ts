@@ -11,6 +11,7 @@ import { plainText, splitTags } from "../extraction/content/model.ts";
 import { ingredientExpressionItemIds } from "../extraction/content/recipes.ts";
 import { readCraftingRecipes } from "../extraction/crafting/read.ts";
 import { createRecordMetadata } from "./catalog-tags.ts";
+import type { NeighborOutfit } from "../extraction/neighbors/types.ts";
 
 export function buildCatalog(
   observations: CollectionObservations,
@@ -18,6 +19,8 @@ export function buildCatalog(
   assets: AssetRegistry,
   identity: Dataset["context"],
   referencedGiftItemIds: readonly number[] = [],
+  neighborOutfits: readonly NeighborOutfit[] = [],
+  neighborImage: (reference: string) => ReturnType<AssetRegistry["image"]>,
 ): Catalog {
   const { tables } = context;
   const metadata = createRecordMetadata(context);
@@ -142,6 +145,48 @@ export function buildCatalog(
       image: assets.image(seed.image),
     });
   }
+  for (const outfit of neighborOutfits) {
+    if (catalog.records.some((record) => record.id === outfit.id))
+      throw new Error(`Neighbor clothing classification conflict ${outfit.id}`);
+    const details = tables.rows(325).filter((row) => tables.id(row) === outfit.id);
+    const qualities = details.map((row) => tables.uint(row, 15, 0));
+    if (new Set(qualities).size > 1)
+      throw new Error(`Conflicting neighbor clothing qualities ${outfit.id}`);
+    const quality = qualities[0] ?? 0;
+    const source = acquisition(context, outfit.id).value;
+    const offers = outfit.offers.map((offer) => ({
+      id: offer.id,
+      goodsGroupId: offer.goodsGroupId,
+      buyPrice: offer.configuredPrice,
+      currencyItemId: offer.currencyItemId,
+      stock: null,
+      refresh: null,
+      conditions: null,
+    }));
+    const prices = new Set(offers.map((offer) => offer.buyPrice));
+    if (prices.size > 1) throw new Error(`Conflicting neighbor clothing prices ${outfit.id}`);
+    const image = neighborImage(outfit.imagePath);
+    if (!image) throw new Error(`Missing neighbor clothing image ${outfit.id}`);
+    catalog.records.push({
+      id: outfit.id,
+      name: outfit.nameZh,
+      image,
+      description: outfit.descriptionZh,
+      quality,
+      ...metadata(outfit.id, false, "neighborClothing"),
+      subcategory: outfit.slotNameZh,
+      trade: offers.length ? { sellPrice: null, offers } : null,
+      acquisition: source,
+      type: "neighborClothing",
+      slotCode: outfit.slotCode,
+      neighborId: outfit.neighborId,
+      playerItemId:
+        outfit.playerItemId !== null && context.main.has(outfit.playerItemId)
+          ? outfit.playerItemId
+          : null,
+      modelPaths: outfit.modelPaths,
+    });
+  }
   catalog.growths = observations.growths.map((growth) => ({
     ...growth,
     stages: growth.stages.map((stage) => ({ ...stage, image: assets.image(stage.image) })),
@@ -186,7 +231,10 @@ export function buildCatalog(
   catalog.records.sort((a, b) => a.id - b.id);
   assert.deepEqual(
     new Set(catalog.records.map((record) => record.id)),
-    catalogAdmissionIds(context),
+    catalogAdmissionIds(
+      context,
+      neighborOutfits.map((outfit) => outfit.id),
+    ),
     "Exact catalog admission union",
   );
   return CatalogSchema.parse(catalog);

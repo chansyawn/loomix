@@ -5,7 +5,7 @@ import { CatalogSchema } from "../src/catalog/index.ts";
 import { parseRelease } from "../src/release/index.ts";
 import { referencedImages } from "../src/dataset/images.ts";
 import { parseNeighbors } from "../src/neighbors/index.ts";
-const context = { formatVersion: 6, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
+const context = { formatVersion: 7, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
 const source = { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" };
 const base = {
   ...recordMetadata(),
@@ -95,7 +95,7 @@ test("gift preferences reference known neighbors, items, and the shared tag dict
     expect.objectContaining({ message: "Unknown preference tag 50001" }),
   );
 });
-test("neighbor outfit data is backward-compatible and keeps configured prices distinct from availability", () => {
+test("neighbor clothing is a formal catalog record and keeps configured prices distinct from availability", () => {
   const dataset = emptyDataset(context, source);
   dataset.neighbors.neighbors.push({
     id: 11,
@@ -106,43 +106,52 @@ test("neighbor outfit data is backward-compatible and keeps configured prices di
     npc2Path: "Avatar/NPC2/NPC_11",
   });
   const image = { assetId: "neighbor-outfit-icon", variant: "icon" as const };
-  dataset.neighbors.outfits.push({
+  dataset.catalog.references.push(
+    { id: 60001, name: "玩家帽子" },
+    { id: 200014, name: "友邻服饰币" },
+  );
+  dataset.catalog.records.push({
+    ...base,
     id: 1160001,
     name: "友邻款帽子",
-    relationship: "matching",
+    type: "neighborClothing",
     neighborId: null,
     slotCode: 5001,
-    slotName: "头戴物",
+    subcategory: "头戴物",
     modelPaths: { small: "NpcOutfits/Small/Hat", medium: null, big: "NpcOutfits/Big/Hat" },
     playerItemId: 60001,
-    playerItemName: "玩家帽子",
-    colors: ["蓝色"],
-    materials: ["毛线"],
-    styles: ["休闲"],
-    specialTags: [],
     image,
     description: null,
-    offers: [{ id: 50001, goodsGroupId: 500, configuredPrice: 120, currencyItemId: 200014 }],
+    quality: null,
+    trade: {
+      sellPrice: null,
+      offers: [
+        {
+          id: 50001,
+          goodsGroupId: 500,
+          buyPrice: 120,
+          currencyItemId: 200014,
+          stock: null,
+          refresh: null,
+          conditions: null,
+        },
+      ],
+    },
+    acquisition: null,
   });
-  expect(parseDataset(dataset).neighbors.outfits).toEqual(dataset.neighbors.outfits);
+  expect(parseDataset(dataset).catalog.records[0]).toEqual(dataset.catalog.records[0]);
   expect(referencedImages(dataset)).toContainEqual(image);
-  const legacy = { ...dataset.neighbors };
-  Reflect.deleteProperty(legacy, "outfits");
-  expect(parseNeighbors(legacy).outfits).toEqual([]);
-  expect(parseDataset({ ...dataset, neighbors: legacy }).neighbors.outfits).toEqual([]);
-  const outfit = dataset.neighbors.outfits[0]!;
-  const offer = outfit.offers[0]!;
+  const outfit = dataset.catalog.records[0]!;
+  if (outfit.type !== "neighborClothing") throw new Error("Expected neighbor clothing");
+  const offer = outfit.trade!.offers![0]!;
   for (const invalid of [
-    { ...outfit, playerItemId: null },
-    { ...outfit, relationship: "neighbor-specific", neighborId: null },
+    { ...outfit, neighborId: null, playerItemId: null },
     { ...outfit, modelPaths: { small: null, medium: null, big: null } },
-    { ...outfit, offers: [offer, offer] },
-    { ...outfit, offers: [{ ...offer, configuredPrice: -1 }] },
-    { ...outfit, offers: [{ ...offer, configuredPrice: 1.5 }] },
-    { ...outfit, offers: [{ ...offer, available: true }] },
+    { ...outfit, trade: { ...outfit.trade!, offers: [offer, offer] } },
+    { ...outfit, trade: { ...outfit.trade!, offers: [{ ...offer, buyPrice: -1 }] } },
   ])
-    expect(() => parseNeighbors({ ...dataset.neighbors, outfits: [invalid] })).toThrow();
-  dataset.neighbors.outfits[0]!.neighborId = 999;
+    expect(() => CatalogSchema.parse({ ...dataset.catalog, records: [invalid] })).toThrow();
+  dataset.catalog.records[0] = { ...outfit, neighborId: 999 };
   expect(validateDataset(dataset)).toContainEqual(
     expect.objectContaining({ message: "Unknown neighbor 999" }),
   );

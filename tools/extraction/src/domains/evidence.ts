@@ -118,6 +118,21 @@ export function buildDomainEvidence(
   }
   for (const { domain, records: audit } of audits) {
     for (const proof of audit) {
+      if (domain === "neighbors" && proof.collection === "outfits") {
+        const recordId = Number(proof.key);
+        if (dataset.catalog.records.some((record) => record.id === recordId))
+          add({
+            entity: { collection: "catalog.records", id: recordId },
+            fieldPath: "$",
+            status: "confirmed",
+            sources: [
+              proof.source.kind === "asset" ? proof.source : { kind: "table", ...proof.source },
+            ],
+            ruleId: "client.catalog.neighborClothing",
+            reasonCode: null,
+          });
+        continue;
+      }
       const name = proof.collection === "assets" ? "resources" : proof.collection;
       const values: unknown = Reflect.get(dataset[domain], name);
       if (!Array.isArray(values)) continue;

@@ -67,4 +67,8 @@ export function finalizeEvidence(work: string): void {
     "neighbor-image-audit",
   ])
     fs.copyFileSync(path.join(work, `${name}.json`), path.join(evidence, `${name}.json`));
+  fs.copyFileSync(
+    path.join(work, "raw/neighbor-clothing.json"),
+    path.join(evidence, "neighbor-clothing.json"),
+  );
 }

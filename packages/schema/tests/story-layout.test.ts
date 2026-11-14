@@ -4,7 +4,7 @@ import { parseNeighbors, StoryLayoutSchema } from "../src/neighbors/index.ts";
 
 function documentWithParagraph(paragraph: unknown) {
   const { neighbors } = emptyDataset(
-    { formatVersion: 6, snapshotId: "a".repeat(64), locale: "zh-CN" },
+    { formatVersion: 7, snapshotId: "a".repeat(64), locale: "zh-CN" },
     { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" },
   );
   return {

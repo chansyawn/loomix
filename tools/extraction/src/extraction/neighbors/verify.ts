@@ -2,8 +2,8 @@ import { neighborAllowlist, isAllowedNeighbor } from "./allowlist.ts";
 import assert from "node:assert/strict";
 import { profile } from "../../profile.ts";
 import { StoryLayoutSchema } from "@loomix/schema/neighbors";
-import { extractNeighbors } from "./extract.ts";
-import { parseNeighborDatabase } from "./schema.ts";
+import { extractNeighborBundle, extractNeighbors } from "./extract.ts";
+import { parseNeighborClothingDatabase, parseNeighborDatabase } from "./schema.ts";
 import type { NeighborDatabase, NeighborExtractionInput } from "./types.ts";
 
 export function verifyNeighbors(value: unknown, input: NeighborExtractionInput): NeighborDatabase {
@@ -93,20 +93,31 @@ export function verifyNeighbors(value: unknown, input: NeighborExtractionInput):
       profile.expectedNeighborPreferences,
       "Neighbor gift preference counts changed; re-confirm the layout and profile",
     );
-    const outfitCounts = {
-      total: database.outfits.length,
-      matching: database.outfits.filter((outfit) => outfit.relationship === "matching").length,
-      neighborSpecific: database.outfits.filter(
-        (outfit) => outfit.relationship === "neighbor-specific",
-      ).length,
-      tokenPricedOutfits: database.outfits.filter((outfit) => outfit.offers.length > 0).length,
-      tokenPricedOffers: database.outfits.reduce((sum, outfit) => sum + outfit.offers.length, 0),
-    };
-    assert.deepEqual(
-      outfitCounts,
-      profile.expectedNeighborOutfits,
-      "Neighbor outfit counts changed; re-confirm the layout and profile",
-    );
   }
   return database;
+}
+
+export function verifyNeighborClothing(value: unknown, input: NeighborExtractionInput) {
+  const clothing = parseNeighborClothingDatabase(value);
+  const extracted = extractNeighborBundle(input);
+  assert.deepEqual(clothing.source, input.source, "Neighbor clothing source metadata");
+  assert.deepEqual(
+    clothing.items,
+    extracted.clothing,
+    "Neighbor clothing differs from frozen sources",
+  );
+  if (clothing.source.manifestId === profile.manifestId)
+    assert.deepEqual(
+      {
+        total: clothing.items.length,
+        matching: clothing.items.filter((item) => item.relationship === "matching").length,
+        neighborSpecific: clothing.items.filter((item) => item.relationship === "neighbor-specific")
+          .length,
+        tokenPricedOutfits: clothing.items.filter((item) => item.offers.length > 0).length,
+        tokenPricedOffers: clothing.items.reduce((sum, item) => sum + item.offers.length, 0),
+      },
+      profile.expectedNeighborOutfits,
+      "Neighbor clothing counts changed; re-confirm the layout and profile",
+    );
+  return clothing;
 }

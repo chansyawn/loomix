@@ -18,8 +18,13 @@ export function neighborInput(work: string): NeighborExtractionInput {
 }
 
 export async function buildNeighbors(work: string): Promise<void> {
-  const { database, audit } = extractNeighborBundle(neighborInput(work));
+  const { database, clothing, audit } = extractNeighborBundle(neighborInput(work));
   writeJson(path.join(work, "raw/neighbors.json"), database);
+  writeJson(path.join(work, "raw/neighbor-clothing.json"), {
+    schemaVersion: 1,
+    source: database.source,
+    items: clothing,
+  });
   writeJson(path.join(work, "neighbor-audit.json"), audit);
   writeJson(path.join(work, "neighbor-exclusions.json"), audit.exclusions);
 }

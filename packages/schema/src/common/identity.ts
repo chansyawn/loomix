@@ -9,7 +9,7 @@ export const SourceSchema = z.strictObject({
   manifestId: z.string().regex(/^\d+$/),
 });
 export const ContextSchema = z.strictObject({
-  formatVersion: z.literal(6),
+  formatVersion: z.literal(7),
   snapshotId: HashSchema,
   locale: z.enum(["zh-CN", "en-US"]),
 });

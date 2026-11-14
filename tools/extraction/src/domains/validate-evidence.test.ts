@@ -4,7 +4,7 @@ import { validateDomainEvidence } from "./validate-evidence.ts";
 import type { FieldEvidence } from "../extraction/evidence/domain-schema.ts";
 const dataset = () =>
   emptyDataset(
-    { formatVersion: 6, snapshotId: "a".repeat(64), locale: "zh-CN" },
+    { formatVersion: 7, snapshotId: "a".repeat(64), locale: "zh-CN" },
     { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" },
   );
 const proof: FieldEvidence = {
