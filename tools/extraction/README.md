@@ -30,7 +30,7 @@ vp run '@loomix/extraction#client' -- select --snapshot <snapshot-id>
 
 导入会校验复制前后的完整文件清单与 SHA256，并将快照设为只读。选择记录保存在共享根；新 environment 绑定所选 snapshot ID，后续切换选择不会改变已有 environment 的输入。客户端更新后重新导入、选择，旧快照保留。
 
-Codex managed worktree 通过 `.worktreeinclude` 携带 `.env` 和网站资源，setup 只安装依赖。同机 worktree 共享客户端、工具缓存和版本化产物，临时调查文件仍放在各自的 `var/scratch/`。
+各 worktree 需单独提供根目录 `.env`。同机 worktree 共享客户端、工具缓存和版本化产物，临时调查文件仍放在各自的 `var/scratch/`。
 
 ## 提取与交付
 

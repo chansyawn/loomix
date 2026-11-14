@@ -22,7 +22,7 @@
 | `Verify website`    | 锁定依赖安装、线上资源完整性校验、`vp check`、全仓测试、网站构建、静态资源边界校验及 Worker 部署 dry-run |
 | `Preview website`   | 等待本次验证成功，部署本次构建产物，验证预览后更新 PR 评论                                               |
 
-预览部署会核对 PR 提交与构建身份，避免发布过期产物。HTTP 验收覆盖首页 HTML、静态图片及 `noindex`，并使用真实预览 Origin 验证资源完整性和 CORS。Fork PR 不使用部署密钥发布预览，处理方式见 [贡献指南](../CONTRIBUTE.md)。
+预览部署会核对 PR 提交与构建身份，避免发布过期产物。HTTP 验收覆盖首页 HTML、静态图片及 `noindex`，并使用真实预览 Origin 验证资源完整性和 CORS。Fork PR 不使用部署密钥发布预览，处理方式见 [贡献指南](../CONTRIBUTING.md)。
 
 PR 合并或关闭时自动删除预览，并更新原评论；重新打开后重新部署。同一 PR 的部署与清理串行执行。目前没有定时清理任务，不依赖自动到期回收；若回收失败，在 Actions 中重跑失败的清理任务。
 
