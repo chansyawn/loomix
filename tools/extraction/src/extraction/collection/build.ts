@@ -8,7 +8,7 @@ import { createContentContext } from "../content/context.ts";
 import { readJson, writeJson } from "../../workflow/json.ts";
 import { parseRawContent, RawImageSchema } from "../schemas/raw-content.ts";
 import { CollectionEvidenceBuilder } from "./evidence.ts";
-import { readCreatureFields, readDishFields } from "./fields.ts";
+import { readCreatureFields } from "./fields.ts";
 import { buildItemDetail } from "./details/client.ts";
 import { detailInvestigation } from "./details/investigation.ts";
 
@@ -27,19 +27,11 @@ export function extendCollection(base: Catalog, context: ContentContext) {
       const { scientificName } = readCreatureFields(context, record.id, proofs);
       return { ...record, attributes: { ...record.attributes, scientificName } };
     }
-    if (record.category === "dishes") {
-      const { tastes, difficultyRequirement } = readDishFields(context, record.id, proofs);
-      return {
-        ...record,
-        attributes: { ...record.attributes, tastes },
-        difficultyRequirement,
-      };
-    }
     return record;
   });
   const catalog: CollectionObservations = RawCollectionObservationsSchema.parse({
     ...base,
-    schemaVersion: 1,
+    schemaVersion: 2,
     items,
     seeds: plants.seeds,
     growths: plants.growths,

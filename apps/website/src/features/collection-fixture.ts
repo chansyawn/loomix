@@ -15,7 +15,7 @@ import { referencedImages } from "@loomix/schema/dataset/images";
 import type { CollectionRecord, CollectionView } from "./collection-view.ts";
 
 export const fixtureContext = {
-  formatVersion: 9,
+  formatVersion: 10,
   snapshotId: "a".repeat(64),
   locale: "zh-CN",
 } as const;
@@ -75,7 +75,13 @@ export function catalogFixture(
   const common = { trade: null, acquisition: null };
   for (const record of view.furniture?.items ?? []) {
     for (const recipe of record.craftingRecipes ?? [])
-      catalog.craftingRecipes.push({ ...recipe, productId: record.id, quantity: 1 });
+      catalog.craftingRecipes.push({
+        ...recipe,
+        cardItemId: recipe.id,
+        collectionId: null,
+        productId: record.id,
+        quantity: 1,
+      });
     add({
       ...catalogBase(record),
       ...common,
@@ -142,22 +148,28 @@ export function catalogFixture(
     });
   }
   for (const record of view.plants?.series ?? []) group(record, "plants.series", record.plantIds);
-  for (const record of view.dishes?.items ?? [])
+  for (const record of view.dishes?.items ?? []) {
+    catalog.cookingRecipes.push({
+      id: record.id,
+      productId: record.id,
+      recipeItemId: null,
+      difficulty: record.difficulty,
+      cookware: values(record.cookware),
+      tastes: record.tastes,
+      difficultyRequirement: record.difficultyRequirement,
+      slots: record.recipe?.slots ?? null,
+    });
     add({
       ...catalogBase(record),
       ...common,
       kind: "dish",
       displayCategory: null,
-      difficulty: record.difficulty,
       galaxyFlavor: record.galaxyFlavor,
-      cookware: values(record.cookware),
       effectsText: record.effectsText,
-      recipe: record.recipe,
       acquisition: acquisition(record.acquisition),
-      tastes: record.tastes,
-      difficultyRequirement: record.difficultyRequirement,
       effects: record.effects,
     });
+  }
   for (const record of view.dishes?.series ?? []) group(record, "dishes.series", record.dishIds);
   for (const record of view.clothing?.items ?? [])
     add({
@@ -291,7 +303,12 @@ export function addFixtureRecords(
   for (const input of items) {
     const raw: Record<string, unknown> = { ...input };
     if (raw.kind === "reference") {
-      catalog.references.push({ id: Number(raw.id), name: String(raw.name) });
+      catalog.references.push({
+        id: Number(raw.id),
+        name: String(raw.name),
+        description: null,
+        usageText: null,
+      });
       continue;
     }
     const meta = fixtureMetadata();

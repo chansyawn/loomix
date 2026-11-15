@@ -80,9 +80,27 @@ export function readRoster(
   tables: Tables,
   records: NeighborEvidence[],
   exclusions: NeighborExclusion[],
-): NeighborRecord[] {
+): Omit<
+  NeighborRecord,
+  | "profile"
+  | "travelProfile"
+  | "abilityDescriptions"
+  | "abilities"
+  | "signature"
+  | "house"
+  | "design"
+>[] {
   const found = new Set<number>();
-  const neighbors: NeighborRecord[] = [];
+  const neighbors: Omit<
+    NeighborRecord,
+    | "profile"
+    | "travelProfile"
+    | "abilityDescriptions"
+    | "abilities"
+    | "signature"
+    | "house"
+    | "design"
+  >[] = [];
   const bodyTypes: Record<string, NeighborBodyType> = {
     NpcSmall: "small",
     NpcMedium: "medium",

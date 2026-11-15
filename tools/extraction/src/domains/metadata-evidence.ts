@@ -1,5 +1,5 @@
 import { readCatalogMetadata } from "../source/client/catalog-metadata.ts";
-import { localizedSources } from "../extraction/collection/evidence.ts";
+import { localizedSources, tableSource } from "../extraction/collection/evidence.ts";
 import { acquisition } from "../extraction/collection/details/client.ts";
 import path from "node:path";
 import type { Dataset } from "@loomix/schema/dataset";
@@ -54,14 +54,15 @@ export function metadataEvidence(work: string, dataset: Dataset): FieldEvidence[
     id: number,
     fieldPath: string,
     sources: FieldEvidence["sources"],
+    reasonCode: string | null = null,
   ) =>
     output.push({
       entity: { collection, id },
       fieldPath,
-      status: "confirmed",
+      status: reasonCode ? "absent" : "confirmed",
       sources,
       ruleId: "client.catalog.exact_metadata",
-      reasonCode: null,
+      reasonCode,
     });
   for (const record of dataset.catalog.records) {
     const row = context.main.get(record.id);
@@ -129,9 +130,53 @@ export function metadataEvidence(work: string, dataset: Dataset): FieldEvidence[
     add(
       "catalog.references",
       reference.id,
-      "$",
-      localizedSources(context.tables, row, [0, 1]).map(tableProof),
+      "name",
+      [tableSource(context.tables, row, [0]), ...localizedSources(context.tables, row, [1])].map(
+        tableProof,
+      ),
     );
+  }
+  for (const collection of dataset.catalog.craftingCollections) {
+    const row = context.tables.byId(180).get(collection.id)!;
+    for (const [field, columns] of [
+      ["id", [0]],
+      ["name", [1]],
+      ["acquisitionText", [3]],
+    ] as const)
+      add(
+        "catalog.craftingCollections",
+        collection.id,
+        field,
+        (field === "id"
+          ? [tableSource(context.tables, row, [0])]
+          : localizedSources(context.tables, row, [...columns])
+        ).map(tableProof),
+        collection[field] === null ? "collection_field_not_configured" : null,
+      );
+  }
+  for (const reference of dataset.catalog.references) {
+    const rows = context.tables.rows(325).filter((row) => context.tables.id(row) === reference.id);
+    for (const [field, column] of [
+      ["description", 27],
+      ["usageText", 26],
+    ] as const) {
+      const sources = rows.flatMap((row) =>
+        [
+          tableSource(context.tables, row, [0]),
+          ...localizedSources(context.tables, row, [column]),
+        ].map(tableProof),
+      );
+      output.push({
+        entity: { collection: "catalog.references", id: reference.id },
+        fieldPath: field,
+        status: reference[field] === null ? "absent" : "confirmed",
+        sources: sources.length
+          ? sources
+          : [tableSource(context.tables, context.main.get(reference.id)!, [0])].map(tableProof),
+        ruleId: "client.catalog.reference_details",
+        reasonCode: reference[field] === null ? "item_detail_not_configured" : null,
+      });
+    }
   }
   for (const tag of dataset.gameplayTags.tags)
     add("gameplayTags.tags", tag.id, "$", context.gameplayTags.sources(tag.id));

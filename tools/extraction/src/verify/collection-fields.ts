@@ -6,8 +6,6 @@ import { verifyTreeDrops } from "./tree-drops.ts";
 
 export function verifyCollectionFields(catalog: CollectionObservations, tables: Tables) {
   const content = tables.byId(93);
-  const recipeByDish = new Map(tables.rows(122).map((row) => [tables.uint(row, 4), row]));
-  const difficulties = tables.byId(121);
   const creatureScales = tables.byId(132);
   const requiredFields = new Map<string, unknown>();
   const acquisition = (id: number) => {
@@ -75,41 +73,6 @@ export function verifyCollectionFields(catalog: CollectionObservations, tables: 
         creatureSizeRange(min, max, multiplier),
         `${record.id}.attributes.sizeRange`,
       );
-    }
-    if (record.category === "dishes") {
-      const recipe = recipeByDish.get(record.id);
-      const tastes = tables.string(recipe, 15);
-      expect(
-        "attributes.tastes",
-        record.attributes.tastes,
-        tastes ? [...new Set(tastes.split("|"))] : null,
-      );
-      const row = difficulties.get(tables.uint(recipe, 2));
-      const rawExpression = tables.string(row, 2);
-      let requirement: unknown = null;
-      if (rawExpression) {
-        const input: unknown = JSON.parse(rawExpression);
-        assert.ok(typeof input === "object" && input !== null && "childList" in input);
-        const list = input.childList;
-        assert.ok(
-          typeof list === "object" &&
-            list !== null &&
-            "nodeList" in list &&
-            Array.isArray(list.nodeList) &&
-            list.nodeList.length === 1,
-        );
-        const node: unknown = list.nodeList[0];
-        assert.ok(typeof node === "object" && node !== null && "leaf" in node);
-        const leaf = node.leaf;
-        assert.ok(typeof leaf === "object" && leaf !== null);
-        const entries = Object.entries(leaf);
-        assert.equal(entries.length, 1);
-        const [kind, parameters] = entries[0]!;
-        assert.ok(kind === "chefLevelGreaterOrEqual" || kind === "learnCookRecipeInCategory");
-        assert.ok(typeof parameters === "object" && parameters !== null);
-        requirement = { rawExpression, condition: { kind, ...parameters }, unresolvedReason: null };
-      }
-      expect("difficultyRequirement", record.difficultyRequirement, requirement);
     }
   }
   return { requiredFields };

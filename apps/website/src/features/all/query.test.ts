@@ -70,7 +70,7 @@ function data(...records: object[]) {
     },
   );
   addFixtureRecords(catalog, gameplayTags, ...records);
-  catalog.references.push({ id: 99, name: "隐藏材料" });
+  catalog.references.push({ id: 99, name: "隐藏材料", description: null, usageText: null });
   return createCollectionCatalog(catalog, assetsFixture(catalog), gameplayTags);
 }
 test("搜索只查询正式记录的编号、名称和介绍", () => {

@@ -2,6 +2,7 @@ import { expect, test } from "vite-plus/test";
 import { createFixture, type FixtureRows } from "../neighbors/fixtures/tables.ts";
 import { readCraftingRecipes } from "./read.ts";
 const rows = (): FixtureRows => ({
+  180: [],
   318: [
     [100, { text: "创想卡" }, 19],
     [200, { text: "家具" }, 1],
@@ -22,6 +23,8 @@ test("仅保留正式产物需要的有效制作配方，不准入卡片或材�
   expect(data.recipes).toEqual([
     {
       id: 100,
+      cardItemId: 100,
+      collectionId: null,
       productId: 200,
       quantity: 2,
       materials: [{ itemId: 300, quantity: 5 }],

@@ -6,7 +6,7 @@ import { datasetFixture, recordMetadata } from "./fixture.ts";
 
 function fixture() {
   const dataset = datasetFixture(
-    { formatVersion: 9, snapshotId: "a".repeat(64), locale: "zh-CN" },
+    { formatVersion: 10, snapshotId: "a".repeat(64), locale: "zh-CN" },
     { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" },
   );
   dataset.gameplayTags.tags = Array.from({ length: 5 }, (_, index) => ({

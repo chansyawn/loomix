@@ -3,6 +3,27 @@ import { CatalogSchema, emptyCatalog, parseCatalog, recordFields, recordTypes } 
 import { attributeSchemas, recordSchemas } from "./records.ts";
 import type { Catalog } from "./catalog.ts";
 import type { CatalogRecord, ItemRecord } from "./records.ts";
+function setRecipe(
+  catalog: Catalog,
+  productId: number,
+  recipe: { slots: import("@loomix/schema/catalog").Recipe["slots"] } | null,
+) {
+  catalog.cookingRecipes =
+    recipe === null
+      ? []
+      : [
+          {
+            id: 1000,
+            productId,
+            recipeItemId: null,
+            difficulty: null,
+            difficultyRequirement: null,
+            cookware: null,
+            tastes: null,
+            ...recipe,
+          },
+        ];
+}
 const source = { gameVersion: "0.95.2", dataRevision: 1449213, resourceRevision: 1391927 };
 const base = {
   name: "fixture",
@@ -239,7 +260,7 @@ test("ingredient categories and recursive recipes validate catalog references", 
     { id: 101, tagName: "食材_A", name: "A", parentId: 100, itemIds: [] },
     { id: 102, tagName: "食材_B", name: "B", parentId: 100, itemIds: [plant.id] },
   ];
-  dish.recipe = {
+  setRecipe(catalog, dish.id, {
     slots: [
       {
         field: 20,
@@ -261,7 +282,7 @@ test("ingredient categories and recursive recipes validate catalog references", 
         quantity: null,
       },
     ],
-  };
+  });
   expect(parseCatalog(catalog)).toEqual(catalog);
 });
 
@@ -280,11 +301,11 @@ test("ingredient and recipe references reject duplicates, invalid kinds, and unk
     { id: 100, tagName: "食材", name: "食材", parentId: null, itemIds: [plant.id] },
     { id: 101, tagName: "食材_A", name: "A", parentId: 100, itemIds: [] },
   ];
-  dish.recipe = {
+  setRecipe(catalog, dish.id, {
     slots: [
       { field: 20, rawExpression: "食材_A", expression: null, itemIds: null, quantity: null },
     ],
-  };
+  });
   expect(parseCatalog(catalog)).toEqual(catalog);
 
   const invalidMutations: ((value: Catalog) => void)[] = [
@@ -298,7 +319,7 @@ test("ingredient and recipe references reject duplicates, invalid kinds, and unk
         (entry): entry is Extract<CatalogRecord, { category: "dishes"; kind: "item" }> =>
           entry.category === "dishes" && entry.kind === "item",
       )!;
-      record.recipe = {
+      setRecipe(value, record.id, {
         slots: [
           {
             field: 20,
@@ -308,14 +329,14 @@ test("ingredient and recipe references reject duplicates, invalid kinds, and unk
             quantity: null,
           },
         ],
-      };
+      });
     },
     (value) => {
       const record = value.items.find(
         (entry): entry is Extract<CatalogRecord, { category: "dishes"; kind: "item" }> =>
           entry.category === "dishes" && entry.kind === "item",
       )!;
-      record.recipe = {
+      setRecipe(value, record.id, {
         slots: [
           {
             field: 20,
@@ -325,7 +346,7 @@ test("ingredient and recipe references reject duplicates, invalid kinds, and unk
             quantity: null,
           },
         ],
-      };
+      });
     },
   ];
   for (const mutate of invalidMutations) {
@@ -333,10 +354,10 @@ test("ingredient and recipe references reject duplicates, invalid kinds, and unk
     mutate(value);
     expect(() => parseCatalog(value)).toThrow();
   }
-  dish.recipe = { slots: [] };
+  setRecipe(catalog, dish.id, { slots: [] });
   expect(parseCatalog(catalog)).toEqual(catalog);
-  dish.recipe = { slots: null };
+  setRecipe(catalog, dish.id, { slots: null });
   expect(parseCatalog(catalog)).toEqual(catalog);
-  dish.recipe = null;
+  setRecipe(catalog, dish.id, null);
   expect(parseCatalog(catalog)).toEqual(catalog);
 });

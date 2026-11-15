@@ -59,6 +59,9 @@ export function linkedAssets(database: NeighborDatabase): NeighborAssetRef[] {
   for (const n of database.neighbors) {
     add(n.avatarPath, [n.id]);
     add(n.npc2Path, [n.id]);
+    for (const ability of n.abilities) add(ability.icon, [n.id]);
+    for (const stage of n.house?.stages ?? []) add(stage.image, [n.id]);
+    add(n.travelProfile?.invitation.reactionKey ?? null, [n.id]);
   }
   for (const s of database.stars)
     for (const p of [s.galaxyModelPath, s.playerModelPath, s.skyModelPath, s.illustrationPath])

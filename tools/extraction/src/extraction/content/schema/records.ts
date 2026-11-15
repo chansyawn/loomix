@@ -49,7 +49,7 @@ export const attributeSchemas = {
   plants: z.strictObject({
     originGalaxy: text,
   }),
-  dishes: z.strictObject({ difficulty: text, galaxyFlavor: text, cookware: text, effects: text }),
+  dishes: z.strictObject({ galaxyFlavor: text, effects: text }),
   miscellaneous: z.strictObject({}),
 };
 export function createRecordSchemas(image: z.ZodType<string | null> = DeliveredImageSchema) {
@@ -92,7 +92,7 @@ export function createRecordSchemas(image: z.ZodType<string | null> = DeliveredI
     "creatures.series": collection("creatures", "series"),
     "plants.item": item("plants"),
     "plants.series": collection("plants", "series"),
-    "dishes.item": item("dishes").extend({ recipe: RecipeSchema.nullable().default(null) }),
+    "dishes.item": item("dishes"),
     "dishes.series": collection("dishes", "series"),
     "miscellaneous.item": item("miscellaneous"),
   };

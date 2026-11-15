@@ -180,7 +180,7 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
     const dish = all.find((entry) => entry.id === recipe.productId);
     assert.ok(dish && dish.category === "dishes" && dish.kind === "item", "Dish recipe scope");
     assert.deepEqual(
-      dish.recipe,
+      { slots: content.cookingRecipes.find((entry) => entry.id === recipe.recipeId)?.slots },
       {
         slots: recipe.fields.ingredientSlots.length
           ? recipe.fields.ingredientSlots.map((slot) => ({

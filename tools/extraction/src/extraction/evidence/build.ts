@@ -58,6 +58,7 @@ export function finalizeEvidence(work: string): void {
     "selected-images",
     "image-manifest",
     "source-audit",
+    "cooking-field-evidence",
     "cooking-audit",
     "cooking-evidence",
     "cooking-investigation",

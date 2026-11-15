@@ -12,7 +12,7 @@ const categories = [
 
 function datasetWithImages() {
   const dataset = emptyDataset(
-    { formatVersion: 9, snapshotId: "a".repeat(64), locale: "zh-CN" },
+    { formatVersion: 10, snapshotId: "a".repeat(64), locale: "zh-CN" },
     { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" },
   );
   dataset.neighbors.neighbors.push({
@@ -22,6 +22,13 @@ function datasetWithImages() {
     scaleValue: null,
     avatar: null,
     npc2Path: "Avatar/NPC2/NPC_11",
+    profile: { englishName: null, nickname: null, gender: null, birthday: null },
+    travelProfile: null,
+    abilityDescriptions: [],
+    abilities: [],
+    signature: { cookingRecipeId: null, friendshipOutfitItemId: null },
+    house: null,
+    design: { furnitureSetId: null, craftingCollectionId: null },
   });
   dataset.neighbors.additionalImages = categories.map((category) => ({
     key: `resource-${category}`,

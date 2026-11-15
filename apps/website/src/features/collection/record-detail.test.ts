@@ -24,7 +24,12 @@ function setup(href: string) {
       series: [plantSeriesFixture({ id: 100, plantIds: [1] })],
     }),
   });
-  resources.catalog.references.push({ id: 99, name: "仅供引用" });
+  resources.catalog.references.push({
+    id: 99,
+    name: "仅供引用",
+    description: null,
+    usageText: null,
+  });
   const request = vi.fn(fixtureRequest(resources));
   vi.stubGlobal("fetch", request);
   const root = createRootRoute();

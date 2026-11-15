@@ -23,12 +23,14 @@ export function baseObservations(catalog: {
   source: Catalog["source"];
   items: CatalogRecordObserved[];
   ingredientCategories: Catalog["ingredientCategories"];
+  cookingRecipes: Catalog["cookingRecipes"];
 }): Catalog {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     source: catalog.source,
     ingredientCategories: catalog.ingredientCategories,
     items: catalog.items.map(baseRecord),
+    cookingRecipes: catalog.cookingRecipes,
   };
 }
 

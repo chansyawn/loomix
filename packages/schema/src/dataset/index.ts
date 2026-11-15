@@ -28,6 +28,8 @@ export function emptyDataset(context: Dataset["context"], source: Dataset["sourc
       references: [],
       clientTypes: [],
       craftingRecipes: [],
+      cookingRecipes: [],
+      craftingCollections: [],
       growths: [],
     },
     neighbors: {

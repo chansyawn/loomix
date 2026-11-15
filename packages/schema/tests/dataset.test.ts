@@ -5,7 +5,7 @@ import { CatalogSchema } from "../src/catalog/index.ts";
 import { parseRelease } from "../src/release/index.ts";
 import { referencedImages } from "../src/dataset/images.ts";
 import { parseNeighbors } from "../src/neighbors/index.ts";
-const context = { formatVersion: 9, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
+const context = { formatVersion: 10, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
 const source = { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" };
 const base = {
   ...recordMetadata(),
@@ -48,7 +48,7 @@ test("acquisition is the only item acquisition field and neighbor rewards are re
 });
 test("reference identity is separate from formal admission", () => {
   const dataset = datasetFixture(context, source);
-  dataset.catalog.references.push({ id: 1, name: "材料" });
+  dataset.catalog.references.push({ id: 1, name: "材料", description: null, usageText: null });
   expect(validateDataset(dataset)).toEqual([]);
   dataset.catalog.records.push({
     ...base,
@@ -71,8 +71,15 @@ test("gift preferences reference known neighbors, items, and the shared tag dict
     scaleValue: null,
     avatar: null,
     npc2Path: "Avatar/NPC2/NPC_11",
+    profile: { englishName: null, nickname: null, gender: null, birthday: null },
+    travelProfile: null,
+    abilityDescriptions: [],
+    abilities: [],
+    signature: { cookingRecipeId: null, friendshipOutfitItemId: null },
+    house: null,
+    design: { furnitureSetId: null, craftingCollectionId: null },
   });
-  dataset.catalog.references.push({ id: 50000, name: "物品" });
+  dataset.catalog.references.push({ id: 50000, name: "物品", description: null, usageText: null });
   dataset.neighbors.giftPreferences.push({
     key: "11:love",
     neighborId: 11,
@@ -110,11 +117,18 @@ test("neighbor clothing is a formal catalog record and keeps configured prices d
     scaleValue: null,
     avatar: null,
     npc2Path: "Avatar/NPC2/NPC_11",
+    profile: { englishName: null, nickname: null, gender: null, birthday: null },
+    travelProfile: null,
+    abilityDescriptions: [],
+    abilities: [],
+    signature: { cookingRecipeId: null, friendshipOutfitItemId: null },
+    house: null,
+    design: { furnitureSetId: null, craftingCollectionId: null },
   });
   const image = { assetId: "neighbor-outfit-icon", variant: "icon" as const };
   dataset.catalog.references.push(
-    { id: 60001, name: "玩家帽子" },
-    { id: 200014, name: "友邻服饰币" },
+    { id: 60001, name: "玩家帽子", description: null, usageText: null },
+    { id: 200014, name: "友邻服饰币", description: null, usageText: null },
   );
   dataset.catalog.records.push({
     ...base,
@@ -164,7 +178,10 @@ test("neighbor clothing is a formal catalog record and keeps configured prices d
 });
 test("duplicate entities, dangling groups and ingredient cycles are reported together", () => {
   const dataset = datasetFixture(context, source);
-  dataset.catalog.references.push({ id: 1, name: "物品" }, { id: 1, name: "物品" });
+  dataset.catalog.references.push(
+    { id: 1, name: "物品", description: null, usageText: null },
+    { id: 1, name: "物品", description: null, usageText: null },
+  );
   dataset.catalog.records.push({
     ...base,
     kind: "furniture.set",
@@ -226,7 +243,7 @@ test("all nested image references use the same traversal and asset coverage chec
 
 test("planting stages must target formal plants, not auxiliary references", () => {
   const dataset = datasetFixture(context, source);
-  dataset.catalog.references.push({ id: 1, name: "植物" });
+  dataset.catalog.references.push({ id: 1, name: "植物", description: null, usageText: null });
   dataset.catalog.records.push({
     ...base,
     id: 10,

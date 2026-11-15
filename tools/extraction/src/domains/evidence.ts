@@ -23,6 +23,9 @@ const fields: Record<string, string> = {
 };
 
 interface AuditRecord {
+  fieldPath?: string;
+  status?: "confirmed" | "absent" | "unresolved";
+  reasonCode?: string | null;
   collection: string;
   key: string | number;
   source:
@@ -162,15 +165,26 @@ export function buildDomainEvidence(
         );
       });
       if (!entity) continue;
+      const fieldValue = proof.fieldPath
+        ?.split(".")
+        .reduce<unknown>(
+          (value, key) =>
+            value && typeof value === "object" ? Reflect.get(value, key) : undefined,
+          entity,
+        );
+      const missingImage =
+        proof.status === "confirmed" &&
+        /(?:image|icon)$/.test(proof.fieldPath ?? "") &&
+        fieldValue === null;
       add({
         entity: { collection: `${domain}.${name}`, id: key },
-        fieldPath: "$",
-        status: "confirmed",
+        fieldPath: proof.fieldPath ?? "$",
+        status: missingImage ? "unresolved" : (proof.status ?? "confirmed"),
         sources: [
           proof.source.kind === "asset" ? proof.source : { kind: "table", ...proof.source },
         ],
         ruleId: `client.${domain}.${name}`,
-        reasonCode: null,
+        reasonCode: missingImage ? "configured_image_not_exported" : (proof.reasonCode ?? null),
       });
     }
   }
@@ -206,6 +220,9 @@ export function readDomainEvidence(work: string, dataset: Dataset) {
         records: readJson<{ records: AuditRecord[] }>(path.join(work, "island-audit.json")).records,
       },
     ],
+  );
+  evidence.fields.push(
+    ...readJson<FieldEvidence[]>(path.join(work, "cooking-field-evidence.json")),
   );
   evidence.fields.push(...metadataEvidence(work, dataset));
   evidence.fields.push(...plantingDomainEvidence(work, dataset));

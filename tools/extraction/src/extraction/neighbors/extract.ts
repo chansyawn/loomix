@@ -1,3 +1,8 @@
+import { enrichFieldEvidence } from "./observations.ts";
+import { readProfile } from "./profiles.ts";
+import { readAbilities } from "./abilities.ts";
+import { readHouse } from "./housing.ts";
+import { readDesign } from "./themes.ts";
 import { readRoster, readStars, readStories, readTravelReactions } from "./adapters.ts";
 import { readEventTags, readIslands, readRules } from "./system.ts";
 import { linkedAssets, readAssets } from "./resources.ts";
@@ -23,7 +28,13 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
   const { tables, source, assetIndex } = input;
   const records: NeighborEvidence[] = [];
   const exclusions: NeighborExclusion[] = [];
-  const neighbors = readRoster(tables, records, exclusions);
+  const neighbors = readRoster(tables, records, exclusions).map((neighbor) => ({
+    ...neighbor,
+    ...readProfile(tables, neighbor.id, records, exclusions),
+    ...readAbilities(tables, neighbor.id, records),
+    house: readHouse(tables, neighbor.id, records, exclusions),
+    design: readDesign(tables, neighbor.id, records, exclusions),
+  }));
   const accepted = new Set(neighbors.map((n) => n.id));
   const giftPreferences = readGiftPreferences(
     tables,
@@ -41,12 +52,23 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
     items: outfits,
   }).items;
   const database: NeighborDatabase = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     source: { ...source },
     neighbors,
     stars: readStars(tables, accepted, records),
     stories: readStories(tables, accepted, records),
-    travelReactions: readTravelReactions(tables, accepted, records),
+    travelReactions: readTravelReactions(tables, accepted, records).filter((reaction) => {
+      if (!reaction.textZh?.includes("(test)")) return true;
+      exclusions.push({
+        kind: "reaction",
+        key: reaction.key,
+        reason: "test_reaction",
+        sources: records
+          .filter((proof) => proof.collection === "travelReactions" && proof.key === reaction.key)
+          .map((proof) => proof.source),
+      });
+      return false;
+    }),
     encounterIslands: readIslands(tables, records),
     friendshipRules: readRules(tables, records, exclusions),
     eventTags: readEventTags(tables, records),
@@ -67,6 +89,7 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
       )
       .filter((s): s is string => !!s),
   );
+  enrichFieldEvidence(tables, records);
   const audit: NeighborExtractionAudit = {
     schemaVersion: 1,
     source: { ...source },

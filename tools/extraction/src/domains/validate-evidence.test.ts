@@ -4,7 +4,7 @@ import { validateDomainEvidence } from "./validate-evidence.ts";
 import type { FieldEvidence } from "../extraction/evidence/domain-schema.ts";
 const dataset = () =>
   emptyDataset(
-    { formatVersion: 9, snapshotId: "a".repeat(64), locale: "zh-CN" },
+    { formatVersion: 10, snapshotId: "a".repeat(64), locale: "zh-CN" },
     { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" },
   );
 const proof: FieldEvidence = {
@@ -17,7 +17,7 @@ const proof: FieldEvidence = {
 };
 test("证据必须指向真实实体及字段，拒绝旧集合和冲突状态", () => {
   const data = dataset();
-  data.catalog.references.push({ id: 1, name: "物品" });
+  data.catalog.references.push({ id: 1, name: "物品", description: null, usageText: null });
   expect(validateDomainEvidence(data, [proof, proof])).toHaveLength(1);
   expect(() => validateDomainEvidence(data, [{ ...proof, fieldPath: "quality" }])).toThrow(
     "Unknown evidence field",

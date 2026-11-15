@@ -1,3 +1,5 @@
+import { verifyCookingRecipes } from "../verify/cooking.ts";
+import { verifyCraftingRelations } from "../verify/crafting.ts";
 import { verifyCatalogMetadata } from "../verify/catalog-metadata.ts";
 import { catalogAdmissionIds } from "./content/catalog-admissions.ts";
 import { readCraftingRecipes } from "./crafting/read.ts";
@@ -52,6 +54,8 @@ export async function verifyExtraction(work: string, writeReports = true): Promi
     "Sealed crafting provenance",
   );
   const rebuilt = buildDataset(work);
+  verifyCookingRecipes(rebuilt.dataset.catalog, craftingContext.tables);
+  verifyCraftingRelations(rebuilt.dataset.catalog, craftingContext.tables);
   assert.deepEqual(
     parseDataset(readJson(path.join(work, "dataset.json"))),
     rebuilt.dataset,

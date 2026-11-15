@@ -53,3 +53,20 @@ export const TastesSchema = z.array(z.enum(["甜", "咸"])).min(1);
 export type Recipe = z.infer<typeof RecipeSchema>;
 export type CraftingRecipe = z.infer<typeof CraftingRecipeSchema>;
 export type DifficultyRequirement = z.infer<typeof DifficultyRequirementSchema>;
+
+export const CookingRecipeSchema = z.strictObject({
+  id: ItemIdSchema,
+  productId: ItemIdSchema,
+  recipeItemId: ItemIdSchema.nullable(),
+  difficulty: text,
+  difficultyRequirement: DifficultyRequirementSchema.nullable(),
+  cookware: z.string().min(1).array().nullable(),
+  tastes: TastesSchema.nullable(),
+  slots: RecipeSlotSchema.array().nullable(),
+});
+export const CraftingCollectionSchema = z.strictObject({
+  id: ItemIdSchema,
+  name: z.string().min(1),
+  acquisitionText: text,
+});
+export type CookingRecipe = z.infer<typeof CookingRecipeSchema>;
