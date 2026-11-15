@@ -28,7 +28,7 @@ function IngredientCard({ item }: { item: IngredientItem }) {
     >
       <Item variant="muted" size="sm" className="h-full">
         <div className="relative size-10 shrink-0 overflow-hidden rounded-lg border bg-muted/30">
-          <RecordImage image={item.image} name={item.name} compact />
+          <RecordImage image={item.image} name={item.name} inset="sm" fallback="icon" />
         </div>
         <ItemContent className="min-w-0">
           <span className="line-clamp-2 min-w-0 wrap-anywhere whitespace-normal" title={item.name}>

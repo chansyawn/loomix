@@ -78,7 +78,7 @@ test("resolves ordered preferences with record links without mixing neighbors", 
     {
       level: "love",
       name: "喜爱",
-      items: [{ id: 106, name: "星空卡片", recordId: null }],
+      items: [{ id: 106, name: "星空卡片", recordId: null, image: null }],
       tags: [],
     },
     {
@@ -93,13 +93,18 @@ test("resolves ordered preferences with record links without mixing neighbors", 
     {
       level: "dislike",
       name: "反感",
-      items: [{ id: 107, name: "海岛卡片", recordId: null }],
+      items: [{ id: 107, name: "海岛卡片", recordId: null, image: null }],
       tags: [],
     },
   ]);
   expect(view.neighbors[2].preferences[0].items).toEqual([
-    { id: 107, name: "海岛卡片", recordId: null },
-    { id: 1201, name: "星星石", recordId: 1201 },
+    { id: 107, name: "海岛卡片", recordId: null, image: null },
+    {
+      id: 1201,
+      name: "星星石",
+      recordId: 1201,
+      image: `assets/${"5".repeat(64)}.webp`,
+    },
   ]);
   expect(view.neighbors[1].preferences).toEqual([
     { level: "love", name: "喜爱", items: [], tags: [] },
@@ -127,8 +132,8 @@ test("rejects unknown tags and deduplicates known preference references", () => 
     level: "love",
     name: "喜爱",
     items: [
-      { id: 106, name: "星空卡片", recordId: null },
-      { id: 999, name: "未收录物品（999）", recordId: null },
+      { id: 106, name: "星空卡片", recordId: null, image: null },
+      { id: 999, name: "未收录物品（999）", recordId: null, image: null },
     ],
     tags: [{ id: 1, name: "树生水果" }],
   });

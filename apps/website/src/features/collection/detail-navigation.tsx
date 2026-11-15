@@ -44,7 +44,13 @@ export function CollectionDetailNavigation({
                   }}
                 >
                   <span aria-hidden="true" className="size-8 shrink-0 overflow-hidden rounded-lg">
-                    <RecordImage key={entry.image} image={entry.image} name={entry.name} compact />
+                    <RecordImage
+                      key={entry.image}
+                      image={entry.image}
+                      name={entry.name}
+                      inset="sm"
+                      fallback="icon"
+                    />
                   </span>
                   {entry.label ?? entry.name}
                 </Link>

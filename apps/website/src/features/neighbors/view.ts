@@ -35,6 +35,7 @@ function preferencesOf(
   neighborId: number,
   index: CatalogIndex,
   tags: ReturnType<typeof createGameplayTagIndex>,
+  image: ImageResolver,
 ) {
   return preferenceLevels.map(([level, name]) => {
     const entries = database.giftPreferences.filter(
@@ -43,11 +44,15 @@ function preferencesOf(
     return {
       level,
       name,
-      items: [...new Set(entries.flatMap((entry) => entry.itemIds))].map((id) => ({
-        id,
-        name: index.names.get(id) ?? `未收录物品（${id}）`,
-        recordId: index.records.has(id) ? id : null,
-      })),
+      items: [...new Set(entries.flatMap((entry) => entry.itemIds))].map((id) => {
+        const record = index.records.get(id);
+        return {
+          id,
+          name: index.names.get(id) ?? `未收录物品（${id}）`,
+          recordId: record?.id ?? null,
+          image: image(record?.image ?? null),
+        };
+      }),
       tags: [...new Set(entries.flatMap((entry) => entry.tagIds))].map((id) => ({
         id,
         name: tagLabel(tags.get(id)),
@@ -157,7 +162,7 @@ export function toNeighborsView(
         description: ability.description,
       })),
       house: houseOf(neighbor.house, index, image),
-      preferences: preferencesOf(database, neighbor.id, index, tags),
+      preferences: preferencesOf(database, neighbor.id, index, tags, image),
       stories: storiesOf(database, neighbor.id, image),
     };
   });

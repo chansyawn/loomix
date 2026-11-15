@@ -17,7 +17,17 @@ export function SeriesImage({
 }) {
   const preview = image ? [] : seriesPreview(memberIds, items);
   if (image || preview.length === 0)
-    return <RecordImage key={image} image={image} name={name} scene eager={eager} />;
+    return (
+      <RecordImage
+        key={image}
+        image={image}
+        name={name}
+        fit="cover"
+        inset="none"
+        className="aspect-2/1"
+        eager={eager}
+      />
+    );
   return (
     <div className="grid aspect-2/1 grid-cols-3 grid-rows-2 gap-1 overflow-hidden bg-muted p-2 [&_img]:p-2 [&>div]:aspect-auto [&>div]:min-h-0">
       {Array.from({ length: 6 }, (_, index) => {

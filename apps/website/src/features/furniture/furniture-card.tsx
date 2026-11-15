@@ -31,7 +31,16 @@ export function FurnitureSetCard({ set }: { set: FurnitureSet }) {
     <CollectionCard
       name={set.name}
       quality={set.quality}
-      image={<FurnitureImage key={set.image} image={set.image} name={set.name} scene />}
+      image={
+        <FurnitureImage
+          key={set.image}
+          image={set.image}
+          name={set.name}
+          fit="cover"
+          inset="none"
+          className="aspect-2/1"
+        />
+      }
       titleLink={
         <Link
           to="/collections/records/$id"

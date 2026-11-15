@@ -159,6 +159,7 @@ export function neighborFixture() {
       asset("favour", "illustration", "b".repeat(64)),
       asset("role", "illustration", "c".repeat(64)),
       asset("houseStage", "illustration", "4".repeat(64)),
+      asset("item", "icon", "5".repeat(64)),
     ],
   };
   const catalog = emptyDataset(fixtureContext, fixtureSource).catalog;
@@ -179,7 +180,7 @@ export function neighborFixture() {
       kind: "material",
       id: 1201,
       name: "星星石",
-      image: null,
+      image: { assetId: "item", variant: "icon" },
       description: null,
       quality: 1,
       displayCategory: null,
