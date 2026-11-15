@@ -4,11 +4,21 @@ import { NeighborsReturnLink } from "./navigation";
 import type { NeighborDetail } from "./data";
 import { NeighborImage } from "./image";
 import { NeighborPreferences } from "./preferences";
-import { NeighborStories, NeighborTravel } from "./reading";
+import { NeighborStories } from "./reading";
+import { NeighborAbilitiesSection } from "./abilities-section";
+import { NeighborHouseSection } from "./house-section";
 
 const fieldClassName = "min-w-0 space-y-1.5 rounded-xl bg-muted/40 p-3 sm:p-4";
 
 export function NeighborDetailPage({ neighbor }: { neighbor: NeighborDetail }) {
+  const heroImage = neighbor.favourImage ?? neighbor.roleImage;
+  const heroLabel = neighbor.favourImage ? "好感插画" : "角色立绘";
+  const profileFields = [
+    ["昵称", neighbor.profile.nickname],
+    ["英文名", neighbor.profile.englishName],
+    ["性别", neighbor.profile.gender],
+    ["生日", neighbor.profile.birthday],
+  ] as const;
   return (
     <div className="space-y-6 pb-8">
       <NeighborsReturnLink className="inline-flex items-center gap-2 rounded-md text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
@@ -22,8 +32,8 @@ export function NeighborDetailPage({ neighbor }: { neighbor: NeighborDetail }) {
       >
         <div className="mx-auto w-full max-w-104 overflow-hidden rounded-4xl border bg-muted/30 lg:sticky lg:top-6 lg:mx-0">
           <NeighborImage
-            image={neighbor.favourImage}
-            name={`${neighbor.name}的好感插画`}
+            image={heroImage}
+            name={`${neighbor.name}的${heroLabel}`}
             eager
             className="aspect-square p-4 sm:p-6"
           />
@@ -36,7 +46,13 @@ export function NeighborDetailPage({ neighbor }: { neighbor: NeighborDetail }) {
             {neighbor.name}
           </h1>
           <dl className="grid grid-cols-1 gap-3 text-sm/6 sm:grid-cols-2 sm:gap-4">
-            <div className={`${fieldClassName} sm:col-span-2`}>
+            {profileFields.map(([label, value]) => (
+              <div key={label} className={fieldClassName}>
+                <dt className="text-xs text-muted-foreground">{label}</dt>
+                <dd className="wrap-break-word">{value ?? "资料暂未收录"}</dd>
+              </div>
+            ))}
+            <div className={fieldClassName}>
               <dt className="text-xs text-muted-foreground">体型</dt>
               <dd>{neighbor.bodyType ? `${neighbor.bodyType}体型` : "体型资料暂未收录"}</dd>
             </div>
@@ -66,8 +82,9 @@ export function NeighborDetailPage({ neighbor }: { neighbor: NeighborDetail }) {
       </section>
       <div className="mt-10 space-y-10 border-t-3 border-dotted pt-8">
         <NeighborPreferences preferences={neighbor.preferences} />
+        <NeighborAbilitiesSection neighbor={neighbor} />
+        <NeighborHouseSection neighbor={neighbor} />
         <NeighborStories neighbor={neighbor} />
-        <NeighborTravel neighbor={neighbor} />
       </div>
     </div>
   );

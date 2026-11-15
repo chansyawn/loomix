@@ -1,8 +1,20 @@
 import { emptyDataset } from "@loomix/schema/dataset";
-import { fixtureSource } from "../collection-fixture";
+import { addFixtureRecords, fixtureContext, fixtureSource } from "../collection-fixture";
 import { parseNeighbors } from "@loomix/schema/neighbors";
 import type { Assets } from "@loomix/schema/assets";
-import { fixtureContext } from "../collection-fixture";
+import type { GameplayTags } from "@loomix/schema/gameplay-tags";
+
+function asset(assetId: string, variant: "icon" | "illustration", hash: string) {
+  return {
+    assetId,
+    variant,
+    file: `assets/${hash}.webp`,
+    sha256: hash,
+    bytes: 1,
+    width: 100,
+    height: 100,
+  };
+}
 
 export function neighborFixture() {
   const neighbors = ["蛮蛮", "幻雪", "图塔", "纳蕾娜"].map((name, index) => ({
@@ -12,12 +24,56 @@ export function neighborFixture() {
     scaleValue: null,
     avatar: null,
     npc2Path: `Avatar/${index + 1}`,
-    profile: { englishName: null, nickname: null, gender: null, birthday: null },
+    profile:
+      index === 0
+        ? {
+            englishName: "Manna",
+            nickname: "阿蛮",
+            gender: "female",
+            birthday: { month: 2, day: 22 },
+          }
+        : index === 1
+          ? {
+              englishName: "Mianduo",
+              nickname: "咪朵",
+              gender: "female",
+              birthday: { month: 7, day: 5 },
+            }
+          : { englishName: null, nickname: null, gender: null, birthday: null },
     travelProfile: null,
     abilityDescriptions: [],
-    abilities: [],
+    abilities:
+      index === 0
+        ? [{ key: "1:6", unlockLevel: 6, name: "切磋", description: "可以和蛮蛮切磋", icon: null }]
+        : [],
     signature: { cookingRecipeId: null, friendshipOutfitItemId: null },
-    house: null,
+    house:
+      index === 0
+        ? {
+            id: 17,
+            buildingPackageItemId: null,
+            stages: [
+              {
+                id: 1011,
+                level: 1,
+                name: "蛮蛮的草顶小棚",
+                description: null,
+                image: { assetId: "houseStage", variant: "illustration" },
+                upgradeHint: null,
+                upgradeRequirements: null,
+              },
+              {
+                id: 1012,
+                level: 2,
+                name: "蛮蛮的小屋",
+                description: "小屋说明",
+                image: { assetId: "houseStage", variant: "illustration" },
+                upgradeHint: null,
+                upgradeRequirements: null,
+              },
+            ],
+          }
+        : null,
     design: { furnitureSetId: null, craftingCollectionId: null },
   }));
   const database = parseNeighbors({
@@ -51,33 +107,22 @@ export function neighborFixture() {
         },
       ],
     })),
-    travelReactions: [
-      {
-        key: "fallback:1",
-        neighborId: null,
-        variantId: 1,
-        conditionType: null,
-        threshold: null,
-        resourceCategory: null,
-        secondaryThreshold: null,
-        reactionAsset: null,
-        text: null,
-      },
-      {
-        key: "1:1",
-        neighborId: 1,
-        variantId: 1,
-        conditionType: "Npc_Get_Items_Num_In_Travel",
-        threshold: "4",
-        resourceCategory: "6",
-        secondaryThreshold: "2",
-        reactionAsset: null,
-        text: "旅行真开心！",
-      },
-    ],
+    travelReactions: [],
     friendshipRules: [],
     eventTags: [],
     additionalImages: [
+      {
+        key: "role:1",
+        category: "role",
+        neighborId: 1,
+        image: { assetId: "role", variant: "illustration" },
+      },
+      {
+        key: "role:2",
+        category: "role",
+        neighborId: 2,
+        image: { assetId: "role", variant: "illustration" },
+      },
       {
         key: "favour:1",
         category: "favour",
@@ -95,7 +140,7 @@ export function neighborFixture() {
       { key: "1:dislike", neighborId: 1, level: "dislike", itemIds: [107], tagIds: [] },
       { key: "1:love", neighborId: 1, level: "love", itemIds: [106], tagIds: [] },
       { key: "1:favor", neighborId: 1, level: "favor", itemIds: [], tagIds: [1, 2] },
-      { key: "3:love", neighborId: 3, level: "love", itemIds: [107], tagIds: [] },
+      { key: "3:love", neighborId: 3, level: "love", itemIds: [107, 1201], tagIds: [] },
     ],
     resources: [
       ...neighbors.map((neighbor) => neighbor.npc2Path),
@@ -108,32 +153,39 @@ export function neighborFixture() {
   const mapping: Assets = {
     ...fixtureContext,
     kind: "assets",
-    images: ["star", "story", "favour"].map((assetId, index) => ({
-      assetId,
-      variant: "illustration",
-      file: `assets/${(index === 2 ? "b" : "a").repeat(64)}.webp`,
-      sha256: (index === 2 ? "b" : "a").repeat(64),
-      bytes: 1,
-      width: 100,
-      height: 100,
-    })),
+    images: [
+      asset("star", "illustration", "a".repeat(64)),
+      asset("story", "illustration", "a".repeat(64)),
+      asset("favour", "illustration", "b".repeat(64)),
+      asset("role", "illustration", "c".repeat(64)),
+      asset("houseStage", "illustration", "4".repeat(64)),
+    ],
   };
   const catalog = emptyDataset(fixtureContext, fixtureSource).catalog;
-  for (const id of [6, 7]) {
-    catalog.references.push({
-      id: id + 100,
-      name: id === 6 ? "星空卡片" : "海岛卡片",
-      description: null,
-      usageText: null,
-    });
-  }
-  const gameplayTags = {
+  const gameplayTags: GameplayTags = {
     ...fixtureContext,
-    kind: "gameplay-tags" as const,
+    kind: "gameplay-tags",
     tags: [
       { id: 1, displayName: "树生水果", internalName: "水果", enumName: null, parentId: null },
       { id: 2, displayName: null, internalName: "含水果", enumName: null, parentId: null },
     ],
   };
+  addFixtureRecords(
+    catalog,
+    gameplayTags,
+    { kind: "reference", id: 106, name: "星空卡片" },
+    { kind: "reference", id: 107, name: "海岛卡片" },
+    {
+      kind: "material",
+      id: 1201,
+      name: "星星石",
+      image: null,
+      description: null,
+      quality: 1,
+      displayCategory: null,
+      trade: null,
+      acquisition: null,
+    },
+  );
   return { database, mapping, catalog, gameplayTags };
 }

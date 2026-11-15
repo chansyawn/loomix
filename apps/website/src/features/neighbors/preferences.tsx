@@ -2,6 +2,7 @@ import { Badge } from "@/ui/components/badge";
 import type { NeighborDetail } from "./data";
 import { Link } from "@tanstack/react-router";
 import { allSearchForTag } from "../all/search";
+import { recordLocation } from "../collection/item-route";
 
 export function NeighborPreferences({
   preferences,
@@ -31,7 +32,18 @@ export function NeighborPreferences({
                     <dd>
                       <ul className="space-y-1 text-sm/6 wrap-break-word">
                         {group.items.map((item) => (
-                          <li key={item.id}>{item.name}</li>
+                          <li key={item.id}>
+                            {item.recordId === null ? (
+                              item.name
+                            ) : (
+                              <Link
+                                {...recordLocation({ id: item.recordId })}
+                                className="underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                              >
+                                {item.name}
+                              </Link>
+                            )}
+                          </li>
                         ))}
                       </ul>
                     </dd>
