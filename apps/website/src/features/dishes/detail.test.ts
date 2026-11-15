@@ -110,7 +110,9 @@ describe("dish details", () => {
 
   it("loads validated content and keeps network or schema failures retryable", async () => {
     vi.stubGlobal("fetch", vi.fn(fixtureRequest(catalogFixture({ dishes: data }))));
-    expect(await loadDishesDetail("items", "1")).toMatchObject({ record: first });
+    expect(await loadDishesDetail("items", "1")).toMatchObject({
+      record: { ...first, recipe: { slots: null } },
+    });
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })));
     await expect(loadDishesDetail("items", "1")).rejects.toThrow("503");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}")));

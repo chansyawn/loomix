@@ -9,7 +9,7 @@ import {
   parseNeighborDatabase,
 } from "../extraction/neighbors/schema.ts";
 import { parseIslandDatabase } from "../extraction/islands/schema.ts";
-import { parseNeighbors } from "@loomix/schema/neighbors";
+import { buildNeighbors, neighborReferencedItemIds } from "./neighbors.ts";
 import { parseWorld } from "@loomix/schema/world";
 import type {
   NeighborImageExport,
@@ -22,25 +22,8 @@ import { readJson, writeJson } from "../workflow/json.ts";
 import { createAssetRegistry } from "./assets.ts";
 import { buildCatalog } from "./catalog.ts";
 
-function localizeKeys(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(localizeKeys);
-  if (!value || typeof value !== "object") return value;
-  return Object.fromEntries(
-    Object.entries(value).map(([key, entry]) => [
-      key === "npcId"
-        ? "neighborId"
-        : key === "bodyZh" || key === "textZh"
-          ? "text"
-          : key.endsWith("Zh")
-            ? key.slice(0, -2)
-            : key,
-      localizeKeys(entry),
-    ]),
-  );
-}
-
 export function buildDataset(work: string) {
-  const identity = { formatVersion: 9, snapshotId: path.basename(work), locale: "zh-CN" } as const;
+  const identity = { formatVersion: 10, snapshotId: path.basename(work), locale: "zh-CN" } as const;
   const observations = RawCollectionObservationsSchema.parse(
     readJson(path.join(work, "raw/images-catalog-observations.json")),
   );
@@ -86,40 +69,8 @@ export function buildDataset(work: string) {
     reference === null ? null : (neighborImages.get(reference) ?? null);
   const islandImage = (reference: string | null) =>
     reference === null ? null : (islandImages.get(reference) ?? null);
-  const {
-    schemaVersion: _neighborVersion,
-    source: _neighborSource,
-    encounterIslands,
-    assets: resources,
-    ...neighborData
-  } = neighbors;
-  const roster = neighborData.neighbors.map(
-    ({ starKeys: _stars, storyKeys: _stories, assetPaths: _paths, avatarPath, ...neighbor }) => ({
-      ...neighbor,
-      avatar: neighborImage(avatarPath),
-    }),
-  );
-  const publicNeighbors = parseNeighbors({
-    ...identity,
-    kind: "neighbors",
-    ...(localizeKeys({
-      ...neighborData,
-      neighbors: roster,
-      stars: neighborData.stars.map(({ illustrationPath, ...star }) => ({
-        ...star,
-        image: neighborImage(illustrationPath),
-      })),
-      stories: neighborData.stories.map((story) => ({
-        ...story,
-        paragraphs: story.paragraphs.map(({ illustrationPath, ...paragraph }) => ({
-          ...paragraph,
-          image: neighborImage(illustrationPath),
-        })),
-      })),
-    }) as object),
-    resources,
-    additionalImages,
-  });
+  const { encounterIslands } = neighbors;
+  const publicNeighbors = buildNeighbors(neighbors, identity, neighborImage, additionalImages);
   const encounters = new Map(encounterIslands.map((island) => [island.id, island]));
   const publicWorld = parseWorld({
     ...identity,
@@ -151,15 +102,15 @@ export function buildDataset(work: string) {
     gameplayTags: { ...identity, kind: "gameplay-tags", tags: context.gameplayTags.tags },
     context: identity,
     source: neighbors.source,
-    catalog: buildCatalog(
+    catalog: buildCatalog({
       observations,
       context,
       assets,
       identity,
-      neighbors.giftPreferences.flatMap((preference) => preference.itemIds),
-      neighborClothing.items,
-      (reference) => neighborClothingImages.get(reference) ?? null,
-    ),
+      referencedItemIds: neighborReferencedItemIds(neighbors),
+      neighborOutfits: neighborClothing.items,
+      neighborImage: (reference) => neighborClothingImages.get(reference) ?? null,
+    }),
     neighbors: publicNeighbors,
     world: publicWorld,
   });

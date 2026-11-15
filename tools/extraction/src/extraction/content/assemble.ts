@@ -1,3 +1,5 @@
+import { cookingEvidence } from "./cooking-evidence.ts";
+import { readCookingRecipes } from "./cooking.ts";
 import fs from "node:fs";
 import path from "node:path";
 import { emptyCatalog, recordSchemas } from "../schema.ts";
@@ -14,6 +16,11 @@ import { buildCookingAudit } from "./recipes.ts";
 export async function structure(options: WorkOptions): Promise<void> {
   const context = createContentContext(options.work);
   const content = emptyCatalog(catalogSource);
+  content.cookingRecipes = readCookingRecipes(context);
+  writeJson(
+    path.join(options.work, "cooking-field-evidence.json"),
+    cookingEvidence(context, content.cookingRecipes),
+  );
   content.ingredientCategories = context.ingredientCategoryBuild.categories;
   const proofs: EvidenceRecord[] = [];
   const diagnostics: EvidenceRecord[] = [];

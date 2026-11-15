@@ -66,7 +66,7 @@ export interface NeighborExtractionAudit {
 }
 
 export interface NeighborExclusion {
-  kind: "npc" | "rule" | "asset" | "giftPreference" | "outfit";
+  kind: "npc" | "rule" | "asset" | "giftPreference" | "outfit" | "field" | "reaction";
   key: string;
   reason: string;
   sources: NeighborEvidenceSource[];
@@ -83,6 +83,9 @@ export type NeighborEvidenceSource =
   | { kind: "asset"; file: string; pathId: string };
 
 export interface NeighborEvidence {
+  fieldPath?: string;
+  status?: "confirmed" | "absent" | "unresolved";
+  reasonCode?: string | null;
   collection: keyof Omit<NeighborDatabase, "source" | "schemaVersion"> | "outfits";
   key: string;
   source: NeighborEvidenceSource;

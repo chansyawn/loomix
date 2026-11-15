@@ -2,7 +2,7 @@ import { expect, test } from "vite-plus/test";
 import { validateDataset } from "../src/dataset/index.ts";
 import { RecordSchema, resolveItem } from "../src/catalog/index.ts";
 import { datasetFixture, recordMetadata } from "./fixture.ts";
-const context = { formatVersion: 9, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
+const context = { formatVersion: 10, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
 function fixture() {
   const catalog = datasetFixture(context, {
     gameVersion: "test",
@@ -74,7 +74,7 @@ test("正式记录与仅供引用的物品身份分开解析", () => {
   const catalog = fixture();
   for (const id of [1, 2, 10, 20])
     expect(resolveItem(catalog, id)).toMatchObject({ kind: "record", value: { id } });
-  catalog.references.push({ id: 99, name: "材料" });
+  catalog.references.push({ id: 99, name: "材料", description: null, usageText: null });
   expect(resolveItem(catalog, 99)?.kind).toBe("reference");
   expect(resolveItem(catalog, 999)).toBeNull();
 });

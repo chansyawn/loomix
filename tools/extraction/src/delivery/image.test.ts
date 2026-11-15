@@ -81,7 +81,7 @@ test("asset delivery deduplicates identical outputs and separates target dimensi
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-webp-"));
   try {
     const dataset = datasetFixture(
-      { formatVersion: 9, snapshotId: "a".repeat(64), locale: "zh-CN" },
+      { formatVersion: 10, snapshotId: "a".repeat(64), locale: "zh-CN" },
       { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" },
     );
     const png = await sharp({ create: { width: 512, height: 512, channels: 4, background: "red" } })
@@ -176,7 +176,7 @@ test("diary and white atlas images are delivered with full references, original 
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-neighbor-images-"));
   try {
     const dataset = datasetFixture(
-      { formatVersion: 9, snapshotId: "a".repeat(64), locale: "zh-CN" },
+      { formatVersion: 10, snapshotId: "a".repeat(64), locale: "zh-CN" },
       { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" },
     );
     dataset.neighbors.neighbors.push({
@@ -186,6 +186,13 @@ test("diary and white atlas images are delivered with full references, original 
       scaleValue: null,
       avatar: null,
       npc2Path: "Avatar/NPC2/NPC_11",
+      profile: { englishName: null, nickname: null, gender: null, birthday: null },
+      travelProfile: null,
+      abilityDescriptions: [],
+      abilities: [],
+      signature: { cookingRecipeId: null, friendshipOutfitItemId: null },
+      house: null,
+      design: { furnitureSetId: null, craftingCollectionId: null },
     });
     const registry = createAssetRegistry();
     const sizes = [

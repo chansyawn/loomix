@@ -1,3 +1,4 @@
+import { CookingRecipeSchema } from "@loomix/schema/catalog";
 import { z } from "zod";
 import {
   CatalogSourceSchema,
@@ -12,10 +13,11 @@ import type { CatalogRecord, CatalogSource, RecordType } from "./records.ts";
 export function createCatalogSchema(image: z.ZodType<string | null> = DeliveredImageSchema) {
   return z
     .strictObject({
-      schemaVersion: z.literal(1),
+      schemaVersion: z.literal(2),
       source: CatalogSourceSchema,
       ingredientCategories: IngredientCategorySchema.array(),
       items: createCatalogRecordSchema(image).array(),
+      cookingRecipes: CookingRecipeSchema.array(),
     })
     .superRefine((catalog, ctx) => {
       const records = new Map<number, CatalogRecord>();
@@ -129,12 +131,27 @@ export function createCatalogSchema(image: z.ZodType<string | null> = DeliveredI
             validateExpression(term, [...path, "terms", termIndex]),
           );
       };
-      catalog.items.forEach((record, index) => {
-        if (record.category !== "dishes" || record.kind !== "item" || record.recipe === null)
-          return;
+      const recipeIds = new Set<number>();
+      const recipeProducts = new Set<number>();
+      catalog.cookingRecipes.forEach((record, index) => {
+        const product = records.get(record.productId);
+        if (!product || product.category !== "dishes" || product.kind !== "item")
+          ctx.addIssue({
+            code: "custom",
+            path: ["cookingRecipes", index, "productId"],
+            message: "Cooking product must be a formal dish",
+          });
+        if (recipeIds.has(record.id) || recipeProducts.has(record.productId))
+          ctx.addIssue({
+            code: "custom",
+            path: ["cookingRecipes", index],
+            message: "Duplicate cooking recipe identity or product",
+          });
+        recipeIds.add(record.id);
+        recipeProducts.add(record.productId);
         const slotFields = new Set<number>();
-        record.recipe.slots?.forEach((slot, slotIndex) => {
-          const path = ["items", index, "recipe", "slots", slotIndex];
+        record.slots?.forEach((slot, slotIndex) => {
+          const path = ["cookingRecipes", index, "slots", slotIndex];
           if (slotFields.has(slot.field))
             ctx.addIssue({
               code: "custom",
@@ -194,7 +211,13 @@ export function parseCatalog(input: unknown): Catalog {
   return CatalogSchema.parse(input);
 }
 export function emptyCatalog(source: CatalogSource): Catalog {
-  return { schemaVersion: 1, source: { ...source }, ingredientCategories: [], items: [] };
+  return {
+    schemaVersion: 2,
+    source: { ...source },
+    ingredientCategories: [],
+    items: [],
+    cookingRecipes: [],
+  };
 }
 export function recordType(record: Pick<CatalogRecord, "category" | "kind">): RecordType {
   return `${record.category}.${record.kind}` as RecordType;

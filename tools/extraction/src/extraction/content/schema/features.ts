@@ -1,10 +1,6 @@
 import { z } from "zod";
 import { createRecordSchemas, DeliveredImageSchema } from "./records.ts";
-import {
-  CraftingRecipeSchema,
-  DifficultyRequirementSchema,
-  TastesSchema,
-} from "@loomix/schema/catalog";
+import { CraftingRecipeSchema, DifficultyRequirementSchema } from "@loomix/schema/catalog";
 export {
   CraftingRecipeSchema,
   DifficultyRequirementSchema,
@@ -24,12 +20,7 @@ export function createObservedRecordSchemas(
       }),
     }),
     "plants.item": base["plants.item"],
-    "dishes.item": base["dishes.item"].extend({
-      attributes: base["dishes.item"].shape.attributes.extend({
-        tastes: TastesSchema.nullable(),
-      }),
-      difficultyRequirement: DifficultyRequirementSchema.nullable(),
-    }),
+    "dishes.item": base["dishes.item"],
   };
 }
 

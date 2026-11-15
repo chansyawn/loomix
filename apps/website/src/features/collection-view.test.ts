@@ -133,17 +133,8 @@ test("dish details retain tastes, structured effects, unlock requirements and ac
     quality: 2,
     trade: null,
     acquisition: [{ sourceId: 1, label: "烹饪", condition: null }],
-    difficulty: "招牌",
     galaxyFlavor: "禾夏风味",
-    cookware: ["烤箱"],
     effectsText: "增加 40 力气",
-    tastes: ["甜", "咸"],
-    recipe: null,
-    difficultyRequirement: {
-      rawExpression: "condition",
-      condition: { kind: "chefLevelGreaterOrEqual", level: 5 },
-      unresolvedReason: null,
-    },
     effects: [
       {
         effectId: 1000201,
@@ -154,6 +145,21 @@ test("dish details retain tastes, structured effects, unlock requirements and ac
         durationSeconds: 10,
       },
     ],
+  });
+
+  catalog.cookingRecipes.push({
+    id: 1001,
+    productId: 1,
+    recipeItemId: null,
+    difficulty: "招牌",
+    cookware: ["烤箱"],
+    tastes: ["甜", "咸"],
+    slots: null,
+    difficultyRequirement: {
+      rawExpression: "condition",
+      condition: { kind: "chefLevelGreaterOrEqual", level: 5 },
+      unresolvedReason: null,
+    },
   });
 
   expect(

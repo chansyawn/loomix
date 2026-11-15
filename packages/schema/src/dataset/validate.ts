@@ -78,7 +78,7 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
   const tagIndex = treeIssues.length ? null : createGameplayTagIndex(dataset.gameplayTags.tags);
   const root = tagIndex?.findByName("食材");
   const ingredientIds = new Set(root ? tagIndex!.subtree(root.id).map((tag) => tag.id) : []);
-  if (root) {
+  {
     const checkExpression = (expression: IngredientExpression, path: (string | number)[]): void => {
       if (expression.kind === "tag") {
         if (!ingredientIds.has(expression.tagId))
@@ -87,15 +87,13 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
       }
       expression.terms.forEach((term, index) => checkExpression(term, [...path, "terms", index]));
     };
-    catalog.records.forEach((record, index) => {
-      if (record.kind !== "dish") return;
-      record.recipe?.slots?.forEach((slot, slotIndex) => {
+    catalog.cookingRecipes.forEach((record, index) => {
+      record.slots?.forEach((slot, slotIndex) => {
         if (slot.expression === null) return;
         checkExpression(slot.expression, [
           "catalog",
-          "records",
+          "cookingRecipes",
           index,
-          "recipe",
           "slots",
           slotIndex,
           "expression",
@@ -103,6 +101,55 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
       });
     });
   }
+  const cookingIds = new Set(catalog.cookingRecipes.map((recipe) => recipe.id));
+  const collectionIds = new Set(catalog.craftingCollections.map((collection) => collection.id));
+  neighbors.neighbors.forEach((neighbor, index) => {
+    const path = ["neighbors", "neighbors", index];
+    const checkItem = (id: number | null, field: (string | number)[]) => {
+      if (id !== null && !resolveItem(catalog, id))
+        issue([...path, ...field], `Unknown item ${id}`);
+    };
+    if (
+      neighbor.signature.cookingRecipeId !== null &&
+      !cookingIds.has(neighbor.signature.cookingRecipeId)
+    )
+      issue([...path, "signature", "cookingRecipeId"], "Unknown signature recipe");
+    checkItem(neighbor.signature.friendshipOutfitItemId, ["signature", "friendshipOutfitItemId"]);
+    if (
+      neighbor.design.furnitureSetId !== null &&
+      items.get(neighbor.design.furnitureSetId)?.kind !== "furniture.set"
+    )
+      issue([...path, "design", "furnitureSetId"], "Unknown furniture set");
+    if (
+      neighbor.design.craftingCollectionId !== null &&
+      !collectionIds.has(neighbor.design.craftingCollectionId)
+    )
+      issue([...path, "design", "craftingCollectionId"], "Unknown crafting collection");
+    unique(neighbor.abilities, (ability) => ability.key, [...path, "abilities"]);
+    unique(neighbor.abilityDescriptions, (ability) => ability.key, [
+      ...path,
+      "abilityDescriptions",
+    ]);
+    if (neighbor.house) {
+      checkItem(neighbor.house.buildingPackageItemId, ["house", "buildingPackageItemId"]);
+      unique(neighbor.house.stages, (stage) => stage.id, [...path, "house", "stages"]);
+      unique(neighbor.house.stages, (stage) => stage.level, [...path, "house", "stages"]);
+      neighbor.house.stages.forEach((stage, stageIndex) => {
+        for (const group of ["materials", "blueprints"] as const) {
+          const amounts = stage.upgradeRequirements?.[group] ?? [];
+          unique(amounts, (amount) => amount.itemId, [
+            ...path,
+            "house",
+            "stages",
+            stageIndex,
+            group,
+          ]);
+          for (const amount of amounts)
+            checkItem(amount.itemId, ["house", "stages", stageIndex, group]);
+        }
+      });
+    }
+  });
   neighbors.giftPreferences.forEach((preference, index) => {
     const path = ["neighbors", "giftPreferences", index];
     if (!ids.has(preference.neighborId))

@@ -1,5 +1,14 @@
 import { z } from "zod";
-import { StoryLayoutSchema } from "@loomix/schema/neighbors";
+import {
+  NeighborProfileSchema,
+  TravelProfileSchema,
+  AbilityDescriptionSchema,
+  createAbilitySchema,
+  createHouseSchema,
+  SignatureSchema,
+  NeighborDesignSchema,
+  StoryLayoutSchema,
+} from "@loomix/schema/neighbors";
 
 type NeighborTravelReaction = {
   npcId: number | null;
@@ -42,6 +51,13 @@ const path = z
   );
 
 const record = z.strictObject({
+  profile: NeighborProfileSchema,
+  travelProfile: TravelProfileSchema.nullable(),
+  abilityDescriptions: AbilityDescriptionSchema.array(),
+  abilities: createAbilitySchema(path.nullable()).array(),
+  signature: SignatureSchema,
+  house: createHouseSchema(path.nullable()).nullable(),
+  design: NeighborDesignSchema,
   id: neighborId,
   nameZh: z.string().min(1),
   bodyType: z.enum(["small", "medium", "big"]).nullable(),
@@ -225,7 +241,7 @@ export const NeighborClothingDatabaseSchema = z
 
 export const NeighborDatabaseSchema = z
   .strictObject({
-    schemaVersion: z.literal(2),
+    schemaVersion: z.literal(3),
     source,
     neighbors: record.array(),
     stars: star.array(),
@@ -355,6 +371,9 @@ export const NeighborDatabaseSchema = z
     for (const n of database.neighbors) {
       checkPath(n.avatarPath);
       checkPath(n.npc2Path);
+      for (const ability of n.abilities) checkPath(ability.icon);
+      for (const stage of n.house?.stages ?? []) checkPath(stage.image);
+      checkPath(n.travelProfile?.invitation.reactionKey ?? null);
     }
     for (const s of database.stars)
       for (const p of [s.galaxyModelPath, s.playerModelPath, s.skyModelPath, s.illustrationPath])
@@ -388,6 +407,10 @@ export function neighborImagePaths(database: NeighborDatabase): string[] {
   return [
     ...new Set(
       [
+        ...database.neighbors.flatMap((neighbor) => [
+          ...neighbor.abilities.map((ability) => ability.icon),
+          ...(neighbor.house?.stages.map((stage) => stage.image) ?? []),
+        ]),
         ...database.stars.map((star) => star.illustrationPath),
         ...database.stories.flatMap((story) =>
           story.paragraphs.map((paragraph) => paragraph.illustrationPath),

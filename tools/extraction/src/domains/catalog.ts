@@ -1,3 +1,4 @@
+import { readCraftingCollections } from "../extraction/crafting/collections.ts";
 import assert from "node:assert/strict";
 import { catalogAdmissionIds } from "../extraction/content/catalog-admissions.ts";
 import { acquisition } from "../extraction/collection/details/client.ts";
@@ -13,15 +14,23 @@ import { readCraftingRecipes } from "../extraction/crafting/read.ts";
 import { createCatalogMetadata } from "./catalog-metadata.ts";
 import type { NeighborOutfit } from "../extraction/neighbors/types.ts";
 
-export function buildCatalog(
-  observations: CollectionObservations,
-  context: ContentContext,
-  assets: AssetRegistry,
-  identity: Dataset["context"],
-  referencedGiftItemIds: readonly number[] = [],
-  neighborOutfits: readonly NeighborOutfit[] = [],
-  neighborImage: (reference: string) => ReturnType<AssetRegistry["image"]>,
-): Catalog {
+export function buildCatalog({
+  observations,
+  context,
+  assets,
+  identity,
+  referencedItemIds = [],
+  neighborOutfits = [],
+  neighborImage,
+}: {
+  observations: CollectionObservations;
+  context: ContentContext;
+  assets: AssetRegistry;
+  identity: Dataset["context"];
+  referencedItemIds?: readonly number[];
+  neighborOutfits?: readonly NeighborOutfit[];
+  neighborImage: (reference: string) => ReturnType<AssetRegistry["image"]>;
+}): Catalog {
   const { tables } = context;
   const { clientTypes, metadata } = createCatalogMetadata(context);
   const references = new Set<number>();
@@ -32,6 +41,8 @@ export function buildCatalog(
     references: [],
     clientTypes,
     craftingRecipes: [],
+    craftingCollections: readCraftingCollections(tables),
+    cookingRecipes: structuredClone(observations.cookingRecipes),
     growths: [],
   };
   const display = (id: number, field: number): string[] | null => {
@@ -118,12 +129,7 @@ export function buildCatalog(
         catalog.records.push({
           ...common,
           kind: "dish",
-          difficulty: record.attributes.difficulty,
-          cookware: record.attributes.cookware === null ? null : [record.attributes.cookware],
           effectsText: record.attributes.effects,
-          tastes: record.attributes.tastes,
-          recipe: record.recipe,
-          difficultyRequirement: record.difficultyRequirement,
           effects: detail.dishEffects,
         });
         break;
@@ -192,10 +198,12 @@ export function buildCatalog(
     context,
     new Set(catalog.records.map((record) => record.id)),
   ).recipes;
-  for (const recipe of catalog.craftingRecipes)
+  for (const recipe of catalog.craftingRecipes) {
+    references.add(recipe.cardItemId);
     for (const material of recipe.materials ?? []) references.add(material.itemId);
+  }
   const items = new Map(catalog.records.map((record) => [record.id, record]));
-  for (const id of referencedGiftItemIds) references.add(id);
+  for (const id of referencedItemIds) references.add(id);
   for (const association of context.ingredientCategoryBuild.associations)
     references.add(association.itemId);
   const ingredientItemIds = new Map<number, number[]>();
@@ -215,19 +223,31 @@ export function buildCatalog(
       for (const offer of item.trade?.offers ?? [])
         if (offer.currencyItemId !== null) references.add(offer.currencyItemId);
     if (item.kind === "plant") for (const drop of item.drops ?? []) references.add(drop.itemId);
-    if (item.kind === "dish")
-      for (const slot of item.recipe?.slots ?? [])
-        if (slot.expression !== null) {
-          slot.itemIds = ingredientExpressionItemIds(slot.expression, categories);
-          for (const id of slot.itemIds) references.add(id);
-        }
+  }
+  for (const recipe of catalog.cookingRecipes) {
+    if (recipe.recipeItemId !== null) references.add(recipe.recipeItemId);
+    for (const slot of recipe.slots ?? [])
+      if (slot.expression !== null) {
+        slot.itemIds = ingredientExpressionItemIds(slot.expression, categories);
+        for (const id of slot.itemIds) references.add(id);
+      }
   }
   for (const id of [...references].sort((a, b) => a - b)) {
     if (items.has(id)) continue;
     const row = context.main.get(id);
     const name = plainText(tables.text(row, 1));
     if (!row || !name) throw new Error(`Unresolved referenced item ${id}`);
-    catalog.references.push({ id, name });
+    const ui = tables.rows(325).filter((entry) => tables.id(entry) === id);
+    const descriptions = [...new Set(ui.map((entry) => plainText(tables.text(entry, 27))))];
+    const usages = [...new Set(ui.map((entry) => plainText(tables.text(entry, 26))))];
+    if (descriptions.length > 1 || usages.length > 1)
+      throw new Error(`Conflicting referenced item details ${id}`);
+    catalog.references.push({
+      id,
+      name,
+      description: descriptions[0] ?? null,
+      usageText: usages[0] ?? null,
+    });
   }
   const ingredientRoot = context.vocabulary.tagIndex.findByName("食材");
   if (ingredientRoot) {

@@ -97,6 +97,7 @@ export async function extract(environmentId: string): Promise<string> {
             "missing-fields.json",
             "outside-members.json",
             "field-investigation.json",
+            "cooking-field-evidence.json",
             "cooking-audit.json",
             "cooking-evidence.json",
             "cooking-investigation.json",

@@ -6,6 +6,7 @@ type CraftingContext = { tables: Tables };
 
 export function readCraftingRecipes({ tables }: CraftingContext, admittedIds: ReadonlySet<number>) {
   const main = tables.byId(318);
+  const collections = tables.byId(180);
   const recipes: Catalog["craftingRecipes"] = [];
   const audit = [];
   const proofs = [];
@@ -14,7 +15,7 @@ export function readCraftingRecipes({ tables }: CraftingContext, admittedIds: Re
     const productId = tables.uint(row, 1);
     const validCard = tables.uint(main.get(id), 2) === 19;
     const included = validCard && productId !== null && admittedIds.has(productId);
-    const source = tableSource(tables, row, [0, 1, 2, 12, 13, 14, 15, 16, 17, 18, 19]);
+    const source = tableSource(tables, row, [0, 1, 2, 3, 12, 13, 14, 15, 16, 17, 18, 19]);
     audit.push({
       id,
       productId,
@@ -32,7 +33,12 @@ export function readCraftingRecipes({ tables }: CraftingContext, admittedIds: Re
     });
     if (new Set(materials.map((material) => material.itemId)).size !== materials.length)
       throw new Error(`Duplicate crafting material ${id}`);
+    const collectionId = tables.uint(row, 3);
+    if (collectionId !== null && !collections.has(collectionId))
+      throw new Error(`Unknown crafting collection ${id}:${collectionId}`);
     recipes.push({
+      cardItemId: id,
+      collectionId,
       id,
       productId,
       quantity: tables.uint(row, 2),

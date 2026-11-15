@@ -5,7 +5,7 @@ import { createRecordTagResolver } from "../src/catalog/index.ts";
 import { parseDataset, validateDataset } from "../src/dataset/index.ts";
 import { datasetFixture, recordMetadata } from "./fixture.ts";
 
-const context = { formatVersion: 9, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
+const context = { formatVersion: 10, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
 const tag = (id: number, internalName: string, parentId: number | null = null): GameplayTag => ({
   id,
   internalName,
@@ -57,7 +57,7 @@ test("物品、偏好和食谱引用同一标签身份，食谱受食材子树�
     manifestId: "1",
   });
   dataset.gameplayTags.tags = [tag(10, "食材"), tag(11, "食材_水果", 10), tag(20, "颜色")];
-  dataset.catalog.references.push({ id: 1, name: "苹果" });
+  dataset.catalog.references.push({ id: 1, name: "苹果", description: null, usageText: null });
   dataset.catalog.records.push({
     ...recordMetadata(),
     id: 2,
@@ -71,28 +71,29 @@ test("物品、偏好和食谱引用同一标签身份，食谱受食材子树�
     acquisition: null,
     tagFields: { ...recordMetadata().tagFields, ingredients: [11] },
     tagIds: [11],
+    effectsText: null,
+    effects: null,
+  });
+  dataset.catalog.cookingRecipes.push({
+    id: 100,
+    productId: 2,
+    recipeItemId: null,
     difficulty: null,
     cookware: null,
-    effectsText: null,
     tastes: null,
     difficultyRequirement: null,
-    effects: null,
-    recipe: {
-      slots: [
-        {
-          field: 20,
-          rawExpression: "食材_水果",
-          expression: { kind: "tag", tagId: 11 },
-          itemIds: [1],
-          quantity: null,
-        },
-      ],
-    },
+    slots: [
+      {
+        field: 20,
+        rawExpression: "食材_水果",
+        expression: { kind: "tag", tagId: 11 },
+        itemIds: [1],
+        quantity: null,
+      },
+    ],
   });
   expect(parseDataset(dataset).catalog.records[0]!.tagIds).toEqual([11]);
-  const recipeDish = dataset.catalog.records[0]!;
-  if (recipeDish.kind !== "dish") throw new Error("Expected dish");
-  recipeDish.recipe!.slots![0]!.expression = { kind: "tag", tagId: 20 };
+  dataset.catalog.cookingRecipes[0]!.slots![0]!.expression = { kind: "tag", tagId: 20 };
   const messages = validateDataset(dataset).map((issue) => issue.message);
   expect(messages).toContain("Unknown ingredient tag 20");
   dataset.catalog.records[0]!.tagIds = [999];

@@ -1,3 +1,4 @@
+import { parseReleaseManifest } from "@loomix/schema/release";
 import { expect, test, vi } from "vite-plus/test";
 import { parseCatalog } from "@loomix/schema/catalog";
 import { parseAssets } from "@loomix/schema/assets";
@@ -26,4 +27,15 @@ test("modified document bytes fail before domain parsing", async () => {
     "integrity mismatch",
   );
   expect(parse).not.toHaveBeenCalled();
+});
+
+test("旧公共版本在读取 manifest 时拒绝，不尝试补字段", async () => {
+  const original = fixtureRequest(catalogFixture());
+  const request: typeof fetch = async (input, init) => {
+    const response = await original(input, init);
+    if (!url(input).endsWith("release.json")) return response;
+    const manifest = parseReleaseManifest(await response.json());
+    return Response.json({ ...manifest, formatVersion: 9 });
+  };
+  await expect(createResourceReader(request)("catalog", parseCatalog)).rejects.toThrow();
 });

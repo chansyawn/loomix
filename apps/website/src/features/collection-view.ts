@@ -8,6 +8,7 @@ import type {
   Item,
   Quality,
   Recipe,
+  CookingRecipe,
 } from "@loomix/schema/catalog";
 import type { Assets } from "@loomix/schema/assets";
 import { createImageResolver } from "@loomix/schema/assets";
@@ -53,7 +54,7 @@ export type DishItem = CollectionRecord & {
   cookware: string | null;
   effectsText: string | null;
   effects: DishEffect[] | null;
-  tastes: Extract<Item, { kind: "dish" }>["tastes"];
+  tastes: CookingRecipe["tastes"];
   difficultyRequirement: DifficultyRequirement | null;
   acquisition: string | null;
   recipe: Recipe | null;
@@ -148,6 +149,12 @@ export function toCollectionView(
     recipes.push(recipe);
     recipesByProduct.set(recipe.productId, recipes);
   }
+  const cookingByProduct = new Map<number, CookingRecipe>();
+  for (const recipe of catalog.cookingRecipes) {
+    if (cookingByProduct.has(recipe.productId))
+      throw new Error(`Multiple cooking recipes for dish ${recipe.productId}`);
+    cookingByProduct.set(recipe.productId, recipe);
+  }
   const view: CollectionView = {
     ingredientTagSource: createIngredientTagSource(
       tagIndex,
@@ -225,15 +232,17 @@ export function toCollectionView(
       case "dish":
         view.dishes.items.push({
           ...common,
-          difficulty: record.difficulty,
+          difficulty: cookingByProduct.get(record.id)?.difficulty ?? null,
           galaxyFlavor: displayValues(tagsFor(record, "origins")),
-          cookware: displayValues(record.cookware),
+          cookware: displayValues(cookingByProduct.get(record.id)?.cookware ?? null),
           effectsText: record.effectsText,
           effects: record.effects,
-          tastes: record.tastes,
-          difficultyRequirement: record.difficultyRequirement,
+          tastes: cookingByProduct.get(record.id)?.tastes ?? null,
+          difficultyRequirement: cookingByProduct.get(record.id)?.difficultyRequirement ?? null,
           acquisition: acquisitionText(record.acquisition),
-          recipe: record.recipe,
+          recipe: cookingByProduct.has(record.id)
+            ? { slots: cookingByProduct.get(record.id)!.slots }
+            : null,
         });
         break;
       case "material":

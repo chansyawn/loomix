@@ -1,3 +1,4 @@
+import { verifyNeighborDetails } from "./verify-details.ts";
 import { neighborAllowlist, isAllowedNeighbor } from "./allowlist.ts";
 import assert from "node:assert/strict";
 import { profile } from "../../profile.ts";
@@ -10,6 +11,7 @@ export function verifyNeighbors(value: unknown, input: NeighborExtractionInput):
   const database = parseNeighborDatabase(value);
   assert.deepEqual(database.source, input.source, "Neighbor source metadata");
   const { tables } = input;
+  verifyNeighborDetails(database, tables);
   const roster = tables
     .rows(profile.roots.neighborsNpc)
     .filter((row) => isAllowedNeighbor(tables.id(row)))
@@ -57,6 +59,43 @@ export function verifyNeighbors(value: unknown, input: NeighborExtractionInput):
       counts,
       profile.expectedNeighbors,
       "Neighbor snapshot counts changed; re-confirm the layout and profile",
+    );
+    const details = database.neighbors;
+    assert.deepEqual(
+      {
+        profiles: details.length,
+        birthdays: details.filter((neighbor) => neighbor.profile.birthday !== null).length,
+        nicknames: details.filter((neighbor) => neighbor.profile.nickname !== null).length,
+        travelProfiles: details.filter((neighbor) => neighbor.travelProfile !== null).length,
+        specialties: details.reduce(
+          (sum, neighbor) => sum + (neighbor.travelProfile?.specialties.length ?? 0),
+          0,
+        ),
+        abilityNeighbors: details.filter((neighbor) => neighbor.abilities.length > 0).length,
+        abilities: details.reduce((sum, neighbor) => sum + neighbor.abilities.length, 0),
+        descriptionNeighbors: details.filter((neighbor) => neighbor.abilityDescriptions.length > 0)
+          .length,
+        signatureRecipes: details.filter((neighbor) => neighbor.signature.cookingRecipeId !== null)
+          .length,
+        signatureOutfits: details.filter(
+          (neighbor) => neighbor.signature.friendshipOutfitItemId !== null,
+        ).length,
+        houses: details.filter((neighbor) => neighbor.house !== null).length,
+        stages: details.reduce((sum, neighbor) => sum + (neighbor.house?.stages.length ?? 0), 0),
+        houseDescriptions: details
+          .flatMap((neighbor) => neighbor.house?.stages ?? [])
+          .filter((stage) => stage.description !== null).length,
+        publishedThemeLinks: details.filter(
+          (neighbor) =>
+            neighbor.design.furnitureSetId !== null ||
+            neighbor.design.craftingCollectionId !== null,
+        ).length,
+        publishedRequirements: details
+          .flatMap((neighbor) => neighbor.house?.stages ?? [])
+          .filter((stage) => stage.upgradeRequirements !== null).length,
+      },
+      profile.expectedNeighborDetails,
+      "Neighbor detail coverage and semantic admission baseline",
     );
     const paragraphs = database.stories.flatMap((story) => story.paragraphs);
     assert.deepEqual(

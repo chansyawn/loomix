@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createGrowthSchema, SeedDataSchema } from "@loomix/schema/catalog";
+import { CookingRecipeSchema, createGrowthSchema, SeedDataSchema } from "@loomix/schema/catalog";
 import {
   DropSchema as drop,
   TradeSchema as trade,
@@ -71,10 +71,11 @@ export function createCollectionObservationsSchema(
   const growthSchema = createGrowthSchema(image);
   return z
     .strictObject({
-      schemaVersion: z.literal(1),
+      schemaVersion: z.literal(2),
       source: CatalogSourceSchema,
       ingredientCategories: IngredientCategorySchema.array(),
       items: createObservedRecordSchema(image).array(),
+      cookingRecipes: CookingRecipeSchema.array(),
       seeds: seedSchema.array(),
       growths: growthSchema.array(),
       details: collectionDetailSchema.array(),

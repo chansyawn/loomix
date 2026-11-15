@@ -12,6 +12,13 @@ export function neighborFixture() {
     scaleValue: null,
     avatar: null,
     npc2Path: `Avatar/${index + 1}`,
+    profile: { englishName: null, nickname: null, gender: null, birthday: null },
+    travelProfile: null,
+    abilityDescriptions: [],
+    abilities: [],
+    signature: { cookingRecipeId: null, friendshipOutfitItemId: null },
+    house: null,
+    design: { furnitureSetId: null, craftingCollectionId: null },
   }));
   const database = parseNeighbors({
     ...fixtureContext,
@@ -113,7 +120,12 @@ export function neighborFixture() {
   };
   const catalog = emptyDataset(fixtureContext, fixtureSource).catalog;
   for (const id of [6, 7]) {
-    catalog.references.push({ id: id + 100, name: id === 6 ? "星空卡片" : "海岛卡片" });
+    catalog.references.push({
+      id: id + 100,
+      name: id === 6 ? "星空卡片" : "海岛卡片",
+      description: null,
+      usageText: null,
+    });
   }
   const gameplayTags = {
     ...fixtureContext,

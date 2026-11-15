@@ -125,7 +125,7 @@ test("掉落保留来源树种、概率和果实，不合并系列成员的概�
     }),
   });
   catalog.records = catalog.records.filter((record) => record.id !== 3);
-  catalog.references.push({ id: 3, name: "树胶" });
+  catalog.references.push({ id: 3, name: "树胶", description: null, usageText: null });
   const data = toCollectionView(
     catalog,
     assetsFixture(catalog),

@@ -11,12 +11,7 @@ import {
   QualitySchema,
 } from "./common.ts";
 import { NeighborClothingSchema } from "./neighbor-clothing.ts";
-import {
-  DifficultyRequirementSchema,
-  RecipeSchema,
-  TastesSchema,
-  CraftingRecipeSchema,
-} from "./recipes.ts";
+import { CookingRecipeSchema, CraftingCollectionSchema, CraftingRecipeSchema } from "./recipes.ts";
 
 export * from "./recipes.ts";
 export * from "./growth.ts";
@@ -90,12 +85,7 @@ export const ItemSchema = z.discriminatedUnion("kind", [
   }),
   item.extend({
     kind: z.literal("dish"),
-    difficulty: text,
-    cookware: texts,
     effectsText: text,
-    tastes: TastesSchema.nullable(),
-    recipe: RecipeSchema.nullable(),
-    difficultyRequirement: DifficultyRequirementSchema.nullable(),
     effects: z
       .array(
         z.strictObject({
@@ -138,16 +128,25 @@ export const RecordSchema = z.discriminatedUnion("kind", [
   }),
   SeedDataSchema.extend({ ...metadata.shape, kind: z.literal("seed") }),
 ]);
-export const ItemReferenceSchema = z.strictObject({ id: IdSchema, name: z.string().min(1) });
+export const ItemReferenceSchema = z.strictObject({
+  id: IdSchema,
+  name: z.string().min(1),
+  description: text,
+  usageText: text,
+});
 export const CatalogSchema = ContextSchema.extend({
   kind: z.literal("catalog"),
   records: RecordSchema.array(),
   references: ItemReferenceSchema.array(),
   clientTypes: ClientTypeSchema.array(),
   craftingRecipes: CraftingRecipeSchema.extend({
+    cardItemId: IdSchema,
+    collectionId: IdSchema.nullable(),
     productId: IdSchema,
     quantity: IdSchema.nullable(),
   }).array(),
+  cookingRecipes: CookingRecipeSchema.array(),
+  craftingCollections: CraftingCollectionSchema.array(),
   growths: GrowthSchema.array(),
 });
 export type Catalog = z.infer<typeof CatalogSchema>;

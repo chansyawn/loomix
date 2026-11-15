@@ -24,6 +24,8 @@ export function validateCatalog(catalog: Catalog): ValidationIssue[] {
     "records",
     "references",
     "craftingRecipes",
+    "cookingRecipes",
+    "craftingCollections",
     "growths",
     "clientTypes",
   ] as const)
@@ -108,21 +110,30 @@ export function validateCatalog(catalog: Catalog): ValidationIssue[] {
       record.size.min > record.size.max
     )
       issue(path, "Invalid size range");
-    if (record.kind === "dish") {
-      unique(record.recipe?.slots ?? [], (slot) => slot.field, [...path, "recipe", "slots"]);
-      for (const slot of record.recipe?.slots ?? []) {
-        if ((slot.expression === null) !== (slot.itemIds === null))
-          issue(path, "Expression and candidates must have the same resolution state");
-        if (slot.itemIds) checkItems(slot.itemIds, path);
-      }
-      if (record.tastes) unique(record.tastes, (taste) => taste, [...path, "tastes"]);
-    }
   });
+  const collections = new Set(catalog.craftingCollections.map((collection) => collection.id));
+  for (const [index, recipe] of catalog.cookingRecipes.entries()) {
+    const path = ["cookingRecipes", index];
+    checkItems([recipe.productId], [...path, "productId"], "dish");
+    if (recipe.recipeItemId !== null) checkItems([recipe.recipeItemId], [...path, "recipeItemId"]);
+    unique(recipe.slots ?? [], (slot) => slot.field, [...path, "slots"]);
+    for (const slot of recipe.slots ?? []) {
+      if ((slot.expression === null) !== (slot.itemIds === null))
+        issue(path, "Expression and candidates must have the same resolution state");
+      if (slot.itemIds) checkItems(slot.itemIds, [...path, "slots"]);
+    }
+    if (recipe.tastes) unique(recipe.tastes, (taste) => taste, [...path, "tastes"]);
+  }
   for (const [index, recipe] of catalog.craftingRecipes.entries()) {
+    checkItems([recipe.cardItemId], ["craftingRecipes", index, "cardItemId"]);
+    if (recipe.collectionId !== null && !collections.has(recipe.collectionId))
+      issue(["craftingRecipes", index, "collectionId"], "Unknown crafting collection");
     if (!records.has(recipe.productId))
       issue(["craftingRecipes", index], "Crafting product is outside formal records");
     checkItems(recipe.materials?.map((material) => material.itemId) ?? [], [
       "craftingRecipes",
+      "cookingRecipes",
+      "craftingCollections",
       index,
       "materials",
     ]);

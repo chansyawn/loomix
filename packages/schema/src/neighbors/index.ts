@@ -1,3 +1,14 @@
+import {
+  NeighborProfileSchema,
+  TravelProfileSchema,
+  AbilityDescriptionSchema,
+  createAbilitySchema,
+  SignatureSchema,
+  NeighborDesignSchema,
+} from "./profile.ts";
+import { createHouseSchema } from "./housing.ts";
+export * from "./profile.ts";
+export * from "./housing.ts";
 import { z } from "zod";
 import { ContextSchema } from "../common/identity.ts";
 import { ImageRefSchema } from "../assets/index.ts";
@@ -11,6 +22,13 @@ const path = z
   );
 
 const record = z.strictObject({
+  profile: NeighborProfileSchema,
+  travelProfile: TravelProfileSchema.nullable(),
+  abilityDescriptions: AbilityDescriptionSchema.array(),
+  abilities: createAbilitySchema(ImageRefSchema.nullable()).array(),
+  signature: SignatureSchema,
+  house: createHouseSchema(ImageRefSchema.nullable()).nullable(),
+  design: NeighborDesignSchema,
   id: neighborId,
   name: z.string().min(1),
   bodyType: z.enum(["small", "medium", "big"]).nullable(),

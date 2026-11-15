@@ -58,6 +58,32 @@ export function fixtureRows(): FixtureRows {
     text(body),
   ];
   return {
+    415: neighborAllowlist.map(({ id, name }) => {
+      const row: Cell[] = Array(21).fill(null);
+      row[0] = id;
+      row[1] = text(name);
+      row[16] = 9;
+      row[17] = 19;
+      row[20] = "female";
+      return row;
+    }),
+    471: [[1010, 1, text("闷果儿")]],
+    500: neighborAllowlist.map(({ id }) => [id, null, null]),
+    122: [],
+    641: neighborAllowlist.map(({ id }) => [id]),
+    222: [],
+    461: [],
+    310: neighborAllowlist.map(({ id }) => [id, null, id]),
+    315: neighborAllowlist.map(({ id, name }) => {
+      const row: Cell[] = Array(27).fill(null);
+      row[0] = id * 100 + 1;
+      row[1] = id;
+      row[2] = 1;
+      row[3] = text(`${name}的小屋`);
+      return row;
+    }),
+    377: [],
+    472: [[1010, 5, 5]],
     318: [[50000], [30050], [1128]],
     325: [],
     416: [],

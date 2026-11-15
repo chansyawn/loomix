@@ -6,7 +6,7 @@ import { buildDomainEvidence } from "./evidence.ts";
 
 test("story paragraphs merge their provenance on the actual chapter entity", () => {
   const dataset = emptyDataset(
-    { formatVersion: 9, snapshotId: "a".repeat(64), locale: "zh-CN" },
+    { formatVersion: 10, snapshotId: "a".repeat(64), locale: "zh-CN" },
     {
       gameVersion: "test",
       dataRevision: 1,
@@ -50,7 +50,7 @@ test("story paragraphs merge their provenance on the actual chapter entity", () 
 
 test("最终 kind 合并分类规则来源，展示分类映射到公开字段", () => {
   const dataset = emptyDataset(
-    { formatVersion: 9, snapshotId: "a".repeat(64), locale: "zh-CN" },
+    { formatVersion: 10, snapshotId: "a".repeat(64), locale: "zh-CN" },
     { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" },
   );
   dataset.catalog.records.push(
@@ -116,4 +116,79 @@ test("最终 kind 合并分类规则来源，展示分类映射到公开字段",
   expect(() => buildDomainEvidence(dataset, observed, [], [], [])).toThrow(
     "Classification evidence mismatch",
   );
+});
+
+test("友邻字段保留精确路径和未确认原因，缺失图片不标记为已确认", () => {
+  const dataset = emptyDataset(
+    { formatVersion: 10, snapshotId: "a".repeat(64), locale: "zh-CN" },
+    { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" },
+  );
+  dataset.neighbors.neighbors.push({
+    id: 1010,
+    name: "云果",
+    bodyType: null,
+    scaleValue: null,
+    avatar: null,
+    npc2Path: "Avatar/Yunguo",
+    profile: { englishName: "Yunguo", nickname: null, gender: null, birthday: null },
+    travelProfile: null,
+    abilityDescriptions: [],
+    abilities: [{ key: "1010:5", unlockLevel: 5, name: "作物浇水", description: null, icon: null }],
+    signature: { cookingRecipeId: null, friendshipOutfitItemId: null },
+    house: null,
+    design: { furnitureSetId: null, craftingCollectionId: null },
+  });
+  const source = {
+    kind: "table" as const,
+    file: "prepared/ed.obb",
+    table: 222,
+    rowOffset: 100,
+    fields: [0, 1, 2],
+  };
+  const result = buildDomainEvidence(
+    dataset,
+    [],
+    [],
+    [],
+    [
+      {
+        domain: "neighbors",
+        records: [
+          {
+            collection: "neighbors",
+            key: "1010",
+            source,
+            fieldPath: "abilities.0.icon",
+            status: "confirmed",
+            reasonCode: null,
+          },
+          {
+            collection: "neighbors",
+            key: "1010",
+            source,
+            fieldPath: "design.furnitureSetId",
+            status: "unresolved",
+            reasonCode: "theme_target_namespace_unconfirmed",
+          },
+        ],
+      },
+    ],
+  );
+  expect(result.fields).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        fieldPath: "abilities.0.icon",
+        status: "unresolved",
+        reasonCode: "configured_image_not_exported",
+      }),
+      expect.objectContaining({
+        fieldPath: "design.furnitureSetId",
+        status: "unresolved",
+        reasonCode: "theme_target_namespace_unconfirmed",
+      }),
+    ]),
+  );
+  expect(
+    result.fields.some((field) => field.fieldPath === "$" && field.status === "confirmed"),
+  ).toBe(false);
 });
