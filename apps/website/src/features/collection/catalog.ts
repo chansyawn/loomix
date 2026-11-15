@@ -1,5 +1,6 @@
 import { createImageResolver, type Assets } from "@loomix/schema/assets";
 import {
+  isGroupRecord,
   recordCategory,
   createRecordTagResolver,
   type Catalog,
@@ -9,7 +10,7 @@ import { createGameplayTagIndex, tagLabel } from "@loomix/schema/gameplay-tags";
 import type { GameplayTags } from "@loomix/schema/gameplay-tags";
 import { toCollectionView } from "../collection-view";
 import { acquisitionText } from "../collection/acquisition";
-import { createCollectionTagFilter } from "./tags";
+import { createCollectionTagFilter, type TagTreePolicy } from "./tags";
 
 export const categoryNames = {
   furniture: "家具",
@@ -24,6 +25,7 @@ export function createCollectionCatalog(
   catalog: Catalog,
   assets: Assets,
   gameplayTags: GameplayTags,
+  options: { tagPolicy?: TagTreePolicy } = {},
 ) {
   const image = createImageResolver(assets);
   if (
@@ -52,7 +54,12 @@ export function createCollectionCatalog(
   });
   return {
     catalog,
-    tags: createCollectionTagFilter(gameplayTags.tags, tagIndex, catalog.records),
+    tags: createCollectionTagFilter(
+      gameplayTags.tags,
+      tagIndex,
+      catalog.records.filter((record) => !isGroupRecord(record)),
+      options.tagPolicy,
+    ),
     rows,
     byId: new Map(rows.map((row) => [row.id, row])),
     view: toCollectionView(catalog, assets, tagIndex),

@@ -1,5 +1,4 @@
 import type { IngredientExpression, Recipe } from "@loomix/schema/catalog";
-import type { IngredientCategory } from "../ingredients/category";
 import type { IngredientItem } from "../collection-view";
 
 type RecipeSlot = NonNullable<Recipe["slots"]>[number];
@@ -24,12 +23,12 @@ export type DishRecipeSlotView = {
 
 function appendConditionTokens(
   expression: IngredientExpression,
-  categories: ReadonlyMap<number, IngredientCategory>,
+  tags: ReadonlyMap<number, { name: string }>,
   tokens: RecipeConditionToken[],
   wrapComposite: boolean,
 ): void {
   if (expression.kind === "tag") {
-    const category = categories.get(expression.tagId);
+    const category = tags.get(expression.tagId);
     tokens.push({
       kind: "tag",
       tagId: expression.tagId,
@@ -46,17 +45,17 @@ function appendConditionTokens(
         kind: "operator",
         value: expression.kind === "all" ? "且" : "或",
       });
-    appendConditionTokens(term, categories, tokens, term.kind !== "tag");
+    appendConditionTokens(term, tags, tokens, term.kind !== "tag");
   });
   if (wrapComposite) tokens.push({ kind: "punctuation", value: ")" });
 }
 
 function conditionTokens(
   expression: IngredientExpression,
-  categories: ReadonlyMap<number, IngredientCategory>,
+  tags: ReadonlyMap<number, { name: string }>,
 ): RecipeConditionToken[] {
   const tokens: RecipeConditionToken[] = [];
-  appendConditionTokens(expression, categories, tokens, false);
+  appendConditionTokens(expression, tags, tokens, false);
   return tokens;
 }
 
@@ -73,7 +72,7 @@ function candidateItems(
 
 export function buildDishRecipeSlots(
   recipe: Recipe | null,
-  categories: ReadonlyMap<number, IngredientCategory>,
+  tags: ReadonlyMap<number, { name: string }>,
   items: ReadonlyMap<number, IngredientItem>,
 ): DishRecipeSlotView[] {
   return (
@@ -81,8 +80,7 @@ export function buildDishRecipeSlots(
       const candidates = candidateItems(slot.itemIds, items);
       return {
         field: slot.field,
-        conditionTokens:
-          slot.expression === null ? [] : conditionTokens(slot.expression, categories),
+        conditionTokens: slot.expression === null ? [] : conditionTokens(slot.expression, tags),
         candidates,
         conditionStatus: slot.expression === null ? "unparsed" : "ready",
         candidateStatus:

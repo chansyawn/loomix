@@ -17,6 +17,7 @@ const config = defineConfig(({ mode }) => {
       tasks: {
         "verify-release": { command: "node scripts/verify-release.ts", cache: false },
         "verify-build": { command: "node scripts/verify-build.ts", cache: false },
+        "verify-tag-filter": { command: "node scripts/verify-tag-filter.ts", cache: false },
         deploy: {
           command: "wrangler deploy --cwd ../.. --config apps/website/dist/server/wrangler.json",
           cache: false,

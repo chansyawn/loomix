@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { IngredientTag } from "./tag-source";
 
 export const ingredientSortOptions = {
   original: "默认顺序",
@@ -27,19 +28,27 @@ export const ingredientsQuerySchema = z.object({
     .enum(["original", "name-asc", "name-desc", "recipes-desc"])
     .catch("original")
     .default("original"),
-  ingredientTags: ingredientTagIdsSchema.default([]),
+  ingredientCategories: ingredientTagIdsSchema.default([]),
+  ingredientColors: ingredientTagIdsSchema.default([]),
+  ingredientQualities: ingredientTagIdsSchema.default([]),
 });
 export type IngredientsQuery = z.output<typeof ingredientsQuerySchema>;
 export const emptyIngredientsQuery = (): IngredientsQuery => ingredientsQuerySchema.parse({});
 
-export function ingredientFiltersForTag(categoryId: number): IngredientsQuery {
-  return { ...emptyIngredientsQuery(), ingredientTags: [String(categoryId)] };
+export function ingredientFiltersForTag(
+  tag: Pick<IngredientTag, "id" | "group">,
+): Partial<IngredientsQuery> {
+  return { [tag.group]: [String(tag.id)] } as Partial<IngredientsQuery>;
 }
 
 export function compactIngredientsQuery(query: IngredientsQuery): Partial<IngredientsQuery> {
   return {
     ...(query.q ? { q: query.q } : {}),
     ...(query.sort !== "original" ? { sort: query.sort } : {}),
-    ...(query.ingredientTags.length ? { ingredientTags: query.ingredientTags } : {}),
+    ...(query.ingredientCategories.length
+      ? { ingredientCategories: query.ingredientCategories }
+      : {}),
+    ...(query.ingredientColors.length ? { ingredientColors: query.ingredientColors } : {}),
+    ...(query.ingredientQualities.length ? { ingredientQualities: query.ingredientQualities } : {}),
   };
 }

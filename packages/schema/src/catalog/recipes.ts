@@ -20,10 +20,6 @@ export const RecipeSlotSchema = z.strictObject({
   quantity: z.null(),
 });
 export const RecipeSchema = z.strictObject({ slots: RecipeSlotSchema.array().nullable() });
-export const IngredientCategorySchema = z.strictObject({
-  tagId: ItemIdSchema,
-  itemIds: z.array(ItemIdSchema),
-});
 const text = z.string().min(1).nullable();
 export const DifficultyConditionSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("chefLevelGreaterOrEqual"), level: ItemIdSchema }),
@@ -55,6 +51,5 @@ export const CraftingRecipeSchema = z
 export const TastesSchema = z.array(z.enum(["甜", "咸"])).min(1);
 
 export type Recipe = z.infer<typeof RecipeSchema>;
-export type IngredientCategory = z.infer<typeof IngredientCategorySchema>;
 export type CraftingRecipe = z.infer<typeof CraftingRecipeSchema>;
 export type DifficultyRequirement = z.infer<typeof DifficultyRequirementSchema>;

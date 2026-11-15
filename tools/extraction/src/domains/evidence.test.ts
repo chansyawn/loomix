@@ -6,7 +6,7 @@ import { buildDomainEvidence } from "./evidence.ts";
 
 test("story paragraphs merge their provenance on the actual chapter entity", () => {
   const dataset = emptyDataset(
-    { formatVersion: 8, snapshotId: "a".repeat(64), locale: "zh-CN" },
+    { formatVersion: 9, snapshotId: "a".repeat(64), locale: "zh-CN" },
     {
       gameVersion: "test",
       dataRevision: 1,
@@ -50,7 +50,7 @@ test("story paragraphs merge their provenance on the actual chapter entity", () 
 
 test("最终 kind 合并分类规则来源，展示分类映射到公开字段", () => {
   const dataset = emptyDataset(
-    { formatVersion: 8, snapshotId: "a".repeat(64), locale: "zh-CN" },
+    { formatVersion: 9, snapshotId: "a".repeat(64), locale: "zh-CN" },
     { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" },
   );
   dataset.catalog.records.push(

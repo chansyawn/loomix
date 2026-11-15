@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 import { Link } from "@tanstack/react-router";
-import type { IngredientCategory } from "./category";
+import type { IngredientTag } from "./tag-source";
 import { buttonVariants } from "@/ui/components/button";
 import { ingredientFiltersForTag } from "./search";
 
@@ -9,7 +9,7 @@ export function IngredientTagLink({
   className,
   children,
 }: {
-  category: Pick<IngredientCategory, "id" | "name">;
+  category: Pick<IngredientTag, "id" | "name" | "group">;
   className?: string;
   children?: ComponentProps<"a">["children"];
 }) {
@@ -18,7 +18,7 @@ export function IngredientTagLink({
       to="/collections/dishes"
       search={{
         view: "ingredients",
-        ingredients: ingredientFiltersForTag(category.id),
+        ingredients: ingredientFiltersForTag(category),
       }}
       className={className ?? buttonVariants({ variant: "secondary", size: "sm" })}
     >

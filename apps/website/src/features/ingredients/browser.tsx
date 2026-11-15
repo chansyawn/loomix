@@ -7,10 +7,10 @@ import { CollectionEmpty } from "../collection/states";
 import { CollectionTable } from "../collection/table";
 import { collectionSort, tableSorting } from "../collection/sort";
 import type { IngredientsData } from "./model";
-import { ingredientFilterGroups, queryIngredients } from "./query";
+import { ingredientFilterGroups, ingredientSelection, queryIngredients } from "./query";
 import { emptyIngredientsQuery, ingredientSortOptions } from "./search";
 import type { IngredientsQuery } from "./search";
-import { normalizeIngredientTagIds } from "./tag-filter";
+import type { IngredientTagGroupKey } from "./tag-filter-policy";
 import { IngredientItems } from "./cards";
 import { ingredientTableColumns } from "./table-columns";
 
@@ -27,16 +27,13 @@ export function IngredientsBrowser({
   onQueryChange: (patch: Partial<IngredientsQuery>, replace?: boolean) => void;
   onLayoutChange: (layout: CollectionLayout) => void;
 }) {
-  const normalizedQuery = {
-    ...query,
-    ingredientTags: normalizeIngredientTagIds(data, query.ingredientTags),
-  };
+  const normalizedQuery = { ...query, ...ingredientSelection(data, query) };
   const result = queryIngredients(data, normalizedQuery);
   const groups = ingredientFilterGroups(data, result.counts);
   const clear = () => onQueryChange(emptyIngredientsQuery());
-  const filter = (values: string[]) =>
-    onQueryChange({ ingredientTags: normalizeIngredientTagIds(data, values) });
-  const chips = collectionFilterChips(groups, normalizedQuery, (_key, values) => filter(values), {
+  const filter = (key: IngredientTagGroupKey, values: string[]) =>
+    onQueryChange({ [key]: values } as Partial<IngredientsQuery>);
+  const chips = collectionFilterChips(groups, normalizedQuery, filter, {
     value: query.q,
     clear: () => onQueryChange({ q: "" }),
   });
@@ -59,7 +56,7 @@ export function IngredientsBrowser({
             groups={groups}
             query={normalizedQuery}
             total={result.items.length}
-            onFilter={(_key, values) => filter(values)}
+            onFilter={filter}
             onClear={clear}
           />
         }

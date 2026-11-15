@@ -5,11 +5,11 @@ import { ingredientFilterGroups, queryIngredients } from "./query";
 import { ingredientsQuerySchema } from "./search";
 
 describe("ingredient browsing and filtering", () => {
-  it("starts with every concrete ingredient and treats tags as filters", () => {
+  it("starts with every concrete ingredient in category-first order", () => {
     const { data } = ingredientsFixture();
     const result = queryIngredients(data, ingredientsQuerySchema.parse({}));
     expect(result.active).toBe(false);
-    expect(result.items.map((item) => item.id)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(result.items.map((item) => item.id)).toEqual([5, 6, 1, 2, 3, 4]);
   });
 
   it("searches concrete ingredient names without matching category names", () => {
@@ -19,52 +19,59 @@ describe("ingredient browsing and filtering", () => {
     expect(queryIngredients(data, ingredientsQuerySchema.parse({ q: "水果类" })).items).toEqual([]);
   });
 
-  it("combines tag dimensions while accepting alternatives within each dimension", () => {
+  it("combines groups while accepting alternatives inside each group", () => {
     const { data } = ingredientsFixture();
-    const result = queryIngredients(
-      data,
-      ingredientsQuerySchema.parse({ ingredientTags: ["10", "13", "21", "31"] }),
-    );
-    expect(result.items.map((item) => item.id)).toEqual([2]);
-    expect(
-      queryIngredients(data, ingredientsQuerySchema.parse({ ingredientTags: ["999"] })).items.map(
-        (item) => item.id,
-      ),
-    ).toEqual([1, 2, 3, 4, 5, 6]);
-    expect(
-      queryIngredients(data, ingredientsQuerySchema.parse({ ingredientTags: ["2"] })).items.map(
-        (item) => item.id,
-      ),
-    ).toEqual([1, 2, 3, 4]);
-  });
-
-  it("builds one full tree and filters by parent or child tags", () => {
-    const { data } = ingredientsFixture();
-    const result = queryIngredients(data, ingredientsQuerySchema.parse({}));
-    const group = ingredientFilterGroups(data, result.counts)[0];
-    const options = flattenFilterOptions(group.options);
-    expect(options.find((option) => option.value === "13")).toMatchObject({
-      chipLabel: "分类 · 荤菜 / 虾类",
-      count: 2,
-    });
-    expect(options.find((option) => option.value === "14")?.disabled).toBe(true);
-    expect(
-      queryIngredients(data, ingredientsQuerySchema.parse({ ingredientTags: ["2"] })).items.map(
-        (item) => item.id,
-      ),
-    ).toEqual([1, 2, 3, 4]);
     expect(
       queryIngredients(
         data,
-        ingredientsQuerySchema.parse({ ingredientTags: ["13", "12"] }),
+        ingredientsQuerySchema.parse({
+          ingredientCategories: ["10"],
+          ingredientColors: ["21"],
+          ingredientQualities: ["31"],
+        }),
       ).items.map((item) => item.id),
-    ).toEqual([4, 5, 6]);
+    ).toEqual([2]);
     expect(
       queryIngredients(
         data,
-        ingredientsQuerySchema.parse({ ingredientTags: ["13", "31"] }),
+        ingredientsQuerySchema.parse({ ingredientCategories: ["999"] }),
+      ).items.map((item) => item.id),
+    ).toEqual([5, 6, 1, 2, 3, 4]);
+    expect(
+      queryIngredients(
+        data,
+        ingredientsQuerySchema.parse({ ingredientCategories: ["2"] }),
+      ).items.map((item) => item.id),
+    ).toEqual([1, 2, 3, 4]);
+    expect(
+      queryIngredients(
+        data,
+        ingredientsQuerySchema.parse({ ingredientCategories: ["13", "12"] }),
+      ).items.map((item) => item.id),
+    ).toEqual([5, 6, 4]);
+    expect(
+      queryIngredients(
+        data,
+        ingredientsQuerySchema.parse({ ingredientCategories: ["13"], ingredientQualities: ["31"] }),
       ).items.map((item) => item.id),
     ).toEqual([6]);
+  });
+
+  it("builds three groups and disables options outside the current search", () => {
+    const { data } = ingredientsFixture();
+    const result = queryIngredients(data, ingredientsQuerySchema.parse({ q: "番茄" }));
+    const groups = ingredientFilterGroups(data, result.counts);
+    expect(groups.map((group) => group.label)).toEqual(["分类", "颜色", "食材品质"]);
+    const options = flattenFilterOptions(groups[0].options);
+    expect(options.find((option) => option.value === "13")).toMatchObject({
+      chipLabel: "分类：荤菜 / 虾类",
+      count: 0,
+      disabled: true,
+    });
+    expect(options.find((option) => option.value === "11")).toMatchObject({
+      chipLabel: "分类：素食 / 蔬菜类 / 番茄",
+      count: 3,
+    });
   });
 
   it("sorts by unique associated dish counts without reordering source data", () => {
@@ -77,7 +84,7 @@ describe("ingredient browsing and filtering", () => {
       ingredientsQuerySchema.parse({ sort: "name-desc" }),
     ).items.map((item) => item.name);
     expect(names).toEqual([...names].sort((a, b) => b.localeCompare(a, "zh-CN")));
-    expect([...data.itemsById.keys()]).toEqual([1, 2, 3, 4, 5, 6]);
+    expect([...data.itemsById.keys()]).toEqual([5, 6, 1, 2, 3, 4]);
   });
 
   it("returns an empty result for unknown names", () => {

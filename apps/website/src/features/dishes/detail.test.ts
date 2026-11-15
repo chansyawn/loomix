@@ -1,7 +1,9 @@
 import { isNotFound } from "@tanstack/react-router";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
+import { createGameplayTagIndex } from "@loomix/schema/gameplay-tags";
 import { catalogFixture, fixtureRequest } from "../collection-fixture.ts";
 import type { DishItem, DishSeries } from "../collection-view.ts";
+import { createIngredientTagSource } from "../ingredients/tag-source";
 import { dishesDetail, loadDishesDetail, parseDishId } from "./detail";
 
 const first: DishItem = {
@@ -50,6 +52,8 @@ const data = {
     { ...group, id: 4, name: "空系列", dishIds: [] },
     { ...group, id: 5, name: "未知系列", dishIds: null },
   ],
+  ingredientTagSource: createIngredientTagSource(createGameplayTagIndex([]), []),
+  ingredientItemsById: new Map(),
 };
 
 afterEach(() => vi.unstubAllGlobals());
@@ -72,14 +76,14 @@ describe("dish details", () => {
       kind: "item",
       record: first,
       catalogItems: data.items,
-      ingredientCategoriesById: new Map(),
-      ingredientItemsById: new Map(),
+      ingredientTagSource: data.ingredientTagSource,
+      ingredientItemsById: data.ingredientItemsById,
       series: [group],
       hasUnconfirmedSeriesMembership: true,
     });
     expect(dishesDetail({ ...data, series: [] }, "items", 1)).toMatchObject({ series: [] });
     expect(
-      dishesDetail({ items: [first], series: [{ ...group, dishIds: null }] }, "items", 1),
+      dishesDetail({ ...data, items: [first], series: [{ ...group, dishIds: null }] }, "items", 1),
     ).toMatchObject({ series: [], hasUnconfirmedSeriesMembership: true });
   });
 

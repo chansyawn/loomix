@@ -1,8 +1,8 @@
 import type { IngredientExpression } from "@loomix/schema/catalog";
-import type { IngredientCategory } from "./category";
 import type { CollectionView, DishItem, IngredientItem } from "../collection-view";
+import { ingredientLeafTags as leafTagsOf, ingredientUsageTags } from "./tag-filter";
+import type { IngredientTag, IngredientTagSource } from "./tag-source";
 
-export type IngredientDimension = "type" | "color" | "quality" | "group";
 export type IngredientCondition = {
   position: number;
   expression: IngredientExpression;
@@ -10,37 +10,16 @@ export type IngredientCondition = {
 };
 export type IngredientDishMatch = { dish: DishItem; conditions: IngredientCondition[] };
 export type IngredientUsage = {
-  tags: IngredientCategory[];
+  tags: IngredientTag[];
   dishes: IngredientDishMatch[];
 };
 export type IngredientsData = {
-  categories: IngredientCategory[];
-  categoriesById: ReadonlyMap<number, IngredientCategory>;
-  dimensions: ReadonlyMap<number, IngredientDimension>;
-  childrenByCategoryId: ReadonlyMap<number, IngredientCategory[]>;
+  tagSource: IngredientTagSource;
   itemsById: ReadonlyMap<number, IngredientItem>;
-  categoriesByItemId: ReadonlyMap<number, IngredientCategory[]>;
   ingredientCandidatesByDishId: ReadonlyMap<number, number[]>;
   dishesByItemId: ReadonlyMap<number, IngredientDishMatch[]>;
   unconfirmedRecipeCount: number;
 };
-
-function dimension(
-  category: IngredientCategory,
-  categories: ReadonlyMap<number, IngredientCategory>,
-): IngredientDimension {
-  const seen = new Set<number>();
-  let current: IngredientCategory | undefined = category;
-  while (current && !seen.has(current.id)) {
-    seen.add(current.id);
-    if (current.tagName === "食材_颜色") return "color";
-    if (current.tagName === "食材_品阶") return "quality";
-    current = current.parentId === null ? undefined : categories.get(current.parentId);
-  }
-  return ["食材", "食材_荤菜", "食材_素菜", "食材_原料", "食材_不宜使用"].includes(category.tagName)
-    ? "group"
-    : "type";
-}
 
 type MatchIndex = Map<number, Map<number, IngredientDishMatch>>;
 
@@ -65,31 +44,15 @@ function flattenIndex(index: MatchIndex): Map<number, IngredientDishMatch[]> {
 }
 
 export function buildIngredientsData(
-  view: Pick<CollectionView, "ingredientCategories" | "ingredientItemsById" | "dishes">,
+  view: Pick<CollectionView, "ingredientTagSource" | "ingredientItemsById" | "dishes">,
 ): IngredientsData {
-  const categories = view.ingredientCategories;
-  const categoriesById = new Map(categories.map((category) => [category.id, category]));
-  const dimensions = new Map(
-    categories.map((category) => [category.id, dimension(category, categoriesById)]),
-  );
-  const childrenByCategoryId = new Map<number, IngredientCategory[]>();
-  for (const category of categories) {
-    if (category.parentId === null) continue;
-    childrenByCategoryId.set(category.parentId, [
-      ...(childrenByCategoryId.get(category.parentId) ?? []),
-      category,
-    ]);
-  }
+  const tagSource = view.ingredientTagSource;
   const itemsById = new Map<number, IngredientItem>();
-  const categoriesByItemId = new Map<number, IngredientCategory[]>();
-  for (const category of categories) {
-    for (const id of new Set(category.itemIds)) {
-      const item = view.ingredientItemsById.get(id);
-      // 仅供引用的记录没有正式详情页，不得作为可浏览条目展示。
-      if (!item || item.listed === false) continue;
-      itemsById.set(id, item);
-      categoriesByItemId.set(id, [...(categoriesByItemId.get(id) ?? []), category]);
-    }
+  for (const id of tagSource.itemIds) {
+    const item = view.ingredientItemsById.get(id);
+    // 仅供引用的记录没有正式详情页，不得作为可浏览条目展示。
+    if (!item || item.listed === false) continue;
+    itemsById.set(id, item);
   }
   const byItem: MatchIndex = new Map();
   const ingredientCandidatesByDishId = new Map<number, Set<number>>();
@@ -103,7 +66,7 @@ export function buildIngredientsData(
       const condition = {
         position: index + 1,
         expression: slot.expression,
-        label: ingredientConditionLabel(slot.expression, categoriesById),
+        label: ingredientConditionLabel(slot.expression, tagSource.byId),
       };
       // 解析后的候选项保留交集（all）与并集（any）语义。
       for (const id of new Set(slot.itemIds)) {
@@ -116,12 +79,8 @@ export function buildIngredientsData(
     });
   }
   return {
-    categories,
-    categoriesById,
-    dimensions,
-    childrenByCategoryId,
+    tagSource,
     itemsById,
-    categoriesByItemId,
     ingredientCandidatesByDishId: new Map(
       [...ingredientCandidatesByDishId].map(([id, candidates]) => [id, [...candidates]]),
     ),
@@ -131,32 +90,27 @@ export function buildIngredientsData(
 }
 
 export function ingredientUsage(data: IngredientsData, itemId: number): IngredientUsage | null {
-  const categories = (data.categoriesByItemId.get(itemId) ?? []).filter(
-    (category) => !["食材", "食材_颜色", "食材_品阶", "食材_不宜使用"].includes(category.tagName),
-  );
-  return categories.length
+  if (!data.itemsById.has(itemId)) return null;
+  const tags = ingredientUsageTags(data.tagSource, itemId);
+  return tags.length
     ? {
-        tags: categories,
+        tags,
         dishes: data.dishesByItemId.get(itemId) ?? [],
       }
     : null;
 }
 
-export function ingredientLeafTags(data: IngredientsData, itemId: number): IngredientCategory[] {
-  return (data.categoriesByItemId.get(itemId) ?? []).filter(
-    (category) =>
-      !data.childrenByCategoryId.has(category.id) &&
-      !["食材", "食材_颜色", "食材_品阶", "食材_不宜使用"].includes(category.tagName),
-  );
+export function ingredientLeafTags(data: IngredientsData, itemId: number): IngredientTag[] {
+  return leafTagsOf(data.tagSource, itemId);
 }
 
 export function ingredientConditionLabel(
   expression: IngredientExpression,
-  categories: ReadonlyMap<number, IngredientCategory>,
+  tags: ReadonlyMap<number, { name: string }>,
 ): string {
-  if (expression.kind === "tag") return categories.get(expression.tagId)?.name ?? "未收录类别";
+  if (expression.kind === "tag") return tags.get(expression.tagId)?.name ?? "未收录类别";
   const labels = expression.terms.map((term) => {
-    const label = ingredientConditionLabel(term, categories);
+    const label = ingredientConditionLabel(term, tags);
     return term.kind !== "tag" && term.kind !== expression.kind ? `（${label}）` : label;
   });
   return labels.join(expression.kind === "all" ? " 且 " : " 或 ");

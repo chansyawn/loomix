@@ -3,29 +3,39 @@ import type { FilterGroup } from "../collection/filter-panel";
 import type { IngredientsData } from "./model";
 import type { IngredientsQuery } from "./search";
 import {
+  ingredientFilterGroups as buildIngredientFilterGroups,
+  ingredientSelectedIds,
   ingredientTagCounts,
-  ingredientTagFilterGroup,
   ingredientTagMatcher,
-  normalizeIngredientTagIds,
+  normalizeIngredientSelection,
 } from "./tag-filter";
-import type { IngredientTagCounts } from "./tag-filter";
+import type { IngredientTagCounts, IngredientTagSelection } from "./tag-filter";
+import type { IngredientTagGroupKey } from "./tag-filter-policy";
 
 export function ingredientFilterGroups(
   data: IngredientsData,
   counts: IngredientTagCounts,
-): FilterGroup<"ingredientTags">[] {
-  return [ingredientTagFilterGroup(data, counts)];
+): FilterGroup<IngredientTagGroupKey>[] {
+  return buildIngredientFilterGroups(data.tagSource, counts);
+}
+
+export function ingredientSelection(data: IngredientsData, query: IngredientsQuery) {
+  return normalizeIngredientSelection(data.tagSource, {
+    ingredientCategories: query.ingredientCategories,
+    ingredientColors: query.ingredientColors,
+    ingredientQualities: query.ingredientQualities,
+  });
 }
 
 export function queryIngredients(data: IngredientsData, query: IngredientsQuery) {
   const term = query.q.trim().toLocaleLowerCase("zh-CN");
-  const tags = normalizeIngredientTagIds(data, query.ingredientTags);
-  const active = Boolean(term || tags.length);
+  const selection: IngredientTagSelection = ingredientSelection(data, query);
+  const active = Boolean(term || ingredientSelectedIds(selection).length);
   const searched = [...data.itemsById.values()].filter(
     (item) => !term || item.name.toLocaleLowerCase("zh-CN").includes(term),
   );
-  const counts = ingredientTagCounts(data, searched);
-  const matchesTags = ingredientTagMatcher(data, tags);
+  const counts = ingredientTagCounts(data.tagSource, searched);
+  const matchesTags = ingredientTagMatcher(data.tagSource, selection);
   const items = searched.filter((item) => matchesTags(item.id));
   sortRecords(items, query.sort, (item) => data.dishesByItemId.get(item.id)?.length ?? 0);
   return { items, active, counts };

@@ -2,7 +2,7 @@ import { expect, test } from "vite-plus/test";
 import { validateDataset } from "../src/dataset/index.ts";
 import { RecordSchema, resolveItem } from "../src/catalog/index.ts";
 import { datasetFixture, recordMetadata } from "./fixture.ts";
-const context = { formatVersion: 8, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
+const context = { formatVersion: 9, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
 function fixture() {
   const catalog = datasetFixture(context, {
     gameVersion: "test",

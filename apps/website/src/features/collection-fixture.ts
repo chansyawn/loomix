@@ -15,7 +15,7 @@ import { referencedImages } from "@loomix/schema/dataset/images";
 import type { CollectionRecord, CollectionView } from "./collection-view.ts";
 
 export const fixtureContext = {
-  formatVersion: 8,
+  formatVersion: 9,
   snapshotId: "a".repeat(64),
   locale: "zh-CN",
 } as const;
@@ -44,7 +44,19 @@ export function catalogBase(record: CollectionRecord) {
     quality: record.quality,
   };
 }
-export function catalogFixture(view: Partial<CollectionView> = {}) {
+export type FixtureIngredientCategory = {
+  id: number;
+  name: string;
+  tagName: string;
+  parentId: number | null;
+  itemIds: number[];
+};
+
+export function catalogFixture(
+  view: Partial<CollectionView> & {
+    ingredientCategories?: readonly FixtureIngredientCategory[];
+  } = {},
+) {
   const catalog = emptyDataset(fixtureContext, fixtureSource).catalog;
   catalog.clientTypes = [{ id: 1, name: null, tagIds: [] }];
   const gameplayTags = tagsFixture();
@@ -56,7 +68,6 @@ export function catalogFixture(view: Partial<CollectionView> = {}) {
       enumName: null,
       parentId: category.parentId,
     });
-    catalog.ingredientCategories.push({ tagId: category.id, itemIds: category.itemIds });
   }
   const add = (...items: object[]) => addFixtureRecords(catalog, gameplayTags, ...items);
   const group = (record: CollectionRecord, kind: Group["kind"], memberIds: number[] | null) =>
@@ -176,6 +187,15 @@ export function catalogFixture(view: Partial<CollectionView> = {}) {
       displayCategory: null,
       acquisition: acquisition(record.acquisition),
     });
+  for (const category of view.ingredientCategories ?? [])
+    for (const itemId of category.itemIds) {
+      const record = catalog.records.find((entry) => entry.id === itemId);
+      if (!record) continue;
+      if (!record.tagFields.ingredients.includes(category.id))
+        record.tagFields.ingredients.push(category.id);
+      const type = catalog.clientTypes.find((entry) => entry.id === record.client.type);
+      record.tagIds = mergeRecordTagIds(record.tagFields, type?.tagIds ?? []);
+    }
   return { catalog, gameplayTags };
 }
 export function assetsFixture(catalog: Catalog): Assets {

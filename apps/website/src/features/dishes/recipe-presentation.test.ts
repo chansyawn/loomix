@@ -1,28 +1,14 @@
 import type { IngredientExpression, Recipe } from "@loomix/schema/catalog";
 import { describe, expect, it } from "vite-plus/test";
-import type { IngredientCategory } from "../ingredients/category";
 import type { IngredientItem } from "../collection-view";
 import { buildDishRecipeSlots, type RecipeConditionToken } from "./recipe-presentation";
 
 type RecipeSlot = NonNullable<Recipe["slots"]>[number];
 
-const categories: IngredientCategory[] = [
-  {
-    id: 10,
-    tagName: "食材_蔬菜",
-    name: "蔬菜",
-    parentId: null,
-    itemIds: [1, 2],
-  },
-  {
-    id: 20,
-    tagName: "食材_紫色",
-    name: "紫色",
-    parentId: null,
-    itemIds: [2],
-  },
-];
-const categoriesById = new Map(categories.map((category) => [category.id, category]));
+const tagLabels = new Map([
+  [10, { name: "蔬菜" }],
+  [20, { name: "紫色" }],
+]);
 
 function ingredient(id: number, listed = true): IngredientItem {
   return {
@@ -83,7 +69,7 @@ describe("dish recipe presentation", () => {
           [1],
         ),
       ),
-      categoriesById,
+      tagLabels,
       new Map(),
     );
 
@@ -103,7 +89,7 @@ describe("dish recipe presentation", () => {
     );
     const [view] = buildDishRecipeSlots(
       recipe(slot({ kind: "tag", tagId: 10 }, [3, 1, 3, 999, 2])),
-      categoriesById,
+      tagLabels,
       items,
     );
 
@@ -114,7 +100,7 @@ describe("dish recipe presentation", () => {
 
   it("keeps known candidates when only the readable condition is unavailable", () => {
     const items = new Map([[1, ingredient(1)]]);
-    const [view] = buildDishRecipeSlots(recipe(slot(null, [1])), categoriesById, items);
+    const [view] = buildDishRecipeSlots(recipe(slot(null, [1])), tagLabels, items);
 
     expect(view).toMatchObject({
       conditionStatus: "unparsed",
@@ -127,7 +113,7 @@ describe("dish recipe presentation", () => {
   it("distinguishes unconfirmed and empty candidate lists", () => {
     const views = buildDishRecipeSlots(
       recipe(slot({ kind: "tag", tagId: 10 }, null, 20), slot({ kind: "tag", tagId: 10 }, [], 25)),
-      categoriesById,
+      tagLabels,
       new Map(),
     );
 
@@ -136,7 +122,7 @@ describe("dish recipe presentation", () => {
   });
 
   it("returns no slots when a recipe has no usable source data", () => {
-    expect(buildDishRecipeSlots(null, categoriesById, new Map())).toEqual([]);
-    expect(buildDishRecipeSlots({ slots: null }, categoriesById, new Map())).toEqual([]);
+    expect(buildDishRecipeSlots(null, tagLabels, new Map())).toEqual([]);
+    expect(buildDishRecipeSlots({ slots: null }, tagLabels, new Map())).toEqual([]);
   });
 });

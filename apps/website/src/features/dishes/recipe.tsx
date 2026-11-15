@@ -104,7 +104,7 @@ function CandidateItems({ slot, index }: { slot: DishRecipeSlotView; index: numb
 export function DishRecipe({ detail }: { detail: Extract<DishesDetail, { kind: "item" }> }) {
   const slots = buildDishRecipeSlots(
     detail.record.recipe,
-    detail.ingredientCategoriesById,
+    detail.ingredientTagSource.byId,
     detail.ingredientItemsById,
   );
   if (slots.length === 0) return null;

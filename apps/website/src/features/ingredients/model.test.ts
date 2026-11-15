@@ -8,13 +8,13 @@ import {
 } from "./model";
 
 describe("ingredient relationships", () => {
-  it("indexes concrete ingredients without mixing attribute dimensions or reference-only items", () => {
+  it("indexes browsable ingredients with group assignments from the tag source", () => {
     const { data } = ingredientsFixture();
-    expect([...data.itemsById.keys()]).toEqual([1, 2, 3, 4, 5, 6]);
-    expect(data.dimensions.get(21)).toBe("color");
-    expect(data.dimensions.get(31)).toBe("quality");
-    expect(data.dimensions.get(1)).toBe("group");
-    expect(data.dimensions.get(11)).toBe("type");
+    expect([...data.itemsById.keys()]).toEqual([5, 6, 1, 2, 3, 4]);
+    expect(data.tagSource.byId.get(21)?.group).toBe("ingredientColors");
+    expect(data.tagSource.byId.get(31)?.group).toBe("ingredientQualities");
+    expect(data.tagSource.byId.get(11)?.group).toBe("ingredientCategories");
+    expect(data.tagSource.visibleIds.has(40)).toBe(false);
   });
 
   it("preserves resolved intersections instead of matching every item sharing one category", () => {
@@ -75,18 +75,21 @@ describe("ingredient relationships", () => {
             categoryExpression(31),
           ],
         },
-        data.categoriesById,
+        data.tagSource.byId,
       ),
     ).toBe("（番茄 或 水果类） 且 特优");
-    expect(ingredientConditionLabel(categoryExpression(999), data.categoriesById)).toBe(
+    expect(ingredientConditionLabel(categoryExpression(999), data.tagSource.byId)).toBe(
       "未收录类别",
     );
   });
 
-  it("does not mutate source membership or recipes while building indexes", () => {
+  it("does not mutate tag membership or recipes while building indexes", () => {
     const { input } = ingredientsFixture();
-    const before = JSON.stringify(input.ingredientCategories) + JSON.stringify(input.dishes);
+    const before =
+      JSON.stringify([...input.ingredientTagSource.tagIdsByItemId]) + JSON.stringify(input.dishes);
     buildIngredientsData(input);
-    expect(JSON.stringify(input.ingredientCategories) + JSON.stringify(input.dishes)).toBe(before);
+    expect(
+      JSON.stringify([...input.ingredientTagSource.tagIdsByItemId]) + JSON.stringify(input.dishes),
+    ).toBe(before);
   });
 });
