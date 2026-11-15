@@ -1,6 +1,4 @@
 import { Fragment } from "react";
-import { ArrowLeftIcon } from "lucide-react";
-import { NeighborsReturnLink } from "./navigation";
 import type { NeighborDetail } from "./data";
 import { NeighborImage } from "./image";
 import { NeighborPreferences } from "./preferences";
@@ -16,15 +14,10 @@ export function NeighborDetailPage({ neighbor }: { neighbor: NeighborDetail }) {
   const profileFields = [
     ["昵称", neighbor.profile.nickname],
     ["英文名", neighbor.profile.englishName],
-    ["性别", neighbor.profile.gender],
     ["生日", neighbor.profile.birthday],
   ] as const;
   return (
-    <div className="space-y-6 pb-8">
-      <NeighborsReturnLink className="inline-flex items-center gap-2 rounded-md text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
-        <ArrowLeftIcon aria-hidden="true" className="size-4" />
-        返回友邻列表
-      </NeighborsReturnLink>
+    <div className="pb-8">
       <section
         id="overview"
         aria-labelledby="neighbor-heading"

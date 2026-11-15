@@ -11,7 +11,6 @@ type House = NonNullable<NeighborRecord["house"]>;
 type ImageResolver = ReturnType<typeof createImageResolver>;
 
 const bodyTypes = { small: "小型", medium: "中型", big: "大型" } as const;
-const genders = { female: "女", male: "男" } as const;
 const preferenceLevels = [
   ["love", "喜爱"],
   ["favor", "好感"],
@@ -149,7 +148,6 @@ export function toNeighborsView(
       profile: {
         englishName: neighbor.profile.englishName,
         nickname: neighbor.profile.nickname,
-        gender: neighbor.profile.gender === null ? null : genders[neighbor.profile.gender],
         birthday:
           neighbor.profile.birthday === null
             ? null

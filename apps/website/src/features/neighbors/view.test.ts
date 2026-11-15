@@ -44,13 +44,11 @@ test("formats profile fields for display", () => {
   expect(view.neighbors[0].profile).toEqual({
     englishName: "Manna",
     nickname: "阿蛮",
-    gender: "女",
     birthday: "2 月 22 日",
   });
   expect(view.neighbors[2].profile).toEqual({
     englishName: null,
     nickname: null,
-    gender: null,
     birthday: null,
   });
 });
