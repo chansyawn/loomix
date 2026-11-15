@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowRightIcon } from "lucide-react";
 import { site } from "@/site";
+import planetLogo from "@/assets/planet-logo.png";
 import { Button } from "@/ui/components/button";
 import { SearchInput } from "@/ui/components/search-input";
 import { createHomeSearch } from "./search";
@@ -12,8 +13,18 @@ export function IntroSearch() {
   return (
     <section
       aria-labelledby="home-title"
-      className="rounded-2xl border bg-linear-to-br from-primary/10 via-background to-background px-5 py-8 sm:px-8 sm:py-10"
+      className="relative isolate overflow-hidden rounded-2xl border bg-linear-to-br from-primary/10 via-background to-background px-5 py-8 sm:px-8 sm:py-10"
     >
+      {/* 素材来自 https://planet.mihoyo.com/ 官网，仅作装饰，避免影响搜索交互。 */}
+      <img
+        src={planetLogo}
+        alt=""
+        aria-hidden="true"
+        width={205}
+        height={87}
+        draggable={false}
+        className="pointer-events-none absolute top-1/2 right-8 -z-10 hidden w-56 -translate-y-1/2 opacity-40 grayscale select-none lg:block xl:right-12 xl:w-72 dark:opacity-40 dark:brightness-0 dark:invert"
+      />
       <p className="mb-3 text-sm text-muted-foreground">{site.domain}</p>
       <h1
         id="home-title"
