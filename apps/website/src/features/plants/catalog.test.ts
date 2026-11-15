@@ -11,7 +11,7 @@ import {
 import { filterGroups, queryPlants } from "./query";
 import { emptyQuery } from "./search";
 
-test("derives crop detail destinations for seeds, products and shared ingredient references", () => {
+test("植物视图保留种子和单品关联，共享食材使用物品自身身份", () => {
   const { catalog, gameplayTags } = catalogFixture({
     plants: plantsDataFixture({
       items: [
@@ -30,11 +30,10 @@ test("derives crop detail destinations for seeds, products and shared ingredient
     assetsFixture(catalog),
     createGameplayTagIndex(gameplayTags.tags),
   );
-  expect(view.plants.items.map((item) => item.cropSeriesId)).toEqual([10, null]);
-  expect(view.plants.seeds[0].cropSeriesId).toBe(10);
-  expect(view.plants.series[0].summary.seeds[0].cropSeriesId).toBe(10);
-  expect(view.ingredientItemsById.get(1)?.cropSeriesId).toBe(10);
-  expect(view.ingredientItemsById.get(2)?.cropSeriesId).toBeNull();
+  expect(view.plants.items.map((item) => item.id)).toEqual([1, 2]);
+  expect(view.plants.seeds[0]).toMatchObject({ id: 30, plantIds: [1] });
+  expect(view.plants.series[0].summary.seeds.map((seed) => seed.id)).toEqual([30]);
+  expect(view.ingredientItemsById.get(1)).toMatchObject({ id: 1, catalogCategory: "plants" });
 });
 
 test("summarizes structured origins without parsing punctuation in localized labels", () => {

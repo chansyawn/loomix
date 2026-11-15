@@ -15,7 +15,7 @@ import type { CollectionColumn } from "../collection/table-columns";
 import { useCollectionOrigin } from "@/features/collection/navigation";
 import { membershipIndex, seedSeries, seedSourceLabels } from "./query";
 import type { View } from "./search";
-import { collectionItemLocation } from "../collection/item-route";
+import { recordLocation } from "../collection/item-route";
 import { PlantSeedLinks, SeedNameLink } from "./seed-info";
 
 export type PlantsRow = PlantItem | PlantSeries | PlantSeed;
@@ -29,13 +29,7 @@ function NameLink({ record }: { record: PlantsRow }) {
   if (isSeedRow(record)) return <SeedNameLink seed={record} />;
   return (
     <Link
-      {...("category" in record
-        ? collectionItemLocation({ ...record, catalogCategory: "plants" })
-        : {
-            to: "/collections/records/$id" as const,
-            params: { id: String(record.id) },
-            search: { focus: undefined },
-          })}
+      {...recordLocation(record)}
       state={{ collectionOrigin: origin }}
       className={tableLinkClassName}
       title={record.name}
@@ -55,9 +49,7 @@ function MemberLinks({ groups, complete }: { groups: PlantSeries[]; complete: bo
       renderLink={(entry) => (
         <Link
           key={entry.id}
-          to="/collections/records/$id"
-          params={{ id: String(entry.id) }}
-          search={{ focus: undefined }}
+          {...recordLocation(entry)}
           state={{ collectionOrigin: origin }}
           className={tableLinkClassName}
         >

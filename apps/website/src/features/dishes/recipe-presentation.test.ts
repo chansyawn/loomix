@@ -32,7 +32,6 @@ function ingredient(id: number, listed = true): IngredientItem {
     description: null,
     quality: null,
     catalogCategory: "plants",
-    cropSeriesId: null,
     listed,
   };
 }

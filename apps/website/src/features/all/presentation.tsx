@@ -3,7 +3,8 @@ import { CollectionCard } from "../collection/collection-card";
 import { RecordImage } from "../collection/record-image";
 import { recordColumns, textColumn, tableLinkClassName } from "../collection/table-columns";
 import { useCollectionOrigin } from "../collection/navigation";
-import { recordLocation, categoryNames, type OverviewRecord } from "../collection/catalog";
+import { categoryNames, type OverviewRecord } from "../collection/catalog";
+import { recordLocation } from "../collection/item-route";
 
 export function RecordNameLink({ record }: { record: OverviewRecord }) {
   const origin = useCollectionOrigin();

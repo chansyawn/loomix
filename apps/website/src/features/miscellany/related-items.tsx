@@ -1,7 +1,7 @@
 import type { IngredientItem } from "../collection-view";
 import { CollectionItemCard } from "../collection/collection-item-card";
 import { CollectionExpandableGrid } from "../collection/expandable-grid";
-import { collectionItemLocation } from "../collection/item-route";
+import { recordLocation } from "../collection/item-route";
 import type { MiscellanyFurnitureUse } from "./detail";
 
 export function MiscellanySourceTrees({ items }: { items: IngredientItem[] }) {
@@ -14,7 +14,7 @@ export function MiscellanySourceTrees({ items }: { items: IngredientItem[] }) {
             <CollectionItemCard
               item={item}
               itemId={item.id}
-              link={item.listed === false ? undefined : collectionItemLocation(item)}
+              link={item.listed === false ? undefined : recordLocation(item)}
             />
           </li>
         ))}

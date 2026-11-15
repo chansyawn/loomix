@@ -1,43 +1,44 @@
-import { PlantGrowthStages } from "./plant-growth";
 import {
   CollectionDetailLayout,
-  CollectionDetailRelatedGrid,
   CollectionDetailExtras,
   type CollectionDetailSection,
 } from "@/features/collection/detail-layout";
 import { RecordImage } from "@/features/collection/record-image";
-import { PlantsCard, PlantSeriesCard } from "./plants-card";
+import { CollectionItemCard } from "../collection/collection-item-card";
+import { PlantsCard } from "./plants-card";
 import type { PlantsDetail } from "./detail";
 import { PlantDropsInfo, PlantRelatedItems } from "./related-items";
 import { ItemCookingUsage } from "../ingredients/item-usage";
-import { CropDetailPage } from "./crop-detail-page";
 import { plantSeriesFields } from "./series-fields";
+import { SeedDetailPage } from "./seed-detail-page";
+import { CollectionDetailNavigation } from "../collection/detail-navigation";
 
-type PlantOrSeriesDetail = Exclude<PlantsDetail, { kind: "crop" }>;
+type PlantOrSeriesDetail = Exclude<PlantsDetail, { kind: "seed" }>;
 
-export function PlantsDetailPage({
-  detail,
-  focus,
-  onFocusChange,
-}: {
-  detail: PlantsDetail;
-  focus?: number;
-  onFocusChange: (focus?: number) => void;
-}) {
-  if (detail.kind === "crop")
-    return (
-      <CropDetailPage
-        key={detail.record.id}
-        detail={detail}
-        focus={focus}
-        onFocusChange={onFocusChange}
+export function PlantsDetailPage({ detail }: { detail: PlantsDetail }) {
+  return (
+    <div className="min-w-0 space-y-6">
+      <CollectionDetailNavigation
+        model={{
+          groups: detail.navigation.groups,
+          notice: detail.navigation.hasUnconfirmedMembership
+            ? "其他系列的成员关系未确认"
+            : undefined,
+        }}
+        currentId={detail.record.id}
       />
-    );
-  return <PlantOrSeriesDetailPage detail={detail} />;
+      {detail.kind === "seed" ? (
+        <SeedDetailPage key={detail.record.id} detail={detail} />
+      ) : (
+        <PlantOrSeriesDetailPage key={detail.record.id} detail={detail} />
+      )}
+    </div>
+  );
 }
 
 function PlantOrSeriesDetailPage({ detail }: { detail: PlantOrSeriesDetail }) {
   const { record } = detail;
+  const sections = plantDetailSections(detail);
   const summary = record.summary;
   const fields: [string, string | null][] =
     detail.kind === "item"
@@ -47,7 +48,7 @@ function PlantOrSeriesDetailPage({ detail }: { detail: PlantOrSeriesDetail }) {
           ["成熟周期", detail.record.maturityPeriod ?? "未确认"],
           [
             "收获茬数",
-            detail.record.harvestCount === null ? null : `${detail.record.harvestCount} 茬`,
+            summary.harvestCounts.length > 0 ? `${summary.harvestCounts.join(" / ")} 茬` : null,
           ],
         ]
       : plantSeriesFields(detail.record);
@@ -58,7 +59,7 @@ function PlantOrSeriesDetailPage({ detail }: { detail: PlantOrSeriesDetail }) {
 
   return (
     <CollectionDetailLayout
-      image={<RecordImage key={record.image} image={record.image} name={record.name} eager />}
+      image={<RecordImage image={record.image} name={record.name} eager />}
       title={record.name}
       quality={record.quality}
       description={
@@ -70,86 +71,80 @@ function PlantOrSeriesDetailPage({ detail }: { detail: PlantOrSeriesDetail }) {
       }
       fields={fields}
     >
-      <PlantExtras detail={detail} />
+      {sections.length > 0 && <CollectionDetailExtras sections={sections} />}
     </CollectionDetailLayout>
   );
 }
 
-function PlantExtras({ detail }: { detail: PlantOrSeriesDetail }) {
+function plantDetailSections(detail: PlantOrSeriesDetail): CollectionDetailSection[] {
   const sections: CollectionDetailSection[] = [];
-  const summary = detail.record.summary;
-  if (summary.seeds.length)
-    sections.push({ key: "plant-growth", content: <PlantGrowthStages seeds={summary.seeds} /> });
-  if (summary.drops.groups.length > 0)
+  if (detail.kind === "item") {
+    if (detail.matureForms.length > 0)
+      sections.push({ key: "plant-mature", content: <PlantMatureForms detail={detail} /> });
+    if (detail.record.summary.drops.groups.length > 0)
+      sections.push({
+        key: "plant-drops",
+        content: <PlantDropsInfo drops={detail.record.summary.drops} />,
+      });
+    if (detail.sourceTrees.length > 0)
+      sections.push({
+        key: "plant-source-trees",
+        content: <PlantRelatedItems title="来源树木" items={detail.sourceTrees} />,
+      });
+    if (detail.cooking)
+      sections.push({
+        key: "plant-cooking",
+        content: <ItemCookingUsage usage={detail.cooking} />,
+      });
+  } else {
     sections.push({
-      key: "plant-drops",
-      content: <PlantDropsInfo drops={summary.drops} />,
-    });
-  if (detail.kind === "item" && detail.sourceTrees.length > 0)
-    sections.push({
-      key: "plant-source-trees",
-      content: <PlantRelatedItems title="来源树木" items={detail.sourceTrees} />,
-    });
-  if (detail.kind === "item" && detail.cooking)
-    sections.push({
-      key: "plant-cooking",
-      content: <ItemCookingUsage usage={detail.cooking} />,
-    });
-  if (detail.kind === "item" && detail.series.length > 0)
-    sections.push({
-      key: "related-plants",
-      content: <PlantSeriesRelated detail={detail} />,
-    });
-  if (detail.kind === "series" && detail.items?.length)
-    sections.push({
-      key: "related-plants",
+      key: "plant-members",
       content: (
-        <section aria-labelledby="related-plants" className="space-y-4">
-          <h2 id="related-plants" className="text-lg font-semibold">
+        <section aria-labelledby="plant-members" className="space-y-4">
+          <h2 id="plant-members" className="text-lg font-semibold">
             系列成员
           </h2>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-3">
-            {detail.items.map((item) => (
-              <PlantsCard key={item.id} item={item} />
-            ))}
-          </div>
+          {detail.items?.length ? (
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-3">
+              {detail.items.map((item) => (
+                <PlantsCard key={item.id} item={item} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {detail.items === null ? "系列成员尚未确认" : "该系列暂无成员"}
+            </p>
+          )}
         </section>
       ),
     });
-  return <CollectionDetailExtras sections={sections} />;
+  }
+  return sections;
 }
 
-function PlantSeriesRelated({
-  detail,
-}: {
-  detail: Extract<PlantOrSeriesDetail, { kind: "item" }>;
-}) {
+function PlantMatureForms({ detail }: { detail: Extract<PlantsDetail, { kind: "item" }> }) {
   return (
-    <section aria-labelledby="related-plants" className="space-y-4">
-      <h2 id="related-plants" className="text-lg font-semibold">
-        所属系列
+    <section aria-labelledby="plant-mature" className="space-y-4">
+      <h2 id="plant-mature" className="text-lg font-semibold">
+        成熟形态
       </h2>
-      <CollectionDetailRelatedGrid>
-        {detail.series.map((series) => (
-          <PlantSeriesCard key={series.id} series={series} />
-        ))}
-      </CollectionDetailRelatedGrid>
-      {detail.relatedGroups.map(
-        ({ series, items }) =>
-          items.length > 0 && (
-            <div key={series.id} className="space-y-3">
-              <h3 className="text-sm font-medium">{series.name} · 同系列植物</h3>
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-3">
-                {items.map((item) => (
-                  <PlantsCard key={item.id} item={item} />
-                ))}
+      {detail.matureForms.map(({ seed, stages }) => (
+        <div key={seed.id} className="space-y-3">
+          {detail.matureForms.length > 1 && <h3 className="text-sm font-medium">{seed.name}</h3>}
+          <div className="flex flex-wrap gap-3">
+            {stages.map((stage) => (
+              <div key={stage.id} className="w-72 max-w-full">
+                <CollectionItemCard
+                  item={{ name: detail.record.name, image: stage.image }}
+                  itemId={detail.record.id}
+                  description={detail.record.description || "描述未提供"}
+                  fullDescription
+                />
               </div>
-            </div>
-          ),
-      )}
-      {detail.hasUnconfirmedSeriesMembership && (
-        <p className="text-sm text-muted-foreground">其他系列的成员关系未确认</p>
-      )}
+            ))}
+          </div>
+        </div>
+      ))}
     </section>
   );
 }

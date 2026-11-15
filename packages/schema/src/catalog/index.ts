@@ -163,6 +163,5 @@ export { NeighborClothingSchema } from "./neighbor-clothing.ts";
 export type { NeighborClothing } from "./neighbor-clothing.ts";
 export const parseCatalog = (input: unknown): Catalog => CatalogSchema.parse(input);
 export { isGroupRecord, recordCategory, resolveItem } from "./records.ts";
-export { recordTarget, recordFocus } from "./location.ts";
 
 export { createRecordTagResolver } from "./tags.ts";

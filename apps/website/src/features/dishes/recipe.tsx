@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { RecordImage } from "../collection/record-image";
-import { collectionItemLocation } from "../collection/item-route";
+import { recordLocation } from "../collection/item-route";
 import type { IngredientItem } from "../collection-view";
 import {
   Accordion,
@@ -22,7 +22,7 @@ function IngredientCard({ item }: { item: IngredientItem }) {
   const origin = useCollectionOrigin();
   return (
     <Link
-      {...collectionItemLocation(item)}
+      {...recordLocation(item)}
       state={{ collectionOrigin: origin }}
       className="group/recipe-item block min-w-0 rounded-xl no-underline outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     >

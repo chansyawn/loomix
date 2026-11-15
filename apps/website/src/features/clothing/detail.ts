@@ -1,8 +1,8 @@
 import { notFound } from "@tanstack/react-router";
 import { loadClothing } from "./data";
 import type { ClothingData } from "./data";
-import { membershipIndex } from "./query";
 import type { View } from "./search";
+import { setDetailNavigation } from "../collection/detail-navigation-model";
 
 export function parseClothingId(value: string): number {
   const id = Number(value);
@@ -10,15 +10,20 @@ export function parseClothingId(value: string): number {
   return id;
 }
 export function clothingDetail(data: ClothingData, view: View, id: number) {
+  const navigation = setDetailNavigation(data, id, "套装");
   if (view === "items") {
     const record = data.items.find((row) => row.id === id);
     if (!record) throw notFound();
-    return { kind: "item" as const, record, sets: membershipIndex(data.sets).get(id) ?? [] };
+    return {
+      kind: "item" as const,
+      record,
+      navigation,
+    };
   }
   if (view === "appearances") {
     const record = data.appearances.find((row) => row.id === id);
     if (!record) throw notFound();
-    return { kind: "appearance" as const, record };
+    return { kind: "appearance" as const, record, navigation };
   }
   const record = data.sets.find((row) => row.id === id);
   if (!record) throw notFound();
@@ -26,6 +31,7 @@ export function clothingDetail(data: ClothingData, view: View, id: number) {
   return {
     kind: "set" as const,
     record,
+    navigation,
     items: record.componentIds === null ? null : record.componentIds.map((id) => items.get(id)!),
   };
 }

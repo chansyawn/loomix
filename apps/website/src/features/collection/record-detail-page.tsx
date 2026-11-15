@@ -12,15 +12,11 @@ import { NeighborClothingDetailPage } from "../neighbor-clothing/detail-page";
 export function RecordDetailPage({
   data,
   id,
-  focus,
   model,
-  onFocusChange,
 }: {
   data: CollectionCatalog;
   id: number;
-  focus?: number;
   model: RecordDetail;
-  onFocusChange: (focus?: number) => void;
 }) {
   return (
     <RecordDetailContext
@@ -28,19 +24,11 @@ export function RecordDetailPage({
         record: data.byId.get(id)!,
       }}
     >
-      <DetailContent model={model} focus={focus} onFocusChange={onFocusChange} />
+      <DetailContent model={model} />
     </RecordDetailContext>
   );
 }
-function DetailContent({
-  model,
-  focus,
-  onFocusChange,
-}: {
-  model: RecordDetail;
-  focus?: number;
-  onFocusChange: (focus?: number) => void;
-}) {
+function DetailContent({ model }: { model: RecordDetail }) {
   switch (model.category) {
     case "furniture":
       return <FurnitureDetailPage detail={model.detail} />;
@@ -49,7 +37,7 @@ function DetailContent({
     case "creatures":
       return <CreaturesDetailPage detail={model.detail} />;
     case "plants":
-      return <PlantsDetailPage detail={model.detail} focus={focus} onFocusChange={onFocusChange} />;
+      return <PlantsDetailPage detail={model.detail} />;
     case "dishes":
       return <DishesDetailPage detail={model.detail} />;
     case "miscellaneous":

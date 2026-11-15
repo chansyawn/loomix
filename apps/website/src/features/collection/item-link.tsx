@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { LinkProps } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import type { IngredientItem } from "../collection-view";
-import { collectionItemLocation } from "./item-route";
+import { recordLocation } from "./item-route";
 import { useCollectionOrigin } from "./navigation";
 
 export function CollectionItemLink({
@@ -20,7 +20,7 @@ export function CollectionItemLink({
   if (item.listed === false) return <span className={className}>{children ?? item.name}</span>;
   return (
     <Link
-      {...collectionItemLocation(item)}
+      {...recordLocation(item)}
       state={state ?? { collectionOrigin: origin }}
       className={
         className ??

@@ -3,8 +3,8 @@ import type { PlantsData } from "./data";
 import { loadCollectionView } from "../collection-loader";
 import { buildIngredientsData, ingredientUsage } from "../ingredients/model";
 import type { IngredientsData } from "../ingredients/model";
-import { membershipIndex } from "./query";
-import { cropSeriesDetail } from "./crop-detail";
+import { plantDetailNavigation } from "./detail-navigation-model";
+import { plantMatureForms } from "./growth";
 import type { View } from "./search";
 
 export function parsePlantId(value: string): number {
@@ -15,65 +15,56 @@ export function parsePlantId(value: string): number {
 
 export function plantsDetail(
   data: PlantsData,
-  view: Exclude<View, "seeds">,
+  view: View,
   id: number,
   ingredients: IngredientsData | null = null,
 ) {
   const itemsById = new Map(data.items.map((item) => [item.id, item]));
+  const navigation = plantDetailNavigation(data, id);
   if (view === "items") {
-    const item = itemsById.get(id);
-    if (!item || item.category === "作物") throw notFound();
-    const series = membershipIndex(data.series).get(id) ?? [];
+    const record = itemsById.get(id);
+    if (!record) throw notFound();
+    const seeds = data.seeds.filter((seed) => seed.plantIds.includes(id));
     return {
       kind: "item" as const,
-      record: item,
+      record,
+      navigation,
+      matureForms: plantMatureForms(seeds, id),
       cooking: ingredients ? ingredientUsage(ingredients, id) : null,
-      series,
-      relatedGroups: series.map((group) => ({
-        series: group,
-        items:
-          group.plantIds?.flatMap((memberId) =>
-            memberId !== id && itemsById.has(memberId) ? [itemsById.get(memberId)!] : [],
-          ) ?? [],
-      })),
       sourceTrees: (data.sourceTreesByItemId.get(id) ?? []).flatMap(
         (tree) => data.itemRefs.get(tree.id) ?? [],
       ),
-      itemRefs: data.itemRefs,
-      hasUnconfirmedSeriesMembership: data.series.some((group) => group.plantIds === null),
     };
   }
-  const series = data.series.find((row) => row.id === id);
-  if (!series) throw notFound();
-  const items = series.plantIds?.flatMap((id) => itemsById.get(id) ?? []) ?? null;
-  if (items?.some((item) => item.category === "作物"))
-    return cropSeriesDetail(series, items, ingredients);
+  if (view === "seeds") {
+    const record = data.seeds.find((seed) => seed.id === id);
+    if (!record) throw notFound();
+    return {
+      kind: "seed" as const,
+      record,
+      navigation,
+      items: record.plantIds.flatMap((plantId) => itemsById.get(plantId) ?? []),
+    };
+  }
+  const record = data.series.find((series) => series.id === id);
+  if (!record) throw notFound();
   return {
     kind: "series" as const,
-    record: series,
-    items,
-    itemRefs: data.itemRefs,
+    record,
+    navigation,
+    items: record.plantIds?.flatMap((plantId) => itemsById.get(plantId) ?? []) ?? null,
   };
 }
 
 export type PlantsDetail = ReturnType<typeof plantsDetail>;
 
-export async function loadPlantsDetail(
-  view: Exclude<View, "seeds">,
-  value: string,
-): Promise<PlantsDetail> {
+export async function loadPlantsDetail(view: View, value: string): Promise<PlantsDetail> {
   const id = parsePlantId(value);
   const collection = await loadCollectionView();
-  const needsCooking =
-    (view === "items" && collection.plants.items.some((item) => item.id === id)) ||
-    (view === "series" &&
-      collection.plants.series
-        .find((series) => series.id === id)
-        ?.summary.categories.includes("作物"));
   return plantsDetail(
     collection.plants,
     view,
     id,
-    needsCooking ? buildIngredientsData(collection) : null,
+    view === "items" ? buildIngredientsData(collection) : null,
   );
 }

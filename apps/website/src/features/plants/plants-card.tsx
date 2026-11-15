@@ -5,7 +5,7 @@ import type { PlantSeed } from "./model";
 import { RecordImage } from "@/features/collection/record-image";
 import { CollectionCard } from "@/features/collection/collection-card";
 import { useCollectionOrigin } from "@/features/collection/navigation";
-import { collectionItemLocation } from "../collection/item-route";
+import { recordLocation } from "../collection/item-route";
 
 export function PlantsCard({ item }: { item: PlantItem }) {
   const origin = useCollectionOrigin();
@@ -15,10 +15,7 @@ export function PlantsCard({ item }: { item: PlantItem }) {
       quality={item.quality}
       image={<RecordImage key={item.image} image={item.image} name={item.name} />}
       titleLink={
-        <Link
-          {...collectionItemLocation({ ...item, catalogCategory: "plants" })}
-          state={{ collectionOrigin: origin }}
-        >
+        <Link {...recordLocation(item)} state={{ collectionOrigin: origin }}>
           {item.name}
         </Link>
       }
@@ -35,12 +32,7 @@ export function PlantSeriesCard({ series }: { series: PlantSeries }) {
       quality={series.quality}
       image={<RecordImage key={series.image} image={series.image} name={series.name} />}
       titleLink={
-        <Link
-          to="/collections/records/$id"
-          params={{ id: String(series.id) }}
-          search={{ focus: undefined }}
-          state={{ collectionOrigin: origin }}
-        >
+        <Link {...recordLocation(series)} state={{ collectionOrigin: origin }}>
           {series.name}
         </Link>
       }

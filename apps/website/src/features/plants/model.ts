@@ -12,7 +12,6 @@ export type PlantSeed = Omit<
   "image" | "kind" | "admissionReasons" | "client" | "tagFields" | "tagIds"
 > & {
   image: string | null;
-  cropSeriesId: number | null;
   plantIds: number[];
   growth: PlantGrowth;
 };
@@ -40,7 +39,6 @@ export interface PlantSummary {
   drops: PlantDrops;
 }
 export type PlantItem = CollectionRecord & {
-  cropSeriesId: number | null;
   category: string | null;
   originGalaxy: string | null;
   maturityPeriod: string | null;
