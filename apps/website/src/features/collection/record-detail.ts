@@ -59,14 +59,19 @@ export function collectionDetail(data: CollectionCatalog, id: number, neighborNa
         ),
       };
     case "plant":
+    case "seed":
     case "plants.series":
       return {
         category: "plants" as const,
         detail: plantsDetail(
           view.plants,
-          record.record.kind === "plant" ? "items" : "series",
+          record.record.kind === "plant"
+            ? "items"
+            : record.record.kind === "seed"
+              ? "seeds"
+              : "series",
           id,
-          buildIngredientsData(view),
+          record.record.kind === "plant" ? buildIngredientsData(view) : null,
         ),
       };
     case "dish":
@@ -93,8 +98,6 @@ export function collectionDetail(data: CollectionCatalog, id: number, neighborNa
           neighborName,
         ),
       };
-    case "seed":
-      throw new Error("Seed detail requires canonical resolution");
   }
 }
 export type RecordDetail = ReturnType<typeof collectionDetail>;

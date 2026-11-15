@@ -65,15 +65,11 @@ export function buildPlantsData(
       const growth = growths.get(seed.growthId);
       if (!growth) throw new Error(`Missing seed growth ${seed.id}`);
       const plantIds = growthPlantIds(growth);
-      const destinations = [
-        ...new Set(plantIds.map((id) => itemRefs.get(id)?.cropSeriesId ?? null)),
-      ];
       return {
         ...seed,
         plantIds,
         growth,
         image: image(seed.image),
-        cropSeriesId: destinations.length === 1 ? destinations[0] : null,
       };
     });
   const seedsByPlant = new Map<number, PlantSeed[]>();
@@ -151,7 +147,6 @@ export function buildPlantsData(
       );
       const item: Omit<PlantItem, "summary"> = {
         id: record.id,
-        cropSeriesId: itemRefs.get(record.id)?.cropSeriesId ?? null,
         name: record.name,
         image: image(record.image),
         description: record.description,

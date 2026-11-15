@@ -3,7 +3,7 @@ import type { IngredientItem } from "../collection-view";
 import { compactGrid } from "../collection/grid-layout";
 import { CollectionCard } from "../collection/collection-card";
 import { RecordImage } from "../collection/record-image";
-import { collectionItemLocation } from "../collection/item-route";
+import { recordLocation } from "../collection/item-route";
 import { useCollectionOrigin } from "@/features/collection/navigation";
 import { ingredientLeafTags } from "./model";
 import type { IngredientsData } from "./model";
@@ -17,7 +17,7 @@ function IngredientCard({ item, data }: { item: IngredientItem; data: Ingredient
       quality={item.quality}
       image={<RecordImage image={item.image} name={item.name} />}
       titleLink={
-        <Link {...collectionItemLocation(item)} state={{ collectionOrigin: origin }}>
+        <Link {...recordLocation(item)} state={{ collectionOrigin: origin }}>
           {item.name}
         </Link>
       }

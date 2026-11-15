@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { CollectionDetailExtras, CollectionDetailLayout } from "../collection/detail-layout";
 import { RecordImage } from "../collection/record-image";
-import { recordLocation } from "../collection/catalog";
+import { recordLocation } from "../collection/item-route";
 import type { NeighborClothingDetail } from "./detail";
 
 export function NeighborClothingDetailPage({ detail }: { detail: NeighborClothingDetail }) {
@@ -36,7 +36,7 @@ export function NeighborClothingDetailPage({ detail }: { detail: NeighborClothin
                       对应玩家服饰：{" "}
                       <Link
                         {...recordLocation({
-                          target: { recordId: detail.counterpartId },
+                          id: detail.counterpartId,
                         })}
                         className="underline-offset-4 hover:underline"
                       >

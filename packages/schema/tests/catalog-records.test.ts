@@ -1,6 +1,6 @@
 import { expect, test } from "vite-plus/test";
 import { validateDataset } from "../src/dataset/index.ts";
-import { RecordSchema, recordTarget, recordFocus, resolveItem } from "../src/catalog/index.ts";
+import { RecordSchema, resolveItem } from "../src/catalog/index.ts";
 import { datasetFixture, recordMetadata } from "./fixture.ts";
 const context = { formatVersion: 8, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
 function fixture() {
@@ -70,34 +70,33 @@ function fixture() {
   });
   return catalog;
 }
-test("种子与产物的canonical定位幂等，外来focus不合法", () => {
+test("正式记录与仅供引用的物品身份分开解析", () => {
   const catalog = fixture();
-  expect(recordTarget(catalog, 1)).toEqual({ recordId: 10, focus: 1 });
-  expect(recordTarget(catalog, 20)).toEqual({ recordId: 10, focus: 20 });
-  expect(recordTarget(catalog, 10)).toEqual({ recordId: 10 });
-  expect(recordFocus(catalog, 10, 20)).toBe(20);
-  expect(recordFocus(catalog, 10, 999)).toBeUndefined();
-  expect(recordFocus(catalog, 10, 10)).toBeUndefined();
+  for (const id of [1, 2, 10, 20])
+    expect(resolveItem(catalog, id)).toMatchObject({ kind: "record", value: { id } });
   catalog.references.push({ id: 99, name: "材料" });
-  expect(recordTarget(catalog, 99)).toBeNull();
   expect(resolveItem(catalog, 99)?.kind).toBe("reference");
+  expect(resolveItem(catalog, 999)).toBeNull();
 });
-test("目的地歧义必须在数据验收阶段失败", () => {
-  const catalog = fixture(),
-    dataset = datasetFixture(context, {
-      gameVersion: "test",
-      dataRevision: 1,
-      resourceRevision: 1,
-      manifestId: "1",
-    });
+test("作物与种子不依赖唯一系列，仍校验正式成员和生长引用", () => {
+  const dataset = datasetFixture(context, {
+    gameVersion: "test",
+    dataRevision: 1,
+    resourceRevision: 1,
+    manifestId: "1",
+  });
+  const catalog = fixture();
   dataset.catalog = catalog;
-  expect(validateDataset(dataset)).toEqual([]);
   catalog.records.push({
     ...catalog.records.find((record) => record.kind === "plants.series")!,
     id: 11,
   });
+  expect(validateDataset(dataset)).toEqual([]);
+  catalog.records = catalog.records.filter((record) => record.kind !== "plants.series");
+  expect(validateDataset(dataset)).toEqual([]);
+  catalog.growths[0]!.stages[1]!.plantId = 999;
   expect(
-    validateDataset(dataset).some((issue) => issue.message.includes("Ambiguous plant series")),
+    validateDataset(dataset).some((issue) => issue.message.includes("Unknown plant 999")),
   ).toBe(true);
 });
 test("直接标签拒绝重复引用与悬空父级", () => {

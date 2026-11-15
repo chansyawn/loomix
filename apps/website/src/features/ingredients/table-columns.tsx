@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { IngredientItem } from "../collection-view";
-import { collectionItemLocation } from "../collection/item-route";
+import { recordLocation } from "../collection/item-route";
 import { recordColumns, tableLinkClassName, textColumn } from "../collection/table-columns";
 import type { CollectionColumn } from "../collection/table-columns";
 import { useCollectionOrigin } from "@/features/collection/navigation";
@@ -11,7 +11,7 @@ function IngredientLink({ item }: { item: IngredientItem }) {
   const origin = useCollectionOrigin();
   return (
     <Link
-      {...collectionItemLocation(item)}
+      {...recordLocation(item)}
       state={{ collectionOrigin: origin }}
       className={tableLinkClassName}
       title={item.name}

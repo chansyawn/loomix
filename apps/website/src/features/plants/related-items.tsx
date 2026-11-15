@@ -1,6 +1,6 @@
 import type { IngredientItem } from "../collection-view";
 import { CollectionItemCard } from "../collection/collection-item-card";
-import { collectionItemLocation } from "../collection/item-route";
+import { recordLocation } from "../collection/item-route";
 import { useCollectionOrigin } from "@/features/collection/navigation";
 import type { PlantDrops } from "./model";
 
@@ -28,7 +28,7 @@ export function PlantRelatedItems({
                 item.listed === false
                   ? undefined
                   : {
-                      ...collectionItemLocation(item),
+                      ...recordLocation(item),
                       state: { collectionOrigin: origin },
                     }
               }
@@ -78,7 +78,7 @@ export function PlantDropsInfo({ drops }: { drops: PlantDrops }) {
                           link={
                             entry.item && entry.item.listed !== false
                               ? {
-                                  ...collectionItemLocation(entry.item),
+                                  ...recordLocation(entry.item),
                                   state: { collectionOrigin: origin },
                                 }
                               : undefined

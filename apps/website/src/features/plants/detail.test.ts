@@ -1,167 +1,118 @@
 import { isNotFound } from "@tanstack/react-router";
-import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import { catalogFixture, fixtureRequest } from "../collection-fixture.ts";
+import { afterEach, expect, test, vi } from "vite-plus/test";
+import { catalogFixture, fixtureRequest } from "../collection-fixture";
 import {
   plantItemFixture,
   plantSeedFixture,
   plantSeriesFixture,
-  plantSummaryFixture,
   plantsDataFixture,
 } from "./fixture";
-import type { PlantItem, PlantSeries } from "../collection-view.ts";
 import { plantsDetail, loadPlantsDetail, parsePlantId } from "./detail";
-import { matureCropStage, selectedCropTab } from "./crop-detail";
 import { ingredientsFixture } from "../ingredients/fixture";
 
-const first: PlantItem = plantItemFixture({
-  id: 1,
-  name: "星露花",
-  image: null,
-  description: null,
-  quality: null,
-  category: null,
-  originGalaxy: null,
-  maturityPeriod: null,
-  harvestCount: null,
-});
-const second: PlantItem = { ...first, id: 2, name: "星露果" };
-const group: PlantSeries = plantSeriesFixture({
-  id: 3,
-  name: "星露系列",
-  image: null,
-  description: null,
-  quality: null,
-  seriesName: null,
-  plantIds: [2, 1],
-});
+const first = plantItemFixture({ id: 1, name: "星露花" });
+const second = plantItemFixture({ id: 2, name: "星露果" });
+const seed = plantSeedFixture({ id: 10, plantIds: [2, 1] });
+const group = plantSeriesFixture({ id: 100, plantIds: [2, 1] });
 const data = plantsDataFixture({
   items: [first, second],
+  seeds: [seed],
   series: [
     group,
-    { ...group, id: 4, name: "空系列", plantIds: [] },
-    { ...group, id: 5, plantIds: null },
+    plantSeriesFixture({ id: 200, plantIds: [] }),
+    plantSeriesFixture({ id: 300, plantIds: null }),
   ],
 });
 
 afterEach(() => vi.unstubAllGlobals());
 
-describe("plant details", () => {
-  it("keeps each crop product's cooking uses separate in a single series detail", () => {
-    const items = [1, 4, 8].map((id) => plantItemFixture({ id, category: "作物" }));
-    const series = plantSeriesFixture({ id: 100, plantIds: [4, 1, 8] });
-    const detail = plantsDetail(
-      plantsDataFixture({ items, series: [series] }),
-      "series",
-      100,
-      ingredientsFixture().data,
+test("种子、普通植物与作物都有自身详情，含作物的系列仍为普通系列", () => {
+  const items = [1, 4, 8].map((id) => plantItemFixture({ id, category: "作物" }));
+  const input = plantsDataFixture({
+    items,
+    seeds: [seed],
+    series: [plantSeriesFixture({ id: 100, plantIds: [4, 1, 8] })],
+  });
+  const ingredients = ingredientsFixture().data;
+  const expectedDishes = new Map([
+    [1, [100, 102, 109]],
+    [4, [102]],
+    [8, []],
+  ]);
+  for (const item of items) {
+    const detail = plantsDetail(input, "items", item.id, ingredients);
+    if (detail.kind !== "item") throw new Error("应为单品详情");
+    expect(detail.record).toBe(item);
+    expect(detail.cooking?.dishes.map((match) => match.dish.id) ?? []).toEqual(
+      expectedDishes.get(item.id),
     );
-    if (detail.kind !== "crop") throw new Error("Expected crop detail");
-    expect(detail.items.map((item) => item.id)).toEqual([4, 1, 8]);
-    expect(detail.cookingByItemId.get(4)?.dishes.map((match) => match.dish.id)).toEqual([102]);
-    expect(detail.cookingByItemId.get(1)?.dishes.map((match) => match.dish.id)).toEqual([
-      100, 102, 109,
-    ]);
-    expect(detail.cookingByItemId.get(8)).toBeNull();
+  }
+  expect(plantsDetail(input, "seeds", 10, ingredients)).toMatchObject({
+    kind: "seed",
+    record: seed,
+    items: [items[0]],
   });
-  it("groups a crop seed and its ordered products under the series detail", () => {
-    const crop = plantItemFixture({ id: 6, name: "星露作物", category: "作物", cropSeriesId: 7 });
-    const seed = plantSeedFixture({ id: 8, name: "星露种子", cropSeriesId: 7, plantIds: [6] });
-    const cropSeries = plantSeriesFixture({
-      id: 7,
-      name: "星露作物系列",
-      plantIds: [6],
-      summary: plantSummaryFixture({ seeds: [seed] }),
-    });
-    const cropData = plantsDataFixture({ items: [crop], series: [cropSeries], seeds: [seed] });
-    const detail = plantsDetail(cropData, "series", 7);
+  const seriesDetail = plantsDetail(input, "series", 100, ingredients);
+  expect(seriesDetail).toMatchObject({ kind: "series", items: [items[1], items[0], items[2]] });
+  expect(seriesDetail).not.toHaveProperty("cookingByItemId");
+  expect(plantsDetail(input, "seeds", 10, ingredients)).not.toHaveProperty("cooking");
+});
 
-    expect(detail).toMatchObject({
-      kind: "crop",
-      record: cropSeries,
-      items: [crop],
-      seeds: [seed],
-    });
-    expect(() => plantsDetail(cropData, "items", 6)).toThrow();
+test("独立种子保留关联植物顺序，单品保留来源种子和缺失字段", () => {
+  expect(plantsDetail(data, "seeds", 10)).toMatchObject({
+    kind: "seed",
+    record: seed,
+    items: [second, first],
   });
-
-  it("selects only valid series product tabs and resolves mature forms by product ID", () => {
-    const growth = {
-      id: 8,
-      kind: "crop" as const,
-      cycleMode: null,
-      initialStageIds: [11],
-      regrowthStageIds: null,
-      stages: [
-        { id: 11, name: "作物株", image: "first", plantId: 6 },
-        { id: 12, name: "作物株", image: "second", plantId: 9 },
-      ],
-      matureStages: [
-        { stageId: 11, tag: null, rank: null },
-        { stageId: 12, tag: null, rank: null },
-      ],
-      witheredStageId: null,
-      maturityDays: null,
-      harvestCount: null,
-    };
-    const items = [plantItemFixture({ id: 6 }), plantItemFixture({ id: 9 })];
-    expect(selectedCropTab("item-9", items)).toBe("item-9");
-    expect(selectedCropTab("item-99", items)).toBe("seed");
-    expect(selectedCropTab("item-x", items)).toBe("seed");
-    expect(matureCropStage(growth, 9)?.image).toBe("second");
+  expect(plantsDetail(data, "items", 1)).toMatchObject({
+    kind: "item",
+    record: first,
+    seeds: [seed],
+    cooking: null,
+    matureForms: [],
+    navigation: { hasUnconfirmedMembership: true },
   });
+  expect(plantsDetail({ ...data, series: [] }, "items", 1)).toMatchObject({
+    record: first,
+    seeds: [seed],
+  });
+});
 
-  it("accepts positive safe integer IDs and rejects malformed addresses", () => {
-    expect(parsePlantId("1")).toBe(1);
-    for (const value of ["0", "-1", "1.5", "1e2", "01", "", "abc", "9007199254740992"]) {
-      try {
-        parsePlantId(value);
-        throw new Error("Expected not found");
-      } catch (error) {
-        expect(isNotFound(error)).toBe(true);
-      }
+test("系列成员保留顺序，未知成员与空列表分开表达", () => {
+  expect(plantsDetail(data, "series", 100)).toMatchObject({ items: [second, first] });
+  expect(plantsDetail(data, "series", 200)).toMatchObject({ items: [] });
+  expect(plantsDetail(data, "series", 300)).toMatchObject({ items: null });
+});
+
+test("仅接受正安全整数编号", () => {
+  expect(parsePlantId("1")).toBe(1);
+  for (const value of ["0", "-1", "1.5", "1e2", "01", "", "abc", "9007199254740992"])
+    expect(() => parsePlantId(value)).toThrow(expect.objectContaining({ isNotFound: true }));
+});
+
+test("错误类型和未知编号返回未找到", () => {
+  for (const [view, id] of [
+    ["items", 100],
+    ["series", 1],
+    ["seeds", 1],
+    ["items", 999],
+    ["seeds", 999],
+  ] as const) {
+    try {
+      plantsDetail(data, view, id);
+      throw new Error("应返回未找到");
+    } catch (error) {
+      expect(isNotFound(error)).toBe(true);
     }
-  });
+  }
+});
 
-  it("returns known series memberships and preserves missing plant fields", () => {
-    expect(plantsDetail(data, "items", 1)).toMatchObject({
-      kind: "item",
-      record: first,
-      series: [group],
-      hasUnconfirmedSeriesMembership: true,
-    });
-    expect(plantsDetail({ ...data, series: [] }, "items", 1)).toMatchObject({ series: [] });
-    expect(
-      plantsDetail({ ...data, items: [first], series: [{ ...group, plantIds: null }] }, "items", 1),
-    ).toMatchObject({ series: [], hasUnconfirmedSeriesMembership: true });
-  });
-
-  it("preserves member order and distinguishes unknown members from an empty list", () => {
-    expect(plantsDetail(data, "series", 3)).toMatchObject({ items: [second, first] });
-    expect(plantsDetail(data, "series", 4)).toMatchObject({ items: [] });
-    expect(plantsDetail(data, "series", 5)).toMatchObject({ items: null });
-  });
-
-  it("treats missing records and IDs of the wrong kind as not found", () => {
-    for (const [view, id] of [
-      ["items", 3],
-      ["series", 1],
-      ["items", 999],
-    ] as const) {
-      try {
-        plantsDetail(data, view, id);
-        throw new Error("Expected not found");
-      } catch (error) {
-        expect(isNotFound(error)).toBe(true);
-      }
-    }
-  });
-
-  it("loads validated content and keeps network or schema failures retryable", async () => {
-    vi.stubGlobal("fetch", vi.fn(fixtureRequest(catalogFixture({ plants: data }))));
-    expect(await loadPlantsDetail("items", "1")).toMatchObject({ record: { id: 1 } });
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })));
-    await expect(loadPlantsDetail("items", "1")).rejects.toThrow("503");
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}")));
-    await expect(loadPlantsDetail("items", "1")).rejects.toThrow();
-  });
+test("加载独立种子与植物数据，资源失败仍可重试", async () => {
+  vi.stubGlobal("fetch", vi.fn(fixtureRequest(catalogFixture({ plants: data }))));
+  expect(await loadPlantsDetail("items", "1")).toMatchObject({ record: { id: 1 } });
+  expect(await loadPlantsDetail("seeds", "10")).toMatchObject({ record: { id: 10 } });
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })));
+  await expect(loadPlantsDetail("seeds", "10")).rejects.toThrow("503");
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}")));
+  await expect(loadPlantsDetail("items", "1")).rejects.toThrow();
 });

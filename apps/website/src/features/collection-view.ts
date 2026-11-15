@@ -91,7 +91,6 @@ export type CatalogCategory =
   | "miscellaneous";
 export type IngredientItem = CollectionRecord & {
   catalogCategory: CatalogCategory;
-  cropSeriesId: number | null;
   listed?: boolean;
 };
 export interface CollectionView {
@@ -145,20 +144,6 @@ export function toCollectionView(
   });
   const groups = catalog.records.filter(isGroupRecord);
   const groupIds = new Set(groups.map((record) => record.id));
-  const cropIds = new Set(
-    catalog.records
-      .filter((item) => item.kind === "plant" && item.displayCategory === "作物")
-      .map((item) => item.id),
-  );
-  const cropSeriesByItemId = new Map(
-    groups
-      .filter((group) => group.kind === "plants.series" && groupIds.has(group.id))
-      .flatMap((group) =>
-        (group.memberIds ?? [])
-          .filter((id) => cropIds.has(id))
-          .map((id) => [id, group.id] as const),
-      ),
-  );
   const recipesByProduct = new Map<number, CraftingRecipe[]>();
   for (const recipe of catalog.craftingRecipes) {
     const recipes = recipesByProduct.get(recipe.productId) ?? [];
@@ -189,7 +174,6 @@ export function toCollectionView(
       description: null,
       quality: null,
       catalogCategory: "miscellaneous",
-      cropSeriesId: null,
       listed: false,
     });
   for (const record of catalog.records) {
@@ -197,7 +181,6 @@ export function toCollectionView(
     view.ingredientItemsById.set(record.id, {
       ...common,
       catalogCategory: recordCategory(record),
-      cropSeriesId: cropSeriesByItemId.get(record.id) ?? null,
       listed: record.kind !== "neighborClothing",
     });
     if (isGroupRecord(record) || record.kind === "appearance" || record.kind === "seed") continue;

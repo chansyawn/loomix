@@ -1,7 +1,6 @@
 import { createImageResolver, type Assets } from "@loomix/schema/assets";
 import {
   recordCategory,
-  recordTarget,
   createRecordTagResolver,
   type Catalog,
   type CatalogRecord,
@@ -36,8 +35,6 @@ export function createCollectionCatalog(
   const tagIndex = createGameplayTagIndex(gameplayTags.tags);
   const tagsFor = createRecordTagResolver(tagIndex);
   const rows = catalog.records.map((record) => {
-    const target = recordTarget(catalog, record.id);
-    if (!target) throw new Error(`Missing formal target ${record.id}`);
     return {
       id: record.id,
       name: record.name,
@@ -50,7 +47,6 @@ export function createCollectionCatalog(
       styles: tagsFor(record, "styles").map(tagLabel),
       acquisition: record.acquisition,
       acquisitionText: acquisitionText(record.acquisition),
-      target,
       record,
     };
   });
@@ -64,13 +60,6 @@ export function createCollectionCatalog(
 }
 export type CollectionCatalog = ReturnType<typeof createCollectionCatalog>;
 export type OverviewRecord = CollectionCatalog["rows"][number];
-export function recordLocation(record: Pick<OverviewRecord, "target">) {
-  return {
-    to: "/collections/records/$id" as const,
-    params: { id: String(record.target.recordId) },
-    search: { focus: record.target.focus },
-  };
-}
 export function recordFields(row: OverviewRecord): [string, string | null][] {
   return [
     ["编号", String(row.id)],

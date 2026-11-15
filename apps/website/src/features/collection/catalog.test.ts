@@ -6,10 +6,11 @@ import {
   plantSeriesFixture,
   plantsDataFixture,
 } from "../plants/fixture";
-import { createCollectionCatalog, recordFields, recordLocation } from "./catalog";
+import { createCollectionCatalog, recordFields } from "./catalog";
+import { recordLocation } from "./item-route";
 import { collectionDetail } from "./record-detail";
 
-test("共享目录保留集合详情及作物和种子的系列定位，公共字段移除记录形式", () => {
+test("共享目录为植物、种子和系列保留独立详情及公共字段", () => {
   const { catalog, gameplayTags } = catalogFixture({
     plants: plantsDataFixture({
       items: [plantItemFixture({ id: 1, name: "作物", category: "作物" })],
@@ -40,14 +41,22 @@ test("共享目录保留集合详情及作物和种子的系列定位，公共�
   expect(data.byId.get(10)?.record).toMatchObject({ kind: "plants.series", memberIds: [1] });
   expect(collectionDetail(data, 10)).toMatchObject({
     category: "plants",
-    detail: { kind: "crop", record: { id: 10 } },
+    detail: { kind: "series", record: { id: 10 } },
   });
-  for (const id of [1, 20]) {
+  for (const [id, kind] of [
+    [1, "item"],
+    [20, "seed"],
+    [10, "series"],
+  ] as const) {
     const row = data.byId.get(id)!;
     expect(recordLocation(row)).toEqual({
       to: "/collections/records/$id",
-      params: { id: "10" },
-      search: { focus: id },
+      params: { id: String(id) },
+      search: {},
+    });
+    expect(collectionDetail(data, id)).toMatchObject({
+      category: "plants",
+      detail: { kind, record: { id } },
     });
   }
   for (const row of data.rows) {

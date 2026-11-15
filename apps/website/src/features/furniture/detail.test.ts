@@ -38,7 +38,6 @@ const ingredientItemsById = new Map([
       description: null,
       quality: null,
       catalogCategory: "furniture" as const,
-      cropSeriesId: null,
     },
   ],
   [
@@ -50,7 +49,6 @@ const ingredientItemsById = new Map([
       description: null,
       quality: null,
       catalogCategory: "furniture" as const,
-      cropSeriesId: null,
     },
   ],
 ]);

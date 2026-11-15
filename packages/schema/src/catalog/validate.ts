@@ -1,5 +1,4 @@
 import { RECORD_TAG_FIELD_NAMES, mergeRecordTagIds } from "./classification.ts";
-import { recordTarget } from "./location.ts";
 import { validatePlantings } from "./growth.ts";
 import { isGroupRecord, resolveItem } from "./records.ts";
 import type { Catalog } from "./index.ts";
@@ -55,11 +54,6 @@ export function validateCatalog(catalog: Catalog): ValidationIssue[] {
   };
   catalog.records.forEach((record, index) => {
     const path = ["records", index];
-    try {
-      recordTarget(catalog, record.id);
-    } catch (error) {
-      issue(path, error instanceof Error ? error.message : "Invalid record destination");
-    }
     unique(record.admissionReasons, (reason) => reason, [...path, "admissionReasons"]);
     unique(record.tagIds, (id) => id, [...path, "tagIds"]);
     const type = clientTypes.get(record.client.type);

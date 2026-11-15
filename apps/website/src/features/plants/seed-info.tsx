@@ -1,12 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { seedLocation } from "./seed-location";
+import { recordLocation } from "../collection/item-route";
 import { useCollectionOrigin } from "@/features/collection/navigation";
 import type { PlantSeed } from "./model";
 
 export function SeedNameLink({ seed }: { seed: PlantSeed }) {
   const origin = useCollectionOrigin();
   return (
-    <Link {...seedLocation(seed)} state={{ collectionOrigin: origin }}>
+    <Link {...recordLocation(seed)} state={{ collectionOrigin: origin }}>
       {seed.name}
     </Link>
   );

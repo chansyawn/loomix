@@ -1,6 +1,4 @@
-import { createFileRoute, notFound, redirect, useRouter } from "@tanstack/react-router";
-import { z } from "zod";
-import { recordTarget, recordFocus } from "@loomix/schema/catalog";
+import { createFileRoute, notFound, useRouter } from "@tanstack/react-router";
 import { loadCollectionCatalog } from "@/features/collection-loader";
 import { parseRecordId, collectionDetail } from "@/features/collection/record-detail";
 import { RecordDetailPage } from "@/features/collection/record-detail-page";
@@ -11,32 +9,11 @@ import { createResourceReader } from "@/infrastructure/resources";
 import { parseNeighbors } from "@loomix/schema/neighbors";
 export const Route = createFileRoute("/collections/records/$id")({
   ssr: false,
-  validateSearch: z.object({
-    focus: z.coerce
-      .number()
-      .int()
-      .positive()
-      .max(Number.MAX_SAFE_INTEGER)
-      .optional()
-      .catch(undefined),
-  }),
-  loaderDeps: ({ search }) => ({ focus: search.focus }),
-  loader: async ({ params, deps, location }) => {
+  loader: async ({ params }) => {
     const id = parseRecordId(params.id);
     if (id === null) throw notFound();
     const load = createResourceReader();
     const data = await loadCollectionCatalog(load);
-    const target = recordTarget(data.catalog, id);
-    if (!target) throw notFound();
-    const focus = target.focus ?? recordFocus(data.catalog, target.recordId, deps.focus);
-    if (target.recordId !== id || Reflect.get(location.search, "focus") !== focus)
-      throw redirect({
-        to: "/collections/records/$id",
-        params: { id: String(target.recordId) },
-        search: { focus },
-        replace: true,
-        state: location.state,
-      });
     const row = data.byId.get(id);
     if (!row) throw notFound();
     const neighborId = row.record.kind === "neighborClothing" ? row.record.neighborId : null;
@@ -46,7 +23,7 @@ export const Route = createFileRoute("/collections/records/$id")({
             (neighbor) => neighbor.id === neighborId,
           )?.name
         : undefined;
-    return { data, record: row, model: collectionDetail(data, id, neighborName), focus };
+    return { data, record: row, model: collectionDetail(data, id, neighborName) };
   },
   pendingComponent: () => <CollectionDetailLoading label="正在加载物品详情" />,
   errorComponent: DetailError,
@@ -59,19 +36,8 @@ export const Route = createFileRoute("/collections/records/$id")({
   component: DetailRoute,
 });
 function DetailRoute() {
-  const { data, record, model, focus } = Route.useLoaderData(),
-    navigate = Route.useNavigate();
-  return (
-    <RecordDetailPage
-      data={data}
-      id={record.id}
-      model={model}
-      focus={focus}
-      onFocusChange={(focus) =>
-        void navigate({ search: { focus }, state: (previous) => previous, resetScroll: false })
-      }
-    />
-  );
+  const { data, record, model } = Route.useLoaderData();
+  return <RecordDetailPage data={data} id={record.id} model={model} />;
 }
 function DetailError() {
   const router = useRouter();
