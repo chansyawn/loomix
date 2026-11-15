@@ -72,20 +72,15 @@ describe("furniture details", () => {
       }
     }
   });
-  it("shows all memberships and preserves missing item fields", () => {
+  it("家具单品保留自身字段，无套组时不生成切换项", () => {
     expect(furnitureDetail(data, "items", 1)).toMatchObject({
       kind: "item",
       record: first,
-      sets: data.sets,
-      sameSetItems: [second],
       recipes: null,
     });
-    expect(furnitureDetail({ ...data, sets: [] }, "items", 1)).toMatchObject({
-      sets: [],
-      sameSetItems: [],
-    });
+    expect(furnitureDetail({ ...data, sets: [] }, "items", 1).navigation.groups).toEqual([]);
   });
-  it("lists each same-set item once across overlapping memberships", () => {
+  it("同组导航仅包含直接归属，不扩展间接关联的套组", () => {
     const third = { ...first, id: 5, name: "木凳" };
     const overlapping = {
       ...data,
@@ -95,11 +90,13 @@ describe("furniture details", () => {
         { ...set, id: 4, componentIds: [2, 5] },
       ],
     };
-    expect(furnitureDetail(overlapping, "items", 1)).toMatchObject({
-      sameSetItems: [third, second],
-    });
+    expect(
+      furnitureDetail(overlapping, "items", 1).navigation.groups.map((group) =>
+        group.entries.map((entry) => entry.id),
+      ),
+    ).toEqual([[3, 5, 2, 1]]);
   });
-  it("家具和套组详情提供同组切换，配方与底部关联资料继续保留", () => {
+  it("家具和套组详情提供同组切换，概览与成员顺序一致", () => {
     const item = furnitureDetail(data, "items", 1);
     expect(item.navigation.groups.map((group) => group.entries.map((entry) => entry.id))).toEqual([
       [3, 2, 1],

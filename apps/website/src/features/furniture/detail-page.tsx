@@ -1,14 +1,13 @@
-import { FurnitureCard, FurnitureSetCard } from "./furniture-card";
+import { FurnitureCard } from "./furniture-card";
 import {
   CollectionDetailLayout,
-  CollectionDetailRelatedGrid,
   CollectionDetailExtras,
   type CollectionDetailSection,
 } from "@/features/collection/detail-layout";
 import { RecordImage as FurnitureImage } from "@/features/collection/record-image";
 import { CollectionItemCard } from "@/features/collection/collection-item-card";
 import { recordLocation } from "@/features/collection/item-route";
-import type { FurnitureItem, FurnitureSet } from "../collection-view";
+import type { FurnitureItem } from "../collection-view";
 import type { FurnitureDetail } from "./detail";
 import { CollectionDetailNavigation } from "../collection/detail-navigation";
 
@@ -23,6 +22,7 @@ export function FurnitureDetailPage({ detail }: { detail: FurnitureDetail }) {
 
 function FurnitureDetailContent({ detail }: { detail: FurnitureDetail }) {
   const { record } = detail;
+  const sections = furnitureDetailSections(detail);
   const fields: [string, string | null][] =
     detail.kind === "item"
       ? [
@@ -57,12 +57,12 @@ function FurnitureDetailContent({ detail }: { detail: FurnitureDetail }) {
       }
       fields={fields}
     >
-      <FurnitureExtras detail={detail} />
+      {sections.length > 0 && <CollectionDetailExtras sections={sections} />}
     </CollectionDetailLayout>
   );
 }
 
-function FurnitureExtras({ detail }: { detail: FurnitureDetail }) {
+function furnitureDetailSections(detail: FurnitureDetail): CollectionDetailSection[] {
   const sections: CollectionDetailSection[] = [];
   if (detail.kind === "item") {
     if (detail.recipes?.length)
@@ -70,23 +70,13 @@ function FurnitureExtras({ detail }: { detail: FurnitureDetail }) {
         key: "furniture-recipes",
         content: <FurnitureRecipes recipes={detail.recipes} />,
       });
-    if (detail.sets.length)
-      sections.push({
-        key: "furniture-memberships",
-        content: <FurnitureMemberships sets={detail.sets} />,
-      });
-    if (detail.sameSetItems.length)
-      sections.push({
-        key: "same-set-furniture",
-        content: <FurnitureSameSetItems items={detail.sameSetItems} />,
-      });
   } else if (detail.items?.length) {
     sections.push({
       key: "furniture-set-members",
       content: <FurnitureSetMembers items={detail.items} />,
     });
   }
-  return <CollectionDetailExtras sections={sections} />;
+  return sections;
 }
 
 function FurnitureRecipes({
@@ -129,32 +119,6 @@ function FurnitureRecipes({
           </div>
         ))}
       </div>
-    </section>
-  );
-}
-
-function FurnitureMemberships({ sets }: { sets: FurnitureSet[] }) {
-  return (
-    <section aria-labelledby="related-furniture" className="space-y-4">
-      <h2 id="related-furniture" className="text-lg font-semibold">
-        所属套组
-      </h2>
-      <CollectionDetailRelatedGrid>
-        {sets.map((set) => (
-          <FurnitureSetCard key={set.id} set={set} />
-        ))}
-      </CollectionDetailRelatedGrid>
-    </section>
-  );
-}
-
-function FurnitureSameSetItems({ items }: { items: FurnitureItem[] }) {
-  return (
-    <section aria-labelledby="same-set-furniture" className="space-y-4">
-      <h2 id="same-set-furniture" className="text-lg font-semibold">
-        同组家具
-      </h2>
-      <FurnitureItemGrid items={items} />
     </section>
   );
 }

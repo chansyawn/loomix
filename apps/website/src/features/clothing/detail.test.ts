@@ -48,13 +48,12 @@ describe("clothing details", () => {
       }
     }
   });
-  it("shows all memberships and preserves missing item fields", () => {
+  it("单品保留自身字段，无套装时不生成切换项", () => {
     expect(clothingDetail(data, "items", 1)).toMatchObject({
       kind: "item",
       record: first,
-      sets: data.sets,
     });
-    expect(clothingDetail({ ...data, sets: [] }, "items", 1)).toMatchObject({ sets: [] });
+    expect(clothingDetail({ ...data, sets: [] }, "items", 1).navigation.groups).toEqual([]);
   });
   it("preserves member order and distinguishes unavailable from empty members", () => {
     expect(clothingDetail(data, "sets", 3)).toMatchObject({ items: [second, first] });

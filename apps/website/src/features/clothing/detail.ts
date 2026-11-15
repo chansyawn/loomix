@@ -1,7 +1,6 @@
 import { notFound } from "@tanstack/react-router";
 import { loadClothing } from "./data";
 import type { ClothingData } from "./data";
-import { membershipIndex } from "./query";
 import type { View } from "./search";
 import { setDetailNavigation } from "../collection/detail-navigation-model";
 
@@ -19,7 +18,6 @@ export function clothingDetail(data: ClothingData, view: View, id: number) {
       kind: "item" as const,
       record,
       navigation,
-      sets: membershipIndex(data.sets).get(id) ?? [],
     };
   }
   if (view === "appearances") {

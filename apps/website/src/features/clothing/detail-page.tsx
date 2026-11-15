@@ -1,7 +1,6 @@
 import { ClothingCard } from "./clothing-card";
 import {
   CollectionDetailLayout,
-  CollectionDetailRelatedGrid,
   CollectionDetailExtras,
   type CollectionDetailSection,
 } from "@/features/collection/detail-layout";
@@ -20,6 +19,7 @@ export function ClothingDetailPage({ detail }: { detail: ClothingDetail }) {
 
 function ClothingDetailContent({ detail }: { detail: ClothingDetail }) {
   const { record } = detail;
+  const sections = clothingDetailSections(detail);
   const fields: [string, string | null][] =
     detail.kind === "item"
       ? [
@@ -47,29 +47,13 @@ function ClothingDetailContent({ detail }: { detail: ClothingDetail }) {
       }
       fields={fields}
     >
-      <ClothingExtras detail={detail} />
+      {sections.length > 0 && <CollectionDetailExtras sections={sections} />}
     </CollectionDetailLayout>
   );
 }
 
-function ClothingExtras({ detail }: { detail: ClothingDetail }) {
+function clothingDetailSections(detail: ClothingDetail): CollectionDetailSection[] {
   const sections: CollectionDetailSection[] = [];
-  if (detail.kind === "item" && detail.sets.length > 0)
-    sections.push({
-      key: "related-clothing",
-      content: (
-        <section aria-labelledby="related-clothing" className="space-y-4">
-          <h2 id="related-clothing" className="text-lg font-semibold">
-            所属套装
-          </h2>
-          <CollectionDetailRelatedGrid>
-            {detail.sets.map((set) => (
-              <ClothingCard key={set.id} record={set} />
-            ))}
-          </CollectionDetailRelatedGrid>
-        </section>
-      ),
-    });
   if (detail.kind === "set" && detail.items?.length)
     sections.push({
       key: "related-clothing",
@@ -86,5 +70,5 @@ function ClothingExtras({ detail }: { detail: ClothingDetail }) {
         </section>
       ),
     });
-  return <CollectionDetailExtras sections={sections} />;
+  return sections;
 }

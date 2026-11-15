@@ -58,7 +58,7 @@ test("种子、普通植物与作物都有自身详情，含作物的系列仍�
   expect(plantsDetail(input, "seeds", 10, ingredients)).not.toHaveProperty("cooking");
 });
 
-test("独立种子保留关联植物顺序，单品保留来源种子和缺失字段", () => {
+test("独立种子保留关联植物顺序，单品通过顶部导航关联种子", () => {
   expect(plantsDetail(data, "seeds", 10)).toMatchObject({
     kind: "seed",
     record: seed,
@@ -67,15 +67,13 @@ test("独立种子保留关联植物顺序，单品保留来源种子和缺失�
   expect(plantsDetail(data, "items", 1)).toMatchObject({
     kind: "item",
     record: first,
-    seeds: [seed],
     cooking: null,
     matureForms: [],
     navigation: { hasUnconfirmedMembership: true },
   });
-  expect(plantsDetail({ ...data, series: [] }, "items", 1)).toMatchObject({
-    record: first,
-    seeds: [seed],
-  });
+  const detail = plantsDetail({ ...data, series: [] }, "items", 1);
+  expect(detail.record).toBe(first);
+  expect(detail.navigation.groups[0].entries.map((entry) => entry.id)).toEqual([10, 2, 1]);
 });
 
 test("系列成员保留顺序，未知成员与空列表分开表达", () => {

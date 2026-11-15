@@ -29,7 +29,6 @@ export function plantsDetail(
       kind: "item" as const,
       record,
       navigation,
-      seeds,
       matureForms: plantMatureForms(seeds, id),
       cooking: ingredients ? ingredientUsage(ingredients, id) : null,
       sourceTrees: (data.sourceTreesByItemId.get(id) ?? []).flatMap(

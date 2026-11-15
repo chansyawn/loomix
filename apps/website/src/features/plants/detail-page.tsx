@@ -10,7 +10,6 @@ import type { PlantsDetail } from "./detail";
 import { PlantDropsInfo, PlantRelatedItems } from "./related-items";
 import { ItemCookingUsage } from "../ingredients/item-usage";
 import { plantSeriesFields } from "./series-fields";
-import { PlantSeedLinks } from "./seed-info";
 import { SeedDetailPage } from "./seed-detail-page";
 import { CollectionDetailNavigation } from "../collection/detail-navigation";
 
@@ -39,6 +38,7 @@ export function PlantsDetailPage({ detail }: { detail: PlantsDetail }) {
 
 function PlantOrSeriesDetailPage({ detail }: { detail: PlantOrSeriesDetail }) {
   const { record } = detail;
+  const sections = plantDetailSections(detail);
   const summary = record.summary;
   const fields: [string, string | null][] =
     detail.kind === "item"
@@ -71,26 +71,13 @@ function PlantOrSeriesDetailPage({ detail }: { detail: PlantOrSeriesDetail }) {
       }
       fields={fields}
     >
-      <PlantExtras detail={detail} />
+      {sections.length > 0 && <CollectionDetailExtras sections={sections} />}
     </CollectionDetailLayout>
   );
 }
 
-function PlantExtras({ detail }: { detail: PlantOrSeriesDetail }) {
+function plantDetailSections(detail: PlantOrSeriesDetail): CollectionDetailSection[] {
   const sections: CollectionDetailSection[] = [];
-  const seeds = detail.kind === "item" ? detail.seeds : detail.record.summary.seeds;
-  if (seeds.length > 0)
-    sections.push({
-      key: "plant-seeds",
-      content: (
-        <section aria-labelledby="plant-seeds" className="space-y-4">
-          <h2 id="plant-seeds" className="text-lg font-semibold">
-            {detail.kind === "item" ? "来源种子" : "关联种子"}
-          </h2>
-          <PlantSeedLinks seeds={seeds} />
-        </section>
-      ),
-    });
   if (detail.kind === "item") {
     if (detail.matureForms.length > 0)
       sections.push({ key: "plant-mature", content: <PlantMatureForms detail={detail} /> });
@@ -132,7 +119,7 @@ function PlantExtras({ detail }: { detail: PlantOrSeriesDetail }) {
       ),
     });
   }
-  return <CollectionDetailExtras sections={sections} />;
+  return sections;
 }
 
 function PlantMatureForms({ detail }: { detail: Extract<PlantsDetail, { kind: "item" }> }) {
