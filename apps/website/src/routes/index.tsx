@@ -1,9 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { EventCountdownList } from "@/features/events/event-countdown-list";
+import { HomePage } from "@/features/home/page";
 
-export const Route = createFileRoute("/")({ component: App });
-
-function App() {
-  return <EventCountdownList />;
-}
+export const Route = createFileRoute("/")({ component: HomePage });
