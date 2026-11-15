@@ -11,10 +11,15 @@ export function EventCountdownList() {
   if (activeEvents.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-4">
-      {activeEvents.map((event) => (
-        <EventCountdown key={event.id} event={event} nowMs={nowMs} />
-      ))}
-    </div>
+    <section aria-labelledby="home-events" className="min-w-0 flex-1 basis-72">
+      <h2 id="home-events" className="mb-4 font-heading text-lg font-semibold">
+        活动日历
+      </h2>
+      <div className="flex flex-col gap-4">
+        {activeEvents.map((event) => (
+          <EventCountdown key={event.id} event={event} nowMs={nowMs} />
+        ))}
+      </div>
+    </section>
   );
 }

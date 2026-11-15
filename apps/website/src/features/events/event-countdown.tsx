@@ -39,7 +39,7 @@ export function EventCountdown({ event, nowMs }: EventCountdownProps) {
   const parts = getCountdownParts(targetMs, nowMs);
 
   return (
-    <Card>
+    <Card size="sm">
       <CardHeader>
         <CardTitle>{event.title}</CardTitle>
         <CardDescription>
@@ -58,7 +58,7 @@ export function EventCountdown({ event, nowMs }: EventCountdownProps) {
             aria-hidden="true"
             className="flex flex-col items-center gap-1 rounded-lg bg-muted py-3"
           >
-            <span className="flex gap-0.5 font-heading text-2xl font-semibold text-foreground tabular-nums sm:text-4xl">
+            <span className="flex gap-0.5 font-heading text-2xl font-semibold text-foreground tabular-nums">
               {pad(parts[key])
                 .split("")
                 .map((digit, index) => (
