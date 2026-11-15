@@ -18,13 +18,10 @@ function groupIds(currentId: number, input = data) {
 
 test("系列、成员和种子共享稳定顺序，导航不依赖当前物品排序", () => {
   for (const id of [100, 1, 2, 10, 20]) expect(groupIds(id)).toEqual([[100, 20, 10, 2, 1]]);
-  expect(plantDetailNavigation(data, 10).groups[0].entries.map((entry) => entry.kind)).toEqual([
-    "series",
-    "seed",
-    "seed",
-    "item",
-    "item",
-  ]);
+  expect(plantDetailNavigation(data, 10).groups[0].entries[0]).toMatchObject({
+    id: 100,
+    label: "系列概览",
+  });
 });
 
 test("没有系列时按种子直接关联植物导航，不依赖作物分类", () => {

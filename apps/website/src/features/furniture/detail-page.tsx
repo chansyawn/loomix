@@ -10,8 +10,18 @@ import { CollectionItemCard } from "@/features/collection/collection-item-card";
 import { recordLocation } from "@/features/collection/item-route";
 import type { FurnitureItem, FurnitureSet } from "../collection-view";
 import type { FurnitureDetail } from "./detail";
+import { CollectionDetailNavigation } from "../collection/detail-navigation";
 
 export function FurnitureDetailPage({ detail }: { detail: FurnitureDetail }) {
+  return (
+    <div className="min-w-0 space-y-6">
+      <CollectionDetailNavigation model={detail.navigation} currentId={detail.record.id} />
+      <FurnitureDetailContent key={detail.record.id} detail={detail} />
+    </div>
+  );
+}
+
+function FurnitureDetailContent({ detail }: { detail: FurnitureDetail }) {
   const { record } = detail;
   const fields: [string, string | null][] =
     detail.kind === "item"

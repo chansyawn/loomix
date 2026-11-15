@@ -49,7 +49,7 @@ describe("clothing details", () => {
     }
   });
   it("shows all memberships and preserves missing item fields", () => {
-    expect(clothingDetail(data, "items", 1)).toEqual({
+    expect(clothingDetail(data, "items", 1)).toMatchObject({
       kind: "item",
       record: first,
       sets: data.sets,
@@ -69,7 +69,16 @@ describe("clothing details", () => {
     expect(clothingDetail(data, "appearances", 5)).toEqual({
       kind: "appearance",
       record: data.appearances[0],
+      navigation: { groups: [] },
     });
+  });
+  it("服饰详情与套装详情都接入同组切换，多个套装分别保留", () => {
+    const item = clothingDetail(data, "items", 1);
+    expect(item.navigation.groups.map((group) => group.entries.map((entry) => entry.id))).toEqual([
+      [3, 2, 1],
+      [4, 1],
+    ]);
+    expect(clothingDetail(data, "sets", 3).navigation.groups).toEqual([item.navigation.groups[0]]);
   });
   it("treats missing records and IDs of the wrong kind as not found", () => {
     for (const [view, id] of [

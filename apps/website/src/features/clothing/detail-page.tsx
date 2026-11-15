@@ -7,8 +7,18 @@ import {
 } from "@/features/collection/detail-layout";
 import { RecordImage } from "@/features/collection/record-image";
 import type { ClothingDetail } from "./detail";
+import { CollectionDetailNavigation } from "../collection/detail-navigation";
 
 export function ClothingDetailPage({ detail }: { detail: ClothingDetail }) {
+  return (
+    <div className="min-w-0 space-y-6">
+      <CollectionDetailNavigation model={detail.navigation} currentId={detail.record.id} />
+      <ClothingDetailContent key={detail.record.id} detail={detail} />
+    </div>
+  );
+}
+
+function ClothingDetailContent({ detail }: { detail: ClothingDetail }) {
   const { record } = detail;
   const fields: [string, string | null][] =
     detail.kind === "item"

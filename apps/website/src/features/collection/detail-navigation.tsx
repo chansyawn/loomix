@@ -1,19 +1,19 @@
 import { Link } from "@tanstack/react-router";
-import { recordLocation } from "../collection/item-route";
-import { useCollectionOrigin } from "../collection/navigation";
-import { RecordImage } from "../collection/record-image";
-import type { PlantDetailNavigationModel } from "./detail-navigation-model";
+import { recordLocation } from "./item-route";
+import { useCollectionOrigin } from "./navigation";
+import { RecordImage } from "./record-image";
+import type { DetailNavigationModel } from "./detail-navigation-model";
 import { ScrollFade } from "@/ui/components/scroll-fade";
 
-export function PlantDetailNavigation({
+export function CollectionDetailNavigation({
   model,
   currentId,
 }: {
-  model: PlantDetailNavigationModel;
+  model: DetailNavigationModel;
   currentId: number;
 }) {
   const origin = useCollectionOrigin();
-  if (model.groups.length === 0 && !model.hasUnconfirmedMembership) return null;
+  if (model.groups.length === 0 && !model.notice) return null;
   return (
     <div className="sticky top-0 z-20 min-w-0 space-y-3 border-b bg-background py-2">
       {model.groups.map((group) => (
@@ -46,16 +46,14 @@ export function PlantDetailNavigation({
                   <span aria-hidden="true" className="size-8 shrink-0 overflow-hidden rounded-lg">
                     <RecordImage key={entry.image} image={entry.image} name={entry.name} compact />
                   </span>
-                  {entry.kind === "series" ? "系列概览" : entry.name}
+                  {entry.label ?? entry.name}
                 </Link>
               ))}
             </div>
           </ScrollFade>
         </nav>
       ))}
-      {model.hasUnconfirmedMembership && (
-        <p className="text-sm text-muted-foreground">其他系列的成员关系未确认</p>
-      )}
+      {model.notice && <p className="text-sm text-muted-foreground">{model.notice}</p>}
     </div>
   );
 }

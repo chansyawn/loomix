@@ -4,6 +4,7 @@ import type { FurnitureData } from "./data";
 import { loadFurniture } from "./data";
 import { membershipIndex } from "./query";
 import type { View } from "./search";
+import { setDetailNavigation } from "../collection/detail-navigation-model";
 
 function findSameSetItems(
   data: FurnitureData,
@@ -28,6 +29,7 @@ export function parseFurnitureId(value: string): number {
 }
 
 export function furnitureDetail(data: FurnitureData, view: View, id: number) {
+  const navigation = setDetailNavigation(data, id, "套组");
   if (view === "items") {
     const item = data.items.find((row) => row.id === id);
     if (!item) throw notFound();
@@ -35,6 +37,7 @@ export function furnitureDetail(data: FurnitureData, view: View, id: number) {
     return {
       kind: "item" as const,
       record: item,
+      navigation,
       sets,
       sameSetItems: findSameSetItems(data, item, sets),
       recipes:
@@ -54,6 +57,7 @@ export function furnitureDetail(data: FurnitureData, view: View, id: number) {
   return {
     kind: "set" as const,
     record: set,
+    navigation,
     items: set.componentIds === null ? null : set.componentIds.map((id) => items.get(id)!),
   };
 }

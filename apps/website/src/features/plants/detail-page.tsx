@@ -12,14 +12,22 @@ import { ItemCookingUsage } from "../ingredients/item-usage";
 import { plantSeriesFields } from "./series-fields";
 import { PlantSeedLinks } from "./seed-info";
 import { SeedDetailPage } from "./seed-detail-page";
-import { PlantDetailNavigation } from "./detail-navigation";
+import { CollectionDetailNavigation } from "../collection/detail-navigation";
 
 type PlantOrSeriesDetail = Exclude<PlantsDetail, { kind: "seed" }>;
 
 export function PlantsDetailPage({ detail }: { detail: PlantsDetail }) {
   return (
     <div className="min-w-0 space-y-6">
-      <PlantDetailNavigation model={detail.navigation} currentId={detail.record.id} />
+      <CollectionDetailNavigation
+        model={{
+          groups: detail.navigation.groups,
+          notice: detail.navigation.hasUnconfirmedMembership
+            ? "其他系列的成员关系未确认"
+            : undefined,
+        }}
+        currentId={detail.record.id}
+      />
       {detail.kind === "seed" ? (
         <SeedDetailPage key={detail.record.id} detail={detail} />
       ) : (

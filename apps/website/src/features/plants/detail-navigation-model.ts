@@ -1,32 +1,27 @@
 import type { CollectionRecord } from "../collection-view";
+import type {
+  DetailNavigationEntry,
+  DetailNavigationGroup,
+} from "../collection/detail-navigation-model";
 import type { PlantItem, PlantSeed, PlantSeries, PlantsData } from "./model";
 
-type NavigationKind = "item" | "seed" | "series";
-export type PlantNavigationEntry = Readonly<
-  Pick<CollectionRecord, "id" | "name" | "image"> & { kind: NavigationKind }
->;
-export type PlantNavigationGroup = Readonly<{
-  key: string;
-  label: string;
-  entries: readonly PlantNavigationEntry[];
-}>;
 export type PlantDetailNavigationModel = Readonly<{
-  groups: readonly PlantNavigationGroup[];
+  groups: readonly DetailNavigationGroup[];
   hasUnconfirmedMembership: boolean;
 }>;
 
-function entry(record: CollectionRecord, kind: NavigationKind): PlantNavigationEntry {
-  return { id: record.id, name: record.name, image: record.image, kind };
+function entry(record: CollectionRecord, label?: string): DetailNavigationEntry {
+  return { id: record.id, name: record.name, image: record.image, label };
 }
 
 function plantEntries(ids: readonly number[], items: ReadonlyMap<number, PlantItem>) {
   return ids.flatMap((id) => {
     const plant = items.get(id);
-    return plant ? [entry(plant, "item")] : [];
+    return plant ? [entry(plant)] : [];
   });
 }
 
-function uniqueEntries(entries: PlantNavigationEntry[]) {
+function uniqueEntries(entries: DetailNavigationEntry[]) {
   return [...new Map(entries.map((item) => [item.id, item])).values()];
 }
 
@@ -34,26 +29,29 @@ function seriesGroup(
   series: PlantSeries,
   seeds: readonly PlantSeed[],
   items: ReadonlyMap<number, PlantItem>,
-): PlantNavigationGroup {
+): DetailNavigationGroup {
   const memberIds = new Set(series.plantIds ?? []);
   return {
     key: `series-${series.id}`,
     label: series.name,
     entries: uniqueEntries([
-      entry(series, "series"),
+      entry(series, "系列概览"),
       ...seeds
         .filter((seed) => seed.plantIds.some((id) => memberIds.has(id)))
-        .map((seed) => entry(seed, "seed")),
+        .map((seed) => entry(seed)),
       ...plantEntries(series.plantIds ?? [], items),
     ]),
   };
 }
 
-function growthGroup(seed: PlantSeed, items: ReadonlyMap<number, PlantItem>): PlantNavigationGroup {
+function growthGroup(
+  seed: PlantSeed,
+  items: ReadonlyMap<number, PlantItem>,
+): DetailNavigationGroup {
   return {
     key: `seed-${seed.id}`,
     label: seed.name,
-    entries: uniqueEntries([entry(seed, "seed"), ...plantEntries(seed.plantIds, items)]),
+    entries: uniqueEntries([entry(seed), ...plantEntries(seed.plantIds, items)]),
   };
 }
 

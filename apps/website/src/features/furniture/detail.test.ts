@@ -73,7 +73,7 @@ describe("furniture details", () => {
     }
   });
   it("shows all memberships and preserves missing item fields", () => {
-    expect(furnitureDetail(data, "items", 1)).toEqual({
+    expect(furnitureDetail(data, "items", 1)).toMatchObject({
       kind: "item",
       record: first,
       sets: data.sets,
@@ -98,6 +98,14 @@ describe("furniture details", () => {
     expect(furnitureDetail(overlapping, "items", 1)).toMatchObject({
       sameSetItems: [third, second],
     });
+  });
+  it("家具和套组详情提供同组切换，配方与底部关联资料继续保留", () => {
+    const item = furnitureDetail(data, "items", 1);
+    expect(item.navigation.groups.map((group) => group.entries.map((entry) => entry.id))).toEqual([
+      [3, 2, 1],
+      [4, 1],
+    ]);
+    expect(furnitureDetail(data, "sets", 3).navigation.groups).toEqual([item.navigation.groups[0]]);
   });
   it("resolves crafting materials and preserves unconfirmed recipe reasons", () => {
     const recipeData = {
