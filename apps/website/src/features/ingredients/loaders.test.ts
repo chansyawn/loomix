@@ -37,7 +37,7 @@ function setupResources() {
   const { catalog, gameplayTags } = catalogFixture({
     ingredientCategories: [
       { id: 10, name: "食材", tagName: "食材", parentId: null, itemIds: [1, 2, 3] },
-      { id: 11, name: "测试食材类", tagName: "食材_测试", parentId: 10, itemIds: [1, 2, 3] },
+      { id: 11, name: "素食", tagName: "食材_素菜", parentId: 10, itemIds: [1, 2, 3] },
     ],
     plants: plantsDataFixture({ items: [plant], series: [] }),
     creatures: { items: [creature], series: [] },

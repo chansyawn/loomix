@@ -1,192 +1,159 @@
-import type { IngredientCategory } from "./category";
-import type { DishItem } from "../collection-view";
-import type { FilterGroup, FilterOption } from "../collection/filter-panel";
-import type { IngredientsData } from "./model";
+import type { FilterGroup, FilterOption } from "../collection/filter-types";
+import {
+  INGREDIENT_USAGE_EXCLUDED,
+  INGREDIENT_TAG_GROUPS,
+  type IngredientTagGroupKey,
+} from "./tag-filter-policy";
+import type { IngredientTag, IngredientTagSource } from "./tag-source";
 
-export type IngredientTagDimension = "category" | "color" | "quality";
+export type IngredientTagSelection = Record<IngredientTagGroupKey, string[]>;
 export type IngredientTagCounts = ReadonlyMap<number, number>;
 
-const categoryDimensionNames = {
-  category: "分类",
-  color: "颜色",
-  quality: "品质",
-} as const;
-const structuralTagNames = new Set(["食材", "食材_颜色", "食材_品阶"]);
-
-function tagDimension(data: IngredientsData, categoryId: number): IngredientTagDimension | null {
-  const dimension = data.dimensions.get(categoryId);
-  if (dimension === "color") return "color";
-  if (dimension === "quality") return "quality";
-  if (dimension === "type" || dimension === "group") return "category";
-  return null;
-}
-
-export function normalizeIngredientTagIds(data: IngredientsData, values: string[]): string[] {
-  const selected = new Set(values.map(Number).filter((id) => data.categoriesById.has(id)));
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (const category of data.categories) {
-      if (!selected.has(category.id)) continue;
-      for (const child of data.childrenByCategoryId.get(category.id) ?? []) {
-        if (selected.has(child.id)) continue;
-        selected.add(child.id);
-        changed = true;
-      }
-    }
-    for (const category of [...data.categories].reverse()) {
-      const children = data.childrenByCategoryId.get(category.id) ?? [];
-      if (
-        selected.has(category.id) ||
-        children.length === 0 ||
-        !children.every((child) => selected.has(child.id))
-      )
-        continue;
-      selected.add(category.id);
-      changed = true;
-    }
-  }
-  return data.categories
-    .filter((category) => selected.has(category.id) && !structuralTagNames.has(category.tagName))
-    .map((category) => String(category.id));
-}
-
-export function ingredientTagMatcher(
-  data: IngredientsData,
-  selectedIds: string[],
-): (itemId: number) => boolean {
-  const selectedByDimension = new Map<IngredientTagDimension, Set<number>>();
-  for (const value of selectedIds) {
-    const categoryId = Number(value);
-    const dimension = tagDimension(data, categoryId);
-    if (!dimension) continue;
-    const selected = selectedByDimension.get(dimension) ?? new Set<number>();
-    selected.add(categoryId);
-    selectedByDimension.set(dimension, selected);
-  }
-  const dimensions = [...selectedByDimension.values()];
-  return (itemId) => {
-    if (dimensions.length === 0) return true;
-    const categoryIds = new Set(
-      (data.categoriesByItemId.get(itemId) ?? []).map((category) => category.id),
-    );
-    return dimensions.every((selected) =>
-      [...selected].some((categoryId) => categoryIds.has(categoryId)),
-    );
-  };
-}
-
-export function ingredientTagMatches(
-  data: IngredientsData,
-  selectedIds: string[],
-  itemId: number,
-): boolean {
-  return ingredientTagMatcher(data, selectedIds)(itemId);
+function excludedFromUsage(tag: IngredientTag): boolean {
+  return (INGREDIENT_USAGE_EXCLUDED as readonly string[]).includes(tag.internalName);
 }
 
 export function ingredientTagCounts(
-  data: IngredientsData,
+  source: IngredientTagSource,
   items: Iterable<{ id: number }>,
 ): Map<number, number> {
   const counts = new Map<number, number>();
   for (const item of items)
-    for (const category of data.categoriesByItemId.get(item.id) ?? [])
-      counts.set(category.id, (counts.get(category.id) ?? 0) + 1);
+    for (const tagId of source.tagIdsByItemId.get(item.id) ?? [])
+      counts.set(tagId, (counts.get(tagId) ?? 0) + 1);
   return counts;
 }
 
 export function dishIngredientTagCounts(
-  data: IngredientsData,
-  dishes: Iterable<DishItem>,
+  source: IngredientTagSource,
+  candidatesByDishId: ReadonlyMap<number, readonly number[]>,
+  dishes: Iterable<{ id: number }>,
 ): Map<number, number> {
   const counts = new Map<number, number>();
   for (const dish of dishes) {
-    const matchedCategories = new Set<number>();
-    for (const itemId of data.ingredientCandidatesByDishId.get(dish.id) ?? [])
-      for (const category of data.categoriesByItemId.get(itemId) ?? [])
-        matchedCategories.add(category.id);
-    for (const categoryId of matchedCategories)
-      counts.set(categoryId, (counts.get(categoryId) ?? 0) + 1);
+    const matched = new Set<number>();
+    for (const itemId of candidatesByDishId.get(dish.id) ?? [])
+      for (const tagId of source.tagIdsByItemId.get(itemId) ?? []) matched.add(tagId);
+    for (const tagId of matched) counts.set(tagId, (counts.get(tagId) ?? 0) + 1);
   }
   return counts;
 }
 
-function categoryOption(
-  data: IngredientsData,
-  category: IngredientCategory,
+function buildOption(
+  source: IngredientTagSource,
+  tag: IngredientTag,
   counts: IngredientTagCounts,
-  section: IngredientTagDimension,
-  path: string[],
+  groupLabel: string,
+  path: readonly string[],
 ): FilterOption {
-  const children = data.childrenByCategoryId.get(category.id) ?? [];
-  const count = counts.get(category.id) ?? 0;
-  const dimensionRoot = structuralTagNames.has(category.tagName);
-  const childPath = dimensionRoot ? [] : [...path, category.name];
+  const namePath = [...path, tag.name];
+  const count = counts.get(tag.id) ?? 0;
   return {
-    value: String(category.id),
-    label: category.name,
-    chipLabel: dimensionRoot
-      ? categoryDimensionNames[section]
-      : `${categoryDimensionNames[section]} · ${[...path, category.name].join(" / ")}`,
+    value: String(tag.id),
+    label: tag.name,
+    chipLabel: `${groupLabel}：${namePath.join(" / ")}`,
     count,
     disabled: count === 0,
-    children: children.map((child) => categoryOption(data, child, counts, section, childPath)),
+    children: (source.childrenByParentId.get(tag.id) ?? [])
+      .filter((id) => source.visibleIds.has(id))
+      .map((id) => buildOption(source, source.byId.get(id)!, counts, groupLabel, namePath)),
   };
 }
 
-function sectionOption(value: string, label: string, children: FilterOption[]): FilterOption {
-  return {
-    value,
-    label,
-    selectable: false,
-    defaultExpanded: true,
-    children,
-  };
-}
-
-export function ingredientTagFilterGroup(
-  data: IngredientsData,
+export function ingredientFilterGroups(
+  source: IngredientTagSource,
   counts: IngredientTagCounts,
-): FilterGroup<"ingredientTags"> {
-  const root = data.categories.find((category) => category.tagName === "食材");
-  const colorRoot = data.categories.find((category) => category.tagName === "食材_颜色");
-  const qualityRoot = data.categories.find((category) => category.tagName === "食材_品阶");
-  const classification = (root ? (data.childrenByCategoryId.get(root.id) ?? []) : []).filter(
-    (category) => tagDimension(data, category.id) === "category",
-  );
-  return {
-    key: "ingredientTags",
-    label: "食材标签",
-    description: "父级包含子级；同一维度内任选，不同维度需由同一种食材同时满足。",
+): FilterGroup<IngredientTagGroupKey>[] {
+  return INGREDIENT_TAG_GROUPS.map((config, index) => ({
+    key: config.key,
+    label: config.label,
     tree: true,
-    options: [
-      sectionOption(
-        "__category",
-        "分类",
-        classification.map((category) => categoryOption(data, category, counts, "category", [])),
-      ),
-      ...(colorRoot
-        ? [
-            sectionOption(
-              "__color",
-              "颜色",
-              (data.childrenByCategoryId.get(colorRoot.id) ?? []).map((category) =>
-                categoryOption(data, category, counts, "color", []),
-              ),
-            ),
-          ]
-        : []),
-      ...(qualityRoot
-        ? [
-            sectionOption(
-              "__quality",
-              "食材品质",
-              (data.childrenByCategoryId.get(qualityRoot.id) ?? []).map((category) =>
-                categoryOption(data, category, counts, "quality", []),
-              ),
-            ),
-          ]
-        : []),
-    ],
+    selectionMode: "independent",
+    ...(index === 0 ? { description: "父级包含子级；同组内满足任一，不同组同时满足。" } : {}),
+    options: source.groupRootIds[config.key].map((id) =>
+      buildOption(source, source.byId.get(id)!, counts, config.label, []),
+    ),
+  }));
+}
+
+function acceptedIds(
+  source: IngredientTagSource,
+  key: IngredientTagGroupKey,
+  ids: readonly string[],
+): number[] {
+  const accepted = new Set<number>();
+  for (const value of ids) {
+    const id = Number(value);
+    const tag = source.byId.get(id);
+    if (!tag || tag.group !== key || !source.visibleIds.has(id)) continue;
+    accepted.add(id);
+  }
+  return [...accepted];
+}
+
+export function acceptIngredientTagIds(
+  source: IngredientTagSource,
+  key: IngredientTagGroupKey,
+  ids: readonly string[],
+): string[] {
+  return acceptedIds(source, key, ids).map(String);
+}
+
+export function normalizeIngredientSelection(
+  source: IngredientTagSource,
+  selection: IngredientTagSelection,
+): IngredientTagSelection {
+  return {
+    ingredientCategories: acceptIngredientTagIds(
+      source,
+      "ingredientCategories",
+      selection.ingredientCategories,
+    ),
+    ingredientColors: acceptIngredientTagIds(
+      source,
+      "ingredientColors",
+      selection.ingredientColors,
+    ),
+    ingredientQualities: acceptIngredientTagIds(
+      source,
+      "ingredientQualities",
+      selection.ingredientQualities,
+    ),
   };
+}
+
+export function ingredientSelectedIds(selection: IngredientTagSelection): number[] {
+  return [
+    ...new Set(
+      INGREDIENT_TAG_GROUPS.flatMap((config) => selection[config.key]).map((value) =>
+        Number(value),
+      ),
+    ),
+  ];
+}
+
+export function ingredientTagMatcher(
+  source: IngredientTagSource,
+  selection: IngredientTagSelection,
+): (itemId: number) => boolean {
+  const groups = INGREDIENT_TAG_GROUPS.map((config) =>
+    acceptedIds(source, config.key, selection[config.key]),
+  ).filter((ids) => ids.length > 0);
+  if (groups.length === 0) return () => true;
+  return (itemId) => {
+    const closure = source.tagIdsByItemId.get(itemId);
+    return Boolean(closure) && groups.every((ids) => ids.some((id) => closure!.has(id)));
+  };
+}
+
+export function ingredientUsageTags(source: IngredientTagSource, itemId: number): IngredientTag[] {
+  const closure = source.tagIdsByItemId.get(itemId);
+  if (!closure) return [];
+  return source.tags.filter((tag) => closure.has(tag.id) && !excludedFromUsage(tag));
+}
+
+export function ingredientLeafTags(source: IngredientTagSource, itemId: number): IngredientTag[] {
+  return ingredientUsageTags(source, itemId).filter(
+    (tag) => !source.childrenByParentId.has(tag.id),
+  );
 }

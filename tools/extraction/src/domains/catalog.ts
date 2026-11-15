@@ -33,10 +33,6 @@ export function buildCatalog(
     clientTypes,
     craftingRecipes: [],
     growths: [],
-    ingredientCategories: observations.ingredientCategories.map((category) => ({
-      tagId: category.id,
-      itemIds: [...category.itemIds],
-    })),
   };
   const display = (id: number, field: number): string[] | null => {
     const values = splitTags(tables.string(context.ui.get(id), field)).map((key) =>
@@ -202,13 +198,17 @@ export function buildCatalog(
   for (const id of referencedGiftItemIds) references.add(id);
   for (const association of context.ingredientCategoryBuild.associations)
     references.add(association.itemId);
-  for (const category of catalog.ingredientCategories)
-    category.itemIds = context.ingredientCategoryBuild.associations
-      .filter((association) => association.categoryId === category.tagId)
-      .map((association) => association.itemId)
-      .sort((a, b) => a - b);
+  const ingredientItemIds = new Map<number, number[]>();
+  for (const association of context.ingredientCategoryBuild.associations) {
+    const ids = ingredientItemIds.get(association.categoryId) ?? [];
+    ids.push(association.itemId);
+    ingredientItemIds.set(association.categoryId, ids);
+  }
   const categories = new Map(
-    catalog.ingredientCategories.map((category) => [category.tagId, category]),
+    [...ingredientItemIds].map(([tagId, ids]) => [
+      tagId,
+      { itemIds: [...new Set(ids)].sort((a, b) => a - b) },
+    ]),
   );
   for (const item of catalog.records) {
     if ("trade" in item)
@@ -228,6 +228,31 @@ export function buildCatalog(
     const name = plainText(tables.text(row, 1));
     if (!row || !name) throw new Error(`Unresolved referenced item ${id}`);
     catalog.references.push({ id, name });
+  }
+  const ingredientRoot = context.vocabulary.tagIndex.findByName("食材");
+  if (ingredientRoot) {
+    const ingredientIds = new Set(
+      context.vocabulary.tagIndex.subtree(ingredientRoot.id).map((tag) => tag.id),
+    );
+    const expectedMemberships = new Map<number, Set<number>>();
+    for (const association of context.ingredientCategoryBuild.associations) {
+      if (!association.listed) continue;
+      const memberships = expectedMemberships.get(association.itemId) ?? new Set<number>();
+      memberships.add(association.categoryId);
+      expectedMemberships.set(association.itemId, memberships);
+    }
+    for (const record of catalog.records) {
+      if (record.kind.includes(".")) continue;
+      const actual = new Set<number>();
+      for (const tagId of record.tagIds)
+        for (const ancestor of context.vocabulary.tagIndex.ancestors(tagId))
+          if (ingredientIds.has(ancestor.id)) actual.add(ancestor.id);
+      assert.deepEqual(
+        actual,
+        expectedMemberships.get(record.id) ?? new Set<number>(),
+        `Ingredient tag membership mismatch for ${record.id}`,
+      );
+    }
   }
   catalog.records.sort((a, b) => a.id - b.id);
   assert.deepEqual(

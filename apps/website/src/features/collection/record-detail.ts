@@ -82,7 +82,7 @@ export function collectionDetail(data: CollectionCatalog, id: number, neighborNa
           {
             ...view.dishes,
             ingredientItemsById: view.ingredientItemsById,
-            ingredientCategoriesById: view.ingredientCategoriesById,
+            ingredientTagSource: view.ingredientTagSource,
           },
           record.record.kind === "dish" ? "items" : "series",
           id,

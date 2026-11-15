@@ -31,7 +31,7 @@ describe("dish URL state", () => {
           effects: ["耐力提升", "耐力提升"],
           qualities: ["0", "9", "__missing", "0"],
           series: ["100", "100", false],
-          ingredientTags: ["50015", "50015", "01", "-1", "1e2"],
+          ingredientCategories: ["50015", "50015", "01", "-1", "1e2"],
         },
         series: { qualities: ["4", "invalid"], effects: ["ignored"] },
       }),
@@ -47,7 +47,7 @@ describe("dish URL state", () => {
         effects: ["耐力提升"],
         qualities: ["0", "__missing"],
         series: ["100"],
-        ingredientTags: ["50015"],
+        ingredientCategories: ["50015"],
       },
       series: { ...emptyQuery(), qualities: ["4"] },
     });
@@ -74,10 +74,10 @@ describe("dish URL state", () => {
 
   it("compacts ingredient tag filters and omits empty selections", () => {
     const selected = dishesSearchSchema.parse({
-      items: { ingredientTags: ["50015", "50017"] },
+      items: { ingredientCategories: ["50015", "50017"], ingredientColors: ["50020"] },
     });
     expect(compactDishesSearch(selected)).toEqual({
-      items: { ingredientTags: ["50015", "50017"] },
+      items: { ingredientCategories: ["50015", "50017"], ingredientColors: ["50020"] },
     });
     expect(compactDishesSearch(dishesSearchSchema.parse({}))).toEqual({});
   });

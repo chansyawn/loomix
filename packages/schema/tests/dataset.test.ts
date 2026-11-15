@@ -5,7 +5,7 @@ import { CatalogSchema } from "../src/catalog/index.ts";
 import { parseRelease } from "../src/release/index.ts";
 import { referencedImages } from "../src/dataset/images.ts";
 import { parseNeighbors } from "../src/neighbors/index.ts";
-const context = { formatVersion: 8, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
+const context = { formatVersion: 9, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
 const source = { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" };
 const base = {
   ...recordMetadata(),
@@ -170,10 +170,6 @@ test("duplicate entities, dangling groups and ingredient cycles are reported tog
     kind: "furniture.set",
     acquisition: null,
     memberIds: [99],
-  });
-  dataset.catalog.ingredientCategories.push({
-    tagId: 2,
-    itemIds: [],
   });
   dataset.gameplayTags.tags.push({
     id: 2,

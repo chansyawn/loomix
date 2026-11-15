@@ -14,8 +14,8 @@ import { createImageResolver } from "@loomix/schema/assets";
 import { acquisitionText } from "./collection/acquisition";
 import { tagLabel } from "@loomix/schema/gameplay-tags";
 import type { GameplayTagIndex } from "@loomix/schema/gameplay-tags";
-import { ingredientCategories } from "./ingredients/category";
-import type { IngredientCategory } from "./ingredients/category";
+import { createIngredientTagSource } from "./ingredients/tag-source";
+import type { IngredientTagSource } from "./ingredients/tag-source";
 import { buildPlantsData } from "./plants/catalog";
 import type { PlantsData } from "./plants/model";
 export type { PlantItem, PlantSeries } from "./plants/model";
@@ -94,8 +94,7 @@ export type IngredientItem = CollectionRecord & {
   listed?: boolean;
 };
 export interface CollectionView {
-  ingredientCategories: IngredientCategory[];
-  ingredientCategoriesById: ReadonlyMap<number, IngredientCategory>;
+  ingredientTagSource: IngredientTagSource;
   ingredientItemsById: Map<number, IngredientItem>;
   furniture: { sets: FurnitureSet[]; items: FurnitureItem[] };
   creatures: { series: CreatureSeries[]; items: CreatureItem[] };
@@ -132,7 +131,6 @@ export function toCollectionView(
   const resolveTags = createRecordTagResolver(tagIndex);
   const tagsFor = (record: CatalogRecord, facet: Parameters<typeof resolveTags>[1]) =>
     resolveTags(record, facet).map(tagLabel);
-  const categories = ingredientCategories(catalog.ingredientCategories, tagIndex);
   const base = (
     record: Pick<Item, "id" | "name" | "description" | "quality" | "image">,
   ): CollectionRecord => ({
@@ -151,8 +149,10 @@ export function toCollectionView(
     recipesByProduct.set(recipe.productId, recipes);
   }
   const view: CollectionView = {
-    ingredientCategories: categories,
-    ingredientCategoriesById: new Map(categories.map((category) => [category.id, category])),
+    ingredientTagSource: createIngredientTagSource(
+      tagIndex,
+      catalog.records.filter((record) => !isGroupRecord(record)),
+    ),
     ingredientItemsById: new Map(),
     furniture: { sets: [], items: [] },
     creatures: { series: [], items: [] },

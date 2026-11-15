@@ -41,9 +41,9 @@ describe("ingredient URL state", () => {
       ingredientsQuerySchema.parse({
         q: 7,
         sort: "bad",
-        ingredientTags: ["10", "10", 11, "01", "-1", "1e2", "9007199254740992", "31"],
+        ingredientCategories: ["10", "10", 11, "01", "-1", "1e2", "9007199254740992", "31"],
       }),
-    ).toEqual({ ...emptyIngredientsQuery(), ingredientTags: ["10", "31"] });
+    ).toEqual({ ...emptyIngredientsQuery(), ingredientCategories: ["10", "31"] });
     for (const value of [null, [], "bad", 42])
       expect(dishesSearchSchema.parse({ ingredients: value }).ingredients).toEqual(
         emptyIngredientsQuery(),
@@ -58,7 +58,9 @@ describe("ingredient URL state", () => {
       series: { q: "饮品" },
       ingredients: {
         q: '番茄 & + # ? "',
-        ingredientTags: ["11", "21", "31"],
+        ingredientCategories: ["11"],
+        ingredientColors: ["21"],
+        ingredientQualities: ["31"],
         sort: "recipes-desc",
       },
     });
@@ -72,10 +74,12 @@ describe("ingredient URL state", () => {
     expect(compactDishesSearch({})).toEqual({});
   });
 
-  it("builds an ingredient filter from exactly one tag", () => {
-    expect(ingredientFiltersForTag(11)).toEqual({
-      ...emptyIngredientsQuery(),
-      ingredientTags: ["11"],
+  it("builds an ingredient filter on the matching group parameter", () => {
+    expect(ingredientFiltersForTag({ id: 11, group: "ingredientCategories" })).toEqual({
+      ingredientCategories: ["11"],
+    });
+    expect(ingredientFiltersForTag({ id: 21, group: "ingredientColors" })).toEqual({
+      ingredientColors: ["21"],
     });
   });
 

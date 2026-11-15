@@ -27,7 +27,9 @@ export const filterKeys = [
   "effects",
   "qualities",
   "series",
-  "ingredientTags",
+  "ingredientCategories",
+  "ingredientColors",
+  "ingredientQualities",
 ] as const;
 export type FilterKey = (typeof filterKeys)[number];
 
@@ -59,7 +61,9 @@ const viewQuerySchema = z.object({
   effects: stringList.default([]),
   qualities: choices(["0", "1", "2", "3", "4"]).default([]),
   series: stringList.default([]),
-  ingredientTags: ingredientTagIdsSchema.default([]),
+  ingredientCategories: ingredientTagIdsSchema.default([]),
+  ingredientColors: ingredientTagIdsSchema.default([]),
+  ingredientQualities: ingredientTagIdsSchema.default([]),
 });
 
 export type ViewQuery = z.output<typeof viewQuerySchema>;

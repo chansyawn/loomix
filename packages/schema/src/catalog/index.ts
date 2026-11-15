@@ -13,7 +13,6 @@ import {
 import { NeighborClothingSchema } from "./neighbor-clothing.ts";
 import {
   DifficultyRequirementSchema,
-  IngredientCategorySchema,
   RecipeSchema,
   TastesSchema,
   CraftingRecipeSchema,
@@ -150,7 +149,6 @@ export const CatalogSchema = ContextSchema.extend({
     quantity: IdSchema.nullable(),
   }).array(),
   growths: GrowthSchema.array(),
-  ingredientCategories: IngredientCategorySchema.array(),
 });
 export type Catalog = z.infer<typeof CatalogSchema>;
 export type CatalogRecord = z.infer<typeof RecordSchema>;

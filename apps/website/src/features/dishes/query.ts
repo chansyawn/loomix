@@ -3,9 +3,10 @@ import type { FilterGroup as CollectionFilterGroup } from "@/features/collection
 import { qualityNames } from "@/features/collection/quality";
 import {
   dishIngredientTagCounts,
-  ingredientTagFilterGroup,
+  ingredientFilterGroups as buildIngredientFilterGroups,
+  ingredientSelectedIds,
   ingredientTagMatcher,
-  normalizeIngredientTagIds,
+  normalizeIngredientSelection,
 } from "../ingredients/tag-filter";
 import type { IngredientTagCounts } from "../ingredients/tag-filter";
 import type { DishesBrowserData } from "./data";
@@ -58,10 +59,7 @@ export function filterGroups(
   if (view === "series") return [{ key: "qualities", label: "品阶", options: qualities }];
 
   return [
-    {
-      ...ingredientTagFilterGroup(data.ingredients, ingredientTagCounts),
-      label: "所需食材",
-    },
+    ...buildIngredientFilterGroups(data.ingredients.tagSource, ingredientTagCounts),
     {
       key: "difficulties",
       label: "难度",
@@ -151,14 +149,25 @@ export function queryDishes(data: DishesBrowserData, view: View, query: ViewQuer
       )
     );
   });
-  const ingredientTags = normalizeIngredientTagIds(data.ingredients, query.ingredientTags);
+  const ingredientSelection = normalizeIngredientSelection(data.ingredients.tagSource, {
+    ingredientCategories: query.ingredientCategories,
+    ingredientColors: query.ingredientColors,
+    ingredientQualities: query.ingredientQualities,
+  });
   const ingredientTagCounts =
     view === "items"
-      ? dishIngredientTagCounts(data.ingredients, baseFiltered as DishItem[])
+      ? dishIngredientTagCounts(
+          data.ingredients.tagSource,
+          data.ingredients.ingredientCandidatesByDishId,
+          baseFiltered as DishItem[],
+        )
       : new Map();
-  const matchesIngredientTags = ingredientTagMatcher(data.ingredients, ingredientTags);
+  const matchesIngredientTags = ingredientTagMatcher(
+    data.ingredients.tagSource,
+    ingredientSelection,
+  );
   const filtered =
-    view === "items" && ingredientTags.length > 0
+    view === "items" && ingredientSelectedIds(ingredientSelection).length > 0
       ? (baseFiltered as DishItem[]).filter((row) =>
           (data.ingredients.ingredientCandidatesByDishId.get(row.id) ?? []).some((itemId) =>
             matchesIngredientTags(itemId),

@@ -1,6 +1,7 @@
 import { createGameplayTagIndex, validateGameplayTags } from "../gameplay-tags/index.ts";
 import type { Dataset } from "./index.ts";
 import { resolveItem } from "../catalog/records.ts";
+import type { IngredientExpression } from "../catalog/recipes.ts";
 import { validateCatalog } from "../catalog/validate.ts";
 import type { ValidationIssue } from "../common/identity.ts";
 
@@ -77,13 +78,31 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
   const tagIndex = treeIssues.length ? null : createGameplayTagIndex(dataset.gameplayTags.tags);
   const root = tagIndex?.findByName("食材");
   const ingredientIds = new Set(root ? tagIndex!.subtree(root.id).map((tag) => tag.id) : []);
-  catalog.ingredientCategories.forEach((category, index) => {
-    if (!ingredientIds.has(category.tagId))
-      issue(
-        ["catalog", "ingredientCategories", index, "tagId"],
-        `Invalid ingredient tag ${category.tagId}`,
-      );
-  });
+  if (root) {
+    const checkExpression = (expression: IngredientExpression, path: (string | number)[]): void => {
+      if (expression.kind === "tag") {
+        if (!ingredientIds.has(expression.tagId))
+          issue(path, `Unknown ingredient tag ${expression.tagId}`);
+        return;
+      }
+      expression.terms.forEach((term, index) => checkExpression(term, [...path, "terms", index]));
+    };
+    catalog.records.forEach((record, index) => {
+      if (record.kind !== "dish") return;
+      record.recipe?.slots?.forEach((slot, slotIndex) => {
+        if (slot.expression === null) return;
+        checkExpression(slot.expression, [
+          "catalog",
+          "records",
+          index,
+          "recipe",
+          "slots",
+          slotIndex,
+          "expression",
+        ]);
+      });
+    });
+  }
   neighbors.giftPreferences.forEach((preference, index) => {
     const path = ["neighbors", "giftPreferences", index];
     if (!ids.has(preference.neighborId))

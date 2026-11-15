@@ -1,7 +1,10 @@
 import type { IngredientExpression } from "@loomix/schema/catalog";
-import type { IngredientCategory } from "./category";
+import { createGameplayTagIndex } from "@loomix/schema/gameplay-tags";
+import type { GameplayTag } from "@loomix/schema/gameplay-tags";
 import type { DishItem, IngredientItem } from "../collection-view";
 import { buildIngredientsData } from "./model";
+import { createIngredientTagSource } from "./tag-source";
+import type { IngredientTagSource } from "./tag-source";
 
 export const categoryExpression = (categoryId: number): IngredientExpression => ({
   kind: "tag",
@@ -43,32 +46,50 @@ export function recipeSlot(expression: IngredientExpression | null, itemIds: num
   return { field: 20 as const, rawExpression: "fixture", expression, itemIds, quantity: null };
 }
 
-function category(
+function tag(
   id: number,
-  name: string,
-  tagName: string,
+  internalName: string,
+  displayName: string | null,
   parentId: number | null,
-  itemIds: number[],
-): IngredientCategory {
-  return { id, name, tagName, parentId, itemIds };
+): GameplayTag {
+  return { id, internalName, displayName, enumName: null, parentId };
+}
+
+export const ingredientFixtureTags: GameplayTag[] = [
+  tag(1, "食材", "食材", null),
+  tag(2, "食材_素菜", "素食", 1),
+  tag(3, "食材_荤菜", "荤菜", 1),
+  tag(5, "食材_原料", "原料", 1),
+  tag(10, "食材_蔬菜", "蔬菜类", 2),
+  tag(11, "食材_番茄", "番茄", 10),
+  tag(12, "食材_水果", "水果类", 2),
+  tag(13, "食材_虾", "虾类", 3),
+  tag(20, "食材_颜色", null, 1),
+  tag(21, "食材_红色蔬菜", "红色蔬菜", 20),
+  tag(30, "食材_品阶", "食材品质", 1),
+  tag(31, "食材_紫色", "特优", 30),
+  tag(40, "食材_不宜使用", "不宜食用", 1),
+];
+
+export const ingredientFixtureItemTags: { id: number; tagIds: number[] }[] = [
+  { id: 1, tagIds: [11, 21] },
+  { id: 2, tagIds: [11, 21, 31] },
+  { id: 3, tagIds: [11, 21] },
+  { id: 4, tagIds: [12] },
+  { id: 5, tagIds: [13] },
+  { id: 6, tagIds: [13, 31] },
+  { id: 8, tagIds: [] },
+  { id: 9, tagIds: [11] },
+];
+
+export function ingredientTagSourceFixture(
+  itemTags: readonly { id: number; tagIds: number[] }[] = ingredientFixtureItemTags,
+): IngredientTagSource {
+  return createIngredientTagSource(createGameplayTagIndex(ingredientFixtureTags), itemTags);
 }
 
 export function ingredientsFixture() {
-  const categories = [
-    category(1, "食材", "食材", null, [1, 2, 3, 4, 5, 6, 9]),
-    category(2, "素食", "食材_素菜", 1, [1, 2, 3, 4]),
-    category(3, "荤菜", "食材_荤菜", 1, [5, 6]),
-    category(10, "蔬菜类", "食材_蔬菜", 2, [1, 2, 3]),
-    category(11, "番茄", "食材_番茄", 10, [1, 2, 3]),
-    category(12, "水果类", "食材_水果", 2, [4]),
-    category(13, "虾类", "食材_虾", 3, [5, 6]),
-    category(14, "未收录类别", "食材_空", 2, []),
-    category(15, "引用类别", "食材_引用", 2, [9, 999]),
-    category(20, "颜色", "食材_颜色", 1, [1, 2, 3, 4]),
-    category(21, "红色蔬菜", "食材_红色蔬菜", 20, [1, 2, 3]),
-    category(30, "食材品质", "食材_品阶", 1, [2, 6]),
-    category(31, "特优", "食材_紫色", 30, [2, 6]),
-  ];
+  const tagSource = ingredientTagSourceFixture();
   const items = [
     ingredientFixture(1, "番茄"),
     ingredientFixture(2, "奇异番茄"),
@@ -114,7 +135,7 @@ export function ingredientsFixture() {
     }),
   ];
   const input = {
-    ingredientCategories: categories,
+    ingredientTagSource: tagSource,
     ingredientItemsById: new Map(items.map((item) => [item.id, item])),
     dishes: { items: dishes, series: [] },
   };

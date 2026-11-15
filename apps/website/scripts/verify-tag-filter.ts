@@ -5,13 +5,17 @@ import { createGameplayTagIndex, parseGameplayTags } from "@loomix/schema/gamepl
 import {
   ALL_TAG_FILTER_POLICY,
   TAG_FILTER_ROOT_NAMES,
-  TAG_LABEL_OVERRIDES,
 } from "../src/features/all/tag-filter-policy.ts";
 import {
   flattenFilterOptions,
   type FilterOption,
 } from "../src/features/collection/filter-types.ts";
-import { createCollectionTagFilter } from "../src/features/collection/tags.ts";
+import { createCollectionTagFilter, TAG_LABEL_OVERRIDES } from "../src/features/collection/tags.ts";
+import {
+  INGREDIENT_TAG_GROUPS,
+  INGREDIENT_USAGE_EXCLUDED,
+} from "../src/features/ingredients/tag-filter-policy.ts";
+import { createIngredientTagSource } from "../src/features/ingredients/tag-source.ts";
 import { resolveResourceConfig } from "./resource-config.ts";
 
 const config = resolveResourceConfig("development");
@@ -27,9 +31,10 @@ const catalog = parseCatalog(
   JSON.parse(readFileSync(path.join(directory, "catalog.json"), "utf8")),
 );
 const records = catalog.records.filter((record) => !isGroupRecord(record));
+const tagIndex = createGameplayTagIndex(tagDocument.tags);
 const filter = createCollectionTagFilter(
   tagDocument.tags,
-  createGameplayTagIndex(tagDocument.tags),
+  tagIndex,
   records,
   ALL_TAG_FILTER_POLICY,
 );
@@ -60,6 +65,57 @@ function checkSiblingLabels(nodes: readonly FilterOption[], parent: string | nul
   }
 }
 checkSiblingLabels(options, null);
+
+const ingredientRoot = tagIndex.findByName("食材");
+if (!ingredientRoot) {
+  issues.push("食材根不存在");
+} else {
+  const claimed = new Set<number>();
+  for (const group of INGREDIENT_TAG_GROUPS) {
+    if (group.kind === "roots") {
+      for (const name of group.rootNames) {
+        const tag = tagIndex.findByName(name);
+        if (!tag) issues.push(`食材分组根不存在：${name}`);
+        else claimed.add(tag.id);
+      }
+      continue;
+    }
+    const tag = tagIndex.findByName(group.rootName);
+    if (!tag) {
+      issues.push(`食材分组根不存在：${group.rootName}`);
+      continue;
+    }
+    claimed.add(tag.id);
+    if (tagIndex.subtree(tag.id).length <= 1) issues.push(`食材分组没有子级：${group.label}`);
+  }
+  for (const name of INGREDIENT_USAGE_EXCLUDED) {
+    if (!tagIndex.findByName(name)) issues.push(`食材排除标签不存在：${name}`);
+  }
+  const unclaimed = tagIndex
+    .subtree(ingredientRoot.id)
+    .filter((tag) => tag.parentId === ingredientRoot.id && !claimed.has(tag.id));
+  for (const tag of unclaimed)
+    issues.push(`食材一级标签未归属分组：${tag.internalName}（${tag.displayName ?? "无显示名"}）`);
+
+  const source = createIngredientTagSource(tagIndex, records);
+  const recordIds = new Set(records.map((record) => record.id));
+  const ingredientCount = source.itemIds.filter((id) => recordIds.has(id)).length;
+  for (const tag of source.tags) {
+    if (!source.visibleIds.has(tag.id)) continue;
+    if (/[_]|父级/.test(tag.name)) issues.push(`可见食材标签仍含内部命名：${tag.name}`);
+  }
+  const siblingNames = new Map<number | null, Set<string>>();
+  for (const tag of source.tags) {
+    if (!source.visibleIds.has(tag.id)) continue;
+    const seen = siblingNames.get(tag.parentId) ?? new Set<string>();
+    if (seen.has(tag.name)) issues.push(`食材同级重名：${tag.name}`);
+    seen.add(tag.name);
+    siblingNames.set(tag.parentId, seen);
+  }
+  console.log(
+    `食材标签检查：${INGREDIENT_TAG_GROUPS.length} 组，${source.visibleIds.size} 个可见标签，${ingredientCount} 种食材。`,
+  );
+}
 
 if (issues.length > 0) {
   for (const issue of issues) console.error(`- ${issue}`);

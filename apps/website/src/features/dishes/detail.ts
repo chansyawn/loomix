@@ -3,8 +3,6 @@ import type { DishesData } from "./data";
 import { loadDishes } from "./data";
 import { membershipIndex } from "./query";
 import type { DishView as View } from "./search";
-import type { IngredientCategory } from "../ingredients/category";
-import type { IngredientItem } from "../collection-view";
 
 export function parseDishId(value: string): number {
   const id = Number(value);
@@ -13,9 +11,8 @@ export function parseDishId(value: string): number {
 }
 
 export function dishesDetail(data: DishesData, view: View, id: number) {
-  const ingredientCategoriesById =
-    data.ingredientCategoriesById ?? new Map<number, IngredientCategory>();
-  const ingredientItemsById = data.ingredientItemsById ?? new Map<number, IngredientItem>();
+  const ingredientTagSource = data.ingredientTagSource;
+  const ingredientItemsById = data.ingredientItemsById;
   if (view === "items") {
     const item = data.items.find((row) => row.id === id);
     if (!item) throw notFound();
@@ -23,7 +20,7 @@ export function dishesDetail(data: DishesData, view: View, id: number) {
       kind: "item" as const,
       record: item,
       catalogItems: data.items,
-      ingredientCategoriesById,
+      ingredientTagSource,
       ingredientItemsById,
       series: membershipIndex(data.series).get(id) ?? [],
       hasUnconfirmedSeriesMembership: data.series.some((group) => group.dishIds === null),
@@ -35,7 +32,7 @@ export function dishesDetail(data: DishesData, view: View, id: number) {
   return {
     kind: "series" as const,
     record: series,
-    ingredientCategoriesById,
+    ingredientTagSource,
     ingredientItemsById,
     items: series.dishIds === null ? null : series.dishIds.map((dishId) => items.get(dishId)!),
   };

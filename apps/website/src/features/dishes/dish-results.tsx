@@ -15,7 +15,7 @@ import type { DishesSearch, DishView, FilterKey, ViewQuery } from "./search";
 import { DishesEmpty } from "./states";
 import { dishesTableColumns } from "./table-columns";
 import { title, listPresentation } from "./list-presentation";
-import { normalizeIngredientTagIds } from "../ingredients/tag-filter";
+import { normalizeIngredientSelection } from "../ingredients/tag-filter";
 
 type SearchUpdate = DishesSearch | ((previous: DishesSearch) => DishesSearch);
 
@@ -28,9 +28,14 @@ export function DishResults({
   search: DishesSearch & { view: DishView };
   onSearchChange: (update: SearchUpdate, replace?: boolean) => Promise<void>;
 }) {
+  const viewQuery = search[search.view];
   const query = {
-    ...search[search.view],
-    ingredientTags: normalizeIngredientTagIds(data.ingredients, search[search.view].ingredientTags),
+    ...viewQuery,
+    ...normalizeIngredientSelection(data.ingredients.tagSource, {
+      ingredientCategories: viewQuery.ingredientCategories,
+      ingredientColors: viewQuery.ingredientColors,
+      ingredientQualities: viewQuery.ingredientQualities,
+    }),
   };
   const layout = useCollectionLayout(search.layout);
   const presentation = listPresentation(search.view);
@@ -41,11 +46,7 @@ export function DishResults({
     void onSearchChange((previous) => updateViewQuery(previous, patch), replace);
   const clear = () =>
     void onSearchChange((previous) => ({ ...previous, [previous.view]: emptyQuery() }));
-  const filter = (key: FilterKey, values: string[]) =>
-    update({
-      [key]:
-        key === "ingredientTags" ? normalizeIngredientTagIds(data.ingredients, values) : values,
-    });
+  const filter = (key: FilterKey, values: string[]) => update({ [key]: values });
   const chips = collectionFilterChips(groups, query, filter, {
     value: query.q,
     clear: () => update({ q: "" }),

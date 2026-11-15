@@ -81,7 +81,7 @@ test("asset delivery deduplicates identical outputs and separates target dimensi
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-webp-"));
   try {
     const dataset = datasetFixture(
-      { formatVersion: 8, snapshotId: "a".repeat(64), locale: "zh-CN" },
+      { formatVersion: 9, snapshotId: "a".repeat(64), locale: "zh-CN" },
       { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" },
     );
     const png = await sharp({ create: { width: 512, height: 512, channels: 4, background: "red" } })
@@ -176,7 +176,7 @@ test("diary and white atlas images are delivered with full references, original 
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-neighbor-images-"));
   try {
     const dataset = datasetFixture(
-      { formatVersion: 8, snapshotId: "a".repeat(64), locale: "zh-CN" },
+      { formatVersion: 9, snapshotId: "a".repeat(64), locale: "zh-CN" },
       { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" },
     );
     dataset.neighbors.neighbors.push({

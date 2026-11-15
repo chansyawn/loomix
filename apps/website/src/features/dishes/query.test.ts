@@ -7,11 +7,14 @@ import {
   recipeFixture,
   recipeSlot,
 } from "../ingredients/fixture";
+import { createGameplayTagIndex } from "@loomix/schema/gameplay-tags";
 import { buildIngredientsData } from "../ingredients/model";
 import type { IngredientsData } from "../ingredients/model";
+import { createIngredientTagSource } from "../ingredients/tag-source";
 import type { DishesBrowserData } from "./data";
 import { filterGroups, queryDishes } from "./query";
 import { emptyQuery, missing, ungrouped } from "./search";
+import type { ViewQuery } from "./search";
 
 function item(id: number, fields: Partial<DishItem> = {}): DishItem {
   return {
@@ -102,12 +105,8 @@ const series: DishSeries[] = [
   },
 ];
 const emptyIngredients = (): IngredientsData => ({
-  categories: [],
-  categoriesById: new Map(),
-  dimensions: new Map(),
-  childrenByCategoryId: new Map(),
+  tagSource: createIngredientTagSource(createGameplayTagIndex([]), []),
   itemsById: new Map(),
-  categoriesByItemId: new Map(),
   ingredientCandidatesByDishId: new Map(),
   dishesByItemId: new Map(),
   unconfirmedRecipeCount: 0,
@@ -116,7 +115,13 @@ const browserData = (
   items: DishItem[],
   series: DishSeries[] = [],
   ingredients = emptyIngredients(),
-): DishesBrowserData => ({ items, series, ingredients });
+): DishesBrowserData => ({
+  items,
+  series,
+  ingredients,
+  ingredientTagSource: ingredients.tagSource,
+  ingredientItemsById: ingredients.itemsById,
+});
 const data = browserData(items, series);
 const ids = (rows: { id: number }[]) => rows.map((row) => row.id);
 const search = (patch: Partial<ReturnType<typeof emptyQuery>>) =>
@@ -221,19 +226,27 @@ describe("dish catalog", () => {
 
   it("filters dishes through the shared ingredient tag semantics", () => {
     const { input, data: ingredients } = ingredientsFixture();
-    const data = { ...input.dishes, ingredients };
-    const search = (ingredientTags: string[], q = "") =>
-      queryDishes(data, "items", { ...emptyQuery(), q, ingredientTags }).rows;
-    expect(ids(search(["11"]))).toEqual([100, 102, 109]);
-    expect(ids(search(["13", "12"]))).toEqual([101, 102]);
-    expect(ids(search(["13", "31"]))).toEqual([101]);
-    expect(ids(search(["999"]))).toEqual(ids(data.items));
-    expect(ids(search(["11"], "101"))).toEqual([]);
-    expect(ids(search(["13"], "101"))).toEqual([101]);
-    expect(filterGroups(data)[0]).toMatchObject({
-      key: "ingredientTags",
-      label: "所需食材",
-    });
+    const data = {
+      ...input.dishes,
+      ingredients,
+      ingredientTagSource: ingredients.tagSource,
+      ingredientItemsById: ingredients.itemsById,
+    };
+    const search = (patch: Partial<ViewQuery>, q = "") =>
+      queryDishes(data, "items", { ...emptyQuery(), q, ...patch }).rows;
+    expect(ids(search({ ingredientCategories: ["11"] }))).toEqual([100, 102, 109]);
+    expect(ids(search({ ingredientCategories: ["13", "12"] }))).toEqual([101, 102]);
+    expect(ids(search({ ingredientCategories: ["13"], ingredientQualities: ["31"] }))).toEqual([
+      101,
+    ]);
+    expect(ids(search({ ingredientCategories: ["999"] }))).toEqual(ids(data.items));
+    expect(ids(search({ ingredientCategories: ["11"] }, "101"))).toEqual([]);
+    expect(ids(search({ ingredientCategories: ["13"] }, "101"))).toEqual([101]);
+    expect(
+      filterGroups(data)
+        .slice(0, 3)
+        .map((group) => group.key),
+    ).toEqual(["ingredientCategories", "ingredientColors", "ingredientQualities"]);
     expect(
       flattenFilterOptions(filterGroups(data)[0].options).map((option) => option.label),
     ).toContain("虾类");
@@ -248,13 +261,19 @@ describe("dish catalog", () => {
       ...input,
       dishes: { ...input.dishes, items: [...input.dishes.items, crossSlotDish] },
     });
-    const data = { ...input.dishes, ingredients };
+    const data = {
+      ...input.dishes,
+      ingredients,
+      ingredientTagSource: ingredients.tagSource,
+      ingredientItemsById: ingredients.itemsById,
+    };
 
     expect(
       ids(
         queryDishes(data, "items", {
           ...emptyQuery(),
-          ingredientTags: ["13", "31"],
+          ingredientCategories: ["13"],
+          ingredientQualities: ["31"],
         }).rows,
       ),
     ).toEqual([101]);
