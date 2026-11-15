@@ -44,7 +44,9 @@ function FurnitureDetailContent({ detail }: { detail: FurnitureDetail }) {
           key={record.image}
           image={record.image}
           name={record.name}
-          scene={detail.kind === "set"}
+          fit={detail.kind === "set" ? "cover" : "contain"}
+          inset={detail.kind === "set" ? "none" : "lg"}
+          className={detail.kind === "set" ? "aspect-2/1" : undefined}
           eager
         />
       }

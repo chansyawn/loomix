@@ -45,7 +45,7 @@ export function recordColumns<
       cell: (record) => (
         <div className="flex min-w-0 items-center gap-3">
           <div className="w-10 shrink-0 overflow-hidden rounded-md" aria-hidden="true">
-            <RecordImage image={record.image} name={record.name} compact />
+            <RecordImage image={record.image} name={record.name} inset="sm" fallback="icon" />
           </div>
           {link(record)}
         </div>

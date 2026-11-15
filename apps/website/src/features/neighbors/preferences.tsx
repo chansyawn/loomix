@@ -2,6 +2,8 @@ import { Badge } from "@/ui/components/badge";
 import type { NeighborDetail } from "./data";
 import { Link } from "@tanstack/react-router";
 import { allSearchForTag } from "../all/search";
+import { recordLocation } from "../collection/item-route";
+import { RecordImage } from "../collection/record-image";
 
 export function NeighborPreferences({
   preferences,
@@ -29,10 +31,38 @@ export function NeighborPreferences({
                   <div className="space-y-2">
                     <dt className="text-xs text-muted-foreground">具体物品</dt>
                     <dd>
-                      <ul className="space-y-1 text-sm/6 wrap-break-word">
-                        {group.items.map((item) => (
-                          <li key={item.id}>{item.name}</li>
-                        ))}
+                      <ul className="flex flex-wrap gap-x-3 gap-y-2 text-sm/5">
+                        {group.items.map((item) => {
+                          const content = (
+                            <>
+                              <span className="size-7 shrink-0 overflow-hidden rounded-md">
+                                <RecordImage
+                                  image={item.image}
+                                  name={item.name}
+                                  inset="none"
+                                  background="none"
+                                  fallback="icon"
+                                />
+                              </span>
+                              <span className="min-w-0 wrap-anywhere">{item.name}</span>
+                            </>
+                          );
+                          const className = "flex min-w-0 items-center gap-1.5";
+                          return (
+                            <li key={item.id} className="max-w-full min-w-0">
+                              {item.recordId === null ? (
+                                <span className={className}>{content}</span>
+                              ) : (
+                                <Link
+                                  {...recordLocation({ id: item.recordId })}
+                                  className={`${className} outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring`}
+                                >
+                                  {content}
+                                </Link>
+                              )}
+                            </li>
+                          );
+                        })}
                       </ul>
                     </dd>
                   </div>

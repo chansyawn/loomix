@@ -16,9 +16,12 @@ export function queryNeighbors(data: NeighborsData, search: NeighborsSearch) {
   return data.neighbors.filter(
     (neighbor) =>
       (!text ||
-        [neighbor.name, ...neighbor.stars.map((star) => star.name)].some((name) =>
-          name.toLocaleLowerCase().includes(text),
-        )) &&
+        [
+          neighbor.name,
+          neighbor.profile.nickname,
+          neighbor.profile.englishName,
+          ...neighbor.stars.map((star) => star.name),
+        ].some((name) => name?.toLocaleLowerCase().includes(text))) &&
       (!search.galaxy || neighbor.stars.some((star) => star.galaxy === search.galaxy)),
   );
 }
