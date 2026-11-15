@@ -3,6 +3,7 @@ import { recordLocation } from "../collection/item-route";
 import { useCollectionOrigin } from "../collection/navigation";
 import { RecordImage } from "../collection/record-image";
 import type { PlantDetailNavigationModel } from "./detail-navigation-model";
+import { ScrollFade } from "@/ui/components/scroll-fade";
 
 export function PlantDetailNavigation({
   model,
@@ -14,14 +15,14 @@ export function PlantDetailNavigation({
   const origin = useCollectionOrigin();
   if (model.groups.length === 0 && !model.hasUnconfirmedMembership) return null;
   return (
-    <div className="min-w-0 space-y-3">
+    <div className="sticky top-0 z-20 min-w-0 space-y-3 border-b bg-background py-2">
       {model.groups.map((group) => (
         <nav key={group.key} aria-label={`${group.label}关联物品`} className="min-w-0 space-y-2">
           {model.groups.length > 1 && (
             <p className="text-xs text-muted-foreground">{group.label}</p>
           )}
-          <div className="overflow-x-auto">
-            <div className="flex w-max min-w-full gap-1 border-b pb-1">
+          <ScrollFade label={`${group.label}关联物品切换`}>
+            <div className="flex w-max min-w-full gap-1 pb-1">
               {group.entries.map((entry) => (
                 <Link
                   key={entry.id}
@@ -49,7 +50,7 @@ export function PlantDetailNavigation({
                 </Link>
               ))}
             </div>
-          </div>
+          </ScrollFade>
         </nav>
       ))}
       {model.hasUnconfirmedMembership && (
