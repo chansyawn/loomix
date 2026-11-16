@@ -1,6 +1,6 @@
 # 有效内容提取原理与独立实现指南
 
-本文说明独立实现所需的输入、解码、关联和验收规则，不要求使用本仓库脚本。当前参数对应客户端 **0.95.2**、配置 revision **1449213**、资源 revision **1391927**、清单目录 **5662883**，新版本必须重新定位字段。
+本文说明独立实现所需的输入、解码、关联和验收规则；末节单独说明本仓库的流水线实现。发布结构及领域语义见[共享数据契约](../../packages/schema/README.md)。以下客户端规则适用于“已验证基线”所列版本，新版本必须重新定位字段。
 
 用户已确认当前根字段 93 的全部记录属于开放游戏内容。字段 1 为 1 的外观也是开放内容，只是不计入万象列表；67 个主题集合是各大类内的小分类。另有用户明确确认的十三条实装记录由版本绑定清单收录；其他表外内容是否开放不能由名称、图标或配方引用推断。
 
@@ -60,6 +60,8 @@ TextMap 特殊处理：根字段 1 解引用到包装层，包装字段 0 解引
 
 从 Unity 包导出 GameplayTag 树及 TagUIData、显示键字典。当前对象名分别为 633e15d6、b429c67e、15896ba2，类型 MiHoYoBinData；这些是版本参数，不是跨版本固定规则。树中的 AllNodes 以 TagId 为键，包含 TagName、EnumName、ParentId。TagUIData 以 TagId 关联 nameInGame.textId；必须再查当前 TextMap。
 
+物品的直接标签由 318.6–17 的十二组标签按字段顺序展开，再追加主表类型对应的 716.10 typetag，稳定去重，不展开祖先；各来源列的归属保存在字段证据中。客户端 EnumName 仅在提取侧用于解析生态展示键。
+
 普通单品使用 318.6 与 318.15 的逗号标签，并沿 ParentId 补齐祖先标签。表 33 每行字段 0 是大类编码、3 是子类编号、4 是子类显示名 hash、5 是 OR 标签筛选。当前大类为 1 生物、2 植物、3 菜肴、4 家具、5 服饰、6 杂物。每个普通单品必须且只能命中一个子类；植物子类 304 输出“采摘材料”。
 
 外观标记 93.1 为 1 时单独归入服饰外观，依据主物品标签继承确定发型、眼睛、眉毛、面饰或肤色。当前实际为发型 23、眼睛 19、眉毛 8、面饰 1；不补造肤色。
@@ -110,7 +112,7 @@ TextMap 特殊处理：根字段 1 解引用到包装层，包装字段 0 解引
 
 其他未确认字段输出 null，并记录实际候选数据和未确认原因。表 134、135 已有时间、栖息地文案，但不能仅因编号相同就连接生物记录。用当前 UI 显示键关联优于推测关联。
 
-## 图片与交付 JSON
+## 图片提取与转换
 
 普通单品及家具、服饰套组采用显示表明确关联的图片，导出全部可用大小图候选后，按原生宽×高选择像素数最多的图片；像素数相同时优先配置的大图。选图使用原生尺寸，原始 PNG 保留在临时导出目录。选图完成后，家具套组（furniture.set）统一输出 1024×512，其他有图记录（包括服饰套装）统一输出 256×256；按原比例缩放、居中裁切，使用 Lanczos3 和有损 WebP 质量 85、alphaQuality 100，保留透明通道。67 个生物、植物、菜肴主题集合复用家具图标；目前未确认这些图是系列的实际展示图，图片保持 null。不要改用成员图或拼图替代。
 
@@ -118,13 +120,7 @@ UISprite 引用加 assets/moleres/rel/sres/ 前缀，统一斜杠和小写，只
 
 导出时同时筛选对象名和 Container。同一个包内若有同名 Sprite，分别导出，避免工具以名称写文件时发生覆盖。任何已选对象导出失败均停止。完整解码 PNG、校验 CRC、尺寸和全部像素数据；仅转换选中的图片，完整解码最终 WebP 并检查目标尺寸；用最终 WebP 字节的 SHA256 命名并去重。相同原图用于不同目标尺寸时分别转换，清单分别记录原始 PNG 和交付 WebP 的路径、哈希及尺寸。
 
-唯一共享包 `@loomix/schema` 的交付契约集中在 `packages/schema/src/`，按 gameplay-tags、catalog、neighbors、assets、dataset、release 和 common 组织。发布契约只保留网站消费的结构化字段，客户端原始字段、未确认候选和解析诊断只保存在提取观察与证据中。源观察、原始数据库和证据模型位于 `tools/extraction`，是只供提取与来源验收使用的内部 checkpoint，不是公开交付版本，与交付领域模型分离，不保留历史版本解析分支。
-
-catalog.items 使用 kind 判别联合统一保存正式物品与仅供引用的物品，按 kind 区分家具、服饰、外观、友邻服饰、生物、植物、种子、菜肴、杂物和 reference；reference 只保存名称与说明，不生成列表或详情。每个 ID 在物品与集合之间只出现一次；catalog.collections 以 memberKind 保存套组和系列。准入原因、原始图鉴标记与客户端类型字段只保留在来源证据中。种子内嵌唯一生长配置；阶段的 plantId 是植物关联的唯一权威字段，植物到种子的反向关系由使用方派生。菜肴内嵌烹饪配方，家具内嵌有效制作配方。物品的 tagIds 由 318.6–17 的十二组直接标签按字段顺序展开，再追加主表类型对应的 716.10 typetag，稳定去重，不展开祖先；各来源列的归属只保存在字段证据中。独立 gameplay-tags 文档保存完整标签树的内部名、父级和显示文本；客户端 EnumName 仅在提取侧用于解析生态展示键。颜色、材质、风格、产区由对应子树派生，食材分类不单独发布，成员关系由 tagIds 的食材子树闭包派生，送礼偏好和食谱直接引用统一标签；来源等多值字段使用数组，不从展示字符串反向拆解。
-
-`category` 与 `furnitureCategory` 分别保存展示分类与家具分类。发布只包含结构化值：家具尺寸、生物体型范围和菜肴力气以数值交付，展示文案由网站拼接。`neighbors` 按友邻组织，星球、故事、能力、住宅、送礼偏好与好感插画、角色立绘均内嵌在友邻实体中。
-
-领域图片使用 {assetId, variant}，不包含交付路径。assets.json 将引用映射为不可变文件路径、SHA256、大小与尺寸；同一源图的 icon、banner、illustration 独立登记。release.json 指定语言目录下的 gameplay-tags.json、catalog.json、neighbors.json 和共享 assets.json，绑定 formatVersion、snapshotId、locale、来源版本及每份文档的实际字节校验值。当前提取 zh-CN；语言是快照上下文，后续语言无需改变实体字段名。所有未知值显式为 null，严格拒绝附加字段；null 与已确认空数组含义不同；恒为 null 的字段不发布。
+## 补充收录与证据
 
 补充清单位于 `src/extraction/content/supplemental-admissions.json`，schemaVersion 为 1，source 绑定同一客户端版本，confirmation 保存人工确认说明。entries 仅含 `id`、`expectedName`、`category`、`subcategory`：苹果 30161、李子 30169、牛油果 30265、芒果 30266、仙人掌果 30267、竹笋 30268 为 plants/采摘材料；肉 2000050、蛋 2000051、奶 2000052，以及寒松木 30115、陨星矿石 30136、雪晶 30299、纯净雪花 30300 为 miscellaneous/null。名称、描述、图片和品质始终从客户端提取，不从清单复制。缺失主表、版本或名称错配、重复 ID、与图鉴分类冲突均中止提取；重叠 ID 只生成一次且保存双方依据。
 
@@ -132,19 +128,48 @@ catalog.items 使用 kind 判别联合统一保存正式物品与仅供引用的
 
 `record-evidence.json` 独立记录 `id`、`admissionSources` 和 `encyclopedia`。图鉴收录源含 kind=encyclopedia、file、table=93、rowOffset；人工源含 kind=manual、file、pointer、sha256。图鉴证据为 present（含原始行及 listed）或 absent（含扫描文件及 table=93），不与未知属性混用。字段路径使用 name、subcategory、attributes.originGalaxy、memberIds 等；ID 证据统一为 318.0，只有分类字段允许引用冻结清单的 JSON Pointer 和 SHA256。
 
-前端通过 toCollectionView 从领域实体和资源清单派生页面 DTO；展示层命名不进入共享契约。reference 实体可展示名称，但不生成未收录详情页链接。
-
 配方、掉落、对应玩家服饰和送礼偏好引用到范围外物品时生成 `reference` 物品，不扩大正式集合。家具只保留正式产物需要的有效创想卡配方；材料缺失的配方以 `materials: null` 表示未知，不解释为免费制作。烹饪配方的食材表达式必须全部解析，解锁条件必须是已知结构，否则中止提取。主题目标、升级用量、秘方物品和商店库存等尚未确认的关系不发布，只记录排除证据。
+
+## 友邻准入与故事
+
+[友邻提取模块](src/extraction/neighbors/) 通过固定 NPC ID 白名单过滤正式主档（当前名单排除图塔，新增友邻需显式更新白名单），输出内部观察 `raw/neighbors.json`（schemaVersion 4）；正式交付 `zh-CN/neighbors.json` 使用共享契约的当前 formatVersion。同行反应、交往说明、事件标签、邂逅岛、世界岛屿和资源路径不被网站使用，不再提取。白名单成员缺少正式主档或必要字段时停止提取；非白名单 NPC 不收录，并写入排除审计。补充图片只保留友邻详情页使用的好感插画与角色立绘，均归属于具体友邻。
+
+友邻数据库保持稳定排序且不写入生成时间；同一输入重复提取产生相同字节。故事按章节和段落顺序聚合，保留纯文、普通单图、竖版单图及左右图文布局；布局来自故事表的正文、配图和排列标记，独立于图片是否成功交付。验收对照固定白名单及冻结主档独立检查友邻集合、检查完整数据库及版本绑定数量，再确认交付领域数据与封存 dataset 一致。
+
+## 已验证基线
+
+当前客户端版本参数由 [profile](src/profile.ts) 维护，提取语言为 zh-CN。本节记录已验证的客户端 **0.95.2**、配置 revision **1449213**、资源 revision **1391927**、清单目录 **5662883**，对应交付 formatVersion 11。本文的字段编号、对象名和数量仅适用于此基线。
+
+正式 records 为 2,550 条：家具 887 单品+42 套组；生物 317+27 系列；植物 208+31 系列；菜肴 121+9 系列；玩家服饰 590 服装+34 套装+51 外观；杂物 23，共 2,340 条（原图鉴 2,327 条另行核验）；加上 79 个确定性种子和 131 条正式友邻服饰。
+
+友邻为 12 个友邻、12 个星球、44 章故事（220 个段落记录）。统计用于交叉核验，不作为跨版本固定数量。
 
 ## 验收与版本更新
 
-当前交付 formatVersion 11，正式 records 为 2,550 条：家具 887 单品+42 套组；生物 317+27 系列；植物 208+31 系列；菜肴 121+9 系列；玩家服饰 590 服装+34 套装+51 外观；杂物 23，共 2,340 条（原图鉴 2,327 条另行核验）；加上 79 个确定性种子和 131 条正式友邻服饰。
-
-验收 ID 集合与冻结表 93 及冻结补充清单的并集完全相等、跨组无重复、所有字段符合白名单、所有成员可解析且类别正确、每个非空值有确认依据、每个未知属性 null 有原因，图鉴 null 有完整表扫描缺失证据。检查每个引用 WebP 完整解码、尺寸符合分组规则、内容哈希相等、素材无多余文件，并复核原始 PNG 的来源、哈希、尺寸和完整解码。检查配置对及所有使用资源包的清单校验值。
+分别验收准入集合：图鉴与人工补充部分的 ID 集合必须等于冻结表 93 与冻结补充清单的并集；种子按上文确定性种植关系与排除证据独立验收；友邻服饰按其准入清单及客户端关联独立验收。合并后的正式物品与集合跨组无重复，所有字段符合白名单、所有成员可解析且类别正确、每个非空值有确认依据、每个未知属性 null 有原因，图鉴 null 有完整表扫描缺失证据。检查每个引用 WebP 完整解码、尺寸符合分组规则、内容哈希相等、素材无多余文件，并复核原始 PNG 的来源、哈希、尺寸和完整解码。检查配置对及所有使用资源包的清单校验值。
 
 更新版本时重新确认根字段、字段宽度、引用／向量类型、TextMap 包装、GameplayTag 和显示对象位置、品阶枚举与缺省值、成员关系及图片用途。统计吻合是辅助证据，不能代替真实字段和显示规则的验证。不要为了匹配旧数量删除新增记录。
 
-## 三阶段证据链与版本协议
+## 本仓库实现
+
+### 模块边界与工具准备
+
+代码按产物边界组织：
+
+- `src/workflow/`：与提取领域无关的流水线内核，负责哈希、manifest、checkpoint、锁、进程、目录替换和 JSON；
+- `src/client/`：客户端快照、版本清单、Asset Map 解析和 AnimeStudio；
+- `src/environment/`：客户端环境产物；
+- `src/source/client/`：共享客户端表读取规则；
+- `src/extraction/`：解码、源观察、图片、证据和来源审计；
+- `src/domains/`：领域组装、引用闭包、资源登记和统一证据映射；
+- `src/delivery/`：WebP、交付 JSON、发布和交付验收；
+- `src/verify.ts`：整条 manifest 链与已发布字节的最终验收。
+
+`src/workflow/process.ts` 通过 execa 统一执行 AnimeStudio、构建工具和准备步骤，直接将 stdout/stderr 写入同一日志，支持追加或覆盖，不缓冲完整进程输出。`src/client/asset-map.ts` 通过 sax 流式读取 Asset Map，统一处理 XML 实体、CDATA、跨块文本、必需字段和 Persistent overlay；环境构建把它压缩为只含 Texture2D、Sprite、MiHoYoBinData 的 `asset-index.json`。AnimeStudio 退出码为 0 但日志报错时仍判定失败。
+
+AnimeStudio 的固定版本与下载摘要见[配置](src/client/anime-studio/config.ts)。Windows 使用局部 runtime；macOS 使用固定源码、补丁与局部 SDK 构建。下载包校验摘要，生成内容在 `.staging` 完成探测和哈希验证后才发布；ready marker 和 `--version` 探测都通过后才复用。缓存版本同时考虑平台、架构和补丁。
+
+### 三阶段证据链与版本协议
 
 ```text
 $LOOMIX_DATA_ROOT/clients/<snapshot-id>/game-client/ 中的客户端文件
@@ -168,6 +193,12 @@ $LOOMIX_DATA_ROOT/clients/<snapshot-id>/game-client/ 中的客户端文件
 
 存储目录与运行命令见[提取工具说明](README.md#输入缓存与产物)。版本通过内容身份区分，不按交付路径创建工作区；默认 deliver 只封存共享交付，materialize 才更新 worktree 网站资源。`--website` 直接发布模式的 verify 还会核对已发布字节。
 
+更新清单包含基础包、未安装的可选下载及未落地的 overlay。init 校验清单格式与已安装条目的 MD5/大小，data manifest 优先于同路径 res manifest；记录未安装项和 MD5 为 0 的无校验值条目；配置对必须完整匹配当前 data manifest。extract 进一步强制核验实际使用的全部图片候选包、BinData 来源包和两份 OBB；未安装项不视为“内容不存在”的证明。
+
+环境身份绑定客户端清单、profile、工具字节和实现摘要；提取身份还绑定 environment manifest 与冻结补充清单。实现摘要覆盖源码、发布契约与 lockfile，修改这些输入会产生新身份。
+
+仓库根配置默认不缓存 package scripts，因此每次都会执行入口并重新验证真实输入。内部 checkpoint 是提取恢复协议，与 Vite Task 缓存无关；`logs/`、`checkpoints/` 和 `run-report.json` 不属于 manifest 的语义输出。
+
 environment、extraction、delivery 的 manifest 均采用 schemaVersion 1。输出项使用相对 manifest 所在目录的 `path`、SHA256 和 `bytes`；输入清单也有整体 SHA256。实现摘要覆盖维护源码、共享契约、提取包配置和仓库 lockfile，profile 摘要不受资源索引路径影响。状态只有全部验证成功后才写为 verified。manifest 使用临时文件加 rename 发布，不以 marker 存在代替字节验证。
 
 每个内部 checkpoint 保存 `schemaVersion`、阶段名、输入摘要、依赖摘要和输出清单。每次恢复都检查原始输入、依赖、输出哈希和输出集合。一个 checkpoint 失效会在运行前删除它和下游 marker；上游成功但下游失败后，可以重用已核实的上游产物。最终 extraction manifest 在重新执行时先失效，避免旧成功状态掩盖失败。
@@ -181,3 +212,7 @@ environment、extraction、delivery 的 manifest 均采用 schemaVersion 1。输
 raw/content.json 保留结构阶段结果；raw/images-content.json 在不修改结构 checkpoint 输出的情况下加入选中 PNG 的 bundle 相对路径。详情观察保存在 raw/images-catalog-observations.json，领域组装读取冻结观察、补全已确认的物品引用并生成统一 dataset 与图片交付任务，同时执行跨领域引用、集合成员类型、分类环、生长阶段和图片覆盖检查。verify 从冻结观察重建领域数据、交付任务与领域证据，防止只修改输出使其自洽。交付阶段只读封存 dataset，处理图片并生成领域 JSON、assets.json 和 release.json，不重做业务关联。最终验证从 bundle 中冻结的 OBB 重新核对表 93 与冻结确认清单的收录并集、分类、图鉴状态、品阶及成员，不打开客户端；只有 init、extract 和完整链 verify 会核对实际客户端快照。
 
 补充清单在 extract 的 admissions checkpoint 冻结，原始字节 SHA256 进入提取身份和 manifest，structure 依赖此 checkpoint。修改工作区清单不能影响已封存交付；验证器重读冻结 OBB 和冻结清单重建并集，不信任 scope.json。提取与 materialize 只更新本地产物；线上切换须先上传新的不可变资源版本，再同步资源指针与网站代码。
+
+### 本地资源替换
+
+输出目录拒绝危险路径、符号链接和无关文件，只接受 release.json、assets.json、语言目录下的领域 JSON、assets/ 和可选 .gitkeep。友邻 JSON 只公开客户端确认的数据，不包含 OBB 来源编号或玩家账号状态；来源证据和排除项仅保存在 extraction bundle。发布先验证同级暂存副本，再将旧目录移到备份并重命名整个新目录；不会逐文件混合两个版本。重命名失败时恢复完整旧目录。发布锁串行化本工具的发布；两次目录重命名之间存在短暂不可用窗口，不承诺跨进程读取或机器断电的事务隔离。

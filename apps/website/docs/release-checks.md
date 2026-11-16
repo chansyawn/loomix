@@ -4,12 +4,13 @@
 
 ## 边界
 
-| 规则类型                                               | 归属                                   |
-| ------------------------------------------------------ | -------------------------------------- |
-| 客户端事实、身份、跨表关联、版本绑定规范化、证据       | extraction                             |
-| 消费者中立的通用解释（标签子树、类型、资源解析）       | `@loomix/schema`                       |
-| 网站对发布数据的假设（可见性、分组、命名、结构完整性） | `apps/website/scripts/release-checks/` |
-| 页面交互行为                                           | 非 UI 单元测试，不进发布门禁           |
+| 规则类型                                               | 归属                                               |
+| ------------------------------------------------------ | -------------------------------------------------- |
+| 客户端事实、身份、跨表关联、版本绑定规范化、证据       | extraction                                         |
+| 消费者中立的通用解释（标签子树、类型、资源解析）       | [共享数据契约](../../../packages/schema/README.md) |
+| 网站对发布数据的假设（可见性、分组、命名、结构完整性） | `apps/website/scripts/release-checks/`             |
+| 筛选、URL 状态等不依赖渲染的逻辑                       | 非 UI 单元测试                                     |
+| 页面交互与渲染                                         | 人工验收，不编写 UI 自动化测试                     |
 
 判断标准：换一个消费者仍然成立的规则放 schema 或 extraction；只服务当前页面策略的规则放这里。
 
@@ -27,28 +28,13 @@ vp run --no-cache website#verify-contracts
 vp run --no-cache website#verify-release
 ```
 
-`verify-release` 下载 `apps/website/release.json` 指向的已发布 release，运行同一套检查；现有 CI 的 `Verify website` 步骤已经包含它，不需要新增 workflow。资源上传仍由发布工具的 `validateContent` 负责，发布契约检查阻断的是网站部署，不是 R2 上传。
+`verify-release` 下载网站资源指针 `apps/website/release.json` 指向的已发布 release，运行同一套检查；现有 CI 的 `Verify website` 步骤已经包含它，不需要新增 workflow。资源上传仍由发布工具的 `validateContent` 负责，发布契约检查阻断的是网站部署，不是 R2 上传。
 
-`verify-release` 要求 `release.json` 指向的 release 与当前 `@loomix/schema` 的 `formatVersion` 匹配；资源格式升级后需要先发布新 release 并更新 `release.json`。
+`verify-release` 要求网站资源指针指向的 release 与当前 `@loomix/schema` 的 `formatVersion` 匹配；资源格式升级后需要先发布新 release 并更新网站资源指针。
 
 ## 检查接口
 
-```ts
-export interface ReleaseCheckIssue {
-  message: string;
-  path?: string;
-}
-
-export interface ReleaseCheckResult {
-  summary?: string;
-  issues: readonly ReleaseCheckIssue[];
-}
-
-export interface ReleaseCheck {
-  id: string;
-  run(release: Release): ReleaseCheckResult | Promise<ReleaseCheckResult>;
-}
-```
+接口以 [types.ts](../scripts/release-checks/types.ts) 为准：`ReleaseCheck` 提供唯一 `id` 和 `run(release)`；结果包含问题列表 `issues` 与可选摘要 `summary`，每个问题含 `message` 与可选数据路径 `path`。
 
 约束：
 
@@ -69,7 +55,7 @@ export interface ReleaseCheck {
 
 | ID                       | 内容                                                                                                                   |
 | ------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| `tag-filter/all`         | 13 个白名单根存在且有可见标签；整棵可见树的标签命名不含 `_`/“父级”；同级重名                                           |
+| `tag-filter/all`         | 配置的白名单根存在且有可见标签；整棵可见树的标签命名不含 `_`/“父级”；同级重名                                          |
 | `tag-filter/ingredients` | `食材` 根存在；分组根是 `食材` 的直接子级；颜色/品质组有子级和可见选项；排除标签在 `食材` 子树内；一级标签全部归属分组 |
 | `tag-filter/labels`      | `TAG_LABEL_OVERRIDES` 的目标 `internalName` 存在                                                                       |
 

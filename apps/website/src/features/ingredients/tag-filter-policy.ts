@@ -23,7 +23,7 @@ export type IngredientTagGroupConfig =
       rootName: string;
     };
 
-// 修改分组后同步更新 apps/website/docs/tag-filter-policy.md 与 tag-filter/ingredients 检查。
+// 修改分组后运行 tag-filter/ingredients 检查；分组语义变化时同步 apps/website/docs/tag-filter-policy.md。
 export const INGREDIENT_TAG_GROUPS: readonly IngredientTagGroupConfig[] = [
   {
     key: "ingredientCategories",

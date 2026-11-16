@@ -28,7 +28,7 @@
 
 合并到 `master` 后，[Deploy website](../.github/workflows/deploy-website.yml) 重新执行与 `Verify website` 相同的校验和部署 dry-run，通过后发布到正式 Worker；生产部署串行执行，也可在 GitHub **Actions → Deploy website → Run workflow** 手动触发。
 
-如需本地发布，先完成 Wrangler 登录，或在根 `.env` 配置 `CLOUDFLARE_ACCOUNT_ID`、`CLOUDFLARE_API_TOKEN`。Wrangler 命令在仓库根目录执行，读取根 `.env` 和可选的 `.env.local`；进程环境变量优先，CI 使用 GitHub Secrets。`website#deploy` 只部署已有产物，日常发布使用以下完整流程：
+如需本地发布，先完成 Wrangler 登录，或在根 `.env` 配置 `CLOUDFLARE_ACCOUNT_ID`、`CLOUDFLARE_API_TOKEN`。Wrangler 命令在仓库根目录执行，环境文件规则见[环境配置](../README.md#环境配置)，CI 使用 GitHub Secrets。`website#deploy` 只部署已有产物，日常发布使用以下完整流程：
 
 ```bash
 vp install --frozen-lockfile
@@ -37,10 +37,21 @@ vp run website#release
 
 ## 资源发布与 CORS
 
-生产构建默认从 [apps/website/release.json](../apps/website/release.json) 读取资源版本；`VITE_RESOURCE_BASE_URL` 可覆盖该地址。部署要求使用已发布的 HTTPS 资源版本，本地资源目录不能用于发布。
+生产构建默认从[网站资源指针 apps/website/release.json](../apps/website/release.json) 读取资源地址；`VITE_RESOURCE_BASE_URL` 可覆盖该地址。部署要求使用已发布的 HTTPS 资源版本，本地资源目录不能用于发布。
 
-- **发布流程**：游戏数据与图片由[资源发布工具](../tools/resource-publisher/README.md)单独上传至 R2 `loomix-assets`，不随网站 CI 自动上传。先发布新的不可变 release，再通过 PR 更新网站的 `release.json`。
-- **检查门禁**：更新本地资源后，按[全部页标签筛选策略](../apps/website/docs/tag-filter-policy.md)运行 `vp run --no-cache website#verify-contracts` 并处理人工维护项。部署链路中的 `verify-release` 对 `release.json` 指向的已发布 release 运行同一套[发布契约检查](../apps/website/docs/release-checks.md)；资源上传本身仍由发布工具的 `validateContent` 负责，发布契约检查阻断的是网站部署。
+网站资源指针只保存资源地址；本地交付中的资源 manifest `resources/website/release.json` 记录领域文档、快照身份与校验值，两者不能互换，详见[共享数据契约](../packages/schema/README.md)。
+
+### 资源更新流程
+
+1. **提取与落地**：按[提取工具说明](../tools/extraction/README.md#提取与交付)执行 refresh、完整链 verify 与 materialize，得到当前 worktree 的本地交付。
+2. **网站验证**：按[发布契约检查](../apps/website/docs/release-checks.md#运行方式)校验本地资源；若报告标签问题，按[标签筛选策略](../apps/website/docs/tag-filter-policy.md#资源更新检查)调整配置，并完成人工验收。
+3. **资源上传**：按[资源发布工具说明](../tools/resource-publisher/README.md#校验与发布)先 dry-run，再使用新的 release ID 上传至 R2 `loomix-assets`。网站 CI 不自动上传游戏数据与图片。
+4. **更新指针**：通过 PR 更新 `apps/website/release.json` 的 `resourceBaseUrl`，连同必要的契约和网站代码变更一起提交。资源格式须与当前共享契约兼容。
+5. **预览与部署**：CI 的 `verify-release` 校验指针所选的已发布资源并运行网站契约检查；预览验收通过后合并，由正式发布流程部署。
+
+资源发布器负责上传前的目录与字节校验；网站契约检查阻断网站部署，不阻断 R2 上传。完整任务命令由上述工具文档维护。
+
+### CORS
 
 R2 CORS 当前允许 `https://loomix.fun` 与 `https://*.preview.loomix.fun` 的 `GET`、`HEAD` 请求。
 
