@@ -1,6 +1,6 @@
 # 贡献指南
 
-开发环境与资源准备见 [README](README.md)，CI/CD 与部署见 [部署说明](docs/deployment.md)。
+开发环境与资源准备见 [README](README.md)，部署流程见 [CI/CD 与部署](DEPLOYMENT.md)。
 
 ## 提交规范
 
@@ -11,7 +11,7 @@
 
 feat: 添加家具筛选
 fix: 修复友邻图片加载
-docs: 补充部署说明
+docs: 补充部署文档
 ```
 
 允许的类型：`feat`、`fix`、`refactor`、`perf`、`docs`、`test`、`build`、`ci`、`chore`、`revert`。通常省略 scope；需要时可用 `fix(website): 修复图片加载`。
@@ -33,6 +33,6 @@ PR 标题本身不添加编号，编号仅在合并时追加。GitHub 默认生�
 
 - 所有变更经 PR 合并，仅允许 Squash；禁止强推和删除主分支，无绕过角色。
 - `Validate PR title`、`Verify website`、`Preview website` 三个检查全部通过；目前不强制要求审批人数。
-- 仅同仓库分支自动部署预览。Fork PR 的预览检查会失败，需维护者将变更转入同仓库分支，创建 PR 并完成预览后合并。
+- 仅同仓库分支自动部署预览；Fork PR 需由维护者转入同仓库分支后重新创建 PR。检查内容与处理细节见[CI/CD 与部署](DEPLOYMENT.md#pr-检查与预览)。
 
 合并或关闭 PR 会自动回收预览。分支目前不会在合并后自动删除，可在确认不再需要时手动删除。

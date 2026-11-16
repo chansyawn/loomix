@@ -4,7 +4,7 @@
 
 ## 本地开发
 
-先按[根 README](../../README.md#本地开发)安装依赖并准备本地或已发布资源。环境文件位置、读取顺序和资源地址覆盖方式统一见[环境配置](../../README.md#环境配置)。以下命令均在仓库根目录执行：
+依赖安装与资源准备见[根 README](../../README.md#本地开发)，环境文件规则见[环境配置](../../README.md#环境配置)。命令在仓库根目录执行：
 
 ```bash
 vp run website#dev
@@ -37,7 +37,7 @@ release.json        # 网站资源指针，指定生产构建默认使用的资�
 
 [资源读取器](src/infrastructure/resources.ts)先加载资源 manifest，再按其声明读取领域文档，核对字节数与 SHA256。功能模块将[共享数据契约](../../packages/schema/README.md)转换为页面查询与展示所需的数据，网站专属的可见性、分组和命名规则在应用内维护。
 
-本目录的 [release.json](release.json) 是网站资源指针，仅指定 `resourceBaseUrl`；资源目录中的同名文件是描述发布内容的资源 manifest。更新游戏数据时，按[资源更新流程](../../docs/deployment.md#资源更新流程)完成提取、本地验证、上传与指针更新。
+本目录的 [release.json](release.json) 是网站资源指针，仅指定 `resourceBaseUrl`；资源目录中的同名文件是描述发布内容的资源 manifest。更新游戏数据时，按[资源更新流程](../../DEPLOYMENT.md#资源更新流程)完成提取、本地验证、上传与指针更新。
 
 ## 常用检查
 
@@ -50,12 +50,11 @@ release.json        # 网站资源指针，指定生产构建默认使用的资�
 | `vp run website#verify-build`                | 校验已有构建产物的静态资源边界                       |
 | `vp run ready`                               | 提交前执行全仓静态检查、测试与构建                   |
 
-任务定义见 [package.json](package.json) 与 [vite.config.ts](vite.config.ts)。UI 改动通过静态检查、构建和人工验收确认；发布契约检查的扩展方式见下方文档。部署命令与凭证配置统一由部署说明维护。
+任务定义见 [package.json](package.json) 与 [vite.config.ts](vite.config.ts)。UI 改动通过静态检查、构建和人工验收确认；发布契约检查的扩展方式见下方文档。部署命令与凭证配置统一由[CI/CD 与部署](../../DEPLOYMENT.md)维护。
 
-## 相关文档
+## 本目录文档
 
 - [发布契约检查](docs/release-checks.md)：检查边界、注册方式和失败处理。
 - [标签筛选策略](docs/tag-filter-policy.md)：全部页与食材筛选的可见性、分组和命名规则。
-- [共享数据契约](../../packages/schema/README.md)：领域语义、图片引用与发布格式。
-- [CI/CD 与部署](../../docs/deployment.md)：PR 预览、资源更新与正式发布。
-- [贡献指南](../../CONTRIBUTING.md)：提交规范、PR 流程与合并限制。
+
+完整文档索引见[根 README](../../README.md#文档)。

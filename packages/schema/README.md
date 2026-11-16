@@ -30,11 +30,11 @@
 
 `dataset` 汇集领域数据及快照上下文；`assets` 将领域图片引用 `{assetId, variant}` 映射为不可变文件路径、SHA256、字节数与尺寸。领域实体不保存交付路径；同一源图的 icon、banner、illustration 分别登记。
 
-资源 manifest `resources/website/release.json` 描述一份完整发布，列出语言目录中的 gameplay-tags、catalog、neighbors 文档与共享 assets 文档，以每份文档的实际 SHA256 和字节数绑定发布内容。formatVersion、snapshotId、locale 和来源版本在 manifest 中声明，加载时组装为带上下文的 dataset。语言属于快照上下文，不改变实体字段名。
+资源 manifest（发布清单）`resources/website/release.json` 描述一份完整发布，列出语言目录中的 gameplay-tags、catalog、neighbors 文档与共享 assets 文档，以每份文档的实际 SHA256 和字节数绑定发布内容。formatVersion、snapshotId、locale 和来源版本在 manifest 中声明，加载时组装为带上下文的 dataset。语言属于快照上下文，不改变实体字段名。
 
 网站资源指针 [apps/website/release.json](../../apps/website/release.json) 仅保存 `resourceBaseUrl`，供生产构建定位已发布资源；它不是资源 manifest，不能相互替换。
 
-当前允许的 `formatVersion` 由 [ContextSchema](src/common/identity.ts) 定义，不保留历史版本解析分支。格式升级时，提取器、发布器和网站需使用匹配契约；先发布兼容的新资源，再更新网站资源指针，具体步骤见[资源更新流程](../../docs/deployment.md#资源更新流程)。
+当前允许的 `formatVersion` 由 [ContextSchema](src/common/identity.ts) 定义，不保留历史版本解析分支。格式升级时，提取器、发布器和网站需使用匹配契约；先发布兼容的新资源，再更新网站资源指针，具体步骤见[资源更新流程](../../DEPLOYMENT.md#资源更新流程)。
 
 ## 与其他层的边界
 

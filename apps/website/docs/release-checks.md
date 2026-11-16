@@ -28,7 +28,7 @@ vp run --no-cache website#verify-contracts
 vp run --no-cache website#verify-release
 ```
 
-`verify-release` 下载网站资源指针 `apps/website/release.json` 指向的已发布 release，运行同一套检查；现有 CI 的 `Verify website` 步骤已经包含它，不需要新增 workflow。资源上传仍由发布工具的 `validateContent` 负责，发布契约检查阻断的是网站部署，不是 R2 上传。
+`verify-release` 下载网站资源指针 `apps/website/release.json` 指向的已发布 release，运行同一套检查；现有 CI 的 `Verify website` 步骤已经包含它，不需要新增 workflow。资源上传由发布工具的 `validateContent` 负责，完整流程见[资源更新流程](../../../DEPLOYMENT.md#资源更新流程)。
 
 `verify-release` 要求网站资源指针指向的 release 与当前 `@loomix/schema` 的 `formatVersion` 匹配；资源格式升级后需要先发布新 release 并更新网站资源指针。
 
@@ -52,6 +52,8 @@ vp run --no-cache website#verify-release
 4. 运行 `vp run --no-cache website#verify-contracts`，确认基线与失败信息。
 
 ## 当前检查
+
+完整清单以 [index.ts](../scripts/release-checks/index.ts) 的 `releaseChecks` 注册为准。
 
 | ID                       | 内容                                                                                                                   |
 | ------------------------ | ---------------------------------------------------------------------------------------------------------------------- |

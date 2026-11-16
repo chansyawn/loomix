@@ -4,13 +4,13 @@
 
 ## 首次配置
 
-先按[根 README](../../README.md#本地开发)安装依赖。若尚未创建根目录 `.env`，复制 `.env.example`，填写共享数据目录的绝对路径 `LOOMIX_DATA_ROOT`；代码不设默认路径。文件读取规则见[环境配置](../../README.md#环境配置)。
+先按[根 README](../../README.md#本地开发)安装依赖。在根目录 `.env` 中填写共享数据目录的绝对路径 `LOOMIX_DATA_ROOT`，代码不设默认路径；模板与读取规则见[环境配置](../../README.md#环境配置)。
 
 在仓库根目录导入并选择客户端；来源也可以是仓库外的绝对路径：
 
 ```sh
-vp run '@loomix/extraction#client' -- import --source resources/game-client
-vp run '@loomix/extraction#client' -- select --snapshot <snapshot-id>
+vp run @loomix/extraction#client -- import --source resources/game-client
+vp run @loomix/extraction#client -- select --snapshot <snapshot-id>
 ```
 
 导入会校验复制前后的完整文件清单与 SHA256，并将快照设为只读。选择记录保存在共享根；新 environment 绑定所选 snapshot ID，后续切换选择不会改变已有 environment 的输入。客户端更新后重新导入、选择，旧快照保留。
@@ -22,23 +22,23 @@ vp run '@loomix/extraction#client' -- select --snapshot <snapshot-id>
 日常更新网站资源：
 
 ```sh
-vp run '@loomix/extraction#refresh'
+vp run @loomix/extraction#refresh
 # 将 refresh 打印的 delivery-id 填入下面的命令
-vp run '@loomix/extraction#verify' --delivery <delivery-id>
-vp run '@loomix/extraction#materialize' --delivery <delivery-id>
+vp run @loomix/extraction#verify --delivery <delivery-id>
+vp run @loomix/extraction#materialize --delivery <delivery-id>
 ```
 
-`refresh` 依次执行 `init`、`extract`、`deliver`，打印三阶段 ID。也可分别执行 `vp run '@loomix/extraction#<入口>'`，将前一步打印的 ID 传给下一步：
+`refresh` 依次执行 `init`、`extract`、`deliver`，打印三阶段 ID。也可分别执行 `vp run @loomix/extraction#<入口>`，将前一步打印的 ID 传给下一步：
 
 | 入口与参数                    | 行为                                                                                                           |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `init`                        | 校验客户端配置及资源清单，准备 AnimeStudio 并生成资源索引；相同身份复用已验证 environment。                    |
+| `init`                        | 校验客户端配置及其资源清单，准备 AnimeStudio 并生成资源索引；相同身份复用已验证 environment。                  |
 | `extract --environment <id>`  | 从绑定快照提取数据、PNG 和证据，完成来源审计与验收后封存 extraction；内部 checkpoint 自动恢复。                |
 | `deliver --extraction <id>`   | 从已验证 extraction 生成共享的 artifact-only 交付，封存 JSON 和 WebP。`--website` 可同时发布到当前 worktree。  |
 | `verify --delivery <id>`      | 核对实际客户端、整条 manifest 链及领域证据；网站发布模式额外核对已发布字节，artifact-only 模式只验收封存产物。 |
 | `materialize --delivery <id>` | 校验 artifact-only 交付并替换当前 worktree 的 `resources/website/`，失败时恢复旧目录。                         |
 
-ID 均为完整 SHA256。相对输入路径和网站目标相对仓库根解析，与命令工作目录无关。`--help` 不初始化工具。工具测试运行 `vp run '@loomix/extraction#test'`，静态检查运行 `vp check`。
+ID 均为完整 SHA256。相对输入路径和网站目标相对仓库根解析，与命令工作目录无关。`--help` 不初始化工具。工具测试运行 `vp run @loomix/extraction#test`，静态检查运行 `vp check`。
 
 ## 输入、缓存与产物
 
@@ -86,7 +86,7 @@ worktree/
 
 复用前会核对输入、输出哈希和文件集合；失败时保留报告，全部验收通过后才写成功 manifest。失败后查看对应产物的 `logs/` 与 `run-report.json`，修复原因后重跑同一入口；已验证的上游 checkpoint 可以复用。恢复协议见[本仓库实现](extraction-method.md#本仓库实现)。
 
-`materialize` 替换本地资源失败时恢复旧目录；替换期间可能短暂不可用，不承诺跨进程读取或断电的事务隔离。线上资源更新流程见[部署说明](../../docs/deployment.md#资源更新流程)。
+`materialize` 替换本地资源失败时恢复旧目录；替换期间可能短暂不可用，不承诺跨进程读取或断电的事务隔离。线上资源更新流程见[CI/CD 与部署](../../DEPLOYMENT.md#资源更新流程)。
 
 客户端、共享缓存/产物、`var/` 下的临时文件和日志均不提交。无运行任务时可以删除失败的 `.staging`、旧 environment/extraction/delivery 或共享 AnimeStudio 缓存；删除 extraction 会使依赖它的 delivery 无法进行完整追溯验收。保留当前在用的整条链。
 

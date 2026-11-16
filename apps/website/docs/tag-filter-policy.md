@@ -6,7 +6,7 @@
 - 食材分组策略：[`apps/website/src/features/ingredients/tag-filter-policy.ts`](../src/features/ingredients/tag-filter-policy.ts)
 - 共享名称特例与前缀：[`apps/website/src/features/collection/tags.ts`](../src/features/collection/tags.ts)
 
-完整名单以这些配置为准，本文只维护策略语义。修改配置后执行资源更新检查；改变匹配、可见性或命名规则时同步本文档。
+完整名单以这些配置为准，本文维护策略语义与配置变更的对应关系；检查机制见[发布契约检查](release-checks.md)。修改匹配、可见性或命名规则时同步本文档。
 
 ## 全部页
 
@@ -62,15 +62,9 @@
 - 同一父级下不允许重名，`tag-filter/all` 会报错。
 - 名称清理作用于两处筛选树与 chip；详情页、类别页的既有展示保持不变。
 
-## 资源更新检查
+## 维护与检查
 
-每次更新 `resources/website/` 后必须执行：
-
-```bash
-vp run --no-cache website#verify-contracts
-```
-
-检查项、接口与部署链路见[发布契约检查](release-checks.md)；本页只维护策略文件与检查报告的对应关系：
+每次更新 `resources/website/` 后必须执行发布契约检查，命令与失败处理见[发布契约检查](release-checks.md#运行方式)；本页只维护策略文件与检查报告的对应关系：
 
 1. 根标签被重命名或新增品类：更新 `TAG_FILTER_ROOT_NAMES` 或食材分组配置。
 2. 新增内部前缀：加入 `TAG_LABEL_PREFIXES`，确认不会造成同级重名。

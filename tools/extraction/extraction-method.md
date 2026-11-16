@@ -1,6 +1,8 @@
-# 有效内容提取原理与独立实现指南
+# 提取原理
 
 本文说明独立实现所需的输入、解码、关联和验收规则；末节单独说明本仓库的流水线实现。发布结构及领域语义见[共享数据契约](../../packages/schema/README.md)。以下客户端规则适用于“已验证基线”所列版本，新版本必须重新定位字段。
+
+## 范围与前提
 
 用户已确认当前根字段 93 的全部记录属于开放游戏内容。字段 1 为 1 的外观也是开放内容，只是不计入万象列表；67 个主题集合是各大类内的小分类。另有用户明确确认的十三条实装记录由版本绑定清单收录；其他表外内容是否开放不能由名称、图标或配方引用推断。
 
@@ -8,7 +10,7 @@
 
 准备客户端的 config.ini、PetitPlanet_Data 内的基础与 Persistent 更新资源，以及覆盖两者的 Unity 对象索引。读取 config.ini 的 game_version，并分别核对 data_revision 和 res_revision。
 
-名为 data_versions.json、res_versions.json 的清单实际为 CSV，列为 FilePath、md5、FileSize。配置候选包括 StreamingAssets/GenerateAssets、Persistent/GenerateAssets 和 Persistent/Temp/<清单目录>/GenerateAssets。只有 ed.obb、cs.obb 同时匹配同一 data 清单的配置对才能采用。当前采用 Persistent/Temp/5662883/GenerateAssets；忽略 Temp 会读到旧配置。
+名为 data_versions.json、res_versions.json 的客户端资源清单实际为 CSV，列为 FilePath、md5、FileSize。配置候选包括 StreamingAssets/GenerateAssets、Persistent/GenerateAssets 和 Persistent/Temp/<清单目录>/GenerateAssets。只有 ed.obb、cs.obb 同时匹配同一 data 清单的配置对才能采用。当前采用 Persistent/Temp/5662883/GenerateAssets；忽略 Temp 会读到旧配置。
 
 对象索引至少包含 Type、Name、Container、PathID、Source。PathID 保留为字符串，避免 64 位精度损失。Source 通过 PetitPlanet_Data 后的内部相对路径重定位；不使用旧机器的绝对路径。更新对象优先于基础对象，并校验每个实际使用包的大小与 MD5：基础包对应基础 res 清单，更新包先查更新 data 清单，再查更新 res 清单。
 
@@ -173,7 +175,7 @@ AnimeStudio 的固定版本与下载摘要见[配置](src/client/anime-studio/co
 
 ```text
 $LOOMIX_DATA_ROOT/clients/<snapshot-id>/game-client/ 中的客户端文件
-  → config.ini、revision、branch、资源清单校验（init）
+  → config.ini、revision、branch、客户端资源清单校验（init）
   → 完整文件集合、SHA256、profile、工具字节与实现摘要
   → 覆盖基础包和 Persistent 的 Asset Map、environment-manifest.json
   → OBB 配置对冻结到 prepared/；MiHoYoBinData 导出到 bindata/（extract/decode）
@@ -191,7 +193,7 @@ $LOOMIX_DATA_ROOT/clients/<snapshot-id>/game-client/ 中的客户端文件
   → materialize 将已验证交付发布到当前 worktree，失败时恢复旧目录
 ```
 
-存储目录与运行命令见[提取工具说明](README.md#输入缓存与产物)。版本通过内容身份区分，不按交付路径创建工作区；默认 deliver 只封存共享交付，materialize 才更新 worktree 网站资源。`--website` 直接发布模式的 verify 还会核对已发布字节。
+存储目录与运行命令见[客户端资源提取](README.md#输入缓存与产物)。版本通过内容身份区分，不按交付路径创建工作区；默认 deliver 只封存共享交付，materialize 才更新 worktree 网站资源。`--website` 直接发布模式的 verify 还会核对已发布字节。
 
 更新清单包含基础包、未安装的可选下载及未落地的 overlay。init 校验清单格式与已安装条目的 MD5/大小，data manifest 优先于同路径 res manifest；记录未安装项和 MD5 为 0 的无校验值条目；配置对必须完整匹配当前 data manifest。extract 进一步强制核验实际使用的全部图片候选包、BinData 来源包和两份 OBB；未安装项不视为“内容不存在”的证明。
 
