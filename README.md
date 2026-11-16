@@ -4,7 +4,18 @@
 
 网站域名：`loomix.fun`。
 
-协作与发布：[贡献指南](CONTRIBUTING.md) · [CI/CD 与部署](docs/deployment.md) · [发布契约检查](docs/release-checks.md)。
+## 文档
+
+| 文档                                                   | 读者             | 内容                                           |
+| ------------------------------------------------------ | ---------------- | ---------------------------------------------- |
+| [贡献指南](CONTRIBUTING.md)                            | 贡献者           | 提交规范、PR 流程与合并限制                    |
+| [Agent 协作约定](AGENTS.md)                            | AI Agent、维护者 | 注释语言、lint、测试范围、React 与 UI 组件约定 |
+| [CI/CD 与部署](docs/deployment.md)                     | 维护者           | 预览、正式发布、资源与 CORS 配置               |
+| [发布契约检查](apps/website/docs/release-checks.md)    | 网站开发者       | 检查边界、接口、新增检查与失败处理             |
+| [标签筛选策略](apps/website/docs/tag-filter-policy.md) | 网站开发者       | 白名单、可见性、分组与中文名清理               |
+| [客户端资源提取](tools/extraction/README.md)           | 提取工具使用者   | 配置、命令、缓存与产物                         |
+| [提取原理](tools/extraction/extraction-method.md)      | 提取实现者       | 解码、关联、证据与交付规范                     |
+| [资源发布](tools/resource-publisher/README.md)         | 资源维护者       | R2 凭证、dry-run 与上传                        |
 
 ## 目录结构
 
@@ -12,6 +23,8 @@
 .
 ├── apps/
 │   └── website/             # 网站应用（页面、路由与样式）
+│       └── docs/            # 网站文档（发布契约检查、标签筛选策略）
+├── docs/                    # 仓库级文档（CI/CD 与部署）
 ├── packages/
 │   └── schema/              # 领域模型、资源与发布契约
 ├── tools/

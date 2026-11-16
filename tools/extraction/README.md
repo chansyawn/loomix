@@ -1,6 +1,6 @@
 # 客户端资源提取
 
-代码、配置、文档和测试都位于本包。当前 profile 对应客户端 0.95.2，data revision 1449213、resource revision 1391927、清单 5662883。更新版本须先重新确认解码布局、范围和关联规则。
+代码、配置、文档和测试都位于本包。当前客户端版本参数与 profile 见[提取原理](extraction-method.md#输入及版本选择)；更新版本须先重新确认解码布局、范围和关联规则。
 
 代码按产物边界组织：
 
@@ -103,21 +103,11 @@ worktree/
 
 环境身份绑定客户端清单、profile、工具字节和实现摘要；提取身份还绑定 environment manifest 与冻结补充清单。实现摘要覆盖源码、发布契约与 lockfile，修改这些输入会产生新身份。
 
-复用前核对输入、输出哈希和文件集合；失败时保留报告，全部验收通过后才写成功 manifest。checkpoint 失效与恢复规则见[三阶段证据链与版本协议](docs/extraction-method.md#三阶段证据链与版本协议)。
+复用前核对输入、输出哈希和文件集合；失败时保留报告，全部验收通过后才写成功 manifest。checkpoint 失效与恢复规则见[三阶段证据链与版本协议](extraction-method.md#三阶段证据链与版本协议)。
 
-## 证据与交付约束
+## 交付与发布约束
 
-唯一共享包为 `@loomix/schema`。发布契约只保留网站消费的结构化字段，客户端原始字段、未确认候选和解析诊断只保存在提取观察与证据中。`catalog.items` 是全部物品的唯一集合，按 `kind` 区分家具、服饰、外观、友邻服饰、生物、植物、种子、菜肴、杂物和 `reference`；`reference` 是仅被正式数据引用的范围外物品，只保存名称与说明，不生成列表或详情。`catalog.collections` 保存套组与系列，用 `memberKind` 声明成员种类。一对一的从属数据内嵌在所属物品中：种子携带 `growth`，菜肴携带 `cooking`，家具携带 `craftingRecipes`。`gameplayTags` 是独立发布的完整标签树；物品只发布合并后的 `tagIds`，来源为主表 318.6–17 的 12 组直接标签按固定顺序展开，再追加主表类型对应的 `BTypeCfg.typetag`（716.10），稳定去重且不扩展祖先；各来源列的归属只保存在字段证据中。颜色、材质、风格、产区按标签子树派生，食材分类由 `tagIds` 的食材子树闭包派生，送礼偏好共用同一标签身份。`category` 与 `furnitureCategory` 分别保存展示分类与家具分类。发布只包含结构化值：家具尺寸、生物体型范围和菜肴力气以数值交付，展示文案由网站拼接。`neighbors` 按友邻组织，星球、故事、能力、住宅、送礼偏好与好感插画、角色立绘均内嵌在友邻实体中。
-
-源观察模型位于 `tools/extraction`，只供提取与来源验收使用；基础观察和详情观察是内部 checkpoint，不是公开交付版本。领域组装读取冻结观察，补全已确认的物品引用，生成 dataset.json，并执行跨领域引用、集合成员类型、分类环、生长阶段和图片覆盖检查。verify 从冻结观察重建领域数据、交付任务与领域证据，防止只修改输出使其自洽。
-
-`evidence/domain-fields.json` 使用实体集合、身份和字段路径定位值，区分 confirmed、absent、unresolved；来源区分表行、完整表扫描、素材对象和人工确认。可定位的集合为 `catalog.items`、`catalog.collections`、`neighbors.neighbors` 与 `gameplayTags.tags`；内嵌数据通过所属实体的字段路径定位，例如种子的 `growth.stages.0.image`、菜肴的 `cooking.slots`。未发布的观察字段、原图鉴标记、准入依据、未确认候选和排除原因继续保存在源审计中。
-
-发布目录由 release.json 指定四个文档：zh-CN/gameplay-tags.json、zh-CN/catalog.json、zh-CN/neighbors.json 和 assets.json。formatVersion、snapshotId、locale 与来源版本只在 manifest 中声明，各文档通过实际字节数与 SHA256 绑定到 manifest。领域图片使用 {assetId, variant}，assets.json 解析到按最终字节 SHA256 命名的 WebP、大小和尺寸。同一源图的 icon、banner、illustration 独立登记。当前提取 zh-CN；语言是快照上下文，后续语言无需改变实体字段名。
-
-当前交付 formatVersion 11，正式收录 2,550 条，包括图鉴与白名单的 2,340 条、79 个确定性种子以及 131 条正式友邻服饰。作物与花树统一种子和阶段契约，生长规则区分 crop/staged；成熟天数未确认，不进入发布数据。配方、掉落、对应玩家服饰和送礼偏好引用到范围外物品时生成 `reference` 物品，不扩大正式集合。家具只保留正式产物需要的有效创想卡配方；材料缺失的配方以 `materials: null` 表示未知，不解释为免费制作。烹饪配方的食材表达式必须全部解析，解锁条件必须是已知结构，否则中止提取。主题目标、升级用量、秘方物品和商店库存等尚未确认的关系不发布，只记录排除证据。友邻服饰通过 neighborId、playerItemId、可穿戴体型与友邻服饰币价格表达关联。
-
-图片规则保持不变：按实际像素面积选最高原生分辨率，平手保留大图优先顺序；家具套组 1024×512，其余有图记录 256×256；Lanczos3 等比缩放、居中裁切，WebP 质量 85、alphaQuality 100。原始 PNG 与最终 WebP 均完整解码，交付文件按最终字节 SHA256 命名和去重。
+发布契约、领域模型、交付文档格式、图片规则与证据协议以[提取原理](extraction-method.md)为准；本节只说明本工具的输出与发布行为。
 
 输出目录拒绝危险路径、符号链接和无关文件，只接受 release.json、assets.json、语言目录下的领域 JSON、assets/ 和可选 .gitkeep。友邻 JSON 只公开客户端确认的数据，不包含 OBB 来源编号或玩家账号状态；来源证据和排除项仅保存在 extraction bundle。发布先验证同级暂存副本，再将旧目录移到备份并重命名整个新目录；不会逐文件混合两个版本。重命名失败时恢复完整旧目录。发布锁串行化本工具的发布；两次目录重命名之间存在短暂不可用窗口，不承诺跨进程读取或机器断电的事务隔离。
 
@@ -129,8 +119,8 @@ Windows x64 使用固定下载和局部 runtime；macOS arm64/x64 使用相同�
 
 客户端、共享缓存/产物、`var/` 下的临时文件和日志均不提交。无运行任务时可以删除失败的 `.staging`、旧 environment/extraction/delivery 或共享 AnimeStudio 缓存；删除 extraction 会使依赖它的 delivery 无法进行完整追溯验收。保留当前在用的整条链。
 
-详细范围和关联规则见[提取原理](docs/extraction-method.md)。
+详细范围和关联规则见[提取原理](extraction-method.md)。
 
-`src/extraction/neighbors/` 通过固定 NPC ID 白名单过滤正式主档（当前名单排除图塔，新增友邻需显式更新白名单），输出内部观察 `raw/neighbors.json`（schemaVersion 4）；正式交付 `zh-CN/neighbors.json` 使用共享契约 formatVersion 11。当前快照收录 12 个友邻、12 个星球、44 章故事（220 个段落记录）。同行反应、交往说明、事件标签、邂逅岛、世界岛屿和资源路径不被网站使用，不再提取。白名单成员缺少正式主档或必要字段时停止提取；非白名单 NPC 不收录，并写入排除审计。补充图片只保留友邻详情页使用的好感插画与角色立绘，均归属于具体友邻。
+`src/extraction/neighbors/` 通过固定 NPC ID 白名单过滤正式主档（当前名单排除图塔，新增友邻需显式更新白名单），输出内部观察 `raw/neighbors.json`（schemaVersion 4）；正式交付 `zh-CN/neighbors.json` 使用共享契约的当前 formatVersion。当前快照收录 12 个友邻、12 个星球、44 章故事（220 个段落记录）。同行反应、交往说明、事件标签、邂逅岛、世界岛屿和资源路径不被网站使用，不再提取。白名单成员缺少正式主档或必要字段时停止提取；非白名单 NPC 不收录，并写入排除审计。补充图片只保留友邻详情页使用的好感插画与角色立绘，均归属于具体友邻。
 
 友邻数据库保持稳定排序且不写入生成时间；同一输入重复提取产生相同字节。故事按章节和段落顺序聚合，保留纯文、普通单图、竖版单图及左右图文布局；布局来自故事表的正文、配图和排列标记，独立于图片是否成功交付。验收对照固定白名单及冻结主档独立检查友邻集合、检查完整数据库及版本绑定数量，再确认交付领域数据与封存 dataset 一致。

@@ -2,9 +2,9 @@
 
 「全部」页与食材筛选共用一套标签命名规则；两处的树结构和数据来源分别维护。
 
-- 全部页策略：[`apps/website/src/features/all/tag-filter-policy.ts`](../apps/website/src/features/all/tag-filter-policy.ts)
-- 食材分组策略：[`apps/website/src/features/ingredients/tag-filter-policy.ts`](../apps/website/src/features/ingredients/tag-filter-policy.ts)
-- 共享名称特例与前缀：[`apps/website/src/features/collection/tags.ts`](../apps/website/src/features/collection/tags.ts)
+- 全部页策略：[`apps/website/src/features/all/tag-filter-policy.ts`](../src/features/all/tag-filter-policy.ts)
+- 食材分组策略：[`apps/website/src/features/ingredients/tag-filter-policy.ts`](../src/features/ingredients/tag-filter-policy.ts)
+- 共享名称特例与前缀：[`apps/website/src/features/collection/tags.ts`](../src/features/collection/tags.ts)
 
 修改任一文件后需同步本文档，并执行资源更新检查。
 
@@ -100,27 +100,11 @@
 vp run --no-cache website#verify-contracts
 ```
 
-该命令加载本地 release 并运行全部发布契约检查：
-
-- `tag-filter/all`：13 个白名单根是否仍然存在、是否仍有可见标签；可见标签是否仍含 `_` 或“父级”；是否出现同级重名。
-- `tag-filter/ingredients`：`食材` 根是否存在；三个分组根是否存在且为 `食材` 的直接子级；颜色/品质组是否有子级和可见选项；`INGREDIENT_USAGE_EXCLUDED` 是否在 `食材` 子树内；`食材` 的直接子级是否全部被分组配置认领。
-- `tag-filter/labels`：显式特例指向的 `internalName` 是否仍然存在。
-
-`verify-release` 会在部署链路对 `apps/website/release.json` 指向的已发布 release 运行同一套检查；`verify-contracts` 只用于本地快速反馈。新增检查的规则见[发布契约检查](release-checks.md)。
-
-检查失败时，根据报告更新策略文件：
+检查项、接口与部署链路见[发布契约检查](release-checks.md)；本页只维护策略文件与检查报告的对应关系：
 
 1. 根标签被重命名或新增品类：更新 `TAG_FILTER_ROOT_NAMES` 或食材分组配置。
 2. 新增内部前缀：加入 `TAG_LABEL_PREFIXES`，确认不会造成同级重名。
 3. 新增结构名或重名标签：加入 `TAG_LABEL_OVERRIDES`。
 4. 更新本文档的清单。
 
-检查通过后仍需运行：
-
-```bash
-vp check
-vp run -r test
-vp run website#build
-```
-
-并人工打开「全部」页、食材浏览页和烹饪页，确认筛选树、搜索、AND/OR、chip 移除和友邻标签链接行为正常。
+检查通过后运行 `vp run ready`，并人工打开「全部」页、食材浏览页和烹饪页，确认筛选树、搜索、AND/OR、chip 移除和友邻标签链接行为正常。

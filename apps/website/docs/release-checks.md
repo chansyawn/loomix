@@ -77,12 +77,6 @@ export interface ReleaseCheck {
 
 ## 失败处理
 
-runner 按检查顺序输出 `✓`/`✗`，失败时以非零退出码结束并汇总问题数量。按报告修正策略文件、分组配置或数据后重新运行：
-
-```bash
-vp check
-vp run -r test
-vp run website#build
-```
+runner 按检查顺序输出 `✓`/`✗`，失败时以非零退出码结束并汇总问题数量。按报告修正策略文件、分组配置或数据后，重新运行 `vp run --no-cache website#verify-contracts`；通过后运行 `vp run ready` 确认没有其他回归。
 
 发布契约检查只覆盖文档级数据。`Release` 包含图片元数据，但本地加载器不解码图片，`downloadRelease` 也不下载图片字节；需要字节级图片检查时，应在 runner 中增加资源读取上下文，而不是只新增一个检查文件。

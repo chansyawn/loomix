@@ -10,7 +10,7 @@
 | PR 预览  | `https://pr-<编号>.preview.loomix.fun`             | 同一 PR 更新时沿用地址，公开访问    |
 | 游戏资源 | `https://assets.loomix.fun/releases/<release-id>/` | R2 不可变资源版本，正式站与预览共用 |
 
-预览使用 Cloudflare Workers Previews，并通过 `X-Robots-Tag: noindex` 告知搜索引擎不收录；这不限制公开访问。`workers.dev` 入口已关闭，正式站根域名不承载预览路由。
+预览使用 Cloudflare Workers Previews，`X-Robots-Tag: noindex` 不阻止公开访问；`workers.dev` 入口和根域名预览路由均已关闭。
 
 ## PR 检查与预览
 
@@ -22,35 +22,27 @@
 | `Verify website`    | 锁定依赖安装、线上资源完整性校验、`vp check`、全仓测试、网站构建、静态资源边界校验及 Worker 部署 dry-run |
 | `Preview website`   | 等待本次验证成功，部署本次构建产物，验证预览后更新 PR 评论                                               |
 
-预览部署会核对 PR 提交与构建身份，避免发布过期产物。HTTP 验收覆盖首页 HTML、静态图片及 `noindex`，并使用真实预览 Origin 验证资源完整性和 CORS。Fork PR 不使用部署密钥发布预览，处理方式见 [贡献指南](../CONTRIBUTING.md)。
-
-PR 合并或关闭时自动删除预览，并更新原评论；重新打开后重新部署。同一 PR 的部署与清理串行执行。目前没有定时清理任务，不依赖自动到期回收；若回收失败，在 Actions 中重跑失败的清理任务。
+预览部署会核对 PR 提交与构建身份，避免发布过期产物；HTTP 验收覆盖首页 HTML、静态图片和 `noindex`，并用真实预览 Origin 验证资源完整性与 CORS。Fork PR 不使用部署密钥，处理方式见[贡献指南](../CONTRIBUTING.md)。合并或关闭 PR 会自动删除预览并更新评论，重新打开后重新部署；同一 PR 的部署与清理串行执行，没有定时清理任务，回收失败时在 Actions 中重跑。
 
 ## 正式发布
 
-合并到 `master` 后，[Deploy website](../.github/workflows/deploy-website.yml) 重新执行资源校验、代码检查、测试、构建、产物校验和部署 dry-run，通过后发布到正式 Worker。生产部署串行执行。
+合并到 `master` 后，[Deploy website](../.github/workflows/deploy-website.yml) 重新执行与 `Verify website` 相同的校验和部署 dry-run，通过后发布到正式 Worker；生产部署串行执行，也可在 GitHub **Actions → Deploy website → Run workflow** 手动触发。
 
-也可在 GitHub **Actions → Deploy website → Run workflow** 手动触发，选择 `master`。
-
-如需本地发布，先完成 Wrangler 登录，或在仓库根目录 `.env` 中配置 `CLOUDFLARE_ACCOUNT_ID`、`CLOUDFLARE_API_TOKEN`，再运行完整发布流程。部署、部署 dry-run 和预览发布的 Wrangler 命令通过 `--cwd` 在仓库根目录执行，读取根 `.env` 和可选的 `.env.local`；进程环境变量优先，CI 继续使用 GitHub Secrets：
+如需本地发布，先完成 Wrangler 登录，或在根 `.env` 配置 `CLOUDFLARE_ACCOUNT_ID`、`CLOUDFLARE_API_TOKEN`。Wrangler 命令在仓库根目录执行，读取根 `.env` 和可选的 `.env.local`；进程环境变量优先，CI 使用 GitHub Secrets。`website#deploy` 只部署已有产物，日常发布使用以下完整流程：
 
 ```bash
 vp install --frozen-lockfile
 vp run website#release
 ```
 
-`website#deploy` 只部署已有产物；日常发布使用上述完整流程，避免跳过校验或部署旧构建。
-
 ## 资源发布与 CORS
 
 生产构建默认从 [apps/website/release.json](../apps/website/release.json) 读取资源版本；`VITE_RESOURCE_BASE_URL` 可覆盖该地址。部署要求使用已发布的 HTTPS 资源版本，本地资源目录不能用于发布。
 
-游戏数据与图片由 [资源发布工具](../tools/resource-publisher/README.md) 单独上传至 R2 `loomix-assets`，不随网站 CI 自动上传。更新资源时，先发布新的不可变 release，再通过 PR 更新网站的 `release.json`。每次更新本地资源后，按[全部页标签筛选策略](tag-filter-policy.md)运行 `vp run --no-cache website#verify-contracts` 并处理人工维护项；部署链路中的 `verify-release` 会对 `release.json` 指向的已发布 release 运行同一套[发布契约检查](release-checks.md)。资源上传本身仍由发布工具的 `validateContent` 负责，发布契约检查阻断的是网站部署。
+- **发布流程**：游戏数据与图片由[资源发布工具](../tools/resource-publisher/README.md)单独上传至 R2 `loomix-assets`，不随网站 CI 自动上传。先发布新的不可变 release，再通过 PR 更新网站的 `release.json`。
+- **检查门禁**：更新本地资源后，按[全部页标签筛选策略](../apps/website/docs/tag-filter-policy.md)运行 `vp run --no-cache website#verify-contracts` 并处理人工维护项。部署链路中的 `verify-release` 对 `release.json` 指向的已发布 release 运行同一套[发布契约检查](../apps/website/docs/release-checks.md)；资源上传本身仍由发布工具的 `validateContent` 负责，发布契约检查阻断的是网站部署。
 
-R2 CORS 当前允许以下 Origin 的 `GET`、`HEAD` 请求：
-
-- `https://loomix.fun`
-- `https://*.preview.loomix.fun`
+R2 CORS 当前允许 `https://loomix.fun` 与 `https://*.preview.loomix.fun` 的 `GET`、`HEAD` 请求。
 
 ## 配置位置
 
