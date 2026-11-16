@@ -2,29 +2,6 @@ import { Badge } from "@/ui/components/badge";
 import type { NeighborDetail } from "./data";
 import { NeighborImage } from "./image";
 
-type Stage = NonNullable<NeighborDetail["house"]>["stages"][number];
-
-function UpgradeRequirements({ requirements }: { requirements: Stage["upgradeRequirements"] }) {
-  if (requirements === null) return null;
-  const groups = [
-    ["材料", requirements.materials],
-    ["蓝图", requirements.blueprints],
-  ] as const;
-  if (!groups.some(([, items]) => items?.length)) return null;
-  return (
-    <dl className="space-y-1 text-sm">
-      {groups.map(([label, items]) =>
-        items?.length ? (
-          <div key={label} className="flex gap-2">
-            <dt className="shrink-0 text-muted-foreground">{label}</dt>
-            <dd className="min-w-0 wrap-anywhere">{items.map((item) => item.name).join("、")}</dd>
-          </div>
-        ) : null,
-      )}
-    </dl>
-  );
-}
-
 export function NeighborHouseSection({ neighbor }: { neighbor: NeighborDetail }) {
   if (!neighbor.house) return null;
   const { stages } = neighbor.house;
@@ -51,7 +28,6 @@ export function NeighborHouseSection({ neighbor }: { neighbor: NeighborDetail })
                   {stage.description}
                 </p>
               )}
-              <UpgradeRequirements requirements={stage.upgradeRequirements} />
             </div>
           </article>
         ))}

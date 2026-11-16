@@ -1,5 +1,5 @@
 import type { RecordType } from "../schema.ts";
-import type { GameplayTagIndex } from "@loomix/schema/gameplay-tags";
+import type { ClientGameplayTagIndex as GameplayTagIndex } from "../gameplay-tags/client.ts";
 import type { Row, TableRow } from "../types.ts";
 import type { Tables } from "../decode/tables.ts";
 import type { CreatureDisplayMap } from "../decode/bindata.ts";
@@ -69,7 +69,8 @@ export function createVocabulary(
       const direct = tables.key(display[key]?.textContent?.textId ?? key);
       if (direct !== null) return direct;
       const habitat = tagIndex.findByName("栖息地");
-      const candidates = tagIndex.findByEnumName(key.replace(/^CHabitat_/, ""));
+      const enumName = key.replace(/^CHabitat_/, "");
+      const candidates = tagIndex.tags.filter((tag) => tag.enumName === enumName);
       const matches = key.startsWith("CHabitat_")
         ? habitat
           ? tagIndex.select(

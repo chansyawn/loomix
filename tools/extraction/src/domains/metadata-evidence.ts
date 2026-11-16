@@ -8,6 +8,9 @@ import { createContentContext } from "../extraction/content/context.ts";
 import { readJson } from "../workflow/json.ts";
 import type { RecordEvidence } from "../extraction/content/admissions.ts";
 import type { CollectionEvidence } from "../extraction/collection/evidence.ts";
+import { profile } from "../profile.ts";
+
+type Source = FieldEvidence["sources"][number];
 
 function tableProof({
   file,
@@ -19,7 +22,7 @@ function tableProof({
   table: number;
   rowOffset: number;
   fields: number[];
-}): FieldEvidence["sources"][number] {
+}): Source {
   return { kind: "table", file, table, rowOffset, fields };
 }
 
@@ -34,159 +37,141 @@ export function metadataEvidence(work: string, dataset: Dataset): FieldEvidence[
   );
   const seedProofs = readJson<CollectionEvidence[]>(path.join(work, "plant-evidence.json"));
   const neighborAudit = readJson<{
-    records: {
-      collection: string;
-      key: string;
-      source: { kind: "table"; file: string; table: number; rowOffset: number; fields: number[] };
-    }[];
+    records: { collection: string; key: string; source: Source }[];
   }>(path.join(work, "neighbor-audit.json"));
-  const neighborClothingSources = new Map<number, FieldEvidence["sources"]>();
+  const neighborClothingSources = new Map<number, Source[]>();
   for (const proof of neighborAudit.records) {
     if (proof.collection !== "outfits") continue;
     const id = Number(proof.key);
-    const sources = neighborClothingSources.get(id) ?? [];
-    sources.push(proof.source);
-    neighborClothingSources.set(id, sources);
+    neighborClothingSources.set(id, [...(neighborClothingSources.get(id) ?? []), proof.source]);
   }
   const output: FieldEvidence[] = [];
-  const add = (
-    collection: string,
-    id: number,
-    fieldPath: string,
-    sources: FieldEvidence["sources"],
-    reasonCode: string | null = null,
-  ) =>
+  const admissionSources = (id: number): Source[] => {
+    const proof = admissions.get(id);
+    return proof
+      ? proof.admissionSources.map((entry) =>
+          entry.kind === "manual"
+            ? entry
+            : tableProof({
+                file: entry.file,
+                table: entry.table,
+                rowOffset: entry.rowOffset,
+                fields: [0],
+              }),
+        )
+      : (neighborClothingSources.get(id) ?? []);
+  };
+  for (const collection of dataset.catalog.collections) {
+    const origin = acquisition(context, collection.id);
     output.push({
-      entity: { collection, id },
-      fieldPath,
-      status: reasonCode ? "absent" : "confirmed",
-      sources,
-      ruleId: "client.catalog.exact_metadata",
-      reasonCode,
+      entity: { collection: "catalog.collections", id: collection.id },
+      fieldPath: "acquisition",
+      status: origin.value === null ? "unresolved" : "confirmed",
+      sources: origin.sources.map(tableProof),
+      ruleId: "client.catalog.acquisition",
+      reasonCode: origin.value === null ? origin.reason : null,
     });
-  for (const record of dataset.catalog.records) {
-    const row = context.main.get(record.id);
-    if (!row) throw new Error(`Missing formal record ${record.id}`);
-    const source = (fields: number[]) => ({
-      kind: "table" as const,
-      file: "prepared/ed.obb",
-      table: 318,
-      rowOffset: row.rowOffset,
-      fields,
-    });
-    const origin = acquisition(context, record.id);
-    if (record.kind === "appearance" || "memberIds" in record)
+  }
+  for (const item of dataset.catalog.items) {
+    const entity = { collection: "catalog.items", id: item.id };
+    const row = context.main.get(item.id);
+    if (!row) throw new Error(`Missing catalog item ${item.id}`);
+    if (item.kind === "reference") {
       output.push({
-        entity: { collection: "catalog.records", id: record.id },
+        entity,
+        fieldPath: "name",
+        status: "confirmed",
+        sources: [
+          tableSource(context.tables, row, [0]),
+          ...localizedSources(context.tables, row, [1]),
+        ].map(tableProof),
+        ruleId: "client.catalog.reference_details",
+        reasonCode: null,
+      });
+      const sources = context.tables
+        .rows(profile.roots.ui)
+        .filter((ui) => context.tables.id(ui) === item.id)
+        .flatMap((ui) =>
+          [
+            tableSource(context.tables, ui, [0]),
+            ...localizedSources(context.tables, ui, [profile.fields.ui.description]),
+          ].map(tableProof),
+        );
+      output.push({
+        entity,
+        fieldPath: "description",
+        status: item.description === null ? "absent" : "confirmed",
+        sources: sources.length ? sources : [tableProof(tableSource(context.tables, row, [0]))],
+        ruleId: "client.catalog.reference_details",
+        reasonCode: item.description === null ? "item_detail_not_configured" : null,
+      });
+      continue;
+    }
+    if (item.kind === "appearance") {
+      const origin = acquisition(context, item.id);
+      output.push({
+        entity,
         fieldPath: "acquisition",
         status: origin.value === null ? "unresolved" : "confirmed",
         sources: origin.sources.map(tableProof),
         ruleId: "client.catalog.acquisition",
         reasonCode: origin.value === null ? origin.reason : null,
       });
-    for (const proof of metadata.record(record.id).proofs)
-      output.push({ entity: { collection: "catalog.records", id: record.id }, ...proof });
-    const proof = admissions.get(record.id);
-    const sources: FieldEvidence["sources"] = proof
-      ? proof.admissionSources.map((entry) =>
-          entry.kind === "manual"
-            ? entry
-            : {
-                kind: "table",
-                file: entry.file,
-                table: entry.table,
-                rowOffset: entry.rowOffset,
-                fields: [0],
-              },
-        )
-      : (neighborClothingSources.get(record.id) ?? []);
-    if (record.kind === "seed")
-      for (const entry of seedProofs.filter(
-        (proof) =>
-          (proof.owner === "seed" && proof.id === record.id) ||
-          (record.kind === "seed" && proof.owner === "growth" && proof.id === record.growthId),
-      ))
-        sources.push(...entry.sources.map(tableProof));
-    add("catalog.records", record.id, "admissionReasons", sources);
-    if (record.kind === "seed" || record.kind === "neighborClothing")
+    }
+    for (const proof of metadata.record(item.id).proofs) output.push({ entity, ...proof });
+    if (item.kind === "seed" || item.kind === "neighborClothing") {
+      const sources = admissionSources(item.id);
+      if (item.kind === "seed")
+        for (const proof of seedProofs.filter(
+          (proof) => (proof.owner === "seed" || proof.owner === "growth") && proof.id === item.id,
+        ))
+          sources.push(...proof.sources.map(tableProof));
       output.push({
-        entity: { collection: "catalog.records", id: record.id },
+        entity,
         fieldPath: "kind",
         status: "confirmed",
-        sources: [source([0, 2]), ...sources],
+        sources: [tableProof(tableSource(context.tables, row, [0, 2])), ...sources],
         ruleId:
-          record.kind === "seed"
+          item.kind === "seed"
             ? "client.catalog.deterministic_seed"
             : "client.catalog.neighbor_outfit",
         reasonCode: null,
       });
-  }
-  for (const type of dataset.catalog.clientTypes)
-    for (const proof of metadata.clientTypeProofs(type.id))
-      output.push({ entity: { collection: "catalog.clientTypes", id: type.id }, ...proof });
-  for (const reference of dataset.catalog.references) {
-    const row = context.main.get(reference.id);
-    if (!row) throw new Error(`Missing reference ${reference.id}`);
-    add(
-      "catalog.references",
-      reference.id,
-      "name",
-      [tableSource(context.tables, row, [0]), ...localizedSources(context.tables, row, [1])].map(
-        tableProof,
-      ),
-    );
-  }
-  for (const collection of dataset.catalog.craftingCollections) {
-    const row = context.tables.byId(180).get(collection.id)!;
-    for (const [field, columns] of [
-      ["id", [0]],
-      ["name", [1]],
-      ["acquisitionText", [3]],
-    ] as const)
-      add(
-        "catalog.craftingCollections",
-        collection.id,
-        field,
-        (field === "id"
-          ? [tableSource(context.tables, row, [0])]
-          : localizedSources(context.tables, row, [...columns])
-        ).map(tableProof),
-        collection[field] === null ? "collection_field_not_configured" : null,
-      );
-  }
-  for (const reference of dataset.catalog.references) {
-    const rows = context.tables.rows(325).filter((row) => context.tables.id(row) === reference.id);
-    for (const [field, column] of [
-      ["description", 27],
-      ["usageText", 26],
-    ] as const) {
-      const sources = rows.flatMap((row) =>
-        [
-          tableSource(context.tables, row, [0]),
-          ...localizedSources(context.tables, row, [column]),
-        ].map(tableProof),
-      );
-      output.push({
-        entity: { collection: "catalog.references", id: reference.id },
-        fieldPath: field,
-        status: reference[field] === null ? "absent" : "confirmed",
-        sources: sources.length
-          ? sources
-          : [tableSource(context.tables, context.main.get(reference.id)!, [0])].map(tableProof),
-        ruleId: "client.catalog.reference_details",
-        reasonCode: reference[field] === null ? "item_detail_not_configured" : null,
-      });
     }
   }
   for (const tag of dataset.gameplayTags.tags)
-    add("gameplayTags.tags", tag.id, "$", context.gameplayTags.sources(tag.id));
+    output.push({
+      entity: { collection: "gameplayTags.tags", id: tag.id },
+      fieldPath: "$",
+      status: "confirmed",
+      sources: context.gameplayTags.sources(tag.id),
+      ruleId: "client.catalog.exact_metadata",
+      reasonCode: null,
+    });
   const recipes = readJson<{
     proofs: {
       id: number;
       sources: { file: string; table: number; rowOffset: number; fields: number[] }[];
     }[];
   }>(path.join(work, "crafting-recipes-audit.json"));
-  for (const recipe of recipes.proofs)
-    add("catalog.craftingRecipes", recipe.id, "$", recipe.sources.map(tableProof));
+  const recipeOwners = new Map(
+    dataset.catalog.items.flatMap((item) =>
+      item.kind === "furniture"
+        ? item.craftingRecipes.map((recipe, index) => [recipe.id, { id: item.id, index }] as const)
+        : [],
+    ),
+  );
+  for (const recipe of recipes.proofs) {
+    const owner = recipeOwners.get(recipe.id);
+    if (!owner) throw new Error(`Crafting recipe ${recipe.id} is missing from its product`);
+    output.push({
+      entity: { collection: "catalog.items", id: owner.id },
+      fieldPath: `craftingRecipes.${owner.index}`,
+      status: "confirmed",
+      sources: recipe.sources.map(tableProof),
+      ruleId: "client.catalog.exact_metadata",
+      reasonCode: null,
+    });
+  }
   return output;
 }

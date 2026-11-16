@@ -5,27 +5,33 @@ import type { FieldEvidence } from "../evidence/domain-schema.ts";
 import type { CollectionEvidence } from "../collection/evidence.ts";
 import type { ImageManifest } from "../types.ts";
 import { readJson } from "../../workflow/json.ts";
+import { evidenceEntity, evidenceField } from "../../domains/validate-evidence.ts";
 
 export function plantingDomainEvidence(work: string, dataset: Dataset): FieldEvidence[] {
   const fields: FieldEvidence[] = readJson<CollectionEvidence[]>(
     path.join(work, "plant-evidence.json"),
-  ).map((proof) => ({
-    entity: {
-      collection: proof.owner === "seed" ? "catalog.records" : "catalog.growths",
-      id: proof.id,
-    },
-    fieldPath: proof.field,
-    status: proof.status === "confirmed" ? "confirmed" : "unresolved",
-    sources: proof.sources.map(({ file, table, rowOffset, fields }) => ({
-      kind: "table",
-      file,
-      table,
-      rowOffset,
-      fields,
-    })),
-    ruleId: "client.planting.explicit_configuration",
-    reasonCode: proof.reason ?? null,
-  }));
+  ).flatMap((proof): FieldEvidence[] => {
+    // 生长配置已内嵌到同 ID 的种子，配置字段映射到 growth 下。
+    const fieldPath = proof.owner === "seed" ? proof.field : `growth.${proof.field}`;
+    const seed = evidenceEntity(dataset, "catalog.items", proof.id);
+    if (!seed || !evidenceField(seed, fieldPath).found) return [];
+    return [
+      {
+        entity: { collection: "catalog.items", id: proof.id },
+        fieldPath,
+        status: proof.status === "confirmed" ? "confirmed" : "unresolved",
+        sources: proof.sources.map(({ file, table, rowOffset, fields }) => ({
+          kind: "table",
+          file,
+          table,
+          rowOffset,
+          fields,
+        })),
+        ruleId: "client.planting.explicit_configuration",
+        reasonCode: proof.reason ?? null,
+      },
+    ];
+  });
   const seeds = new Map(
     readJson<ImageManifest[]>(path.join(work, "seed-image-manifest.json")).map((image) => [
       image.id,
@@ -74,17 +80,18 @@ export function plantingDomainEvidence(work: string, dataset: Dataset): FieldEvi
       ruleId: "client.planting.exact_image_reference",
       reasonCode: original ? null : audit.reason,
     });
-  for (const seed of dataset.catalog.records.filter((record) => record.kind === "seed"))
-    add("catalog.records", seed.id, "image", seeds.get(seed.id), audits.get(`seed:${seed.id}`)!);
-  for (const growth of dataset.catalog.growths)
-    growth.stages.forEach((stage, index) =>
+  for (const seed of dataset.catalog.items) {
+    if (seed.kind !== "seed") continue;
+    add("catalog.items", seed.id, "image", seeds.get(seed.id), audits.get(`seed:${seed.id}`)!);
+    seed.growth.stages.forEach((stage, index) =>
       add(
-        "catalog.growths",
-        growth.id,
-        `stages.${index}.image`,
+        "catalog.items",
+        seed.id,
+        `growth.stages.${index}.image`,
         stages.get(stage.id),
         audits.get(`stage:${stage.id}`)!,
       ),
     );
+  }
   return fields;
 }

@@ -1,4 +1,4 @@
-import { recordMetadata } from "../../../packages/schema/tests/fixture.ts";
+import { context, material, source } from "../../../packages/schema/tests/fixture.ts";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { emptyDataset } from "@loomix/schema/dataset";
@@ -13,27 +13,15 @@ export const webp = Buffer.from(
 );
 export const imageKey = `assets/${sha256(webp)}.webp`;
 
-export const context = { formatVersion: 10, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
-export const source = {
-  gameVersion: "test",
-  dataRevision: 1,
-  resourceRevision: 1,
-  manifestId: "1",
-};
+export { context, source };
 export function emptyRelease() {
-  const dataset = emptyDataset(context, source);
-  dataset.catalog.clientTypes = [{ id: 1, name: null, tagIds: [] }];
-  return {
-    dataset,
-    assets: { ...context, kind: "assets" as const, images: [] } as Assets,
-  };
+  return { dataset: emptyDataset(context, source), assets: { images: [] } as Assets };
 }
 export async function writeDocuments(directory: string, dataset: Dataset, assets: Assets) {
   const documents = {
     "gameplay-tags": dataset.gameplayTags,
     catalog: dataset.catalog,
     neighbors: dataset.neighbors,
-    world: dataset.world,
     assets,
   };
   const files = [];
@@ -60,18 +48,7 @@ export async function writeFixture(directory: string, imageCount = 1, payloads?:
     const hash = sha256(bytes),
       file = `assets/${hash}.webp`;
     const image = { assetId: `image-${i}`, variant: "icon" as const };
-    dataset.catalog.records.push({
-      ...recordMetadata(),
-      displayCategory: null,
-      trade: null,
-      acquisition: null,
-      id: i + 1,
-      name: "Image",
-      kind: "material",
-      description: null,
-      quality: null,
-      image,
-    });
+    dataset.catalog.items.push({ ...material(i + 1), image });
     assets.images.push({
       ...image,
       file,

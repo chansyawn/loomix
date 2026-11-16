@@ -132,7 +132,7 @@ describe("ingredient tag filtering", () => {
       data.ingredientCandidatesByDishId,
       input.dishes.items,
     );
-    expect(counts.get(11)).toBe(3);
+    expect(counts.get(11)).toBe(2);
     expect(counts.get(13)).toBe(1);
     expect(counts.get(31)).toBe(3);
   });

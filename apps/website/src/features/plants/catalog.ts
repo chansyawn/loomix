@@ -1,5 +1,5 @@
-import { growthPlantIds, createRecordTagResolver, isGroupRecord } from "@loomix/schema/catalog";
-import type { Catalog } from "@loomix/schema/catalog";
+import { growthPlantIds, createRecordTagResolver } from "@loomix/schema/catalog";
+import type { Catalog, ItemOf } from "@loomix/schema/catalog";
 import { tagLabel } from "@loomix/schema/gameplay-tags";
 import type { GameplayTagIndex } from "@loomix/schema/gameplay-tags";
 import { acquisitionLabels } from "../collection/acquisition";
@@ -50,35 +50,25 @@ export function buildPlantsData(
 ): PlantsData {
   const image = createImageResolver(assets);
   const tagsFor = createRecordTagResolver(tagIndex);
-  const growths = new Map<number, PlantGrowth>(
-    catalog.growths.map((growth) => [
-      growth.id,
-      {
+  const seeds: PlantSeed[] = catalog.items
+    .filter((item): item is ItemOf<"seed"> => item.kind === "seed")
+    .map(({ kind: _kind, tagIds: _tagIds, growth, ...seed }) => ({
+      ...seed,
+      image: image(seed.image),
+      plantIds: growthPlantIds(growth),
+      growth: {
         ...growth,
         stages: growth.stages.map((stage) => ({ ...stage, image: image(stage.image) })),
-      },
-    ]),
-  );
-  const seeds: PlantSeed[] = catalog.records
-    .filter((record) => record.kind === "seed")
-    .map((seed) => {
-      const growth = growths.get(seed.growthId);
-      if (!growth) throw new Error(`Missing seed growth ${seed.id}`);
-      const plantIds = growthPlantIds(growth);
-      return {
-        ...seed,
-        plantIds,
-        growth,
-        image: image(seed.image),
-      };
-    });
+      } as PlantGrowth,
+    }));
   const seedsByPlant = new Map<number, PlantSeed[]>();
   for (const seed of seeds)
     for (const id of seed.plantIds) seedsByPlant.set(id, [...(seedsByPlant.get(id) ?? []), seed]);
   const records = new Map(
-    catalog.records.filter((item) => item.kind === "plant").map((item) => [item.id, item]),
+    catalog.items
+      .filter((item): item is ItemOf<"plant"> => item.kind === "plant")
+      .map((item) => [item.id, item]),
   );
-  const listed = new Set(catalog.records.map((record) => record.id));
   const itemAcquisitionLabels = (id: number): string[] =>
     acquisitionLabels(records.get(id)?.acquisition ?? null);
   const summarize = (items: Omit<PlantItem, "summary">[]): PlantSummary => {
@@ -90,8 +80,8 @@ export function buildPlantsData(
     ];
     const configurations = new Map<number, { id: number; name: string; growth: PlantGrowth }>();
     for (const seed of relatedSeeds)
-      configurations.set(seed.growthId, {
-        id: seed.growthId,
+      configurations.set(seed.id, {
+        id: seed.id,
         name: seed.name,
         growth: seed.growth,
       });
@@ -129,42 +119,33 @@ export function buildPlantsData(
       },
     };
   };
-  const items: PlantItem[] = [...records.values()]
-    .filter((record) => listed.has(record.id))
-    .map((record) => {
-      const related = seedsByPlant.get(record.id) ?? [];
-      const harvestCounts = unique(
-        related.flatMap((seed) =>
-          seed.growth.kind === "crop" && seed.growth.harvestCount !== null
-            ? [seed.growth.harvestCount]
-            : [],
-        ),
-      );
-      const days = unique(
-        related.flatMap((seed) =>
-          seed.growth.maturityDays === null ? [] : [seed.growth.maturityDays],
-        ),
-      );
-      const item: Omit<PlantItem, "summary"> = {
-        id: record.id,
-        name: record.name,
-        image: image(record.image),
-        description: record.description,
-        quality: record.quality,
-        category: record.displayCategory,
-        originGalaxy: tagsFor(record, "origins").map(tagLabel).join("，") || null,
-        maturityPeriod: days.length ? days.map((day) => `${day} 天`).join(" / ") : null,
-        harvestCount: harvestCounts.length === 1 ? harvestCounts[0] : null,
-        acquisition: itemAcquisitionLabels(record.id).join("，") || null,
-        flowerColors: record.flowerColors,
-        treeDrops: record.drops,
-      };
-      return { ...item, summary: summarize([item]) };
-    });
+  const items: PlantItem[] = [...records.values()].map((record) => {
+    const related = seedsByPlant.get(record.id) ?? [];
+    const harvestCounts = unique(
+      related.flatMap((seed) =>
+        seed.growth.kind === "crop" && seed.growth.harvestCount !== null
+          ? [seed.growth.harvestCount]
+          : [],
+      ),
+    );
+    const item: Omit<PlantItem, "summary"> = {
+      id: record.id,
+      name: record.name,
+      image: image(record.image),
+      description: record.description,
+      quality: record.quality,
+      category: record.category,
+      originGalaxy: tagsFor(record, "origins").map(tagLabel).join("，") || null,
+      harvestCount: harvestCounts.length === 1 ? harvestCounts[0] : null,
+      acquisition: itemAcquisitionLabels(record.id).join("，") || null,
+      flowerColors: record.flowerColors,
+      treeDrops: record.drops,
+    };
+    return { ...item, summary: summarize([item]) };
+  });
   const itemsById = new Map(items.map((item) => [item.id, item]));
-  const series = catalog.records
-    .filter(isGroupRecord)
-    .filter((group) => group.kind === "plants.series")
+  const series = catalog.collections
+    .filter((group) => group.memberKind === "plant")
     .map((group) => {
       const members = group.memberIds?.flatMap((id) => itemsById.get(id) ?? []) ?? [];
       return {

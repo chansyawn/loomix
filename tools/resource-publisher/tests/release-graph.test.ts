@@ -4,6 +4,7 @@ import path from "node:path";
 import { afterEach, expect, test } from "vite-plus/test";
 import { validateContent } from "../src/validate.ts";
 import { writeFixture, writeDocuments } from "./fixture.ts";
+import { neighbor } from "../../../packages/schema/tests/fixture.ts";
 const directories: string[] = [];
 afterEach(async () => {
   await Promise.all(
@@ -11,42 +12,23 @@ afterEach(async () => {
   );
 });
 
-test("world and catalog share one asset directory with complete graph validation", async () => {
-  const directory = await mkdtemp(path.join(tmpdir(), "loomix-world-release-"));
+test("友邻与目录共享同一资源目录，并校验完整引用图", async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), "loomix-neighbor-release-"));
   directories.push(directory);
   const { dataset, assets } = await writeFixture(directory);
-  const image = { assetId: assets.images[0].assetId, variant: assets.images[0].variant };
-  dataset.world.islandIconStyles.push({
-    id: 1,
-    name: "岛屿图标",
-    icon: image,
-    variantIcon: image,
-    entityPrefabPath: "Island/1",
-  });
-  dataset.world.islands.push({
-    id: 1,
-    name: "岛屿",
-    sceneId: 10,
-    status: "default",
-    galaxyId: null,
-    regionId: null,
-    iconStyleId: 1,
-    image,
-    displayCreatureIds: [],
-    displaySpecialtyIds: [1],
-    neighborIds: [],
-    unlockCondition: null,
-  });
+  const image = { assetId: assets.images[0]!.assetId, variant: assets.images[0]!.variant };
+  const owner = neighbor(11);
+  owner.images.role = image;
+  dataset.neighbors.neighbors.push(owner);
   await writeDocuments(directory, dataset, assets);
   const content = await validateContent(directory);
   expect(content.assets).toHaveLength(1);
-  expect(content.release.dataset.world.islands).toHaveLength(1);
-  dataset.world.islands[0].displayCreatureIds = [1];
+  owner.gifts.love = { itemIds: [999], tagIds: [] };
   await writeDocuments(directory, dataset, assets);
-  await expect(validateContent(directory)).rejects.toThrow("Unknown island item");
+  await expect(validateContent(directory)).rejects.toThrow("Unknown item 999");
 });
 test("rejects undeclared files in nested directories", async () => {
-  const directory = await mkdtemp(path.join(tmpdir(), "loomix-world-release-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "loomix-neighbor-release-"));
   directories.push(directory);
   await writeFixture(directory);
   await writeFile(path.join(directory, "zh-CN/extra.json"), "{}");

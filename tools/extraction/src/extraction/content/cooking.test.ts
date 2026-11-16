@@ -27,11 +27,11 @@ test("独立配方保留源身份、产物和未知 slots，不将同号菜肴�
   const recipes = readCookingRecipes(context);
   const fields = cookingEvidence(context, recipes);
   expect(() => fields.map((field) => FieldEvidenceSchema.parse(field))).not.toThrow();
-  expect(fields.find((field) => field.fieldPath === "slots")).toMatchObject({
+  expect(fields.find((field) => field.fieldPath === "cooking.slots")).toMatchObject({
     status: "unresolved",
     reasonCode: "ingredient_slot_runtime_semantics_unconfirmed",
   });
-  expect(fields.find((field) => field.fieldPath === "tastes")).toMatchObject({
+  expect(fields.find((field) => field.fieldPath === "cooking.tastes")).toMatchObject({
     status: "absent",
     reasonCode: "cooking_field_not_configured",
   });
@@ -39,9 +39,8 @@ test("独立配方保留源身份、产物和未知 slots，不将同号菜肴�
     {
       id: 200,
       productId: 300,
-      recipeItemId: null,
       difficulty: "入门",
-      difficultyRequirement: null,
+      unlockCondition: null,
       cookware: null,
       tastes: null,
       slots: null,

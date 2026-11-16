@@ -27,15 +27,9 @@ export async function audit(options: WorkOptions) {
   const neighborImages = readJson<{ source: string }[]>(
     path.join(options.work, "neighbor-image-exports.json"),
   );
-  const neighborClothingImages = readJson<{ source: string }[]>(
-    path.join(options.work, "neighbor-image-exports.json"),
-  );
   const additionalNeighborImages = readJson<{ source: string }[]>(
     path.join(options.work, "neighbor-additional-image-exports.json"),
   );
-  const islandImageExports = fs.existsSync(path.join(options.work, "island-image-exports.json"))
-    ? readJson<{ source: string }[]>(path.join(options.work, "island-image-exports.json"))
-    : [];
   const sourceFiles = new Set([
     ...readJson<ImageManifest[]>(path.join(options.work, "seed-image-originals.json")).map(
       (image) => image.source,
@@ -45,9 +39,7 @@ export async function audit(options: WorkOptions) {
     ),
     ...images.map((a) => a.source),
     ...neighborImages.map((a) => a.source),
-    ...neighborClothingImages.map((a) => a.source),
     ...additionalNeighborImages.map((a) => a.source),
-    ...islandImageExports.map((image) => image.source),
     ...bindata.map((a) => a.Source),
   ]);
   const records: SourceCheck[] = [];

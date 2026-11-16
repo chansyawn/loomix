@@ -1,52 +1,51 @@
-import type { CookingRecipe } from "@loomix/schema/catalog";
 import type { FieldEvidence } from "../evidence/domain-schema.ts";
 import type { CookingContext } from "./cooking.ts";
 import { localizedSources, tableSource } from "../collection/evidence.ts";
+import type { ObservedCookingRecipe } from "../schemas/observed.ts";
+
+// 证据挂在菜肴的内嵌字段上，与发布契约中 cooking 的位置一致。
+const publishedFields = ["difficulty", "unlockCondition", "cookware", "tastes", "slots"] as const;
 
 export function cookingEvidence(
   context: CookingContext,
-  recipes: CookingRecipe[],
+  recipes: ObservedCookingRecipe[],
 ): FieldEvidence[] {
   return recipes.flatMap((recipe) => {
     const row = context.recipesByProduct.get(recipe.productId)!;
     const difficulty = context.vocabulary.difficulties.get(context.tables.uint(row, 2));
-    return Object.keys(recipe).map((fieldPath): FieldEvidence => {
+    const sources = [
+      tableSource(context.tables, row, [0, 2, 4, 15, 16, 20, 25, 30, 35]),
+      ...(difficulty
+        ? [
+            tableSource(context.tables, difficulty, [0, 2]),
+            ...localizedSources(context.tables, difficulty, [1]),
+          ]
+        : []),
+      ...context.vocabulary.cookware
+        .filter((entry) => context.tables.uint(entry, 2) === context.tables.uint(row, 16))
+        .map((entry) => tableSource(context.tables, entry, [1, 2])),
+    ].map(({ file, table, rowOffset, fields }) => ({
+      kind: "table" as const,
+      file,
+      table,
+      rowOffset,
+      fields,
+    }));
+    return publishedFields.map((field): FieldEvidence => {
+      const value = recipe[field];
       const reason =
-        fieldPath === "recipeItemId"
-          ? "recipe_item_key_semantics_unconfirmed"
-          : fieldPath === "slots"
-            ? "ingredient_slot_runtime_semantics_unconfirmed"
+        field === "slots"
+          ? "ingredient_slot_runtime_semantics_unconfirmed"
+          : value === null
+            ? "cooking_field_not_configured"
             : null;
       return {
-        entity: { collection: "catalog.cookingRecipes", id: recipe.id },
-        fieldPath,
-        status: reason
-          ? "unresolved"
-          : Reflect.get(recipe, fieldPath) === null
-            ? "absent"
-            : "confirmed",
+        entity: { collection: "catalog.items", id: recipe.productId },
+        fieldPath: `cooking.${field}`,
+        status: field === "slots" ? "unresolved" : value === null ? "absent" : "confirmed",
         ruleId: "client.cooking.config",
-        reasonCode:
-          reason ??
-          (Reflect.get(recipe, fieldPath) === null ? "cooking_field_not_configured" : null),
-        sources: [
-          tableSource(context.tables, row, [0, 2, 4, 15, 16, 20, 25, 30, 35]),
-          ...(difficulty
-            ? [
-                tableSource(context.tables, difficulty, [0, 2]),
-                ...localizedSources(context.tables, difficulty, [1]),
-              ]
-            : []),
-          ...context.vocabulary.cookware
-            .filter((entry) => context.tables.uint(entry, 2) === context.tables.uint(row, 16))
-            .map((entry) => tableSource(context.tables, entry, [1, 2])),
-        ].map(({ file, table, rowOffset, fields }) => ({
-          kind: "table",
-          file,
-          table,
-          rowOffset,
-          fields,
-        })),
+        reasonCode: reason,
+        sources,
       };
     });
   });

@@ -122,16 +122,7 @@ test("树木掉落不作为种子的直接关联植物", () => {
     items: [
       plantItemFixture({
         id: 1,
-        treeDrops: [
-          {
-            itemId: 2,
-            dropGroupId: null,
-            weight: null,
-            quantityMin: null,
-            quantityMax: null,
-            probability: null,
-          },
-        ],
+        treeDrops: [{ itemId: 2, source: "fruit" }],
       }),
       plantItemFixture({ id: 2 }),
     ],

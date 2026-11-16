@@ -48,7 +48,6 @@ function fixture() {
           { id: 30, name: "花苗", image: null, plantId: null },
           { id: 31, name: "花株", image: null, plantId: 10 },
         ],
-        maturityDays: null,
       },
     ],
     details: [emptyCollectionDetail(10)],

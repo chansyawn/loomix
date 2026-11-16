@@ -1,6 +1,7 @@
 import { verifyCookingRecipes } from "../verify/cooking.ts";
 import { verifyCraftingRelations } from "../verify/crafting.ts";
 import { verifyCatalogMetadata } from "../verify/catalog-metadata.ts";
+import { readCatalogMetadata } from "../source/client/catalog-metadata.ts";
 import { catalogAdmissionIds } from "./content/catalog-admissions.ts";
 import { readCraftingRecipes } from "./crafting/read.ts";
 import { createContentContext } from "./content/context.ts";
@@ -67,7 +68,11 @@ export async function verifyExtraction(work: string, writeReports = true): Promi
     "Image jobs must match the complete reference graph",
   );
   const domainEvidence = readDomainEvidence(work, rebuilt.dataset);
-  verifyCatalogMetadata(rebuilt.dataset.catalog, domainEvidence.fields);
+  verifyCatalogMetadata(
+    rebuilt.dataset.catalog,
+    domainEvidence.fields,
+    readCatalogMetadata(craftingContext.tables, craftingContext.gameplayTags.index),
+  );
   assert.deepEqual(
     EvidenceSchema.parse(readJson(path.join(work, "evidence/domain-fields.json"))),
     domainEvidence,

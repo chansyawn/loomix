@@ -14,9 +14,9 @@ export const CatalogSourceSchema = z.strictObject({
   dataRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
   resourceRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
 });
-export { IngredientExpressionSchema, RecipeSlotSchema, RecipeSchema } from "@loomix/schema/catalog";
+export { IngredientExpressionSchema } from "@loomix/schema/catalog";
 export type { IngredientExpression } from "@loomix/schema/catalog";
-import { RecipeSchema, RecipeSlotSchema } from "@loomix/schema/catalog";
+import { ObservedRecipeSlotSchema } from "../../schemas/observed.ts";
 export const IngredientCategorySchema = z.strictObject({
   id: ItemIdSchema,
   tagName: z.string().min(1),
@@ -122,8 +122,7 @@ export type NullableText = string | null;
 export type Quality = 0 | 1 | 2 | 3 | 4;
 export type CatalogSource = z.infer<typeof CatalogSourceSchema>;
 export type CatalogRecord = z.infer<typeof CatalogRecordSchema>;
-export type RecipeSlot = z.infer<typeof RecipeSlotSchema>;
-export type Recipe = z.infer<typeof RecipeSchema>;
+export type RecipeSlot = z.infer<typeof ObservedRecipeSlotSchema>;
 export type IngredientCategory = z.infer<typeof IngredientCategorySchema>;
 export type ItemRecord = Extract<CatalogRecord, { kind: "item" }>;
 export type SetRecord = Extract<CatalogRecord, { kind: "set" }>;

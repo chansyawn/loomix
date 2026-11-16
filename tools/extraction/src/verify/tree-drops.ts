@@ -26,9 +26,6 @@ export function verifyTreeDrops(
       itemId: fruit,
       dropGroupId: null,
       weight: null,
-      quantityMin: null,
-      quantityMax: null,
-      probability: null,
     });
   }
   let total = 0;
@@ -46,9 +43,6 @@ export function verifyTreeDrops(
       itemId,
       dropGroupId: group,
       weight,
-      quantityMin: null,
-      quantityMax: null,
-      probability: null,
     });
   }
   assert.deepEqual(actual, expected.length ? expected : null, `Independent tree drops ${id}`);

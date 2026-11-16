@@ -19,11 +19,10 @@ test("catalog entries control listing while reference entities remain available 
       ...base,
       id: 1,
       kind: "material",
-      displayCategory: null,
-      trade: null,
+      category: null,
       acquisition: [
-        { sourceId: 1, label: "来源甲", condition: null },
-        { sourceId: 2, label: "来源乙", condition: null },
+        { sourceId: 1, label: "来源甲" },
+        { sourceId: 2, label: "来源乙" },
       ],
     },
     { ...base, id: 2, kind: "reference" },
@@ -45,7 +44,7 @@ test("external appearance records retain their identity without entering item li
     acquisition: null,
     id: 8,
     name: "发型",
-    displayCategory: "发型",
+    category: "发型",
     image: null,
     quality: null,
     description: null,
@@ -62,13 +61,11 @@ test("友邻服饰保留独立分类并且不进入玩家服饰或普通食材�
     id: 9,
     name: "云果手套",
     kind: "neighborClothing",
-    displayCategory: "手套",
+    category: "手套",
     image: null,
     description: "友邻专属服饰",
     quality: 1,
-    trade: null,
     acquisition: null,
-    slotCode: 6001,
     neighborId: 1010,
     playerItemId: null,
     modelPaths: { small: null, medium: "NpcOutfits/Medium/9", big: null },
@@ -92,11 +89,10 @@ test("creature details retain scientific names and localized acquisition labels"
     id: 1,
     name: "三色锦鲤",
     kind: "creature",
-    displayCategory: "水生生物",
+    category: "水生生物",
     image: null,
     description: null,
     quality: 2,
-    trade: null,
     region: null,
     habitat: null,
     activeSeasons: null,
@@ -105,8 +101,8 @@ test("creature details retain scientific names and localized acquisition labels"
     sizeRange: null,
     scientificName: "Cyprinus carpio",
     acquisition: [
-      { sourceId: 104, label: "钓鱼", condition: null },
-      { sourceId: 108, label: "河域钓取", condition: null },
+      { sourceId: 104, label: "钓鱼" },
+      { sourceId: 108, label: "河域钓取" },
     ],
     size: null,
     grades: null,
@@ -127,14 +123,13 @@ test("dish details retain tastes, structured effects, unlock requirements and ac
     id: 1,
     name: "星露烤鱼",
     kind: "dish",
-    displayCategory: null,
+    category: null,
     image: null,
     description: null,
     quality: 2,
-    trade: null,
-    acquisition: [{ sourceId: 1, label: "烹饪", condition: null }],
+    acquisition: [{ sourceId: 1, label: "烹饪" }],
     galaxyFlavor: "禾夏风味",
-    effectsText: "增加 40 力气",
+    strength: 40,
     effects: [
       {
         effectId: 1000201,
@@ -145,20 +140,12 @@ test("dish details retain tastes, structured effects, unlock requirements and ac
         durationSeconds: 10,
       },
     ],
-  });
-
-  catalog.cookingRecipes.push({
-    id: 1001,
-    productId: 1,
-    recipeItemId: null,
-    difficulty: "招牌",
-    cookware: ["烤箱"],
-    tastes: ["甜", "咸"],
-    slots: null,
-    difficultyRequirement: {
-      rawExpression: "condition",
-      condition: { kind: "chefLevelGreaterOrEqual", level: 5 },
-      unresolvedReason: null,
+    cooking: {
+      difficulty: "招牌",
+      cookware: "烤箱",
+      tastes: ["甜", "咸"],
+      slots: [],
+      unlockCondition: { kind: "chefLevelGreaterOrEqual", level: 5 },
     },
   });
 
@@ -166,10 +153,11 @@ test("dish details retain tastes, structured effects, unlock requirements and ac
     toCollectionView(catalog, assetsFixture(catalog), createGameplayTagIndex(gameplayTags.tags))
       .dishes.items[0],
   ).toMatchObject({
-    effectsText: "增加 40 力气",
+    strength: 40,
     effects: [{ name: "大力播洒 一阶", durationSeconds: 10 }],
     tastes: ["甜", "咸"],
-    difficultyRequirement: { condition: { kind: "chefLevelGreaterOrEqual", level: 5 } },
+    cookware: "烤箱",
+    unlockCondition: { kind: "chefLevelGreaterOrEqual", level: 5 },
     acquisition: "烹饪",
   });
 });
@@ -182,9 +170,8 @@ test("furniture, clothing and materials display structured acquisition condition
     image: null,
     quality: null,
     description: null,
-    displayCategory: null,
-    trade: null,
-    acquisition: [{ sourceId: 1, label: "星屿探索", condition: "完成探索" }],
+    category: null,
+    acquisition: [{ sourceId: 1, label: "星屿探索" }],
   };
   addFixtureRecords(
     catalog,
@@ -206,7 +193,7 @@ test("furniture, clothing and materials display structured acquisition condition
     createGameplayTagIndex(gameplayTags.tags),
   );
   for (const item of [view.furniture.items[0], view.clothing.items[0], view.miscellaneous[0]]) {
-    expect(item.acquisition).toBe("星屿探索（完成探索）");
+    expect(item.acquisition).toBe("星屿探索");
     expect(item).not.toHaveProperty("sources");
   }
 });

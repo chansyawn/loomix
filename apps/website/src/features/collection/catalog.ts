@@ -1,14 +1,14 @@
 import { createImageResolver, type Assets } from "@loomix/schema/assets";
 import {
-  isGroupRecord,
-  recordCategory,
   createRecordTagResolver,
+  isListedItem,
   type Catalog,
-  type CatalogRecord,
+  type Collection,
+  type ListedItem,
 } from "@loomix/schema/catalog";
 import { createGameplayTagIndex, tagLabel } from "@loomix/schema/gameplay-tags";
 import type { GameplayTags } from "@loomix/schema/gameplay-tags";
-import { toCollectionView } from "../collection-view";
+import { catalogCategory, toCollectionView } from "../collection-view";
 import { acquisitionText } from "../collection/acquisition";
 import { createCollectionTagFilter, type TagTreePolicy } from "./tags";
 
@@ -21,6 +21,9 @@ export const categoryNames = {
   dishes: "烹饪",
   miscellaneous: "杂物",
 };
+
+export type FormalRecord = ListedItem | Collection;
+
 export function createCollectionCatalog(
   catalog: Catalog,
   assets: Assets,
@@ -28,40 +31,32 @@ export function createCollectionCatalog(
   options: { tagPolicy?: TagTreePolicy } = {},
 ) {
   const image = createImageResolver(assets);
-  if (
-    gameplayTags.snapshotId !== catalog.snapshotId ||
-    gameplayTags.locale !== catalog.locale ||
-    gameplayTags.formatVersion !== catalog.formatVersion
-  )
-    throw new Error("Catalog tags context mismatch");
   const tagIndex = createGameplayTagIndex(gameplayTags.tags);
   const tagsFor = createRecordTagResolver(tagIndex);
-  const rows = catalog.records.map((record) => {
+  const items = catalog.items.filter(isListedItem);
+  const row = (record: FormalRecord) => {
+    const tagIds = "tagIds" in record ? record : { tagIds: [] };
     return {
       id: record.id,
       name: record.name,
       description: record.description,
       image: image(record.image),
       quality: record.quality,
-      category: recordCategory(record),
-      colors: tagsFor(record, "colors").map(tagLabel),
-      materials: tagsFor(record, "materials").map(tagLabel),
-      styles: tagsFor(record, "styles").map(tagLabel),
+      category: catalogCategory(record),
+      colors: tagsFor(tagIds, "colors").map(tagLabel),
+      materials: tagsFor(tagIds, "materials").map(tagLabel),
+      styles: tagsFor(tagIds, "styles").map(tagLabel),
       acquisition: record.acquisition,
       acquisitionText: acquisitionText(record.acquisition),
       record,
     };
-  });
+  };
+  const rows = [...items, ...catalog.collections].map(row).sort((a, b) => a.id - b.id);
   return {
     catalog,
-    tags: createCollectionTagFilter(
-      gameplayTags.tags,
-      tagIndex,
-      catalog.records.filter((record) => !isGroupRecord(record)),
-      options.tagPolicy,
-    ),
+    tags: createCollectionTagFilter(gameplayTags.tags, tagIndex, items, options.tagPolicy),
     rows,
-    byId: new Map(rows.map((row) => [row.id, row])),
+    byId: new Map(rows.map((entry) => [entry.id, entry])),
     view: toCollectionView(catalog, assets, tagIndex),
   };
 }
@@ -83,4 +78,3 @@ export function recordFields(row: OverviewRecord): [string, string | null][] {
     ["获取来源", row.acquisitionText],
   ];
 }
-export type FormalRecord = CatalogRecord;

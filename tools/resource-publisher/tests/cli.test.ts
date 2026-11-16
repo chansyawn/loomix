@@ -33,7 +33,7 @@ test("dry run from another directory returns only JSON without credentials or pr
     expect(JSON.parse(result.stdout)).toMatchObject({
       release: "test",
       assetCount: 0,
-      documentCount: 6,
+      documentCount: 5,
       manifestSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
       dryRun: true,
     });

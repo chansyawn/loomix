@@ -22,8 +22,6 @@ import { exportNeighborImages } from "./neighbors/images.ts";
 import { buildNeighbors } from "./neighbors/build.ts";
 import { buildCollection } from "./collection/build.ts";
 import { exportSeedImages } from "./collection/images.ts";
-import { buildIslands } from "./islands/build.ts";
-import { exportIslandImages } from "./islands/images.ts";
 
 export async function extract(environmentId: string): Promise<string> {
   const environmentDirectory = identityDirectory("environments", environmentId);
@@ -115,12 +113,6 @@ export async function extract(environmentId: string): Promise<string> {
           ],
         },
         {
-          name: "islands",
-          dependencies: ["structure"],
-          run: async () => buildIslands(work),
-          outputs: () => ["raw/islands.json", "island-audit.json", "island-exclusions.json"],
-        },
-        {
           name: "raw-assets",
           dependencies: ["structure"],
           run: () => exportImages(options),
@@ -182,24 +174,14 @@ export async function extract(environmentId: string): Promise<string> {
           ],
         },
         {
-          name: "island-images",
-          dependencies: ["islands", "raw-assets"],
-          run: () => exportIslandImages(options),
-          outputs: () => [
-            "island-image-exports.json",
-            "island-image-audit.json",
-            ...tree("island-exports"),
-          ],
-        },
-        {
           name: "source-audit",
-          dependencies: ["neighbor-images", "island-images", "seed-images", "crafting"],
+          dependencies: ["neighbor-images", "seed-images", "crafting"],
           run: () => audit(options),
           outputs: () => ["source-audit.json"],
         },
         {
           name: "extraction-verify",
-          dependencies: ["source-audit", "neighbors", "islands", "island-images"],
+          dependencies: ["source-audit", "neighbors"],
           run: async () => {
             finalizeEvidence(work);
             assembleDataset(work);
@@ -227,13 +209,11 @@ export async function extract(environmentId: string): Promise<string> {
           "decode",
           "structure",
           "neighbors",
-          "islands",
           "raw-assets",
           "crafting",
           "collection",
           "seed-images",
           "neighbor-images",
-          "island-images",
           "source-audit",
           "extraction-verify",
         ],

@@ -1,4 +1,4 @@
-import { CookingRecipeSchema } from "@loomix/schema/catalog";
+import { ObservedCookingRecipeSchema as CookingRecipeSchema } from "../../schemas/observed.ts";
 import { z } from "zod";
 import {
   CatalogSourceSchema,

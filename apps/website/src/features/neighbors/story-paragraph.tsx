@@ -4,12 +4,20 @@ import { StoryText } from "./rich-text";
 
 type Paragraph = NeighborDetail["stories"][number]["paragraphs"][number];
 
-export function StoryParagraph({ paragraph, title }: { paragraph: Paragraph; title: string }) {
+export function StoryParagraph({
+  paragraph,
+  sequence,
+  title,
+}: {
+  paragraph: Paragraph;
+  sequence: number;
+  title: string;
+}) {
   const { layout, text } = paragraph;
   const illustration = layout !== "text" && (
     <NeighborImage
       image={paragraph.image}
-      name={`${title} · 插图 ${paragraph.sequence}`}
+      name={`${title} · 插图 ${sequence}`}
       className={
         layout === "portrait-image"
           ? "mx-auto aspect-2/3 w-full max-w-86.5"

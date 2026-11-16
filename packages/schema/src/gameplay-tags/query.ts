@@ -2,25 +2,19 @@ import { assertValid } from "../common/identity.ts";
 import type { GameplayTag } from "./index.ts";
 import { validateGameplayTags } from "./validate.ts";
 
-export function createGameplayTagIndex(tags: readonly GameplayTag[]) {
+// 泛型保留调用方的扩展字段，例如提取侧仍需客户端枚举名。
+export function createGameplayTagIndex<T extends GameplayTag>(tags: readonly T[]) {
   assertValid(validateGameplayTags(tags));
   const byId = new Map(tags.map((tag) => [tag.id, tag]));
   const byName = new Map(tags.map((tag) => [tag.internalName, tag]));
-  const byEnum = new Map<string, GameplayTag[]>();
-  for (const tag of tags) {
-    if (tag.enumName === null) continue;
-    const matches = byEnum.get(tag.enumName) ?? [];
-    matches.push(tag);
-    byEnum.set(tag.enumName, matches);
-  }
-  const get = (id: number): GameplayTag => {
+  const get = (id: number): T => {
     const tag = byId.get(id);
     if (!tag) throw new Error(`Unknown GameplayTag ${id}`);
     return tag;
   };
-  const ancestors = (id: number): GameplayTag[] => {
-    const result: GameplayTag[] = [];
-    let tag: GameplayTag | undefined = get(id);
+  const ancestors = (id: number): T[] => {
+    const result: T[] = [];
+    let tag: T | undefined = get(id);
     while (tag) {
       result.push(tag);
       tag = tag.parentId === null ? undefined : get(tag.parentId);
@@ -30,14 +24,14 @@ export function createGameplayTagIndex(tags: readonly GameplayTag[]) {
   const ancestry = new Map(
     tags.map((tag) => [tag.id, new Set(ancestors(tag.id).map((t) => t.id))]),
   );
-  const select = (ids: readonly number[], rootId: number): GameplayTag[] => {
+  const select = (ids: readonly number[], rootId: number): T[] => {
     get(rootId);
     return ids.map(get).filter((tag) => ancestry.get(tag.id)!.has(rootId));
   };
   return {
+    tags,
     get,
     findByName: (name: string) => byName.get(name),
-    findByEnumName: (name: string): readonly GameplayTag[] => byEnum.get(name) ?? [],
     ancestors,
     subtree: (id: number) =>
       select(
@@ -47,4 +41,6 @@ export function createGameplayTagIndex(tags: readonly GameplayTag[]) {
     select,
   };
 }
-export type GameplayTagIndex = ReturnType<typeof createGameplayTagIndex>;
+export type GameplayTagIndex<T extends GameplayTag = GameplayTag> = ReturnType<
+  typeof createGameplayTagIndex<T>
+>;

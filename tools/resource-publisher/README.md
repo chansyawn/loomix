@@ -1,6 +1,6 @@
 # 资源发布
 
-在仓库根目录运行。资源目录由 `release.json` 描述，包含 `assets.json`、`zh-CN/{gameplay-tags,catalog,neighbors,world}.json` 和 `assets/`。文档必须具有相同快照身份与语言；manifest 记录每份文档的实际 SHA256 与字节数。发布器验证领域引用图、资源覆盖、完整 WebP 像素与尺寸，并拒绝额外文件或符号链接。
+在仓库根目录运行。资源目录由 `release.json` 描述，包含 `assets.json`、`zh-CN/{gameplay-tags,catalog,neighbors}.json` 和 `assets/`。快照身份与语言只在 manifest 中声明一次；manifest 记录每份文档的实际 SHA256 与字节数，文档通过哈希绑定到同一发布。发布器验证领域引用图、资源覆盖、完整 WebP 像素与尺寸，并拒绝额外文件或符号链接。
 
 ## 配置凭证
 

@@ -56,7 +56,6 @@ export function verifyNeighborDetails(database: NeighborDatabase, tables: Tables
           ability.unlockLevel,
           ability.name,
           ability.description,
-          ability.icon,
         ]),
       ),
     ),
@@ -69,20 +68,9 @@ export function verifyNeighborDetails(database: NeighborDatabase, tables: Tables
           tables.id(row),
           tables.text(row, 3),
           tables.text(row, 4),
-          tables.string(row, 2),
         ]),
     ),
     "Independent ability links",
-  );
-  assert.deepEqual(
-    tuples(database.neighbors.map((neighbor) => [neighbor.id, neighbor.signature.cookingRecipeId])),
-    tuples(
-      tables
-        .rows(500)
-        .filter((row) => accepted.has(tables.uint(row, 0, 0)))
-        .map((row) => [tables.uint(row, 0), tables.uint(row, 2)]),
-    ),
-    "Independent signature recipe links",
   );
   for (const neighbor of database.neighbors) {
     const row = tables.byId(415).get(neighbor.id)!;
@@ -93,17 +81,5 @@ export function verifyNeighborDetails(database: NeighborDatabase, tables: Tables
       month === null || day === null ? null : { month, day },
       `Birthday ${neighbor.id}`,
     );
-    assert.equal(neighbor.profile.gender, tables.string(row, 20));
-    assert.deepEqual(
-      neighbor.design,
-      { furnitureSetId: null, craftingCollectionId: null },
-      "Unconfirmed theme namespaces must not create edges",
-    );
-    for (const stage of neighbor.house?.stages ?? [])
-      assert.equal(
-        stage.upgradeRequirements,
-        null,
-        "Unconfirmed quantities must not create requirements",
-      );
   }
 }

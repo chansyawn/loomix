@@ -44,19 +44,16 @@ function furnitureFixture(
 }
 
 function relatedCatalog() {
-  const drop = {
-    itemId: item.id,
-    dropGroupId: null,
-    weight: null,
-    quantityMin: null,
-    quantityMax: null,
-    probability: null,
-  };
+  const drop = { itemId: item.id, source: "fruit" as const };
   return catalogFixture({
     miscellaneous: [item, { ...item, id: 30032, name: "其他材料" }],
     plants: plantsDataFixture({
       items: [
-        plantItemFixture({ id: 2, name: "杉树", treeDrops: [drop, { ...drop, dropGroupId: 1 }] }),
+        plantItemFixture({
+          id: 2,
+          name: "杉树",
+          treeDrops: [drop, { ...drop, source: "felling" }],
+        }),
         plantItemFixture({ id: 1, name: "银杏树", treeDrops: [drop] }),
         plantItemFixture({ id: 3, name: "无掉落树木" }),
       ],
@@ -65,20 +62,17 @@ function relatedCatalog() {
     furniture: {
       items: [
         furnitureFixture(100, [
-          { id: 1, materials: [{ itemId: 30032, quantity: 9 }], unresolvedReason: null },
-          { id: 2, materials: [{ itemId: item.id, quantity: 3 }], unresolvedReason: null },
-          { id: 3, materials: [{ itemId: item.id, quantity: 5 }], unresolvedReason: null },
+          { id: 1, materials: [{ itemId: 30032, quantity: 9 }] },
+          { id: 2, materials: [{ itemId: item.id, quantity: 3 }] },
+          { id: 3, materials: [{ itemId: item.id, quantity: 5 }] },
         ]),
         furnitureFixture(101, [
-          { id: 4, materials: [{ itemId: item.id, quantity: 2 }], unresolvedReason: null },
-          { id: 5, materials: [{ itemId: item.id, quantity: 2 }], unresolvedReason: null },
+          { id: 4, materials: [{ itemId: item.id, quantity: 2 }] },
+          { id: 5, materials: [{ itemId: item.id, quantity: 2 }] },
         ]),
-        furnitureFixture(102, null),
         furnitureFixture(103, []),
-        furnitureFixture(104, [{ id: 6, materials: null, unresolvedReason: "材料尚未确认" }]),
-        furnitureFixture(105, [
-          { id: 7, materials: [{ itemId: 100, quantity: 1 }], unresolvedReason: null },
-        ]),
+        furnitureFixture(104, [{ id: 6, materials: null }]),
+        furnitureFixture(105, [{ id: 7, materials: [{ itemId: 100, quantity: 1 }] }]),
       ],
       sets: [],
     },
@@ -87,7 +81,7 @@ function relatedCatalog() {
       { id: 11, name: "原料", tagName: "食材_原料", parentId: 10, itemIds: [item.id] },
     ],
     dishes: {
-      items: [recipeFixture(900, { slots: [recipeSlot(categoryExpression(11), [item.id])] })],
+      items: [recipeFixture(900, [recipeSlot(categoryExpression(11), [item.id])])],
       series: [],
     },
   });

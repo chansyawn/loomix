@@ -107,15 +107,15 @@ worktree/
 
 ## 证据与交付约束
 
-唯一共享包为 `@loomix/schema`。`catalog.records` 是全部正式记录的唯一集合，按 `kind` 区分单品、套组、系列、外观和种子；准入条件是图鉴、版本绑定白名单或通过现有确定性种植关系验证的种子。范围外物品仅在 `references` 保存 ID 与名称，不获得列表或详情；`craftingRecipes` 与 `growths` 保存正式记录及其他已发布领域所需的关联资料。`gameplayTags` 是独立发布的完整标签树；记录通过 `tagFields` 保留主表 318.6–17 的 12 组直接标签，包括 `foodMaterials` 与 `npcFurnitureCategory`；再按固定字段顺序展开，并追加 `client.type` 对应的 `BTypeCfg.typetag`（716.10），稳定去重形成 `tagIds`，不扩展祖先。颜色、材质、风格等按标签子树派生。食材分类不单独发布，网站由 `tagIds` 的食材子树闭包派生成员关系；送礼偏好共用同一标签身份；原始字段归属同时保留在 `tagFields` 与逐字段来源证据中。`client` 保存 BIdCfg 的 `type`、`idType`、`subtype` 和 `subtypeName`，缺失数值按客户端默认值 0 读取，空名称归 null。`catalog.clientTypes` 发布 BTypeCfg 的完整类型字典，仅通过 `client.type` 关联；`idType` 不作为其外键，`subtype` 不作为全局枚举。`displayCategory` 与 `furnitureCategory` 分别保存既有展示分类与家具分类，其取值和网站筛选文字不变。种子以 growthId 引用生长配置，阶段以 plantId 关联正式植物，阶段图片保留上下文语义，反向关系由消费方派生。`neighbors` 与 `world` 保存各自实体和单向关系，不重复保存反向索引或物品名称。
+唯一共享包为 `@loomix/schema`。发布契约只保留网站消费的结构化字段，客户端原始字段、未确认候选和解析诊断只保存在提取观察与证据中。`catalog.items` 是全部物品的唯一集合，按 `kind` 区分家具、服饰、外观、友邻服饰、生物、植物、种子、菜肴、杂物和 `reference`；`reference` 是仅被正式数据引用的范围外物品，只保存名称与说明，不生成列表或详情。`catalog.collections` 保存套组与系列，用 `memberKind` 声明成员种类。一对一的从属数据内嵌在所属物品中：种子携带 `growth`，菜肴携带 `cooking`，家具携带 `craftingRecipes`。`gameplayTags` 是独立发布的完整标签树；物品只发布合并后的 `tagIds`，来源为主表 318.6–17 的 12 组直接标签按固定顺序展开，再追加主表类型对应的 `BTypeCfg.typetag`（716.10），稳定去重且不扩展祖先；各来源列的归属只保存在字段证据中。颜色、材质、风格、产区按标签子树派生，食材分类由 `tagIds` 的食材子树闭包派生，送礼偏好共用同一标签身份。`category` 与 `furnitureCategory` 分别保存展示分类与家具分类。发布只包含结构化值：家具尺寸、生物体型范围和菜肴力气以数值交付，展示文案由网站拼接。`neighbors` 按友邻组织，星球、故事、能力、住宅、送礼偏好与好感插画、角色立绘均内嵌在友邻实体中。
 
 源观察模型位于 `tools/extraction`，只供提取与来源验收使用；基础观察和详情观察是内部 checkpoint，不是公开交付版本。领域组装读取冻结观察，补全已确认的物品引用，生成 dataset.json，并执行跨领域引用、集合成员类型、分类环、生长阶段和图片覆盖检查。verify 从冻结观察重建领域数据、交付任务与领域证据，防止只修改输出使其自洽。
 
-`evidence/domain-fields.json` 使用实体集合、身份和字段路径定位值，区分 confirmed、absent、unresolved；来源区分表行、完整表扫描、素材对象和人工确认。正式记录的准入原因有独立证据，原图鉴标记与缺失证据保留在 record-evidence.json，生长配置有独立实体证据，友邻和世界保留实体级表来源。细粒度字段来源、未确认候选和排除原因继续保存在源审计中。
+`evidence/domain-fields.json` 使用实体集合、身份和字段路径定位值，区分 confirmed、absent、unresolved；来源区分表行、完整表扫描、素材对象和人工确认。可定位的集合为 `catalog.items`、`catalog.collections`、`neighbors.neighbors` 与 `gameplayTags.tags`；内嵌数据通过所属实体的字段路径定位，例如种子的 `growth.stages.0.image`、菜肴的 `cooking.slots`。未发布的观察字段、原图鉴标记、准入依据、未确认候选和排除原因继续保存在源审计中。
 
-发布目录由 release.json 指定五个文档：zh-CN/gameplay-tags.json、zh-CN/catalog.json、zh-CN/neighbors.json、zh-CN/world.json 和 assets.json。每个文档绑定相同 formatVersion、snapshotId、locale；manifest 保存实际字节数与 SHA256。领域图片使用 {assetId, variant}，assets.json 解析到按最终字节 SHA256 命名的 WebP、大小和尺寸。同一源图的 icon、banner、illustration 独立登记。当前提取 zh-CN；语言是快照上下文，后续语言无需改变实体字段名。
+发布目录由 release.json 指定四个文档：zh-CN/gameplay-tags.json、zh-CN/catalog.json、zh-CN/neighbors.json 和 assets.json。formatVersion、snapshotId、locale 与来源版本只在 manifest 中声明，各文档通过实际字节数与 SHA256 绑定到 manifest。领域图片使用 {assetId, variant}，assets.json 解析到按最终字节 SHA256 命名的 WebP、大小和尺寸。同一源图的 icon、banner、illustration 独立登记。当前提取 zh-CN；语言是快照上下文，后续语言无需改变实体字段名。
 
-当前交付 formatVersion 10，正式记录 2,550 条，包括图鉴与白名单的 2,340 条（杂物 23 条）、79 个确定性种子以及 131 条正式友邻服饰；另保留 79 份生长配置及 317 个关联阶段。作物与花树统一种子和阶段契约，生长规则区分 crop/staged；未确认的成熟天数保持 null。配方、掉落、货币和友邻等引用到范围外物品时建立 references，保留名称、说明及用途，不扩大正式集合。DIY 配方只保留正式产物需要的有效卡片关联，独立交付 22 个创想卡集；套组与卡集通过配方产物派生关系，不按同号 ID 互相映射。121 条正式烹饪配方集中在 cookingRecipes，保留源配方身份与产物引用；不交付范围外配方。友邻资料、同行能力和住宅通过显式配置关联，主题目标、升级用量及秘方物品键尚未确认的关系保持 null，并记录排除证据。未确认属性保留 null，配方材料缺失不解释为免费制作。友邻服饰作为 catalog.records 的 neighborClothing 正式记录交付，并通过 neighborId、playerItemId 与交易信息表达关联。
+当前交付 formatVersion 11，正式收录 2,550 条，包括图鉴与白名单的 2,340 条、79 个确定性种子以及 131 条正式友邻服饰。作物与花树统一种子和阶段契约，生长规则区分 crop/staged；成熟天数未确认，不进入发布数据。配方、掉落、对应玩家服饰和送礼偏好引用到范围外物品时生成 `reference` 物品，不扩大正式集合。家具只保留正式产物需要的有效创想卡配方；材料缺失的配方以 `materials: null` 表示未知，不解释为免费制作。烹饪配方的食材表达式必须全部解析，解锁条件必须是已知结构，否则中止提取。主题目标、升级用量、秘方物品和商店库存等尚未确认的关系不发布，只记录排除证据。友邻服饰通过 neighborId、playerItemId、可穿戴体型与友邻服饰币价格表达关联。
 
 图片规则保持不变：按实际像素面积选最高原生分辨率，平手保留大图优先顺序；家具套组 1024×512，其余有图记录 256×256；Lanczos3 等比缩放、居中裁切，WebP 质量 85、alphaQuality 100。原始 PNG 与最终 WebP 均完整解码，交付文件按最终字节 SHA256 命名和去重。
 
@@ -131,6 +131,6 @@ Windows x64 使用固定下载和局部 runtime；macOS arm64/x64 使用相同�
 
 详细范围和关联规则见[提取原理](docs/extraction-method.md)。
 
-`src/extraction/neighbors/` 通过固定 NPC ID 白名单过滤正式主档（当前名单排除图塔，新增友邻需显式更新白名单），输出内部观察 `raw/neighbors.json`（schemaVersion 3）；正式交付 `zh-CN/neighbors.json` 使用共享契约 formatVersion 10。当前快照收录 12 个友邻、12 个星球、44 章故事（220 个段落记录）、185 条同行反应（其中 12 条通用回退）及 10 个邂逅岛。59 条唯一交往说明保留客户端原始中文和样式；4 条未投放测试说明和完全相同的重复教程行写入内部审计。白名单成员缺少正式主档或必要字段时停止提取；非白名单 NPC 不收录，并写入排除审计。明确归属于非白名单 NPC 的专属奖励和补充图片一并排除，共享和未确认归属的内容保留。
+`src/extraction/neighbors/` 通过固定 NPC ID 白名单过滤正式主档（当前名单排除图塔，新增友邻需显式更新白名单），输出内部观察 `raw/neighbors.json`（schemaVersion 4）；正式交付 `zh-CN/neighbors.json` 使用共享契约 formatVersion 11。当前快照收录 12 个友邻、12 个星球、44 章故事（220 个段落记录）。同行反应、交往说明、事件标签、邂逅岛、世界岛屿和资源路径不被网站使用，不再提取。白名单成员缺少正式主档或必要字段时停止提取；非白名单 NPC 不收录，并写入排除审计。补充图片只保留友邻详情页使用的好感插画与角色立绘，均归属于具体友邻。
 
-友邻数据库保持稳定排序且不写入生成时间；同一输入重复提取产生相同字节。故事按章节和段落顺序聚合，保留纯文、普通单图、竖版单图及左右图文布局；布局来自故事表的正文、配图和排列标记，独立于图片是否成功交付。同行资源反应不解释为礼物偏好。无法直接确认的 NPC、奖励和资源关联保留空数组；邂逅岛的场景 ID 已确认，但不根据岛名猜测 NPC 关联。友邻事件标签使用已确认的中文标签作为键；一个装修主题的数值 ID 未确认，因此保留空值并用其确认名称维持引用。资源索引冻结于 `prepared/asset-index.json`，公共资源记录只保存客户端路径，不新增二进制导出。验收对照固定白名单及冻结主档独立检查友邻集合、检查完整数据库及版本绑定数量，再确认交付领域数据与封存 dataset 一致。
+友邻数据库保持稳定排序且不写入生成时间；同一输入重复提取产生相同字节。故事按章节和段落顺序聚合，保留纯文、普通单图、竖版单图及左右图文布局；布局来自故事表的正文、配图和排列标记，独立于图片是否成功交付。验收对照固定白名单及冻结主档独立检查友邻集合、检查完整数据库及版本绑定数量，再确认交付领域数据与封存 dataset 一致。

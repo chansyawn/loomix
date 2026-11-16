@@ -19,7 +19,7 @@ function item(id: number, fields: Partial<PlantItem> = {}): PlantItem {
     quality: null,
     category: null,
     originGalaxy: null,
-    maturityPeriod: null,
+
     harvestCount: null,
     ...fields,
   });
@@ -42,9 +42,8 @@ function seed(
         growth: {
           ...record.growth,
           kind: "crop",
-          cycleMode: null,
           initialStageIds: [record.growth.stages[0].id],
-          regrowthStageIds: null,
+          regrowthStageIds: [],
           matureStages: record.growth.stages.map((stage) => ({
             stageId: stage.id,
             tag: null,
@@ -110,7 +109,7 @@ const seeds = [
     {
       name: "A番茄种子",
       plantIds: [1],
-      acquisition: [{ sourceId: 1, label: "格连商店购买", condition: null }],
+      acquisition: [{ sourceId: 1, label: "格连商店购买" }],
     },
     { harvestCount: 3 },
   ),
@@ -119,7 +118,7 @@ const seeds = [
     {
       name: "B甜瓜种子",
       plantIds: [2],
-      acquisition: [{ sourceId: 2, label: "星屿探索", condition: "完成探索" }],
+      acquisition: [{ sourceId: 2, label: "星屿探索" }],
     },
     { harvestCount: 1 },
   ),
@@ -231,7 +230,7 @@ describe("seed catalog", () => {
     expect(ids(querySeeds({ acquisition: ["格连商店购买"], harvestCounts: ["3"] }).rows)).toEqual([
       10,
     ]);
-    expect(ids(querySeeds({ acquisition: ["星屿探索（完成探索）"] }).rows)).toEqual([11]);
+    expect(ids(querySeeds({ acquisition: ["星屿探索"] }).rows)).toEqual([11]);
     expect(ids(querySeeds({ series: ["100", "101"] }).rows)).toEqual([10, 11]);
     expect(querySeeds({ harvestCounts: ["__missing"] }).total).toBe(1);
   });
@@ -248,8 +247,8 @@ describe("seed catalog", () => {
     const groups = filterGroups(complete, "seeds");
     expect(groups.map((group) => group.key)).toEqual(["acquisition", "harvestCounts", "series"]);
     expect(groups.find((group) => group.key === "acquisition")?.options).toContainEqual({
-      value: "星屿探索（完成探索）",
-      label: "星屿探索（完成探索）",
+      value: "星屿探索",
+      label: "星屿探索",
     });
     expect(groups.find((group) => group.key === "series")?.options).toContainEqual({
       value: "100",

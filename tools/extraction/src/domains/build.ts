@@ -1,6 +1,7 @@
 import { writeDomainEvidence } from "./evidence.ts";
 import path from "node:path";
 import { parseDataset } from "@loomix/schema/dataset";
+import type { Dataset } from "@loomix/schema/dataset";
 import { referencedImages } from "@loomix/schema/dataset/images";
 import { imageKey } from "@loomix/schema/assets";
 import { RawCollectionObservationsSchema } from "../extraction/collection/build.ts";
@@ -8,22 +9,25 @@ import {
   parseNeighborClothingDatabase,
   parseNeighborDatabase,
 } from "../extraction/neighbors/schema.ts";
-import { parseIslandDatabase } from "../extraction/islands/schema.ts";
 import { buildNeighbors, neighborReferencedItemIds } from "./neighbors.ts";
-import { parseWorld } from "@loomix/schema/world";
 import type {
   NeighborImageExport,
   AdditionalNeighborImageExport,
 } from "../extraction/neighbors/images.ts";
-import type { IslandImageExport } from "../extraction/islands/images.ts";
 import type { ImageManifest } from "../extraction/types.ts";
 import { createContentContext } from "../extraction/content/context.ts";
 import { readJson, writeJson } from "../workflow/json.ts";
 import { createAssetRegistry } from "./assets.ts";
 import { buildCatalog } from "./catalog.ts";
 
+export const FORMAT_VERSION = 11;
+
 export function buildDataset(work: string) {
-  const identity = { formatVersion: 10, snapshotId: path.basename(work), locale: "zh-CN" } as const;
+  const context: Dataset["context"] = {
+    formatVersion: FORMAT_VERSION,
+    snapshotId: path.basename(work),
+    locale: "zh-CN",
+  };
   const observations = RawCollectionObservationsSchema.parse(
     readJson(path.join(work, "raw/images-catalog-observations.json")),
   );
@@ -31,7 +35,6 @@ export function buildDataset(work: string) {
   const neighborClothing = parseNeighborClothingDatabase(
     readJson(path.join(work, "raw/neighbor-clothing.json")),
   );
-  const islands = parseIslandDatabase(readJson(path.join(work, "raw/islands.json")));
   const assets = createAssetRegistry();
   for (const file of [
     "image-manifest.json",
@@ -40,79 +43,42 @@ export function buildDataset(work: string) {
   ])
     for (const image of readJson<ImageManifest[]>(path.join(work, file)))
       assets.register(image, image.group);
+  const neighborExports = readJson<NeighborImageExport[]>(
+    path.join(work, "neighbor-image-exports.json"),
+  );
   const neighborImages = new Map(
-    readJson<NeighborImageExport[]>(path.join(work, "neighbor-image-exports.json")).map((image) => [
-      image.reference,
-      assets.register(image),
-    ]),
+    neighborExports.map((image) => [image.reference, assets.register(image)]),
   );
   const neighborClothingImages = new Map(
-    readJson<NeighborImageExport[]>(path.join(work, "neighbor-image-exports.json"))
+    neighborExports
       .filter((image) => neighborClothing.items.some((item) => item.imagePath === image.reference))
       .map((image) => [image.reference, assets.register(image, "neighborClothing")]),
-  );
-  const islandImages = new Map(
-    readJson<IslandImageExport[]>(path.join(work, "island-image-exports.json")).map((image) => [
-      image.reference,
-      assets.register(image),
-    ]),
   );
   const additionalImages = readJson<AdditionalNeighborImageExport[]>(
     path.join(work, "neighbor-additional-image-exports.json"),
   ).map((image) => ({
-    key: image.resourceName,
     category: image.category,
     neighborId: image.npcId,
     image: assets.register(image),
   }));
   const neighborImage = (reference: string | null) =>
     reference === null ? null : (neighborImages.get(reference) ?? null);
-  const islandImage = (reference: string | null) =>
-    reference === null ? null : (islandImages.get(reference) ?? null);
-  const { encounterIslands } = neighbors;
-  const publicNeighbors = buildNeighbors(neighbors, identity, neighborImage, additionalImages);
-  const encounters = new Map(encounterIslands.map((island) => [island.id, island]));
-  const publicWorld = parseWorld({
-    ...identity,
-    kind: "world",
-    islands: islands.islands.map(({ nameZh, illustrationPath, ...island }) => ({
-      ...island,
-      name: nameZh,
-      image: islandImage(illustrationPath),
-      neighborIds: encounters.get(island.id)?.neighborIds ?? [],
-      unlockCondition: encounters.get(island.id)?.unlockCondition ?? null,
-    })),
-    islandIconStyles: islands.islandIconStyles.map(
-      ({ nameZh, iconPath, variantIconPath, ...style }) => ({
-        ...style,
-        name: nameZh,
-        icon: islandImage(iconPath),
-        variantIcon: islandImage(variantIconPath),
-      }),
-    ),
-    regions: islands.regions.map(({ nameZh, sdfPath, stationImagePath, ...region }) => ({
-      ...region,
-      name: nameZh,
-      sdf: islandImage(sdfPath),
-      stationImage: islandImage(stationImagePath),
-    })),
-  });
-  const context = createContentContext(work);
+  const content = createContentContext(work);
   const dataset = parseDataset({
-    gameplayTags: { ...identity, kind: "gameplay-tags", tags: context.gameplayTags.tags },
-    context: identity,
+    context,
     source: neighbors.source,
+    gameplayTags: {
+      tags: content.gameplayTags.tags.map(({ enumName: _enumName, ...tag }) => tag),
+    },
     catalog: buildCatalog({
       observations,
-      context,
+      context: content,
       assets,
-      identity,
       referencedItemIds: neighborReferencedItemIds(neighbors),
       neighborOutfits: neighborClothing.items,
       neighborImage: (reference) => neighborClothingImages.get(reference) ?? null,
     }),
-    neighbors: publicNeighbors,
-    world: publicWorld,
+    neighbors: buildNeighbors(neighbors, neighborImage, additionalImages),
   });
   const used = new Set(referencedImages(dataset).map(imageKey));
   const jobs = [...assets.jobs]

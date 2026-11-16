@@ -16,10 +16,7 @@ test("extracts the fixed allowlist independently of dedicated configurations", (
     neighborAllowlist.map((n) => [n.id, n.name]),
   );
   assert.equal(database.stars.length, 4);
-  const huanxue = database.neighbors.find((n) => n.id === 1005)!;
-  assert.deepEqual(huanxue.storyKeys, []);
-  assert.ok(!("rewardItemIds" in huanxue));
-  assert.equal(huanxue.avatarPath, null);
+  assert.ok(database.stories.every((story) => story.npcId !== 1005));
   assert.deepEqual(
     audit.exclusions.filter((e) => e.kind === "npc").map((e) => [e.key, e.reason]),
     [
@@ -90,21 +87,6 @@ test("rejects empty story paragraphs", (context) => {
   assert.throws(() => extractNeighbors(fixture.input), /Empty story paragraph/);
 });
 
-test("separates the speaker from variant IDs and keeps resource travel conditions distinct from gift preferences", (context) => {
-  const fixture = createFixture();
-  context.onTestFinished(fixture.cleanup);
-  const database = extractNeighbors(fixture.input);
-  const fallback = database.travelReactions.find((r) => r.npcId === null)!;
-  const harvest = database.travelReactions.find((r) => r.resourceCategory === "作物")!;
-  assert.equal(fallback.variantId, 1);
-  assert.equal(fallback.textZh, null);
-  assert.equal(harvest.npcId, 1010);
-  assert.equal(harvest.variantId, 1);
-  assert.equal(harvest.threshold, "3");
-  assert.equal(harvest.textZh, "丰收了！");
-  assert.ok(database.travelReactions.every((reaction) => !("level" in reaction)));
-});
-
 test("extracts gift rules by namespace, normalizes category rows, and audits non-allowlisted neighbors", (context) => {
   const fixture = createFixture();
   context.onTestFinished(fixture.cleanup);
@@ -123,32 +105,6 @@ test("extracts gift rules by namespace, normalizes category rows, and audits non
     ["1020:love"],
   );
   assert.ok(audit.records.some((entry) => entry.collection === "giftPreferences"));
-});
-
-test("links explicit themes, excludes test rules and leaves unconfirmed island associations empty", (context) => {
-  const fixture = createFixture();
-  context.onTestFinished(fixture.cleanup);
-  const { database, audit } = extractNeighborBundle(fixture.input);
-  assert.equal(database.friendshipRules.length, 1);
-  assert.equal(database.friendshipRules[0]!.level, 7);
-  assert.deepEqual(database.encounterIslands[0]!.neighborIds, []);
-  assert.equal(database.encounterIslands[0]!.sceneId, 10001010);
-  assert.ok(!("rewards" in database));
-  assert.ok(!("catalogReferences" in audit));
-  assert.ok(!("rewards" in audit.counts));
-  assert.ok(!("rewards" in audit.normalization.associationCounts));
-  assert.ok(
-    audit.exclusions.some(
-      (e) =>
-        e.kind === "rule" &&
-        e.reason === "test_or_placeholder" &&
-        e.sources[0]?.kind === "table" &&
-        e.sources[0].table === 711,
-    ),
-  );
-  assert.ok(audit.exclusions.some((e) => e.kind === "asset"));
-  assert.equal(database.assets.filter((a) => a.path === "Entity/NeighborHub/Desk").length, 1);
-  assert.ok(!/rowOffset|confirmed|inferred/.test(JSON.stringify(database)));
 });
 
 test("strict schema rejects unknown fields, missing relationships, duplicate IDs, invalid sources and dangling references", (context) => {
@@ -170,17 +126,11 @@ test("strict schema rejects unknown fields, missing relationships, duplicate IDs
   );
   assert.throws(() => parseNeighborDatabase({ ...database, assets: [] }));
   const missing = structuredClone(database);
-  Reflect.deleteProperty(missing.neighbors[0]!, "storyKeys");
+  Reflect.deleteProperty(missing.neighbors[0]!, "profile");
   assert.throws(() => parseNeighborDatabase(missing));
   const dangling = structuredClone(database);
-  dangling.neighbors[0]!.storyKeys.push("999:1");
+  dangling.stars[0]!.npcId = 999;
   assert.throws(() => parseNeighborDatabase(dangling));
-  const invalidIsland = structuredClone(database);
-  invalidIsland.encounterIslands[0]!.neighborIds = [999];
-  assert.throws(() => parseNeighborDatabase(invalidIsland));
-  const invalidAsset = structuredClone(database);
-  invalidAsset.assets[0]!.relatedNeighborIds = [999];
-  assert.throws(() => parseNeighborDatabase(invalidAsset));
 });
 
 test("independent verification rejects a self-consistent missing neighbor, changed neighbor and mismatched source", (context) => {
@@ -190,13 +140,11 @@ test("independent verification rejects a self-consistent missing neighbor, chang
   const missing = structuredClone(database);
   missing.neighbors = missing.neighbors.filter((n) => n.id !== 1005);
   missing.stars = missing.stars.filter((s) => s.npcId !== 1005);
-  missing.assets.forEach((a) => {
-    a.relatedNeighborIds = a.relatedNeighborIds.filter((id) => id !== 1005);
-  });
+  missing.giftPreferences = missing.giftPreferences.filter((p) => p.npcId !== 1005);
   parseNeighborDatabase(missing);
   assert.throws(() => verifyNeighbors(missing, fixture.input), /roster/);
   const renamed = structuredClone(database);
-  renamed.friendshipRules[0]!.textZh = "错误规则";
+  renamed.stars[0]!.nameZh = "错误星球";
   assert.throws(() => verifyNeighbors(renamed, fixture.input), /frozen sources/);
   assert.throws(
     () =>
@@ -243,12 +191,15 @@ test("invalid references and unexpected table fields stop extraction", (context)
   context.onTestFinished(fixture.cleanup);
   const tables = fixture.input.tables;
   const row = tables.rows(profile.roots.neighborStars)[0]!;
-  const field = tables.fields(row)[11]!;
+  const field = tables.fields(row)[15]!;
   tables.reader.b.writeUInt32BE((0x7fffffff ^ profile.wordMask) >>> 0, field);
   assert.throws(() => extractNeighbors(fixture.input), /Invalid string/);
-  assert.throws(() => assertLayout(tables, row, { model: [11, "vector"] }, 16), /out of bounds/);
+  assert.throws(
+    () => assertLayout(tables, row, { illustration: [15, "vector"] }, 16),
+    /out of bounds/,
+  );
   const rows = fixtureRows();
-  rows[643]![0]!.push(1);
+  rows[668]![0]!.push(...Array<null>(10).fill(null), 1);
   const changed = createFixture(rows);
   context.onTestFinished(changed.cleanup);
   assert.throws(() => extractNeighbors(changed.input), /layout/);
@@ -271,14 +222,11 @@ test("excludes fully configured non-allowlisted neighbors", (context) => {
   const rows = fixtureRows();
   rows[630]!.push(rows[630]![0]!.map((cell, index) => (index === 5 ? 1014 : cell)));
   rows[668]!.push([1014, 1, { text: "图塔故事" }, 1, { text: "正文" }, null]);
-  rows[643]!.push([1014, 1, "New_Npc", "1", null, 1, 1, null, { text: "台词" }]);
-  rows[180]!.push([6, { text: "图塔主题" }, null, { text: "完成图塔的装修请求" }]);
   const fixture = createFixture(rows);
   context.onTestFinished(fixture.cleanup);
   const database = extractNeighbors(fixture.input);
   assert.ok(database.neighbors.every((n) => n.id !== 1014));
   assert.ok(database.stars.every((s) => s.npcId !== 1014));
   assert.ok(database.stories.every((s) => s.npcId !== 1014));
-  assert.ok(database.travelReactions.every((r) => r.npcId !== 1014));
   verifyNeighbors(database, fixture.input);
 });

@@ -1,29 +1,22 @@
-import { GameplayTagsSchema } from "../gameplay-tags/index.ts";
 import { z } from "zod";
+import { GameplayTagsSchema } from "../gameplay-tags/index.ts";
 import { AssetsSchema, imageKey } from "../assets/index.ts";
 import { CatalogSchema } from "../catalog/index.ts";
 import { ContextSchema, HashSchema, SourceSchema, assertValid } from "../common/identity.ts";
+import { createIssueCollector } from "../common/identity.ts";
 import type { ValidationIssue } from "../common/identity.ts";
 import { DatasetSchema, validateDataset } from "../dataset/index.ts";
 import { referencedImages } from "../dataset/images.ts";
 import { NeighborsSchema } from "../neighbors/index.ts";
-import { WorldSchema } from "../world/index.ts";
 
 export const documentSchemas = {
   "gameplay-tags": GameplayTagsSchema,
   catalog: CatalogSchema,
   neighbors: NeighborsSchema,
-  world: WorldSchema,
   assets: AssetsSchema,
 };
-export type DocumentKind = keyof typeof documentSchemas;
-export const DocumentKindSchema = z.enum([
-  "gameplay-tags",
-  "catalog",
-  "neighbors",
-  "world",
-  "assets",
-]);
+export const DocumentKindSchema = z.enum(["gameplay-tags", "catalog", "neighbors", "assets"]);
+export type DocumentKind = z.infer<typeof DocumentKindSchema>;
 export const ReleaseIdSchema = z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/);
 export const ReleaseMarkerSchema = z.strictObject({
   release: ReleaseIdSchema,
@@ -35,14 +28,16 @@ export const FileSchema = z.strictObject({
   sha256: HashSchema,
   bytes: z.number().int().positive(),
 });
+// 发布上下文只在清单中声明一次，各文档通过哈希绑定到清单。
 export const ReleaseManifestSchema = ContextSchema.extend({
   source: SourceSchema,
   files: FileSchema.array(),
 }).superRefine((manifest, ctx) => {
-  const expected = Object.keys(documentSchemas);
   if (
-    manifest.files.length !== expected.length ||
-    expected.some((kind) => manifest.files.filter((file) => file.kind === kind).length !== 1)
+    manifest.files.length !== DocumentKindSchema.options.length ||
+    DocumentKindSchema.options.some(
+      (kind) => manifest.files.filter((file) => file.kind === kind).length !== 1,
+    )
   )
     ctx.addIssue({
       code: "custom",
@@ -73,15 +68,11 @@ export const parseReleaseManifest = (input: unknown): ReleaseManifest =>
 
 export function validateRelease(release: Release): ValidationIssue[] {
   const { dataset, assets, manifest } = release;
-  const issues = validateDataset(dataset);
-  const issue = (path: (string | number)[], message: string) =>
-    issues.push({ code: "invalid_release", path, message });
-  for (const field of ["snapshotId", "locale", "formatVersion"] as const) {
+  const { issues, issue } = createIssueCollector("invalid_release");
+  issues.push(...validateDataset(dataset));
+  for (const field of ["snapshotId", "locale", "formatVersion"] as const)
     if (manifest[field] !== dataset.context[field])
       issue(["manifest", field], "Release context mismatch");
-    if (assets[field] !== dataset.context[field])
-      issue(["assets", field], "Assets context mismatch");
-  }
   for (const field of ["gameVersion", "dataRevision", "resourceRevision", "manifestId"] as const)
     if (manifest.source[field] !== dataset.source[field])
       issue(["manifest", "source", field], "Release source mismatch");
@@ -129,7 +120,6 @@ export function assembleRelease(
       gameplayTags: documents.get("gameplay-tags"),
       catalog: documents.get("catalog"),
       neighbors: documents.get("neighbors"),
-      world: documents.get("world"),
     },
     assets: documents.get("assets"),
   });

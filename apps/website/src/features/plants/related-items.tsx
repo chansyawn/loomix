@@ -55,11 +55,11 @@ export function PlantDropsInfo({ drops }: { drops: PlantDrops }) {
           {[
             {
               title: "果实产物",
-              entries: group.entries.filter((entry) => entry.dropGroupId === null),
+              entries: group.entries.filter((entry) => entry.source === "fruit"),
             },
             {
               title: "砍树掉落",
-              entries: group.entries.filter((entry) => entry.dropGroupId !== null),
+              entries: group.entries.filter((entry) => entry.source === "felling"),
             },
           ].map(
             ({ title, entries }) =>
@@ -68,10 +68,7 @@ export function PlantDropsInfo({ drops }: { drops: PlantDrops }) {
                   <h4 className="text-sm text-muted-foreground">{title}</h4>
                   <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))] gap-3">
                     {entries.map((entry) => (
-                      <li
-                        key={String(entry.dropGroupId) + ":" + entry.itemId}
-                        className="max-w-full min-w-0"
-                      >
+                      <li key={`${entry.source}:${entry.itemId}`} className="max-w-full min-w-0">
                         <CollectionItemCard
                           item={entry.item}
                           itemId={entry.itemId}

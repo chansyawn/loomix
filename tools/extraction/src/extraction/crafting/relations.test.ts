@@ -1,9 +1,8 @@
 import { expect, test } from "vite-plus/test";
 import { createFixture } from "../neighbors/fixtures/tables.ts";
 import { readCraftingRecipes } from "./read.ts";
-import { readCraftingCollections } from "./collections.ts";
 
-test("同一家具套组的配方可跨卡集，空卡集独立保留", ({ onTestFinished }) => {
+test("配方按产物收录，材料槽位保留数量", ({ onTestFinished }) => {
   const fixture = createFixture({
     318: [
       [111610, { text: "创想卡：小轩窗" }, 19],
@@ -25,12 +24,10 @@ test("同一家具套组的配方可跨卡集，空卡集独立保留", ({ onTes
   onTestFinished(fixture.cleanup);
   const { tables } = fixture.input;
   const recipes = readCraftingRecipes({ tables }, new Set([1610, 1758])).recipes;
-  expect(recipes.map(({ productId, collectionId }) => [productId, collectionId])).toEqual([
-    [1610, 5],
-    [1758, 999],
+  expect(recipes).toEqual([
+    { id: 111610, productId: 1610, materials: [{ itemId: 30104, quantity: 4 }] },
+    { id: 111758, productId: 1758, materials: null },
   ]);
-  expect(readCraftingCollections(tables).map((collection) => collection.id)).toEqual([1, 5, 999]);
-  expect(recipes.some((recipe) => recipe.collectionId === 1)).toBe(false);
 });
 
 test("无效卡集外键报错，不转换为缺省", ({ onTestFinished }) => {

@@ -46,7 +46,6 @@ export function readCropGrowth(context: PlantingContext, crop: TableRow) {
   const growth: ObservedGrowth = {
     id,
     kind: "crop",
-    maturityDays: null,
     cycleMode: tables.string(crop, 3),
     initialStageIds,
     regrowthStageIds,
@@ -111,6 +110,6 @@ export function readStagedGrowth(context: PlantingContext, id: number, use: Tabl
     stageId = tables.uint(link, 2);
     if (stageId === null) throw new Error(`Missing next plant stage ${id}:${tables.id(link)}`);
   }
-  const growth: ObservedGrowth = { id, kind: "staged", stages, maturityDays: null };
+  const growth: ObservedGrowth = { id, kind: "staged", stages };
   return { growth, sources, investigation };
 }

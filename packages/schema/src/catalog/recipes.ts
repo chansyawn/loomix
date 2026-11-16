@@ -1,72 +1,47 @@
 import { z } from "zod";
-import { IdSchema as ItemIdSchema } from "../common/identity.ts";
+import { IdSchema, NullableTextSchema } from "../common/identity.ts";
+
 export type IngredientExpression =
   | { kind: "tag"; tagId: number }
   | { kind: "all"; terms: IngredientExpression[] }
   | { kind: "any"; terms: IngredientExpression[] };
-const ingredientExpressionSchema: z.ZodType<IngredientExpression> = z.lazy(() =>
+export const IngredientExpressionSchema: z.ZodType<IngredientExpression> = z.lazy(() =>
   z.discriminatedUnion("kind", [
-    z.strictObject({ kind: z.literal("tag"), tagId: ItemIdSchema }),
-    z.strictObject({ kind: z.literal("all"), terms: ingredientExpressionSchema.array().min(2) }),
-    z.strictObject({ kind: z.literal("any"), terms: ingredientExpressionSchema.array().min(2) }),
+    z.strictObject({ kind: z.literal("tag"), tagId: IdSchema }),
+    z.strictObject({ kind: z.literal("all"), terms: IngredientExpressionSchema.array().min(2) }),
+    z.strictObject({ kind: z.literal("any"), terms: IngredientExpressionSchema.array().min(2) }),
   ]),
 );
-export const IngredientExpressionSchema = ingredientExpressionSchema;
 export const RecipeSlotSchema = z.strictObject({
-  field: z.union([z.literal(20), z.literal(25), z.literal(30), z.literal(35)]),
-  rawExpression: z.string().min(1),
-  expression: IngredientExpressionSchema.nullable(),
-  itemIds: z.array(ItemIdSchema).nullable(),
-  quantity: z.null(),
+  expression: IngredientExpressionSchema,
+  itemIds: IdSchema.array(),
 });
-export const RecipeSchema = z.strictObject({ slots: RecipeSlotSchema.array().nullable() });
-const text = z.string().min(1).nullable();
-export const DifficultyConditionSchema = z.discriminatedUnion("kind", [
-  z.strictObject({ kind: z.literal("chefLevelGreaterOrEqual"), level: ItemIdSchema }),
-  z.strictObject({ kind: z.literal("learnCookRecipeInCategory"), categoryId: ItemIdSchema }),
+export const UnlockConditionSchema = z.discriminatedUnion("kind", [
+  z.strictObject({ kind: z.literal("chefLevelGreaterOrEqual"), level: IdSchema }),
+  z.strictObject({ kind: z.literal("learnCookRecipeInCategory"), categoryId: IdSchema }),
 ]);
-export const DifficultyRequirementSchema = z
-  .strictObject({
-    rawExpression: z.string().min(1),
-    condition: DifficultyConditionSchema.nullable(),
-    unresolvedReason: text,
-  })
-  .superRefine((value, ctx) => {
-    if ((value.condition === null) !== (value.unresolvedReason !== null))
-      ctx.addIssue({ code: "custom", message: "Unknown conditions require a reason" });
-  });
-export const CraftingRecipeSchema = z
-  .strictObject({
-    id: ItemIdSchema,
-    materials: z
-      .array(z.strictObject({ itemId: ItemIdSchema, quantity: ItemIdSchema }))
-      .min(1)
-      .nullable(),
-    unresolvedReason: text,
-  })
-  .superRefine((recipe, ctx) => {
-    if ((recipe.materials === null) !== (recipe.unresolvedReason !== null))
-      ctx.addIssue({ code: "custom", message: "Unknown crafting materials require a reason" });
-  });
 export const TastesSchema = z.array(z.enum(["甜", "咸"])).min(1);
-
-export type Recipe = z.infer<typeof RecipeSchema>;
-export type CraftingRecipe = z.infer<typeof CraftingRecipeSchema>;
-export type DifficultyRequirement = z.infer<typeof DifficultyRequirementSchema>;
-
 export const CookingRecipeSchema = z.strictObject({
-  id: ItemIdSchema,
-  productId: ItemIdSchema,
-  recipeItemId: ItemIdSchema.nullable(),
-  difficulty: text,
-  difficultyRequirement: DifficultyRequirementSchema.nullable(),
-  cookware: z.string().min(1).array().nullable(),
+  difficulty: NullableTextSchema,
+  unlockCondition: UnlockConditionSchema.nullable(),
+  cookware: NullableTextSchema,
   tastes: TastesSchema.nullable(),
-  slots: RecipeSlotSchema.array().nullable(),
+  slots: RecipeSlotSchema.array(),
 });
-export const CraftingCollectionSchema = z.strictObject({
-  id: ItemIdSchema,
-  name: z.string().min(1),
-  acquisitionText: text,
+export const ItemAmountSchema = z.strictObject({ itemId: IdSchema, quantity: IdSchema });
+export const CraftingRecipeSchema = z.strictObject({
+  id: IdSchema,
+  materials: ItemAmountSchema.array().min(1).nullable(),
 });
+
+export type RecipeSlot = z.infer<typeof RecipeSlotSchema>;
+export type UnlockCondition = z.infer<typeof UnlockConditionSchema>;
 export type CookingRecipe = z.infer<typeof CookingRecipeSchema>;
+export type CraftingRecipe = z.infer<typeof CraftingRecipeSchema>;
+export type ItemAmount = z.infer<typeof ItemAmountSchema>;
+
+export function ingredientExpressionTagIds(expression: IngredientExpression): number[] {
+  return expression.kind === "tag"
+    ? [expression.tagId]
+    : expression.terms.flatMap(ingredientExpressionTagIds);
+}

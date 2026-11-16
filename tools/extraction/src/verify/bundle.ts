@@ -23,8 +23,6 @@ import { highestResolutionImages } from "../extraction/images/select.ts";
 import { verifyNeighborClothing, verifyNeighbors } from "../extraction/neighbors/verify.ts";
 import { verifyNeighborImages } from "./neighbor-images.ts";
 import { neighborInput } from "../extraction/neighbors/build.ts";
-import { verifyIslandBundle } from "../extraction/islands/verify-bundle.ts";
-import { verifyIslandImages } from "../extraction/islands/verify-images.ts";
 
 export interface BundleVerification {
   reportRoot: string;
@@ -52,7 +50,6 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
     readJson(path.join(staging, "neighbor-clothing.json")),
     neighborInput(bundle),
   );
-  const islands = verifyIslandBundle(bundle, staging);
   const cookingAudit = readJson<{
     counts: Record<string, number>;
     categories: {
@@ -188,7 +185,6 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
               rawExpression: slot.rawExpression,
               expression: slot.expression,
               itemIds: slot.itemIds,
-              quantity: null,
             }))
           : null,
       },
@@ -257,7 +253,6 @@ export async function verifyBundle(request: BundleVerification): Promise<void> {
   const used = new Set(all.map((r) => r.image).filter((image): image is string => Boolean(image)));
   for (const image of request.extraImages ?? []) used.add(image);
   await verifyNeighborImages(neighbors, bundle);
-  await verifyIslandImages(islands, bundle);
   for (const image of used)
     PNG.sync.read(fs.readFileSync(within(bundle, image)), { checkCRC: true });
   const proofs = readJson<EvidenceRecord[]>(path.join(reportRoot, "evidence/field-evidence.json"));

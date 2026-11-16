@@ -1,4 +1,4 @@
-import type { RecordType, Recipe } from "./schema.ts";
+import type { RecordType, RecipeSlot } from "./schema.ts";
 
 export interface WorkOptions {
   work: string;
@@ -79,7 +79,7 @@ export interface TextEntry {
 export interface TextMap {
   byHash: Record<number, TextEntry>;
 }
-export type FieldValue = string | number | number[] | Recipe | null;
+export type FieldValue = string | number | number[] | { slots: RecipeSlot[] | null } | null;
 export interface TableEvidence {
   table: number;
   field: number | number[];

@@ -16,10 +16,11 @@ import { buildCookingAudit } from "./recipes.ts";
 export async function structure(options: WorkOptions): Promise<void> {
   const context = createContentContext(options.work);
   const content = emptyCatalog(catalogSource);
-  content.cookingRecipes = readCookingRecipes(context);
+  const cookingRecipes = readCookingRecipes(context);
+  content.cookingRecipes = cookingRecipes;
   writeJson(
     path.join(options.work, "cooking-field-evidence.json"),
-    cookingEvidence(context, content.cookingRecipes),
+    cookingEvidence(context, cookingRecipes),
   );
   content.ingredientCategories = context.ingredientCategoryBuild.categories;
   const proofs: EvidenceRecord[] = [];

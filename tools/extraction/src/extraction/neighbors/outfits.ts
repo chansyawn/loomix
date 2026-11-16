@@ -1,10 +1,8 @@
 import { profile } from "../../profile.ts";
 import type { Tables } from "../decode/tables.ts";
-import { splitTags } from "../content/model.ts";
 import type { TableRow } from "../types.ts";
 import { assertLayout, requiredId, requiredText } from "./fields.ts";
 import type { NeighborEvidence, NeighborExclusion, NeighborOutfit } from "./types.ts";
-import { uniqueText } from "./normalize.ts";
 
 const tokenItemId = 200014;
 
@@ -191,12 +189,7 @@ function readOffers(
     if (tables.uint(row, 11) !== tokenItemId) continue;
     const configuredPrice = tables.uint(row, 10);
     if (configuredPrice === null) throw new Error(`Missing neighbor outfit price ${outfitId}`);
-    const offer = {
-      id: requiredId(tables, row, 0),
-      goodsGroupId: requiredId(tables, row, 1),
-      configuredPrice,
-      currencyItemId: tokenItemId,
-    };
+    const offer = { id: requiredId(tables, row, 0), configuredPrice };
     if (seenIds.has(offer.id)) throw new Error(`Duplicate neighbor outfit offer ${offer.id}`);
     seenIds.add(offer.id);
     const offers = offersByItem.get(outfitId) ?? [];
@@ -228,13 +221,11 @@ function buildOutfit(
   const slotNameZh = slot.name;
   const imagePath = tables.string(display, 5) ?? tables.string(display, 4);
   if (!imagePath) throw new Error(`Missing neighbor outfit icon ${id}`);
-  const modelPaths = {
-    small: tables.string(row, 7),
-    medium: tables.string(row, 8),
-    big: tables.string(row, 9),
-  };
-  if (!modelPaths.small && !modelPaths.medium && !modelPaths.big)
-    throw new Error(`Missing neighbor outfit models ${id}`);
+  // 只有配置了模型的体型才能穿戴该服饰。
+  const bodyTypes = (["small", "medium", "big"] as const).filter((_, index) =>
+    Boolean(tables.string(row, 7 + index)),
+  );
+  if (!bodyTypes.length) throw new Error(`Missing neighbor outfit models ${id}`);
 
   addEvidence(records, id, tables, row, [0, 1, 2, 7, 8, 9, 11]);
   addEvidence(records, id, tables, slot.row, [0, 4]);
@@ -251,15 +242,9 @@ function buildOutfit(
     nameZh,
     relationship,
     neighborId,
-    slotCode,
     slotNameZh,
-    modelPaths,
+    bodyTypes,
     playerItemId,
-    playerItemNameZh: playerItem ? tables.text(playerItem, 1) : null,
-    colors: uniqueText(splitTags(tables.string(item, 9))),
-    materials: uniqueText(splitTags(tables.string(item, 11))),
-    styles: uniqueText(splitTags(tables.string(item, 12))),
-    specialTags: uniqueText(splitTags(tables.string(item, 13))),
     imagePath,
     descriptionZh: tables.text(display, 27),
     offers: offers.map(({ offer }) => offer),

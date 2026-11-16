@@ -40,7 +40,6 @@ export function verifyPlantings(catalog: CollectionObservations, bundle: string)
     expected.push({
       id,
       kind: "crop",
-      maturityDays: null,
       cycleMode: tables.string(row, 3),
       initialStageIds,
       regrowthStageIds,
@@ -98,7 +97,7 @@ export function verifyPlantings(catalog: CollectionObservations, bundle: string)
     }
     if (!stages.some((stage) => stage.plantId !== null)) continue;
     seedIds.add(id);
-    expected.push({ id, kind: "staged", maturityDays: null, stages });
+    expected.push({ id, kind: "staged", stages });
   }
   expected.sort((a, b) => a.id - b.id);
   assert.deepEqual(

@@ -1,4 +1,3 @@
-import type { IndexedAsset } from "../types.ts";
 import type { Tables } from "../decode/tables.ts";
 
 import type { NeighborDatabase } from "./schema.ts";
@@ -7,11 +6,6 @@ export type NeighborSource = NeighborDatabase["source"];
 export type NeighborRecord = NeighborDatabase["neighbors"][number];
 export type NeighborStar = NeighborDatabase["stars"][number];
 export type NeighborStoryChapter = NeighborDatabase["stories"][number];
-export type NeighborTravelReaction = NeighborDatabase["travelReactions"][number];
-export type NeighborEncounterIsland = NeighborDatabase["encounterIslands"][number];
-export type NeighborFriendshipRule = NeighborDatabase["friendshipRules"][number];
-export type NeighborEventTag = NeighborDatabase["eventTags"][number];
-export type NeighborAssetRef = NeighborDatabase["assets"][number];
 export type NeighborGiftPreference = NeighborDatabase["giftPreferences"][number];
 export type NeighborOutfit = import("./schema.ts").NeighborOutfit;
 export type NeighborBodyType = NonNullable<NeighborRecord["bodyType"]>;
@@ -22,23 +16,17 @@ export type GiftPreferenceLevel = "love" | "favor" | "dislike";
 export interface NeighborExtractionInput {
   tables: Tables;
   source: NeighborSource;
-  assetIndex: readonly IndexedAsset[];
-  tagIndex: import("@loomix/schema/gameplay-tags").GameplayTagIndex;
+  tagIndex: import("../gameplay-tags/client.ts").ClientGameplayTagIndex;
 }
 
 export interface NeighborExtractionAudit {
-  schemaVersion: 1;
+  schemaVersion: 2;
   source: NeighborSource;
   counts: {
     neighbors: number;
     stars: number;
     stories: number;
     storyParagraphs: number;
-    travelReactions: number;
-    fallbackTravelReactions: number;
-    encounterIslands: number;
-    friendshipRules: number;
-    eventTags: number;
     giftPreferences: number;
     giftPreferenceItems: Record<GiftPreferenceLevel, number>;
     giftPreferenceTags: Record<GiftPreferenceLevel, number>;
@@ -47,26 +35,13 @@ export interface NeighborExtractionAudit {
     neighborSpecificOutfits: number;
     tokenPricedOutfits: number;
     tokenPricedOffers: number;
-    assets: number;
   };
   exclusions: NeighborExclusion[];
-  assetIndexEntries: number;
   records: NeighborEvidence[];
-  normalization: {
-    assetOccurrences: number;
-    uniqueAssetPaths: number;
-    assetCountsByKind: Record<string, number>;
-    indexedAssetPaths: number;
-    associationCounts: {
-      stars: number;
-      stories: number;
-      assets: number;
-    };
-  };
 }
 
 export interface NeighborExclusion {
-  kind: "npc" | "rule" | "asset" | "giftPreference" | "outfit" | "field" | "reaction";
+  kind: "npc" | "giftPreference" | "outfit";
   key: string;
   reason: string;
   sources: NeighborEvidenceSource[];

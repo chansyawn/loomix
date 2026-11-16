@@ -1,10 +1,12 @@
 import { z } from "zod";
-import { CookingRecipeSchema, createGrowthSchema, SeedDataSchema } from "@loomix/schema/catalog";
 import {
-  DropSchema as drop,
-  TradeSchema as trade,
-  AcquisitionSchema as acquisition,
-} from "@loomix/schema/catalog";
+  ObservedAcquisitionSchema as acquisition,
+  ObservedCookingRecipeSchema as CookingRecipeSchema,
+  ObservedDropSchema as drop,
+  ObservedTradeSchema as trade,
+  createObservedGrowthSchema,
+  createObservedSeedSchema,
+} from "../schemas/observed.ts";
 import { createCatalogSchema } from "../content/schema/catalog.ts";
 import { createObservedRecordSchema } from "../content/schema/features.ts";
 import { baseObservations, validateObservedRelations } from "./relations.ts";
@@ -67,8 +69,8 @@ export function createCollectionObservationsSchema(
 ) {
   const sourceSchema = createCatalogSchema(image);
   const collectionDetailSchema = createCollectionDetailSchema();
-  const seedSchema = SeedDataSchema.omit({ image: true }).extend({ image });
-  const growthSchema = createGrowthSchema(image);
+  const seedSchema = createObservedSeedSchema(image);
+  const growthSchema = createObservedGrowthSchema(image);
   return z
     .strictObject({
       schemaVersion: z.literal(2),

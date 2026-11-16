@@ -21,15 +21,7 @@ function read(data: FixtureRows, finished: (cleanup: () => void) => void, ids = 
 test("仅保留正式产物需要的有效制作配方，不准入卡片或材料", ({ onTestFinished }) => {
   const data = read(rows(), onTestFinished);
   expect(data.recipes).toEqual([
-    {
-      id: 100,
-      cardItemId: 100,
-      collectionId: null,
-      productId: 200,
-      quantity: 2,
-      materials: [{ itemId: 300, quantity: 5 }],
-      unresolvedReason: null,
-    },
+    { id: 100, productId: 200, materials: [{ itemId: 300, quantity: 5 }] },
   ]);
   expect(data.audit.find((row) => row.id === 101)?.disposition).toBe("orphan_card");
   expect(data).not.toHaveProperty("cards");
@@ -40,10 +32,7 @@ test("空材料保持未知，不完整、重复和不存在的材料拒绝交�
   const empty = rows();
   empty[568][0][12] = null;
   empty[568][0][13] = null;
-  expect(read(empty, onTestFinished).recipes[0]).toMatchObject({
-    materials: null,
-    unresolvedReason: "material_slots_absent_semantics_unconfirmed",
-  });
+  expect(read(empty, onTestFinished).recipes[0]).toMatchObject({ materials: null });
   for (const kind of ["missing", "duplicate", "unknown"]) {
     const invalid = rows();
     if (kind === "missing") invalid[568][0][13] = null;

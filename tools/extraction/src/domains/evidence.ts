@@ -1,4 +1,4 @@
-import { validateDomainEvidence } from "./validate-evidence.ts";
+import { evidenceEntity, evidenceField, validateDomainEvidence } from "./validate-evidence.ts";
 import { metadataEvidence } from "./metadata-evidence.ts";
 import { plantingDomainEvidence } from "../extraction/plants/evidence.ts";
 import path from "node:path";
@@ -7,19 +7,28 @@ import type { EvidenceSource, FieldEvidence } from "../extraction/evidence/domai
 import type { Dataset } from "@loomix/schema/dataset";
 import type { FieldEvidence as ObservedFieldEvidence } from "../extraction/evidence/schema.ts";
 import type { CollectionEvidence } from "../extraction/collection/evidence.ts";
-import type { RecordEvidence } from "../extraction/content/admissions.ts";
 import { readJson, writeJson } from "../workflow/json.ts";
 
+// 观察字段到发布字段的映射；未发布的观察字段只保留在提取审计中。
 const fields: Record<string, string> = {
   "attributes.type": "furnitureCategory",
-  subcategory: "displayCategory",
-  "attributes.originGalaxy": "origins",
-  "attributes.effects": "effectsText",
+  "attributes.size": "size",
+  "attributes.effects": "strength",
+  "attributes.scientificName": "scientificName",
+  subcategory: "category",
   "detail.treeDrops": "drops",
   "detail.creatureSize": "size",
-  "detail.creatureGrades": "grades",
   "detail.dishEffects": "effects",
   "detail.acquisitionConditions": "acquisition",
+  "detail.flowerColors": "flowerColors",
+};
+const itemKinds: Record<string, string> = {
+  furniture: "furniture",
+  clothing: "clothing",
+  creatures: "creature",
+  plants: "plant",
+  dishes: "dish",
+  miscellaneous: "material",
 };
 
 interface AuditRecord {
@@ -33,44 +42,74 @@ interface AuditRecord {
     | { kind: "asset"; file: string; pathId: string };
 }
 
+const tableSource = (source: {
+  file: string;
+  table: number;
+  rowOffset: number;
+  fields: number[];
+}): EvidenceSource => ({
+  kind: "table",
+  file: source.file,
+  table: source.table,
+  rowOffset: source.rowOffset,
+  fields: source.fields,
+});
+const auditSource = (source: AuditRecord["source"]): EvidenceSource =>
+  source.kind === "asset" ? source : tableSource(source);
+
+function classificationOf(group: string): { collection: string; kind: string | null } {
+  const [category, kind] = group.split(".");
+  if (kind === "set" || kind === "series") return { collection: "catalog.collections", kind: null };
+  if (kind === "appearance") return { collection: "catalog.items", kind: "appearance" };
+  return { collection: "catalog.items", kind: itemKinds[category!] ?? category! };
+}
+
+// 友邻审计记录按友邻实体归并，子数据的路径转为友邻上的字段路径。
+function neighborTarget(proof: AuditRecord): { id: string; fieldPath: string } | null {
+  const [owner] = String(proof.key).split(":");
+  switch (proof.collection) {
+    case "neighbors":
+      return { id: String(proof.key), fieldPath: proof.fieldPath ?? "$" };
+    case "stars":
+      return { id: owner!, fieldPath: "stars" };
+    case "stories":
+      return { id: owner!, fieldPath: "stories" };
+    case "giftPreferences":
+      return { id: owner!, fieldPath: "gifts" };
+    default:
+      return null;
+  }
+}
+
 export function buildDomainEvidence(
   dataset: Dataset,
   observed: ObservedFieldEvidence[],
   details: CollectionEvidence[],
-  _admissions: RecordEvidence[],
-  audits: { domain: "neighbors" | "world"; records: AuditRecord[] }[],
+  neighborAudit: AuditRecord[],
 ) {
   const records = new Map<string, FieldEvidence>();
-  const collection = (_id: number) => "catalog.records";
-  const entities = new Map<string, object>(
-    (["records", "references", "growths"] as const).flatMap((name) =>
-      dataset.catalog[name].map((entity) => [`catalog.${name}:${entity.id}`, entity] as const),
-    ),
-  );
   const add = (proof: FieldEvidence) => {
     const key = `${proof.entity.collection}:${proof.entity.id}:${proof.fieldPath}`;
     const previous = records.get(key);
-    if (previous && previous.status === proof.status) {
-      proof.sources = [
-        ...new Map(
-          [...previous.sources, ...proof.sources].map((source) => [JSON.stringify(source), source]),
-        ).values(),
-      ];
-    }
+    if (previous && previous.status === proof.status)
+      proof.sources = [...previous.sources, ...proof.sources];
     records.set(key, proof);
+  };
+  const published = (collection: string, id: string | number, fieldPath: string) => {
+    const entity = evidenceEntity(dataset, collection, id);
+    return entity && evidenceField(entity, fieldPath).found ? entity : undefined;
   };
   for (const proof of observed) {
     if (proof.field === "encyclopediaEntry") continue;
-    const sources: EvidenceSource[] = proof.sources.flatMap((source): EvidenceSource[] => {
+    const sources = proof.sources.flatMap((source): EvidenceSource[] => {
       if (source.table !== undefined && source.rowOffset !== undefined && source.fields?.length)
         return [
-          {
-            kind: "table",
+          tableSource({
             file: source.file,
             table: source.table,
             rowOffset: source.rowOffset,
             fields: source.fields,
-          },
+          }),
         ];
       if (source.pathId) return [{ kind: "asset", file: source.file, pathId: source.pathId }];
       if (source.pointer && source.sha256)
@@ -79,25 +118,19 @@ export function buildDomainEvidence(
         ];
       return [];
     });
+    const target = classificationOf(proof.group);
     const classification = proof.field === "category" || proof.field === "kind";
     const fieldPath = classification
-      ? "kind"
+      ? target.kind === null
+        ? "memberKind"
+        : "kind"
       : (fields[proof.field] ?? proof.field.replace(/^attributes\./, ""));
-    const entity = entities.get(`${collection(proof.id)}:${proof.id}`);
-    if (!entity || !(fieldPath in entity)) continue;
-    if (classification) {
-      const expected = proof.group.endsWith(".item")
-        ? ({ creatures: "creature", plants: "plant", dishes: "dish", miscellaneous: "material" }[
-            proof.group.split(".")[0]!
-          ] ?? proof.group.split(".")[0])
-        : proof.group === "clothing.appearance"
-          ? "appearance"
-          : proof.group;
-      if (Reflect.get(entity, "kind") !== expected)
-        throw new Error(`Classification evidence mismatch ${proof.id}: ${proof.group}`);
-    }
+    const entity = published(target.collection, proof.id, fieldPath);
+    if (!entity) continue;
+    if (target.kind !== null && classification && Reflect.get(entity, "kind") !== target.kind)
+      throw new Error(`Classification evidence mismatch ${proof.id}: ${proof.group}`);
     add({
-      entity: { collection: collection(proof.id), id: proof.id },
+      entity: { collection: target.collection, id: proof.id },
       fieldPath,
       status: proof.status === "confirmed" ? "confirmed" : "unresolved",
       sources,
@@ -108,127 +141,73 @@ export function buildDomainEvidence(
     });
   }
   for (const proof of details) {
-    if (proof.field === "detail.id") continue;
-    const owner = collection(proof.id);
+    if (proof.field === "detail.id" || proof.owner !== "item") continue;
     const fieldPath = fields[proof.field] ?? proof.field.replace(/^attributes\.|^detail\./, "");
-    // 不适用的来源观测记录不会在领域实体上创建字段。
-    const entity = entities.get(`${owner}:${proof.id}`);
-    if (
-      fieldPath === "acquisition" &&
-      entity &&
-      ("memberIds" in entity || ("kind" in entity && entity.kind === "appearance"))
-    )
-      continue;
-    const sources: EvidenceSource[] = proof.sources.map(({ file, table, rowOffset, fields }) => ({
-      kind: "table",
-      file,
-      table,
-      rowOffset,
-      fields,
-    }));
-    if (!entity || !(fieldPath in entity)) continue;
+    const entity = published("catalog.items", proof.id, fieldPath);
+    if (!entity) continue;
+    // 外观的获取来源由元数据证据覆盖，详情观察不适用于外观。
+    if (fieldPath === "acquisition" && Reflect.get(entity, "kind") === "appearance") continue;
     add({
-      entity: { collection: owner, id: proof.id },
+      entity: { collection: "catalog.items", id: proof.id },
       fieldPath,
       status: proof.status === "confirmed" ? "confirmed" : "unresolved",
-      sources,
+      sources: proof.sources.map(tableSource),
       ruleId: `client.${proof.owner}.${proof.field}`,
       reasonCode: proof.reason ?? null,
     });
   }
-  for (const { domain, records: audit } of audits) {
-    for (const proof of audit) {
-      if (domain === "neighbors" && proof.collection === "outfits") {
-        const recordId = Number(proof.key);
-        if (dataset.catalog.records.some((record) => record.id === recordId))
-          add({
-            entity: { collection: "catalog.records", id: recordId },
-            fieldPath: "$",
-            status: "confirmed",
-            sources: [
-              proof.source.kind === "asset" ? proof.source : { kind: "table", ...proof.source },
-            ],
-            ruleId: "client.catalog.neighborClothing",
-            reasonCode: null,
-          });
-        continue;
-      }
-      const name = proof.collection === "assets" ? "resources" : proof.collection;
-      const values: unknown = Reflect.get(dataset[domain], name);
-      if (!Array.isArray(values)) continue;
-      let key = proof.key;
-      if (name === "stories") key = String(key).split(":").slice(0, 2).join(":");
-      const entity: unknown = values.find((value: unknown) => {
-        if (!value || typeof value !== "object") return false;
-        return ["key", "id", "path", "itemId"].some(
-          (field) => String(Reflect.get(value, field)) === String(key),
-        );
-      });
-      if (!entity) continue;
-      const fieldValue = proof.fieldPath
-        ?.split(".")
-        .reduce<unknown>(
-          (value, key) =>
-            value && typeof value === "object" ? Reflect.get(value, key) : undefined,
-          entity,
-        );
-      const missingImage =
-        proof.status === "confirmed" &&
-        /(?:image|icon)$/.test(proof.fieldPath ?? "") &&
-        fieldValue === null;
-      add({
-        entity: { collection: `${domain}.${name}`, id: key },
-        fieldPath: proof.fieldPath ?? "$",
-        status: missingImage ? "unresolved" : (proof.status ?? "confirmed"),
-        sources: [
-          proof.source.kind === "asset" ? proof.source : { kind: "table", ...proof.source },
-        ],
-        ruleId: `client.${domain}.${name}`,
-        reasonCode: missingImage ? "configured_image_not_exported" : (proof.reasonCode ?? null),
-      });
+  for (const proof of neighborAudit) {
+    if (proof.collection === "outfits") {
+      const id = Number(proof.key);
+      if (published("catalog.items", id, "$"))
+        add({
+          entity: { collection: "catalog.items", id },
+          fieldPath: "$",
+          status: "confirmed",
+          sources: [auditSource(proof.source)],
+          ruleId: "client.catalog.neighborClothing",
+          reasonCode: null,
+        });
+      continue;
     }
+    const target = neighborTarget(proof);
+    if (!target) continue;
+    const entity = published("neighbors.neighbors", target.id, target.fieldPath);
+    if (!entity) continue;
+    const value = evidenceField(entity, target.fieldPath).value;
+    const missingImage =
+      proof.status === "confirmed" && target.fieldPath.endsWith("image") && value === null;
+    add({
+      entity: { collection: "neighbors.neighbors", id: target.id },
+      fieldPath: target.fieldPath,
+      status: missingImage ? "unresolved" : (proof.status ?? "confirmed"),
+      sources: [auditSource(proof.source)],
+      ruleId: `client.neighbors.${proof.collection}`,
+      reasonCode: missingImage ? "configured_image_not_exported" : (proof.reasonCode ?? null),
+    });
   }
-  return EvidenceSchema.parse({
-    ...dataset.context,
-    kind: "evidence",
-    fields: [...records.values()].sort((a, b) =>
-      `${a.entity.collection}:${a.entity.id}:${a.fieldPath}`.localeCompare(
-        `${b.entity.collection}:${b.entity.id}:${b.fieldPath}`,
-        "en",
-      ),
-    ),
-  });
+  return [...records.values()];
 }
 
 export function readDomainEvidence(work: string, dataset: Dataset) {
-  const evidence = buildDomainEvidence(
-    dataset,
-    [
-      ...readJson<ObservedFieldEvidence[]>(path.join(work, "evidence/field-evidence.json")),
-      ...readJson<ObservedFieldEvidence[]>(path.join(work, "evidence/missing-fields.json")),
-    ],
-    readJson<CollectionEvidence[]>(path.join(work, "collection-evidence.json")),
-    readJson<RecordEvidence[]>(path.join(work, "record-evidence.json")),
-    [
-      {
-        domain: "neighbors",
-        records: readJson<{ records: AuditRecord[] }>(path.join(work, "neighbor-audit.json"))
-          .records,
-      },
-      {
-        domain: "world",
-        records: readJson<{ records: AuditRecord[] }>(path.join(work, "island-audit.json")).records,
-      },
-    ],
-  );
-  evidence.fields.push(
+  const fields = [
+    ...buildDomainEvidence(
+      dataset,
+      [
+        ...readJson<ObservedFieldEvidence[]>(path.join(work, "evidence/field-evidence.json")),
+        ...readJson<ObservedFieldEvidence[]>(path.join(work, "evidence/missing-fields.json")),
+      ],
+      readJson<CollectionEvidence[]>(path.join(work, "collection-evidence.json")),
+      readJson<{ records: AuditRecord[] }>(path.join(work, "neighbor-audit.json")).records,
+    ),
     ...readJson<FieldEvidence[]>(path.join(work, "cooking-field-evidence.json")),
-  );
-  evidence.fields.push(...metadataEvidence(work, dataset));
-  evidence.fields.push(...plantingDomainEvidence(work, dataset));
+    ...metadataEvidence(work, dataset),
+    ...plantingDomainEvidence(work, dataset),
+  ];
   return EvidenceSchema.parse({
-    ...evidence,
-    fields: validateDomainEvidence(dataset, evidence.fields),
+    ...dataset.context,
+    kind: "evidence",
+    fields: validateDomainEvidence(dataset, fields),
   });
 }
 

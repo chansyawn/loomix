@@ -77,24 +77,14 @@ test("extracts confirmed outfits, explicit counterparts, configured offers and c
   );
   const matching = clothing[1]!;
   assert.equal(matching.playerItemId, 60001);
-  assert.equal(matching.playerItemNameZh, "玩家同款帽子");
   assert.equal(matching.slotNameZh, "头戴物");
-  assert.deepEqual(matching.colors, ["白色", "蓝色"]);
-  assert.deepEqual(matching.materials, ["毛线"]);
-  assert.deepEqual(matching.styles, ["休闲"]);
-  assert.deepEqual(matching.modelPaths, {
-    small: "NpcOutfits/Small/1160001",
-    medium: "NpcOutfits/Medium/1160001",
-    big: "NpcOutfits/Big/1160001",
-  });
+  assert.deepEqual(matching.bodyTypes, ["small", "medium", "big"]);
   assert.deepEqual(matching.offers, [
-    { id: 50001, goodsGroupId: 500, configuredPrice: 120, currencyItemId: 200014 },
-    { id: 50601, goodsGroupId: 506, configuredPrice: 120, currencyItemId: 200014 },
+    { id: 50001, configuredPrice: 120 },
+    { id: 50601, configuredPrice: 120 },
   ]);
   const native = clothing[0]!;
   assert.equal(native.playerItemId, 60003);
-  assert.equal(native.playerItemNameZh, null);
-  assert.deepEqual(native.specialTags, ["友邻专属"]);
   assert.deepEqual(native.offers, []);
   assert.deepEqual(
     audit.exclusions
@@ -130,7 +120,7 @@ test("extracts confirmed outfits, explicit counterparts, configured offers and c
   );
   verifyNeighbors(database, fixture.input);
   verifyNeighborClothing(
-    { schemaVersion: 1, source: database.source, items: clothing },
+    { schemaVersion: 2, source: database.source, items: clothing },
     fixture.input,
   );
 });
@@ -229,7 +219,7 @@ test("outfit validation and frozen-source verification reject incomplete or tamp
   context.onTestFinished(fixture.cleanup);
   const bundle = extractNeighborBundle(fixture.input);
   const clothingData = {
-    schemaVersion: 1 as const,
+    schemaVersion: 2 as const,
     source: bundle.database.source,
     items: bundle.clothing,
   };
@@ -244,7 +234,7 @@ test("outfit validation and frozen-source verification reject incomplete or tamp
       value.items[0]!.neighborId = 999;
     },
     (value: typeof clothingData) => {
-      value.items[0]!.modelPaths = { small: null, medium: null, big: null };
+      value.items[0]!.bodyTypes = [];
     },
     (value: typeof clothingData) => {
       value.items.push(value.items[0]!);

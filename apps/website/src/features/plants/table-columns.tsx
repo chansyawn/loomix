@@ -21,7 +21,7 @@ import { PlantSeedLinks, SeedNameLink } from "./seed-info";
 export type PlantsRow = PlantItem | PlantSeries | PlantSeed;
 
 function isSeedRow(record: PlantsRow): record is PlantSeed {
-  return "growthId" in record;
+  return "growth" in record;
 }
 
 function NameLink({ record }: { record: PlantsRow }) {
@@ -207,9 +207,6 @@ export function plantsTableColumns(
     ),
     textColumn("originGalaxy", "原产星系", 160, (record) =>
       "category" in record ? record.originGalaxy : null,
-    ),
-    textColumn("maturityPeriod", "成熟周期", 144, (record) =>
-      "category" in record ? record.maturityPeriod : null,
     ),
     textColumn("harvestCount", "收获茬数", 112, (record) =>
       "category" in record ? record.harvestCount : null,

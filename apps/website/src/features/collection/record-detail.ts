@@ -1,5 +1,6 @@
 import { notFound } from "@tanstack/react-router";
-import type { CollectionCatalog } from "./catalog";
+import type { ItemOf } from "@loomix/schema/catalog";
+import type { CollectionCatalog, OverviewRecord } from "./catalog";
 import { furnitureDetail } from "../furniture/detail";
 import { clothingDetail } from "../clothing/detail";
 import { creaturesDetail } from "../creatures/detail";
@@ -8,74 +9,67 @@ import { dishesDetail } from "../dishes/detail";
 import { buildMiscellanyDetail } from "../miscellany/detail";
 import { buildIngredientsData, ingredientUsage } from "../ingredients/model";
 import { neighborClothingDetail } from "../neighbor-clothing/detail";
-import type { OverviewRecord } from "./catalog";
-import type { NeighborClothing } from "@loomix/schema/catalog";
 
 export function parseRecordId(value: string) {
   const id = Number(value);
   return /^[1-9]\d*$/.test(value) && Number.isSafeInteger(id) ? id : null;
 }
+
+// 合集按成员种类进入对应图鉴的合集视图。
+function detailKind(row: OverviewRecord) {
+  const { record } = row;
+  return "memberKind" in record
+    ? ({ kind: record.memberKind, collection: true } as const)
+    : ({ kind: record.kind, collection: false } as const);
+}
+
 export function collectionDetail(data: CollectionCatalog, id: number, neighborName?: string) {
-  const record = data.byId.get(id);
-  if (!record) throw notFound();
+  const row = data.byId.get(id);
+  if (!row) throw notFound();
   const view = data.view;
-  switch (record.record.kind) {
+  const { kind, collection } = detailKind(row);
+  switch (kind) {
     case "furniture":
-    case "furniture.set":
       return {
         category: "furniture" as const,
         detail: furnitureDetail(
           { ...view.furniture, ingredientItemsById: view.ingredientItemsById },
-          record.record.kind === "furniture" ? "items" : "sets",
+          collection ? "sets" : "items",
           id,
         ),
       };
     case "clothing":
-    case "clothing.set":
     case "appearance":
       return {
         category: "clothing" as const,
         detail: clothingDetail(
           view.clothing,
-          record.record.kind === "appearance"
-            ? "appearances"
-            : record.record.kind === "clothing"
-              ? "items"
-              : "sets",
+          collection ? "sets" : kind === "appearance" ? "appearances" : "items",
           id,
         ),
       };
     case "creature":
-    case "creatures.series":
       return {
         category: "creatures" as const,
         detail: creaturesDetail(
           view.creatures,
-          record.record.kind === "creature" ? "items" : "series",
+          collection ? "series" : "items",
           id,
-          record.record.kind === "creature"
-            ? ingredientUsage(buildIngredientsData(view), id)
-            : null,
+          collection ? null : ingredientUsage(buildIngredientsData(view), id),
         ),
       };
     case "plant":
     case "seed":
-    case "plants.series":
       return {
         category: "plants" as const,
         detail: plantsDetail(
           view.plants,
-          record.record.kind === "plant"
-            ? "items"
-            : record.record.kind === "seed"
-              ? "seeds"
-              : "series",
+          collection ? "series" : kind === "seed" ? "seeds" : "items",
           id,
-          record.record.kind === "plant" ? buildIngredientsData(view) : null,
+          kind === "plant" && !collection ? buildIngredientsData(view) : null,
         ),
       };
     case "dish":
-    case "dishes.series":
       return {
         category: "dishes" as const,
         detail: dishesDetail(
@@ -84,7 +78,7 @@ export function collectionDetail(data: CollectionCatalog, id: number, neighborNa
             ingredientItemsById: view.ingredientItemsById,
             ingredientTagSource: view.ingredientTagSource,
           },
-          record.record.kind === "dish" ? "items" : "series",
+          collection ? "series" : "items",
           id,
         ),
       };
@@ -94,7 +88,7 @@ export function collectionDetail(data: CollectionCatalog, id: number, neighborNa
       return {
         category: "neighborClothing" as const,
         detail: neighborClothingDetail(
-          record as OverviewRecord & { record: NeighborClothing },
+          row as OverviewRecord & { record: ItemOf<"neighborClothing"> },
           neighborName,
         ),
       };

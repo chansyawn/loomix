@@ -65,7 +65,7 @@ export function verifyProofSources(proof: CollectionEvidence, tables: Tables): v
     }
   } else {
     add(122, (row) => tables.uint(row, 4) === proof.id, [0, 2, 4, 15]);
-    if (proof.field === "difficultyRequirement") {
+    if (proof.field === "unlockCondition") {
       const ids = new Set(rows.map(({ row }) => tables.uint(row, 2)));
       add(121, (row) => ids.has(tables.id(row)), [0, 2]);
     }

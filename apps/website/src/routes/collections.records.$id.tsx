@@ -16,10 +16,12 @@ export const Route = createFileRoute("/collections/records/$id")({
     const data = await loadCollectionCatalog(load);
     const row = data.byId.get(id);
     if (!row) throw notFound();
-    const neighborId = row.record.kind === "neighborClothing" ? row.record.neighborId : null;
+    const { record } = row;
+    const neighborId =
+      "kind" in record && record.kind === "neighborClothing" ? record.neighborId : null;
     const neighborName =
       neighborId !== null
-        ? parseNeighbors(await load("neighbors", parseNeighbors)).neighbors.find(
+        ? (await load("neighbors", parseNeighbors)).neighbors.find(
             (neighbor) => neighbor.id === neighborId,
           )?.name
         : undefined;

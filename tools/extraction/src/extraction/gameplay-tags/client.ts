@@ -1,6 +1,7 @@
 import path from "node:path";
 import { createGameplayTagIndex, GameplayTagSchema } from "@loomix/schema/gameplay-tags";
-import type { GameplayTag } from "@loomix/schema/gameplay-tags";
+import type { GameplayTagIndex } from "@loomix/schema/gameplay-tags";
+import { z } from "zod";
 import type { TagNode, BinDataAsset } from "../types.ts";
 import type { TagDisplay } from "../decode/bindata.ts";
 import { parseTagBinData } from "../decode/bindata.ts";
@@ -10,15 +11,22 @@ import { readJson } from "../../workflow/json.ts";
 import { profile } from "../../profile.ts";
 import type { EvidenceSource } from "../evidence/domain-schema.ts";
 
+// 提取侧额外保留客户端枚举名，用于解析生态展示键；发布契约不包含该字段。
+export const ClientGameplayTagSchema = GameplayTagSchema.extend({
+  enumName: z.string().min(1).nullable(),
+});
+export type ClientGameplayTag = z.infer<typeof ClientGameplayTagSchema>;
+export type ClientGameplayTagIndex = GameplayTagIndex<ClientGameplayTag>;
+
 export function createClientGameplayTags(
   tree: Record<number, TagNode>,
   display: TagDisplay,
   tables: Pick<Tables, "key">,
 ) {
-  const tags: GameplayTag[] = Object.entries(tree)
+  const tags: ClientGameplayTag[] = Object.entries(tree)
     .map(([key, node]) => {
       if (String(node.TagId) !== key) throw new Error(`GameplayTag key mismatch ${key}`);
-      return GameplayTagSchema.parse({
+      return ClientGameplayTagSchema.parse({
         id: node.TagId,
         internalName: node.TagName,
         enumName: node.EnumName ?? null,

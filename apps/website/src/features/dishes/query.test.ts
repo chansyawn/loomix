@@ -26,12 +26,12 @@ function item(id: number, fields: Partial<DishItem> = {}): DishItem {
     difficulty: null,
     galaxyFlavor: null,
     cookware: null,
-    effectsText: null,
+    strength: null,
     effects: null,
     tastes: null,
-    difficultyRequirement: null,
+    unlockCondition: null,
     acquisition: null,
-    recipe: null,
+    slots: [],
     ...fields,
   };
 }
@@ -43,7 +43,7 @@ const items = [
     difficulty: "中等",
     galaxyFlavor: "星屿，禾夏",
     cookware: "烤架",
-    effectsText: "耐力上限提升 5 点",
+    strength: 5,
     effects: [
       {
         effectId: 1,
@@ -55,11 +55,7 @@ const items = [
       },
     ],
     tastes: ["甜"],
-    difficultyRequirement: {
-      rawExpression: "unused",
-      condition: { kind: "chefLevelGreaterOrEqual", level: 5 },
-      unresolvedReason: null,
-    },
+    unlockCondition: { kind: "chefLevelGreaterOrEqual", level: 5 },
     acquisition: "烹饪",
   }),
   item(2, {
@@ -68,7 +64,6 @@ const items = [
     difficulty: "简单",
     galaxyFlavor: "禾夏",
     cookware: "蒸锅",
-    effectsText: "耐力上限提升 3 点",
     tastes: ["甜", "咸"],
     acquisition: "烹饪",
   }),
@@ -109,7 +104,6 @@ const emptyIngredients = (): IngredientsData => ({
   itemsById: new Map(),
   ingredientCandidatesByDishId: new Map(),
   dishesByItemId: new Map(),
-  unconfirmedRecipeCount: 0,
 });
 const browserData = (
   items: DishItem[],
@@ -146,7 +140,7 @@ describe("dish catalog", () => {
           tastes: ["甜"],
           galaxyFlavors: ["星屿"],
           cookwares: ["烤架"],
-          effects: ["耐力上限提升 5 点"],
+          effects: ["增加 5 力气"],
           qualities: ["2"],
           series: ["100"],
         }).rows,
@@ -234,7 +228,7 @@ describe("dish catalog", () => {
     };
     const search = (patch: Partial<ViewQuery>, q = "") =>
       queryDishes(data, "items", { ...emptyQuery(), q, ...patch }).rows;
-    expect(ids(search({ ingredientCategories: ["11"] }))).toEqual([100, 102, 109]);
+    expect(ids(search({ ingredientCategories: ["11"] }))).toEqual([100, 102]);
     expect(ids(search({ ingredientCategories: ["13", "12"] }))).toEqual([101, 102]);
     expect(ids(search({ ingredientCategories: ["13"], ingredientQualities: ["31"] }))).toEqual([
       101,
@@ -254,9 +248,10 @@ describe("dish catalog", () => {
 
   it("does not combine dimensions across separate recipe slots", () => {
     const { input } = ingredientsFixture();
-    const crossSlotDish = recipeFixture(110, {
-      slots: [recipeSlot(categoryExpression(13), [5]), recipeSlot(categoryExpression(31), [2])],
-    });
+    const crossSlotDish = recipeFixture(110, [
+      recipeSlot(categoryExpression(13), [5]),
+      recipeSlot(categoryExpression(31), [2]),
+    ]);
     const ingredients = buildIngredientsData({
       ...input,
       dishes: { ...input.dishes, items: [...input.dishes.items, crossSlotDish] },

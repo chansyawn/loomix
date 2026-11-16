@@ -4,7 +4,6 @@ import {
   type GameplayTagIndex,
   type GameplayTags,
 } from "@loomix/schema/gameplay-tags";
-import type { CatalogRecord } from "@loomix/schema/catalog";
 import type { FilterOption } from "./filter-types";
 
 export type TagMatchMode = "and" | "or";
@@ -49,7 +48,7 @@ export function resolveTagFilterLabel(tag: GameplayTag, policy?: TagLabelPolicy)
 export function createCollectionTagFilter(
   tags: GameplayTags["tags"],
   index: GameplayTagIndex,
-  records: readonly Pick<CatalogRecord, "id" | "tagIds">[],
+  records: readonly { id: number; tagIds: readonly number[] }[],
   policy?: TagTreePolicy,
 ) {
   const label = (tag: GameplayTag) => resolveTagFilterLabel(tag, policy);

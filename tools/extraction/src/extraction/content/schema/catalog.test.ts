@@ -6,7 +6,7 @@ import type { CatalogRecord, ItemRecord } from "./records.ts";
 function setRecipe(
   catalog: Catalog,
   productId: number,
-  recipe: { slots: import("@loomix/schema/catalog").Recipe["slots"] } | null,
+  recipe: { slots: Catalog["cookingRecipes"][number]["slots"] } | null,
 ) {
   catalog.cookingRecipes =
     recipe === null
@@ -15,9 +15,8 @@ function setRecipe(
           {
             id: 1000,
             productId,
-            recipeItemId: null,
             difficulty: null,
-            difficultyRequirement: null,
+            unlockCondition: null,
             cookware: null,
             tastes: null,
             ...recipe,
@@ -279,7 +278,6 @@ test("ingredient categories and recursive recipes validate catalog references", 
           ],
         },
         itemIds: [],
-        quantity: null,
       },
     ],
   });
@@ -302,9 +300,7 @@ test("ingredient and recipe references reject duplicates, invalid kinds, and unk
     { id: 101, tagName: "食材_A", name: "A", parentId: 100, itemIds: [] },
   ];
   setRecipe(catalog, dish.id, {
-    slots: [
-      { field: 20, rawExpression: "食材_A", expression: null, itemIds: null, quantity: null },
-    ],
+    slots: [{ field: 20, rawExpression: "食材_A", expression: null, itemIds: null }],
   });
   expect(parseCatalog(catalog)).toEqual(catalog);
 
@@ -326,7 +322,6 @@ test("ingredient and recipe references reject duplicates, invalid kinds, and unk
             rawExpression: "食材_A",
             expression: { kind: "tag", tagId: 999 },
             itemIds: [],
-            quantity: null,
           },
         ],
       });
@@ -343,7 +338,6 @@ test("ingredient and recipe references reject duplicates, invalid kinds, and unk
             rawExpression: "食材_A",
             expression: { kind: "tag", tagId: 101 },
             itemIds: null,
-            quantity: null,
           },
         ],
       });

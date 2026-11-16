@@ -10,7 +10,7 @@ import {
 } from "../ingredients/tag-filter";
 import type { IngredientTagCounts } from "../ingredients/tag-filter";
 import type { DishesBrowserData } from "./data";
-import { difficultyRequirementLabel, effectValues } from "./presentation";
+import { unlockConditionLabel, effectValues } from "./presentation";
 import { missing, ungrouped } from "./search";
 import type { FilterKey, DishView as View, ViewQuery } from "./search";
 
@@ -68,9 +68,7 @@ export function filterGroups(
     {
       key: "difficultyRequirements",
       label: "解锁条件",
-      options: options(
-        data.items.map((row) => difficultyRequirementLabel(row.difficultyRequirement)),
-      ),
+      options: options(data.items.map((row) => unlockConditionLabel(row.unlockCondition))),
       fullWidth: true,
     },
     {
@@ -135,9 +133,7 @@ export function queryDishes(data: DishesBrowserData, view: View, query: ViewQuer
     const effects = effectValues(row);
     return (
       matches(query.difficulties, [row.difficulty || missing]) &&
-      matches(query.difficultyRequirements, [
-        difficultyRequirementLabel(row.difficultyRequirement),
-      ]) &&
+      matches(query.difficultyRequirements, [unlockConditionLabel(row.unlockCondition)]) &&
       matches(query.tastes, row.tastes?.length ? row.tastes : [missing]) &&
       matches(query.galaxyFlavors, splitValues(row.galaxyFlavor)) &&
       matches(query.cookwares, [row.cookware || missing]) &&

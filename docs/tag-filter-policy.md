@@ -38,7 +38,7 @@
 | 颜色     | `食材_颜色` 的子级及其子树 | `ingredientColors`     |
 | 食材品质 | `食材_品阶` 的子级及其子树 | `ingredientQualities`  |
 
-- 数据源为 `gameplay-tags` 加 `catalog.records[].tagIds`，不再读取 `catalog.ingredientCategories`。
+- 数据源为 `gameplay-tags` 加 `catalog.items[].tagIds`（不含仅供引用的物品）。
 - 分组内满足任一，不同分组同时满足；勾选父级不级联子级，但匹配包含全部子级。
 - 标签按「至少一条正式食品引用」剪枝；0 引用的标签不可见，有了引用才出现。
 - 计数按当前搜索结果或候选菜肴计算，0 计数置灰。

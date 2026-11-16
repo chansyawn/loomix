@@ -1,151 +1,75 @@
-import { RECORD_TAG_FIELD_NAMES, mergeRecordTagIds } from "./classification.ts";
-import { validatePlantings } from "./growth.ts";
-import { isGroupRecord, resolveItem } from "./records.ts";
-import type { Catalog } from "./index.ts";
+import { createIssueCollector } from "../common/identity.ts";
 import type { ValidationIssue } from "../common/identity.ts";
+import { growthPlantIds, validateGrowth } from "./growth.ts";
+import type { Catalog } from "./index.ts";
+import type { Item, ItemKind } from "./items.ts";
 
 export function validateCatalog(catalog: Catalog): ValidationIssue[] {
-  const issues: ValidationIssue[] = [];
-  const issue = (path: (string | number)[], message: string) =>
-    issues.push({ code: "invalid_reference", path: ["catalog", ...path], message });
-  const unique = <T>(
-    values: readonly T[],
-    key: (value: T) => string | number,
+  const { issues, issue, unique } = createIssueCollector("invalid_reference", ["catalog"]);
+  unique([...catalog.items, ...catalog.collections], (entry) => entry.id, ["entries"]);
+  const items = new Map<number, Item>(catalog.items.map((item) => [item.id, item]));
+  const checkItems = (
+    ids: readonly number[],
     path: (string | number)[],
+    kinds?: readonly ItemKind[],
   ) => {
-    const seen = new Set<string | number>();
-    values.forEach((value, index) => {
-      const id = key(value);
-      if (seen.has(id)) issue([...path, index], `Duplicate identity ${id}`);
-      seen.add(id);
-    });
-  };
-  for (const name of [
-    "records",
-    "references",
-    "craftingRecipes",
-    "cookingRecipes",
-    "craftingCollections",
-    "growths",
-    "clientTypes",
-  ] as const)
-    unique<{ id: number }>(catalog[name], (value) => value.id, [name]);
-  const clientTypes = new Map(catalog.clientTypes.map((type) => [type.id, type]));
-  for (const [index, type] of catalog.clientTypes.entries())
-    unique(type.tagIds, (id) => id, ["clientTypes", index, "tagIds"]);
-  const records = new Map(catalog.records.map((record) => [record.id, record]));
-  const checkItems = (ids: readonly number[], path: (string | number)[], type?: string) => {
-    unique(ids, (value) => value, path);
+    unique(ids, (id) => id, path);
     ids.forEach((id, index) => {
-      const record = records.get(id);
-      if (type ? record?.kind !== type : !resolveItem(catalog, id))
-        issue([...path, index], `Unknown ${type ?? "item"} ${id}`);
+      const kind = items.get(id)?.kind;
+      if (!kind || (kinds && !kinds.includes(kind)))
+        issue([...path, index], `Unknown ${kinds?.join("/") ?? "item"} ${id}`);
     });
   };
-  for (const [index, reference] of catalog.references.entries())
-    if (records.has(reference.id))
-      issue(["references", index], "Reference duplicates a formal record");
-  catalog.records.forEach((record, index) => {
-    const path = ["records", index];
-    unique(record.admissionReasons, (reason) => reason, [...path, "admissionReasons"]);
-    unique(record.tagIds, (id) => id, [...path, "tagIds"]);
-    const type = clientTypes.get(record.client.type);
-    if (!type) issue([...path, "client", "type"], `Unknown client type ${record.client.type}`);
-    else {
-      const expected = mergeRecordTagIds(record.tagFields, type.tagIds);
-      if (
-        expected.length !== record.tagIds.length ||
-        expected.some((id, index) => record.tagIds[index] !== id)
-      )
-        issue([...path, "tagIds"], "Must equal the ordered tag source union");
-    }
-    for (const field of RECORD_TAG_FIELD_NAMES)
-      unique(record.tagFields[field], (id) => id, [...path, "tagFields", field]);
-    if (isGroupRecord(record)) {
-      if (record.memberIds !== null) {
-        const type = {
-          "furniture.set": "furniture",
-          "clothing.set": "clothing",
-          "creatures.series": "creature",
-          "plants.series": "plant",
-          "dishes.series": "dish",
-        }[record.kind];
-        checkItems(record.memberIds, [...path, "memberIds"], type);
-      }
-      return;
-    }
-    if ("trade" in record)
-      for (const offer of record.trade?.offers ?? [])
-        if (offer.currencyItemId !== null) checkItems([offer.currencyItemId], [...path, "trade"]);
-    if (record.kind === "neighborClothing" && record.playerItemId !== null) {
-      const counterpart = records.get(record.playerItemId);
-      if (counterpart && counterpart.kind !== "clothing")
-        issue([...path, "playerItemId"], "Counterpart must be player clothing");
-      if (
-        !counterpart &&
-        !catalog.references.some((reference) => reference.id === record.playerItemId)
-      )
-        issue([...path, "playerItemId"], `Unknown player clothing ${record.playerItemId}`);
-    }
-    if (record.kind === "plant") {
-      checkItems(record.drops?.map((drop) => drop.itemId) ?? [], [...path, "drops"]);
-      for (const drop of record.drops ?? [])
-        if (
-          drop.quantityMin !== null &&
-          drop.quantityMax !== null &&
-          drop.quantityMin > drop.quantityMax
-        )
-          issue(path, "Invalid drop quantity range");
-      for (const recipe of record.hybridRecipes ?? [])
-        checkItems(
-          [...recipe.parents.map((parent) => parent.itemId), recipe.productId],
-          [...path, "hybridRecipes"],
-          "plant",
+  catalog.items.forEach((item, index) => {
+    const path = ["items", index];
+    if (item.kind === "reference") return;
+    unique(item.tagIds, (id) => id, [...path, "tagIds"]);
+    switch (item.kind) {
+      case "furniture":
+        unique(item.craftingRecipes, (recipe) => recipe.id, [...path, "craftingRecipes"]);
+        item.craftingRecipes.forEach((recipe, recipeIndex) =>
+          checkItems(recipe.materials?.map((material) => material.itemId) ?? [], [
+            ...path,
+            "craftingRecipes",
+            recipeIndex,
+            "materials",
+          ]),
         );
+        break;
+      case "neighborClothing":
+        if (item.neighborId === null && item.playerItemId === null)
+          issue([...path, "neighborId"], "Neighbor clothing needs a resolvable association");
+        unique(item.bodyTypes, (type) => type, [...path, "bodyTypes"]);
+        if (item.playerItemId !== null)
+          checkItems([item.playerItemId], [...path, "playerItemId"], ["clothing", "reference"]);
+        break;
+      case "creature":
+        if (item.size && item.size.min > item.size.max) issue([...path, "size"], "Invalid range");
+        break;
+      case "plant":
+        unique(item.drops ?? [], (drop) => `${drop.source}:${drop.itemId}`, [...path, "drops"]);
+        for (const drop of item.drops ?? []) checkItems([drop.itemId], [...path, "drops"]);
+        break;
+      case "seed":
+        for (const message of validateGrowth(item.growth)) issue([...path, "growth"], message);
+        checkItems(growthPlantIds(item.growth), [...path, "growth", "stages"], ["plant"]);
+        break;
+      case "dish":
+        item.cooking?.slots.forEach((slot, slotIndex) =>
+          checkItems(slot.itemIds, [...path, "cooking", "slots", slotIndex, "itemIds"]),
+        );
+        if (item.cooking?.tastes)
+          unique(item.cooking.tastes, (taste) => taste, [...path, "cooking", "tastes"]);
+        break;
     }
-    if (
-      record.kind === "creature" &&
-      record.size?.min != null &&
-      record.size.max !== null &&
-      record.size.min > record.size.max
-    )
-      issue(path, "Invalid size range");
   });
-  const collections = new Set(catalog.craftingCollections.map((collection) => collection.id));
-  for (const [index, recipe] of catalog.cookingRecipes.entries()) {
-    const path = ["cookingRecipes", index];
-    checkItems([recipe.productId], [...path, "productId"], "dish");
-    if (recipe.recipeItemId !== null) checkItems([recipe.recipeItemId], [...path, "recipeItemId"]);
-    unique(recipe.slots ?? [], (slot) => slot.field, [...path, "slots"]);
-    for (const slot of recipe.slots ?? []) {
-      if ((slot.expression === null) !== (slot.itemIds === null))
-        issue(path, "Expression and candidates must have the same resolution state");
-      if (slot.itemIds) checkItems(slot.itemIds, [...path, "slots"]);
-    }
-    if (recipe.tastes) unique(recipe.tastes, (taste) => taste, [...path, "tastes"]);
-  }
-  for (const [index, recipe] of catalog.craftingRecipes.entries()) {
-    checkItems([recipe.cardItemId], ["craftingRecipes", index, "cardItemId"]);
-    if (recipe.collectionId !== null && !collections.has(recipe.collectionId))
-      issue(["craftingRecipes", index, "collectionId"], "Unknown crafting collection");
-    if (!records.has(recipe.productId))
-      issue(["craftingRecipes", index], "Crafting product is outside formal records");
-    checkItems(recipe.materials?.map((material) => material.itemId) ?? [], [
-      "craftingRecipes",
-      "cookingRecipes",
-      "craftingCollections",
-      index,
-      "materials",
-    ]);
-  }
-  issues.push(
-    ...validatePlantings(
-      catalog.records.filter((record) => record.kind === "seed"),
-      catalog.growths,
-      new Set(
-        catalog.records.filter((record) => record.kind === "plant").map((record) => record.id),
-      ),
-    ).map((entry) => ({ ...entry, path: ["catalog", ...entry.path] })),
-  );
+  catalog.collections.forEach((collection, index) => {
+    if (collection.memberIds !== null)
+      checkItems(
+        collection.memberIds,
+        ["collections", index, "memberIds"],
+        [collection.memberKind],
+      );
+  });
   return issues;
 }

@@ -11,9 +11,11 @@ export function createResourceReader(request: typeof fetch = fetch) {
     if (!response.ok) throw new Error(`Unable to load release: ${response.status}`);
     return parseReleaseManifest(await response.json());
   });
-  return async function loadResourceDocument<
-    T extends { snapshotId: string; locale: string; formatVersion: number },
-  >(kind: DocumentKind, parse: (input: unknown) => T): Promise<T> {
+  // 文档通过清单中的哈希绑定到同一发布，无需逐个核对上下文。
+  return async function loadResourceDocument<T>(
+    kind: DocumentKind,
+    parse: (input: unknown) => T,
+  ): Promise<T> {
     const manifest = await pendingManifest;
     const file = manifest.files.find((file) => file.kind === kind);
     if (!file || file.path !== documentPath(kind, manifest.locale))
@@ -26,13 +28,6 @@ export function createResourceReader(request: typeof fetch = fetch) {
       .join("");
     if (bytes.byteLength !== file.bytes || hash !== file.sha256)
       throw new Error(`Resource integrity mismatch: ${kind}`);
-    const document = parse(JSON.parse(new TextDecoder().decode(bytes)));
-    if (
-      document.snapshotId !== manifest.snapshotId ||
-      document.locale !== manifest.locale ||
-      document.formatVersion !== manifest.formatVersion
-    )
-      throw new Error(`Resource context mismatch: ${kind}`);
-    return document;
+    return parse(JSON.parse(new TextDecoder().decode(bytes)));
   };
 }

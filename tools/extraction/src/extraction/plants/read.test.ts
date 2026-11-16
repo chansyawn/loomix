@@ -54,7 +54,6 @@ test("apple and ginkgo seeds retain explicit chains and unknown elapsed days", (
     expect(result.seeds.map((s) => s.id)).toEqual([id]);
     expect(result.growths[0]).toMatchObject({
       kind: "staged",
-      maturityDays: null,
       stages: [
         { id: 50260, plantId: null },
         { id: 50261, plantId: null },

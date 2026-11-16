@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { recordTypes } from "../schema.ts";
-import { RecipeSchema } from "../schema.ts";
+import { ObservedRecipeSlotSchema } from "../schemas/observed.ts";
+
+const RecipeSchema = z.strictObject({ slots: ObservedRecipeSlotSchema.array().nullable() });
 
 const tableEvidence = z
   .object({

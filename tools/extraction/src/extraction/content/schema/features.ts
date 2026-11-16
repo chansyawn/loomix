@@ -1,12 +1,8 @@
 import { z } from "zod";
 import { createRecordSchemas, DeliveredImageSchema } from "./records.ts";
-import { CraftingRecipeSchema, DifficultyRequirementSchema } from "@loomix/schema/catalog";
-export {
-  CraftingRecipeSchema,
-  DifficultyRequirementSchema,
-  DifficultyConditionSchema,
-  TastesSchema,
-} from "@loomix/schema/catalog";
+import { ObservedCraftingRecipeSchema } from "../../schemas/observed.ts";
+export { TastesSchema, UnlockConditionSchema } from "@loomix/schema/catalog";
+export type { UnlockCondition } from "@loomix/schema/catalog";
 const text = z.string().min(1).nullable();
 export function createObservedRecordSchemas(
   image: z.ZodType<string | null> = DeliveredImageSchema,
@@ -43,5 +39,4 @@ export function createObservedRecordSchema(image: z.ZodType<string | null> = Del
 }
 export const ObservedRecordSchema = createObservedRecordSchema();
 export type CatalogRecordObserved = z.infer<typeof ObservedRecordSchema>;
-export type DifficultyRequirement = z.infer<typeof DifficultyRequirementSchema>;
-export type CraftingRecipe = z.infer<typeof CraftingRecipeSchema>;
+export type CraftingRecipe = z.infer<typeof ObservedCraftingRecipeSchema>;

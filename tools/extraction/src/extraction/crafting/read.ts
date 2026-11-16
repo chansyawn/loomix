@@ -1,4 +1,4 @@
-import type { Catalog } from "@loomix/schema/catalog";
+import type { ObservedCraftingRecipe } from "../schemas/observed.ts";
 import type { Tables } from "../decode/tables.ts";
 import { tableSource } from "../collection/evidence.ts";
 
@@ -7,7 +7,7 @@ type CraftingContext = { tables: Tables };
 export function readCraftingRecipes({ tables }: CraftingContext, admittedIds: ReadonlySet<number>) {
   const main = tables.byId(318);
   const collections = tables.byId(180);
-  const recipes: Catalog["craftingRecipes"] = [];
+  const recipes: ObservedCraftingRecipe[] = [];
   const audit = [];
   const proofs = [];
   for (const row of tables.rows(568)) {
@@ -36,15 +36,7 @@ export function readCraftingRecipes({ tables }: CraftingContext, admittedIds: Re
     const collectionId = tables.uint(row, 3);
     if (collectionId !== null && !collections.has(collectionId))
       throw new Error(`Unknown crafting collection ${id}:${collectionId}`);
-    recipes.push({
-      cardItemId: id,
-      collectionId,
-      id,
-      productId,
-      quantity: tables.uint(row, 2),
-      materials: materials.length ? materials : null,
-      unresolvedReason: materials.length ? null : "material_slots_absent_semantics_unconfirmed",
-    });
+    recipes.push({ id, productId, materials: materials.length ? materials : null });
     proofs.push({ id, sources: [source] });
   }
   return { recipes: recipes.sort((a, b) => a.id - b.id), audit, proofs };

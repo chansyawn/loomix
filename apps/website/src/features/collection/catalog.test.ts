@@ -21,12 +21,9 @@ test("共享目录为植物、种子和系列保留独立详情及公共字段",
           name: "作物种子",
           plantIds: [1],
           growth: {
-            id: 20,
             kind: "crop",
-            cycleMode: null,
-            maturityDays: null,
             initialStageIds: [21],
-            regrowthStageIds: null,
+            regrowthStageIds: [],
             matureStages: [{ stageId: 21, tag: null, rank: null }],
             witheredStageId: null,
             harvestCount: 1,
@@ -38,7 +35,7 @@ test("共享目录为植物、种子和系列保留独立详情及公共字段",
   });
   const data = createCollectionCatalog(catalog, assetsFixture(catalog), gameplayTags);
   expect(data.rows).toHaveLength(3);
-  expect(data.byId.get(10)?.record).toMatchObject({ kind: "plants.series", memberIds: [1] });
+  expect(data.byId.get(10)?.record).toMatchObject({ memberKind: "plant", memberIds: [1] });
   expect(collectionDetail(data, 10)).toMatchObject({
     category: "plants",
     detail: { kind: "series", record: { id: 10 } },
@@ -77,13 +74,11 @@ test("友邻服饰详情保留体型、友邻和玩家对应款信息", () => {
     quality: 1,
     image: null,
     kind: "neighborClothing",
-    displayCategory: "连衣裙",
-    trade: null,
+    category: "连衣裙",
     acquisition: null,
-    slotCode: 1004,
     neighborId: 1010,
     playerItemId: 41,
-    modelPaths: { small: null, medium: "NpcOutfits/Medium/40", big: "NpcOutfits/Big/40" },
+    bodyTypes: ["medium", "big"],
   });
   addFixtureRecords(catalog, gameplayTags, {
     id: 41,
@@ -92,8 +87,7 @@ test("友邻服饰详情保留体型、友邻和玩家对应款信息", () => {
     quality: 1,
     image: null,
     kind: "clothing",
-    displayCategory: "连衣裙",
-    trade: null,
+    category: "连衣裙",
     acquisition: null,
     colors: null,
     materials: null,

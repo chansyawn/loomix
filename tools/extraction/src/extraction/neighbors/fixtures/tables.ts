@@ -36,11 +36,11 @@ export function fixtureRows(): FixtureRows {
     null,
     null,
     null,
-    `Scene/Galaxy${id}`,
     null,
     null,
     null,
     null,
+    `UISprite/Star${id}`,
   ];
   const guide = (id: number, body: string, category = "友邻交往"): Cell[] => [
     4,
@@ -297,7 +297,6 @@ export function createFixture(rows = fixtureRows()): {
       tables,
       content,
       source,
-      assetIndex: [],
       tagIndex: createGameplayTagIndex([
         { id: 50000, internalName: "食物", displayName: "食物", enumName: null, parentId: null },
       ]),

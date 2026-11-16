@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { validatePlantings } from "@loomix/schema/catalog";
+import { validatePlantings } from "../schemas/observed.ts";
 import { attributeSchemas, recordSchemas } from "../content/schema/records.ts";
 import type { CatalogRecord, RecordType } from "../content/schema/records.ts";
 import type { Catalog } from "../content/schema/catalog.ts";

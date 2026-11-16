@@ -1,7 +1,7 @@
 import { localized } from "./fields.ts";
 import type { Tables } from "../decode/tables.ts";
 import type { TableRow } from "../types.ts";
-import type { NeighborEvidence, NeighborExclusion } from "./types.ts";
+import type { NeighborEvidence } from "./types.ts";
 import { evidence } from "./adapters.ts";
 
 export function fieldProof(
@@ -19,23 +19,6 @@ export function fieldProof(
     reasonCode,
   });
 }
-export function excludeField(
-  records: NeighborEvidence[],
-  exclusions: NeighborExclusion[],
-  id: number,
-  fieldPath: string,
-  row: TableRow,
-  fields: number[],
-  reason: string,
-) {
-  fieldProof(records, id, fieldPath, row, fields, reason);
-  exclusions.push({
-    kind: "field",
-    key: `${id}:${fieldPath}`,
-    reason,
-    sources: [evidence("neighbors", String(id), row, fields).source],
-  });
-}
 export function nullableText(
   tables: Tables,
   row: TableRow | undefined,
@@ -49,10 +32,8 @@ export function enrichFieldEvidence(tables: Tables, records: NeighborEvidence[])
   const textFields: Record<number, readonly number[]> = {
     415: [1],
     471: [2],
-    641: [1, 2, 3, 4, 5, 6, 13],
     222: [3, 4],
-    461: [5],
-    315: [3, 17, 18],
+    315: [3, 18],
   };
   for (const proof of records) {
     if (!proof.fieldPath || proof.source.kind !== "table" || proof.source.table === 1) continue;

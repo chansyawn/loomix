@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { DifficultyConditionSchema } from "../schema.ts";
-import type { DifficultyRequirement } from "../schema.ts";
+import { UnlockConditionSchema } from "../schema.ts";
+import type { UnlockCondition } from "../schema.ts";
 
 const rawCondition = z.strictObject({
   childList: z.strictObject({
@@ -23,24 +23,20 @@ const rawCondition = z.strictObject({
   }),
 });
 
-export function parseDifficultyRequirement(rawExpression: string): DifficultyRequirement {
+// 未知条件结构不能视为无条件，直接中止提取以便重新确认解析规则。
+export function parseUnlockCondition(rawExpression: string): UnlockCondition {
   let input: unknown;
   try {
     input = JSON.parse(rawExpression);
-  } catch {
-    return { rawExpression, condition: null, unresolvedReason: "invalid_condition_json" };
+  } catch (cause) {
+    throw new Error(`Invalid unlock condition JSON: ${rawExpression}`, { cause });
   }
   const parsed = rawCondition.safeParse(input);
-  if (!parsed.success)
-    return { rawExpression, condition: null, unresolvedReason: "unsupported_condition_structure" };
+  if (!parsed.success) throw new Error(`Unsupported unlock condition: ${rawExpression}`);
   const { leaf } = parsed.data.childList.nodeList[0]!;
-  const condition =
+  return UnlockConditionSchema.parse(
     "chefLevelGreaterOrEqual" in leaf
       ? { kind: "chefLevelGreaterOrEqual", ...leaf.chefLevelGreaterOrEqual }
-      : { kind: "learnCookRecipeInCategory", ...leaf.learnCookRecipeInCategory };
-  return {
-    rawExpression,
-    condition: DifficultyConditionSchema.parse(condition),
-    unresolvedReason: null,
-  };
+      : { kind: "learnCookRecipeInCategory", ...leaf.learnCookRecipeInCategory },
+  );
 }

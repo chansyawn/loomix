@@ -27,18 +27,17 @@ export function buildMiscellanyDetail(collection: CollectionView, id: number) {
   if (!record) throw notFound();
   const furnitureUses: MiscellanyFurnitureUse[] = collection.furniture.items.flatMap(
     (furniture) => {
-      const recipes =
-        furniture.craftingRecipes?.flatMap((recipe, index) => {
-          const materials = recipe.materials?.filter((material) => material.itemId === id);
-          return materials?.length
-            ? [
-                {
-                  position: index + 1,
-                  quantity: materials.reduce((total, material) => total + material.quantity, 0),
-                },
-              ]
-            : [];
-        }) ?? [];
+      const recipes = furniture.craftingRecipes.flatMap((recipe, index) => {
+        const materials = recipe.materials?.filter((material) => material.itemId === id);
+        return materials?.length
+          ? [
+              {
+                position: index + 1,
+                quantity: materials.reduce((total, material) => total + material.quantity, 0),
+              },
+            ]
+          : [];
+      });
       return recipes.length ? [{ furniture, recipes }] : [];
     },
   );

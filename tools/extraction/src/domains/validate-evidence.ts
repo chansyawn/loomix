@@ -1,56 +1,59 @@
 import type { Dataset } from "@loomix/schema/dataset";
 import type { FieldEvidence } from "../extraction/evidence/domain-schema.ts";
 
+// 证据只能指向发布数据中实际存在的实体；友邻子数据均通过友邻实体的字段路径定位。
+export const evidenceCollections = {
+  "catalog.items": (dataset: Dataset) => dataset.catalog.items,
+  "catalog.collections": (dataset: Dataset) => dataset.catalog.collections,
+  "neighbors.neighbors": (dataset: Dataset) => dataset.neighbors.neighbors,
+  "gameplayTags.tags": (dataset: Dataset) => dataset.gameplayTags.tags,
+} as const;
+export type EvidenceCollection = keyof typeof evidenceCollections;
+
+export function evidenceEntity(
+  dataset: Dataset,
+  collection: string,
+  id: string | number,
+): object | undefined {
+  const entries = Reflect.get(evidenceCollections, collection) as
+    | ((dataset: Dataset) => readonly { id: number }[])
+    | undefined;
+  return entries?.(dataset).find((entry) => String(entry.id) === String(id));
+}
+
+export function evidenceField(
+  entity: object,
+  fieldPath: string,
+): { found: boolean; value: unknown } {
+  if (fieldPath === "$") return { found: true, value: entity };
+  let value: unknown = entity;
+  for (const segment of fieldPath.split(".")) {
+    if (!value || typeof value !== "object" || !(segment in value))
+      return { found: false, value: undefined };
+    value = Reflect.get(value, segment);
+  }
+  return { found: true, value };
+}
+
+const sourceKey = (source: FieldEvidence["sources"][number]) => JSON.stringify(source);
+const uniqueSources = (sources: FieldEvidence["sources"]) => [
+  ...new Map(sources.map((source) => [sourceKey(source), source])).values(),
+];
+
 export function validateDomainEvidence(dataset: Dataset, fields: FieldEvidence[]): FieldEvidence[] {
   const merged = new Map<string, FieldEvidence>();
   for (const proof of fields) {
-    const [domain, name] = proof.entity.collection.split(".");
-    if (
-      domain !== "catalog" &&
-      domain !== "neighbors" &&
-      domain !== "world" &&
-      domain !== "gameplayTags"
-    )
-      throw new Error(`Unknown evidence domain ${domain}`);
-    const values: unknown = Reflect.get(dataset[domain], name!);
-    const entity: unknown = Array.isArray(values)
-      ? values.find(
-          (value: unknown) =>
-            value &&
-            typeof value === "object" &&
-            ["id", "key", "path"].some(
-              (key) => String(Reflect.get(value, key)) === String(proof.entity.id),
-            ),
-        )
-      : undefined;
-    if (!entity)
-      throw new Error(`Unknown evidence entity ${proof.entity.collection}:${proof.entity.id}`);
-    if (proof.fieldPath !== "$") {
-      let value: unknown = entity;
-      for (const segment of proof.fieldPath.split(".")) {
-        if (!value || typeof value !== "object" || !(segment in value))
-          throw new Error(
-            `Unknown evidence field ${proof.entity.collection}:${proof.entity.id}.${proof.fieldPath}`,
-          );
-        value = Reflect.get(value, segment);
-      }
-    }
-    const key = `${proof.entity.collection}:${proof.entity.id}:${proof.fieldPath}`,
-      previous = merged.get(key);
+    const { collection, id } = proof.entity;
+    const entity = evidenceEntity(dataset, collection, id);
+    if (!entity) throw new Error(`Unknown evidence entity ${collection}:${id}`);
+    if (!evidenceField(entity, proof.fieldPath).found)
+      throw new Error(`Unknown evidence field ${collection}:${id}.${proof.fieldPath}`);
+    const key = `${collection}:${id}:${proof.fieldPath}`;
+    const previous = merged.get(key);
     if (previous) {
       if (previous.status !== proof.status) throw new Error(`Conflicting evidence status ${key}`);
-      previous.sources = [
-        ...new Map(
-          [...previous.sources, ...proof.sources].map((source) => [JSON.stringify(source), source]),
-        ).values(),
-      ];
-    } else
-      merged.set(key, {
-        ...proof,
-        sources: [
-          ...new Map(proof.sources.map((source) => [JSON.stringify(source), source])).values(),
-        ],
-      });
+      previous.sources = uniqueSources([...previous.sources, ...proof.sources]);
+    } else merged.set(key, { ...proof, sources: uniqueSources(proof.sources) });
   }
   return [...merged.values()].sort((a, b) =>
     `${a.entity.collection}:${a.entity.id}:${a.fieldPath}`.localeCompare(

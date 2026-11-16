@@ -31,9 +31,6 @@ export function treeDrops(
       itemId: fruitId,
       dropGroupId: null,
       weight: null,
-      quantityMin: null,
-      quantityMax: null,
-      probability: null,
     });
   }
   for (const [index, row] of rows.entries()) {
@@ -46,9 +43,6 @@ export function treeDrops(
       itemId,
       dropGroupId: groupId,
       weight,
-      quantityMin: null,
-      quantityMax: null,
-      probability: null,
     });
   }
   return {

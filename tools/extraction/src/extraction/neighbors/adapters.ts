@@ -12,7 +12,6 @@ import type {
   NeighborRecord,
   NeighborStar,
   NeighborStoryChapter,
-  NeighborTravelReaction,
 } from "./types.ts";
 
 const layouts = {
@@ -31,9 +30,6 @@ const layouts = {
     star: [3, "uint"],
     npc: [5, "uint"],
     name: [6, "text"],
-    galaxyModel: [11, "string"],
-    playerModel: [12, "string"],
-    sky: [13, "string"],
     illustration: [15, "string"],
   },
   story: {
@@ -45,15 +41,6 @@ const layouts = {
     illustration: [5, "string"],
     isVertical: [6, "uint"],
     isImageLeft: [7, "uint"],
-  },
-  reaction: {
-    npc: [0, "uint"],
-    variant: [1, "uint"],
-    condition: [2, "string"],
-    threshold: [3, "string"],
-    secondary: [4, "string"],
-    asset: [7, "string"],
-    text: [8, "text"],
   },
 } as const satisfies Record<string, Layout>;
 
@@ -80,27 +67,9 @@ export function readRoster(
   tables: Tables,
   records: NeighborEvidence[],
   exclusions: NeighborExclusion[],
-): Omit<
-  NeighborRecord,
-  | "profile"
-  | "travelProfile"
-  | "abilityDescriptions"
-  | "abilities"
-  | "signature"
-  | "house"
-  | "design"
->[] {
+): Pick<NeighborRecord, "id" | "nameZh" | "bodyType">[] {
   const found = new Set<number>();
-  const neighbors: Omit<
-    NeighborRecord,
-    | "profile"
-    | "travelProfile"
-    | "abilityDescriptions"
-    | "abilities"
-    | "signature"
-    | "house"
-    | "design"
-  >[] = [];
+  const neighbors: Pick<NeighborRecord, "id" | "nameZh" | "bodyType">[] = [];
   const bodyTypes: Record<string, NeighborBodyType> = {
     NpcSmall: "small",
     NpcMedium: "medium",
@@ -127,21 +96,8 @@ export function readRoster(
     if (name !== expected.name) throw new Error(`Neighbor name differs from allowlist: ${id}`);
     const type = tables.string(row, 5);
     if (type !== null && !bodyTypes[type]) throw new Error(`Unknown neighbor body type ${type}`);
-    const scaleValue = tables.float(row, 4);
-    if (scaleValue !== null && (!Number.isFinite(scaleValue) || scaleValue <= 0))
-      throw new Error(`Invalid NPC scale ${id}`);
-    neighbors.push({
-      id,
-      nameZh: name!,
-      bodyType: type === null ? null : bodyTypes[type]!,
-      scaleValue,
-      avatarPath: normalizedPath(tables.string(row, 2)),
-      npc2Path: requiredText(model, `npc2:${id}`),
-      starKeys: [],
-      storyKeys: [],
-      assetPaths: [],
-    });
-    records.push(evidence("neighbors", String(id), row, [0, 1, 2, 3, 4, 5]));
+    neighbors.push({ id, nameZh: name!, bodyType: type === null ? null : bodyTypes[type]! });
+    records.push(evidence("neighbors", String(id), row, [0, 1, 3, 5]));
   }
   for (const { id } of neighborAllowlist)
     if (!found.has(id)) throw new Error(`Missing formal neighbor master ${id}`);
@@ -170,9 +126,6 @@ export function readStars(
       systemIndex,
       starIndex,
       nameZh: requiredText(localized(tables, row, 6), key),
-      galaxyModelPath: normalizedPath(tables.string(row, 11)),
-      playerModelPath: normalizedPath(tables.string(row, 12)),
-      skyModelPath: normalizedPath(tables.string(row, 13)),
       illustrationPath: normalizedPath(tables.string(row, 15)),
     });
     records.push(
@@ -237,34 +190,4 @@ export function readStories(
   }
   for (const entry of chapters.values()) requiredText(entry.titleZh, entry.key);
   return [...chapters.values()];
-}
-
-export function readTravelReactions(
-  tables: Tables,
-  accepted: Set<number>,
-  records: NeighborEvidence[],
-): NeighborTravelReaction[] {
-  const reactions: NeighborTravelReaction[] = [];
-  for (const row of tables.rows(profile.roots.neighborTravelReactions)) {
-    assertLayout(tables, row, layouts.reaction, 9);
-    const npcId = tables.uint(row, 0);
-    if (npcId !== null && !accepted.has(npcId)) continue;
-    const variantId = requiredId(tables, row, 1);
-    const conditionType = tables.string(row, 2);
-    const resourceCondition = conditionType === "Npc_Get_Items_Num_In_Travel";
-    const key = `${npcId ?? "fallback"}:${variantId}`;
-    reactions.push({
-      key,
-      npcId,
-      variantId,
-      conditionType,
-      threshold: tables.string(row, resourceCondition ? 4 : 3),
-      resourceCategory: resourceCondition ? tables.string(row, 3) : null,
-      secondaryThreshold: resourceCondition ? null : tables.string(row, 4),
-      reactionAsset: normalizedPath(tables.string(row, 7)),
-      textZh: localized(tables, row, 8),
-    });
-    records.push(evidence("travelReactions", key, row, [0, 1, 2, 3, 4, 7, 8]));
-  }
-  return reactions;
 }

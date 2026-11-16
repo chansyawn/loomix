@@ -58,7 +58,7 @@ test("publishes a complete, verifiable release and refuses to overwrite it", asy
     manifestSha256: sha256(await readFile(path.join(directory, "release.json"))),
   });
   expect([...objects.keys()].at(-1)).toBe("releases/0.95.2-r1/_complete.json");
-  expect(objects.has("releases/0.95.2-r1/zh-CN/world.json")).toBe(true);
+  expect(objects.has("releases/0.95.2-r1/zh-CN/neighbors.json")).toBe(true);
   await expect(publishRelease(directory, "0.95.2-r1", store)).rejects.toThrow(
     "Release already exists",
   );

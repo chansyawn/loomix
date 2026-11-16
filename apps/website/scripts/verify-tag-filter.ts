@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { isGroupRecord, parseCatalog } from "@loomix/schema/catalog";
+import { isListedItem, parseCatalog } from "@loomix/schema/catalog";
 import { createGameplayTagIndex, parseGameplayTags } from "@loomix/schema/gameplay-tags";
 import {
   ALL_TAG_FILTER_POLICY,
@@ -30,7 +30,7 @@ const tagDocument = parseGameplayTags(
 const catalog = parseCatalog(
   JSON.parse(readFileSync(path.join(directory, "catalog.json"), "utf8")),
 );
-const records = catalog.records.filter((record) => !isGroupRecord(record));
+const records = catalog.items.filter(isListedItem);
 const tagIndex = createGameplayTagIndex(tagDocument.tags);
 const filter = createCollectionTagFilter(
   tagDocument.tags,

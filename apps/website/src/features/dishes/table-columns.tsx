@@ -9,7 +9,7 @@ import {
 import type { CollectionColumn } from "../collection/table-columns";
 import { useCollectionOrigin } from "@/features/collection/navigation";
 import { membershipIndex } from "./query";
-import { difficultyRequirementLabel, effectSummary, formatTastes } from "./presentation";
+import { unlockConditionLabel, effectSummary, formatTastes } from "./presentation";
 import type { DishView as View } from "./search";
 
 export type DishesRow = DishItem | DishSeries;
@@ -81,8 +81,8 @@ export function dishesTableColumns(
     textColumn("cookware", "炊具", 160, (record) =>
       "difficulty" in record ? record.cookware : null,
     ),
-    textColumn("difficultyRequirement", "解锁条件", 240, (record) =>
-      "difficulty" in record ? difficultyRequirementLabel(record.difficultyRequirement) : null,
+    textColumn("unlockCondition", "解锁条件", 240, (record) =>
+      "difficulty" in record ? unlockConditionLabel(record.unlockCondition) : null,
     ),
     textColumn("effects", "效果", 320, (record) =>
       "difficulty" in record ? effectSummary(record) : null,

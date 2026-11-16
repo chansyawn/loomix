@@ -1,95 +1,90 @@
-import { parseNeighbors } from "@loomix/schema/neighbors";
-import type { Neighbors } from "@loomix/schema/neighbors";
-import type { Dataset } from "@loomix/schema/dataset";
+import { GiftLevelSchema, parseNeighbors } from "@loomix/schema/neighbors";
+import type { Neighbor, Neighbors } from "@loomix/schema/neighbors";
 import type { ImageRef } from "@loomix/schema/assets";
 import type { NeighborDatabase } from "../extraction/neighbors/schema.ts";
 
+export interface NeighborImageEntry {
+  category: string;
+  neighborId: number | null;
+  image: ImageRef;
+}
+
 export function buildNeighbors(
   database: NeighborDatabase,
-  identity: Dataset["context"],
   image: (path: string | null) => ImageRef | null,
-  additionalImages: Neighbors["additionalImages"],
+  additionalImages: readonly NeighborImageEntry[],
 ): Neighbors {
-  return parseNeighbors({
-    ...identity,
-    kind: "neighbors",
-    neighbors: database.neighbors.map((neighbor) => ({
-      id: neighbor.id,
-      name: neighbor.nameZh,
-      bodyType: neighbor.bodyType,
-      scaleValue: neighbor.scaleValue,
-      avatar: image(neighbor.avatarPath),
-      npc2Path: neighbor.npc2Path,
-      profile: neighbor.profile,
-      travelProfile: neighbor.travelProfile,
-      abilityDescriptions: neighbor.abilityDescriptions,
-      abilities: neighbor.abilities.map((ability) => ({ ...ability, icon: image(ability.icon) })),
-      signature: neighbor.signature,
-      design: neighbor.design,
-      house:
-        neighbor.house === null
-          ? null
-          : {
-              ...neighbor.house,
-              stages: neighbor.house.stages.map((stage) => ({
-                ...stage,
-                image: image(stage.image),
-              })),
-            },
-    })),
-    stars: database.stars.map(({ npcId, nameZh, galaxyNameZh, illustrationPath, ...star }) => ({
-      ...star,
-      neighborId: npcId,
-      name: nameZh,
-      galaxyName: galaxyNameZh,
-      image: image(illustrationPath),
-    })),
-    stories: database.stories.map(({ npcId, titleZh, paragraphs, ...story }) => ({
-      ...story,
-      neighborId: npcId,
-      title: titleZh,
-      paragraphs: paragraphs.map(({ bodyZh, illustrationPath, ...paragraph }) => ({
-        ...paragraph,
-        text: bodyZh,
-        image: image(illustrationPath),
+  const imageOf = (neighborId: number, category: "favour" | "role") => {
+    const matches = additionalImages.filter(
+      (entry) => entry.neighborId === neighborId && entry.category === category,
+    );
+    if (matches.length > 1) throw new Error(`Ambiguous ${category} image ${neighborId}`);
+    return matches[0]?.image ?? null;
+  };
+  const neighbors = database.neighbors.map((neighbor): Neighbor => ({
+    id: neighbor.id,
+    name: neighbor.nameZh,
+    bodyType: neighbor.bodyType,
+    profile: {
+      englishName: neighbor.profile.englishName,
+      nickname: neighbor.profile.nickname,
+      birthday: neighbor.profile.birthday,
+    },
+    images: { favour: imageOf(neighbor.id, "favour"), role: imageOf(neighbor.id, "role") },
+    stars: database.stars
+      .filter((star) => star.npcId === neighbor.id)
+      .map((star) => ({
+        name: star.nameZh,
+        galaxy: star.galaxyNameZh,
+        image: image(star.illustrationPath),
       })),
+    abilities: neighbor.abilities.map(({ unlockLevel, name, description }) => ({
+      unlockLevel,
+      name,
+      description,
     })),
-    travelReactions: database.travelReactions.map(({ npcId, textZh, ...reaction }) => ({
-      ...reaction,
-      neighborId: npcId,
-      text: textZh,
-    })),
-    friendshipRules: database.friendshipRules.map(({ titleZh, textZh, ...rule }) => ({
-      ...rule,
-      title: titleZh,
-      text: textZh,
-    })),
-    eventTags: database.eventTags.map(({ textZh, ...tag }) => ({ ...tag, text: textZh })),
-    giftPreferences: database.giftPreferences.map(({ npcId, ...preference }) => ({
-      ...preference,
-      neighborId: npcId,
-    })),
-    resources: database.assets,
-    additionalImages,
-  });
+    house: neighbor.house?.stages.length
+      ? {
+          stages: neighbor.house.stages.map((stage) => ({
+            id: stage.id,
+            level: stage.level,
+            name: stage.name,
+            description: stage.description,
+            image: image(stage.image),
+          })),
+        }
+      : null,
+    stories: database.stories
+      .filter((story) => story.npcId === neighbor.id)
+      .map((story) => ({
+        chapter: story.chapter,
+        title: story.titleZh,
+        paragraphs: story.paragraphs.map((paragraph) => ({
+          text: paragraph.bodyZh,
+          image: image(paragraph.illustrationPath),
+          layout: paragraph.layout,
+        })),
+      })),
+    gifts: Object.fromEntries(
+      GiftLevelSchema.options.map((level) => {
+        const entries = database.giftPreferences.filter(
+          (preference) => preference.npcId === neighbor.id && preference.level === level,
+        );
+        return [
+          level,
+          {
+            itemIds: [...new Set(entries.flatMap((entry) => entry.itemIds))],
+            tagIds: [...new Set(entries.flatMap((entry) => entry.tagIds))],
+          },
+        ];
+      }),
+    ) as Neighbor["gifts"],
+  }));
+  return parseNeighbors({ neighbors });
 }
 
 export function neighborReferencedItemIds(database: NeighborDatabase): number[] {
-  return [
-    ...new Set(
-      [
-        ...database.giftPreferences.flatMap((preference) => preference.itemIds),
-        ...database.neighbors.flatMap((neighbor) => [
-          neighbor.signature.friendshipOutfitItemId,
-          neighbor.house?.buildingPackageItemId ?? null,
-          ...(neighbor.house?.stages.flatMap((stage) =>
-            [
-              ...(stage.upgradeRequirements?.materials ?? []),
-              ...(stage.upgradeRequirements?.blueprints ?? []),
-            ].map((amount) => amount.itemId),
-          ) ?? []),
-        ]),
-      ].filter((id): id is number => id !== null),
-    ),
-  ].sort((a, b) => a - b);
+  return [...new Set(database.giftPreferences.flatMap((preference) => preference.itemIds))].sort(
+    (a, b) => a - b,
+  );
 }

@@ -11,7 +11,7 @@ export function NeighborAbilitiesSection({ neighbor }: { neighbor: NeighborDetai
       {abilities.length ? (
         <div className="grid gap-3 sm:grid-cols-2">
           {abilities.map((ability) => (
-            <article key={ability.key} className="min-w-0 space-y-2 rounded-xl border p-4">
+            <article key={ability.unlockLevel} className="min-w-0 space-y-2 rounded-xl border p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-semibold">{ability.name}</h3>
                 <Badge variant="outline">亲密度 {ability.unlockLevel} 级解锁</Badge>

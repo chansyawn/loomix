@@ -18,7 +18,6 @@ export type IngredientsData = {
   itemsById: ReadonlyMap<number, IngredientItem>;
   ingredientCandidatesByDishId: ReadonlyMap<number, number[]>;
   dishesByItemId: ReadonlyMap<number, IngredientDishMatch[]>;
-  unconfirmedRecipeCount: number;
 };
 
 type MatchIndex = Map<number, Map<number, IngredientDishMatch>>;
@@ -56,13 +55,8 @@ export function buildIngredientsData(
   }
   const byItem: MatchIndex = new Map();
   const ingredientCandidatesByDishId = new Map<number, Set<number>>();
-  let unconfirmedRecipeCount = 0;
   for (const dish of view.dishes.items) {
-    const slots = dish.recipe?.slots;
-    if (!slots || slots.some((slot) => slot.expression === null || slot.itemIds === null))
-      unconfirmedRecipeCount++;
-    slots?.forEach((slot, index) => {
-      if (slot.expression === null || slot.itemIds === null) return;
+    dish.slots.forEach((slot, index) => {
       const condition = {
         position: index + 1,
         expression: slot.expression,
@@ -85,7 +79,6 @@ export function buildIngredientsData(
       [...ingredientCandidatesByDishId].map(([id, candidates]) => [id, [...candidates]]),
     ),
     dishesByItemId: flattenIndex(byItem),
-    unconfirmedRecipeCount,
   };
 }
 

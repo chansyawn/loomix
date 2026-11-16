@@ -51,7 +51,7 @@ export function NeighborDetailPage({ neighbor }: { neighbor: NeighborDetail }) {
             </div>
             {neighbor.stars.length ? (
               neighbor.stars.map((star) => (
-                <Fragment key={star.key}>
+                <Fragment key={star.name}>
                   <div className={fieldClassName}>
                     <dt className="text-xs text-muted-foreground">所属星球</dt>
                     <dd className="wrap-break-word">{star.name}</dd>

@@ -165,7 +165,6 @@ export function recipeSlots(
       expression: parsed.expression,
       itemIds:
         parsed.expression === null ? null : ingredientExpressionItemIds(parsed.expression, byId),
-      quantity: null,
     });
   }
   return { slots: slots.length ? slots : null, fields };

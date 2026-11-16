@@ -44,16 +44,6 @@ export function verifyNeighbors(value: unknown, input: NeighborExtractionInput):
       stars: database.stars.length,
       stories: database.stories.length,
       storyParagraphs: database.stories.reduce((sum, s) => sum + s.paragraphs.length, 0),
-      travelReactions: database.travelReactions.length,
-      fallbackTravelReactions: database.travelReactions.filter((r) => r.npcId === null).length,
-      encounterIslands: database.encounterIslands.length,
-      friendshipRules: database.friendshipRules.length,
-      eventTags: database.eventTags.length,
-      housePaths: database.assets.filter((a) => /NPCBldg/i.test(a.path)).length,
-      friendStarPaths: database.assets.filter((a) => a.kind === "friendStar").length,
-      outfitPaths: database.assets.filter((a) => a.kind === "outfit").length,
-      hubPaths: database.assets.filter((a) => a.kind === "hub").length,
-      favourMissionPaths: database.assets.filter((a) => a.kind === "favourMission").length,
     };
     assert.deepEqual(
       counts,
@@ -66,33 +56,13 @@ export function verifyNeighbors(value: unknown, input: NeighborExtractionInput):
         profiles: details.length,
         birthdays: details.filter((neighbor) => neighbor.profile.birthday !== null).length,
         nicknames: details.filter((neighbor) => neighbor.profile.nickname !== null).length,
-        travelProfiles: details.filter((neighbor) => neighbor.travelProfile !== null).length,
-        specialties: details.reduce(
-          (sum, neighbor) => sum + (neighbor.travelProfile?.specialties.length ?? 0),
-          0,
-        ),
         abilityNeighbors: details.filter((neighbor) => neighbor.abilities.length > 0).length,
         abilities: details.reduce((sum, neighbor) => sum + neighbor.abilities.length, 0),
-        descriptionNeighbors: details.filter((neighbor) => neighbor.abilityDescriptions.length > 0)
-          .length,
-        signatureRecipes: details.filter((neighbor) => neighbor.signature.cookingRecipeId !== null)
-          .length,
-        signatureOutfits: details.filter(
-          (neighbor) => neighbor.signature.friendshipOutfitItemId !== null,
-        ).length,
         houses: details.filter((neighbor) => neighbor.house !== null).length,
         stages: details.reduce((sum, neighbor) => sum + (neighbor.house?.stages.length ?? 0), 0),
         houseDescriptions: details
           .flatMap((neighbor) => neighbor.house?.stages ?? [])
           .filter((stage) => stage.description !== null).length,
-        publishedThemeLinks: details.filter(
-          (neighbor) =>
-            neighbor.design.furnitureSetId !== null ||
-            neighbor.design.craftingCollectionId !== null,
-        ).length,
-        publishedRequirements: details
-          .flatMap((neighbor) => neighbor.house?.stages ?? [])
-          .filter((stage) => stage.upgradeRequirements !== null).length,
       },
       profile.expectedNeighborDetails,
       "Neighbor detail coverage and semantic admission baseline",

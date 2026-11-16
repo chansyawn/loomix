@@ -4,10 +4,7 @@ import { plantSeedFixture } from "./fixture";
 import type { PlantGrowth } from "./model";
 
 const growth: Extract<PlantGrowth, { kind: "crop" }> = {
-  id: 10,
   kind: "crop",
-  cycleMode: null,
-  maturityDays: 3,
   harvestCount: 2,
   initialStageIds: [11],
   matureStages: [
@@ -54,7 +51,6 @@ test("保留全部种子来源，过滤其他产物、非成熟阶段和缺失�
     id: 20,
     growth: {
       ...growth,
-      id: 20,
       stages: growth.stages.map((stage) => (stage.id === 12 ? { ...stage, plantId: 2 } : stage)),
     },
   });
@@ -71,7 +67,7 @@ test("普通阶段仅保留既有顺序，不推测成熟状态；缺失生长�
   ]);
   expect(plantMatureForms([seed], 1)).toEqual([]);
   expect(
-    growthStageGroups({ ...growth, regrowthStageIds: null, witheredStageId: null }).map(
+    growthStageGroups({ ...growth, regrowthStageIds: [], witheredStageId: null }).map(
       (group) => group.label,
     ),
   ).toEqual(["初始生长", "成熟形态"]);

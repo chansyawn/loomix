@@ -1,7 +1,6 @@
 import { isAllowedNeighbor } from "./allowlist.ts";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
-import { NeighborSpecificImageCategorySchema } from "@loomix/schema/neighbors";
 import {
   AdditionalNeighborImageCategorySchema,
   type AdditionalNeighborImageCategory,
@@ -10,27 +9,15 @@ import { readJson } from "../../workflow/json.ts";
 import type { IndexedAsset } from "../types.ts";
 import type { ImageAsset } from "../images/export.ts";
 
-const selectionSchema = z
-  .strictObject({
-    category: AdditionalNeighborImageCategorySchema,
-    npcId: z.number().int().positive().nullable(),
-    assetType: z.enum(["Texture2D", "Sprite"]),
-    resourceName: z.string().min(1),
-    container: z.string().min(1),
-    source: z.string().min(1),
-    pathId: z.string().min(1),
-  })
-  .superRefine((value, ctx) => {
-    if (
-      value.npcId === null &&
-      NeighborSpecificImageCategorySchema.safeParse(value.category).success
-    )
-      ctx.addIssue({
-        code: "custom",
-        path: ["npcId"],
-        message: "Neighbor-specific images need a neighbor",
-      });
-  });
+const selectionSchema = z.strictObject({
+  category: AdditionalNeighborImageCategorySchema,
+  npcId: z.number().int().positive(),
+  assetType: z.enum(["Texture2D", "Sprite"]),
+  resourceName: z.string().min(1),
+  container: z.string().min(1),
+  source: z.string().min(1),
+  pathId: z.string().min(1),
+});
 
 const selectionsSchema = z.array(selectionSchema).superRefine((selections, ctx) => {
   const keys = new Set<string>();
@@ -54,7 +41,7 @@ const selectionsSchema = z.array(selectionSchema).superRefine((selections, ctx) 
 export type AdditionalNeighborImageSelection = z.infer<typeof selectionSchema>;
 export type AdditionalNeighborImageAsset = ImageAsset & {
   category: AdditionalNeighborImageCategory;
-  npcId: number | null;
+  npcId: number;
 };
 
 const selectionFile = fileURLToPath(new URL("./additional-images.json", import.meta.url));
@@ -62,13 +49,7 @@ const selectionFile = fileURLToPath(new URL("./additional-images.json", import.m
 export function parseAdditionalNeighborImageSelections(
   input: unknown,
 ): AdditionalNeighborImageSelection[] {
-  return selectionsSchema
-    .parse(input)
-    .filter(
-      (selection) =>
-        selection.category !== "card" &&
-        (selection.npcId === null || isAllowedNeighbor(selection.npcId)),
-    );
+  return selectionsSchema.parse(input).filter((selection) => isAllowedNeighbor(selection.npcId));
 }
 
 export function additionalNeighborImageSelections(): AdditionalNeighborImageSelection[] {

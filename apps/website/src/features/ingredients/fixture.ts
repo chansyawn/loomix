@@ -23,7 +23,7 @@ export function ingredientFixture(id: number, name: string, listed = true): Ingr
   };
 }
 
-export function recipeFixture(id: number, recipe: DishItem["recipe"]): DishItem {
+export function recipeFixture(id: number, slots: DishItem["slots"]): DishItem {
   return {
     id,
     name: `菜肴${id}`,
@@ -33,17 +33,17 @@ export function recipeFixture(id: number, recipe: DishItem["recipe"]): DishItem 
     difficulty: null,
     galaxyFlavor: null,
     cookware: null,
-    effectsText: null,
+    strength: null,
     effects: null,
     tastes: null,
-    difficultyRequirement: null,
+    unlockCondition: null,
     acquisition: null,
-    recipe,
+    slots,
   };
 }
 
-export function recipeSlot(expression: IngredientExpression | null, itemIds: number[] | null) {
-  return { field: 20 as const, rawExpression: "fixture", expression, itemIds, quantity: null };
+export function recipeSlot(expression: IngredientExpression, itemIds: number[]) {
+  return { expression, itemIds };
 }
 
 function tag(
@@ -52,7 +52,7 @@ function tag(
   displayName: string | null,
   parentId: number | null,
 ): GameplayTag {
-  return { id, internalName, displayName, enumName: null, parentId };
+  return { id, internalName, displayName, parentId };
 }
 
 export const ingredientFixtureTags: GameplayTag[] = [
@@ -101,38 +101,23 @@ export function ingredientsFixture() {
     ingredientFixture(9, "未收录引用", false),
   ];
   const dishes = [
-    recipeFixture(100, {
-      slots: [
-        recipeSlot(categoryExpression(11), [1, 1, 2, 3]),
-        { ...recipeSlot(categoryExpression(11), [1, 2, 3]), field: 25 },
-      ],
-    }),
-    recipeFixture(101, {
-      slots: [
-        recipeSlot({ kind: "all", terms: [categoryExpression(13), categoryExpression(31)] }, [6]),
-      ],
-    }),
-    recipeFixture(102, {
-      slots: [
-        recipeSlot(
-          { kind: "any", terms: [categoryExpression(11), categoryExpression(12)] },
-          [1, 2, 3, 4],
-        ),
-      ],
-    }),
-    recipeFixture(103, {
-      slots: [
-        recipeSlot({ kind: "all", terms: [categoryExpression(12), categoryExpression(31)] }, []),
-      ],
-    }),
-    recipeFixture(104, null),
-    recipeFixture(105, { slots: null }),
-    recipeFixture(106, { slots: [recipeSlot(null, [1])] }),
-    recipeFixture(107, { slots: [] }),
-    recipeFixture(108, { slots: [recipeSlot(categoryExpression(11), null)] }),
-    recipeFixture(109, {
-      slots: [recipeSlot(categoryExpression(11), [1]), { ...recipeSlot(null, null), field: 25 }],
-    }),
+    recipeFixture(100, [
+      recipeSlot(categoryExpression(11), [1, 1, 2, 3]),
+      recipeSlot(categoryExpression(11), [1, 2, 3]),
+    ]),
+    recipeFixture(101, [
+      recipeSlot({ kind: "all", terms: [categoryExpression(13), categoryExpression(31)] }, [6]),
+    ]),
+    recipeFixture(102, [
+      recipeSlot(
+        { kind: "any", terms: [categoryExpression(11), categoryExpression(12)] },
+        [1, 2, 3, 4],
+      ),
+    ]),
+    recipeFixture(103, [
+      recipeSlot({ kind: "all", terms: [categoryExpression(12), categoryExpression(31)] }, []),
+    ]),
+    recipeFixture(104, []),
   ];
   const input = {
     ingredientTagSource: tagSource,

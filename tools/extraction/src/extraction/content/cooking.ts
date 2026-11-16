@@ -1,15 +1,15 @@
-import type { CookingRecipe } from "@loomix/schema/catalog";
 import type { ContentContext } from "./context.ts";
 import { recipeSlots } from "./recipes.ts";
-import { parseDifficultyRequirement } from "../collection/conditions.ts";
+import { parseUnlockCondition } from "../collection/conditions.ts";
 import { TastesSchema } from "@loomix/schema/catalog";
+import type { ObservedCookingRecipe } from "../schemas/observed.ts";
 
 export type CookingContext = Pick<
   ContentContext,
   "tables" | "recipesByProduct" | "ingredientCategoryBuild"
 > & { vocabulary: Pick<ContentContext["vocabulary"], "difficulties" | "cookware"> };
 
-export function readCookingRecipes(context: CookingContext): CookingRecipe[] {
+export function readCookingRecipes(context: CookingContext): ObservedCookingRecipe[] {
   const { tables, vocabulary, ingredientCategoryBuild } = context;
   const categories = new Map(
     ingredientCategoryBuild.categories.map((category) => [category.id, category]),
@@ -22,18 +22,12 @@ export function readCookingRecipes(context: CookingContext): CookingRecipe[] {
         (entry) => tables.uint(entry, 2) === tables.uint(row, 16),
       );
       const rawTaste = tables.string(row, 15);
-      const difficultyRequirement = rawCondition ? parseDifficultyRequirement(rawCondition) : null;
-      if (difficultyRequirement?.condition === null)
-        throw new Error(
-          `Unsupported difficulty condition ${tables.id(row)}: ${difficultyRequirement.unresolvedReason}`,
-        );
       return {
         id: tables.id(row),
         productId: tables.uint(row, 4)!,
-        recipeItemId: null,
         difficulty: tables.text(difficulty, 1),
-        difficultyRequirement,
-        cookware: cookware.length === 1 ? [tables.string(cookware[0], 1)!] : null,
+        unlockCondition: rawCondition ? parseUnlockCondition(rawCondition) : null,
+        cookware: cookware.length === 1 ? tables.string(cookware[0], 1) : null,
         tastes: rawTaste ? TastesSchema.parse([...new Set(rawTaste.split("|"))]) : null,
         slots: recipeSlots(row, tables, ingredientCategoryBuild.byTagName, categories).slots,
       };

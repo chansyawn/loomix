@@ -47,12 +47,11 @@ export async function renderImages(options: WorkOptions, extraction: string): Pr
     images.push({ assetId: job.assetId, variant: job.variant, ...result });
     evidence.push({ ...job, delivered: result });
   }
-  const assets = AssetsSchema.parse({ ...dataset.context, kind: "assets", images });
+  const assets = AssetsSchema.parse({ images });
   const documents = {
     "gameplay-tags": dataset.gameplayTags,
     catalog: dataset.catalog,
     neighbors: dataset.neighbors,
-    world: dataset.world,
     assets,
   };
   const files: ReleaseManifest["files"] = [];

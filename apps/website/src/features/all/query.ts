@@ -1,11 +1,10 @@
-import { isGroupRecord } from "@loomix/schema/catalog";
 import type { FilterGroup } from "../collection/filter-types";
 import { qualityNames } from "../collection/quality";
 import type { AllQuery, FilterKey } from "./search";
 import { categoryNames, type CollectionCatalog } from "../collection/catalog";
 
 function allRecords(data: CollectionCatalog) {
-  return data.rows.filter((row) => !isGroupRecord(row.record));
+  return data.rows.filter((row) => !("memberKind" in row.record));
 }
 
 const intersects = (selected: string[], values: string[]) =>

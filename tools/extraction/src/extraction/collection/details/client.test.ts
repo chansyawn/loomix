@@ -102,17 +102,11 @@ test("tree drops join by configured group and leave unsupported quantity and cha
       itemId: 30161,
       dropGroupId: null,
       weight: null,
-      quantityMin: null,
-      quantityMax: null,
-      probability: null,
     },
     {
       itemId: 30108,
       dropGroupId: 40000,
       weight: 270,
-      quantityMin: null,
-      quantityMax: null,
-      probability: null,
     },
   ]);
   expect(result.reason).toBe("drop_mode_or_positive_total_weight_unconfirmed");
@@ -181,11 +175,8 @@ test.each([
 ])("树木保留原始权重，不推断最终掉落概率：%j", (...weights) => {
   const source = weightedTree(weights);
   const result = treeDrops(source, 50193);
-  expect(result.value?.slice(1).map((drop) => drop.probability)).toEqual(weights.map(() => null));
-  expect(result.value?.[0].probability).toBeNull();
-  expect(
-    result.value?.every((drop) => drop.quantityMin === null && drop.quantityMax === null),
-  ).toBe(true);
+  expect(result.value?.slice(1).map((drop) => drop.weight)).toEqual(weights);
+  expect(result.value?.[0]).toMatchObject({ dropGroupId: null, weight: null });
   expect(result.sources.filter((entry) => entry.table === 563)).toHaveLength(weights.length);
   verifyTreeDrops(source.tables, 50193, result.value);
 });
@@ -193,7 +184,7 @@ test.each([
 test("未知模式和零总权重保持概率为空，非法配置停止提取", () => {
   for (const source of [weightedTree([270, 630], 1), weightedTree([0, 0])]) {
     const result = treeDrops(source, 50193);
-    expect(result.value?.every((drop) => drop.probability === null)).toBe(true);
+    expect(result.value?.every((drop) => Object.keys(drop).length === 3)).toBe(true);
     verifyTreeDrops(source.tables, 50193, result.value);
   }
   for (const weights of [[-1], [0.5], [Number.NaN]])
@@ -212,7 +203,7 @@ test("独立校验拒绝概率、权重和掉落条目篡改", () => {
   for (const changed of [
     value.slice(0, -1),
     value.map((drop, index) => (index === 1 ? { ...drop, weight: 629 } : drop)),
-    value.map((drop, index) => (index === 1 ? { ...drop, probability: 0.63 } : drop)),
+    value.map((drop, index) => (index === 1 ? { ...drop, dropGroupId: null } : drop)),
   ])
     expect(() => verifyTreeDrops(source.tables, 50193, changed)).toThrow(/Independent tree drops/);
 });

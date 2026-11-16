@@ -1,4 +1,9 @@
-import { datasetFixture, recordMetadata } from "../../../../packages/schema/tests/fixture.ts";
+import {
+  collection,
+  datasetFixture,
+  material,
+  neighbor,
+} from "../../../../packages/schema/tests/fixture.ts";
 import assert from "node:assert/strict";
 import { test } from "vite-plus/test";
 import fs from "node:fs";
@@ -80,10 +85,7 @@ test("corrupt inputs and truncated WebP fail decoding", async () => {
 test("asset delivery deduplicates identical outputs and separates target dimensions", async () => {
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-webp-"));
   try {
-    const dataset = datasetFixture(
-      { formatVersion: 10, snapshotId: "a".repeat(64), locale: "zh-CN" },
-      { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" },
-    );
+    const dataset = datasetFixture();
     const png = await sharp({ create: { width: 512, height: 512, channels: 4, background: "red" } })
       .png()
       .toBuffer();
@@ -102,24 +104,8 @@ test("asset delivery deduplicates identical outputs and separates target dimensi
     const first = registry.register(original, "miscellaneous.item");
     const second = registry.register({ ...original, pathId: "2" }, "miscellaneous.item");
     const banner = registry.register(original, "furniture.set");
-    const base = {
-      ...recordMetadata(),
-      acquisition: null,
-      name: "fixture",
-      quality: null,
-      description: null,
-    };
-    dataset.catalog.records.push(
-      { ...base, id: 1, kind: "material", displayCategory: null, trade: null, image: first },
-      { ...base, id: 2, kind: "material", displayCategory: null, trade: null, image: second },
-    );
-    dataset.catalog.records.push({
-      ...base,
-      id: 3,
-      kind: "furniture.set",
-      image: banner,
-      memberIds: null,
-    });
+    dataset.catalog.items.push({ ...material(1), image: first }, { ...material(2), image: second });
+    dataset.catalog.collections.push({ ...collection(3, "furniture", null), image: banner });
     fs.writeFileSync(path.join(work, "dataset.json"), JSON.stringify(dataset));
     fs.writeFileSync(
       path.join(work, "image-jobs.json"),
@@ -172,35 +158,18 @@ test("neighbor images retain full framing and alpha, never upscale and fit withi
   }
 });
 
-test("diary and white atlas images are delivered with full references, original size and alpha", async () => {
+test("neighbor illustrations are delivered with full references, original size and alpha", async () => {
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-neighbor-images-"));
   try {
-    const dataset = datasetFixture(
-      { formatVersion: 10, snapshotId: "a".repeat(64), locale: "zh-CN" },
-      { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" },
-    );
-    dataset.neighbors.neighbors.push({
-      id: 11,
-      name: "蛮蛮",
-      bodyType: null,
-      scaleValue: null,
-      avatar: null,
-      npc2Path: "Avatar/NPC2/NPC_11",
-      profile: { englishName: null, nickname: null, gender: null, birthday: null },
-      travelProfile: null,
-      abilityDescriptions: [],
-      abilities: [],
-      signature: { cookingRecipeId: null, friendshipOutfitItemId: null },
-      house: null,
-      design: { furnitureSetId: null, craftingCollectionId: null },
-    });
+    const dataset = datasetFixture();
+    const owner = neighbor(11);
+    dataset.neighbors.neighbors.push(owner);
     const registry = createAssetRegistry();
     const sizes = [
-      ["diaryIllustration", 452, 534],
-      ["diaryWatermark", 300, 300],
-      ["diarySticker", 78, 108],
-      ["starAtlasIcon", 83, 89],
+      ["favour", 452, 534],
+      ["role", 300, 300],
     ] as const;
+    const images = new Map<string, ReturnType<typeof registry.register>>();
     for (const [category, width, height] of sizes) {
       const png = await sharp({
         create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
@@ -230,7 +199,8 @@ test("diary and white atlas images are delivered with full references, original 
         assetType: "Sprite",
         pathId: category,
       });
-      dataset.neighbors.additionalImages.push({ key: category, category, neighborId: 11, image });
+      images.set(category, image);
+      owner.images[category] = image;
     }
     fs.writeFileSync(path.join(work, "dataset.json"), JSON.stringify(dataset));
     fs.writeFileSync(
@@ -247,10 +217,8 @@ test("diary and white atlas images are delivered with full references, original 
       dataset.neighbors,
     );
     for (const [category, width, height] of sizes) {
-      const reference = dataset.neighbors.additionalImages.find(
-        (image) => image.category === category,
-      )!;
-      const delivered = assets.images.find((image) => image.assetId === reference.image.assetId)!;
+      const reference = images.get(category)!;
+      const delivered = assets.images.find((image) => image.assetId === reference.assetId)!;
       assert.equal(delivered.variant, "illustration");
       assert.equal(delivered.width, width);
       assert.equal(delivered.height, height);
