@@ -122,7 +122,7 @@ test("掉落保留来源树种与果实，系列按成员分组", () => {
   ).plants;
   const groups = data.series[0].summary.drops.groups;
   expect(groups.map((group) => group.treeId)).toEqual([2, 1]);
-  expect(groups[0].entries[0].item).toMatchObject({ id: 3, name: "树胶", listed: false });
+  expect(groups[0].entries[0].item).toMatchObject({ id: 3, name: "树胶", browsable: false });
   expect(groups[1].entries[1]).toMatchObject({ itemId: 4, source: "fruit" });
   expect(data.sourceTreesByItemId.get(3)?.map((item) => item.id)).toEqual([1, 2]);
 });

@@ -32,7 +32,7 @@ export const Route = createFileRoute("/collections/records/$id")({
   notFoundComponent: () => (
     <section className="space-y-4">
       <h1 className="text-2xl font-semibold">未找到已收录物品</h1>
-      <CollectionReturnLink>返回收藏列表</CollectionReturnLink>
+      <CollectionReturnLink>返回图鉴列表</CollectionReturnLink>
     </section>
   ),
   component: DetailRoute,

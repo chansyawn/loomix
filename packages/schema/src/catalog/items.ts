@@ -78,7 +78,7 @@ export const ItemSchema = z.discriminatedUnion("kind", [
     cooking: CookingRecipeSchema.nullable(),
   }),
   item.extend({ kind: z.literal("material") }),
-  // 仅被正式数据引用、未收录为图鉴条目的物品。
+  // 仅被正式数据引用、未纳入本站正式收录范围的物品。
   z.strictObject({
     kind: z.literal("reference"),
     id: IdSchema,

@@ -39,7 +39,7 @@ vp run website#release
 
 生产构建默认从[网站资源指针](apps/website/release.json)读取资源地址，`VITE_RESOURCE_BASE_URL` 可覆盖；变量默认行为见[环境配置](README.md#环境配置)。部署要求使用已发布的 HTTPS 资源版本，本地资源目录不能用于发布。
 
-网站资源指针只保存资源地址；本地交付中的资源 manifest `resources/website/release.json` 记录领域文档、快照身份与校验值，两者不能互换，详见[共享数据契约](packages/schema/README.md)。
+网站资源指针与资源发布清单的文件位置和结构见[共享数据契约](packages/schema/README.md#快照图片与发布)，概念边界见[领域术语表](GLOSSARY.md#资源发布)。
 
 ### 资源更新流程
 

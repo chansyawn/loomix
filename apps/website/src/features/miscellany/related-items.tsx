@@ -14,7 +14,7 @@ export function MiscellanySourceTrees({ items }: { items: IngredientItem[] }) {
             <CollectionItemCard
               item={item}
               itemId={item.id}
-              link={item.listed === false ? undefined : recordLocation(item)}
+              link={item.browsable === false ? undefined : recordLocation(item)}
             />
           </li>
         ))}

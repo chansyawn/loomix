@@ -11,7 +11,7 @@ export const categoryExpression = (categoryId: number): IngredientExpression => 
   tagId: categoryId,
 });
 
-export function ingredientFixture(id: number, name: string, listed = true): IngredientItem {
+export function ingredientFixture(id: number, name: string, browsable = true): IngredientItem {
   return {
     id,
     name,
@@ -19,7 +19,7 @@ export function ingredientFixture(id: number, name: string, listed = true): Ingr
     description: null,
     quality: null,
     catalogCategory: "plants",
-    listed,
+    browsable,
   };
 }
 

@@ -1,5 +1,5 @@
 import type { Growth, ItemOf } from "@loomix/schema/catalog";
-import type { CollectionRecord, IngredientItem } from "../collection-view";
+import type { CatalogEntrySummary, IngredientItem } from "../collection-view";
 
 type ResolvedGrowth<G extends Growth = Growth> = G extends Growth
   ? Omit<G, "stages"> & {
@@ -35,7 +35,7 @@ export interface PlantSummary {
   growths: PlantGrowthGroup[];
   drops: PlantDrops;
 }
-export type PlantItem = CollectionRecord & {
+export type PlantItem = CatalogEntrySummary & {
   category: string | null;
   originGalaxy: string | null;
   harvestCount: number | null;
@@ -44,7 +44,7 @@ export type PlantItem = CollectionRecord & {
   treeDrops: PlantRecord["drops"];
   summary: PlantSummary;
 };
-export type PlantSeries = CollectionRecord & {
+export type PlantSeries = CatalogEntrySummary & {
   seriesName: string | null;
   plantIds: number[] | null;
   summary: PlantSummary;

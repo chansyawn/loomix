@@ -60,7 +60,7 @@ function candidateItems(
 ): IngredientItem[] {
   return [...new Set(itemIds)].flatMap((id) => {
     const item = items.get(id);
-    return item && item.listed !== false ? [item] : [];
+    return item && item.browsable !== false ? [item] : [];
   });
 }
 

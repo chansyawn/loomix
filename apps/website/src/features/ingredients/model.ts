@@ -49,8 +49,8 @@ export function buildIngredientsData(
   const itemsById = new Map<number, IngredientItem>();
   for (const id of tagSource.itemIds) {
     const item = view.ingredientItemsById.get(id);
-    // 仅供引用的记录没有正式详情页，不得作为可浏览条目展示。
-    if (!item || item.listed === false) continue;
+    // 此视图只展示可浏览的关联物品，正式收录资格由共享契约另行定义。
+    if (!item || item.browsable === false) continue;
     itemsById.set(id, item);
   }
   const byItem: MatchIndex = new Map();

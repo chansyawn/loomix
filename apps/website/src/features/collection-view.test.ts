@@ -34,7 +34,7 @@ test("catalog entries control listing while reference entities remain available 
   );
   expect(view.miscellaneous.map((item) => item.id)).toEqual([1]);
   expect(view.miscellaneous[0]?.acquisition).toBe("来源甲，来源乙");
-  expect(view.ingredientItemsById.get(2)).toMatchObject({ listed: false });
+  expect(view.ingredientItemsById.get(2)).toMatchObject({ browsable: false });
 });
 
 test("external appearance records retain their identity without entering item lists", () => {
@@ -79,7 +79,7 @@ test("友邻服饰保留独立分类并且不进入玩家服饰或普通食材�
   expect(view.clothing.appearances).toEqual([]);
   expect(view.ingredientItemsById.get(9)).toMatchObject({
     catalogCategory: "neighborClothing",
-    listed: false,
+    browsable: false,
   });
 });
 

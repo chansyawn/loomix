@@ -17,7 +17,7 @@ export function CollectionItemLink({
   className?: string;
 }) {
   const origin = useCollectionOrigin();
-  if (item.listed === false) return <span className={className}>{children ?? item.name}</span>;
+  if (item.browsable === false) return <span className={className}>{children ?? item.name}</span>;
   return (
     <Link
       {...recordLocation(item)}

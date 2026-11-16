@@ -45,7 +45,7 @@ export function CollectionCard({
         </CardTitle>
         {description?.trim() ? (
           <CardDescription
-            // oxlint-disable-next-line shadcn/no-restyle -- 收藏卡片的描述固定预留两行空间。
+            // oxlint-disable-next-line shadcn/no-restyle -- 图鉴卡片的描述固定预留两行空间。
             className="line-clamp-2 min-h-10 leading-5"
             title={description}
           >

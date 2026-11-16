@@ -1,6 +1,6 @@
 # 共享数据契约
 
-`@loomix/schema` 是提取器、资源发布器和网站共用的领域与发布契约，各包直接引用 TypeScript 源码，无需前置构建。具体字段、类型和校验约束以源码为准；本文说明跨包共享的语义。
+`@loomix/schema` 是提取器、资源发布器和网站共用的领域与发布契约，各包直接引用 TypeScript 源码，无需前置构建。领域定义以[领域术语表](../../GLOSSARY.md)为准；本文维护契约映射与跨包约束，具体字段、类型和校验约束以源码为准。
 
 ## 模块入口
 
@@ -14,9 +14,18 @@
 | [release](src/release/index.ts)             | 发布清单、文档组装与资源覆盖校验     |
 | [common](src/common/identity.ts)            | 身份、来源、语言与格式版本           |
 
-## 领域语义
+## 领域映射与约束
 
-`catalog.items` 通过 `kind` 区分正式物品与 `reference`；后者用于解析配方、掉落或偏好引用的范围外物品，只保存名称与说明，不进入正式列表或详情。`catalog.collections` 保存套组和系列，以 `memberKind` 约束成员类型。每个 ID 在物品与集合之间只出现一次。
+| 术语         | 契约映射                                                                      |
+| ------------ | ----------------------------------------------------------------------------- |
+| 物品目录     | `Catalog`，包含 `items` 与 `collections`                                      |
+| 物品         | `Item`，以 `kind` 区分种类                                                    |
+| 正式物品     | `ListedItem`，由 `isListedItem` 排除 `kind: "reference"`                      |
+| 仅供引用物品 | `kind: "reference"`，仅交付 `id`、`name` 与 `description`                     |
+| 集合         | `Collection`，以 `memberKind` 约束 `memberIds` 的成员类型                     |
+| 领域快照     | `Dataset`，包含 `context`、`source`、`gameplayTags`、`catalog` 与 `neighbors` |
+
+物品与集合共享 ID 空间，每个 ID 只出现一次。正式物品的准入依据保存在提取器中；客户端图鉴标记和网站页面可见性不进入共享收录类型。
 
 一对一的从属数据内嵌在所属实体中：种子内嵌 `growth`，菜肴内嵌烹饪配方，家具内嵌制作配方；星球、故事、能力、住宅、送礼偏好与补充图片内嵌在友邻中。关系只保存一个方向，反向索引由消费方派生，例如阶段 `plantId` 是植物关联的权威字段，植物到种子的关系由它派生。
 
@@ -28,11 +37,18 @@
 
 ## 快照、图片与发布
 
-`dataset` 汇集领域数据及快照上下文；`assets` 将领域图片引用 `{assetId, variant}` 映射为不可变文件路径、SHA256、字节数与尺寸。领域实体不保存交付路径；同一源图的 icon、banner、illustration 分别登记。
+领域快照的 `context.snapshotId` 当前取自生成它的 extraction ID，不是客户端快照 ID、delivery ID 或线上 release ID。`source` 保存客户端版本与资源来源版本，`context` 保存领域快照身份、语言和格式版本；语言不改变实体字段名。
 
-资源 manifest（发布清单）`resources/website/release.json` 描述一份完整发布，列出语言目录中的 gameplay-tags、catalog、neighbors 文档与共享 assets 文档，以每份文档的实际 SHA256 和字节数绑定发布内容。formatVersion、snapshotId、locale 和来源版本在 manifest 中声明，加载时组装为带上下文的 dataset。语言属于快照上下文，不改变实体字段名。
+`assets` 将领域图片引用 `{assetId, variant}` 映射为不可变文件路径、SHA256、字节数与尺寸。领域实体不保存交付路径；同一源图的 icon、banner、illustration 分别登记。
 
-网站资源指针 [apps/website/release.json](../../apps/website/release.json) 仅保存 `resourceBaseUrl`，供生产构建定位已发布资源；它不是资源 manifest，不能相互替换。
+两个同名文件使用不同结构，不能相互替换：
+
+| 文件                                                         | 概念与结构                                                                                                                               |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `resources/website/release.json`                             | 资源发布清单 `ReleaseManifest`，声明 `formatVersion`、`snapshotId`、`locale`、`source` 与 `files`；交付阶段即生成，不包含线上 release ID |
+| [apps/website/release.json](../../apps/website/release.json) | 网站资源指针，仅保存 `resourceBaseUrl`，供生产构建选择资源版本                                                                           |
+
+资源发布清单列出语言目录中的 gameplay-tags、catalog、neighbors 文档与共享 assets 文档，以每份文档的实际 SHA256 和字节数绑定内容。加载时通过 `assembleRelease` 将文档组装为 `Release`，包含清单、领域快照与图片索引；线上 release ID 由发布工具指定，记录于资源地址和完成标记中。
 
 当前允许的 `formatVersion` 由 [ContextSchema](src/common/identity.ts) 定义，不保留历史版本解析分支。格式升级时，提取器、发布器和网站需使用匹配契约；先发布兼容的新资源，再更新网站资源指针，具体步骤见[资源更新流程](../../DEPLOYMENT.md#资源更新流程)。
 

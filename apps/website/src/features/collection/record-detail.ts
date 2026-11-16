@@ -15,7 +15,7 @@ export function parseRecordId(value: string) {
   return /^[1-9]\d*$/.test(value) && Number.isSafeInteger(id) ? id : null;
 }
 
-// 合集按成员种类进入对应图鉴的合集视图。
+// 集合按成员种类进入对应图鉴的套组、套装或系列视图。
 function detailKind(row: OverviewRecord) {
   const { record } = row;
   return "memberKind" in record

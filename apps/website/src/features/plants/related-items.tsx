@@ -25,7 +25,7 @@ export function PlantRelatedItems({
               item={item}
               itemId={item.id}
               link={
-                item.listed === false
+                item.browsable === false
                   ? undefined
                   : {
                       ...recordLocation(item),
@@ -73,7 +73,7 @@ export function PlantDropsInfo({ drops }: { drops: PlantDrops }) {
                           item={entry.item}
                           itemId={entry.itemId}
                           link={
-                            entry.item && entry.item.listed !== false
+                            entry.item && entry.item.browsable !== false
                               ? {
                                   ...recordLocation(entry.item),
                                   state: { collectionOrigin: origin },

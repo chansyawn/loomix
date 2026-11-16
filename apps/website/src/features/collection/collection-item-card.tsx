@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { LinkProps } from "@tanstack/react-router";
 import { Card, CardContent } from "@/ui/components/card";
-import type { CollectionRecord } from "../collection-view";
+import type { CatalogEntrySummary } from "../collection-view";
 import { RecordImage } from "./record-image";
 import { useCollectionOrigin } from "./navigation";
 
@@ -14,7 +14,7 @@ export function CollectionItemCard({
   fullDescription = false,
   fallbackName = "未知物品",
 }: {
-  item: Pick<CollectionRecord, "name" | "image"> | null;
+  item: Pick<CatalogEntrySummary, "name" | "image"> | null;
   itemId: number;
   quantity?: number;
   description?: string;

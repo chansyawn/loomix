@@ -26,14 +26,14 @@ import type { PlantsData } from "./plants/model";
 export type { PlantItem, PlantSeries } from "./plants/model";
 export type { DishEffect } from "@loomix/schema/catalog";
 
-export interface CollectionRecord {
+export interface CatalogEntrySummary {
   id: number;
   name: string;
   image: string | null;
   description: string | null;
   quality: Quality | null;
 }
-type CategorizedRecord = CollectionRecord & { category: string | null };
+type CategorizedRecord = CatalogEntrySummary & { category: string | null };
 export type FurnitureItem = CategorizedRecord & {
   furnitureCategory: string | null;
   size: string | null;
@@ -52,7 +52,7 @@ export type CreatureItem = CategorizedRecord & {
   activeWeather: string | null;
   sizeRange: string | null;
 };
-export type DishItem = CollectionRecord & {
+export type DishItem = CatalogEntrySummary & {
   difficulty: string | null;
   galaxyFlavor: string | null;
   cookware: string | null;
@@ -70,22 +70,25 @@ export type ClothingItem = CategorizedRecord & {
   acquisition: string | null;
 };
 export type ClothingAppearance = CategorizedRecord;
-export type MiscellaneousItem = CollectionRecord & {
+export type MiscellaneousItem = CatalogEntrySummary & {
   acquisition: string | null;
 };
-export type FurnitureSet = CollectionRecord & {
+export type FurnitureSet = CatalogEntrySummary & {
   seriesName: string | null;
   componentIds: number[] | null;
 };
-export type ClothingSet = CollectionRecord & {
+export type ClothingSet = CatalogEntrySummary & {
   setName: string | null;
   componentIds: number[] | null;
 };
-export type CreatureSeries = CollectionRecord & {
+export type CreatureSeries = CatalogEntrySummary & {
   seriesName: string | null;
   creatureIds: number[] | null;
 };
-export type DishSeries = CollectionRecord & { seriesName: string | null; dishIds: number[] | null };
+export type DishSeries = CatalogEntrySummary & {
+  seriesName: string | null;
+  dishIds: number[] | null;
+};
 export type CatalogCategory =
   | "furniture"
   | "clothing"
@@ -94,9 +97,10 @@ export type CatalogCategory =
   | "plants"
   | "dishes"
   | "miscellaneous";
-export type IngredientItem = CollectionRecord & {
+export type IngredientItem = CatalogEntrySummary & {
   catalogCategory: CatalogCategory;
-  listed?: boolean;
+  // 仅表示通用物品关联视图中的浏览与链接资格，不代表正式收录状态。
+  browsable?: boolean;
 };
 export interface CollectionView {
   ingredientTagSource: IngredientTagSource;
@@ -148,7 +152,7 @@ export function toCollectionView(
   ) => displayValues(resolveTags(record, facet).map(tagLabel));
   const base = (
     record: Pick<ListedItem | Collection, "id" | "name" | "description" | "quality" | "image">,
-  ): CollectionRecord => ({
+  ): CatalogEntrySummary => ({
     id: record.id,
     name: record.name,
     description: record.description,
@@ -173,7 +177,7 @@ export function toCollectionView(
     miscellaneous: [],
   };
   for (const item of catalog.items) {
-    // 仅供引用的物品和友邻服饰没有对应的图鉴详情页。
+    // 友邻服饰有独立详情，但与仅供引用物品一样，不参与通用关联视图的浏览与链接。
     view.ingredientItemsById.set(item.id, {
       id: item.id,
       name: item.name,
@@ -181,7 +185,7 @@ export function toCollectionView(
       quality: item.kind === "reference" ? null : item.quality,
       image: item.kind === "reference" ? null : image(item.image),
       catalogCategory: catalogCategory(item),
-      listed: item.kind !== "reference" && item.kind !== "neighborClothing",
+      browsable: item.kind !== "reference" && item.kind !== "neighborClothing",
     });
   }
   for (const item of listed) {

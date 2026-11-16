@@ -22,7 +22,7 @@ export const categoryNames = {
   miscellaneous: "杂物",
 };
 
-export type FormalRecord = ListedItem | Collection;
+export type ListedEntry = ListedItem | Collection;
 
 export function createCollectionCatalog(
   catalog: Catalog,
@@ -34,7 +34,7 @@ export function createCollectionCatalog(
   const tagIndex = createGameplayTagIndex(gameplayTags.tags);
   const tagsFor = createRecordTagResolver(tagIndex);
   const items = catalog.items.filter(isListedItem);
-  const row = (record: FormalRecord) => {
+  const row = (record: ListedEntry) => {
     const tagIds = "tagIds" in record ? record : { tagIds: [] };
     return {
       id: record.id,

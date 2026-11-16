@@ -8,7 +8,7 @@ const tagLabels = new Map([
   [20, { name: "紫色" }],
 ]);
 
-function ingredient(id: number, listed = true): IngredientItem {
+function ingredient(id: number, browsable = true): IngredientItem {
   return {
     id,
     name: `食材${id}`,
@@ -16,7 +16,7 @@ function ingredient(id: number, listed = true): IngredientItem {
     description: null,
     quality: null,
     catalogCategory: "plants",
-    listed,
+    browsable,
   };
 }
 

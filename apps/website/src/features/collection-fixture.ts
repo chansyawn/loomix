@@ -12,7 +12,7 @@ import type { Assets, ImageRef } from "@loomix/schema/assets";
 import { emptyDataset } from "@loomix/schema/dataset";
 import { DocumentKindSchema, documentPath } from "@loomix/schema/release";
 import { referencedImages } from "@loomix/schema/dataset/images";
-import type { CollectionRecord, CollectionView } from "./collection-view.ts";
+import type { CatalogEntrySummary, CollectionView } from "./collection-view.ts";
 
 export const fixtureContext = {
   formatVersion: 11,
@@ -29,7 +29,7 @@ const values = (value: string | null): string[] | null => value?.split("，") ??
 const acquisition = (value: string | null): Acquisition[] | null =>
   value === null ? null : value.split("，").map((label, index) => ({ sourceId: index + 1, label }));
 
-export function catalogBase(record: CollectionRecord) {
+export function catalogBase(record: CatalogEntrySummary) {
   return {
     id: record.id,
     name: record.name,
@@ -63,7 +63,7 @@ export function catalogFixture(
     });
   const add = (...items: object[]) => addFixtureRecords(catalog, gameplayTags, ...items);
   const group = (
-    record: CollectionRecord,
+    record: CatalogEntrySummary,
     memberKind: CollectionMemberKind,
     memberIds: number[] | null,
   ) =>

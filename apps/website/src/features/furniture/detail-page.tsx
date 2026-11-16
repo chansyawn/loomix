@@ -107,7 +107,7 @@ function FurnitureRecipes({
                       quantity={material.quantity}
                       fallbackName="未知材料"
                       link={
-                        material.item && material.item.listed !== false
+                        material.item && material.item.browsable !== false
                           ? recordLocation(material.item)
                           : undefined
                       }
