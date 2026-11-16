@@ -1,6 +1,6 @@
 import { TAG_LABEL_OVERRIDES, TAG_LABEL_PREFIXES, type TagTreePolicy } from "../collection/tags.ts";
 
-// 修改白名单、前缀或特例后，同步更新 docs/tag-filter-policy.md。
+// 修改白名单、前缀或特例后，同步更新 docs/tag-filter-policy.md；检查会自动使用这些常量。
 export const TAG_FILTER_ROOT_NAMES = [
   "颜色",
   "材质",

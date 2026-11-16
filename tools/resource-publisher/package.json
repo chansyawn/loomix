@@ -4,7 +4,8 @@
   "type": "module",
   "exports": {
     "./release": "./src/release.ts",
-    "./validate": "./src/validate.ts"
+    "./validate": "./src/validate.ts",
+    "./load": "./src/load.ts"
   },
   "scripts": {
     "test": "vp exec vp test"

@@ -45,7 +45,7 @@ vp run website#release
 
 生产构建默认从 [apps/website/release.json](../apps/website/release.json) 读取资源版本；`VITE_RESOURCE_BASE_URL` 可覆盖该地址。部署要求使用已发布的 HTTPS 资源版本，本地资源目录不能用于发布。
 
-游戏数据与图片由 [资源发布工具](../tools/resource-publisher/README.md) 单独上传至 R2 `loomix-assets`，不随网站 CI 自动上传。更新资源时，先发布新的不可变 release，再通过 PR 更新网站的 `release.json`。每次更新本地资源后，按[全部页标签筛选策略](tag-filter-policy.md)运行标签校验并处理人工维护项。
+游戏数据与图片由 [资源发布工具](../tools/resource-publisher/README.md) 单独上传至 R2 `loomix-assets`，不随网站 CI 自动上传。更新资源时，先发布新的不可变 release，再通过 PR 更新网站的 `release.json`。每次更新本地资源后，按[全部页标签筛选策略](tag-filter-policy.md)运行 `vp run --no-cache website#verify-contracts` 并处理人工维护项；部署链路中的 `verify-release` 会对 `release.json` 指向的已发布 release 运行同一套[发布契约检查](release-checks.md)。资源上传本身仍由发布工具的 `validateContent` 负责，发布契约检查阻断的是网站部署。
 
 R2 CORS 当前允许以下 Origin 的 `GET`、`HEAD` 请求：
 

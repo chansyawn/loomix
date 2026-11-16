@@ -1,9 +1,12 @@
-import { lstat, readFile, readdir } from "node:fs/promises";
+import { lstat, readdir } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 import { assembleRelease, parseReleaseManifest } from "@loomix/schema/release";
 import type { DocumentKind, Release } from "@loomix/schema/release";
+import { readRegularFile } from "./files.ts";
 import { sha256 } from "./release.ts";
+
+export { readRegularFile } from "./files.ts";
 
 export interface AssetFile {
   key: string;
@@ -21,11 +24,6 @@ export interface ValidatedContent {
   manifestSha256: string;
   documents: DocumentFile[];
   assets: AssetFile[];
-}
-
-export async function readRegularFile(file: string): Promise<Buffer> {
-  if (!(await lstat(file)).isFile()) throw new Error(`Expected a regular file: ${file}`);
-  return readFile(file);
 }
 
 async function filesWithin(directory: string): Promise<string[]> {
