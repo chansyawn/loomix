@@ -118,7 +118,7 @@ UISprite 引用加 assets/moleres/rel/sres/ 前缀，统一斜杠和小写，只
 
 导出时同时筛选对象名和 Container。同一个包内若有同名 Sprite，分别导出，避免工具以名称写文件时发生覆盖。任何已选对象导出失败均停止。完整解码 PNG、校验 CRC、尺寸和全部像素数据；仅转换选中的图片，完整解码最终 WebP 并检查目标尺寸；用最终 WebP 字节的 SHA256 命名并去重。相同原图用于不同目标尺寸时分别转换，清单分别记录原始 PNG 和交付 WebP 的路径、哈希及尺寸。
 
-交付契约集中在 `packages/schema/src/`，按 catalog、neighbors、world、assets、dataset、release 和 extraction 组织。源观察与交付领域模型分离，不保留历史版本解析分支。
+交付契约集中在 `packages/schema/src/`，按 gameplay-tags、catalog、neighbors、world、assets、dataset、release 和 common 组织。源观察、原始数据库和证据模型位于 `tools/extraction`，与交付领域模型分离，不保留历史版本解析分支。
 
 catalog.records 使用 kind 判别联合统一保存正式单品、集合、外观和种子，每个物品 ID 只出现一次。admissionReasons 保存图鉴、人工白名单和确定性种子的准入原因；原始图鉴标记保留在来源证据中。范围外物品仅保存为 references 的 ID 和名称，不计入收录、不生成详情。craftingRecipes 保存正式产物的有效制作关系，growths 保留阶段上下文。种子以 growthId 引用唯一生长配置；阶段的 plantId 是植物关联的唯一权威字段，植物到种子、生长配置的反向关系由使用方派生。正式记录以 tagFields 保留 318.6–17 的十二组直接标签，按字段顺序展开，再追加 client.type 对应的 716.10 typetag，稳定去重为 tagIds，不展开祖先。client 保留原始 type、idType、subtype、subtypeName；catalog.clientTypes 保存完整 BTypeCfg 类型字典，仅通过 type 关联，不以 idType 作为外键。展示分类与家具分类分别通过 displayCategory、furnitureCategory 交付。独立 gameplay-tags 文档保存完整标签树的内部名、EnumName、父级和显示文本；颜色、材质、风格由对应子树派生，食材分类不单独发布，成员关系由记录 tagIds 的食材子树闭包派生，偏好和食谱直接引用统一标签，原始分组可从 tagFields、封存来源和字段证据追溯；来源等多值字段使用数组，不从展示字符串反向拆解。
 
@@ -126,7 +126,7 @@ catalog.records 使用 kind 判别联合统一保存正式单品、集合、外�
 
 补充清单位于 `src/extraction/content/supplemental-admissions.json`，schemaVersion 为 1，source 绑定同一客户端版本，confirmation 保存人工确认说明。entries 仅含 `id`、`expectedName`、`category`、`subcategory`：苹果 30161、李子 30169、牛油果 30265、芒果 30266、仙人掌果 30267、竹笋 30268 为 plants/采摘材料；肉 2000050、蛋 2000051、奶 2000052，以及寒松木 30115、陨星矿石 30136、雪晶 30299、纯净雪花 30300 为 miscellaneous/null。名称、描述、图片和品质始终从客户端提取，不从清单复制。缺失主表、版本或名称错配、重复 ID、与图鉴分类冲突均中止提取；重叠 ID 只生成一次且保存双方依据。
 
-九条均无系列引用，六种植物的原产星系、成熟周期和收获茬数均未配置，保留 null。肉蛋奶描述未解析到，保留 null。图鉴行缺失不会阻断 UI 描述或图片来源。
+十三条补充记录的系列引用、描述及其他属性均从冻结客户端读取，不因人工收录而推断关联或补造字段；未配置或未确认的字段按契约保留 null，并记录来源证据或未确认原因。图鉴行缺失不会阻断 UI 描述或图片来源。
 
 `record-evidence.json` 独立记录 `id`、`admissionSources` 和 `encyclopedia`。图鉴收录源含 kind=encyclopedia、file、table=93、rowOffset；人工源含 kind=manual、file、pointer、sha256。图鉴证据为 present（含原始行及 listed）或 absent（含扫描文件及 table=93），不与未知属性混用。字段路径使用 name、subcategory、attributes.originGalaxy、memberIds 等；ID 证据统一为 318.0，只有分类字段允许引用冻结清单的 JSON Pointer 和 SHA256。
 
@@ -174,4 +174,4 @@ environment、extraction、delivery 的 manifest 均采用 schemaVersion 1。输
 
 raw/content.json 保留结构阶段结果；raw/images-content.json 在不修改结构 checkpoint 输出的情况下加入选中 PNG 的 bundle 相对路径。详情观察保存在 raw/images-catalog-observations.json，领域组装生成统一 dataset 与图片交付任务。交付阶段只读封存 dataset，处理图片并生成领域 JSON、assets.json 和 release.json，不重做业务关联。最终验证从 bundle 中冻结的 OBB 重新核对表 93 与冻结确认清单的收录并集、分类、图鉴状态、品阶及成员，不打开客户端；只有 init、extract 和完整链 verify 会核对实际客户端快照。
 
-补充清单在 extract 的 admissions checkpoint 冻结，原始字节 SHA256 进入提取身份和 manifest，structure 依赖此 checkpoint。修改工作区清单不能影响已封存交付；验证器重读冻结 OBB 和冻结清单重建并集，不信任 scope.json。线上切换须先上传新的不可变资源版本，再同步资源指针与网站代码；本次仅完成本地交付，不更新生产指针。
+补充清单在 extract 的 admissions checkpoint 冻结，原始字节 SHA256 进入提取身份和 manifest，structure 依赖此 checkpoint。修改工作区清单不能影响已封存交付；验证器重读冻结 OBB 和冻结清单重建并集，不信任 scope.json。提取与 materialize 只更新本地产物；线上切换须先上传新的不可变资源版本，再同步资源指针与网站代码。
