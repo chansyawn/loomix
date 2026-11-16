@@ -11,8 +11,10 @@ import os from "node:os";
 import path from "node:path";
 import sharp from "sharp";
 import { parseAssets } from "@loomix/schema/assets";
-import { createAssetRegistry } from "../domains/assets.ts";
-import type { ImageJob } from "../domains/assets.ts";
+import { imageKey, type ImageRef } from "@loomix/schema/assets";
+import { readJson } from "../workflow/json.ts";
+import { parseDataset } from "@loomix/schema/dataset";
+import type { ImageJob } from "../extraction/images/model.ts";
 import { digest } from "../workflow/hashing.ts";
 import { processImage, processNeighborImage, decodeWebp } from "./image.ts";
 import { renderImages } from "./images.ts";
@@ -29,7 +31,7 @@ for (const size of [256, 512]) {
     })
       .png()
       .toBuffer();
-    const output = await processImage(png, "clothing.set");
+    const output = await processImage(png, "icon");
     assert.equal(output.width, 256);
     assert.equal(output.height, 256);
     await decodeWebp(output.bytes);
@@ -61,7 +63,7 @@ test("furniture banners resize and crop centrally without distortion", async () 
       ])
       .png()
       .toBuffer();
-    const output = await processImage(input, "furniture.set");
+    const output = await processImage(input, "banner");
     const pixels = await sharp(output.bytes).ensureAlpha().raw().toBuffer();
     for (const y of [100, 450]) assert.ok(pixels[(y * 1024 + 512) * 4] > 240, "Red outer bands");
     for (const y of [150, 350])
@@ -73,12 +75,12 @@ test("furniture banners resize and crop centrally without distortion", async () 
 });
 
 test("corrupt inputs and truncated WebP fail decoding", async () => {
-  await assert.rejects(processImage(Buffer.from("broken"), "miscellaneous.item"));
+  await assert.rejects(processImage(Buffer.from("broken"), "icon"));
   const png = await sharp({ create: { width: 256, height: 256, channels: 4, background: "red" } })
     .png()
     .toBuffer();
   await assert.rejects(decodeWebp(png), /Expected WebP/);
-  const output = await processImage(png, "miscellaneous.item");
+  const output = await processImage(png, "icon");
   await assert.rejects(decodeWebp(output.bytes.subarray(0, output.bytes.length / 2)));
 });
 
@@ -90,7 +92,15 @@ test("asset delivery deduplicates identical outputs and separates target dimensi
       .png()
       .toBuffer();
     fs.writeFileSync(path.join(work, "original.png"), png);
-    const registry = createAssetRegistry();
+    const jobs = new Map<string, ImageJob>();
+    const register = (
+      original: Omit<ImageJob["original"], "object"> & { pathId: string },
+      variant: ImageRef["variant"] = "illustration",
+    ): ImageRef => {
+      const image = { assetId: digest(original.pathId), variant };
+      jobs.set(imageKey(image), { ...image, original: { ...original, object: image.assetId } });
+      return image;
+    };
     const original = {
       file: "original.png",
       sha256: digest(png),
@@ -101,17 +111,21 @@ test("asset delivery deduplicates identical outputs and separates target dimensi
       assetType: "Sprite",
       pathId: "1",
     };
-    const first = registry.register(original, "miscellaneous.item");
-    const second = registry.register({ ...original, pathId: "2" }, "miscellaneous.item");
-    const banner = registry.register(original, "furniture.set");
+    const first = register(original, "icon");
+    const second = register({ ...original, pathId: "2" }, "icon");
+    const banner = register(original, "banner");
     dataset.catalog.items.push({ ...material(1), image: first }, { ...material(2), image: second });
     dataset.catalog.collections.push({ ...collection(3, "furniture", null), image: banner });
     fs.writeFileSync(path.join(work, "dataset.json"), JSON.stringify(dataset));
-    fs.writeFileSync(
-      path.join(work, "image-jobs.json"),
-      JSON.stringify([...registry.jobs.values()]),
+    fs.writeFileSync(path.join(work, "image-jobs.json"), JSON.stringify([...jobs.values()]));
+    await renderImages(
+      { work },
+      {
+        directory: work,
+        dataset: parseDataset(readJson(path.join(work, "dataset.json"))),
+        imageJobs: readJson<ImageJob[]>(path.join(work, "image-jobs.json")),
+      },
     );
-    await renderImages({ work }, work);
     const manifest: (ImageJob & { delivered: { file: string; width: number } })[] = JSON.parse(
       fs.readFileSync(path.join(work, "image-manifest.json"), "utf8"),
     );
@@ -133,7 +147,18 @@ test("delivery rejects invalid domain data before converting images", async () =
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-invalid-dataset-"));
   try {
     fs.writeFileSync(path.join(work, "dataset.json"), "{}");
-    await assert.rejects(renderImages({ work }, work), { name: "ZodError" });
+    await assert.rejects(
+      async () =>
+        renderImages(
+          { work },
+          {
+            directory: work,
+            dataset: parseDataset(readJson(path.join(work, "dataset.json"))),
+            imageJobs: [],
+          },
+        ),
+      { name: "ZodError" },
+    );
   } finally {
     fs.rmSync(work, { recursive: true, force: true });
   }
@@ -164,12 +189,20 @@ test("neighbor illustrations are delivered with full references, original size a
     const dataset = datasetFixture();
     const owner = neighbor(11);
     dataset.neighbors.neighbors.push(owner);
-    const registry = createAssetRegistry();
+    const jobs = new Map<string, ImageJob>();
+    const register = (
+      original: Omit<ImageJob["original"], "object"> & { pathId: string },
+      variant: ImageRef["variant"] = "illustration",
+    ): ImageRef => {
+      const image = { assetId: digest(original.pathId), variant };
+      jobs.set(imageKey(image), { ...image, original: { ...original, object: image.assetId } });
+      return image;
+    };
     const sizes = [
       ["favour", 452, 534],
       ["role", 300, 300],
     ] as const;
-    const images = new Map<string, ReturnType<typeof registry.register>>();
+    const images = new Map<string, ImageRef>();
     for (const [category, width, height] of sizes) {
       const png = await sharp({
         create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
@@ -189,25 +222,26 @@ test("neighbor illustrations are delivered with full references, original size a
         .toBuffer();
       const file = `${category}.png`;
       fs.writeFileSync(path.join(work, file), png);
-      const image = registry.register({
+      const image = register({
         file,
         sha256: digest(png),
         width,
         height,
-        source: "fixture.blk",
-        container: category,
-        assetType: "Sprite",
         pathId: category,
       });
       images.set(category, image);
       owner.images[category] = image;
     }
     fs.writeFileSync(path.join(work, "dataset.json"), JSON.stringify(dataset));
-    fs.writeFileSync(
-      path.join(work, "image-jobs.json"),
-      JSON.stringify([...registry.jobs.values()]),
+    fs.writeFileSync(path.join(work, "image-jobs.json"), JSON.stringify([...jobs.values()]));
+    await renderImages(
+      { work },
+      {
+        directory: work,
+        dataset: parseDataset(readJson(path.join(work, "dataset.json"))),
+        imageJobs: readJson<ImageJob[]>(path.join(work, "image-jobs.json")),
+      },
     );
-    await renderImages({ work }, work);
     const assets = parseAssets(
       JSON.parse(fs.readFileSync(path.join(work, "staging/assets.json"), "utf8")),
     );

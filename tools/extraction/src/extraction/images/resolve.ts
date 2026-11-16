@@ -1,6 +1,6 @@
 import type { IndexedAsset, IconMatch } from "../types.ts";
 import { profile } from "../../profile.ts";
-import { normalizeAssetPath, preferOverlay } from "../../client/asset-map.ts";
+import { normalizeAssetPath } from "../../client/asset-map.ts";
 
 export function createIconResolver(textures: IndexedAsset[], sprites: IndexedAsset[]) {
   const assets = new Map<string, IndexedAsset[]>(),
@@ -17,6 +17,13 @@ export function createIconResolver(textures: IndexedAsset[], sprites: IndexedAss
     if (!spriteAssets.has(key)) spriteAssets.set(key, []);
     spriteAssets.get(key)!.push(a);
   }
+  const preferOverlay = (variants: IndexedAsset[]): IndexedAsset | undefined => {
+    const overlay = variants.filter((asset) => /[\\/]Persistent[\\/]/i.test(asset.Source));
+    const active = overlay.length ? overlay : variants;
+    if (new Set(active.map((asset) => `${asset.Source}:${asset.PathID}`)).size > 1)
+      throw new Error("Ambiguous authoritative image reference");
+    return active[0];
+  };
   return (reference: string): IconMatch | null => {
     if (!reference?.startsWith("UISprite/")) return null;
     const key = normalizeAssetPath(profile.assetPrefix + reference);

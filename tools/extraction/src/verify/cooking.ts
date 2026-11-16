@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import type { Catalog } from "@loomix/schema/catalog";
-import type { Tables } from "../extraction/decode/tables.ts";
+import type { Tables } from "../extraction/source/decode/tables.ts";
 
 export function verifyCookingRecipes(catalog: Catalog, tables: Tables): void {
   const dishes = catalog.items.flatMap((item) => (item.kind === "dish" ? [item] : []));

@@ -6,6 +6,7 @@ import type { Manifest } from "../workflow/manifest.ts";
 import { digest, inventory, filesWithin } from "../workflow/hashing.ts";
 import { implementationRevision, profileHash } from "../workflow/identity.ts";
 import { withLock } from "../workflow/lock.ts";
+import { readVerifiedExtraction } from "../extraction/bundle.ts";
 import { renderImages } from "./images.ts";
 import { verifyDelivery } from "./verify.ts";
 import { publish, safeOutput } from "./publish.ts";
@@ -15,7 +16,8 @@ export async function deliver(
   { artifactOnly = false } = {},
 ): Promise<string> {
   const bundle = identityDirectory("extractions", extractionId);
-  const extraction = await readManifest(bundle, "extraction");
+  const verified = await readVerifiedExtraction(bundle);
+  const extraction = verified.manifest;
   if (extraction.profileHash !== profileHash)
     throw new Error("Extraction profile differs from the current profile; extract again");
   const target = artifactOnly ? "artifact-only" : "website";
@@ -32,7 +34,7 @@ export async function deliver(
     implementation,
     profileHash,
     target,
-    imagePolicy: "Lanczos3-cover-card-contain256-neighbor-inside1600-WebP85-alpha100-v3",
+    imagePolicy: "Lanczos3-icon256-banner1024x512-illustration1600-WebP85-alpha100-v4",
   });
   const work = identityDirectory("deliveries", id);
   await withLock(artifactOnly ? `${work}.lock` : `${websiteDirectory}.lock`, async () => {
@@ -45,7 +47,7 @@ export async function deliver(
     fs.rmSync(path.join(work, "staging"), { recursive: true, force: true });
     const options = { work, output: websiteDirectory };
     try {
-      await renderImages(options, bundle);
+      await renderImages(options, verified);
       await verifyDelivery(work, bundle);
       atomicJson(path.join(work, "run-report.json"), {
         passed: true,

@@ -1,8 +1,8 @@
-import type { ImageGroup } from "../domains/assets.ts";
+import type { ImageRef } from "@loomix/schema/assets";
 import sharp from "sharp";
 
-export function imageDimensions(group: ImageGroup) {
-  return group === "furniture.set" ? { width: 1024, height: 512 } : { width: 256, height: 256 };
+export function imageDimensions(variant: ImageRef["variant"]) {
+  return variant === "banner" ? { width: 1024, height: 512 } : { width: 256, height: 256 };
 }
 
 export async function decodeWebp(bytes: Buffer) {
@@ -14,8 +14,9 @@ export async function decodeWebp(bytes: Buffer) {
   return info;
 }
 
-export async function processImage(bytes: Buffer, group: ImageGroup) {
-  const dimensions = imageDimensions(group);
+export async function processImage(bytes: Buffer, variant: ImageRef["variant"]) {
+  if (variant === "illustration") return processNeighborImage(bytes);
+  const dimensions = imageDimensions(variant);
   const output = await sharp(bytes, { failOn: "warning" })
     .resize({
       ...dimensions,

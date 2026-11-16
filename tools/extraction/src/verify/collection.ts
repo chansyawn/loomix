@@ -1,19 +1,7 @@
-import { verifyPlantings } from "./plants.ts";
 import assert from "node:assert/strict";
-import path from "node:path";
-import { baseCollectionObservations } from "../extraction/schema.ts";
-import type { CollectionObservations } from "../extraction/schema.ts";
-import { readJson, writeJson } from "../workflow/json.ts";
-import { RawCollectionObservationsSchema } from "../extraction/collection/build.ts";
-import { collectionEvidenceSchema } from "../extraction/collection/evidence.ts";
-import type { CollectionEvidence } from "../extraction/collection/evidence.ts";
-import { detailInvestigationSchema } from "../extraction/collection/details/investigation.ts";
-import { parseRawContent } from "../extraction/schemas/raw-content.ts";
-import { Tables } from "../extraction/decode/tables.ts";
+import type { CollectionEvidence } from "../extraction/source/catalog/collection/evidence.ts";
+import type { Tables } from "../extraction/source/decode/tables.ts";
 import type { TableRow } from "../extraction/types.ts";
-import { verifyCollectionFields } from "./collection-fields.ts";
-import { verifySeedImages, verifyStageImages } from "./collection-images.ts";
-import { verifyTreeInvestigation } from "./tree-drops.ts";
 
 export function verifyProofSources(proof: CollectionEvidence, tables: Tables): void {
   const rows: { row: TableRow; fields: number[] }[] = [];
@@ -109,96 +97,4 @@ export function verifyProofSources(proof: CollectionEvidence, tables: Tables): v
         ),
         "Complete joined source rows",
       );
-}
-
-export async function verifyCollection(
-  bundle: string,
-  reportRoot: string,
-  writeReports = true,
-): Promise<CollectionObservations> {
-  const file = path.join(bundle, "raw/images-catalog-observations.json");
-  const catalog = RawCollectionObservationsSchema.parse(readJson(file));
-  const base = parseRawContent(readJson(path.join(bundle, "raw/images-content.json")));
-  const withoutImages = (items: typeof base.items) =>
-    items.map(({ image: _image, ...record }) => record);
-  const baseProjection = baseCollectionObservations(catalog);
-  assert.deepEqual(baseProjection, base, "Raw observation base projection");
-  assert.deepEqual(
-    withoutImages(baseProjection.items),
-    withoutImages(base.items),
-    "Collection preserves extracted base fields",
-  );
-  assert.deepEqual(baseProjection.source, base.source);
-  assert.deepEqual(baseProjection.ingredientCategories, base.ingredientCategories);
-  const tables = new Tables(path.join(bundle, "prepared"));
-  const { requiredFields } = verifyCollectionFields(catalog, tables);
-  const proofs = readJson<CollectionEvidence[]>(path.join(bundle, "collection-evidence.json"));
-  const missing = proofs.filter((proof) => proof.value === null);
-  assert.deepEqual(
-    readJson(path.join(bundle, "collection-missing-fields.json")),
-    missing,
-    "Every unknown detail has a reasoned missing-field record",
-  );
-  const investigation = detailInvestigationSchema.parse(
-    readJson(path.join(bundle, "collection-investigation.json")),
-  );
-  verifyTreeInvestigation(tables, investigation.records);
-  assert.deepEqual(
-    readJson(path.join(bundle, "evidence/collection-investigation.json")),
-    investigation,
-    "Client candidates are preserved in the evidence package",
-  );
-  for (const candidate of investigation.records)
-    for (const source of candidate.sources) {
-      if (source.table === 1) {
-        assert.equal(tables.textmap[source.row]?.rowOffset, source.rowOffset);
-        continue;
-      }
-      assert.ok(
-        tables
-          .rows(source.table)
-          .some((row) => tables.id(row) === source.row && row.rowOffset === source.rowOffset),
-        `Unrelated investigation source ${candidate.id}.${candidate.field}`,
-      );
-    }
-  assert.deepEqual(readJson(path.join(bundle, "evidence/collection-evidence.json")), proofs);
-  const seen = new Set<string>();
-  const coverage: Record<string, { populated: number; null: number }> = {};
-  const withoutStageImages = (value: unknown): unknown => {
-    if (Array.isArray(value)) return value.map(withoutStageImages);
-    if (value && typeof value === "object") {
-      const result: Record<string, unknown> = {};
-      for (const [key, entry] of Object.entries(value))
-        result[key] = key === "image" ? null : withoutStageImages(entry);
-      return result;
-    }
-    return value;
-  };
-  for (const input of proofs) {
-    const proof = collectionEvidenceSchema.parse(input);
-    const key = `${proof.owner}:${proof.id}:${proof.field}`;
-    assert.ok(
-      requiredFields.has(key) && !seen.has(key),
-      `Unexpected/duplicate collection evidence ${key}`,
-    );
-    assert.deepEqual(
-      withoutStageImages(proof.value),
-      withoutStageImages(requiredFields.get(key)),
-      `Collection evidence value ${key}`,
-    );
-    verifyProofSources(proof, tables);
-    seen.add(key);
-    const category =
-      proof.owner === "seed"
-        ? "seed"
-        : catalog.items.find((item) => item.id === proof.id)!.category;
-    const stats = (coverage[`${category}.${proof.field}`] ??= { populated: 0, null: 0 });
-    stats[proof.value === null ? "null" : "populated"]++;
-  }
-  assert.equal(seen.size, requiredFields.size, "Complete collection evidence coverage");
-  verifyPlantings(catalog, bundle);
-  verifySeedImages(catalog, bundle);
-  verifyStageImages(catalog, bundle);
-  if (writeReports) writeJson(path.join(reportRoot, "collection-coverage.json"), coverage);
-  return catalog;
 }

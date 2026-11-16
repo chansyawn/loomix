@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import type { CollectionDetail } from "../extraction/schema.ts";
-import type { Tables } from "../extraction/decode/tables.ts";
-import type { detailInvestigationSchema } from "../extraction/collection/details/investigation.ts";
+import type { Tables } from "../extraction/source/decode/tables.ts";
+import type { detailInvestigationSchema } from "../extraction/source/catalog/collection/details/investigation.ts";
 import type { z } from "zod";
 
 export function verifyTreeDrops(

@@ -116,25 +116,27 @@ TextMap 特殊处理：根字段 1 解引用到包装层，包装字段 0 解引
 
 ## 图片提取与转换
 
-普通单品及家具、服饰套组采用显示表明确关联的图片，导出全部可用大小图候选后，按原生宽×高选择像素数最多的图片；像素数相同时优先配置的大图。选图使用原生尺寸，原始 PNG 保留在临时导出目录。选图完成后，家具套组（furniture.set）统一输出 1024×512，其他有图记录（包括服饰套装）统一输出 256×256；按原比例缩放、居中裁切，使用 Lanczos3 和有损 WebP 质量 85、alphaQuality 100，保留透明通道。67 个生物、植物、菜肴主题集合复用家具图标；目前未确认这些图是系列的实际展示图，图片保持 null。不要改用成员图或拼图替代。
+普通单品及家具、服饰套组采用显示表明确关联的图片，导出全部可用大小图候选后，按原生宽×高选择像素数最多的图片；像素数相同时按原始配置 rank 优先大图，再按源对象身份排序。选图使用原生尺寸，所有参与比较的候选 PNG 均封存到提取结果。选图完成后，家具套组（furniture.set）统一输出 1024×512，其他有图记录（包括服饰套装）统一输出 256×256；按原比例缩放、居中裁切，使用 Lanczos3 和有损 WebP 质量 85、alphaQuality 100，保留透明通道。67 个生物、植物、菜肴主题集合复用家具图标；目前未确认这些图是系列的实际展示图，图片保持 null。不要改用成员图或拼图替代。
 
 UISprite 引用加 assets/moleres/rel/sres/ 前缀，统一斜杠和小写，只去除末尾 png/jpg/jpeg/tga/psd。按完整 Container 匹配 Texture2D。Texture2D 名称为 sactx- 图集时，改用完整 Container 加精确 Sprite 名称匹配，名称为引用路径末段去扩展名。不能导出整张图集当单品。更新来源优先且所有来源包须通过清单校验。
 
-导出时同时筛选对象名和 Container。同一个包内若有同名 Sprite，分别导出，避免工具以名称写文件时发生覆盖。任何已选对象导出失败均停止。完整解码 PNG、校验 CRC、尺寸和全部像素数据；仅转换选中的图片，完整解码最终 WebP 并检查目标尺寸；用最终 WebP 字节的 SHA256 命名并去重。相同原图用于不同目标尺寸时分别转换，清单分别记录原始 PNG 和交付 WebP 的路径、哈希及尺寸。
+源对象身份由冻结包 SHA256、对象类型和规范有符号 64 位 PathID 共同确定；PathID 使用 BigInt 验证，不经过 Number。配置引用、源对象、PNG 字节身份和领域图片引用分别保留。assetId 使用源对象身份，PNG SHA256 只负责原图内容存储；同一源对象可以有 icon、banner 和 illustration 三种用途变体。
+
+导出时同时筛选对象名和 Container；若这两个筛选仍不能唯一定位请求 PathID，立即报歧义。同一个包内若有同名 Sprite，分别导出，避免工具以名称写文件时发生覆盖。任何已选对象导出失败均停止。完整解码 PNG、校验 CRC、尺寸和全部像素数据；仅转换选中的图片，完整解码最终 WebP 并检查目标尺寸；用最终 WebP 字节的 SHA256 命名并去重。相同原图用于不同目标尺寸时分别转换，清单分别记录原始 PNG 和交付 WebP 的路径、哈希及尺寸。
 
 ## 补充收录与证据
 
-补充清单位于 `src/extraction/content/supplemental-admissions.json`，schemaVersion 为 1，source 绑定同一客户端版本，confirmation 保存人工确认说明。entries 仅含 `id`、`expectedName`、`category`、`subcategory`：苹果 30161、李子 30169、牛油果 30265、芒果 30266、仙人掌果 30267、竹笋 30268 为 plants/采摘材料；肉 2000050、蛋 2000051、奶 2000052，以及寒松木 30115、陨星矿石 30136、雪晶 30299、纯净雪花 30300 为 miscellaneous/null。名称、描述、图片和品质始终从客户端提取，不从清单复制。缺失主表、版本或名称错配、重复 ID、与图鉴分类冲突均中止提取；重叠 ID 只生成一次且保存双方依据。
+补充清单位于 `src/extraction/source/catalog/supplemental-admissions.json`，schemaVersion 为 1，source 绑定同一客户端版本，confirmation 保存人工确认说明。entries 仅含 `id`、`expectedName`、`category`、`subcategory`：苹果 30161、李子 30169、牛油果 30265、芒果 30266、仙人掌果 30267、竹笋 30268 为 plants/采摘材料；肉 2000050、蛋 2000051、奶 2000052，以及寒松木 30115、陨星矿石 30136、雪晶 30299、纯净雪花 30300 为 miscellaneous/null。名称、描述、图片和品质始终从客户端提取，不从清单复制。缺失主表、版本或名称错配、重复 ID、与图鉴分类冲突均中止提取；重叠 ID 只生成一次且保存双方依据。
 
 十三条补充记录的系列引用、描述及其他属性均从冻结客户端读取，不因人工收录而推断关联或补造字段；未配置或未确认的字段按契约保留 null，并记录来源证据或未确认原因。图鉴行缺失不会阻断 UI 描述或图片来源。
 
-`record-evidence.json` 独立记录 `id`、`admissionSources` 和 `encyclopedia`。图鉴收录源含 kind=encyclopedia、file、table=93、rowOffset；人工源含 kind=manual、file、pointer、sha256。图鉴证据为 present（含原始行及 listed）或 absent（含扫描文件及 table=93），不与未知属性混用。字段路径使用 name、subcategory、attributes.originGalaxy、memberIds 等；ID 证据统一为 318.0，只有分类字段允许引用冻结清单的 JSON Pointer 和 SHA256。
+`observations.json` 的 `diagnostics.admissions` 保存 `id`、`admissionSources` 和 `encyclopedia`。图鉴收录源含 kind=encyclopedia、file、table=93、rowOffset；人工源含 kind=manual、file、pointer、sha256。图鉴证据为 present（含原始行及 listed）或 absent（含扫描文件及 table=93），不与未知属性混用。字段路径使用 name、subcategory、attributes.originGalaxy、memberIds 等；ID 证据统一为 318.0，只有分类字段允许引用冻结清单的 JSON Pointer 和 SHA256。
 
 配方、掉落、对应玩家服饰和送礼偏好引用到范围外物品时生成仅供引用物品（`reference`），不扩大正式收录范围；术语边界见[领域术语表](../../GLOSSARY.md#收录与图鉴)。家具只保留正式产物需要的有效创想卡配方；材料缺失的配方以 `materials: null` 表示未知，不解释为免费制作。烹饪配方的食材表达式必须全部解析，解锁条件必须是已知结构，否则中止提取。主题目标、升级用量、秘方物品和商店库存等尚未确认的关系不发布，只记录排除证据。
 
 ## 友邻准入与故事
 
-[友邻提取模块](src/extraction/neighbors/) 通过固定 NPC ID 白名单过滤正式主档（当前名单排除图塔，新增友邻需显式更新白名单），输出内部观察 `raw/neighbors.json`（schemaVersion 4）；正式交付 `zh-CN/neighbors.json` 使用共享契约的当前 formatVersion。同行反应、交往说明、事件标签、邂逅岛、世界岛屿和资源路径不被网站使用，不再提取。白名单成员缺少正式主档或必要字段时停止提取；非白名单 NPC 不收录，并写入排除审计。补充图片只保留友邻详情页使用的好感插画与角色立绘，均归属于具体友邻。
+[友邻提取模块](src/extraction/source/neighbors/) 通过固定 NPC ID 白名单过滤正式主档（当前名单排除图塔，新增友邻需显式更新白名单），在 `observations.json` 保存内部友邻观察（schemaVersion 4）；正式交付 `zh-CN/neighbors.json` 使用共享契约的当前 formatVersion。同行反应、交往说明、事件标签、邂逅岛、世界岛屿和资源路径不被网站使用，不再提取。白名单成员缺少正式主档或必要字段时停止提取；非白名单 NPC 不收录，并写入排除审计。补充图片只保留友邻详情页使用的好感插画与角色立绘，均归属于具体友邻。
 
 友邻数据库保持稳定排序且不写入生成时间；同一输入重复提取产生相同字节。故事按章节和段落顺序聚合，保留纯文、普通单图、竖版单图及左右图文布局；布局来自故事表的正文、配图和排列标记，独立于图片是否成功交付。验收对照固定白名单及冻结主档独立检查友邻集合、检查完整数据库及版本绑定数量，再确认交付领域数据与封存 dataset 一致。
 
@@ -156,16 +158,18 @@ UISprite 引用加 assets/moleres/rel/sres/ 前缀，统一斜杠和小写，只
 
 ### 模块边界与工具准备
 
-代码按产物边界组织：
+代码按事实解释、纯组装和生命周期归属组织：
 
-- `src/workflow/`：与提取领域无关的流水线内核，负责哈希、manifest、checkpoint、锁、进程、目录替换和 JSON；
+- `src/workflow/`：哈希、manifest、锁、进程、目录替换和 JSON；
 - `src/client/`：客户端快照、版本清单、Asset Map 解析和 AnimeStudio；
 - `src/environment/`：客户端环境产物；
-- `src/source/client/`：共享客户端表读取规则；
-- `src/extraction/`：解码、源观察、图片、证据和来源审计；
-- `src/domains/`：领域组装、引用闭包、资源登记和统一证据映射；
-- `src/delivery/`：WebP、交付 JSON、发布和交付验收；
-- `src/verify.ts`：整条 manifest 链与已发布字节的最终验收。
+- `src/extraction/source/`：冻结、解码及目录、种植、配方、友邻 reader；同次返回事实、具体依据、图片用途和诊断；
+- `src/extraction/images/`：源对象身份、统一导出 adapter、批次缓存及确定性选择；
+- `src/extraction/assemble/`：纯领域组装、引用闭包及证据路径投影，不读取文件或客户端表；
+- `src/extraction/build.ts`、`bundle.ts`、`cache.ts`：固定提取流程、不可变封存视图和昂贵批次恢复；
+- `src/verify/`：独立来源断言，直接对照冻结表、图片索引、原图和证据；
+- `src/delivery/`：消费验证后的类型化封存视图，按 variant 转换图片并交付；
+- `src/verify.ts`：实际客户端、整条 manifest 链与落地字节的验收。
 
 `src/workflow/process.ts` 通过 execa 统一执行 AnimeStudio、构建工具和准备步骤，直接将 stdout/stderr 写入同一日志，支持追加或覆盖，不缓冲完整进程输出。`src/client/asset-map.ts` 通过 sax 流式读取 Asset Map，统一处理 XML 实体、CDATA、跨块文本、必需字段和 Persistent overlay；环境构建把它压缩为只含 Texture2D、Sprite、MiHoYoBinData 的 `asset-index.json`。AnimeStudio 退出码为 0 但日志报错时仍判定失败。
 
@@ -178,14 +182,14 @@ $LOOMIX_DATA_ROOT/clients/<snapshot-id>/game-client/ 中的客户端文件
   → config.ini、revision、branch、客户端资源清单校验（init）
   → 完整文件集合、SHA256、profile、工具字节与实现摘要
   → 覆盖基础包和 Persistent 的 Asset Map、environment-manifest.json
-  → OBB 配置对冻结到 prepared/；MiHoYoBinData 导出到 bindata/（extract/decode）
-  → 表、行偏移、字段、TextMap 解码
-  → 已确认的 ID、产物向量、枚举、tag 过滤与系列反向引用（structure）
-  → raw/content.json、图片候选关联
-  → 完整 PNG 导出、原生分辨率比较、稳定选图（raw-assets）
-  → 字段证据、未知原因、未确认候选、范围外成员、来源包审计
-  → 领域组装 dataset.json、image-jobs.json、evidence/domain-fields.json
-  → extraction-verify、extraction-manifest.json
+  → source/ 冻结 OBB、索引、TextMap、BinData、人工清单
+  → reader 同次提取 typed 事实、具体证据、图片用途及调查信息
+  → observations.json、统一源对象和候选配置
+  → 昂贵导出批次缓存、完整 PNG 验证、originals.json
+  → assemble(observations, originals) 纯组装及稳定选图
+  → dataset.json、evidence.json、image-bindings.json、image-jobs.json
+  → 全候选来源包审计、独立来源验收及可重现性比较
+  → validation.json、extraction-manifest.json 最后写入并原子封存
   → 只读取 extraction bundle 的图片缩放、裁切、WebP 编码（deliver）
   → 最终 JSON 与按最终字节 SHA256 去重的 WebP
   → 交付验证与 delivery-manifest.json 封存（deliver）
@@ -199,21 +203,21 @@ $LOOMIX_DATA_ROOT/clients/<snapshot-id>/game-client/ 中的客户端文件
 
 环境身份绑定客户端清单、profile、工具字节和实现摘要；提取身份还绑定 environment manifest 与冻结补充清单。实现摘要覆盖源码、发布契约与 lockfile，修改这些输入会产生新身份。
 
-仓库根配置默认不缓存 package scripts，因此每次都会执行入口并重新验证真实输入。内部 checkpoint 是提取恢复协议，与 Vite Task 缓存无关；`logs/`、`checkpoints/` 和 `run-report.json` 不属于 manifest 的语义输出。
+仓库根配置默认不缓存 package scripts，因此每次都会执行入口并重新验证真实输入。提取只对解码和外部原图导出保留恢复缓存，与 Vite Task 缓存无关。缓存身份绑定冻结输入、profile、完整实现和真实工具字节；解码域包含 BinData 导出，因而也绑定工具和导出选项。每个缓存批次在 staging 中完成，核对完整文件集合与哈希后写 receipt，再原子提交；相同身份加锁，失败批次不成为可复用结果。
 
-environment、extraction、delivery 的 manifest 均采用 schemaVersion 1。输出项使用相对 manifest 所在目录的 `path`、SHA256 和 `bytes`；输入清单也有整体 SHA256。实现摘要覆盖维护源码、共享契约、提取包配置和仓库 lockfile，profile 摘要不受资源索引路径影响。状态只有全部验证成功后才写为 verified。manifest 使用临时文件加 rename 发布，不以 marker 存在代替字节验证。
+environment、extraction、delivery 的 manifest 均采用 schemaVersion 1。输出项使用相对 manifest 所在目录的 `path`、SHA256 和 `bytes`；输入清单也有整体 SHA256。实现摘要覆盖维护源码、共享契约、提取包配置和仓库 lockfile，profile 摘要不受资源索引路径影响。状态只有全部验证成功后才写为 verified。旧内部 raw、分领域图片清单与 checkpoint 协议不再读取；重新提取会生成新身份。
 
-每个内部 checkpoint 保存 `schemaVersion`、阶段名、输入摘要、依赖摘要和输出清单。每次恢复都检查原始输入、依赖、输出哈希和输出集合。一个 checkpoint 失效会在运行前删除它和下游 marker；上游成功但下游失败后，可以重用已核实的上游产物。最终 extraction manifest 在重新执行时先失效，避免旧成功状态掩盖失败。
+新提取始终在独立 staging 目录内构建和验收，manifest 最后写入，再 rename 提交整个目录。已有同身份的有效封存先核验后直接复用；只在完整性损坏时隔离旧目录，不在重跑开始时撤销成功标记。封存包含冻结源、所有参与选图的原图与观察，恢复缓存可独立删除。
 
-正式 `evidence/field-evidence.json` 的每条记录包含 `id`、`group`、`field`、`value`、类型明确的原始 `evidence`、`sources`、`association`、`transformation` 和 `status`。`sources` 指向冻结 OBB 的表号、行编号/偏移、字段索引，或原始资源包的 PathID；本地化/标签解析同时保留 TextMap、BinData 的追溯文件。图片还保留配置 reference、精确 Container、来源包、PathID 和原始/最终尺寸及哈希。
+`observations.json` 是唯一源观察产物：reader 同次保存值与具体表行、TextMap、BinData 或人工依据，并声明结构化图片用途及其所有候选。未知原因、排除项、范围外成员与调查信息留在该产物中。不会在最终组装时回读客户端补值，也不按表号提示猜测证据来源。生长阶段和制作配方以语义身份定位证据，组装确定顺序和归属时投影最终字段路径。
 
-`evidence/missing-fields.json` 使用同一字段协议，状态 unconfirmed 且必须带 reason；字段未找到、文本缺失、用途未确认、冲突等均不等价于值不存在。`plant-investigation.json` 保留实际候选参数，`outside-members.json` 解释被范围规则排除的关联；它们不回填交付字段。`source-audit.json` 将所有候选图片、BinData 和 OBB 来源绑定到版本清单，不能只审计最后选中的图片。
+`evidence.json` 使用实体集合、身份和字段路径定位值，区分 confirmed、absent、unresolved；来源区分表行、完整表扫描、素材对象和人工确认。可定位集合为 `catalog.items`、`catalog.collections`、`neighbors.neighbors` 与 `gameplayTags.tags`；内嵌数据通过所属实体字段路径定位，例如 `growth.stages.0.image`、`cooking.slots`。确认状态冲突或悬空证据路径直接失败。
 
-`evidence/domain-fields.json` 使用实体集合、身份和字段路径定位值，区分 confirmed、absent、unresolved；来源区分表行、完整表扫描、素材对象和人工确认。可定位的集合为 `catalog.items`、`catalog.collections`、`neighbors.neighbors` 与 `gameplayTags.tags`；内嵌数据通过所属实体的字段路径定位，例如种子的 `growth.stages.0.image`、菜肴的 `cooking.slots`。未发布的观察字段、未确认候选和排除原因继续保存在源审计中。
+统一原图目录按源对象去重导出，按 PNG SHA256 去重存储。`image-bindings.json` 保存用途到候选选择的关联，`image-jobs.json` 精确覆盖公开图片引用，只含 ImageRef 和原图元数据；delivery 按 icon/banner/illustration 选择转换规格。`source-audit.json` 必须覆盖所有参与比较的候选包及 BinData、配置，不能只审计赢家。
 
-raw/content.json 保留结构阶段结果；raw/images-content.json 在不修改结构 checkpoint 输出的情况下加入选中 PNG 的 bundle 相对路径。详情观察保存在 raw/images-catalog-observations.json，领域组装读取冻结观察、补全已确认的物品引用并生成统一 dataset 与图片交付任务，同时执行跨领域引用、集合成员类型、分类环、生长阶段和图片覆盖检查。verify 从冻结观察重建领域数据、交付任务与领域证据，防止只修改输出使其自洽。交付阶段只读封存 dataset，处理图片并生成领域 JSON、assets.json 和 release.json，不重做业务关联。最终验证从 bundle 中冻结的 OBB 重新核对表 93 与冻结确认清单的收录并集、分类、图鉴状态、品阶及成员，不打开客户端；只有 init、extract 和完整链 verify 会核对实际客户端快照。
+验收把可重现性与独立来源断言分开：前者重读源观察并重新 assemble，对照 dataset、证据、绑定和 jobs；后者直接从冻结 OBB、清单、图片索引与 PNG 计算准入集合、成员、种植链、材料、掉落、标签、候选及选图断言。独立检查器不调用生产分类、关联、选图 reader 生成 expected。数据与证据一起篡改的回归必须被独立断言拒绝。提取结果的离线验收不打开实际客户端；整链 verify 继续验证实际客户端和上游环境。
 
-补充清单在 extract 的 admissions checkpoint 冻结，原始字节 SHA256 进入提取身份和 manifest，structure 依赖此 checkpoint。修改工作区清单不能影响已封存交付；验证器重读冻结 OBB 和冻结清单重建并集，不信任 scope.json。提取与 materialize 只更新本地产物；线上切换须先上传新的不可变资源版本，再同步资源指针与网站代码。
+补充清单原始字节在 extract 开始时冻结到 `source/`，其 SHA256 进入提取身份及最终 manifest。修改工作区清单不会改变已封存结果。提取与 materialize 只更新本地产物；线上切换须先上传新的不可变资源版本，再同步资源指针与网站代码。
 
 ### 本地落地与资源替换
 

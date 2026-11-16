@@ -33,7 +33,7 @@ vp run @loomix/extraction#materialize --delivery <delivery-id>
 | 入口与参数                    | 行为                                                                                                           |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `init`                        | 校验客户端配置及其资源清单，准备 AnimeStudio 并生成资源索引；相同身份复用已验证 environment。                  |
-| `extract --environment <id>`  | 从绑定快照提取数据、PNG 和证据，完成来源审计与验收后封存 extraction；内部 checkpoint 自动恢复。                |
+| `extract --environment <id>`  | 从绑定快照提取数据、PNG 和证据，完成来源审计与验收后封存 extraction；昂贵解码和原图导出批次自动恢复。          |
 | `deliver --extraction <id>`   | 从已验证提取结果生成共享的 artifact-only 资源交付，封存 JSON 和 WebP。`--website` 可同时落地到当前 worktree。  |
 | `verify --delivery <id>`      | 核对实际客户端、整条阶段清单链及领域证据；website 模式额外核对本地落地字节，artifact-only 模式只验收封存产物。 |
 | `materialize --delivery <id>` | 校验 artifact-only 交付并替换当前 worktree 的 `resources/website/`，失败时恢复旧目录。                         |
@@ -46,9 +46,13 @@ vp run @loomix/extraction#materialize --delivery <delivery-id>
 <LOOMIX_DATA_ROOT>/
   clients/<snapshot-id>/game-client/             # 按完整文件清单哈希寻址的只读客户端快照
   selections/client.json                         # 当前选定的 snapshot ID
-  cache/anime-studio/<rid>/<tool-key>/            # 已验证 CLI/runtime、ready.json
-  cache/anime-studio/<rid>/<tool-key>.work/       # 下载、源码、补丁后源码、SDK
-  cache/anime-studio/logs/                        # 初始化与默认工具日志
+  cache/anime-studio/<rid>/<tool-key>/           # 已验证 CLI/runtime、ready.json
+  cache/anime-studio/<rid>/<tool-key>.work/      # 下载、源码、补丁后源码、SDK
+  cache/decode/<key>/                            # 绑定源输入、profile、实现和真实工具字节的解码缓存
+  cache/originals/<key>/                         # 验证过完整 PNG 的导出批次
+  cache/{decode,originals}/failures/             # 未完成批次的诊断与日志
+  cache/failures/                                # 未完成提取的诊断副本
+  cache/anime-studio/logs/                       # 初始化与默认工具日志
   artifacts/environments/<environment-id>/
     environment-manifest.json
     config-source.json                           # 选中的配置对、哈希与候选
@@ -58,16 +62,16 @@ vp run @loomix/extraction#materialize --delivery <delivery-id>
     logs/
   artifacts/extractions/<extraction-id>/
     extraction-manifest.json
-    prepared/                                    # 冻结 OBB、表索引、TextMap、素材索引
-    bindata/                                     # MiHoYoBinData 导出
-    raw/                                         # 解码后的领域观察
+    source/                                      # 冻结 OBB、索引、TextMap、BinData、人工清单
+    observations.json                            # typed 源观察、具体依据、图片用途和调查信息
+    originals.json                               # 所有参与选图的源对象及 PNG 完整性
+    originals/<PNG-SHA256>.png                   # 内容去重；不同源对象仍保留身份
     dataset.json                                 # 统一领域快照，严格结构和引用图校验
-    image-jobs.json                              # 领域图片引用到原始 PNG 的交付任务
-    exports/、seed-exports/、neighbor-exports/ 等     # 原始 PNG
-    evidence/                                    # 正式证据协议
-    checkpoints/
-    logs/
-    run-report.json
+    evidence.json                                # 最终字段证据与确认状态
+    image-bindings.json                          # 图片用途、候选选择结果与缺失原因
+    image-jobs.json                              # 精确覆盖发布引用的图片转换任务
+    source-audit.json                            # 全部候选图片包、BinData 和配置审计
+    validation.json                              # 独立来源验收及可重现性结果
   artifacts/deliveries/<delivery-id>/
     delivery-manifest.json
     staging/{release.json,assets.json,zh-CN/,assets/}
@@ -80,11 +84,11 @@ worktree/
   var/scratch/                                    # 临时调查与失败运行
 ```
 
-目录树只列主要产物；完整语义输出以各阶段 manifest 的 `outputs` 为准。extraction 根目录还保存补充收录清单、字段证据、排除项与调查报告。
+目录树只列主要产物；完整语义输出以各阶段 manifest 的 `outputs` 为准。补充清单保存在 `source/`；排除项、未确认候选和调查信息归入 `observations.json`。提取结果包含离线验收与交付所需输入，删除恢复缓存不会影响已有封存结果。
 
 ## 故障恢复与清理
 
-复用前会核对输入、输出哈希和文件集合；失败时保留报告，全部验收通过后才写成功 manifest。失败后查看对应产物的 `logs/` 与 `run-report.json`，修复原因后重跑同一入口；已验证的上游 checkpoint 可以复用。恢复协议见[本仓库实现](extraction-method.md#本仓库实现)。
+复用前核对输出哈希和精确文件集合；新提取在独立 staging 中完成构建、来源验收和审计，manifest 最后发布并原子提交目录。已有完整有效的同身份提取结果只读复用，失败不会撤销其成功封存。失败后查看 `cache/failures/` 及对应 `cache/decode/failures/`、`cache/originals/failures/`，修复原因后重跑；已完成并通过字节复验的昂贵批次可复用，源观察和组装重新计算。恢复与证据协议见[本仓库实现](extraction-method.md#本仓库实现)。
 
 `materialize` 替换本地资源失败时恢复旧目录；替换期间可能短暂不可用，不承诺跨进程读取或断电的事务隔离。线上资源更新流程见[CI/CD 与部署](../../DEPLOYMENT.md#资源更新流程)。
 

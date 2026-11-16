@@ -203,3 +203,7 @@ export async function assertClientUnchanged(environment: Manifest): Promise<void
   )
     throw new Error("Client snapshot changed; import and select it again");
 }
+
+export function clientSnapshotFiles(snapshotId: string): readonly FileHash[] {
+  return readSnapshotManifest(snapshotId).files;
+}

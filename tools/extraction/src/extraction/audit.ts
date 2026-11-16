@@ -1,10 +1,10 @@
 import type {
   WorkOptions,
-  ImageManifest,
   BinDataAsset,
   ConfigSource,
   SourceCheck,
   SourceAudit,
+  SelectedImage,
 } from "./types.ts";
 import fs from "node:fs";
 import path from "node:path";
@@ -15,37 +15,26 @@ import { readManifest } from "../workflow/manifest.ts";
 import { readJson, writeJson } from "../workflow/json.ts";
 import { manifestEntry, readManifestMaps } from "../client/versions.ts";
 
-export async function audit(options: WorkOptions) {
+export async function audit(
+  options: WorkOptions,
+  sourceRoot: string,
+  images: readonly Pick<SelectedImage, "source">[],
+) {
   if (!options.environment) throw new Error("Environment directory is required for source audit");
   const environment = await readManifest(options.environment, "environment");
   const snapshotId = environment.clientSnapshotId ?? environment.inputs.sha256;
   const root = resolveClientPath(profile.paths.gameRoot, snapshotId);
   const rootDirectory = clientRoot(snapshotId);
   const manifests = readManifestMaps(root, profile.manifestId);
-  const images = readJson<ImageManifest[]>(path.join(options.work, "image-candidates.json"));
-  const bindata = readJson<BinDataAsset[]>(path.join(options.work, "bindata-manifest.json"));
-  const neighborImages = readJson<{ source: string }[]>(
-    path.join(options.work, "neighbor-image-exports.json"),
-  );
-  const additionalNeighborImages = readJson<{ source: string }[]>(
-    path.join(options.work, "neighbor-additional-image-exports.json"),
-  );
+  const bindata = readJson<BinDataAsset[]>(path.join(sourceRoot, "bindata-manifest.json"));
   const sourceFiles = new Set([
-    ...readJson<ImageManifest[]>(path.join(options.work, "seed-image-originals.json")).map(
-      (image) => image.source,
-    ),
-    ...readJson<ImageManifest[]>(path.join(options.work, "stage-image-originals.json")).map(
-      (image) => image.source,
-    ),
-    ...images.map((a) => a.source),
-    ...neighborImages.map((a) => a.source),
-    ...additionalNeighborImages.map((a) => a.source),
-    ...bindata.map((a) => a.Source),
+    ...images.map((image) => image.source),
+    ...bindata.map((asset) => asset.Source),
   ]);
   const records: SourceCheck[] = [];
   const configChecks: SourceAudit["configChecks"] = [];
   const configuration = readJson<ConfigSource>(
-    path.join(options.work, "prepared", "active-config-source.json"),
+    path.join(sourceRoot, "prepared", "active-config-source.json"),
   );
   for (const selected of configuration.files) {
     const original = path.join(root, configuration.relativeDirectory, path.basename(selected.file));
@@ -53,7 +42,7 @@ export async function audit(options: WorkOptions) {
     const expected = manifests.data.get(`GenerateAssets/${path.basename(selected.file)}`);
     const md5 = crypto.createHash("md5").update(bytes).digest("hex");
     configChecks.push({
-      file: original,
+      file: selected.file,
       md5,
       size: bytes.length,
       matchesManifest:
