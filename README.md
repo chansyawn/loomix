@@ -13,7 +13,7 @@
 ├── apps/
 │   └── website/             # 网站应用（页面、路由与样式）
 ├── packages/
-│   └── schema/              # 领域模型、提取观察、资源与发布契约
+│   └── schema/              # 领域模型、资源与发布契约
 ├── tools/
 │   ├── extraction/          # 客户端提取文档和脚本（按任务组织）
 │   └── resource-publisher/  # 资源发布工具
@@ -26,7 +26,7 @@
 └── vite.config.ts            # Vite+ 仓库级配置
 ```
 
-`@loomix/schema` 按 catalog、neighbors、world、assets、dataset、release 和 common 划分子路径，维护发布契约。提取观察、原始数据库和证据模型位于 `tools/extraction`，仅复用发布契约中的通用结构。领域实体与图鉴收录分离；关系只保存一个方向，反向索引由消费方派生；图片引用使用 assetId 与 variant，交付路径由共享资源清单解析。提取器、发布器和网站共用严格契约，直接引用 TypeScript 源码，无需前置构建。
+`@loomix/schema` 按 gameplay-tags、catalog、neighbors、world、assets、dataset、release 和 common 划分子路径，维护发布契约。提取观察、原始数据库和证据模型位于 `tools/extraction`，仅复用发布契约中的通用结构。领域实体与图鉴收录分离；关系只保存一个方向，反向索引由消费方派生；图片引用使用 assetId 与 variant，交付路径由共享资源清单解析。提取器、发布器和网站共用严格契约，直接引用 TypeScript 源码，无需前置构建。
 
 网站页面和路由主要位于 `apps/website/src/`。
 
@@ -35,7 +35,7 @@
 - `resources/game-client/`：首次导入共享只读快照时可用作本地来源。
 - `LOOMIX_DATA_ROOT/`：本机共享数据目录，保存客户端快照、AnimeStudio 缓存和验证产物；通过未跟踪的 `.env` 配置，变量模板见 `.env.example`。
 - `var/scratch/`：当前 worktree 的临时调查与运行数据。
-- `resources/website/`：验证通过的 release.json、assets.json、zh-CN/{catalog,neighbors,world}.json 和 assets/，供网站本地开发及资源发布直接读取。
+- `resources/website/`：验证通过的 release.json、assets.json、zh-CN/{gameplay-tags,catalog,neighbors,world}.json 和 assets/，供网站本地开发及资源发布直接读取。
 
 `resources/` 与 `var/` 下的本地数据均由根目录 `.gitignore` 忽略。
 
