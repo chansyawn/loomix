@@ -1,70 +1,39 @@
 # 发布契约检查
 
-发布契约检查验证**网站对发布数据的假设**是否仍然成立。它不是提取器的数据保真校验，也不替代资源发布工具的目录校验。
+发布契约检查验证网站对发布数据的假设，不替代提取器的来源验收或发布器的目录与字节校验。本文维护职责边界与扩展指引，接口和检查清单以代码为准。
 
 ## 边界
 
-| 规则类型                                               | 归属                                               |
-| ------------------------------------------------------ | -------------------------------------------------- |
-| 客户端事实、身份、跨表关联、版本绑定规范化、证据       | extraction                                         |
-| 消费者中立的通用解释（标签子树、类型、资源解析）       | [共享数据契约](../../../packages/schema/README.md) |
-| 网站对发布数据的假设（可见性、分组、命名、结构完整性） | `apps/website/scripts/release-checks/`             |
-| 筛选、URL 状态等不依赖渲染的逻辑                       | 非 UI 单元测试                                     |
-| 页面交互与渲染                                         | 人工验收，不编写 UI 自动化测试                     |
+客户端事实与关联依据由提取器负责；消费者中立的结构、引用与资源规则由[共享数据契约](../../../packages/schema/README.md)负责；网站专属的可见性、分组和命名假设在这里验证。换一个消费者仍然成立的规则，不应仅放在网站检查中。
 
-判断标准：换一个消费者仍然成立的规则放 schema 或 extraction；只服务当前页面策略的规则放这里。
+筛选、URL 状态等不依赖渲染的逻辑使用非 UI 单元测试；页面交互与渲染通过人工验收确认，不编写 UI 自动化测试。
 
 ## 运行方式
 
-本地（`materialize` 之后）：
+本地资源完成 `materialize` 后运行：
 
 ```bash
 vp run --no-cache website#verify-contracts
 ```
 
-部署链路：
+验证选定的已发布资源：
 
 ```bash
 vp run --no-cache website#verify-release
 ```
 
-`verify-release` 下载网站资源指针 `apps/website/release.json` 指向的已发布资源版本，运行同一套检查；现有 CI 的 `Verify website` 步骤已经包含它，不需要新增 workflow。资源上传由发布工具的 `validateContent` 负责，完整流程见[CI/CD 与部署](../../../DEPLOYMENT.md#资源更新流程)。
-
-`verify-release` 要求网站资源指针指向的资源版本与当前 `@loomix/schema` 的 `formatVersion` 匹配；资源格式升级后需要先发布新资源版本并更新网站资源指针。
-
-## 检查接口
-
-接口以 [types.ts](../scripts/release-checks/types.ts) 为准：`ReleaseCheck` 提供唯一 `id` 和 `run(release)`；结果包含问题列表 `issues` 与可选摘要 `summary`，每个问题含 `message` 与可选数据路径 `path`。
-
-约束：
-
-- 检查是纯函数，只读取 `Release`，不做文件或网络 I/O。
-- 一个检查对应一类网站假设；不要把所有断言塞进同一个检查。
-- 预期失败返回 `issues`，不要抛异常；抛出的异常会被 runner 捕获，计为一条“检查执行失败”的问题并保留堆栈。
-- `summary` 只在检查通过时输出；`path` 是可读的数据定位符。
-- 检查 ID 必须唯一；runner 在运行前校验。
+两者运行同一套网站假设检查，后者也用于部署校验。资源选择与上传顺序见[CI/CD 与部署](../../../DEPLOYMENT.md#资源更新流程)；资源必须与当前共享契约兼容。发布工具的 `validateContent` 负责上传前校验，实际上传由发布流程负责，网站检查不会上传资源。
 
 ## 新增检查
 
-1. 在 `apps/website/scripts/release-checks/checks/<area>/` 新增文件，导出纯检查函数和 `ReleaseCheck` 适配器。
-2. 在 `apps/website/scripts/release-checks/index.ts` 的 `releaseChecks` 中显式注册。
-3. 新增 fixture 测试；fixture 从生产策略常量生成，避免手写策略清单。
-4. 运行 `vp run --no-cache website#verify-contracts`，确认基线与失败信息。
+从[类型定义](../scripts/release-checks/types.ts)了解接口，在 [checks](../scripts/release-checks/checks/) 下按业务范围实现，并加入[检查注册入口](../scripts/release-checks/index.ts)。一个检查对应一类网站假设，保持只读取 `Release` 的纯检查逻辑，不做文件或网络 I/O；预期失败返回问题，执行异常交由 runner 报告。
 
-## 当前检查
+为新增规则补充有效输入与失败场景的非 UI 测试。可复用生产配置构造 fixture，避免复制完整名单；关键预期应来自要验证的规则，不应全部随生产配置自动变化，否则配置错误也可能让测试继续通过。
 
-完整清单以 [index.ts](../scripts/release-checks/index.ts) 的 `releaseChecks` 注册为准。
-
-| ID                       | 内容                                                                                                                   |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| `tag-filter/all`         | 配置的白名单根存在且有可见标签；整棵可见树的标签命名不含 `_`/“父级”；同级重名                                          |
-| `tag-filter/ingredients` | `食材` 根存在；分组根是 `食材` 的直接子级；颜色/品质组有子级和可见选项；排除标签在 `食材` 子树内；一级标签全部归属分组 |
-| `tag-filter/labels`      | `TAG_LABEL_OVERRIDES` 的目标 `internalName` 存在                                                                       |
-
-`tag-filter/all` 覆盖整棵可见树，包含 `食材` 子树，因此可见标签命名和同级重名由它统一检查；`tag-filter/ingredients` 只负责食材分组结构和分组可见性。
+运行相应测试与本地契约检查，再按[贡献指南](../../../CONTRIBUTING.md#提交-pr)完成提交前检查。标签相关策略的含义见[标签筛选策略](tag-filter-policy.md)，无需在本文同步枚举检查 ID 和具体断言。
 
 ## 失败处理
 
-runner 按检查顺序输出 `✓`/`✗`，失败时以非零退出码结束并汇总问题数量。按报告修正策略文件、分组配置或数据后，重新运行 `vp run --no-cache website#verify-contracts`；通过后运行 `vp run ready` 确认没有其他回归。
+按报告中的检查和数据位置，判断是资源版本不匹配、来源数据异常还是网站策略需要调整；不要仅为消除报错放宽断言。修正后重跑对应本地或已发布资源检查。
 
-发布契约检查只覆盖文档级数据。`Release` 包含图片元数据，但本地加载器不解码图片，`downloadRelease` 也不下载图片字节；需要字节级图片检查时，应在 runner 中增加资源读取上下文，而不是只新增一个检查文件。
+检查只覆盖领域文档及图片元数据，本地加载器不解码图片，远程加载器也不下载图片字节。图片字节校验由资源发布工具负责；若网站确需新增字节级验收，需另外设计读取边界，不能只增加一个接收 `Release` 的检查函数。

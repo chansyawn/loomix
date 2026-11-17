@@ -47,20 +47,21 @@ tools/resource-publisher/  # 不可变资源版本的校验与上传
 resources/website/         # 当前 worktree 的本地网站资源
 ```
 
-`LOOMIX_DATA_ROOT` 指定本机共享数据目录，保存只读客户端快照、工具缓存和验证产物；`resources/game-client/` 可作首次导入来源，`var/scratch/` 用于当前 worktree 的临时调查。`resources/` 与 `var/` 下的本地数据由根目录 `.gitignore` 忽略。完整产物布局见[客户端资源提取](tools/extraction/README.md#输入缓存与产物)。
+`LOOMIX_DATA_ROOT` 指定本机共享数据目录，保存只读客户端快照、工具缓存和验证产物；`resources/game-client/` 可作首次导入来源，`var/scratch/` 用于当前 worktree 的临时调查。`resources/` 与 `var/` 下的本地数据由根目录 `.gitignore` 忽略。目录用途与产物查询见[客户端资源提取](tools/extraction/README.md#输入缓存与产物)。
 
 ## 文档
 
-| 文档                                                   | 读者                 | 内容                                           |
-| ------------------------------------------------------ | -------------------- | ---------------------------------------------- |
-| [贡献指南](CONTRIBUTING.md)                            | 贡献者               | 提交规范、PR 流程与合并限制                    |
-| [Agent 协作约定](AGENTS.md)                            | AI Agent、维护者     | 注释语言、lint、文档、领域术语、测试与 UI 约定 |
-| [领域术语表](GLOSSARY.md)                              | 各包开发者、AI Agent | 收录、图鉴、游戏关系、提取与资源发布的统一定义 |
-| [CI/CD 与部署](DEPLOYMENT.md)                          | 维护者               | 预览、正式发布、资源与 CORS 配置               |
-| [网站应用](apps/website/README.md)                     | 网站开发者           | 开发入口、代码结构、数据加载与常用检查         |
-| [发布契约检查](apps/website/docs/release-checks.md)    | 网站开发者           | 检查边界、接口、新增检查与失败处理             |
-| [标签筛选策略](apps/website/docs/tag-filter-policy.md) | 网站开发者           | 白名单、可见性、分组与中文名清理               |
-| [客户端资源提取](tools/extraction/README.md)           | 提取工具使用者       | 配置、命令、缓存与产物                         |
-| [提取原理](tools/extraction/extraction-method.md)      | 提取实现者           | 解码、来源关联、证据与验收                     |
-| [资源发布](tools/resource-publisher/README.md)         | 资源维护者           | R2 凭证、dry-run 与上传                        |
-| [共享数据契约](packages/schema/README.md)              | 各包开发者           | 领域映射、图片引用、发布格式与版本边界         |
+| 文档                                                              | 读者                 | 内容                                           |
+| ----------------------------------------------------------------- | -------------------- | ---------------------------------------------- |
+| [贡献指南](CONTRIBUTING.md)                                       | 贡献者               | 提交规范、PR 流程与合并限制                    |
+| [Agent 协作约定](AGENTS.md)                                       | AI Agent、维护者     | 注释语言、lint、文档、领域术语、测试与 UI 约定 |
+| [领域术语表](GLOSSARY.md)                                         | 各包开发者、AI Agent | 收录、图鉴、游戏关系、提取与资源发布的统一定义 |
+| [CI/CD 与部署](DEPLOYMENT.md)                                     | 维护者               | 预览、正式发布、资源与 CORS 配置               |
+| [网站应用](apps/website/README.md)                                | 网站开发者           | 开发入口、代码结构、数据加载与常用检查         |
+| [发布契约检查](apps/website/docs/release-checks.md)               | 网站开发者           | 职责边界、扩展指引与失败处理                   |
+| [标签筛选策略](apps/website/docs/tag-filter-policy.md)            | 网站开发者           | 筛选语义、可见性边界与维护指引                 |
+| [客户端资源提取](tools/extraction/README.md)                      | 提取工具使用者       | 首次配置、日常操作、排障与清理                 |
+| [提取原理](tools/extraction/docs/extraction-method.md)            | 提取工具维护者       | 跨业务原则、流水线取舍、版本更新与实现入口     |
+| [业务确认与调查](tools/extraction/docs/business-investigation.md) | 提取工具维护者       | 业务收录依据、确认结论与待调查事项             |
+| [资源发布](tools/resource-publisher/README.md)                    | 资源维护者           | R2 凭证、校验、上传与失败处理                  |
+| [共享数据契约](packages/schema/README.md)                         | 各包开发者           | 跨包约束、身份、图片与版本边界                 |

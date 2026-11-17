@@ -14,21 +14,13 @@
 
 ## PR 检查与预览
 
-向 `master` 打开、重新打开 PR 或推送提交时，运行以下必需检查：
-
-| 检查                | 内容                                                                                                     |
-| ------------------- | -------------------------------------------------------------------------------------------------------- |
-| `Validate PR title` | 校验 Conventional Commits 标题；编辑 PR 标题时也会运行                                                   |
-| `Verify website`    | 锁定依赖安装、线上资源完整性校验、`vp check`、全仓测试、网站构建、静态资源边界校验及 Worker 部署 dry-run |
-| `Preview website`   | 等待本次验证成功，部署本次构建产物，验证预览后更新 PR 评论                                               |
-
-预览部署会核对 PR 提交与构建身份，避免发布过期产物；HTTP 验收覆盖首页 HTML、静态图片和 `noindex`，并用真实预览 Origin 验证资源完整性与 CORS。Fork PR 不使用部署密钥，处理方式见[贡献指南](CONTRIBUTING.md#合并限制)。合并或关闭 PR 会自动删除预览并更新评论，重新打开后重新部署；同一 PR 的部署与清理串行执行，没有定时清理任务，回收失败时在 Actions 中重跑。
+PR 需要先通过验证，再部署对应提交的构建产物并更新预览评论；必需检查名单由[贡献指南](CONTRIBUTING.md#合并限制)维护，触发条件与具体步骤以[预览工作流](.github/workflows/preview-website.yml)为准。预览验收包含资源访问与 CORS，避免只确认页面可打开而遗漏资源加载失败。Fork PR 不使用部署密钥，处理方式见[贡献指南](CONTRIBUTING.md#合并限制)。合并或关闭 PR 会自动删除预览并更新评论，重新打开后重新部署；同一 PR 的部署与清理串行执行，没有定时清理任务，回收失败时在 Actions 中重跑。
 
 ## 正式发布
 
-合并到 `master` 后，[Deploy website](.github/workflows/deploy-website.yml) 重新执行与 `Verify website` 相同的校验和部署 dry-run，通过后发布到正式 Worker；正式站部署串行执行，也可在 GitHub **Actions → Deploy website → Run workflow** 手动触发。
+合并到 `master` 后，[Deploy website](.github/workflows/deploy-website.yml) 重新验证并构建后发布到正式 Worker，具体步骤以工作流为准；正式站部署串行执行，也可在 GitHub **Actions → Deploy website → Run workflow** 手动触发。
 
-如需本地发布，先完成 Wrangler 登录，或在根 `.env` 配置 `CLOUDFLARE_ACCOUNT_ID`、`CLOUDFLARE_API_TOKEN`。Wrangler 命令在仓库根目录执行，环境文件规则见[环境配置](README.md#环境配置)，CI 使用 GitHub Secrets。`website#deploy` 只部署已有产物，日常发布使用以下完整流程：
+如需本地发布，先完成 Wrangler 登录，或在根 `.env` 配置 `CLOUDFLARE_ACCOUNT_ID`、`CLOUDFLARE_API_TOKEN`。Wrangler 命令在仓库根目录执行，环境文件规则见[根 README](README.md#环境配置)，CI 使用 GitHub Secrets。`website#deploy` 只部署已有产物，日常发布使用以下完整流程：
 
 ```bash
 vp install --frozen-lockfile
@@ -37,7 +29,7 @@ vp run website#release
 
 ## 资源发布与 CORS
 
-生产构建默认从[网站资源指针](apps/website/release.json)读取资源地址，`VITE_RESOURCE_BASE_URL` 可覆盖；变量默认行为见[环境配置](README.md#环境配置)。部署要求使用已发布的 HTTPS 资源版本，本地资源目录不能用于发布。
+生产构建默认从[网站资源指针](apps/website/release.json)读取资源地址，`VITE_RESOURCE_BASE_URL` 可覆盖；变量默认行为见[根 README](README.md#环境配置)。部署要求使用已发布的 HTTPS 资源版本，本地资源目录不能用于发布。
 
 网站资源指针与资源发布清单的文件位置和结构见[共享数据契约](packages/schema/README.md#快照图片与发布)，概念边界见[领域术语表](GLOSSARY.md#资源发布)。
 
