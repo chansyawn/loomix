@@ -2,7 +2,7 @@ import { lstat, readdir } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 import { assembleRelease, parseReleaseManifest } from "@loomix/schema/release";
-import type { DocumentKind, Release } from "@loomix/schema/release";
+import type { DocumentKind, Release, ReleaseManifest } from "@loomix/schema/release";
 import { readRegularFile } from "./files.ts";
 import { sha256 } from "./release.ts";
 
@@ -49,7 +49,15 @@ async function filesWithin(directory: string): Promise<string[]> {
 export async function validateContent(directory: string): Promise<ValidatedContent> {
   const actual = await filesWithin(directory);
   const manifestBytes = await readRegularFile(path.join(directory, "release.json"));
-  const manifest = parseReleaseManifest(JSON.parse(manifestBytes.toString("utf8")));
+  let manifest: ReleaseManifest;
+  try {
+    manifest = parseReleaseManifest(JSON.parse(manifestBytes.toString("utf8")));
+  } catch (cause) {
+    throw new Error(
+      `本地资源清单不符合当前契约；请重新提取、验证并 materialize，不能只修改 formatVersion。${cause instanceof Error ? cause.message : String(cause)}`,
+      { cause },
+    );
+  }
   const documents: DocumentFile[] = [];
   const parsed = new Map<DocumentKind, unknown>();
   for (const file of manifest.files) {

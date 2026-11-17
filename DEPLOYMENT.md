@@ -36,12 +36,11 @@ vp run website#release
 ### 资源更新流程
 
 1. **提取与落地**：按[客户端资源提取](tools/extraction/README.md#提取与交付)执行 refresh、完整链 verify 与 materialize，得到当前 worktree 的本地交付。
-2. **网站验证**：按[发布契约检查](apps/website/docs/release-checks.md#运行方式)校验本地资源；若报告标签问题，按[标签筛选策略](apps/website/docs/tag-filter-policy.md#维护与检查)调整配置，并完成人工验收。
-3. **资源上传**：按[资源发布](tools/resource-publisher/README.md#校验与发布)先 dry-run，再使用新的 release ID 上传至 R2 `loomix-assets`。网站 CI 不自动上传游戏数据与图片。
-4. **更新指针**：通过 PR 更新 `apps/website/release.json` 的 `resourceBaseUrl`，连同必要的契约和网站代码变更一起提交。资源格式须与当前共享契约兼容。
-5. **预览与部署**：CI 的 `verify-release` 校验指针所选的已发布资源并运行发布契约检查；预览验收通过后合并，由正式发布流程部署。
+2. **发布资源**：运行 `vp run resources:publish`，自动检查本地资源与网站契约、分配发布 ID、上传 R2，并在远程检查通过后更新本地网站资源指针。操作前可加 `--dry-run` 做离线检查；参数、占号规则和失败恢复由[资源发布](tools/resource-publisher/README.md#校验与发布)维护。若报告标签问题，按[标签筛选策略](apps/website/docs/tag-filter-policy.md#维护与检查)调整配置，并完成人工验收。网站 CI 不自动上传游戏数据与图片。
+3. **提交指针**：通过 PR 提交 `apps/website/release.json`，连同必要的契约和网站代码变更一起提交；资源格式须与当前共享契约兼容。
+4. **预览与部署**：CI 的 `verify-release` 校验指针所选的已发布资源并运行发布契约检查；预览验收通过后合并，由正式发布流程部署。
 
-资源发布器负责上传前的目录与字节校验；发布契约检查阻断网站部署，不阻断 R2 上传。完整任务命令由上述工具文档维护。
+仓库级命令在上传前后运行同一套网站检查；底层资源发布器只负责目录、字节与上传完整性。部署仍独立执行发布契约检查，操作入口与失败恢复由上述工具文档维护。
 
 ### CORS
 

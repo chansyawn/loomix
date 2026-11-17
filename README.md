@@ -25,6 +25,8 @@ vp run dev
 
 提交前检查与 PR 流程见[贡献指南](CONTRIBUTING.md)。
 
+本地资源交付准备好后，使用 `vp run resources:publish` 自动校验、上传并更新本地网站资源指针；随后通过 PR 预览与部署。凭证、离线检查和失败恢复见[资源发布](tools/resource-publisher/README.md)，整体流程见[CI/CD 与部署](DEPLOYMENT.md#资源更新流程)。
+
 ### 环境配置
 
 配置文件统一放在仓库根目录，模板见 [.env.example](.env.example)。尚未创建 `.env` 时复制模板，再填写所需变量；各 worktree 独立提供配置。子目录环境文件不加载，进程环境变量优先于文件配置。

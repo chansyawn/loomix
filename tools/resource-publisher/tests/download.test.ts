@@ -48,6 +48,18 @@ test("downloads and validates every document declared by the immutable release",
   const { request, dataset } = await fixture();
   expect((await downloadRelease(base, request)).dataset).toEqual(dataset);
 });
+test("远程完成标记必须绑定本次上传的 ID 和清单哈希", async () => {
+  const { request, files } = await fixture();
+  const marker = { release: "r1", manifestSha256: sha256(files.get("release.json")!) };
+  await expect(downloadRelease(base, request, "https://loomix.fun", marker)).resolves.toBeDefined();
+  for (const expected of [
+    { ...marker, manifestSha256: "a".repeat(64) },
+    { ...marker, release: "other" },
+  ])
+    await expect(downloadRelease(base, request, "https://loomix.fun", expected)).rejects.toThrow(
+      "uploaded release marker",
+    );
+});
 test.each([
   "release.json",
   "zh-CN/catalog.json",

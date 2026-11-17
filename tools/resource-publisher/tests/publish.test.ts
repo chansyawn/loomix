@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { S3Client } from "@aws-sdk/client-s3";
 import { afterEach, expect, test, vi } from "vite-plus/test";
-import { publishRelease } from "../src/publish.ts";
+import { publishValidatedContent } from "../src/publish.ts";
 import type { UploadProgress } from "../src/publish.ts";
 import { parseReleaseBase, sha256 } from "../src/release.ts";
 import { createR2Store } from "../src/store.ts";
@@ -11,6 +11,16 @@ import type { ReleaseStore } from "../src/store.ts";
 import { validateContent } from "../src/validate.ts";
 import { writeFixture, webp, imageKey } from "./fixture.ts";
 const directories: string[] = [];
+const date = new Date("2026-11-17T06:30:00Z");
+const firstId = "20261117-gtest-f11-r001";
+const secondId = "20261117-gtest-f11-r002";
+async function publishRelease(
+  directory: string,
+  store: ReleaseStore,
+  onProgress?: (progress: UploadProgress) => void,
+) {
+  return publishValidatedContent(await validateContent(directory), store, onProgress, date);
+}
 async function fixture(imageCount = 1): Promise<string> {
   const directory = await mkdtemp(path.join(tmpdir(), "loomix-publisher-"));
   directories.push(directory);
@@ -49,33 +59,38 @@ function memoryStore(failKey?: string): { store: ReleaseStore; objects: Map<stri
   };
 }
 
-test("publishes a complete, verifiable release and refuses to overwrite it", async () => {
+test("发布完整版本，再次发布时占用新序号而不覆盖旧版本", async () => {
   const directory = await fixture();
   const { store, objects } = memoryStore();
-  const marker = await publishRelease(directory, "0.95.2-r1", store);
+  const marker = await publishRelease(directory, store);
   expect(marker).toEqual({
-    release: "0.95.2-r1",
+    release: firstId,
     manifestSha256: sha256(await readFile(path.join(directory, "release.json"))),
   });
-  expect([...objects.keys()].at(-1)).toBe("releases/0.95.2-r1/_complete.json");
-  expect(objects.has("releases/0.95.2-r1/zh-CN/neighbors.json")).toBe(true);
-  await expect(publishRelease(directory, "0.95.2-r1", store)).rejects.toThrow(
-    "Release already exists",
-  );
+  expect([...objects.keys()].at(-1)).toBe(`releases/${firstId}/_complete.json`);
+  expect(objects.has(`releases/${firstId}/zh-CN/neighbors.json`)).toBe(true);
+  expect((await publishRelease(directory, store)).release).toBe(secondId);
+  expect(objects.has(`releases/${firstId}/_complete.json`)).toBe(true);
 });
 
 test("an interrupted upload cannot produce a completion marker or reuse its release ID", async () => {
   const directory = await fixture();
-  const { store, objects } = memoryStore(`releases/r1/${imageKey}`);
-  await expect(publishRelease(directory, "r1", store)).rejects.toThrow("Write rejected");
-  expect(objects.has("releases/r1/_complete.json")).toBe(false);
-  await expect(publishRelease(directory, "r1", store)).rejects.toThrow("Release already exists");
+  const { store, objects } = memoryStore(`releases/${firstId}/${imageKey}`);
+  await expect(publishRelease(directory, store)).rejects.toThrow("Write rejected");
+  expect(objects.has(`releases/${firstId}/_complete.json`)).toBe(false);
+  expect((await publishRelease(directory, store)).release).toBe(secondId);
 });
 
 test("a reservation storage error is not reported as an existing release", async () => {
   const directory = await fixture();
-  const { store } = memoryStore("releases/r1/_upload.json");
-  await expect(publishRelease(directory, "r1", store)).rejects.toThrow("Write rejected");
+  const { store } = memoryStore(`releases/${firstId}/_upload.json`);
+  const reserve = vi.spyOn(store, "tryReserve");
+  await expect(publishRelease(directory, store)).rejects.toMatchObject({
+    release: firstId,
+    phase: "reservation",
+    message: expect.stringContaining("Write rejected"),
+  });
+  expect(reserve).toHaveBeenCalledTimes(1);
 });
 
 test.each([
@@ -109,21 +124,14 @@ test.each([
   },
 );
 
-test("concurrent publishers cannot mix content under the same release", async () => {
+test("并发发布通过原子预留获得不同序号", async () => {
   const directory = await fixture();
   const { store } = memoryStore();
-  const results = await Promise.allSettled([
-    publishRelease(directory, "r1", store),
-    publishRelease(directory, "r1", store),
+  const results = await Promise.all([
+    publishRelease(directory, store),
+    publishRelease(directory, store),
   ]);
-  expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
-  const rejected = results.find((result) => result.status === "rejected");
-  expect(rejected?.status).toBe("rejected");
-  if (rejected?.status === "rejected") {
-    expect(rejected.reason).toMatchObject({
-      message: "Release already exists: r1. Use a new release ID.",
-    });
-  }
+  expect(results.map((result) => result.release).sort()).toEqual([firstId, secondId]);
 });
 
 test("a failed remote integrity check prevents completion", async () => {
@@ -132,8 +140,8 @@ test("a failed remote integrity check prevents completion", async () => {
   store.verify = async () => {
     throw new Error("Remote integrity mismatch");
   };
-  await expect(publishRelease(directory, "r1", store)).rejects.toThrow("Remote integrity mismatch");
-  expect(objects.has("releases/r1/_complete.json")).toBe(false);
+  await expect(publishRelease(directory, store)).rejects.toThrow("Remote integrity mismatch");
+  expect(objects.has(`releases/${firstId}/_complete.json`)).toBe(false);
 });
 
 test("rejects missing, extra, corrupt, and invalidly referenced assets before publication", async () => {
@@ -157,12 +165,9 @@ test("rejects a non-WebP or truncated container even when its hash matches", asy
     await expect(validateContent(directory)).rejects.toThrow("Invalid WebP container");
   }
 });
-test.each(["../escape", "r1/path", "", ".", ".."])(
-  "rejects unsafe release ID %s",
-  async (release) => {
-    await expect(publishRelease("unused", release, memoryStore().store)).rejects.toThrow();
-  },
-);
+test.each(["../escape", "r1/path", "", ".", ".."])("rejects unsafe release ID %s", (release) => {
+  expect(() => parseReleaseBase(`https://assets.loomix.fun/releases/${release}/`)).toThrow();
+});
 
 test("requires an immutable HTTPS release base", () => {
   expect(parseReleaseBase("https://assets.loomix.fun/releases/0.95.2-r1/").pathname).toBe(
@@ -183,7 +188,7 @@ test("allows a regular directory placeholder without publishing it", async () =>
   const content = await validateContent(directory);
   expect(content.assets.map((asset) => asset.key)).toEqual([imageKey]);
   const { store, objects } = memoryStore();
-  await publishRelease(directory, "placeholder", store);
+  await publishRelease(directory, store);
   expect([...objects.keys()].some((key) => key.endsWith(".gitkeep"))).toBe(false);
   await rm(path.join(directory, ".gitkeep"));
   await mkdir(path.join(directory, ".gitkeep"));
@@ -211,7 +216,7 @@ test("progress counts remotely verified images and bytes in concurrent completio
     await verify(key, size, hash);
     if (key.endsWith(held.key)) await gate.promise;
   };
-  const publication = publishRelease(directory, "progress", store, (progress) => {
+  const publication = publishRelease(directory, store, (progress) => {
     updates.push(progress);
     if (progress.completed === 2) otherImages.resolve();
   });
@@ -262,21 +267,21 @@ test("a failed upload suppresses progress from in-flight images and never comple
     late.resolve();
   };
   try {
-    await expect(
-      publishRelease(directory, "failed", store, (p) => updates.push(p)),
-    ).rejects.toThrow("Image verification failed");
+    await expect(publishRelease(directory, store, (p) => updates.push(p))).rejects.toThrow(
+      "Image verification failed",
+    );
   } finally {
     gate.resolve();
     await late.promise;
   }
   expect(updates).toHaveLength(1);
   expect(updates[0].completed).toBe(0);
-  expect(objects.has("releases/failed/_complete.json")).toBe(false);
+  expect(objects.has(`releases/${firstId}/_complete.json`)).toBe(false);
 });
 
 test("zero-image versions report finalization and completion without invalid totals", async () => {
   const updates: UploadProgress[] = [];
-  await publishRelease(await fixture(0), "empty", memoryStore().store, (p) => updates.push(p));
+  await publishRelease(await fixture(0), memoryStore().store, (p) => updates.push(p));
   expect(updates.map((p) => p.phase)).toEqual(["images", "finalizing", "complete"]);
   expect(
     updates.every(
@@ -294,8 +299,61 @@ test("failure to verify the completion marker never reports successful publicati
     if (key.endsWith("/_complete.json")) throw new Error("Completion verification failed");
     await verify(key, size, hash);
   };
-  await expect(publishRelease(directory, "marker", store, (p) => updates.push(p))).rejects.toThrow(
+  await expect(publishRelease(directory, store, (p) => updates.push(p))).rejects.toThrow(
     "Completion verification failed",
   );
   expect(updates.at(-1)?.phase).toBe("finalizing");
+});
+
+test("只重试已占用序号，r999 之后停止且不上传", async () => {
+  const content = await validateContent(await fixture(0));
+  const { store } = memoryStore();
+  const reserve = vi.spyOn(store, "tryReserve").mockResolvedValue(false);
+  const put = vi.spyOn(store, "put");
+  await expect(publishValidatedContent(content, store, undefined, date)).rejects.toThrow(
+    "序号已用尽",
+  );
+  expect(reserve).toHaveBeenCalledTimes(999);
+  expect(reserve.mock.calls.at(-1)?.[0]).toBe("releases/20261117-gtest-f11-r999/_upload.json");
+  expect(put).not.toHaveBeenCalled();
+});
+
+test("r999 可以发布，UTC 日期或来源版本变化后重新从 r001 开始", async () => {
+  const content = await validateContent(await fixture(0));
+  const { store } = memoryStore();
+  const reserve = vi.spyOn(store, "tryReserve");
+  for (let sequence = 1; sequence < 999; sequence++) reserve.mockResolvedValueOnce(false);
+  expect((await publishValidatedContent(content, store, undefined, date)).release).toBe(
+    "20261117-gtest-f11-r999",
+  );
+  expect(
+    (await publishValidatedContent(content, store, undefined, new Date("2026-11-18T00:00:00Z")))
+      .release,
+  ).toBe("20261118-gtest-f11-r001");
+  content.release.manifest.source.gameVersion = "new";
+  expect((await publishValidatedContent(content, store, undefined, date)).release).toBe(
+    "20261117-gnew-f11-r001",
+  );
+});
+
+test("不合法的来源版本在预留前失败", async () => {
+  const content = await validateContent(await fixture(0));
+  content.release.manifest.source.gameVersion = "../unsafe";
+  const { store } = memoryStore();
+  const reserve = vi.spyOn(store, "tryReserve");
+  await expect(publishValidatedContent(content, store, undefined, date)).rejects.toThrow();
+  expect(reserve).not.toHaveBeenCalled();
+});
+
+test("图片在验证后发生变化会停止上传并保留占号", async () => {
+  const directory = await fixture();
+  const content = await validateContent(directory);
+  await writeFile(path.join(directory, imageKey), "changed");
+  const { store, objects } = memoryStore();
+  await expect(publishValidatedContent(content, store, undefined, date)).rejects.toMatchObject({
+    release: firstId,
+    phase: "upload",
+    message: expect.stringContaining("Image changed"),
+  });
+  expect([...objects.keys()]).toEqual([`releases/${firstId}/_upload.json`]);
 });

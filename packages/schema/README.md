@@ -39,7 +39,7 @@
 | `resources/website/release.json`                             | 资源发布清单，绑定来源上下文与交付文件；交付阶段即生成，不包含线上 release ID |
 | [apps/website/release.json](../../apps/website/release.json) | 网站资源指针，仅保存 `resourceBaseUrl`，供生产构建选择资源版本                |
 
-资源发布清单绑定文档的字节完整性，组装入口与校验规则以 release 模块为准。线上 release ID 由发布工具指定，与领域快照身份独立。
+资源发布清单绑定文档的字节完整性，组装入口与校验规则以 release 模块为准。线上 release ID 由发布工具根据 UTC 日期、来源游戏版本、格式版本及原子占号自动生成，与领域快照身份独立；命名与恢复规则见[资源发布](../../tools/resource-publisher/README.md)。格式版本表达契约，不随发布次数递增；旧发布 ID 仍可解析。
 
 当前允许的 `formatVersion` 由 [ContextSchema](src/common/identity.ts) 定义，不保留历史版本解析分支。格式升级时，提取器、发布器和网站需使用匹配契约；先发布兼容的新资源，再更新网站资源指针，具体步骤见[CI/CD 与部署](../../DEPLOYMENT.md#资源更新流程)。
 

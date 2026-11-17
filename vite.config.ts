@@ -38,6 +38,12 @@ export default defineConfig({
     options: { typeAware: true, typeCheck: true },
   },
   run: {
+    tasks: {
+      "resources:publish": {
+        command: "node apps/website/scripts/publish-resources.ts",
+        cache: false,
+      },
+    },
     cache: {
       tasks: true,
       scripts: false,

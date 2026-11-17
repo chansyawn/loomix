@@ -8,29 +8,35 @@
 
 ## 校验与发布
 
-先运行 dry-run 校验资源，不需要凭证，也不会上传：
+日常网站资源发布使用仓库级命令：
+
+```sh
+vp run resources:publish
+```
+
+它固定读取当前 worktree 的 `resources/website/`，执行完整资源校验与网站契约检查，上传至 `loomix-assets`，再从公共域名验证本次发布的完成标记、文档哈希及 CORS 并重跑网站检查。全部通过后才更新本地 `apps/website/release.json`；提交、PR 预览与部署按[CI/CD 与部署](../../DEPLOYMENT.md#资源更新流程)继续。网站的 `VITE_RESOURCE_BASE_URL` 覆盖值不改变此命令的输入或验证目标。
+
+添加 `--dry-run` 可在不联网、无需凭证的情况下校验本地资源和网站契约，不创建发布锁、不占号、不修改指针。输出 ID 只是未预留的候选，正式发布时可能不同。
+
+发布 ID 按 UTC 日期和资源清单自动生成，例如 `20261117-g0.95.2-f11-r001`。游戏版本与格式版本取自已验证清单；同一天、同游戏版本和格式版本下，通过 R2 原子预留依次占号，失败发布的号也保持占用，日内序号用尽后报错。日期与序号用于识别发布尝试，不表示完成时间；资源是否完整看完成标记，网站使用哪个版本看资源指针。格式版本仍独立表达契约，不随发布次数递增。生成约束见[命名实现](src/release-id.ts)。
+
+只有校验与上传需求，或需要指定其他输入目录、bucket 时，使用底层发布器：
 
 ```sh
 vp run @loomix/resource-publisher#publish \
   --content resources/website \
-  --release 0.95.2-r1 \
   --dry-run
+vp run @loomix/resource-publisher#publish --content resources/website
 ```
 
-校验通过后，使用新的 release ID 发布：
-
-```sh
-vp run @loomix/resource-publisher#publish \
-  --content resources/website \
-  --release 0.95.2-r1
-```
-
-`--content` 路径相对仓库根目录；release ID 只能发布一次。默认上传到 `loomix-assets` bucket，可用 `--bucket <name>` 指定其他 bucket。进度写入 stderr，发布结果 JSON 写入 stdout。
-
-发布成功后再按部署流程更新网站资源指针。发布结果不代表网站已切换到新资源；网站假设仍需通过发布契约检查。完整参数见 [CLI](src/cli.ts)，上传与完成判定见[发布实现](src/publish.ts)。
+底层命令不执行网站专属检查、不更新指针。`--content` 默认 `resources/website`，路径相对仓库根目录；`--bucket` 默认 `loomix-assets`。不再接受手动 `--release`。进度写入 stderr，最终结果 JSON 写入 stdout。完整参数见 [CLI](src/cli.ts)，上传与完成判定见[发布实现](src/publish.ts)。
 
 ## 失败处理
 
-dry-run 失败时先修复本地交付，不会占用远程 release ID。正式上传会先预留 ID；预留成功后即使上传中途失败，该 ID 也保持占用，当前工具不支持用它续传。
+本地校验失败时先修复交付；若格式不匹配，按[客户端资源提取](../extraction/README.md)重新生成、验证并落地，不能只修改 `formatVersion`。正式上传会先预留 ID；预留后失败也不回收或续传。修复原因后重跑，工具自动选择下一个可用序号；仅明确的占号冲突会自动换号，网络和权限错误直接停止。不要删除 R2 预留标记绕过不可变约束。
 
-遇到 `Release already exists` 时使用新的 release ID。网络或上传校验失败后，保留命令输出以定位原因，修复后重新 dry-run 并用新 ID 发布；不要删除预留标记来绕过不可变约束，也不要把网站指针切到未确认完成的版本。上传期间不要修改输入目录。
+上传完成但远程检查或指针更新失败时，旧指针保持原样，错误输出包含已上传资源的 URL、清单哈希和复核命令。修复后校验该已有版本，再通过 PR 更新指针即可，无需重复上传。远程检查只读取完成标记、清单和 JSON 文档，图片字节仍由上传校验负责，公共图片访问通过预览验收。
+
+仓库级命令使用当前 worktree 的 `var/scratch/resources-publish.lock` 互斥。发布期间不要修改资源或指针，提交前发现指针已变化会拒绝覆盖；锁不能约束外部编辑器。指针通过原子替换提交，提交后的清理失败会报告“指针已更新”警告。
+
+进程异常退出可能遗留锁和 `apps/website/.release-*.tmp`。先查看锁中的 PID 并确认原发布进程已结束，再删除该锁及确认属于该次发布的临时文件，随后重跑；工具不自动抢锁。不要把指针切到未确认完成或未通过网站检查的版本。
