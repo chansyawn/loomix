@@ -1,7 +1,5 @@
-import type { IngredientExpression, Recipe } from "@loomix/schema/catalog";
+import type { IngredientExpression, RecipeSlot } from "@loomix/schema/catalog";
 import type { IngredientItem } from "../collection-view";
-
-type RecipeSlot = NonNullable<Recipe["slots"]>[number];
 
 export type RecipeConditionToken =
   | {
@@ -14,11 +12,8 @@ export type RecipeConditionToken =
   | { kind: "punctuation"; value: "(" | ")" };
 
 export type DishRecipeSlotView = {
-  field: RecipeSlot["field"];
   conditionTokens: RecipeConditionToken[];
   candidates: IngredientItem[];
-  conditionStatus: "ready" | "unparsed";
-  candidateStatus: "ready" | "unconfirmed" | "empty";
 };
 
 function appendConditionTokens(
@@ -60,32 +55,22 @@ function conditionTokens(
 }
 
 function candidateItems(
-  itemIds: readonly number[] | null,
+  itemIds: readonly number[],
   items: ReadonlyMap<number, IngredientItem>,
 ): IngredientItem[] {
-  if (itemIds === null) return [];
   return [...new Set(itemIds)].flatMap((id) => {
     const item = items.get(id);
-    return item && item.listed !== false ? [item] : [];
+    return item && item.browsable !== false ? [item] : [];
   });
 }
 
 export function buildDishRecipeSlots(
-  recipe: Recipe | null,
+  slots: readonly RecipeSlot[],
   tags: ReadonlyMap<number, { name: string }>,
   items: ReadonlyMap<number, IngredientItem>,
 ): DishRecipeSlotView[] {
-  return (
-    recipe?.slots?.map((slot) => {
-      const candidates = candidateItems(slot.itemIds, items);
-      return {
-        field: slot.field,
-        conditionTokens: slot.expression === null ? [] : conditionTokens(slot.expression, tags),
-        candidates,
-        conditionStatus: slot.expression === null ? "unparsed" : "ready",
-        candidateStatus:
-          slot.itemIds === null ? "unconfirmed" : candidates.length > 0 ? "ready" : "empty",
-      };
-    }) ?? []
-  );
+  return slots.map((slot) => ({
+    conditionTokens: conditionTokens(slot.expression, tags),
+    candidates: candidateItems(slot.itemIds, items),
+  }));
 }

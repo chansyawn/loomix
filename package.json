@@ -4,13 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "ready": "vp check && vp run -r test && vp run -r build",
+    "ready": "vp check && vp run test && vp run build",
     "lint": "vp lint",
     "dev": "vp run website#dev",
+    "test": "vp run -r test",
+    "build": "vp run -r build",
     "prepare": "vp config"
   },
   "devDependencies": {
     "@shadcn/lint": "catalog:",
+    "@types/node": "catalog:",
     "eslint-plugin-better-tailwindcss": "catalog:",
     "vite-plus": "catalog:"
   },

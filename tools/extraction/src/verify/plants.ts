@@ -1,12 +1,9 @@
 import assert from "node:assert/strict";
 import path from "node:path";
 import type { CollectionObservations } from "../extraction/schema.ts";
-import { Tables } from "../extraction/decode/tables.ts";
-import { createContentContext } from "../extraction/content/context.ts";
-import { readPlantings } from "../extraction/plants/read.ts";
-import { readJson } from "../workflow/json.ts";
-import { plainText } from "../extraction/content/model.ts";
-import type { ObservedGrowth } from "../extraction/plants/schema.ts";
+import { Tables } from "../extraction/source/decode/tables.ts";
+import { plainText } from "../extraction/source/catalog/model.ts";
+import type { ObservedGrowth } from "../extraction/source/catalog/plants/schema.ts";
 
 export function verifyPlantings(catalog: CollectionObservations, bundle: string) {
   const tables = new Tables(path.join(bundle, "prepared"));
@@ -40,7 +37,6 @@ export function verifyPlantings(catalog: CollectionObservations, bundle: string)
     expected.push({
       id,
       kind: "crop",
-      maturityDays: null,
       cycleMode: tables.string(row, 3),
       initialStageIds,
       regrowthStageIds,
@@ -98,7 +94,7 @@ export function verifyPlantings(catalog: CollectionObservations, bundle: string)
     }
     if (!stages.some((stage) => stage.plantId !== null)) continue;
     seedIds.add(id);
-    expected.push({ id, kind: "staged", maturityDays: null, stages });
+    expected.push({ id, kind: "staged", stages });
   }
   expected.sort((a, b) => a.id - b.id);
   assert.deepEqual(
@@ -124,27 +120,5 @@ export function verifyPlantings(catalog: CollectionObservations, bundle: string)
   assert.equal(
     new Set(catalog.growths.flatMap((growth) => growth.stages.map((stage) => stage.id))).size,
     317,
-  );
-  const rebuilt = readPlantings(createContentContext(bundle));
-  assert.deepEqual(
-    catalog.seeds.map(({ image: _image, ...seed }) => seed),
-    rebuilt.seeds.map(({ image: _image, ...seed }) => seed),
-    "Complete seed metadata",
-  );
-  for (const [name, value] of [
-    ["plant-evidence", rebuilt.evidence],
-    ["plant-exclusions", rebuilt.exclusions],
-    ["plant-investigation", rebuilt.investigation],
-  ] as const) {
-    assert.deepEqual(readJson(path.join(bundle, `${name}.json`)), value, `Rebuilt ${name}`);
-    assert.deepEqual(
-      readJson(path.join(bundle, `evidence/${name}.json`)),
-      value,
-      `Preserved ${name}`,
-    );
-  }
-  assert.deepEqual(
-    rebuilt.exclusions.map((entry) => entry.id).sort((a, b) => a - b),
-    [30224, 30228, 30238, 56999],
   );
 }

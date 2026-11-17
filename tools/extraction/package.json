@@ -10,7 +10,7 @@
     "refresh": "node src/cli.ts refresh",
     "verify": "node src/cli.ts verify",
     "client": "node src/cli.ts client",
-    "test": "vp exec vp test run"
+    "test": "vp test"
   },
   "dependencies": {
     "@loomix/resource-publisher": "workspace:*",

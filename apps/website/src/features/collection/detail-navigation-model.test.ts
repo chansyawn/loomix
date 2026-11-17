@@ -1,8 +1,8 @@
 import { expect, test } from "vite-plus/test";
-import type { CollectionRecord } from "../collection-view";
+import type { CatalogEntrySummary } from "../collection-view";
 import { setDetailNavigation, type DetailNavigationModel } from "./detail-navigation-model";
 
-function record(id: number, name: string): CollectionRecord {
+function record(id: number, name: string): CatalogEntrySummary {
   return { id, name, image: null, description: null, quality: null };
 }
 

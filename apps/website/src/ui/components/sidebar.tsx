@@ -65,7 +65,6 @@ function SidebarProvider({
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = React.useState(false);
 
-  // 侧栏的内部状态。
   // 通过 openProp 和 setOpenProp 从组件外部控制状态。
   const [_open, _setOpen] = React.useState(defaultOpen);
   const open = openProp ?? _open;
@@ -78,13 +77,12 @@ function SidebarProvider({
         _setOpen(openState);
       }
 
-      // 将侧栏状态写入 cookie，以便保留。
+      // 将桌面侧栏状态写入 cookie，以便恢复。
       document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
     },
     [setOpenProp, open],
   );
 
-  // 切换侧栏的展开状态。
   const toggleSidebar = React.useCallback(() => {
     return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
   }, [isMobile, setOpen, setOpenMobile]);
@@ -102,8 +100,6 @@ function SidebarProvider({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [toggleSidebar]);
 
-  // 将状态映射为 data-state="expanded" 或 "collapsed"。
-  // 便于使用 Tailwind 类设置侧栏样式。
   const state = open ? "expanded" : "collapsed";
 
   const contextValue = React.useMemo<SidebarContextProps>(
@@ -207,7 +203,6 @@ function Sidebar({
       data-side={side}
       data-slot="sidebar"
     >
-      {/* 在桌面端为侧栏预留空间 */}
       <div
         data-slot="sidebar-gap"
         className={cn(
@@ -224,7 +219,6 @@ function Sidebar({
         data-side={side}
         className={cn(
           "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:-left-(--sidebar-width) data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:-right-(--sidebar-width) md:flex",
-          // 调整浮动和内嵌变体的内边距。
           variant === "floating" || variant === "inset"
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
             : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",

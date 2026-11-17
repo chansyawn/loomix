@@ -109,7 +109,7 @@ export function PlantsPage({
             layout={presentation.grid}
             getKey={(row) => row.id}
             renderCard={(row) => {
-              if ("growthId" in row) return <SeedCard seed={row} />;
+              if ("growth" in row) return <SeedCard seed={row} />;
               return "category" in row ? (
                 <PlantsCard item={row} />
               ) : (

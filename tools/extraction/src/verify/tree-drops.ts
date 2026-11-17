@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import type { CollectionDetail } from "../extraction/schema.ts";
-import type { Tables } from "../extraction/decode/tables.ts";
-import type { detailInvestigationSchema } from "../extraction/collection/details/investigation.ts";
+import type { Tables } from "../extraction/source/decode/tables.ts";
+import type { detailInvestigationSchema } from "../extraction/source/catalog/collection/details/investigation.ts";
 import type { z } from "zod";
 
 export function verifyTreeDrops(
@@ -26,9 +26,6 @@ export function verifyTreeDrops(
       itemId: fruit,
       dropGroupId: null,
       weight: null,
-      quantityMin: null,
-      quantityMax: null,
-      probability: null,
     });
   }
   let total = 0;
@@ -46,9 +43,6 @@ export function verifyTreeDrops(
       itemId,
       dropGroupId: group,
       weight,
-      quantityMin: null,
-      quantityMax: null,
-      probability: null,
     });
   }
   assert.deepEqual(actual, expected.length ? expected : null, `Independent tree drops ${id}`);

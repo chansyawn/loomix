@@ -24,7 +24,6 @@ export function plantItemFixture(fields: Partial<PlantItem> = {}): PlantItem {
     quality: null,
     category: null,
     originGalaxy: null,
-    maturityPeriod: null,
     harvestCount: null,
     acquisition: null,
     flowerColors: null,
@@ -69,13 +68,9 @@ export function plantSeedFixture(fields: Partial<PlantSeed> = {}): PlantSeed {
     description: null,
     quality: null,
     plantIds,
-    growthId: id,
-    trade: null,
     acquisition: null,
     growth: {
-      id,
       kind: "staged",
-      maturityDays: null,
       stages: plantIds.map((plantId) => ({
         id: plantId + 1000,
         name: "植株",

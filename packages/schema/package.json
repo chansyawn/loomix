@@ -7,7 +7,6 @@
     "./gameplay-tags": "./src/gameplay-tags/index.ts",
     "./catalog": "./src/catalog/index.ts",
     "./neighbors": "./src/neighbors/index.ts",
-    "./world": "./src/world/index.ts",
     "./assets": "./src/assets/index.ts",
     "./dataset": "./src/dataset/index.ts",
     "./release": "./src/release/index.ts",
@@ -15,12 +14,13 @@
     "./dataset/images": "./src/dataset/images.ts"
   },
   "scripts": {
-    "test": "vp exec vp test run"
+    "test": "vp test"
   },
   "dependencies": {
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@types/node": "catalog:",
     "typescript": "catalog:",
     "vite-plus": "catalog:"
   }

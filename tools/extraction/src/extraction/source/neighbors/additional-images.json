@@ -1,0 +1,209 @@
+[
+  {
+    "category": "role",
+    "npcId": 11,
+    "assetType": "Texture2D",
+    "resourceName": "0011Npc_Manna_s",
+    "container": "assets/moleres/rel/sres/uisprite/load/roleitem/0011npc_manna_s.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10452017.blk",
+    "pathId": "984806357444017604"
+  },
+  {
+    "category": "role",
+    "npcId": 12,
+    "assetType": "Texture2D",
+    "resourceName": "0012Npc_Mianduo_s",
+    "container": "assets/moleres/rel/sres/uisprite/load/roleitem/0012npc_mianduo_s.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/00000003.blk",
+    "pathId": "6339243244772300192"
+  },
+  {
+    "category": "role",
+    "npcId": 1005,
+    "assetType": "Texture2D",
+    "resourceName": "1005NPC_Huanxue_s",
+    "container": "assets/moleres/rel/sres/uisprite/load/roleitem/1005npc_huanxue_s.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/00144068.blk",
+    "pathId": "-8899300381191084207"
+  },
+  {
+    "category": "role",
+    "npcId": 1008,
+    "assetType": "Texture2D",
+    "resourceName": "1008Npc_Rebeier_s",
+    "container": "assets/moleres/rel/sres/uisprite/load/roleitem/1008npc_rebeier_s.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/11224359.blk",
+    "pathId": "-1387836339639861154"
+  },
+  {
+    "category": "role",
+    "npcId": 1009,
+    "assetType": "Texture2D",
+    "resourceName": "1009Npc_Isaki_s",
+    "container": "assets/moleres/rel/sres/uisprite/load/roleitem/1009npc_isaki_s.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/14186844.blk",
+    "pathId": "-8627682295506577645"
+  },
+  {
+    "category": "role",
+    "npcId": 1010,
+    "assetType": "Sprite",
+    "resourceName": "1010Npc_Yunguo_s",
+    "container": "assets/moleres/rel/sres/uisprite/load/task/icon_task_mysterious.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/00000003.blk",
+    "pathId": "5437018692415253002"
+  },
+  {
+    "category": "role",
+    "npcId": 1011,
+    "assetType": "Texture2D",
+    "resourceName": "1011Npc_Duojielang_s",
+    "container": "assets/moleres/rel/sres/uisprite/load/roleitem/1011npc_duojielang_s.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/14092613.blk",
+    "pathId": "1400920591235132504"
+  },
+  {
+    "category": "role",
+    "npcId": 1013,
+    "assetType": "Texture2D",
+    "resourceName": "1013Npc_Safeili_s",
+    "container": "assets/moleres/rel/sres/uisprite/load/roleitem/1013npc_safeili_s.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/11224359.blk",
+    "pathId": "9086989899922079358"
+  },
+  {
+    "category": "role",
+    "npcId": 1015,
+    "assetType": "Texture2D",
+    "resourceName": "1015Npc_Naleina_s",
+    "container": "assets/moleres/rel/sres/uisprite/load/roleitem/1015npc_naleina_s.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/14092613.blk",
+    "pathId": "-5504706181418362489"
+  },
+  {
+    "category": "role",
+    "npcId": 1017,
+    "assetType": "Texture2D",
+    "resourceName": "1017Npc_Hapeinuo_s",
+    "container": "assets/moleres/rel/sres/uisprite/load/roleitem/1017npc_hapeinuo_s.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/14092613.blk",
+    "pathId": "-7371597365948753165"
+  },
+  {
+    "category": "role",
+    "npcId": 1018,
+    "assetType": "Texture2D",
+    "resourceName": "1018Npc_Tika_s",
+    "container": "assets/moleres/rel/sres/uisprite/load/roleitem/1018npc_tika_s.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/14092613.blk",
+    "pathId": "-4798290997534480535"
+  },
+  {
+    "category": "role",
+    "npcId": 1019,
+    "assetType": "Texture2D",
+    "resourceName": "1019Npc_Heyu_s",
+    "container": "assets/moleres/rel/sres/uisprite/load/roleitem/1019npc_heyu_s.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/14092613.blk",
+    "pathId": "7223179785156892496"
+  },
+  {
+    "category": "favour",
+    "npcId": 11,
+    "assetType": "Texture2D",
+    "resourceName": "NPCFavour_0011",
+    "container": "assets/moleres/rel/sres/uisprite/load/npcfavour/npcfavour_0011.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/12045190.blk",
+    "pathId": "1508601890344749762"
+  },
+  {
+    "category": "favour",
+    "npcId": 12,
+    "assetType": "Texture2D",
+    "resourceName": "NPCFavour_0012",
+    "container": "assets/moleres/rel/sres/uisprite/load/npcfavour/npcfavour_0012.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/12045190.blk",
+    "pathId": "-4115808356225632609"
+  },
+  {
+    "category": "favour",
+    "npcId": 1008,
+    "assetType": "Texture2D",
+    "resourceName": "NPCFavour_1008",
+    "container": "assets/moleres/rel/sres/uisprite/load/npcfavour/npcfavour_1008.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/12045190.blk",
+    "pathId": "-3337190686298992370"
+  },
+  {
+    "category": "favour",
+    "npcId": 1009,
+    "assetType": "Texture2D",
+    "resourceName": "NPCFavour_1009",
+    "container": "assets/moleres/rel/sres/uisprite/load/npcfavour/npcfavour_1009.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/12045190.blk",
+    "pathId": "-499152629062343009"
+  },
+  {
+    "category": "favour",
+    "npcId": 1010,
+    "assetType": "Texture2D",
+    "resourceName": "NPCFavour_1010",
+    "container": "assets/moleres/rel/sres/uisprite/load/npcfavour/npcfavour_1010.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/12045190.blk",
+    "pathId": "-4968063308595817723"
+  },
+  {
+    "category": "favour",
+    "npcId": 1011,
+    "assetType": "Texture2D",
+    "resourceName": "NPCFavour_1011",
+    "container": "assets/moleres/rel/sres/uisprite/load/npcfavour/npcfavour_1011.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10367662.blk",
+    "pathId": "604231615745009945"
+  },
+  {
+    "category": "favour",
+    "npcId": 1013,
+    "assetType": "Texture2D",
+    "resourceName": "NPCFavour_1013",
+    "container": "assets/moleres/rel/sres/uisprite/load/npcfavour/npcfavour_1013.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10367662.blk",
+    "pathId": "8568815975238573636"
+  },
+  {
+    "category": "favour",
+    "npcId": 1015,
+    "assetType": "Texture2D",
+    "resourceName": "NPCFavour_1015",
+    "container": "assets/moleres/rel/sres/uisprite/load/npcfavour/npcfavour_1015.png",
+    "source": "resources/game-client/PetitPlanet_Data/Persistent/AssetBundle/blocks/00/13293309.blk",
+    "pathId": "-8974352555973674926"
+  },
+  {
+    "category": "favour",
+    "npcId": 1017,
+    "assetType": "Texture2D",
+    "resourceName": "NPCFavour_1017",
+    "container": "assets/moleres/rel/sres/uisprite/load/npcfavour/npcfavour_1017.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10367662.blk",
+    "pathId": "7391152483514219977"
+  },
+  {
+    "category": "favour",
+    "npcId": 1018,
+    "assetType": "Texture2D",
+    "resourceName": "NPCFavour_1018",
+    "container": "assets/moleres/rel/sres/uisprite/load/npcfavour/npcfavour_1018.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10367662.blk",
+    "pathId": "-4330425178173288116"
+  },
+  {
+    "category": "favour",
+    "npcId": 1019,
+    "assetType": "Texture2D",
+    "resourceName": "NPCFavour_1019",
+    "container": "assets/moleres/rel/sres/uisprite/load/npcfavour/npcfavour_1019.png",
+    "source": "resources/game-client/PetitPlanet_Data/StreamingAssets/AssetBundle/blocks/00/10367662.blk",
+    "pathId": "6736836811294085904"
+  }
+]

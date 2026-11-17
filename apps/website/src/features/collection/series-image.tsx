@@ -1,4 +1,4 @@
-import type { CollectionRecord } from "../collection-view.ts";
+import type { CatalogEntrySummary } from "../collection-view.ts";
 import { RecordImage } from "./record-image";
 import { seriesPreview } from "./series-preview";
 
@@ -12,7 +12,7 @@ export function SeriesImage({
   name: string;
   image: string | null;
   memberIds: readonly number[] | null;
-  items: readonly Pick<CollectionRecord, "id" | "name" | "image">[];
+  items: readonly Pick<CatalogEntrySummary, "id" | "name" | "image">[];
   eager?: boolean;
 }) {
   const preview = image ? [] : seriesPreview(memberIds, items);

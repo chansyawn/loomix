@@ -5,7 +5,7 @@ import {
   ReleaseIdSchema,
   ReleaseMarkerSchema,
 } from "@loomix/schema/release";
-import type { DocumentKind, Release } from "@loomix/schema/release";
+import type { DocumentKind, Release, ReleaseMarker } from "@loomix/schema/release";
 
 export {
   ReleaseIdSchema as releaseIdSchema,
@@ -37,6 +37,7 @@ export async function downloadRelease(
   value: string,
   request: typeof fetch = fetch,
   origin = "https://loomix.fun",
+  expectedMarker?: ReleaseMarker,
 ): Promise<Release> {
   const base = parseReleaseBase(value);
   const fetchFile = async (name: string): Promise<Buffer> => {
@@ -55,6 +56,12 @@ export async function downloadRelease(
   );
   if (base.pathname !== `/releases/${marker.release}/`)
     throw new Error("Resource release marker does not match the configured URL");
+  if (
+    expectedMarker &&
+    (marker.release !== expectedMarker.release ||
+      marker.manifestSha256 !== expectedMarker.manifestSha256)
+  )
+    throw new Error("Remote release does not match the uploaded release marker");
   const bytes = await fetchFile("release.json");
   if (sha256(bytes) !== marker.manifestSha256) throw new Error("Release manifest SHA-256 mismatch");
   const manifest = parseReleaseManifest(JSON.parse(bytes.toString("utf8")));

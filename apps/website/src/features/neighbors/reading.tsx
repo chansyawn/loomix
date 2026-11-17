@@ -16,17 +16,18 @@ export function NeighborStories({ neighbor }: { neighbor: NeighborDetail }) {
       {neighbor.stories.length ? (
         <Accordion multiple>
           {neighbor.stories.map((story) => (
-            <AccordionItem key={story.key} value={story.key}>
+            <AccordionItem key={story.chapter} value={String(story.chapter)}>
               <AccordionTrigger>
                 第 {story.chapter} 章 · {story.title}
               </AccordionTrigger>
               <AccordionContent>
                 <div className="@container mx-auto max-w-240 px-3 md:px-6">
                   <div className="space-y-6 text-base [&_p]:mb-0!">
-                    {story.paragraphs.map((paragraph) => (
+                    {story.paragraphs.map((paragraph, index) => (
                       <StoryParagraph
-                        key={paragraph.sequence}
+                        key={index}
                         paragraph={paragraph}
+                        sequence={index + 1}
                         title={story.title}
                       />
                     ))}

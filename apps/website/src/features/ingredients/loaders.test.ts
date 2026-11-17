@@ -43,7 +43,7 @@ function setupResources() {
     creatures: { items: [creature], series: [] },
     miscellaneous: [material],
     dishes: {
-      items: [recipeFixture(100, { slots: [recipeSlot(categoryExpression(11), [1, 2, 3])] })],
+      items: [recipeFixture(100, [recipeSlot(categoryExpression(11), [1, 2, 3])])],
       series: [],
     },
   });

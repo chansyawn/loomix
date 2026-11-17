@@ -96,9 +96,7 @@ function FurnitureRecipes({
           <div key={recipe.id} className="space-y-3">
             {recipes.length > 1 && <h3 className="mb-3 text-sm font-medium">配方 {index + 1}</h3>}
             {recipe.materials === null ? (
-              <p className="text-sm text-muted-foreground">
-                {recipe.unresolvedReason || "材料信息未确认"}
-              </p>
+              <p className="text-sm text-muted-foreground">材料信息未确认</p>
             ) : (
               <ul className="flex flex-wrap gap-3">
                 {recipe.materials.map((material) => (
@@ -109,7 +107,7 @@ function FurnitureRecipes({
                       quantity={material.quantity}
                       fallbackName="未知材料"
                       link={
-                        material.item && material.item.listed !== false
+                        material.item && material.item.browsable !== false
                           ? recordLocation(material.item)
                           : undefined
                       }

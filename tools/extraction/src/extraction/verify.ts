@@ -1,76 +1,92 @@
-import { verifyCookingRecipes } from "../verify/cooking.ts";
-import { verifyCraftingRelations } from "../verify/crafting.ts";
-import { verifyCatalogMetadata } from "../verify/catalog-metadata.ts";
-import { catalogAdmissionIds } from "./content/catalog-admissions.ts";
-import { readCraftingRecipes } from "./crafting/read.ts";
-import { createContentContext } from "./content/context.ts";
 import assert from "node:assert/strict";
-import { parseDataset } from "@loomix/schema/dataset";
-import { EvidenceSchema } from "./evidence/domain-schema.ts";
-import { buildDataset } from "../domains/build.ts";
-import { readDomainEvidence } from "../domains/evidence.ts";
 import path from "node:path";
-import { verifyBundle } from "../verify/bundle.ts";
-import { parseRawContent } from "./schemas/raw-content.ts";
-import { verifyCollection } from "../verify/collection.ts";
-import { readJson } from "../workflow/json.ts";
-import type { CollectionObservations } from "./schema.ts";
-import { parseNeighborClothingDatabase } from "./neighbors/schema.ts";
+import { readCandidate, readVerifiedExtraction } from "./bundle.ts";
+import { observe } from "./source/observe.ts";
+import { Tables, indexTables } from "./source/decode/tables.ts";
+import { decodeTextMap } from "./source/decode/textmap.ts";
+import { ObbReader } from "./source/decode/obb.ts";
+import { readJson, writeJson } from "../workflow/json.ts";
+import { verifyCatalogSources } from "../verify/catalog.ts";
+import { verifyCraftingRelations } from "../verify/crafting.ts";
+import { verifyCookingRecipes } from "../verify/cooking.ts";
+import { verifyCollectionFields } from "../verify/collection-fields.ts";
+import { verifyProofSources } from "../verify/collection.ts";
+import { verifyPlantings } from "../verify/plants.ts";
+import { verifyImages } from "../verify/images.ts";
+import { verifyEvidence } from "../verify/evidence.ts";
+import { verifyNeighborDetails } from "./source/neighbors/verify-details.ts";
 
-export async function verifyExtraction(work: string, writeReports = true): Promise<void> {
-  const collection = readJson<CollectionObservations>(
-    path.join(work, "raw/images-catalog-observations.json"),
-  );
-  await verifyBundle({
-    reportRoot: work,
-    bundle: work,
-    staging: path.join(work, "raw"),
-    contentFile: path.join(work, "raw", "images-content.json"),
-    parse: parseRawContent,
-    writeReports,
-    extraImages: collection.seeds.flatMap((seed) => (seed.image ? [seed.image] : [])),
-  });
-  await verifyCollection(work, work, writeReports);
-  const craftingContext = createContentContext(work);
-  const clothing = parseNeighborClothingDatabase(
-    readJson(path.join(work, "raw/neighbor-clothing.json")),
-  );
-  const { audit, proofs } = readCraftingRecipes(
-    craftingContext,
-    catalogAdmissionIds(
-      craftingContext,
-      clothing.items.map((item) => item.id),
-    ),
-  );
-  const expectedCrafting = { recipes: audit, proofs };
+export async function verifyCandidate(directory: string, writeReport = true): Promise<void> {
+  const bundle = readCandidate(directory);
+  const { dataset, observations, originals, imageBindings, evidence } = bundle;
+  const source = path.join(directory, "source");
+  const reader = new ObbReader(path.join(source, "prepared/ed.obb"));
   assert.deepEqual(
-    readJson(path.join(work, "crafting-recipes-audit.json")),
-    expectedCrafting,
-    "Fresh crafting provenance",
+    readJson(path.join(source, "prepared/obb-table-index.json")),
+    indexTables(reader),
+    "Frozen table index decodes from OBB",
   );
+  const textmap = readJson<{ byHash: unknown }>(path.join(source, "prepared/textmap-zh-en.json"));
+  assert.deepEqual(textmap.byHash, decodeTextMap(reader).byHash, "Frozen TextMap decodes from OBB");
+  const tables = new Tables(path.join(source, "prepared"));
+  verifyCatalogSources(dataset, observations, tables, source);
+  verifyCollectionFields(observations.diagnostics.collection, tables);
+  for (const proof of observations.detailProofs) verifyProofSources(proof, tables);
+  verifyPlantings(observations.diagnostics.collection, source);
+  for (const seed of observations.diagnostics.collection.seeds) {
+    const item = dataset.catalog.items.find((item) => item.id === seed.id);
+    assert.ok(item && item.kind === "seed");
+    const growth = observations.diagnostics.collection.growths.find(
+      (growth) => growth.id === seed.growthId,
+    )!;
+    assert.deepEqual(
+      item.growth.stages.map(({ image: _image, ...stage }) => stage),
+      growth.stages.map(({ image: _image, ...stage }) => stage),
+      "Published planting stage relationships",
+    );
+    assert.equal(item.growth.kind, growth.kind, "Published growth kind");
+    if (item.growth.kind === "crop" && growth.kind === "crop") {
+      assert.deepEqual(
+        {
+          initialStageIds: item.growth.initialStageIds,
+          regrowthStageIds: item.growth.regrowthStageIds,
+          matureStages: item.growth.matureStages,
+          witheredStageId: item.growth.witheredStageId,
+          harvestCount: item.growth.harvestCount,
+        },
+        {
+          initialStageIds: growth.initialStageIds,
+          regrowthStageIds: growth.regrowthStageIds ?? [],
+          matureStages: growth.matureStages,
+          witheredStageId: growth.witheredStageId,
+          harvestCount: growth.harvestCount,
+        },
+        "Independent published crop configuration",
+      );
+    }
+  }
+  verifyNeighborDetails(observations.neighbors, tables);
+  verifyCookingRecipes(dataset.catalog, tables);
+  verifyCraftingRelations(dataset.catalog, tables);
+  verifyImages(directory, tables, observations, originals, imageBindings);
+  verifyEvidence(directory, dataset, evidence, tables);
+  // 可重现性与独立来源断言分开；此比较不能代替上面的来源验收。
   assert.deepEqual(
-    readJson(path.join(work, "evidence/crafting-recipes-audit.json")),
-    expectedCrafting,
-    "Sealed crafting provenance",
+    observations,
+    observe(source, dataset.context.snapshotId),
+    "Reproducible source observations",
   );
-  const rebuilt = buildDataset(work);
-  verifyCookingRecipes(rebuilt.dataset.catalog, craftingContext.tables);
-  verifyCraftingRelations(rebuilt.dataset.catalog, craftingContext.tables);
-  assert.deepEqual(
-    parseDataset(readJson(path.join(work, "dataset.json"))),
-    rebuilt.dataset,
-    "Dataset must match its frozen source observations",
-  );
-  assert.deepEqual(
-    readJson(path.join(work, "image-jobs.json")),
-    rebuilt.jobs,
-    "Image jobs must match the complete reference graph",
-  );
-  const domainEvidence = readDomainEvidence(work, rebuilt.dataset);
-  verifyCatalogMetadata(rebuilt.dataset.catalog, domainEvidence.fields);
-  assert.deepEqual(
-    EvidenceSchema.parse(readJson(path.join(work, "evidence/domain-fields.json"))),
-    domainEvidence,
-    "Domain evidence must match the frozen source evidence",
-  );
+  if (writeReport)
+    writeJson(path.join(directory, "validation.json"), {
+      passed: true,
+      independentSources: true,
+      reproducible: true,
+      snapshotId: dataset.context.snapshotId,
+    });
+}
+
+export async function verifyExtraction(directory: string, _writeReports = false) {
+  const bundle = await readVerifiedExtraction(directory);
+  await verifyCandidate(directory, false);
+  return bundle;
 }

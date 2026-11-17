@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import type { CollectionObservations } from "../extraction/schema.ts";
-import type { Tables } from "../extraction/decode/tables.ts";
-import { creatureSizeRange, plainText, scaledCreatureSize } from "../extraction/content/model.ts";
+import type { Tables } from "../extraction/source/decode/tables.ts";
+import {
+  creatureSizeRange,
+  plainText,
+  scaledCreatureSize,
+} from "../extraction/source/catalog/model.ts";
 import { verifyTreeDrops } from "./tree-drops.ts";
 
 export function verifyCollectionFields(catalog: CollectionObservations, tables: Tables) {

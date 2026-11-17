@@ -1,234 +1,132 @@
-import { datasetFixture, recordMetadata } from "./fixture.ts";
 import { expect, test } from "vite-plus/test";
 import { parseDataset, validateDataset } from "../src/dataset/index.ts";
 import { CatalogSchema } from "../src/catalog/index.ts";
-import { parseRelease } from "../src/release/index.ts";
+import type { ItemOf } from "../src/catalog/index.ts";
+import { DocumentKindSchema, parseRelease } from "../src/release/index.ts";
 import { referencedImages } from "../src/dataset/images.ts";
-import { parseNeighbors } from "../src/neighbors/index.ts";
-const context = { formatVersion: 10, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
-const source = { gameVersion: "test", dataRevision: 1, resourceRevision: 1, manifestId: "1" };
-const base = {
-  ...recordMetadata(),
-  id: 1,
-  name: "物品",
-  image: null,
-  quality: null,
-  description: null,
-};
+import {
+  collection,
+  context,
+  datasetFixture,
+  material,
+  neighbor,
+  plant,
+  reference,
+  seed,
+  source,
+} from "./fixture.ts";
 
-test("parsing rejects unknown fields and versions without mutating the input", () => {
-  const dataset = datasetFixture(context, source);
+const messages = (dataset: ReturnType<typeof datasetFixture>) =>
+  validateDataset(dataset).map((issue) => issue.message);
+
+test("解析拒绝未知字段且不修改输入", () => {
+  const dataset = datasetFixture();
   expect(parseDataset(dataset)).toEqual(dataset);
-  expect(() => CatalogSchema.parse({ ...dataset.catalog, formatVersion: 1 })).toThrow();
-  expect(() => CatalogSchema.parse({ ...dataset.catalog, details: [] })).toThrow();
-  expect(dataset.catalog.records).toEqual([]);
-});
-test("acquisition is the only item acquisition field and neighbor rewards are removed", () => {
-  const dataset = datasetFixture(context, source);
-  const acquisition = [
-    { sourceId: 142, label: "摇晃果树或伐木后拾取获得", condition: null },
-    { sourceId: 143, label: "摇晃果树或伐木后拾取获得", condition: null },
-  ];
-  const item = {
-    ...base,
-    kind: "material" as const,
-    displayCategory: null,
-    trade: null,
-    acquisition,
-  };
-  dataset.catalog.records.push(item);
-  expect(parseDataset(dataset).catalog.records[0]).toEqual(item);
+  expect(() => CatalogSchema.parse({ ...dataset.catalog, references: [] })).toThrow();
+  expect(() => parseDataset({ ...dataset, world: {} })).toThrow();
   expect(() =>
-    CatalogSchema.parse({ ...dataset.catalog, records: [{ ...item, sources: [] }] }),
+    CatalogSchema.parse({ ...dataset.catalog, items: [{ ...material(1), trade: null }] }),
   ).toThrow();
-  expect(dataset.neighbors).not.toHaveProperty("rewards");
+  expect(dataset.catalog.items).toEqual([]);
+});
+
+test("正式物品与引用物品共享同一身份空间", () => {
+  const dataset = datasetFixture();
+  dataset.catalog.items.push(reference(1), material(1));
+  dataset.catalog.collections.push(collection(2, "furniture", [1, 99]));
+  const result = messages(dataset);
+  expect(result).toContain("Duplicate identity 1");
+  expect(result).toContain("Unknown furniture 1");
+  expect(result).toContain("Unknown furniture 99");
+});
+
+test("未知成员与确认为空的成员保持区分", () => {
+  const { catalog } = datasetFixture();
+  catalog.collections.push(collection(1, "plant", null), collection(2, "plant", []));
   expect(() =>
-    parseDataset({ ...dataset, neighbors: { ...dataset.neighbors, rewards: [] } }),
-  ).toThrow();
-});
-test("reference identity is separate from formal admission", () => {
-  const dataset = datasetFixture(context, source);
-  dataset.catalog.references.push({ id: 1, name: "材料", description: null, usageText: null });
-  expect(validateDataset(dataset)).toEqual([]);
-  dataset.catalog.records.push({
-    ...base,
-    kind: "material",
-    displayCategory: null,
-    trade: null,
-    acquisition: null,
-  });
-  expect(
-    validateDataset(dataset).some((issue) => issue.message.includes("Reference duplicates")),
-  ).toBe(true);
-  expect(() => CatalogSchema.parse({ ...dataset.catalog, entries: [] })).toThrow();
-});
-test("gift preferences reference known neighbors, items, and the shared tag dictionary", () => {
-  const dataset = datasetFixture(context, source);
-  dataset.neighbors.neighbors.push({
-    id: 11,
-    name: "蛮蛮",
-    bodyType: null,
-    scaleValue: null,
-    avatar: null,
-    npc2Path: "Avatar/NPC2/NPC_11",
-    profile: { englishName: null, nickname: null, gender: null, birthday: null },
-    travelProfile: null,
-    abilityDescriptions: [],
-    abilities: [],
-    signature: { cookingRecipeId: null, friendshipOutfitItemId: null },
-    house: null,
-    design: { furnitureSetId: null, craftingCollectionId: null },
-  });
-  dataset.catalog.references.push({ id: 50000, name: "物品", description: null, usageText: null });
-  dataset.neighbors.giftPreferences.push({
-    key: "11:love",
-    neighborId: 11,
-    level: "love",
-    itemIds: [50000],
-    tagIds: [50000],
-  });
-  dataset.gameplayTags.tags.push({
-    id: 50000,
-    internalName: "食物",
-    displayName: "食物",
-    enumName: null,
-    parentId: null,
-  });
-  expect(parseDataset(dataset).neighbors.giftPreferences).toEqual(
-    dataset.neighbors.giftPreferences,
-  );
-  expect(
-    parseNeighbors({
-      ...dataset.neighbors,
-      giftPreferences: undefined,
+    CatalogSchema.parse({
+      ...catalog,
+      collections: [{ ...collection(3, "plant", []), tagIds: [] }],
     }),
-  ).toMatchObject({ giftPreferences: [] });
-  dataset.neighbors.giftPreferences[0]!.tagIds = [50001];
-  expect(validateDataset(dataset)).toContainEqual(
-    expect.objectContaining({ message: "Unknown preference tag 50001" }),
-  );
+  ).toThrow();
+  expect(CatalogSchema.parse(catalog).collections.map((entry) => entry.memberIds)).toEqual([
+    null,
+    [],
+  ]);
 });
-test("neighbor clothing is a formal catalog record and keeps configured prices distinct from availability", () => {
-  const dataset = datasetFixture(context, source);
-  dataset.neighbors.neighbors.push({
-    id: 11,
-    name: "蛮蛮",
-    bodyType: null,
-    scaleValue: null,
-    avatar: null,
-    npc2Path: "Avatar/NPC2/NPC_11",
-    profile: { englishName: null, nickname: null, gender: null, birthday: null },
-    travelProfile: null,
-    abilityDescriptions: [],
-    abilities: [],
-    signature: { cookingRecipeId: null, friendshipOutfitItemId: null },
-    house: null,
-    design: { furnitureSetId: null, craftingCollectionId: null },
-  });
-  const image = { assetId: "neighbor-outfit-icon", variant: "icon" as const };
-  dataset.catalog.references.push(
-    { id: 60001, name: "玩家帽子", description: null, usageText: null },
-    { id: 200014, name: "友邻服饰币", description: null, usageText: null },
-  );
-  dataset.catalog.records.push({
-    ...base,
-    id: 1160001,
-    name: "友邻款帽子",
+
+test("种子内嵌生长配置，阶段必须指向正式植物", () => {
+  const dataset = datasetFixture();
+  const growth = {
+    kind: "staged" as const,
+    stages: [{ id: 20, name: "植株", image: null, plantId: 1 }],
+  };
+  dataset.catalog.items.push(reference(1), seed(10, growth));
+  expect(messages(dataset)).toContain("Unknown plant 1");
+  dataset.catalog.items[0] = plant(1);
+  expect(validateDataset(dataset)).toEqual([]);
+});
+
+test("友邻服饰必须关联已知友邻或玩家服饰", () => {
+  const dataset = datasetFixture();
+  const outfit: ItemOf<"neighborClothing"> = {
+    ...material(1160001),
     kind: "neighborClothing",
-    neighborId: null,
-    slotCode: 5001,
-    displayCategory: "头戴物",
-    modelPaths: { small: "NpcOutfits/Small/Hat", medium: null, big: "NpcOutfits/Big/Hat" },
+    category: "头戴物",
+    neighborId: 11,
     playerItemId: 60001,
-    image,
-    description: null,
-    quality: null,
-    trade: {
-      sellPrice: null,
-      offers: [
-        {
-          id: 50001,
-          goodsGroupId: 500,
-          buyPrice: 120,
-          currencyItemId: 200014,
-          stock: null,
-          refresh: null,
-          conditions: null,
-        },
-      ],
-    },
-    acquisition: null,
-  });
-  expect(parseDataset(dataset).catalog.records[0]).toEqual(dataset.catalog.records[0]);
-  expect(referencedImages(dataset)).toContainEqual(image);
-  const outfit = dataset.catalog.records[0]!;
-  if (outfit.kind !== "neighborClothing") throw new Error("Expected neighbor clothing");
-  const offer = outfit.trade!.offers![0]!;
-  for (const invalid of [
-    { ...outfit, neighborId: null, playerItemId: null },
-    { ...outfit, modelPaths: { small: null, medium: null, big: null } },
-    { ...outfit, trade: { ...outfit.trade!, offers: [offer, offer] } },
-    { ...outfit, trade: { ...outfit.trade!, offers: [{ ...offer, buyPrice: -1 }] } },
-  ])
-    expect(() => CatalogSchema.parse({ ...dataset.catalog, records: [invalid] })).toThrow();
-  dataset.catalog.records[0] = { ...outfit, neighborId: 999 };
-  expect(validateDataset(dataset)).toContainEqual(
-    expect.objectContaining({ message: "Unknown neighbor 999" }),
-  );
+    bodyTypes: ["small", "big"],
+    price: 120,
+  };
+  dataset.neighbors.neighbors.push(neighbor(11));
+  dataset.catalog.items.push(reference(60001), outfit);
+  expect(parseDataset(dataset).catalog.items[1]).toEqual(outfit);
+  expect(() =>
+    CatalogSchema.parse({ ...dataset.catalog, items: [{ ...outfit, bodyTypes: [] }] }),
+  ).toThrow();
+  outfit.neighborId = 999;
+  outfit.playerItemId = 2;
+  dataset.catalog.items.push(material(2));
+  const result = messages(dataset);
+  expect(result).toContain("Unknown neighbor 999");
+  expect(result).toContain("Unknown clothing/reference 2");
+  outfit.neighborId = null;
+  outfit.playerItemId = null;
+  expect(messages(dataset)).toContain("Neighbor clothing needs a resolvable association");
 });
-test("duplicate entities, dangling groups and ingredient cycles are reported together", () => {
-  const dataset = datasetFixture(context, source);
-  dataset.catalog.references.push(
-    { id: 1, name: "物品", description: null, usageText: null },
-    { id: 1, name: "物品", description: null, usageText: null },
-  );
-  dataset.catalog.records.push({
-    ...base,
-    kind: "furniture.set",
-    acquisition: null,
-    memberIds: [99],
-  });
-  dataset.gameplayTags.tags.push({
-    id: 2,
-    internalName: "食材",
-    displayName: null,
-    enumName: null,
-    parentId: 2,
-  });
-  const messages = validateDataset(dataset).map((issue) => issue.message);
-  expect(messages).toContain("Duplicate identity 1");
-  expect(messages).toContain("Unknown furniture 99");
-  expect(messages).toContain("Tag parent cycle");
+
+test("友邻子数据按友邻内嵌，礼物引用物品与标签字典", () => {
+  const dataset = datasetFixture();
+  const owner = neighbor(11);
+  owner.gifts.love = { itemIds: [1, 1], tagIds: [7] };
+  owner.stories = [
+    { chapter: 1, title: "故事", paragraphs: [{ layout: "text", text: "正文", image: null }] },
+    { chapter: 1, title: "故事", paragraphs: [{ layout: "text", text: "正文", image: null }] },
+  ];
+  dataset.neighbors.neighbors.push(owner);
+  const result = messages(dataset);
+  expect(result).toContain("Duplicate identity 1");
+  expect(result).toContain("Unknown item 1");
+  expect(result).toContain("Unknown tag 7");
 });
-test("unknown member sets remain distinct from confirmed empty sets", () => {
-  const catalog = datasetFixture(context, source).catalog;
-  catalog.records.push(
-    { ...base, kind: "plants.series", acquisition: null, memberIds: null },
-    { ...base, id: 2, kind: "plants.series", acquisition: null, memberIds: [] },
-  );
-  const result = CatalogSchema.parse(catalog);
-  expect(
-    result.records.filter((group) => "memberIds" in group).map((group) => group.memberIds),
-  ).toEqual([null, []]);
-});
-test("all nested image references use the same traversal and asset coverage check", () => {
-  const dataset = datasetFixture(context, source);
+
+test("所有嵌套图片引用使用同一遍历并校验资源覆盖", () => {
+  const dataset = datasetFixture();
   const image = { assetId: "source-image", variant: "icon" as const };
-  dataset.catalog.records.push({
-    ...base,
-    kind: "material",
-    displayCategory: null,
-    trade: null,
-    acquisition: null,
-    image,
-  });
-  expect(referencedImages(dataset)).toEqual([image]);
+  const story = { assetId: "story", variant: "illustration" as const };
+  const owner = neighbor(11);
+  owner.stories = [
+    { chapter: 1, title: "故事", paragraphs: [{ layout: "image", text: null, image: story }] },
+  ];
+  dataset.neighbors.neighbors.push(owner);
+  dataset.catalog.items.push({ ...material(1), image });
+  expect(referencedImages(dataset)).toEqual([image, story]);
   expect(() =>
     parseRelease({
       manifest: {
         ...context,
         source,
-        files: ["gameplay-tags", "catalog", "neighbors", "world", "assets"].map((kind) => ({
+        files: DocumentKindSchema.options.map((kind) => ({
           kind,
           path: kind === "assets" ? "assets.json" : `zh-CN/${kind}.json`,
           sha256: "b".repeat(64),
@@ -236,40 +134,7 @@ test("all nested image references use the same traversal and asset coverage chec
         })),
       },
       dataset,
-      assets: { ...context, kind: "assets", images: [] },
+      assets: { images: [] },
     }),
   ).toThrow("Missing image");
-});
-
-test("planting stages must target formal plants, not auxiliary references", () => {
-  const dataset = datasetFixture(context, source);
-  dataset.catalog.references.push({ id: 1, name: "植物", description: null, usageText: null });
-  dataset.catalog.records.push({
-    ...base,
-    id: 10,
-    kind: "seed",
-    growthId: 10,
-    trade: null,
-    acquisition: null,
-    admissionReasons: ["deterministicSeed"],
-  });
-  dataset.catalog.growths.push({
-    id: 10,
-    kind: "staged",
-    maturityDays: null,
-    stages: [{ id: 20, name: "植株", image: null, plantId: 1 }],
-  });
-  expect(validateDataset(dataset).some((issue) => issue.message === "Unknown plant 1")).toBe(true);
-  dataset.catalog.references = [];
-  dataset.catalog.records.push({
-    ...base,
-    kind: "plant",
-    displayCategory: null,
-    trade: null,
-    acquisition: null,
-    flowerColors: null,
-    drops: null,
-    hybridRecipes: null,
-  });
-  expect(validateDataset(dataset)).toEqual([]);
 });

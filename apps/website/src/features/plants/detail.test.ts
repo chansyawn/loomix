@@ -35,7 +35,7 @@ test("种子、普通植物与作物都有自身详情，含作物的系列仍�
   });
   const ingredients = ingredientsFixture().data;
   const expectedDishes = new Map([
-    [1, [100, 102, 109]],
+    [1, [100, 102]],
     [4, [102]],
     [8, []],
   ]);

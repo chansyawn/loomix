@@ -19,15 +19,14 @@ export function furnitureDetail(data: FurnitureData, view: View, id: number) {
       kind: "item" as const,
       record: item,
       navigation,
-      recipes:
-        item.craftingRecipes?.map((recipe) => ({
-          ...recipe,
-          materials:
-            recipe.materials?.map((material) => ({
-              ...material,
-              item: data.ingredientItemsById?.get(material.itemId) ?? null,
-            })) ?? null,
-        })) ?? null,
+      recipes: item.craftingRecipes.map((recipe) => ({
+        ...recipe,
+        materials:
+          recipe.materials?.map((material) => ({
+            ...material,
+            item: data.ingredientItemsById?.get(material.itemId) ?? null,
+          })) ?? null,
+      })),
     };
   }
   const set = data.sets.find((row) => row.id === id);

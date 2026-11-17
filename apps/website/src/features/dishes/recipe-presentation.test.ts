@@ -1,16 +1,14 @@
-import type { IngredientExpression, Recipe } from "@loomix/schema/catalog";
+import type { IngredientExpression, RecipeSlot } from "@loomix/schema/catalog";
 import { describe, expect, it } from "vite-plus/test";
 import type { IngredientItem } from "../collection-view";
 import { buildDishRecipeSlots, type RecipeConditionToken } from "./recipe-presentation";
-
-type RecipeSlot = NonNullable<Recipe["slots"]>[number];
 
 const tagLabels = new Map([
   [10, { name: "蔬菜" }],
   [20, { name: "紫色" }],
 ]);
 
-function ingredient(id: number, listed = true): IngredientItem {
+function ingredient(id: number, browsable = true): IngredientItem {
   return {
     id,
     name: `食材${id}`,
@@ -18,40 +16,23 @@ function ingredient(id: number, listed = true): IngredientItem {
     description: null,
     quality: null,
     catalogCategory: "plants",
-    listed,
+    browsable,
   };
 }
 
-function slot(
-  expression: IngredientExpression | null,
-  itemIds: number[] | null,
-  field: RecipeSlot["field"] = 20,
-): RecipeSlot {
-  return {
-    field,
-    rawExpression: "hidden",
-    expression,
-    itemIds,
-    quantity: null,
-  };
-}
-
-function recipe(...slots: RecipeSlot[]): Recipe {
-  return { slots };
-}
+const slot = (expression: IngredientExpression, itemIds: number[]): RecipeSlot => ({
+  expression,
+  itemIds,
+});
 
 function conditionText(tokens: RecipeConditionToken[]): string {
-  return tokens
-    .map((token) =>
-      token.kind === "tag" ? token.label : token.kind === "operator" ? token.value : token.value,
-    )
-    .join(" ");
+  return tokens.map((token) => (token.kind === "tag" ? token.label : token.value)).join(" ");
 }
 
 describe("dish recipe presentation", () => {
   it("creates readable tokens while preserving nested boolean grouping", () => {
     const [view] = buildDishRecipeSlots(
-      recipe(
+      [
         slot(
           {
             kind: "all",
@@ -68,16 +49,13 @@ describe("dish recipe presentation", () => {
           },
           [1],
         ),
-      ),
+      ],
       tagLabels,
       new Map(),
     );
 
     expect(conditionText(view!.conditionTokens)).toBe("( 蔬菜 或 紫色 ) 且 未收录类别");
-    expect(view?.conditionTokens.at(-1)).toMatchObject({
-      kind: "tag",
-      resolved: false,
-    });
+    expect(view?.conditionTokens.at(-1)).toMatchObject({ kind: "tag", resolved: false });
   });
 
   it("uses resolved itemIds as authoritative candidates and preserves their source order", () => {
@@ -88,41 +66,22 @@ describe("dish recipe presentation", () => {
       ]),
     );
     const [view] = buildDishRecipeSlots(
-      recipe(slot({ kind: "tag", tagId: 10 }, [3, 1, 3, 999, 2])),
+      [slot({ kind: "tag", tagId: 10 }, [3, 1, 3, 999, 2])],
       tagLabels,
       items,
     );
 
     expect(view?.candidates.map((item) => item.id)).toEqual([3, 1]);
-    expect(view?.candidateStatus).toBe("ready");
     expect(conditionText(view!.conditionTokens)).toBe("蔬菜");
   });
 
-  it("keeps known candidates when only the readable condition is unavailable", () => {
-    const items = new Map([[1, ingredient(1)]]);
-    const [view] = buildDishRecipeSlots(recipe(slot(null, [1])), tagLabels, items);
-
-    expect(view).toMatchObject({
-      conditionStatus: "unparsed",
-      candidateStatus: "ready",
-      conditionTokens: [],
-    });
-    expect(view?.candidates.map((item) => item.id)).toEqual([1]);
-  });
-
-  it("distinguishes unconfirmed and empty candidate lists", () => {
+  it("keeps empty candidate lists and returns no slots for dishes without recipes", () => {
     const views = buildDishRecipeSlots(
-      recipe(slot({ kind: "tag", tagId: 10 }, null, 20), slot({ kind: "tag", tagId: 10 }, [], 25)),
+      [slot({ kind: "tag", tagId: 10 }, [])],
       tagLabels,
       new Map(),
     );
-
-    expect(views.map((view) => view.candidateStatus)).toEqual(["unconfirmed", "empty"]);
-    expect(views.map((view) => view.field)).toEqual([20, 25]);
-  });
-
-  it("returns no slots when a recipe has no usable source data", () => {
-    expect(buildDishRecipeSlots(null, tagLabels, new Map())).toEqual([]);
-    expect(buildDishRecipeSlots({ slots: null }, tagLabels, new Map())).toEqual([]);
+    expect(views.map((view) => view.candidates)).toEqual([[]]);
+    expect(buildDishRecipeSlots([], tagLabels, new Map())).toEqual([]);
   });
 });

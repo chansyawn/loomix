@@ -24,21 +24,31 @@ test("dry run from another directory returns only JSON without credentials or pr
   const directory = await mkdtemp(path.join(tmpdir(), "loomix-cli-"));
   try {
     await writeFixture(directory, 0);
-    const result = spawnSync(
-      process.execPath,
-      [cli, "--content", directory, "--release", "test", "--dry-run"],
-      { cwd: tmpdir(), env, encoding: "utf8" },
-    );
+    const result = spawnSync(process.execPath, [cli, "--content", directory, "--dry-run"], {
+      cwd: tmpdir(),
+      env,
+      encoding: "utf8",
+    });
     expect(result.status, result.stderr).toBe(0);
     expect(JSON.parse(result.stdout)).toMatchObject({
-      release: "test",
+      release: expect.stringMatching(/^\d{8}-gtest-f11-r001$/),
       assetCount: 0,
-      documentCount: 6,
+      documentCount: 5,
       manifestSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
       dryRun: true,
+      reserved: false,
     });
     expect(result.stderr).toBe("");
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("旧的手动 release 参数被拒绝", () => {
+  const result = spawnSync(process.execPath, [cli, "--release", "manual", "--dry-run"], {
+    env,
+    encoding: "utf8",
+  });
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain("--release");
 });

@@ -1,7 +1,8 @@
-import { emptyDataset } from "@loomix/schema/dataset";
-import { addFixtureRecords, fixtureContext, fixtureSource } from "../collection-fixture";
+import { addFixtureRecords } from "../collection-fixture";
 import { parseNeighbors } from "@loomix/schema/neighbors";
+import type { Neighbor } from "@loomix/schema/neighbors";
 import type { Assets } from "@loomix/schema/assets";
+import type { Catalog } from "@loomix/schema/catalog";
 import type { GameplayTags } from "@loomix/schema/gameplay-tags";
 
 function asset(assetId: string, variant: "icon" | "illustration", hash: string) {
@@ -16,143 +17,79 @@ function asset(assetId: string, variant: "icon" | "illustration", hash: string) 
   };
 }
 
+const illustration = (assetId: string) => ({ assetId, variant: "illustration" as const });
+const noGift = { itemIds: [], tagIds: [] };
+const profiles: Neighbor["profile"][] = [
+  { englishName: "Manna", nickname: "阿蛮", birthday: { month: 2, day: 22 } },
+  { englishName: "Mianduo", nickname: "咪朵", birthday: { month: 7, day: 5 } },
+];
+
 export function neighborFixture() {
-  const neighbors = ["蛮蛮", "幻雪", "图塔", "纳蕾娜"].map((name, index) => ({
+  const neighbors = ["蛮蛮", "幻雪", "图塔", "纳蕾娜"].map((name, index): Neighbor => ({
     id: index + 1,
     name,
     bodyType: "medium",
-    scaleValue: null,
-    avatar: null,
-    npc2Path: `Avatar/${index + 1}`,
-    profile:
-      index === 0
-        ? {
-            englishName: "Manna",
-            nickname: "阿蛮",
-            gender: "female",
-            birthday: { month: 2, day: 22 },
-          }
-        : index === 1
-          ? {
-              englishName: "Mianduo",
-              nickname: "咪朵",
-              gender: "female",
-              birthday: { month: 7, day: 5 },
-            }
-          : { englishName: null, nickname: null, gender: null, birthday: null },
-    travelProfile: null,
-    abilityDescriptions: [],
-    abilities:
-      index === 0
-        ? [{ key: "1:6", unlockLevel: 6, name: "切磋", description: "可以和蛮蛮切磋", icon: null }]
-        : [],
-    signature: { cookingRecipeId: null, friendshipOutfitItemId: null },
+    profile: profiles[index] ?? { englishName: null, nickname: null, birthday: null },
+    images: {
+      favour: index === 0 || index === 2 ? illustration("favour") : null,
+      role: index < 2 ? illustration("role") : null,
+    },
+    stars: [
+      {
+        name: `${name}的星球`,
+        galaxy: index < 2 ? "禾夏" : "帕沙",
+        image: illustration("star"),
+      },
+    ],
+    abilities: index === 0 ? [{ unlockLevel: 6, name: "切磋", description: "可以和蛮蛮切磋" }] : [],
     house:
       index === 0
         ? {
-            id: 17,
-            buildingPackageItemId: null,
             stages: [
               {
                 id: 1011,
                 level: 1,
                 name: "蛮蛮的草顶小棚",
                 description: null,
-                image: { assetId: "houseStage", variant: "illustration" },
-                upgradeHint: null,
-                upgradeRequirements: null,
+                image: illustration("houseStage"),
               },
               {
                 id: 1012,
                 level: 2,
                 name: "蛮蛮的小屋",
                 description: "小屋说明",
-                image: { assetId: "houseStage", variant: "illustration" },
-                upgradeHint: null,
-                upgradeRequirements: null,
+                image: illustration("houseStage"),
               },
             ],
           }
         : null,
-    design: { furnitureSetId: null, craftingCollectionId: null },
+    stories:
+      index === 0
+        ? [2, 1].map((chapter) => ({
+            chapter,
+            title: chapter === 1 ? "启程" : "归来",
+            paragraphs: [
+              {
+                layout: chapter === 1 ? "image-left" : "image",
+                text: chapter === 1 ? "<i>第一行\n<b>第二行</b></i>" : null,
+                image: illustration("story"),
+              } as const,
+            ],
+          }))
+        : [],
+    gifts:
+      index === 0
+        ? {
+            love: { itemIds: [106], tagIds: [] },
+            favor: { itemIds: [], tagIds: [1, 2] },
+            dislike: { itemIds: [107], tagIds: [] },
+          }
+        : index === 2
+          ? { love: { itemIds: [107, 1201], tagIds: [] }, favor: noGift, dislike: noGift }
+          : { love: noGift, favor: noGift, dislike: noGift },
   }));
-  const database = parseNeighbors({
-    ...fixtureContext,
-    kind: "neighbors",
-    neighbors,
-    stars: neighbors.map((neighbor, index) => ({
-      key: `star:${neighbor.id}`,
-      neighborId: neighbor.id,
-      galaxyName: index < 2 ? "禾夏" : "帕沙",
-      galaxyIndex: 1,
-      systemIndex: 1,
-      starIndex: index,
-      name: `${neighbor.name}的星球`,
-      galaxyModelPath: null,
-      playerModelPath: null,
-      skyModelPath: null,
-      image: { assetId: "star", variant: "illustration" },
-    })),
-    stories: [1, 2].map((chapter) => ({
-      key: `1:${chapter}`,
-      neighborId: 1,
-      chapter,
-      title: chapter === 1 ? "启程" : "归来",
-      paragraphs: [
-        {
-          sequence: 1,
-          layout: chapter === 1 ? "image-left" : "image",
-          text: chapter === 1 ? "<i>第一行\n<b>第二行</b></i>" : null,
-          image: { assetId: "story", variant: "illustration" },
-        },
-      ],
-    })),
-    travelReactions: [],
-    friendshipRules: [],
-    eventTags: [],
-    additionalImages: [
-      {
-        key: "role:1",
-        category: "role",
-        neighborId: 1,
-        image: { assetId: "role", variant: "illustration" },
-      },
-      {
-        key: "role:2",
-        category: "role",
-        neighborId: 2,
-        image: { assetId: "role", variant: "illustration" },
-      },
-      {
-        key: "favour:1",
-        category: "favour",
-        neighborId: 1,
-        image: { assetId: "favour", variant: "illustration" },
-      },
-      {
-        key: "favour:3",
-        category: "favour",
-        neighborId: 3,
-        image: { assetId: "favour", variant: "illustration" },
-      },
-    ],
-    giftPreferences: [
-      { key: "1:dislike", neighborId: 1, level: "dislike", itemIds: [107], tagIds: [] },
-      { key: "1:love", neighborId: 1, level: "love", itemIds: [106], tagIds: [] },
-      { key: "1:favor", neighborId: 1, level: "favor", itemIds: [], tagIds: [1, 2] },
-      { key: "3:love", neighborId: 3, level: "love", itemIds: [107, 1201], tagIds: [] },
-    ],
-    resources: [
-      ...neighbors.map((neighbor) => neighbor.npc2Path),
-      "UISprite/Star.png",
-      "UISprite/Story.png",
-    ]
-      .sort()
-      .map((path) => ({ path, kind: "other", relatedNeighborIds: [] })),
-  });
+  const database = parseNeighbors({ neighbors });
   const mapping: Assets = {
-    ...fixtureContext,
-    kind: "assets",
     images: [
       asset("star", "illustration", "a".repeat(64)),
       asset("story", "illustration", "a".repeat(64)),
@@ -162,13 +99,11 @@ export function neighborFixture() {
       asset("item", "icon", "5".repeat(64)),
     ],
   };
-  const catalog = emptyDataset(fixtureContext, fixtureSource).catalog;
+  const catalog: Catalog = { items: [], collections: [] };
   const gameplayTags: GameplayTags = {
-    ...fixtureContext,
-    kind: "gameplay-tags",
     tags: [
-      { id: 1, displayName: "树生水果", internalName: "水果", enumName: null, parentId: null },
-      { id: 2, displayName: null, internalName: "含水果", enumName: null, parentId: null },
+      { id: 1, displayName: "树生水果", internalName: "水果", parentId: null },
+      { id: 2, displayName: null, internalName: "含水果", parentId: null },
     ],
   };
   addFixtureRecords(
@@ -181,11 +116,7 @@ export function neighborFixture() {
       id: 1201,
       name: "星星石",
       image: { assetId: "item", variant: "icon" },
-      description: null,
       quality: 1,
-      displayCategory: null,
-      trade: null,
-      acquisition: null,
     },
   );
   return { database, mapping, catalog, gameplayTags };

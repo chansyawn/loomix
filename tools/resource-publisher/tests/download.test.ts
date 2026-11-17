@@ -4,6 +4,7 @@ import path from "node:path";
 import { afterEach, expect, test } from "vite-plus/test";
 import { downloadRelease, sha256 } from "../src/release.ts";
 import { writeFixture, writeDocuments } from "./fixture.ts";
+import { material } from "../../../packages/schema/tests/fixture.ts";
 
 const directories: string[] = [];
 const base = "https://assets.loomix.fun/releases/r1/";
@@ -47,12 +48,23 @@ test("downloads and validates every document declared by the immutable release",
   const { request, dataset } = await fixture();
   expect((await downloadRelease(base, request)).dataset).toEqual(dataset);
 });
+test("远程完成标记必须绑定本次上传的 ID 和清单哈希", async () => {
+  const { request, files } = await fixture();
+  const marker = { release: "r1", manifestSha256: sha256(files.get("release.json")!) };
+  await expect(downloadRelease(base, request, "https://loomix.fun", marker)).resolves.toBeDefined();
+  for (const expected of [
+    { ...marker, manifestSha256: "a".repeat(64) },
+    { ...marker, release: "other" },
+  ])
+    await expect(downloadRelease(base, request, "https://loomix.fun", expected)).rejects.toThrow(
+      "uploaded release marker",
+    );
+});
 test.each([
   "release.json",
   "zh-CN/catalog.json",
   "zh-CN/gameplay-tags.json",
   "zh-CN/neighbors.json",
-  "zh-CN/world.json",
   "assets.json",
 ])("rejects changed bytes in %s", async (file) => {
   const { files, request } = await fixture();
@@ -69,12 +81,12 @@ test("rejects missing documents and incorrect release identity", async () => {
   );
   await expect(downloadRelease(base, request)).rejects.toThrow("does not match");
 });
-test("checks cross-document context even when all byte hashes match", async () => {
+test("checks cross-document references even when all byte hashes match", async () => {
   const fixtureData = await fixture();
-  fixtureData.dataset.world.snapshotId = "b".repeat(64);
+  fixtureData.dataset.catalog.items[0] = { ...material(1), tagIds: [999] };
   await writeDocuments(fixtureData.directory, fixtureData.dataset, fixtureData.assets);
   await fixtureData.load();
-  await expect(downloadRelease(base, fixtureData.request)).rejects.toThrow("context mismatch");
+  await expect(downloadRelease(base, fixtureData.request)).rejects.toThrow("Unknown tag 999");
 });
 test("rejects resources without website CORS access", async () => {
   const { request } = await fixture();

@@ -10,7 +10,7 @@ import { DishesCard, DishSeriesCard } from "./dishes-card";
 import type { DishesDetail } from "./detail";
 import { DishRecipe } from "./recipe";
 import { DishEffects } from "./effects";
-import { difficultyRequirementLabel, formatTastes } from "./presentation";
+import { formatTastes, strengthText, unlockConditionLabel } from "./presentation";
 
 export function DishesDetailPage({ detail }: { detail: DishesDetail }) {
   const { record } = detail;
@@ -18,11 +18,11 @@ export function DishesDetailPage({ detail }: { detail: DishesDetail }) {
     detail.kind === "item"
       ? [
           ["难度", detail.record.difficulty],
-          ["解锁条件", difficultyRequirementLabel(detail.record.difficultyRequirement)],
+          ["解锁条件", unlockConditionLabel(detail.record.unlockCondition)],
           ["口味", formatTastes(detail.record.tastes)],
           ["星系风味", detail.record.galaxyFlavor],
           ["炊具", detail.record.cookware],
-          ["基础效果", detail.record.effectsText],
+          ["基础效果", strengthText(detail.record.strength)],
           ["获取方式", detail.record.acquisition],
         ]
       : [
@@ -69,7 +69,7 @@ function DishesExtras({ detail }: { detail: DishesDetail }) {
         key: "dish-effects",
         content: <DishEffects effects={detail.record.effects} />,
       });
-    if (detail.record.recipe?.slots?.length)
+    if (detail.record.slots.length)
       sections.push({ key: "dish-recipe", content: <DishRecipe detail={detail} /> });
   }
   if (

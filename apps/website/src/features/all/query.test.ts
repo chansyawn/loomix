@@ -9,38 +9,34 @@ import { allSearchSchema, compactAllSearch, emptyQuery } from "./search";
 import { plantItemFixture, plantSeedFixture, plantsDataFixture } from "../plants/fixture";
 
 function groupRecords(memberIds: number[] | null) {
-  return (
-    ["furniture.set", "clothing.set", "creatures.series", "plants.series", "dishes.series"] as const
-  ).map((type, index) => ({
-    id: 1000 + index,
-    name: `集合${type}`,
-    description: "集合专属介绍",
-    image: null,
-    quality: null,
-    kind: type,
-    memberIds,
-    colors: ["集合专属颜色"],
-    materials: ["集合专属材质"],
-    styles: ["集合专属风格"],
-    acquisition: [{ sourceId: 99, label: "集合专属来源", condition: null }],
-  }));
+  return (["furniture", "clothing", "creature", "plant", "dish"] as const).map(
+    (memberKind, index) => ({
+      id: 1000 + index,
+      name: `集合${memberKind}`,
+      description: "集合专属介绍",
+      image: null,
+      quality: null,
+      memberKind,
+      memberIds,
+      acquisition: [{ sourceId: 99, label: "集合专属来源" }],
+    }),
+  );
 }
 
 function data(...records: object[]) {
   const { catalog, gameplayTags } = catalogFixture();
   gameplayTags.tags.push(
-    { id: 1, internalName: "颜色", enumName: null, parentId: null, displayName: null },
-    { id: 2, internalName: "材质", enumName: null, parentId: null, displayName: null },
-    { id: 3, internalName: "艺术风格", enumName: null, parentId: null, displayName: null },
+    { id: 1, internalName: "颜色", parentId: null, displayName: null },
+    { id: 2, internalName: "材质", parentId: null, displayName: null },
+    { id: 3, internalName: "艺术风格", parentId: null, displayName: null },
     {
       id: 11,
       internalName: "颜色_花红",
-      enumName: "RedFlower",
       parentId: 1,
       displayName: "红色花朵",
     },
-    { id: 12, internalName: "材质_木", enumName: "Wood", parentId: 2, displayName: "木质" },
-    { id: 13, internalName: "风格_自然", enumName: "Natural", parentId: 3, displayName: "自然" },
+    { id: 12, internalName: "材质_木", parentId: 2, displayName: "木质" },
+    { id: 13, internalName: "风格_自然", parentId: 3, displayName: "自然" },
   );
   addFixtureRecords(
     catalog,
@@ -52,9 +48,8 @@ function data(...records: object[]) {
       quality: 2,
       image: null,
       kind: "material",
-      displayCategory: null,
-      trade: null,
-      acquisition: [{ sourceId: 5, label: "采集", condition: null }],
+      category: null,
+      acquisition: [{ sourceId: 5, label: "采集" }],
       tagIds: [11, 12, 13],
     },
     {
@@ -64,13 +59,12 @@ function data(...records: object[]) {
       image: null,
       description: null,
       kind: "material",
-      displayCategory: null,
-      trade: null,
+      category: null,
       acquisition: null,
     },
   );
   addFixtureRecords(catalog, gameplayTags, ...records);
-  catalog.references.push({ id: 99, name: "隐藏材料", description: null, usageText: null });
+  catalog.items.push({ kind: "reference", id: 99, name: "隐藏材料", description: null });
   return createCollectionCatalog(catalog, assetsFixture(catalog), gameplayTags);
 }
 test("搜索只查询正式记录的编号、名称和介绍", () => {
@@ -169,7 +163,7 @@ test("集合黑名单允许外观和种子参与搜索与类别筛选", () => {
     quality: null,
     image: null,
     kind: "appearance",
-    displayCategory: "发型",
+    category: "发型",
     acquisition: null,
   });
   const source = createCollectionCatalog(catalog, assetsFixture(catalog), gameplayTags);
@@ -191,10 +185,8 @@ test("友邻服饰进入全部页搜索和独立类别筛选", () => {
     quality: 1,
     image: null,
     kind: "neighborClothing",
-    displayCategory: "手套",
-    trade: null,
+    category: "手套",
     acquisition: null,
-    slotCode: 6001,
     neighborId: 1010,
     playerItemId: null,
     modelPaths: { small: null, medium: "NpcOutfits/Medium/40", big: null },
@@ -210,11 +202,11 @@ test("友邻服饰进入全部页搜索和独立类别筛选", () => {
 test("白名单策略隐藏白名单外根与未引用分支，并静默丢弃隐藏标签", () => {
   const { catalog, gameplayTags } = catalogFixture();
   gameplayTags.tags.push(
-    { id: 1, internalName: "颜色", enumName: null, parentId: null, displayName: null },
-    { id: 2, internalName: "食材_红色", enumName: null, parentId: 1, displayName: null },
-    { id: 3, internalName: "未使用", enumName: null, parentId: 1, displayName: null },
-    { id: 4, internalName: "饮食", enumName: null, parentId: null, displayName: null },
-    { id: 5, internalName: "食材_杯", enumName: null, parentId: 4, displayName: null },
+    { id: 1, internalName: "颜色", parentId: null, displayName: null },
+    { id: 2, internalName: "食材_红色", parentId: 1, displayName: null },
+    { id: 3, internalName: "未使用", parentId: 1, displayName: null },
+    { id: 4, internalName: "饮食", parentId: null, displayName: null },
+    { id: 5, internalName: "食材_杯", parentId: 4, displayName: null },
   );
   addFixtureRecords(
     catalog,
@@ -226,8 +218,7 @@ test("白名单策略隐藏白名单外根与未引用分支，并静默丢弃�
       quality: null,
       image: null,
       kind: "material",
-      displayCategory: null,
-      trade: null,
+      category: null,
       acquisition: null,
       tagIds: [2, 5],
     },
@@ -238,8 +229,7 @@ test("白名单策略隐藏白名单外根与未引用分支，并静默丢弃�
       quality: null,
       image: null,
       kind: "material",
-      displayCategory: null,
-      trade: null,
+      category: null,
       acquisition: null,
       tagIds: [],
     },

@@ -1,28 +1,27 @@
+import type { ItemOf } from "@loomix/schema/catalog";
 import type { OverviewRecord } from "../collection/catalog";
-import type { NeighborClothing } from "@loomix/schema/catalog";
+
+const bodyTypeNames = { small: "小型", medium: "中型", big: "大型" } as const;
 
 export type NeighborClothingDetail = {
-  record: OverviewRecord & { record: NeighborClothing };
+  record: OverviewRecord & { record: ItemOf<"neighborClothing"> };
   neighborName: string | null;
   slotName: string | null;
   modelSizes: string;
+  price: number | null;
   counterpartId: number | null;
 };
 
 export function neighborClothingDetail(
-  row: OverviewRecord & { record: NeighborClothing },
+  row: OverviewRecord & { record: ItemOf<"neighborClothing"> },
   neighborName?: string,
 ): NeighborClothingDetail {
-  const sizes = [
-    row.record.modelPaths.small ? "小型" : null,
-    row.record.modelPaths.medium ? "中型" : null,
-    row.record.modelPaths.big ? "大型" : null,
-  ].filter((value): value is string => value !== null);
   return {
     record: row,
     neighborName: neighborName ?? null,
-    slotName: row.record.displayCategory,
-    modelSizes: sizes.join("、"),
+    slotName: row.record.category,
+    modelSizes: row.record.bodyTypes.map((type) => bodyTypeNames[type]).join("、"),
+    price: row.record.price,
     counterpartId: row.record.playerItemId,
   };
 }

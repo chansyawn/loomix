@@ -1,4 +1,4 @@
-import type { RecordType, Recipe } from "./schema.ts";
+import type { RecordType, RecipeSlot } from "./schema.ts";
 
 export interface WorkOptions {
   work: string;
@@ -40,12 +40,6 @@ export interface SelectedImage {
   source: string;
   pathId: string;
 }
-export interface ImageManifest extends SelectedImage {
-  file: string;
-  sha256: string;
-  width: number;
-  height: number;
-}
 export interface ConfigFile {
   file: string;
   exists?: boolean;
@@ -79,11 +73,12 @@ export interface TextEntry {
 export interface TextMap {
   byHash: Record<number, TextEntry>;
 }
-export type FieldValue = string | number | number[] | Recipe | null;
+export type FieldValue = string | number | number[] | { slots: RecipeSlot[] | null } | null;
 export interface TableEvidence {
   table: number;
   field: number | number[];
   note?: string;
+  sources?: SourceReference[];
 }
 export interface ResourceEvidence {
   reference: string;
@@ -125,7 +120,7 @@ export interface EvidenceRecord {
   status?: "confirmed" | "unconfirmed";
   reason?: string;
 }
-export type TagNode = import("./decode/bindata.ts").TagTree["AllNodes"][string];
+export type TagNode = import("./source/decode/bindata.ts").TagTree["AllNodes"][string];
 export interface SourceCheck {
   expected?: { md5: string; bytes: number };
   source: string;

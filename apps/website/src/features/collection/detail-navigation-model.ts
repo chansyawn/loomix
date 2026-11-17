@@ -1,7 +1,7 @@
-import type { CollectionRecord } from "../collection-view";
+import type { CatalogEntrySummary } from "../collection-view";
 
 export type DetailNavigationEntry = Readonly<
-  Pick<CollectionRecord, "id" | "name" | "image"> & { label?: string }
+  Pick<CatalogEntrySummary, "id" | "name" | "image"> & { label?: string }
 >;
 export type DetailNavigationGroup = Readonly<{
   key: string;
@@ -14,11 +14,11 @@ export type DetailNavigationModel = Readonly<{
 }>;
 
 type SetNavigationData = {
-  items: readonly CollectionRecord[];
-  sets: readonly (CollectionRecord & { componentIds: readonly number[] | null })[];
+  items: readonly CatalogEntrySummary[];
+  sets: readonly (CatalogEntrySummary & { componentIds: readonly number[] | null })[];
 };
 
-function navigationEntry(record: CollectionRecord, label?: string): DetailNavigationEntry {
+function navigationEntry(record: CatalogEntrySummary, label?: string): DetailNavigationEntry {
   return { id: record.id, name: record.name, image: record.image, label };
 }
 

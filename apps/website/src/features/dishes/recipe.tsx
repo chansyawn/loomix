@@ -55,8 +55,6 @@ function ConditionToken({ token }: { token: RecipeConditionToken }) {
 }
 
 function ConditionSummary({ slot }: { slot: DishRecipeSlotView }) {
-  if (slot.conditionStatus === "unparsed")
-    return <span className="text-xs text-muted-foreground">条件未收录</span>;
   const conditionText = slot.conditionTokens
     .map((token) => (token.kind === "tag" ? token.label : token.value))
     .join(" ");
@@ -73,18 +71,12 @@ function ConditionSummary({ slot }: { slot: DishRecipeSlotView }) {
 }
 
 function candidateCountLabel(slot: DishRecipeSlotView): string {
-  if (slot.candidateStatus === "ready") return String(slot.candidates.length);
-  if (slot.candidateStatus === "unconfirmed") return "待确认";
-  return "0";
+  return String(slot.candidates.length);
 }
 
 function CandidateItems({ slot, index }: { slot: DishRecipeSlotView; index: number }) {
-  if (slot.candidateStatus !== "ready")
-    return (
-      <p className="py-4 text-sm text-muted-foreground">
-        {slot.candidateStatus === "unconfirmed" ? "候选食材尚未确认" : "暂无可浏览的收录食材"}
-      </p>
-    );
+  if (!slot.candidates.length)
+    return <p className="py-4 text-sm text-muted-foreground">暂无可浏览的收录食材</p>;
 
   return (
     <ul
@@ -103,7 +95,7 @@ function CandidateItems({ slot, index }: { slot: DishRecipeSlotView; index: numb
 
 export function DishRecipe({ detail }: { detail: Extract<DishesDetail, { kind: "item" }> }) {
   const slots = buildDishRecipeSlots(
-    detail.record.recipe,
+    detail.record.slots,
     detail.ingredientTagSource.byId,
     detail.ingredientItemsById,
   );
@@ -116,7 +108,7 @@ export function DishRecipe({ detail }: { detail: Extract<DishesDetail, { kind: "
       </h2>
       <Accordion multiple>
         {slots.map((slot, index) => (
-          <AccordionItem key={`${slot.field}-${index}`} value={`${slot.field}-${index}`}>
+          <AccordionItem key={index} value={String(index)}>
             <AccordionTrigger className="items-start">
               <span className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                 <span className="shrink-0 whitespace-nowrap">食材 {index + 1}：</span>

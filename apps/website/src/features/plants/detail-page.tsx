@@ -45,7 +45,6 @@ function PlantOrSeriesDetailPage({ detail }: { detail: PlantOrSeriesDetail }) {
       ? [
           ["分类", detail.record.category],
           ["原产星系", detail.record.originGalaxy],
-          ["成熟周期", detail.record.maturityPeriod ?? "未确认"],
           [
             "收获茬数",
             summary.harvestCounts.length > 0 ? `${summary.harvestCounts.join(" / ")} 茬` : null,

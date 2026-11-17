@@ -18,12 +18,6 @@ test("derives neighbor relationships from their owning entities", () => {
 
 test("uses only the current neighbor's favour illustration without changing the list image", () => {
   const { database, mapping, catalog, gameplayTags, view } = fixture();
-  database.additionalImages.unshift({
-    key: "shared:favour",
-    category: "favour",
-    neighborId: null,
-    image: { assetId: "star", variant: "illustration" },
-  });
   const updated = toNeighborsView(database, mapping, catalog, gameplayTags);
   expect(updated.neighbors[0].image).toBe(`assets/${"a".repeat(64)}.webp`);
   expect(updated.neighbors[0].favourImage).toBe(`assets/${"b".repeat(64)}.webp`);
@@ -56,17 +50,16 @@ test("formats profile fields for display", () => {
 test("maps abilities with their unlock level", () => {
   const { view } = fixture();
   expect(view.neighbors[0].abilities).toEqual([
-    { key: "1:6", unlockLevel: 6, name: "切磋", description: "可以和蛮蛮切磋" },
+    { unlockLevel: 6, name: "切磋", description: "可以和蛮蛮切磋" },
   ]);
   expect(view.neighbors[1].abilities).toEqual([]);
 });
 
-test("resolves house stages and upgrade requirements", () => {
+test("resolves house stages", () => {
   const { view } = fixture();
   const house = view.neighbors[0].house;
   expect(house?.stages.map((stage) => stage.name)).toEqual(["蛮蛮的草顶小棚", "蛮蛮的小屋"]);
   expect(house?.stages[0].image).toBe(`assets/${"4".repeat(64)}.webp`);
-  expect(house?.stages.every((stage) => stage.upgradeRequirements === null)).toBe(true);
   expect(view.neighbors[1].house).toBeNull();
 });
 
@@ -111,19 +104,13 @@ test("resolves ordered preferences with record links without mixing neighbors", 
   ]);
 });
 
-test("rejects unknown tags and deduplicates known preference references", () => {
+test("rejects unknown tags and names unknown preference items", () => {
   const { database, mapping, catalog, gameplayTags } = neighborFixture();
-  database.giftPreferences.push({
-    key: "1:love:extra",
-    neighborId: 1,
-    level: "love",
-    itemIds: [106, 999],
-    tagIds: [999],
-  });
+  database.neighbors[0]!.gifts.love = { itemIds: [106, 999], tagIds: [999] };
   expect(() => toNeighborsView(database, mapping, catalog, gameplayTags)).toThrow(
     "Unknown GameplayTag 999",
   );
-  database.giftPreferences.at(-1)!.tagIds = [1, 1];
+  database.neighbors[0]!.gifts.love.tagIds = [1];
   expect(
     toNeighborsView(database, mapping, catalog, gameplayTags).neighbors[0].preferences[0],
   ).toEqual({

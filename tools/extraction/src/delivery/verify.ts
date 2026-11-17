@@ -20,7 +20,7 @@ export async function verifyDelivery(
     writeJson(path.join(work, "validation.json"), {
       passed: true,
       snapshotId: dataset.context.snapshotId,
-      records: dataset.catalog.records.length,
+      items: dataset.catalog.items.length,
       images: content.assets.length,
     });
 }

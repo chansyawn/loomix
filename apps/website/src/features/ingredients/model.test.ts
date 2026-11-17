@@ -29,21 +29,19 @@ describe("ingredient relationships", () => {
   it("deduplicates dishes and candidate IDs while retaining every matching slot", () => {
     const { data } = ingredientsFixture();
     const matches = data.dishesByItemId.get(1)!;
-    expect(matches.map((match) => match.dish.id)).toEqual([100, 102, 109]);
+    expect(matches.map((match) => match.dish.id)).toEqual([100, 102]);
     expect(matches[0].conditions.map((condition) => condition.position)).toEqual([1, 2]);
   });
 
   it("indexes browsable recipe candidates without losing compound conditions", () => {
     const { data } = ingredientsFixture();
     expect(data.ingredientCandidatesByDishId.get(101)).toEqual([6]);
-    expect(data.ingredientCandidatesByDishId.get(109)).toEqual([1]);
     expect(data.ingredientCandidatesByDishId.get(103)).toBeUndefined();
     expect(data.dishesByItemId.get(6)?.[0].conditions[0].label).toBe("虾类 且 特优");
   });
 
   it("skips unconfirmed slots without discarding known slots or treating confirmed empty recipes as unknown", () => {
     const { data } = ingredientsFixture();
-    expect(data.unconfirmedRecipeCount).toBe(5);
     expect(data.dishesByItemId.get(1)?.map((match) => match.dish.id)).not.toContain(106);
     expect(data.dishesByItemId.get(4)?.map((match) => match.dish.id)).toEqual([102]);
   });

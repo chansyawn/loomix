@@ -1,7 +1,11 @@
-import { readRegularFile, validateContent } from "./validate.ts";
-import { releaseIdSchema, sha256 } from "./release.ts";
+import { readRegularFile } from "./files.ts";
+import type { ValidatedContent } from "./validate.ts";
+import { sha256 } from "./release.ts";
+import { createReleaseId } from "./release-id.ts";
 import type { ReleaseMarker } from "./release.ts";
 import type { ReleaseStore } from "./store.ts";
+
+export type { ReleaseStore } from "./store.ts";
 
 export interface UploadProgress {
   phase: "images" | "finalizing" | "complete";
@@ -11,29 +15,71 @@ export interface UploadProgress {
   totalBytes: number;
 }
 
-export async function publishRelease(
-  directory: string,
-  release: string,
+export class PublicationError extends Error {
+  readonly release: string;
+  readonly phase: "reservation" | "upload";
+
+  constructor(release: string, phase: "reservation" | "upload", cause: unknown) {
+    super(
+      `资源发布失败：${release}（${phase}）：${cause instanceof Error ? cause.message : String(cause)}`,
+      { cause },
+    );
+    this.name = "PublicationError";
+    this.release = release;
+    this.phase = phase;
+  }
+}
+
+async function reserveRelease(
+  content: ValidatedContent,
+  store: ReleaseStore,
+  date: Date,
+): Promise<ReleaseMarker> {
+  for (let sequence = 1; sequence <= 999; sequence++) {
+    const release = createReleaseId(content.release.manifest, sequence, date);
+    const marker = { release, manifestSha256: content.manifestSha256 };
+    const bytes = Buffer.from(JSON.stringify(marker));
+    try {
+      if (
+        await store.tryReserve(
+          `releases/${release}/_upload.json`,
+          bytes,
+          "application/json",
+          sha256(bytes),
+        )
+      )
+        return marker;
+    } catch (cause) {
+      throw new PublicationError(release, "reservation", cause);
+    }
+  }
+  throw new Error(
+    `当日当前版本的发布序号已用尽：${createReleaseId(content.release.manifest, 999, date)}；请等待下一个 UTC 日期，不要覆盖或回收占号。`,
+  );
+}
+
+export async function publishValidatedContent(
+  content: ValidatedContent,
   store: ReleaseStore,
   onProgress?: (progress: UploadProgress) => void,
+  date = new Date(),
 ): Promise<ReleaseMarker> {
-  releaseIdSchema.parse(release);
-  const content = await validateContent(directory);
-  const prefix = `releases/${release}/`;
-
-  const reservation = Buffer.from(
-    JSON.stringify({ release, manifestSha256: content.manifestSha256 }),
-  );
-  if (
-    !(await store.tryReserve(
-      `${prefix}_upload.json`,
-      reservation,
-      "application/json",
-      sha256(reservation),
-    ))
-  ) {
-    throw new Error(`Release already exists: ${release}. Use a new release ID.`);
+  const marker = await reserveRelease(content, store, date);
+  try {
+    await uploadContent(content, marker, store, onProgress);
+    return marker;
+  } catch (cause) {
+    throw new PublicationError(marker.release, "upload", cause);
   }
+}
+
+async function uploadContent(
+  content: ValidatedContent,
+  marker: ReleaseMarker,
+  store: ReleaseStore,
+  onProgress?: (progress: UploadProgress) => void,
+): Promise<void> {
+  const prefix = `releases/${marker.release}/`;
   const progress: UploadProgress = {
     phase: "images",
     completed: 0,
@@ -74,10 +120,8 @@ export async function publishRelease(
     );
     await store.verify(`${prefix}${document.key}`, document.bytes.length, document.sha256);
   }
-  const marker: ReleaseMarker = { release, manifestSha256: content.manifestSha256 };
   const bytes = Buffer.from(JSON.stringify(marker));
   await store.put(`${prefix}_complete.json`, bytes, "application/json", sha256(bytes));
   await store.verify(`${prefix}_complete.json`, bytes.length, sha256(bytes));
   onProgress?.({ ...progress, phase: "complete" });
-  return marker;
 }

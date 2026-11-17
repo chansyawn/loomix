@@ -1,21 +1,21 @@
 import { createHash } from "node:crypto";
 import type { GameplayTags } from "@loomix/schema/gameplay-tags";
 import {
-  RecordSchema,
-  mergeRecordTagIds,
+  CatalogSchema,
+  type Acquisition,
   type Catalog,
-  type CatalogRecord,
+  type Collection,
+  type CollectionMemberKind,
   type Item,
-  type Group,
 } from "@loomix/schema/catalog";
 import type { Assets, ImageRef } from "@loomix/schema/assets";
 import { emptyDataset } from "@loomix/schema/dataset";
-import { documentPath } from "@loomix/schema/release";
+import { DocumentKindSchema, documentPath } from "@loomix/schema/release";
 import { referencedImages } from "@loomix/schema/dataset/images";
-import type { CollectionRecord, CollectionView } from "./collection-view.ts";
+import type { CatalogEntrySummary, CollectionView } from "./collection-view.ts";
 
 export const fixtureContext = {
-  formatVersion: 10,
+  formatVersion: 11,
   snapshotId: "a".repeat(64),
   locale: "zh-CN",
 } as const;
@@ -26,16 +26,10 @@ export const fixtureSource = {
   manifestId: "5662883",
 };
 const values = (value: string | null): string[] | null => value?.split("，") ?? null;
-type MaterialItem = Extract<Item, { kind: "material" }>;
-const acquisition = (value: string | null): MaterialItem["acquisition"] =>
-  value === null
-    ? null
-    : value.split("，").map((label, index) => ({
-        sourceId: index + 1,
-        label,
-        condition: null,
-      }));
-export function catalogBase(record: CollectionRecord) {
+const acquisition = (value: string | null): Acquisition[] | null =>
+  value === null ? null : value.split("，").map((label, index) => ({ sourceId: index + 1, label }));
+
+export function catalogBase(record: CatalogEntrySummary) {
   return {
     id: record.id,
     name: record.name,
@@ -52,170 +46,132 @@ export type FixtureIngredientCategory = {
   itemIds: number[];
 };
 
+// 从网站视图形态反向构造发布目录，文本属性按需转为标签。
 export function catalogFixture(
   view: Partial<CollectionView> & {
     ingredientCategories?: readonly FixtureIngredientCategory[];
   } = {},
 ) {
-  const catalog = emptyDataset(fixtureContext, fixtureSource).catalog;
-  catalog.clientTypes = [{ id: 1, name: null, tagIds: [] }];
+  const catalog: Catalog = { items: [], collections: [] };
   const gameplayTags = tagsFixture();
-  for (const category of view.ingredientCategories ?? []) {
+  for (const category of view.ingredientCategories ?? [])
     gameplayTags.tags.push({
       id: category.id,
       internalName: category.tagName,
       displayName: category.name,
-      enumName: null,
       parentId: category.parentId,
     });
-  }
   const add = (...items: object[]) => addFixtureRecords(catalog, gameplayTags, ...items);
-  const group = (record: CollectionRecord, kind: Group["kind"], memberIds: number[] | null) =>
-    add({ ...catalogBase(record), kind, memberIds, acquisition: null });
-  const common = { trade: null, acquisition: null };
+  const group = (
+    record: CatalogEntrySummary,
+    memberKind: CollectionMemberKind,
+    memberIds: number[] | null,
+  ) =>
+    catalog.collections.push({ ...catalogBase(record), memberKind, memberIds, acquisition: null });
   for (const record of view.furniture?.items ?? []) {
-    for (const recipe of record.craftingRecipes ?? [])
-      catalog.craftingRecipes.push({
-        ...recipe,
-        cardItemId: recipe.id,
-        collectionId: null,
-        productId: record.id,
-        quantity: 1,
-      });
+    const [width, depth] = record.size?.split("x").map(Number) ?? [];
     add({
       ...catalogBase(record),
-      ...common,
       kind: "furniture",
-      displayCategory: record.category,
+      category: record.category,
       furnitureCategory: record.furnitureCategory,
-      size: record.size,
+      size: width && depth ? { width, depth } : null,
+      craftingRecipes: record.craftingRecipes,
       colors: values(record.colors),
       materials: values(record.materials),
       acquisition: acquisition(record.acquisition),
     });
   }
-  for (const record of view.furniture?.sets ?? [])
-    group(record, "furniture.set", record.componentIds);
-  for (const record of view.creatures?.items ?? [])
+  for (const record of view.furniture?.sets ?? []) group(record, "furniture", record.componentIds);
+  for (const record of view.creatures?.items ?? []) {
+    const range = /^(\d+(?:\.\d+)?)–(\d+(?:\.\d+)?)(.+)$/.exec(record.sizeRange ?? "");
     add({
       ...catalogBase(record),
-      ...common,
       kind: "creature",
-      displayCategory: record.category,
+      category: record.category,
       region: values(record.region),
       habitat: values(record.habitat),
       activeSeasons: values(record.activeSeasons),
       activeTimes: values(record.activeTimes),
       activeWeather: values(record.activeWeather),
-      sizeRange: record.sizeRange,
       scientificName: record.scientificName,
       acquisition: acquisition(record.acquisition),
-      size: null,
-      grades: null,
+      size: range ? { min: Number(range[1]), max: Number(range[2]), unit: range[3] } : null,
     });
-  for (const record of view.creatures?.series ?? [])
-    group(record, "creatures.series", record.creatureIds);
-  for (const record of view.plants?.items ?? []) {
+  }
+  for (const record of view.creatures?.series ?? []) group(record, "creature", record.creatureIds);
+  for (const record of view.plants?.items ?? [])
     add({
       ...catalogBase(record),
-      ...common,
       kind: "plant",
-      displayCategory: record.category,
+      category: record.category,
       origins: values(record.originGalaxy),
       acquisition: acquisition(record.acquisition),
       flowerColors: record.flowerColors,
       drops: record.treeDrops,
-      hybridRecipes: null,
     });
-  }
-  for (const record of view.plants?.seeds ?? []) {
-    if (!catalog.growths.some((growth) => growth.id === record.growthId))
-      catalog.growths.push({
+  for (const record of view.plants?.seeds ?? [])
+    add({
+      ...catalogBase(record),
+      kind: "seed",
+      acquisition: record.acquisition,
+      growth: {
         ...record.growth,
-        id: record.growthId,
         stages: record.growth.stages.map((stage) => ({
           ...stage,
           image: stage.image ? { assetId: stage.image, variant: "icon" } : null,
         })),
-      });
-    add({
-      kind: "seed",
-      ...catalogBase(record),
-      admissionReasons: ["deterministicSeed"],
-      growthId: record.growthId,
-      trade: record.trade,
-      acquisition: record.acquisition,
+      },
     });
-  }
-  for (const record of view.plants?.series ?? []) group(record, "plants.series", record.plantIds);
-  for (const record of view.dishes?.items ?? []) {
-    catalog.cookingRecipes.push({
-      id: record.id,
-      productId: record.id,
-      recipeItemId: null,
-      difficulty: record.difficulty,
-      cookware: values(record.cookware),
-      tastes: record.tastes,
-      difficultyRequirement: record.difficultyRequirement,
-      slots: record.recipe?.slots ?? null,
-    });
+  for (const record of view.plants?.series ?? []) group(record, "plant", record.plantIds);
+  for (const record of view.dishes?.items ?? [])
     add({
       ...catalogBase(record),
-      ...common,
       kind: "dish",
-      displayCategory: null,
-      galaxyFlavor: record.galaxyFlavor,
-      effectsText: record.effectsText,
-      acquisition: acquisition(record.acquisition),
+      origins: values(record.galaxyFlavor),
+      strength: record.strength,
       effects: record.effects,
+      acquisition: acquisition(record.acquisition),
+      cooking: {
+        difficulty: record.difficulty,
+        unlockCondition: record.unlockCondition,
+        cookware: record.cookware,
+        tastes: record.tastes,
+        slots: record.slots,
+      },
     });
-  }
-  for (const record of view.dishes?.series ?? []) group(record, "dishes.series", record.dishIds);
+  for (const record of view.dishes?.series ?? []) group(record, "dish", record.dishIds);
   for (const record of view.clothing?.items ?? [])
     add({
       ...catalogBase(record),
-      ...common,
       kind: "clothing",
-      displayCategory: record.category,
+      category: record.category,
       colors: values(record.colors),
       materials: values(record.materials),
       styles: values(record.styles),
       acquisition: acquisition(record.acquisition),
     });
-  for (const record of view.clothing?.sets ?? [])
-    group(record, "clothing.set", record.componentIds);
+  for (const record of view.clothing?.sets ?? []) group(record, "clothing", record.componentIds);
   for (const record of view.clothing?.appearances ?? [])
-    add({
-      ...catalogBase(record),
-      kind: "appearance",
-      displayCategory: record.category,
-      acquisition: null,
-    });
+    add({ ...catalogBase(record), kind: "appearance", category: record.category });
   for (const record of view.miscellaneous ?? [])
     add({
       ...catalogBase(record),
-      ...common,
       kind: "material",
-      displayCategory: null,
       acquisition: acquisition(record.acquisition),
     });
   for (const category of view.ingredientCategories ?? [])
     for (const itemId of category.itemIds) {
-      const record = catalog.records.find((entry) => entry.id === itemId);
-      if (!record) continue;
-      if (!record.tagFields.ingredients.includes(category.id))
-        record.tagFields.ingredients.push(category.id);
-      const type = catalog.clientTypes.find((entry) => entry.id === record.client.type);
-      record.tagIds = mergeRecordTagIds(record.tagFields, type?.tagIds ?? []);
+      const item = catalog.items.find((entry) => entry.id === itemId);
+      if (item && item.kind !== "reference" && !item.tagIds.includes(category.id))
+        item.tagIds.push(category.id);
     }
-  return { catalog, gameplayTags };
+  return { catalog: CatalogSchema.parse(catalog), gameplayTags };
 }
 export function assetsFixture(catalog: Catalog): Assets {
   const dataset = emptyDataset(fixtureContext, fixtureSource);
   dataset.catalog = catalog;
   return {
-    ...fixtureContext,
-    kind: "assets",
     images: referencedImages(dataset).map((image: ImageRef) => ({
       ...image,
       file: image.assetId,
@@ -233,30 +189,22 @@ export function fixtureRequest({
   catalog: Catalog;
   gameplayTags: GameplayTags;
 }): typeof fetch {
-  const dataset = emptyDataset(fixtureContext, fixtureSource);
-  dataset.catalog = catalog;
   const documents = {
     "gameplay-tags": gameplayTags,
     catalog,
-    neighbors: dataset.neighbors,
-    world: dataset.world,
+    neighbors: { neighbors: [] },
     assets: assetsFixture(catalog),
   };
-  const files = Object.entries(documents).map(([kind, data]) => {
-    const bytes = JSON.stringify(data);
+  const files = DocumentKindSchema.options.map((kind) => {
+    const bytes = JSON.stringify(documents[kind]);
     return {
       kind,
-      path: documentPath(kind as keyof typeof documents, fixtureContext.locale),
+      path: documentPath(kind, fixtureContext.locale),
       sha256: createHash("sha256").update(bytes).digest("hex"),
       bytes: Buffer.byteLength(bytes),
     };
   });
-  const responses = new Map(
-    files.map((file) => [
-      file.path,
-      JSON.stringify(documents[file.kind as keyof typeof documents]),
-    ]),
-  );
+  const responses = new Map(files.map((file) => [file.path, JSON.stringify(documents[file.kind])]));
   responses.set(
     "release.json",
     JSON.stringify({ ...fixtureContext, source: fixtureSource, files }),
@@ -268,33 +216,60 @@ export function fixtureRequest({
   };
 }
 
-export function fixtureMetadata(): Pick<
-  CatalogRecord,
-  "admissionReasons" | "client" | "tagFields" | "tagIds"
-> {
-  return {
-    admissionReasons: ["manual" as const],
-    client: { type: 1, idType: 0, subtype: 0, subtypeName: null },
-    tagFields: {
-      type: [],
-      showType: [],
-      area: [],
-      color: [],
-      creature: [],
-      material: [],
-      style: [],
-      property: [],
-      size: [],
-      ingredients: [],
-      foodMaterials: [],
-      npcFurnitureCategory: [],
-    },
-    tagIds: [] as number[],
-  };
-}
 export function tagsFixture(): GameplayTags {
-  return { ...fixtureContext, kind: "gameplay-tags", tags: [] };
+  return { tags: [] };
 }
+
+const tagFacets = [
+  ["colors", "颜色"],
+  ["materials", "材质"],
+  ["styles", "艺术风格"],
+  ["origins", "产区分类"],
+] as const;
+
+function facetTag(gameplayTags: GameplayTags, rootName: string, label: string): number {
+  const nextId = () => Math.max(0, ...gameplayTags.tags.map((tag) => tag.id)) + 1;
+  let root = gameplayTags.tags.find((tag) => tag.internalName === rootName);
+  if (!root) {
+    root = { id: nextId(), internalName: rootName, displayName: rootName, parentId: null };
+    gameplayTags.tags.push(root);
+  }
+  let tag = gameplayTags.tags.find((tag) => tag.internalName === label && tag.parentId === root.id);
+  if (!tag) {
+    tag = { id: nextId(), internalName: label, displayName: label, parentId: root.id };
+    gameplayTags.tags.push(tag);
+  }
+  return tag.id;
+}
+
+// 默认补齐各种类的可空字段，并把颜色等文本属性映射为对应标签树。
+const kindDefaults: Record<string, Record<string, unknown>> = {
+  furniture: { category: null, furnitureCategory: null, size: null, craftingRecipes: [] },
+  clothing: { category: null },
+  appearance: { category: null },
+  creature: {
+    category: null,
+    scientificName: null,
+    region: null,
+    habitat: null,
+    activeSeasons: null,
+    activeTimes: null,
+    activeWeather: null,
+    size: null,
+  },
+  plant: { category: null, flowerColors: null, drops: null },
+  dish: { strength: null, effects: null, cooking: null },
+  material: {},
+  seed: {},
+  neighborClothing: {
+    category: null,
+    neighborId: null,
+    playerItemId: null,
+    bodyTypes: ["medium"],
+    price: null,
+  },
+};
+
 export function addFixtureRecords(
   catalog: Catalog,
   gameplayTags: GameplayTags,
@@ -303,65 +278,45 @@ export function addFixtureRecords(
   for (const input of items) {
     const raw: Record<string, unknown> = { ...input };
     if (raw.kind === "reference") {
-      catalog.references.push({
+      catalog.items.push({
+        kind: "reference",
         id: Number(raw.id),
         name: String(raw.name),
         description: null,
-        usageText: null,
       });
       continue;
     }
-    const meta = fixtureMetadata();
-    for (const [key, rootName, field] of [
-      ["colors", "颜色", "color"],
-      ["materials", "材质", "material"],
-      ["styles", "艺术风格", "style"],
-      ["origins", "产区分类", "area"],
-      ["galaxyFlavor", "产区分类", "area"],
-    ] as const) {
+    if ("memberKind" in raw) {
+      catalog.collections.push({
+        description: null,
+        image: null,
+        quality: null,
+        acquisition: null,
+        memberIds: null,
+        ...raw,
+      } as Collection);
+      continue;
+    }
+    const tagIds = new Set(Array.isArray(raw.tagIds) ? (raw.tagIds as number[]) : []);
+    for (const [key, rootName] of tagFacets) {
       const value = raw[key];
       delete raw[key];
-      const values = Array.isArray(value)
+      const labels = Array.isArray(value)
         ? value
         : typeof value === "string"
           ? value.split("，")
           : [];
-      for (const label of values) {
-        if (typeof label !== "string") continue;
-        let root = gameplayTags.tags.find((tag) => tag.internalName === rootName);
-        if (!root) {
-          root = {
-            id: Math.max(0, ...gameplayTags.tags.map((tag) => tag.id)) + 1,
-            internalName: rootName,
-            displayName: rootName,
-            enumName: null,
-            parentId: null,
-          };
-          gameplayTags.tags.push(root);
-        }
-        let tag = gameplayTags.tags.find(
-          (tag) => tag.internalName === label && tag.parentId === root.id,
-        );
-        if (!tag) {
-          tag = {
-            id: Math.max(0, ...gameplayTags.tags.map((tag) => tag.id)) + 1,
-            internalName: label,
-            displayName: label,
-            enumName: null,
-            parentId: root.id,
-          };
-          gameplayTags.tags.push(tag);
-        }
-        meta.tagFields[field].push(tag.id);
-      }
+      for (const label of labels)
+        if (typeof label === "string") tagIds.add(facetTag(gameplayTags, rootName, label));
     }
-    if (raw.kind === "furniture") delete raw.size;
-    const tagIds =
-      Array.isArray(raw.tagIds) && raw.tagIds.length
-        ? raw.tagIds
-        : mergeRecordTagIds(meta.tagFields, []);
-    if (!raw.tagFields && Array.isArray(raw.tagIds) && raw.tagIds.length)
-      meta.tagFields.type = [...raw.tagIds] as number[];
-    catalog.records.push(RecordSchema.parse({ ...meta, ...raw, tagIds: [...new Set(tagIds)] }));
+    catalog.items.push({
+      description: null,
+      image: null,
+      quality: null,
+      acquisition: null,
+      ...kindDefaults[String(raw.kind)],
+      ...raw,
+      tagIds: [...tagIds],
+    } as Item);
   }
 }

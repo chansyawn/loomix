@@ -1,29 +1,24 @@
-import { buildCrafting } from "./crafting/build.ts";
-import { assembleDataset } from "../domains/build.ts";
 import fs from "node:fs";
 import path from "node:path";
-import { identityDirectory } from "../paths.ts";
-import { readManifest, publishManifest, atomicJson } from "../workflow/manifest.ts";
+import { cacheRoot, identityDirectory } from "../paths.ts";
+import { readManifest } from "../workflow/manifest.ts";
 import type { Manifest } from "../workflow/manifest.ts";
-import { digest, filesWithin, inventory } from "../workflow/hashing.ts";
+import { digest, inventory } from "../workflow/hashing.ts";
 import { implementationRevision, profileHash, toolIdentity } from "../workflow/identity.ts";
-import { runCheckpoints } from "../workflow/checkpoint.ts";
 import { ensureAnimeStudio } from "../client/anime-studio/index.ts";
-import { withLock } from "../workflow/lock.ts";
-import { assertClientUnchanged } from "../client/snapshot.ts";
-import { prepareSource } from "./source.ts";
-import { structure } from "./content/assemble.ts";
-import { exportImages } from "./images/export.ts";
+import { assertClientUnchanged, clientSnapshotFiles } from "../client/snapshot.ts";
+import { readJson, writeJson } from "../workflow/json.ts";
+import type { IndexedAsset } from "./types.ts";
+import { prepareSource } from "./source/decode.ts";
+import { cachedDirectory, copyCachedDirectory } from "./cache.ts";
+import { neighborAllowlist } from "./source/neighbors/allowlist.ts";
+import { admissionsFile, parseAdmissions } from "./source/catalog/admissions.ts";
+import { observe } from "./source/observe.ts";
+import { assemble } from "./assemble/index.ts";
+import { exportOriginals } from "./images/originals.ts";
 import { audit } from "./audit.ts";
-import { verifyExtraction } from "./verify.ts";
-import { admissionsFile, parseAdmissions } from "./content/admissions.ts";
-import { finalizeEvidence } from "./evidence/build.ts";
-import { exportNeighborImages } from "./neighbors/images.ts";
-import { buildNeighbors } from "./neighbors/build.ts";
-import { buildCollection } from "./collection/build.ts";
-import { exportSeedImages } from "./collection/images.ts";
-import { buildIslands } from "./islands/build.ts";
-import { exportIslandImages } from "./islands/images.ts";
+import { verifyExtraction, verifyCandidate } from "./verify.ts";
+import { writeAssembly, sealExtraction } from "./bundle.ts";
 
 export async function extract(environmentId: string): Promise<string> {
   const environmentDirectory = identityDirectory("environments", environmentId);
@@ -33,7 +28,8 @@ export async function extract(environmentId: string): Promise<string> {
     environment.tools.animeStudioInput !== digest(toolIdentity())
   )
     throw new Error("Environment profile/tool changed; run init");
-  if (environment.tools.animeStudio !== (await ensureAnimeStudio()))
+  const tool = await ensureAnimeStudio();
+  if (environment.tools.animeStudio !== tool)
     throw new Error("Initialized tool bytes changed; run init again");
   await assertClientUnchanged(environment);
   const implementation = await implementationRevision();
@@ -42,235 +38,113 @@ export async function extract(environmentId: string): Promise<string> {
     ...environment.outputs.map((file) => file.path),
   ]);
   const admissionsBytes = fs.readFileSync(
-    new URL("./content/supplemental-admissions.json", import.meta.url),
+    new URL("./source/catalog/supplemental-admissions.json", import.meta.url),
   );
   const admissions = parseAdmissions(admissionsBytes);
   const id = digest({
+    format: 2,
     environmentId,
     inputs: digest(inputs),
     profileHash,
     implementation,
+    tool,
     admissions: admissions.sha256,
   });
-  const work = identityDirectory("extractions", id);
-  await withLock(`${work}.lock`, async () => {
-    fs.mkdirSync(work, { recursive: true });
-    const manifestFile = path.join(work, "extraction-manifest.json");
-    const previous = fs.existsSync(manifestFile)
-      ? (JSON.parse(fs.readFileSync(manifestFile, "utf8")) as Manifest)
-      : undefined;
-    fs.rmSync(manifestFile, { force: true });
-    const tree = (directory: string) =>
-      filesWithin(path.join(work, directory)).map((file) => `${directory}/${file}`);
-    const options = {
-      work,
-      environment: environmentDirectory,
-      clientSnapshotId: environment.clientSnapshotId ?? environment.inputs.sha256,
-    };
+  const destination = identityDirectory("extractions", id);
+  await sealExtraction(destination, async (staging) => {
     try {
-      await runCheckpoints(work, id, [
+      const snapshotId = environment.clientSnapshotId ?? environment.inputs.sha256;
+      const decoded = await cachedDirectory(
+        path.join(cacheRoot(), "decode"),
         {
-          name: "admissions",
-          dependencies: [],
-          run: async () => {
-            fs.writeFileSync(path.join(work, admissionsFile), admissionsBytes);
-          },
-          outputs: () => [admissionsFile],
+          format: 2,
+          inputs,
+          snapshotId,
+          profileHash,
+          implementation,
+          tool,
+          options: "MiHoYoBinData-json",
         },
-        {
-          name: "decode",
-          dependencies: [],
-          run: () => prepareSource(options),
-          outputs: () => [...tree("prepared"), ...tree("bindata"), "bindata-manifest.json"],
+        async (work) => {
+          await prepareSource({
+            work,
+            environment: environmentDirectory,
+            clientSnapshotId: snapshotId,
+          });
+          fs.rmSync(path.join(work, "logs"), { recursive: true, force: true });
         },
-        {
-          name: "structure",
-          dependencies: ["decode", "admissions"],
-          run: () => structure(options),
-          outputs: () => [
-            "raw/content.json",
-            "scope.json",
-            "record-evidence.json",
-            "quality-enum.json",
-            "candidate-images.json",
-            "field-evidence.json",
-            "missing-fields.json",
-            "outside-members.json",
-            "field-investigation.json",
-            "cooking-field-evidence.json",
-            "cooking-audit.json",
-            "cooking-evidence.json",
-            "cooking-investigation.json",
-          ],
-        },
-        {
-          name: "neighbors",
-          dependencies: ["structure"],
-          run: () => buildNeighbors(work),
-          outputs: () => [
-            "raw/neighbors.json",
-            "raw/neighbor-clothing.json",
-            "neighbor-audit.json",
-            "neighbor-exclusions.json",
-          ],
-        },
-        {
-          name: "islands",
-          dependencies: ["structure"],
-          run: async () => buildIslands(work),
-          outputs: () => ["raw/islands.json", "island-audit.json", "island-exclusions.json"],
-        },
-        {
-          name: "raw-assets",
-          dependencies: ["structure"],
-          run: () => exportImages(options),
-          outputs: () => [
-            ...tree("exports"),
-            "raw/images-content.json",
-            "image-candidates.json",
-            "selected-images.json",
-            "image-manifest.json",
-            "image-field-evidence.json",
-          ],
-        },
-        {
-          name: "crafting",
-          dependencies: ["raw-assets"],
-          run: () => buildCrafting(options),
-          outputs: () => ["crafting-recipes-audit.json"],
-        },
-        {
-          name: "collection",
-          dependencies: ["raw-assets"],
-          run: async () => buildCollection(work),
-          outputs: () => [
-            "raw/catalog-observations.json",
-            "collection-evidence.json",
-            "plant-evidence.json",
-            "plant-image-audit.json",
-            "plant-exclusions.json",
-            "plant-investigation.json",
-            "seed-image-candidates.json",
-            "stage-image-candidates.json",
-            "collection-missing-fields.json",
-            "collection-investigation.json",
-          ],
-        },
-        {
-          name: "seed-images",
-          dependencies: ["collection"],
-          run: () => exportSeedImages(options),
-          outputs: () => [
-            ...tree("seed-exports"),
-            ...tree("stage-exports"),
-            "seed-image-originals.json",
-            "seed-image-manifest.json",
-            "stage-image-originals.json",
-            "stage-image-manifest.json",
-            "raw/images-catalog-observations.json",
-          ],
-        },
-        {
-          name: "neighbor-images",
-          dependencies: ["neighbors", "raw-assets"],
-          run: () => exportNeighborImages(options),
-          outputs: () => [
-            ...tree("neighbor-exports"),
-            "neighbor-image-exports.json",
-            "neighbor-additional-image-exports.json",
-            "neighbor-image-audit.json",
-          ],
-        },
-        {
-          name: "island-images",
-          dependencies: ["islands", "raw-assets"],
-          run: () => exportIslandImages(options),
-          outputs: () => [
-            "island-image-exports.json",
-            "island-image-audit.json",
-            ...tree("island-exports"),
-          ],
-        },
-        {
-          name: "source-audit",
-          dependencies: ["neighbor-images", "island-images", "seed-images", "crafting"],
-          run: () => audit(options),
-          outputs: () => ["source-audit.json"],
-        },
-        {
-          name: "extraction-verify",
-          dependencies: ["source-audit", "neighbors", "islands", "island-images"],
-          run: async () => {
-            finalizeEvidence(work);
-            assembleDataset(work);
-            await verifyExtraction(work);
-          },
-          outputs: () => [
-            "dataset.json",
-            "image-jobs.json",
-            ...tree("evidence"),
-            "coverage.json",
-            "collection-coverage.json",
-            "validation.json",
-          ],
-        },
-      ]);
-      await assertClientUnchanged(environment);
-      // 复用时仍需重新校验，不依赖检查点标记。
-      await verifyExtraction(work);
-      atomicJson(path.join(work, "run-report.json"), {
-        passed: true,
-        environmentId,
-        extractionId: id,
-        checkpoints: [
-          "admissions",
-          "decode",
-          "structure",
-          "neighbors",
-          "islands",
-          "raw-assets",
-          "crafting",
-          "collection",
-          "seed-images",
-          "neighbor-images",
-          "island-images",
-          "source-audit",
-          "extraction-verify",
-        ],
+      );
+      const source = path.join(staging, "source");
+      copyCachedDirectory(decoded, source);
+      fs.writeFileSync(path.join(source, admissionsFile), admissionsBytes);
+      fs.copyFileSync(
+        new URL("./source/neighbors/additional-images.json", import.meta.url),
+        path.join(source, "additional-images.json"),
+      );
+      writeJson(path.join(source, "neighbor-allowlist.json"), neighborAllowlist);
+      const snapshotFiles = clientSnapshotFiles(snapshotId);
+      writeJson(path.join(source, "client-files.json"), snapshotFiles);
+      const files = new Map(snapshotFiles.map((file) => [file.path, file.sha256]));
+      const packages = [
+        ...new Set(
+          readJson<IndexedAsset[]>(path.join(source, "prepared/asset-index.json")).map(
+            (asset) => asset.Source,
+          ),
+        ),
+      ]
+        .sort()
+        .map((source) => {
+          const sha256 = files.get(source.replace(/^resources\/game-client\//, ""));
+          if (!sha256) throw new Error(`Missing frozen package ${source}`);
+          return { source, sha256 };
+        });
+      writeJson(path.join(source, "packages.json"), packages);
+      const observations = observe(source, id);
+      writeJson(path.join(staging, "observations.json"), observations);
+      const originals = await exportOriginals({
+        objects: observations.imageObjects,
+        index: readJson<IndexedAsset[]>(path.join(source, "prepared/asset-index.json")),
+        cache: path.join(cacheRoot(), "originals"),
+        work: staging,
+        snapshotId,
+        tool,
+        implementation,
       });
+      writeJson(path.join(staging, "originals.json"), originals);
+      writeAssembly(staging, assemble(observations, originals));
+      await audit(
+        { work: staging, environment: environmentDirectory },
+        source,
+        observations.imageObjects,
+      );
+      await verifyCandidate(staging);
+      await assertClientUnchanged(environment);
+      if (
+        (await ensureAnimeStudio()) !== tool ||
+        (await implementationRevision()) !== implementation
+      )
+        throw new Error("Tool or implementation changed during extraction");
       const manifest: Manifest = {
         schemaVersion: 1,
         kind: "extraction",
         id,
         status: "verified",
-        createdAt: previous?.createdAt ?? new Date().toISOString(),
+        createdAt: new Date().toISOString(),
         inputs: { id: environmentId, sha256: digest(inputs), files: inputs },
         implementation,
         profileHash,
         tools: environment.tools,
-        outputs: await inventory(
-          work,
-          filesWithin(work).filter(
-            (file) =>
-              !file.startsWith("logs/") &&
-              !file.startsWith("checkpoints/") &&
-              !["run-report.json", "extraction-manifest.json", "created.json"].includes(file),
-          ),
-        ),
+        outputs: await inventory(staging),
         result: { passed: true, validation: "passed", failures: [] },
       };
-      if ((await implementationRevision()) !== implementation)
-        throw new Error("Implementation changed during extract; rerun extract");
-      await publishManifest(work, manifest);
+      return manifest;
     } catch (error) {
-      atomicJson(path.join(work, "run-report.json"), {
-        passed: false,
-        environmentId,
-        extractionId: id,
-        failure: String(error),
-      });
+      const failures = path.join(cacheRoot(), "failures");
+      fs.mkdirSync(failures, { recursive: true });
+      fs.renameSync(staging, path.join(failures, path.basename(staging)));
       throw error;
     }
   });
+  await verifyExtraction(destination);
   return id;
 }

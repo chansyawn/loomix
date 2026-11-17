@@ -15,7 +15,7 @@ const first: DishItem = {
   difficulty: "中等",
   galaxyFlavor: "星屿，禾夏",
   cookware: "烤架",
-  effectsText: "耐力上限提升 5 点",
+  strength: null,
   effects: [
     {
       effectId: 1,
@@ -27,13 +27,9 @@ const first: DishItem = {
     },
   ],
   tastes: ["甜"],
-  difficultyRequirement: {
-    rawExpression: '{"childList":{"nodeList":[{"leaf":{"chefLevelGreaterOrEqual":{"level":5}}}]}}',
-    condition: { kind: "chefLevelGreaterOrEqual", level: 5 },
-    unresolvedReason: null,
-  },
+  unlockCondition: { kind: "chefLevelGreaterOrEqual", level: 5 },
   acquisition: "烹饪",
-  recipe: null,
+  slots: [],
 };
 const second: DishItem = { ...first, id: 2, name: "星露蒸鱼" };
 const group: DishSeries = {
@@ -111,7 +107,7 @@ describe("dish details", () => {
   it("loads validated content and keeps network or schema failures retryable", async () => {
     vi.stubGlobal("fetch", vi.fn(fixtureRequest(catalogFixture({ dishes: data }))));
     expect(await loadDishesDetail("items", "1")).toMatchObject({
-      record: { ...first, recipe: { slots: null } },
+      record: first,
     });
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })));
     await expect(loadDishesDetail("items", "1")).rejects.toThrow("503");

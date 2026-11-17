@@ -4,10 +4,15 @@
   "type": "module",
   "exports": {
     "./release": "./src/release.ts",
-    "./validate": "./src/validate.ts"
+    "./release-id": "./src/release-id.ts",
+    "./publish": "./src/publish.ts",
+    "./configuration": "./src/configuration.ts",
+    "./progress": "./src/progress.ts",
+    "./validate": "./src/validate.ts",
+    "./load": "./src/load.ts"
   },
   "scripts": {
-    "test": "vp exec vp test"
+    "test": "vp test"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "catalog:",

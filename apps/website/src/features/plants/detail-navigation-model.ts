@@ -1,4 +1,4 @@
-import type { CollectionRecord } from "../collection-view";
+import type { CatalogEntrySummary } from "../collection-view";
 import type {
   DetailNavigationEntry,
   DetailNavigationGroup,
@@ -10,7 +10,7 @@ export type PlantDetailNavigationModel = Readonly<{
   hasUnconfirmedMembership: boolean;
 }>;
 
-function entry(record: CollectionRecord, label?: string): DetailNavigationEntry {
+function entry(record: CatalogEntrySummary, label?: string): DetailNavigationEntry {
   return { id: record.id, name: record.name, image: record.image, label };
 }
 

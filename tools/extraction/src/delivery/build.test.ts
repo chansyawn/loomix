@@ -3,6 +3,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { digest, inventory } from "../workflow/hashing.ts";
 import { publishManifest, readManifest } from "../workflow/manifest.ts";
+import { observationFixture } from "../extraction/fixtures/observations.ts";
+import { assemble } from "../extraction/assemble/index.ts";
+import { writeAssembly } from "../extraction/bundle.ts";
+import { writeJson } from "../workflow/json.ts";
 import { deliver } from "./build.ts";
 
 const dependencies = vi.hoisted(() => ({
@@ -37,11 +41,12 @@ beforeEach(async () => {
     "existing website bytes\n",
   );
   const bundle = path.join(dependencies.root, "extractions", extractionId);
-  fs.mkdirSync(path.join(bundle, "raw"), { recursive: true });
-  for (const file of ["content.json", "neighbors.json", "images-catalog-observations.json"])
-    fs.writeFileSync(path.join(bundle, "raw", file), "{}\n");
-  fs.writeFileSync(path.join(bundle, "dataset.json"), "{}\n");
-  fs.writeFileSync(path.join(bundle, "image-jobs.json"), "[]\n");
+  fs.mkdirSync(bundle, { recursive: true });
+  const observations = observationFixture(extractionId);
+  writeJson(path.join(bundle, "observations.json"), observations);
+  writeJson(path.join(bundle, "originals.json"), []);
+  writeJson(path.join(bundle, "validation.json"), { passed: true });
+  writeAssembly(bundle, assemble(observations, []));
   const outputs = await inventory(bundle);
   await publishManifest(bundle, {
     schemaVersion: 1,

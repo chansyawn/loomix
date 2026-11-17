@@ -31,7 +31,7 @@ export function NeighborCard({ neighbor }: { neighbor: NeighborDetail }) {
           </h2>
         </CardTitle>
         {neighbor.stars.map((star) => (
-          <CardDescription key={star.key}>
+          <CardDescription key={star.name}>
             {star.name}
             <span className="mt-1 block text-xs">
               {star.galaxy ? `${star.galaxy}星系` : "星系资料暂未收录"}

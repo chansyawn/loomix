@@ -26,16 +26,11 @@ jobs:
           persist-credentials: false
       - uses: voidzero-dev/setup-vp@v1.21.2
         with:
-          node-version: "24"
           run-install: false
           cache: true
       - run: vp install --frozen-lockfile
-      - run: vp run --no-cache website#verify-release
-      - run: vp check
-      - run: vp run --no-cache -r test
-      - run: vp run --no-cache website#build
-      - run: vp run --no-cache website#verify-build
-      - run: vp run --no-cache website#deploy:check
+      - name: Verify website for deployment
+        run: vp run --no-cache website#verify
       - name: Record build identity
         env:
           BUILD_SHA: ${{ github.sha }}
@@ -80,7 +75,6 @@ jobs:
           persist-credentials: false
       - uses: voidzero-dev/setup-vp@v1.21.2
         with:
-          node-version: "24"
           run-install: false
           cache: true
       - run: vp install --frozen-lockfile

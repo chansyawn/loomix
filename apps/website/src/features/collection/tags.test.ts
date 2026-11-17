@@ -9,7 +9,7 @@ function tag(
   parentId: number | null = null,
   displayName: string | null = null,
 ): GameplayTag {
-  return { id, internalName, parentId, enumName: null, displayName };
+  return { id, internalName, parentId, displayName };
 }
 
 const tags = [

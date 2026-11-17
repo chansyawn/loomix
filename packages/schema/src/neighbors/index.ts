@@ -1,55 +1,7 @@
-import {
-  NeighborProfileSchema,
-  TravelProfileSchema,
-  AbilityDescriptionSchema,
-  createAbilitySchema,
-  SignatureSchema,
-  NeighborDesignSchema,
-} from "./profile.ts";
-import { createHouseSchema } from "./housing.ts";
-export * from "./profile.ts";
-export * from "./housing.ts";
 import { z } from "zod";
-import { ContextSchema } from "../common/identity.ts";
+import { IdSchema, NullableTextSchema } from "../common/identity.ts";
 import { ImageRefSchema } from "../assets/index.ts";
-const neighborId = z.number().int().positive();
-const path = z
-  .string()
-  .min(1)
-  .refine(
-    (value) => !value.includes("\\") && !value.startsWith("/") && !value.split("/").includes(".."),
-    "Expected relative POSIX asset path",
-  );
-
-const record = z.strictObject({
-  profile: NeighborProfileSchema,
-  travelProfile: TravelProfileSchema.nullable(),
-  abilityDescriptions: AbilityDescriptionSchema.array(),
-  abilities: createAbilitySchema(ImageRefSchema.nullable()).array(),
-  signature: SignatureSchema,
-  house: createHouseSchema(ImageRefSchema.nullable()).nullable(),
-  design: NeighborDesignSchema,
-  id: neighborId,
-  name: z.string().min(1),
-  bodyType: z.enum(["small", "medium", "big"]).nullable(),
-  scaleValue: z.number().finite().nullable(),
-  avatar: ImageRefSchema.nullable(),
-  npc2Path: path,
-});
-
-const star = z.strictObject({
-  key: z.string().min(1),
-  neighborId: neighborId,
-  galaxyName: z.string().nullable(),
-  galaxyIndex: z.number().int().nonnegative().nullable(),
-  systemIndex: z.number().int().nonnegative().nullable(),
-  starIndex: z.number().int().nonnegative().nullable(),
-  name: z.string().min(1),
-  galaxyModelPath: path.nullable(),
-  playerModelPath: path.nullable(),
-  skyModelPath: path.nullable(),
-  image: ImageRefSchema.nullable(),
-});
+import { BodyTypeSchema } from "../catalog/items.ts";
 
 export const StoryLayoutSchema = z.enum([
   "text",
@@ -60,9 +12,8 @@ export const StoryLayoutSchema = z.enum([
 ]);
 export type StoryLayout = z.infer<typeof StoryLayoutSchema>;
 
-const storyParagraph = z
+export const StoryParagraphSchema = z
   .strictObject({
-    sequence: z.number().int().positive(),
     text: z.string().nullable(),
     image: ImageRefSchema.nullable(),
     layout: StoryLayoutSchema,
@@ -80,108 +31,67 @@ const storyParagraph = z
       });
   });
 
-const story = z.strictObject({
-  key: z.string().min(1),
-  neighborId: neighborId,
-  chapter: z.number().int().positive(),
-  title: z.string().min(1),
-  paragraphs: storyParagraph.array(),
+export const GiftLevelSchema = z.enum(["love", "favor", "dislike"]);
+const gift = z.strictObject({ itemIds: IdSchema.array(), tagIds: IdSchema.array() });
+
+export const NeighborSchema = z.strictObject({
+  id: IdSchema,
+  name: z.string().min(1),
+  bodyType: BodyTypeSchema.nullable(),
+  profile: z.strictObject({
+    englishName: NullableTextSchema,
+    nickname: NullableTextSchema,
+    birthday: z
+      .strictObject({
+        month: z.number().int().min(1).max(12),
+        day: z.number().int().min(1).max(31),
+      })
+      .nullable(),
+  }),
+  images: z.strictObject({
+    favour: ImageRefSchema.nullable(),
+    role: ImageRefSchema.nullable(),
+  }),
+  stars: z
+    .strictObject({
+      name: z.string().min(1),
+      galaxy: NullableTextSchema,
+      image: ImageRefSchema.nullable(),
+    })
+    .array(),
+  abilities: z
+    .strictObject({
+      unlockLevel: IdSchema,
+      name: NullableTextSchema,
+      description: NullableTextSchema,
+    })
+    .array(),
+  house: z
+    .strictObject({
+      stages: z
+        .strictObject({
+          id: IdSchema,
+          level: IdSchema,
+          name: z.string().min(1),
+          description: NullableTextSchema,
+          image: ImageRefSchema.nullable(),
+        })
+        .array()
+        .min(1),
+    })
+    .nullable(),
+  stories: z
+    .strictObject({
+      chapter: z.number().int().positive(),
+      title: z.string().min(1),
+      paragraphs: StoryParagraphSchema.array().min(1),
+    })
+    .array(),
+  gifts: z.strictObject({ love: gift, favor: gift, dislike: gift }),
 });
 
-const travelReaction = z.strictObject({
-  key: z.string().min(1),
-  neighborId: neighborId.nullable(),
-  variantId: z.number().int().positive(),
-  conditionType: z.string().nullable(),
-  threshold: z.string().nullable(),
-  resourceCategory: z.string().nullable(),
-  secondaryThreshold: z.string().nullable(),
-  reactionAsset: path.nullable(),
-  text: z.string().nullable(),
-});
-
-const friendshipRule = z.strictObject({
-  key: z.string().min(1),
-  title: z.string().nullable(),
-  text: z.string().min(1),
-  category: z.string().nullable(),
-  level: z.number().int().positive().nullable(),
-});
-
-const eventTag = z.strictObject({ key: z.string().min(1), text: z.string().min(1) });
-
-const asset = z.strictObject({
-  path,
-  kind: z.enum([
-    "house",
-    "friendStar",
-    "outfit",
-    "hub",
-    "favourMission",
-    "storyEnv",
-    "reaction",
-    "other",
-  ]),
-  relatedNeighborIds: neighborId.array(),
-});
-
-const giftPreferenceLevel = z.enum(["love", "favor", "dislike"]);
-const giftPreference = z.strictObject({
-  key: z.string().min(1),
-  neighborId,
-  level: giftPreferenceLevel,
-  itemIds: neighborId.array(),
-  tagIds: neighborId.array(),
-});
-
-export const NeighborSpecificImageCategorySchema = z.enum([
-  "diaryIllustration",
-  "diaryWatermark",
-  "diarySticker",
-  "starAtlasIcon",
-]);
-export const AdditionalNeighborImageCategorySchema = z.enum([
-  "avatar",
-  "card",
-  "favour",
-  "house",
-  "island",
-  "outline",
-  "role",
-  ...NeighborSpecificImageCategorySchema.options,
-]);
-export type AdditionalNeighborImageCategory = z.infer<typeof AdditionalNeighborImageCategorySchema>;
-
-const additionalImage = z
-  .strictObject({
-    key: z.string().min(1),
-    category: AdditionalNeighborImageCategorySchema,
-    neighborId: neighborId.nullable(),
-    image: ImageRefSchema,
-  })
-  .superRefine((value, ctx) => {
-    if (
-      value.neighborId === null &&
-      NeighborSpecificImageCategorySchema.safeParse(value.category).success
-    )
-      ctx.addIssue({
-        code: "custom",
-        path: ["neighborId"],
-        message: "Neighbor-specific images need a neighbor",
-      });
-  });
-
-export const NeighborsSchema = ContextSchema.extend({
-  kind: z.literal("neighbors"),
-  neighbors: record.array(),
-  stars: star.array(),
-  stories: story.array(),
-  travelReactions: travelReaction.array(),
-  friendshipRules: friendshipRule.array(),
-  eventTags: eventTag.array(),
-  giftPreferences: giftPreference.array().default([]),
-  resources: asset.array(),
-  additionalImages: additionalImage.array(),
-});
+export const NeighborsSchema = z.strictObject({ neighbors: NeighborSchema.array() });
+export type Neighbor = z.infer<typeof NeighborSchema>;
 export type Neighbors = z.infer<typeof NeighborsSchema>;
+export type GiftLevel = z.infer<typeof GiftLevelSchema>;
 export const parseNeighbors = (input: unknown): Neighbors => NeighborsSchema.parse(input);

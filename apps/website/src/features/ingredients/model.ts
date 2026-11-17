@@ -18,7 +18,6 @@ export type IngredientsData = {
   itemsById: ReadonlyMap<number, IngredientItem>;
   ingredientCandidatesByDishId: ReadonlyMap<number, number[]>;
   dishesByItemId: ReadonlyMap<number, IngredientDishMatch[]>;
-  unconfirmedRecipeCount: number;
 };
 
 type MatchIndex = Map<number, Map<number, IngredientDishMatch>>;
@@ -50,19 +49,14 @@ export function buildIngredientsData(
   const itemsById = new Map<number, IngredientItem>();
   for (const id of tagSource.itemIds) {
     const item = view.ingredientItemsById.get(id);
-    // 仅供引用的记录没有正式详情页，不得作为可浏览条目展示。
-    if (!item || item.listed === false) continue;
+    // 此视图只展示可浏览的关联物品，正式收录资格由共享契约另行定义。
+    if (!item || item.browsable === false) continue;
     itemsById.set(id, item);
   }
   const byItem: MatchIndex = new Map();
   const ingredientCandidatesByDishId = new Map<number, Set<number>>();
-  let unconfirmedRecipeCount = 0;
   for (const dish of view.dishes.items) {
-    const slots = dish.recipe?.slots;
-    if (!slots || slots.some((slot) => slot.expression === null || slot.itemIds === null))
-      unconfirmedRecipeCount++;
-    slots?.forEach((slot, index) => {
-      if (slot.expression === null || slot.itemIds === null) return;
+    dish.slots.forEach((slot, index) => {
       const condition = {
         position: index + 1,
         expression: slot.expression,
@@ -85,7 +79,6 @@ export function buildIngredientsData(
       [...ingredientCandidatesByDishId].map(([id, candidates]) => [id, [...candidates]]),
     ),
     dishesByItemId: flattenIndex(byItem),
-    unconfirmedRecipeCount,
   };
 }
 

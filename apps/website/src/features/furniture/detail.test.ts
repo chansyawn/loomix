@@ -16,7 +16,7 @@ const first: FurnitureItem = {
   colors: null,
   materials: null,
   acquisition: null,
-  craftingRecipes: null,
+  craftingRecipes: [],
 };
 const second: FurnitureItem = { ...first, id: 2, name: "木桌" };
 const set: FurnitureSet = {
@@ -76,7 +76,7 @@ describe("furniture details", () => {
     expect(furnitureDetail(data, "items", 1)).toMatchObject({
       kind: "item",
       record: first,
-      recipes: null,
+      recipes: [],
     });
     expect(furnitureDetail({ ...data, sets: [] }, "items", 1).navigation.groups).toEqual([]);
   });
@@ -104,15 +104,15 @@ describe("furniture details", () => {
     ]);
     expect(furnitureDetail(data, "sets", 3).navigation.groups).toEqual([item.navigation.groups[0]]);
   });
-  it("resolves crafting materials and preserves unconfirmed recipe reasons", () => {
+  it("resolves crafting materials and keeps unknown materials as null", () => {
     const recipeData = {
       ...data,
       items: [
         {
           ...first,
           craftingRecipes: [
-            { id: 10, materials: [{ itemId: 2, quantity: 3 }], unresolvedReason: null },
-            { id: 11, materials: null, unresolvedReason: "材料信息尚未确认" },
+            { id: 10, materials: [{ itemId: 2, quantity: 3 }] },
+            { id: 11, materials: null },
           ],
         },
         second,
@@ -121,7 +121,7 @@ describe("furniture details", () => {
     expect(furnitureDetail(recipeData, "items", 1)).toMatchObject({
       recipes: [
         { id: 10, materials: [{ itemId: 2, quantity: 3, item: { name: "木桌" } }] },
-        { id: 11, materials: null, unresolvedReason: "材料信息尚未确认" },
+        { id: 11, materials: null },
       ],
     });
   });

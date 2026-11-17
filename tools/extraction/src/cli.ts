@@ -28,7 +28,7 @@ async function main(): Promise<void> {
   });
   if (values.help) {
     console.log(
-      "客户端提取：client import [--source PATH] | client select --snapshot ID | init | extract --environment ID | deliver --extraction ID [--website] | materialize --delivery ID | refresh | verify --delivery ID\nLOOMIX_DATA_ROOT 必须指向共享数据目录。deliver 默认生成不可变交付；materialize 将已验证版本发布到当前 worktree 的 resources/website/。",
+      "客户端提取：client import [--source PATH] | client select --snapshot ID | init | extract --environment ID | deliver --extraction ID [--website] | materialize --delivery ID | refresh | verify --delivery ID\nLOOMIX_DATA_ROOT 必须指向共享数据目录。deliver 默认生成不可变资源交付；materialize 将已验证交付落地到当前 worktree 的 resources/website/。",
     );
     return;
   }

@@ -3,14 +3,12 @@ import { createGameplayTagIndex, parseGameplayTags, tagLabel } from "../src/game
 import type { GameplayTag } from "../src/gameplay-tags/index.ts";
 import { createRecordTagResolver } from "../src/catalog/index.ts";
 import { parseDataset, validateDataset } from "../src/dataset/index.ts";
-import { datasetFixture, recordMetadata } from "./fixture.ts";
+import { datasetFixture, dish, reference } from "./fixture.ts";
 
-const context = { formatVersion: 10, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
 const tag = (id: number, internalName: string, parentId: number | null = null): GameplayTag => ({
   id,
   internalName,
   parentId,
-  enumName: "Shared",
   displayName: null,
 });
 const tags = [
@@ -21,11 +19,9 @@ const tags = [
   tag(5, "木质", 4),
 ];
 
-test("统一索引支持多根树、枚举重名和包含自身的继承查询", () => {
+test("统一索引支持多根树与包含自身的继承查询", () => {
   const index = createGameplayTagIndex(tags);
   expect(index.findByName("深红")?.id).toBe(3);
-  expect(index.findByEnumName("Shared")).toHaveLength(5);
-  expect(index.findByEnumName("missing")).toEqual([]);
   expect(index.ancestors(3).map((value) => value.id)).toEqual([3, 2, 1]);
   expect(index.subtree(1).map((value) => value.id)).toEqual([1, 2, 3]);
   expect(index.select([5, 3, 2], 1).map((value) => value.id)).toEqual([3, 2]);
@@ -40,7 +36,7 @@ test.each([
   [tag(1, "颜色", 999)],
   [tag(1, "颜色", 2), tag(2, "红色", 1)],
 ])("标签文档拒绝重复身份、缺失父级及循环 %#", (...values) => {
-  expect(() => parseGameplayTags({ ...context, kind: "gameplay-tags", tags: values })).toThrow();
+  expect(() => parseGameplayTags({ tags: values })).toThrow();
 });
 
 test("目录属性由直接标签的子树派生，并保留显示顺序", () => {
@@ -49,53 +45,26 @@ test("目录属性由直接标签的子树派生，并保留显示顺序", () =>
   expect(resolve({ tagIds: [5, 3, 2] }, "materials").map((value) => value.id)).toEqual([5]);
 });
 
-test("物品、偏好和食谱引用同一标签身份，食谱受食材子树约束", () => {
-  const dataset = datasetFixture(context, {
-    gameVersion: "test",
-    dataRevision: 1,
-    resourceRevision: 1,
-    manifestId: "1",
-  });
+test("物品与食谱引用同一标签身份，食谱受食材子树约束", () => {
+  const dataset = datasetFixture();
   dataset.gameplayTags.tags = [tag(10, "食材"), tag(11, "食材_水果", 10), tag(20, "颜色")];
-  dataset.catalog.references.push({ id: 1, name: "苹果", description: null, usageText: null });
-  dataset.catalog.records.push({
-    ...recordMetadata(),
-    id: 2,
-    name: "菜肴",
-    kind: "dish",
-    image: null,
-    description: null,
-    quality: null,
-    displayCategory: null,
-    trade: null,
-    acquisition: null,
-    tagFields: { ...recordMetadata().tagFields, ingredients: [11] },
+  const meal = {
+    ...dish(2),
     tagIds: [11],
-    effectsText: null,
-    effects: null,
-  });
-  dataset.catalog.cookingRecipes.push({
-    id: 100,
-    productId: 2,
-    recipeItemId: null,
-    difficulty: null,
-    cookware: null,
-    tastes: null,
-    difficultyRequirement: null,
-    slots: [
-      {
-        field: 20,
-        rawExpression: "食材_水果",
-        expression: { kind: "tag", tagId: 11 },
-        itemIds: [1],
-        quantity: null,
-      },
-    ],
-  });
-  expect(parseDataset(dataset).catalog.records[0]!.tagIds).toEqual([11]);
-  dataset.catalog.cookingRecipes[0]!.slots![0]!.expression = { kind: "tag", tagId: 20 };
-  const messages = validateDataset(dataset).map((issue) => issue.message);
-  expect(messages).toContain("Unknown ingredient tag 20");
-  dataset.catalog.records[0]!.tagIds = [999];
+    cooking: {
+      difficulty: null,
+      unlockCondition: null,
+      cookware: null,
+      tastes: null,
+      slots: [{ expression: { kind: "tag" as const, tagId: 11 }, itemIds: [1] }],
+    },
+  };
+  dataset.catalog.items.push(reference(1), meal);
+  expect(parseDataset(dataset).catalog.items[1]).toEqual(meal);
+  meal.cooking.slots[0]!.expression = { kind: "tag", tagId: 20 };
+  expect(validateDataset(dataset).map((issue) => issue.message)).toContain(
+    "Unknown ingredient tag 20",
+  );
+  meal.tagIds = [999];
   expect(validateDataset(dataset).map((issue) => issue.message)).toContain("Unknown tag 999");
 });

@@ -1,5 +1,5 @@
-import type { Growth, Item, Seed } from "@loomix/schema/catalog";
-import type { CollectionRecord, IngredientItem } from "../collection-view";
+import type { Growth, ItemOf } from "@loomix/schema/catalog";
+import type { CatalogEntrySummary, IngredientItem } from "../collection-view";
 
 type ResolvedGrowth<G extends Growth = Growth> = G extends Growth
   ? Omit<G, "stages"> & {
@@ -7,15 +7,12 @@ type ResolvedGrowth<G extends Growth = Growth> = G extends Growth
     }
   : never;
 export type PlantGrowth = ResolvedGrowth;
-export type PlantSeed = Omit<
-  Seed,
-  "image" | "kind" | "admissionReasons" | "client" | "tagFields" | "tagIds"
-> & {
+export type PlantSeed = Omit<ItemOf<"seed">, "image" | "kind" | "tagIds" | "growth"> & {
   image: string | null;
   plantIds: number[];
   growth: PlantGrowth;
 };
-type PlantRecord = Extract<Item, { kind: "plant" }>;
+type PlantRecord = ItemOf<"plant">;
 export interface PlantDrops {
   groups: {
     treeId: number;
@@ -38,17 +35,16 @@ export interface PlantSummary {
   growths: PlantGrowthGroup[];
   drops: PlantDrops;
 }
-export type PlantItem = CollectionRecord & {
+export type PlantItem = CatalogEntrySummary & {
   category: string | null;
   originGalaxy: string | null;
-  maturityPeriod: string | null;
   harvestCount: number | null;
   acquisition: string | null;
   flowerColors: PlantRecord["flowerColors"];
   treeDrops: PlantRecord["drops"];
   summary: PlantSummary;
 };
-export type PlantSeries = CollectionRecord & {
+export type PlantSeries = CatalogEntrySummary & {
   seriesName: string | null;
   plantIds: number[] | null;
   summary: PlantSummary;

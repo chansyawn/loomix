@@ -9,7 +9,6 @@ export function SeedDetailPage({ detail }: { detail: Extract<PlantsDetail, { kin
   const { growth } = record;
   const fields: [string, string | null][] = [
     ["分类", "种子"],
-    ["成熟周期", growth.maturityDays === null ? null : `${growth.maturityDays} 天`],
     ["关联植物", `${detail.items.length} 种植物`],
   ];
   if (growth.kind === "crop")

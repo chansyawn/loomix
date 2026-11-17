@@ -43,22 +43,21 @@ test("summarizes structured origins without parsing punctuation in localized lab
       series: [plantSeriesFixture({ id: 2, plantIds: [1] })],
     }),
   });
-  const plant = catalog.records[0];
+  const plant = catalog.items[0]!;
   if (plant.kind !== "plant") throw new Error("Expected plant");
   const rootId = 1000;
   gameplayTags.tags.push(
-    { id: rootId, internalName: "产区分类", displayName: null, enumName: null, parentId: null },
+    { id: rootId, internalName: "产区分类", displayName: null, parentId: null },
     {
       id: 1001,
       internalName: "禾夏，星系",
       displayName: "禾夏，星系",
-      enumName: null,
       parentId: rootId,
     },
-    { id: 1002, internalName: "帕沙", displayName: "帕沙", enumName: null, parentId: rootId },
+    { id: 1002, internalName: "帕沙", displayName: "帕沙", parentId: rootId },
   );
   plant.tagIds = [1001, 1002];
-  plant.acquisition = [{ sourceId: 1, label: "采集，限时活动", condition: null }];
+  plant.acquisition = [{ sourceId: 1, label: "采集，限时活动" }];
   const data = toCollectionView(
     catalog,
     assetsFixture(catalog),
@@ -90,33 +89,23 @@ test("derives every seed for a plant from stage references without duplicate pro
   expect(data.items[0].summary.seeds.map((seed) => seed.id)).toEqual([10, 11]);
   expect(data.items[0].summary.growths).toHaveLength(2);
   expect(data.seeds[0].growth.kind).toBe("staged");
-  expect(catalog.records.find((record) => record.kind === "seed")).not.toHaveProperty("productIds");
+  expect(catalog.items.find((item) => item.kind === "seed")).not.toHaveProperty("productIds");
 });
 
-test("掉落保留来源树种、概率和果实，不合并系列成员的概率", () => {
-  const drop = {
-    itemId: 3,
-    dropGroupId: 40000,
-    weight: 25,
-    quantityMin: null,
-    quantityMax: null,
-    probability: 0.025,
-  };
+test("掉落保留来源树种与果实，系列按成员分组", () => {
+  const drop = { itemId: 3, source: "felling" as const };
   const { catalog, gameplayTags } = catalogFixture({
     plants: plantsDataFixture({
       items: [
         plantItemFixture({
           id: 1,
           name: "苹果树",
-          treeDrops: [
-            drop,
-            { ...drop, itemId: 4, dropGroupId: null, weight: null, probability: null },
-          ],
+          treeDrops: [drop, { itemId: 4, source: "fruit" }],
         }),
         plantItemFixture({
           id: 2,
           name: "花树",
-          treeDrops: [{ ...drop, dropGroupId: 40007, probability: 25 / 957 }],
+          treeDrops: [drop],
         }),
         plantItemFixture({ id: 3, name: "树胶" }),
         plantItemFixture({ id: 4, name: "果实" }),
@@ -124,8 +113,8 @@ test("掉落保留来源树种、概率和果实，不合并系列成员的概�
       series: [plantSeriesFixture({ id: 10, plantIds: [2, 1] })],
     }),
   });
-  catalog.records = catalog.records.filter((record) => record.id !== 3);
-  catalog.references.push({ id: 3, name: "树胶", description: null, usageText: null });
+  catalog.items = catalog.items.filter((item) => item.id !== 3);
+  catalog.items.push({ kind: "reference", id: 3, name: "树胶", description: null });
   const data = toCollectionView(
     catalog,
     assetsFixture(catalog),
@@ -133,9 +122,8 @@ test("掉落保留来源树种、概率和果实，不合并系列成员的概�
   ).plants;
   const groups = data.series[0].summary.drops.groups;
   expect(groups.map((group) => group.treeId)).toEqual([2, 1]);
-  expect(groups.map((group) => group.entries[0].probability)).toEqual([25 / 957, 0.025]);
-  expect(groups[0].entries[0].item).toMatchObject({ id: 3, name: "树胶", listed: false });
-  expect(groups[1].entries[1]).toMatchObject({ itemId: 4, probability: null, dropGroupId: null });
+  expect(groups[0].entries[0].item).toMatchObject({ id: 3, name: "树胶", browsable: false });
+  expect(groups[1].entries[1]).toMatchObject({ itemId: 4, source: "fruit" });
   expect(data.sourceTreesByItemId.get(3)?.map((item) => item.id)).toEqual([1, 2]);
 });
 
@@ -144,9 +132,7 @@ test("flower and tree stage mappings include formal intermediate shrubs without 
     id: 20,
     plantIds: [1],
     growth: {
-      id: 20,
       kind: "staged",
-      maturityDays: null,
       stages: [
         { id: 10, name: "苗", image: null, plantId: null },
         { id: 1, name: "树", image: null, plantId: 1 },
@@ -160,16 +146,7 @@ test("flower and tree stage mappings include formal intermediate shrubs without 
       items: [
         plantItemFixture({
           id: 1,
-          treeDrops: [
-            {
-              itemId: 2,
-              dropGroupId: null,
-              weight: null,
-              quantityMin: null,
-              quantityMax: null,
-              probability: null,
-            },
-          ],
+          treeDrops: [{ itemId: 2, source: "fruit" }],
         }),
         plantItemFixture({ id: 2 }),
         plantItemFixture({ id: 3 }),
