@@ -18,7 +18,9 @@ PR 需要先通过验证，再部署对应提交的构建产物并更新预览�
 
 ## 正式发布
 
-合并到 `master` 后，[Deploy website](.github/workflows/deploy-website.yml) 重新验证并构建后发布到正式 Worker，具体步骤以工作流为准；正式站部署串行执行，也可在 GitHub **Actions → Deploy website → Run workflow** 手动触发。
+PR 检查、正式部署与本地发布共用 `website#verify`，按任务定义的顺序执行资源检查、全仓代码检查与测试、网站构建、产物检查及部署 dry-run，任何一步失败都会停止。它需要访问已发布资源，不等同于提交前的 `ready`。
+
+合并到 `master` 后，[Deploy website](.github/workflows/deploy-website.yml) 通过上述验证后发布到正式 Worker；正式站部署串行执行，也可在 GitHub **Actions → Deploy website → Run workflow** 手动触发。
 
 如需本地发布，先完成 Wrangler 登录，或在根 `.env` 配置 `CLOUDFLARE_ACCOUNT_ID`、`CLOUDFLARE_API_TOKEN`。Wrangler 命令在仓库根目录执行，环境文件规则见[根 README](README.md#环境配置)，CI 使用 GitHub Secrets。`website#deploy` 只部署已有产物，日常发布使用以下完整流程：
 
@@ -26,6 +28,8 @@ PR 需要先通过验证，再部署对应提交的构建产物并更新预览�
 vp install --frozen-lockfile
 vp run website#release
 ```
+
+只验证、不发布时运行 `vp run website#verify`；该任务及其远程检查、部署任务均禁用缓存，`website#release` 在验证通过后才执行部署。
 
 ## 资源发布与 CORS
 

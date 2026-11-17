@@ -6,7 +6,7 @@
 
 ## 本地开发
 
-以下命令均在仓库根目录执行，使用仓库锁定的 Node 与 Vite+ 工具链：
+以下命令均在仓库根目录执行。本地与 CI 使用根 `package.json` 的 `devEngines` 选择 Node 和包管理器，Vite+ 版本由工作区依赖与锁文件固定：
 
 ```bash
 vp install
@@ -23,7 +23,7 @@ vp install
 vp run dev
 ```
 
-提交前检查与 PR 流程见[贡献指南](CONTRIBUTING.md)。
+日常使用 `vp run test` 运行全仓测试，`vp run build` 构建所有提供构建任务的包；只操作一个包时使用 `vp run <包名>#<任务>`。测试默认执行一次，持续监听可运行 `vp run website#test watch`。提交前检查与 PR 流程见[贡献指南](CONTRIBUTING.md)。
 
 本地资源交付准备好后，使用 `vp run resources:publish` 自动校验、上传并更新本地网站资源指针；随后通过 PR 预览与部署。凭证、离线检查和失败恢复见[资源发布](tools/resource-publisher/README.md)，整体流程见[CI/CD 与部署](DEPLOYMENT.md#资源更新流程)。
 

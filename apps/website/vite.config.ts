@@ -22,16 +22,20 @@ const config = defineConfig(({ mode }) => {
           command: "wrangler deploy --cwd ../.. --config apps/website/dist/server/wrangler.json",
           cache: false,
         },
-        release: {
+        verify: {
           command: [
             "vp run website#verify-release",
             "vp check",
-            "vp run -r test",
+            "vp run test",
             "vp run website#build",
             "vp run website#verify-build",
             "vp run website#deploy:check",
-            "vp run website#deploy",
           ],
+          cwd: "../..",
+          cache: false,
+        },
+        release: {
+          command: ["vp run website#verify", "vp run website#deploy"],
           cwd: "../..",
           cache: false,
         },

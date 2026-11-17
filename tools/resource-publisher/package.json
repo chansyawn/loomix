@@ -12,7 +12,7 @@
     "./load": "./src/load.ts"
   },
   "scripts": {
-    "test": "vp exec vp test"
+    "test": "vp test"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "catalog:",

@@ -28,13 +28,14 @@ React、组件引入与测试范围遵循[Agent 协作约定](../../AGENTS.md)�
 
 ## 常用检查
 
-| 命令                                         | 用途                                                 |
-| -------------------------------------------- | ---------------------------------------------------- |
-| `vp run website#test`                        | 网站的非 UI 测试                                     |
-| `vp run website#build`                       | 构建网站                                             |
-| `vp run --no-cache website#verify-contracts` | 校验本地资源是否满足网站的数据假设，需先 materialize |
-| `vp run --no-cache website#verify-release`   | 校验选定的已发布资源及网站数据假设                   |
-| `vp run website#verify-build`                | 校验已有构建产物的静态资源边界                       |
-| `vp run ready`                               | 提交前执行全仓静态检查、测试与构建                   |
+| 命令                                         | 用途                                                                                 |
+| -------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `vp run website#test`                        | 网站的非 UI 测试                                                                     |
+| `vp run website#build`                       | 构建网站                                                                             |
+| `vp run --no-cache website#verify-contracts` | 校验本地资源是否满足网站的数据假设，需先 materialize                                 |
+| `vp run --no-cache website#verify-release`   | 校验选定的已发布资源及网站数据假设                                                   |
+| `vp run website#verify-build`                | 校验已有构建产物的静态资源边界                                                       |
+| `vp run website#verify`                      | 执行完整发布前验证，需访问已发布资源；见[CI/CD 与部署](../../DEPLOYMENT.md#正式发布) |
+| `vp run ready`                               | 提交前执行全仓静态检查、测试与构建                                                   |
 
 任务定义见 [package.json](package.json) 与 [vite.config.ts](vite.config.ts)。UI 改动通过静态检查、构建和人工验收确认；数据检查的扩展方式与失败处理见[发布契约检查](docs/release-checks.md)。部署命令与凭证配置统一由[CI/CD 与部署](../../DEPLOYMENT.md)维护。

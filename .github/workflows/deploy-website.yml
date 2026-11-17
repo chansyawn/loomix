@@ -20,23 +20,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: voidzero-dev/setup-vp@v1.21.2
         with:
-          node-version: "24"
           run-install: false
           cache: true
       - name: Install locked dependencies
         run: vp install --frozen-lockfile
-      - name: Verify resource release
-        run: vp run --no-cache website#verify-release
-      - name: Check code
-        run: vp check
-      - name: Run tests
-        run: vp run --no-cache -r test
-      - name: Build website
-        run: vp run --no-cache website#build
-      - name: Verify static asset boundary
-        run: vp run --no-cache website#verify-build
-      - name: Validate Worker deployment
-        run: vp run --no-cache website#deploy:check
+      - name: Verify website for deployment
+        run: vp run --no-cache website#verify
       - name: Deploy website
         run: vp run --no-cache website#deploy
         env:
