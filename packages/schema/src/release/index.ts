@@ -8,14 +8,22 @@ import type { ValidationIssue } from "../common/identity.ts";
 import { DatasetSchema, validateDataset } from "../dataset/index.ts";
 import { referencedImages } from "../dataset/images.ts";
 import { NeighborsSchema } from "../neighbors/index.ts";
+import { StarseaSchema } from "../starsea/index.ts";
 
 export const documentSchemas = {
   "gameplay-tags": GameplayTagsSchema,
   catalog: CatalogSchema,
   neighbors: NeighborsSchema,
+  starsea: StarseaSchema,
   assets: AssetsSchema,
 };
-export const DocumentKindSchema = z.enum(["gameplay-tags", "catalog", "neighbors", "assets"]);
+export const DocumentKindSchema = z.enum([
+  "gameplay-tags",
+  "catalog",
+  "neighbors",
+  "starsea",
+  "assets",
+]);
 export type DocumentKind = z.infer<typeof DocumentKindSchema>;
 export const ReleaseIdSchema = z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/);
 export const ReleaseMarkerSchema = z.strictObject({
@@ -120,6 +128,7 @@ export function assembleRelease(
       gameplayTags: documents.get("gameplay-tags"),
       catalog: documents.get("catalog"),
       neighbors: documents.get("neighbors"),
+      starsea: documents.get("starsea"),
     },
     assets: documents.get("assets"),
   });

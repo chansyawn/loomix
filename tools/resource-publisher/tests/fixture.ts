@@ -22,6 +22,7 @@ export async function writeDocuments(directory: string, dataset: Dataset, assets
     "gameplay-tags": dataset.gameplayTags,
     catalog: dataset.catalog,
     neighbors: dataset.neighbors,
+    starsea: dataset.starsea,
     assets,
   };
   const files = [];

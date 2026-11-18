@@ -95,4 +95,13 @@ export function verifyEvidence(
         `Required collection provenance ${entry.id}.${field}`,
       );
     }
+  for (const collection of ["regions", "islands", "iconStyles"] as const)
+    for (const entry of dataset.starsea[collection])
+      for (const field of Object.keys(entry)) {
+        if (field === "id") continue;
+        assert.ok(
+          covered.has(`starsea.${collection}:${entry.id}:${field}`),
+          `Required starsea provenance ${collection}:${entry.id}.${field}`,
+        );
+      }
 }

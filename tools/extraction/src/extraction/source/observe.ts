@@ -15,8 +15,8 @@ import type { EvidenceSource } from "../evidence/domain-schema.ts";
 import type { SourceObservations } from "../model.ts";
 import { imageCollector } from "./images.ts";
 import { readCatalog } from "./catalog/read.ts";
-
-export const FORMAT_VERSION = 11;
+import { FORMAT_VERSION } from "@loomix/schema/common";
+import { readStarsea, starseaItemIds } from "./starsea/read.ts";
 export interface FrozenPackage {
   source: string;
   sha256: string;
@@ -162,10 +162,18 @@ export function observe(source: string, snapshotId: string): SourceObservations 
       true,
     ),
   }));
+  const starsea = readStarsea(
+    context.tables,
+    new Set(neighbors.database.neighbors.map((neighbor) => neighbor.id)),
+    images,
+  );
   const catalog = readCatalog({
     observations: collection.catalog,
     context,
-    referencedItemIds: neighbors.database.giftPreferences.flatMap((entry) => entry.itemIds),
+    referencedItemIds: [
+      ...neighbors.database.giftPreferences.flatMap((entry) => entry.itemIds),
+      ...starseaItemIds(starsea.data.islands),
+    ],
     neighborOutfits: neighbors.clothing,
     outfitSourcesById: neighbors.clothingSources,
     neighborImage: (reference, id) => {
@@ -212,6 +220,7 @@ export function observe(source: string, snapshotId: string): SourceObservations 
       ...new Set(context.ingredientCategoryBuild.associations.map((entry) => entry.itemId)),
     ].sort((a, b) => a - b),
     neighbors: neighbors.database,
+    starsea,
     additionalImages,
     imageNeeds: images.needs,
     imageObjects: images.objects,

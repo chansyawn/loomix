@@ -22,17 +22,17 @@ test("读取已 materialize 的 release，不依赖图片字节", async () => {
   const value = await createFixture();
   await writeFixture(value);
   const release = await loadReleaseDirectory(value);
-  expect(release.manifest.formatVersion).toBe(11);
+  expect(release.manifest.formatVersion).toBe(12);
   expect(release.dataset.catalog.items).toHaveLength(1);
   expect(release.assets.images).toHaveLength(1);
 });
 
-test("拒绝被篡改的文档", async () => {
+test("拒绝被篡改的星海文档", async () => {
   const value = await createFixture();
   await writeFixture(value);
-  await writeFile(path.join(value, "zh-CN/catalog.json"), "{}");
+  await writeFile(path.join(value, "zh-CN/starsea.json"), "{}");
   await expect(loadReleaseDirectory(value)).rejects.toThrow(
-    "Document SHA-256 or size mismatch: zh-CN/catalog.json",
+    "Document SHA-256 or size mismatch: zh-CN/starsea.json",
   );
 });
 

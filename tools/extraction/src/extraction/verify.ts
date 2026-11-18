@@ -15,6 +15,7 @@ import { verifyPlantings } from "../verify/plants.ts";
 import { verifyImages } from "../verify/images.ts";
 import { verifyEvidence } from "../verify/evidence.ts";
 import { verifyNeighborDetails } from "./source/neighbors/verify-details.ts";
+import { verifyStarseaSources } from "../verify/starsea.ts";
 
 export async function verifyCandidate(directory: string, writeReport = true): Promise<void> {
   const bundle = readCandidate(directory);
@@ -29,6 +30,7 @@ export async function verifyCandidate(directory: string, writeReport = true): Pr
   const textmap = readJson<{ byHash: unknown }>(path.join(source, "prepared/textmap-zh-en.json"));
   assert.deepEqual(textmap.byHash, decodeTextMap(reader).byHash, "Frozen TextMap decodes from OBB");
   const tables = new Tables(path.join(source, "prepared"));
+  verifyStarseaSources(dataset, observations.starsea.diagnostics, tables);
   verifyCatalogSources(dataset, observations, tables, source);
   verifyCollectionFields(observations.diagnostics.collection, tables);
   for (const proof of observations.detailProofs) verifyProofSources(proof, tables);

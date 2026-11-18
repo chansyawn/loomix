@@ -9,8 +9,9 @@ export const SourceSchema = z.strictObject({
   resourceRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
   manifestId: z.string().regex(/^\d+$/),
 });
+export const FORMAT_VERSION = 12;
 export const ContextSchema = z.strictObject({
-  formatVersion: z.literal(11),
+  formatVersion: z.literal(FORMAT_VERSION),
   snapshotId: HashSchema,
   locale: z.enum(["zh-CN", "en-US"]),
 });

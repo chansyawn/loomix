@@ -19,6 +19,48 @@ import {
 const messages = (dataset: ReturnType<typeof datasetFixture>) =>
   validateDataset(dataset).map((issue) => issue.message);
 
+test("星海引用校验检查归属、展示类型和图片覆盖", () => {
+  const dataset = datasetFixture();
+  dataset.catalog.items.push(reference(5), material(6));
+  dataset.neighbors.neighbors.push(neighbor(11));
+  const icon = { assetId: "island-icon", variant: "icon" } as const;
+  dataset.starsea.iconStyles.push({ id: 1, name: "河鱼", icon });
+  dataset.starsea.islands.push({
+    id: 2,
+    name: "星屿",
+    iconStyleId: 1,
+    illustration: null,
+    displayedCreatureIds: [5],
+    displayedSpecialtyIds: [6],
+  });
+  dataset.starsea.regions.push({
+    id: 1,
+    name: "禾夏H83区",
+    galaxyName: "禾夏",
+    unlockTip: null,
+    mapImage: null,
+    stationImage: null,
+    explorationIslandIds: [2],
+    encounters: [{ neighborId: 11, candidateIslandIds: null }],
+  });
+  expect(messages(dataset)).toEqual([]);
+  expect(referencedImages(dataset)).toEqual([icon]);
+  const region = dataset.starsea.regions[0];
+  region.explorationIslandIds.push(2, 9);
+  region.encounters.push({ neighborId: 14, candidateIslandIds: [8] });
+  dataset.starsea.islands[0].displayedCreatureIds = [6, 7];
+  expect(messages(dataset)).toEqual(
+    expect.arrayContaining([
+      "Duplicate identity 2",
+      "Unknown island 9",
+      "Unknown neighbor 14",
+      "Unknown island 8",
+      "Expected creature or reference item 6",
+      "Unknown item 7",
+    ]),
+  );
+});
+
 test("解析拒绝未知字段且不修改输入", () => {
   const dataset = datasetFixture();
   expect(parseDataset(dataset)).toEqual(dataset);

@@ -15,7 +15,7 @@ import { referencedImages } from "@loomix/schema/dataset/images";
 import type { CatalogEntrySummary, CollectionView } from "./collection-view.ts";
 
 export const fixtureContext = {
-  formatVersion: 11,
+  formatVersion: 12,
   snapshotId: "a".repeat(64),
   locale: "zh-CN",
 } as const;
@@ -193,6 +193,7 @@ export function fixtureRequest({
     "gameplay-tags": gameplayTags,
     catalog,
     neighbors: { neighbors: [] },
+    starsea: { regions: [], islands: [], iconStyles: [] },
     assets: assetsFixture(catalog),
   };
   const files = DocumentKindSchema.options.map((kind) => {

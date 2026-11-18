@@ -2,8 +2,13 @@ import { emptyDataset } from "../src/dataset/index.ts";
 import type { Dataset } from "../src/dataset/index.ts";
 import type { Collection, ItemOf } from "../src/catalog/index.ts";
 import type { Neighbor } from "../src/neighbors/index.ts";
+import { FORMAT_VERSION } from "../src/common/identity.ts";
 
-export const context = { formatVersion: 11, snapshotId: "a".repeat(64), locale: "zh-CN" } as const;
+export const context = {
+  formatVersion: FORMAT_VERSION,
+  snapshotId: "a".repeat(64),
+  locale: "zh-CN",
+} as const;
 export const source = {
   gameVersion: "test",
   dataRevision: 1,

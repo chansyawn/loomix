@@ -19,6 +19,18 @@ export function observationFixture(snapshotId = "c".repeat(64)): SourceObservati
       stories: [],
       giftPreferences: [],
     },
+    starsea: {
+      data: { regions: [], islands: [], iconStyles: [] },
+      proofs: [],
+      diagnostics: {
+        regions: [],
+        islands: [],
+        encounters: [],
+        iconStyles: [],
+        resourceProfiles: [],
+        resourceGroups: [],
+      },
+    },
     additionalImages: [],
     imageNeeds: [],
     imageObjects: [],

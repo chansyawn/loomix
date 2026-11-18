@@ -11,7 +11,14 @@ import { Tables } from "../../decode/tables.ts";
 import type { TableIndex, TextMap } from "../../../types.ts";
 import type { NeighborExtractionInput } from "../types.ts";
 
-type Cell = number | string | null | { text: string } | { float: number } | { byte: number };
+type Cell =
+  | number
+  | string
+  | null
+  | { text: string }
+  | { float: number }
+  | { byte: number }
+  | { vector: number[] };
 export type FixtureRows = Record<number, Cell[][]>;
 const text = (value: string): Cell => ({ text: value });
 
@@ -247,6 +254,14 @@ function encodedTables(rows: FixtureRows): {
           cursor += 4;
           decodeBytes(plain).copy(bytes, cursor);
           cursor += plain.length;
+        } else if ("vector" in cell) {
+          structural(position, cursor - position);
+          structural(cursor, cell.vector.length);
+          cursor += 4;
+          for (const value of cell.vector) {
+            structural(cursor, value);
+            cursor += 4;
+          }
         } else if ("float" in cell) scalar(position, cell.float, "float");
         else if ("byte" in cell) scalar(position, cell.byte, "byte");
         else {

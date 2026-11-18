@@ -343,6 +343,10 @@ export function verifyCatalogSources(
     }
   const formal = new Set(expectedFormal);
   const references = new Set<number>();
+  for (const island of dataset.starsea.islands) {
+    for (const id of island.displayedCreatureIds ?? []) references.add(id);
+    for (const id of island.displayedSpecialtyIds ?? []) references.add(id);
+  }
   for (const neighbor of dataset.neighbors.neighbors)
     for (const preference of Object.values(neighbor.gifts))
       for (const id of preference.itemIds) references.add(id);

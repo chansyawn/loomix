@@ -12,6 +12,7 @@ import { buildDomainEvidence } from "./evidence.ts";
 import { validateDomainEvidence } from "./validate-evidence.ts";
 import { assembleCatalog } from "./catalog.ts";
 import { plantingDomainEvidence } from "./planting-evidence.ts";
+import { starseaItemIds } from "../source/starsea/read.ts";
 
 export function assemble(observations: SourceObservations, originals: readonly OriginalImage[]) {
   const bound = bindImages(observations.imageNeeds, originals);
@@ -32,6 +33,9 @@ export function assemble(observations: SourceObservations, originals: readonly O
     let ownerKind: typeof need.owner.kind;
     if (collection === "catalog.collections") ownerKind = "collection";
     else if (collection === "neighbors.neighbors") ownerKind = "neighbor";
+    else if (collection === "starsea.regions") ownerKind = "starseaRegion";
+    else if (collection === "starsea.islands") ownerKind = "starseaIsland";
+    else if (collection === "starsea.iconStyles") ownerKind = "starseaIconStyle";
     else {
       const item = observations.catalog.items.find((item) => item.id === id);
       if (!item) throw new Error(`Missing image owner ${id}`);
@@ -65,12 +69,10 @@ export function assemble(observations: SourceObservations, originals: readonly O
     });
     return result;
   };
-  const catalog = assembleCatalog(
-    observations.catalog,
-    image,
-    observations.ingredientItemIds,
-    observations.neighbors.giftPreferences.flatMap((entry) => entry.itemIds),
-  );
+  const catalog = assembleCatalog(observations.catalog, image, observations.ingredientItemIds, [
+    ...observations.neighbors.giftPreferences.flatMap((entry) => entry.itemIds),
+    ...starseaItemIds(observations.starsea.data.islands),
+  ]);
   const neighbors = buildNeighbors(
     observations.neighbors,
     (use, id, fieldPath) => image(use, "neighbors.neighbors", id, fieldPath),
@@ -91,6 +93,33 @@ export function assemble(observations: SourceObservations, originals: readonly O
     gameplayTags: observations.gameplayTags,
     catalog,
     neighbors,
+    starsea: {
+      regions: observations.starsea.data.regions.map((region) => ({
+        ...region,
+        stationImage: image(
+          region.stationImage?.use ?? null,
+          "starsea.regions",
+          region.id,
+          "stationImage",
+        ),
+        mapImage: region.mapImage
+          ? image(region.mapImage.use, "starsea.regions", region.id, "mapImage")
+          : null,
+      })),
+      islands: observations.starsea.data.islands.map((island) => ({
+        ...island,
+        illustration: image(
+          island.illustration?.use ?? null,
+          "starsea.islands",
+          island.id,
+          "illustration",
+        ),
+      })),
+      iconStyles: observations.starsea.data.iconStyles.map((style) => ({
+        ...style,
+        icon: image(style.icon?.use ?? null, "starsea.iconStyles", style.id, "icon"),
+      })),
+    },
   });
   const fields = [
     ...buildDomainEvidence(
@@ -100,6 +129,7 @@ export function assemble(observations: SourceObservations, originals: readonly O
       observations.neighborProofs,
     ),
     ...plantingDomainEvidence(observations.plantProofs, dataset),
+    ...observations.starsea.proofs,
     ...observations.proofs.map(({ owner, id, field, ...proof }) => {
       const collection =
         owner === "tag"

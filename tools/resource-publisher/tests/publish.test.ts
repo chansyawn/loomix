@@ -12,8 +12,8 @@ import { validateContent } from "../src/validate.ts";
 import { writeFixture, webp, imageKey } from "./fixture.ts";
 const directories: string[] = [];
 const date = new Date("2026-11-17T06:30:00Z");
-const firstId = "20261117-gtest-f11-r001";
-const secondId = "20261117-gtest-f11-r002";
+const firstId = "20261117-gtest-f12-r001";
+const secondId = "20261117-gtest-f12-r002";
 async function publishRelease(
   directory: string,
   store: ReleaseStore,
@@ -69,6 +69,7 @@ test("发布完整版本，再次发布时占用新序号而不覆盖旧版本",
   });
   expect([...objects.keys()].at(-1)).toBe(`releases/${firstId}/_complete.json`);
   expect(objects.has(`releases/${firstId}/zh-CN/neighbors.json`)).toBe(true);
+  expect(objects.has(`releases/${firstId}/zh-CN/starsea.json`)).toBe(true);
   expect((await publishRelease(directory, store)).release).toBe(secondId);
   expect(objects.has(`releases/${firstId}/_complete.json`)).toBe(true);
 });
@@ -314,7 +315,7 @@ test("只重试已占用序号，r999 之后停止且不上传", async () => {
     "序号已用尽",
   );
   expect(reserve).toHaveBeenCalledTimes(999);
-  expect(reserve.mock.calls.at(-1)?.[0]).toBe("releases/20261117-gtest-f11-r999/_upload.json");
+  expect(reserve.mock.calls.at(-1)?.[0]).toBe("releases/20261117-gtest-f12-r999/_upload.json");
   expect(put).not.toHaveBeenCalled();
 });
 
@@ -324,15 +325,15 @@ test("r999 可以发布，UTC 日期或来源版本变化后重新从 r001 开�
   const reserve = vi.spyOn(store, "tryReserve");
   for (let sequence = 1; sequence < 999; sequence++) reserve.mockResolvedValueOnce(false);
   expect((await publishValidatedContent(content, store, undefined, date)).release).toBe(
-    "20261117-gtest-f11-r999",
+    "20261117-gtest-f12-r999",
   );
   expect(
     (await publishValidatedContent(content, store, undefined, new Date("2026-11-18T00:00:00Z")))
       .release,
-  ).toBe("20261118-gtest-f11-r001");
+  ).toBe("20261118-gtest-f12-r001");
   content.release.manifest.source.gameVersion = "new";
   expect((await publishValidatedContent(content, store, undefined, date)).release).toBe(
-    "20261117-gnew-f11-r001",
+    "20261117-gnew-f12-r001",
   );
 });
 

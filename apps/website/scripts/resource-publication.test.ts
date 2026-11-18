@@ -9,8 +9,8 @@ import { publishWebsiteResources } from "./resource-publication.ts";
 import type { PublicationDependencies } from "./resource-publication.ts";
 
 const roots: string[] = [];
-const firstId = "20261117-gtest-f11-r001";
-const secondId = "20261117-gtest-f11-r002";
+const firstId = "20261117-gtest-f12-r001";
+const secondId = "20261117-gtest-f12-r002";
 const original = '{"resourceBaseUrl":"https://assets.loomix.fun/releases/old/"}\n';
 
 afterEach(async () => {

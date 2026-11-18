@@ -8,6 +8,7 @@ import type { EvidenceRecord } from "./types.ts";
 import type { CollectionEvidence } from "./source/catalog/collection/evidence.ts";
 import type { NeighborEvidence } from "./source/neighbors/types.ts";
 import type { CollectionObservations } from "./schema.ts";
+import type { readStarsea } from "./source/starsea/read.ts";
 
 export interface ImageUse {
   use: string;
@@ -34,6 +35,7 @@ export interface SourceObservations {
   catalog: CatalogObservation;
   ingredientItemIds: number[];
   neighbors: NeighborDatabase;
+  starsea: ReturnType<typeof readStarsea>;
   additionalImages: { category: string; neighborId: number; use: string }[];
   imageNeeds: ImageNeed[];
   imageObjects: ImageObject[];
