@@ -19,10 +19,9 @@ function requireEntry<Entry>(index: ReadonlyMap<number, Entry>, id: number, kind
   return entry;
 }
 
-function indexStarsea(starsea: Starsea, assets: Assets) {
+function indexStarsea(starsea: Starsea, image: ReturnType<typeof createImageResolver>) {
   const islandById = new Map(starsea.islands.map((island) => [island.id, island]));
   const styleById = new Map(starsea.iconStyles.map((style) => [style.id, style]));
-  const image = createImageResolver(assets);
   const membershipsByIsland = new Map<number, RegionMembership[]>();
 
   const regions = starsea.regions.map((source) => {
@@ -71,7 +70,10 @@ function indexStarsea(starsea: Starsea, assets: Assets) {
 }
 
 export function toStarseaList(starsea: Starsea, assets: Assets) {
-  const { regions, islandById, membershipsByIsland, summarize } = indexStarsea(starsea, assets);
+  const { regions, islandById, membershipsByIsland, summarize } = indexStarsea(
+    starsea,
+    createImageResolver(assets),
+  );
   return {
     regions,
     islets: Array.from(membershipsByIsland, ([id, memberships]) =>
@@ -90,7 +92,8 @@ export function toStarseaDetail(
   catalog: Catalog,
   neighbors: Neighbors,
 ) {
-  const { islandById, membershipsByIsland, summarize } = indexStarsea(starsea, assets);
+  const image = createImageResolver(assets);
+  const { islandById, membershipsByIsland, summarize } = indexStarsea(starsea, image);
   const memberships = membershipsByIsland.get(isletId);
   if (!memberships) return null;
   const island = requireEntry(islandById, isletId, "islet");
@@ -102,7 +105,8 @@ export function toStarseaDetail(
     return (
       ids?.map((id) => {
         const item = requireEntry(items, id, "item");
-        return { id, name: item.name, browsable: isListedItem(item) };
+        const browsable = isListedItem(item);
+        return { id, name: item.name, image: browsable ? image(item.image) : null, browsable };
       }) ?? null
     );
   }
@@ -113,7 +117,11 @@ export function toStarseaDetail(
     specialties: displayItems(island.displayedSpecialtyIds),
     encounterNeighbors: Array.from(neighborIds, (id) => {
       const neighbor = requireEntry(neighborById, id, "neighbor");
-      return { id, name: neighbor.name };
+      return {
+        id,
+        name: neighbor.name,
+        image: image(neighbor.images.role) ?? image(neighbor.images.favour),
+      };
     }),
   };
 }

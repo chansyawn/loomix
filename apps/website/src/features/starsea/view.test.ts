@@ -82,23 +82,31 @@ test("星屿按区域与探索顺序排列，候选去重并保留可筛选的�
 
 test("详情按星屿关联物资与友邻，区分空配置和空条目", () => {
   const starsea = starseaFixture();
-  const { database } = neighborFixture();
+  const { database, mapping } = neighborFixture();
   const { catalog, gameplayTags } = catalogFixture();
+  const relatedAssets = { images: [...assets.images, ...mapping.images] };
   addFixtureRecords(
     catalog,
     gameplayTags,
-    { id: 11, name: "同名鱼", kind: "creature" },
+    { id: 11, name: "同名鱼", kind: "creature", image: { assetId: "item", variant: "icon" } },
     { id: 12, name: "同名鱼", kind: "reference" },
   );
-  const detail = toStarseaDetail(125, starsea, assets, catalog, database);
+  const detail = toStarseaDetail(125, starsea, relatedAssets, catalog, database);
   expect(detail?.creatures).toEqual([
-    { id: 12, name: "同名鱼", browsable: false },
-    { id: 11, name: "同名鱼", browsable: true },
+    { id: 12, name: "同名鱼", image: null, browsable: false },
+    { id: 11, name: "同名鱼", image: `assets/${"5".repeat(64)}.webp`, browsable: true },
   ]);
   expect(detail?.specialties).toEqual([]);
-  expect(detail?.encounterNeighbors.map(({ id }) => id)).toEqual([1]);
-  const candidate = toStarseaDetail(79, starsea, assets, catalog, database);
+  expect(detail?.encounterNeighbors).toEqual([
+    { id: 1, name: "蛮蛮", image: `assets/${"c".repeat(64)}.webp` },
+  ]);
+  const missingRole = { images: relatedAssets.images.filter((image) => image.assetId !== "role") };
+  const candidate = toStarseaDetail(79, starsea, missingRole, catalog, database);
   expect(candidate?.encounterNeighbors.map(({ id }) => id)).toEqual([1, 2]);
+  expect(candidate?.encounterNeighbors.map(({ image }) => image)).toEqual([
+    `assets/${"b".repeat(64)}.webp`,
+    null,
+  ]);
   expect(candidate?.regions.map(({ id }) => id)).toEqual([1, 2]);
   expect(candidate?.specialties).toBeNull();
   expect(toStarseaDetail(24, starsea, assets, catalog, database)?.encounterNeighbors).toEqual([]);

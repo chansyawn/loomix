@@ -1,27 +1,24 @@
-import { Link } from "@tanstack/react-router";
 import { CollectionDetailLayout } from "@/features/collection/detail-layout";
+import { CollectionItemCard } from "@/features/collection/collection-item-card";
 import { recordLocation } from "@/features/collection/item-route";
 import { RecordImage } from "@/features/collection/record-image";
 import type { StarseaDetail } from "./view";
 
-const detailLink =
-  "rounded-sm text-primary underline-offset-4 hover:underline focus-visible:outline-ring";
+const relatedCardGrid = "grid grid-cols-[repeat(auto-fill,minmax(min(100%,13rem),1fr))] gap-3";
 
 function IsletItems({ title, items }: { title: string; items: StarseaDetail["creatures"] }) {
   return (
     <section className="flex flex-col gap-2">
       <h2 className="text-xl font-semibold">{title}</h2>
       {items?.length ? (
-        <ul className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+        <ul className={relatedCardGrid}>
           {items.map((item) => (
-            <li key={item.id}>
-              {item.browsable ? (
-                <Link {...recordLocation(item)} className={detailLink}>
-                  {item.name}
-                </Link>
-              ) : (
-                item.name
-              )}
+            <li key={item.id} className="min-w-0">
+              <CollectionItemCard
+                item={item}
+                itemId={item.id}
+                link={item.browsable ? recordLocation(item) : undefined}
+              />
             </li>
           ))}
         </ul>
@@ -41,16 +38,14 @@ function EncounterSection({ neighbors }: { neighbors: StarseaDetail["encounterNe
       {neighbors.length > 0 ? (
         <>
           <p className="text-sm text-muted-foreground">实际出场受探索和季遇状态影响。</p>
-          <ul className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+          <ul className={relatedCardGrid}>
             {neighbors.map((neighbor) => (
-              <li key={neighbor.id}>
-                <Link
-                  to="/neighbors/$id"
-                  params={{ id: String(neighbor.id) }}
-                  className={detailLink}
-                >
-                  {neighbor.name}
-                </Link>
+              <li key={neighbor.id} className="min-w-0">
+                <CollectionItemCard
+                  item={neighbor}
+                  itemId={neighbor.id}
+                  link={{ to: "/neighbors/$id", params: { id: String(neighbor.id) } }}
+                />
               </li>
             ))}
           </ul>
@@ -86,14 +81,12 @@ export function StarseaDetailPage({ islet }: { islet: StarseaDetail }) {
         ...(unlockTips.length ? [["区域解锁提示", unlockTips.join("\n")] as const] : []),
       ]}
     >
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-6">
         <p className="text-sm text-muted-foreground">
           生物与特产为探索提示，实际产出受探索条件影响。
         </p>
-        <div className="grid gap-6 sm:grid-cols-2">
-          <IsletItems title="生物" items={islet.creatures} />
-          <IsletItems title="特产" items={islet.specialties} />
-        </div>
+        <IsletItems title="生物" items={islet.creatures} />
+        <IsletItems title="特产" items={islet.specialties} />
       </div>
       <EncounterSection neighbors={islet.encounterNeighbors} />
     </CollectionDetailLayout>
