@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ArrowDownUpIcon, LayoutGridIcon, TableIcon } from "lucide-react";
+import { ArrowDownUpIcon } from "lucide-react";
 import { SearchInput } from "@/ui/components/search-input";
 import {
   Select,
@@ -9,8 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/ui/components/select";
-import { ToggleGroup, ToggleGroupItem } from "@/ui/components/toggle-group";
 import type { CollectionLayout } from "./layout";
+import { CollectionLayoutToggle } from "./layout-toggle";
 
 export function CollectionToolbar<S extends string>({
   title,
@@ -76,23 +76,12 @@ export function CollectionToolbar<S extends string>({
           </SelectGroup>
         </SelectContent>
       </Select>
-      <ToggleGroup
-        aria-label={`${title}展示方式`}
-        variant="outline"
-        spacing={0}
-        value={[layout]}
+      <CollectionLayoutToggle
+        title={title}
+        layout={layout}
+        onLayoutChange={onLayoutChange}
         disabled={disabled}
-        onValueChange={([value]) => {
-          if (value === "grid" || value === "table") onLayoutChange?.(value);
-        }}
-      >
-        <ToggleGroupItem value="grid" aria-label="卡片视图">
-          <LayoutGridIcon />
-        </ToggleGroupItem>
-        <ToggleGroupItem value="table" aria-label="表格视图">
-          <TableIcon />
-        </ToggleGroupItem>
-      </ToggleGroup>
+      />
       {actions}
     </div>
   );
