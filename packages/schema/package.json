@@ -7,6 +7,7 @@
     "./gameplay-tags": "./src/gameplay-tags/index.ts",
     "./catalog": "./src/catalog/index.ts",
     "./neighbors": "./src/neighbors/index.ts",
+    "./starsea": "./src/starsea/index.ts",
     "./assets": "./src/assets/index.ts",
     "./dataset": "./src/dataset/index.ts",
     "./release": "./src/release/index.ts",

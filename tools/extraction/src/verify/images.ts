@@ -34,6 +34,18 @@ function configuredReferences(
   source: string,
 ): string[] {
   const { owner } = need;
+  if (owner.kind.startsWith("starsea")) {
+    const [root, field] =
+      owner.kind === "starseaRegion"
+        ? [652, 13]
+        : owner.kind === "starseaIsland"
+          ? [654, 27]
+          : [628, 2];
+    const row = tables.rows(root).find((entry) => tables.id(entry) === owner.id);
+    assert.ok(row, `Independent starsea image owner ${need.id}`);
+    const value = tables.string(row, field)?.trim().replaceAll("\\", "/");
+    return value ? [value] : [];
+  }
   if (owner.kind !== "neighbor") {
     const record = observations.diagnostics.collection.items.find((entry) => entry.id === owner.id);
     if (owner.kind === "collection" && record?.kind === "series") return [];
@@ -122,6 +134,7 @@ export function verifyImages(
   assert.ok([...audit.records, ...audit.configChecks].every((entry) => entry.matchesManifest));
   const exactLocators = new Map<string, Set<string>>();
   const byContainer = new Map<string, IndexedAsset[]>();
+  const bySpriteFolderAndName = new Map<string, IndexedAsset[]>();
   for (const entry of index) {
     const locator = JSON.stringify([entry.Source, entry.Type, entry.Name, entry.Container]);
     const ids = exactLocators.get(locator) ?? new Set<string>();
@@ -132,6 +145,13 @@ export function verifyImages(
       const entries = byContainer.get(container) ?? [];
       entries.push(entry);
       byContainer.set(container, entries);
+      if (entry.Type === "Sprite" && entry.Name) {
+        const folder = normalize(entry.Container).split("/").slice(0, -1).join("/");
+        const spriteKey = `${folder}/${normalize(entry.Name)}`;
+        const siblings = bySpriteFolderAndName.get(spriteKey) ?? [];
+        siblings.push(entry);
+        bySpriteFolderAndName.set(spriteKey, siblings);
+      }
     }
   }
   const objects = new Map<string, ImageObject>();
@@ -168,7 +188,7 @@ export function verifyImages(
       "Decoded original dimensions",
     );
   }
-  const resolved = (reference: string): IndexedAsset | undefined => {
+  const resolved = (reference: string, allowAtlasName: boolean): IndexedAsset | undefined => {
     const key = normalize(`assets/moleres/rel/sres/${reference}`);
     const preferred = (entries: IndexedAsset[]) => {
       const overlays = entries.filter((entry) => /(?:^|\/)Persistent\//i.test(entry.Source));
@@ -181,11 +201,12 @@ export function verifyImages(
     };
     const texture = preferred(byContainer.get(`Texture2D:${key}`) ?? []);
     if (texture && !texture.Name?.startsWith("sactx-")) return texture;
-    return preferred(
+    const sprite = preferred(
       (byContainer.get(`Sprite:${key}`) ?? []).filter(
         (entry) => entry.Name && normalize(entry.Name) === normalize(reference.split("/").at(-1)!),
       ),
     );
+    return sprite ?? (allowAtlasName ? preferred(bySpriteFolderAndName.get(key) ?? []) : undefined);
   };
   const expectedBindings: ImageBinding[] = [];
   const candidateKeys = new Set<string>();
@@ -194,7 +215,9 @@ export function verifyImages(
       (entry) => entry.id === need.owner.id,
     );
     const variant =
-      need.owner.kind === "neighbor"
+      need.owner.kind === "neighbor" ||
+      need.owner.kind === "starseaRegion" ||
+      need.owner.kind === "starseaIsland"
         ? "illustration"
         : need.owner.kind === "collection" &&
             record?.category === "furniture" &&
@@ -224,7 +247,7 @@ export function verifyImages(
         return [{ reference, rank, object: identity({ ...selection, packageSha256 }) }];
       }
       if (!reference.startsWith("UISprite/")) return [];
-      const asset = resolved(reference);
+      const asset = resolved(reference, need.owner.kind.startsWith("starsea"));
       return asset
         ? [
             {

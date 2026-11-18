@@ -93,7 +93,9 @@ export function imageCollector(index: IndexedAsset[], packages: ReadonlyMap<stri
     sources: EvidenceSource[],
     required = false,
   ): string => {
-    const match: IconMatch | null = reference ? resolve(reference) : null;
+    const match: IconMatch | null = reference
+      ? resolve(reference, owner.kind.startsWith("starsea"))
+      : null;
     const candidates =
       match?.matched && match.source && match.pathId && match.container && match.resourceName
         ? [

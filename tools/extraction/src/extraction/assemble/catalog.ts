@@ -6,7 +6,7 @@ export function assembleCatalog(
   observed: CatalogObservation,
   image: (use: string | null, collection: string, id: number, field: string) => ImageRef | null,
   ingredientIds: readonly number[],
-  giftItemIds: readonly number[],
+  referencedItemIds: readonly number[],
 ): Catalog {
   const items: Item[] = observed.items.map((item): Item => {
     if (item.kind === "reference") return item;
@@ -36,7 +36,7 @@ export function assembleCatalog(
   const formal = new Set(
     [...items.filter((item) => item.kind !== "reference"), ...collections].map((entry) => entry.id),
   );
-  const references = new Set([...ingredientIds, ...giftItemIds]);
+  const references = new Set([...ingredientIds, ...referencedItemIds]);
   for (const item of items) {
     if (item.kind === "furniture")
       for (const recipe of item.craftingRecipes)

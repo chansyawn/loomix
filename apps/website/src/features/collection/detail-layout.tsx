@@ -27,7 +27,7 @@ export function CollectionDetailLayout({
 }: {
   image: ReactNode;
   title: string;
-  quality: number | null;
+  quality?: number | null;
   description?: ReactNode;
   fields: readonly DetailField[];
   children?: ReactNode;
@@ -42,7 +42,7 @@ export function CollectionDetailLayout({
         <div className="@container/detail-fields min-w-0 space-y-4">
           <div className="space-y-3">
             <h1 className="flex items-center gap-3 text-3xl/tight font-semibold tracking-tight wrap-break-word sm:text-4xl">
-              {quality !== null && <QualityMarker quality={quality} />}
+              {typeof quality === "number" && <QualityMarker quality={quality} />}
               <span className="min-w-0">{title}</span>
             </h1>
             {quality === null && <p className="text-sm text-muted-foreground">品阶：未提供</p>}

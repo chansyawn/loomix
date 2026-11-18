@@ -18,8 +18,19 @@ export interface ImageCandidate {
   reference: string;
   rank: number;
 }
+const ImageOwnerKindSchema = z.enum([
+  "item",
+  "collection",
+  "seed",
+  "stage",
+  "neighbor",
+  "neighborClothing",
+  "starseaRegion",
+  "starseaIsland",
+  "starseaIconStyle",
+]);
 export interface ImageOwner {
-  kind: "item" | "collection" | "seed" | "stage" | "neighbor" | "neighborClothing";
+  kind: z.infer<typeof ImageOwnerKindSchema>;
   id: number;
   field: string;
 }
@@ -96,7 +107,7 @@ export const imageObjectSchema = z.strictObject({
 export const imageNeedSchema = z.strictObject({
   id: z.string().min(1),
   owner: z.strictObject({
-    kind: z.enum(["item", "collection", "seed", "stage", "neighbor", "neighborClothing"]),
+    kind: ImageOwnerKindSchema,
     id: z.number().int().positive(),
     field: z.string().min(1),
   }),

@@ -9,6 +9,7 @@
 | [catalog](src/catalog/index.ts)             | 物品、集合、配方、生长配置与引用校验 |
 | [gameplay-tags](src/gameplay-tags/index.ts) | 标签树、子树查询与标签解析           |
 | [neighbors](src/neighbors/index.ts)         | 友邻及其内嵌资料                     |
+| [starsea](src/starsea/index.ts)             | 星海区域、星屿与探索关系             |
 | [dataset](src/dataset/index.ts)             | 统一领域快照与跨领域校验             |
 | [assets](src/assets/index.ts)               | 图片引用与交付文件映射               |
 | [release](src/release/index.ts)             | 发布清单、文档组装与资源覆盖校验     |
@@ -19,6 +20,8 @@
 物品与集合共享 ID 空间，每个 ID 只出现一次。正式物品的准入依据保存在提取器中；客户端图鉴标记和网站页面可见性不进入共享收录类型。
 
 从属数据内嵌在所属实体中，避免独立维护多份归属关系。关系只保存一个方向，反向索引由消费方派生，例如阶段 `plantId` 是植物关联的权威字段，植物到种子的关系由它派生。
+
+星海区域保留探索星屿顺序和区域邂逅关系。星屿展示物资引用物品目录，同名物品按 ID 区分。消费方可按物品或友邻 ID 反查区域和星屿。物资展示与邂逅候选的业务范围见[业务确认与调查](../../tools/extraction/docs/business-investigation.md#星海与星屿)。
 
 物品 `tagIds` 保存直接标签并稳定去重，不展开祖先；`gameplay-tags` 保存完整标签树的内部名、父级和显示文本。颜色、材质、风格、产区和食材分类由对应子树派生，送礼偏好与食谱引用统一标签。来源等多值字段使用数组，不从展示字符串反向拆解。
 

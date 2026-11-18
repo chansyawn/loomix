@@ -15,6 +15,17 @@ export const profile = {
   wordMask: 0x53020253,
   shortMask: 0x5555,
   assetPrefix: "assets/moleres/rel/sres/",
+  starsea: {
+    iconStyles: 628,
+    galaxies: 650,
+    explorationLists: 651,
+    regions: 652,
+    encounters: 653,
+    islands: 654,
+    resourceProfiles: 655,
+    dropGroups: 563,
+    testIslandIds: [101],
+  },
   roots: {
     textmap: 1,
     items: 318,

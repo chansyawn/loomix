@@ -4,7 +4,12 @@ import * as React from "react";
 import { Link } from "@tanstack/react-router";
 import GithubIcon from "@/assets/icons/github.svg?react";
 import { site } from "@/site";
-import { collectionNavigation, homeItem, neighborsItem } from "@/features/layout/navigation";
+import {
+  collectionNavigation,
+  homeItem,
+  neighborsItem,
+  starseaItem,
+} from "@/features/layout/navigation";
 import { Button } from "@/ui/components/button";
 import {
   Sidebar,
@@ -70,6 +75,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               >
                 <neighborsItem.icon />
                 <span>{neighborsItem.title}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                render={<Link to={starseaItem.to} activeProps={{ "data-active": true }} />}
+              >
+                <starseaItem.icon />
+                <span>{starseaItem.title}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

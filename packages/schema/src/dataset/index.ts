@@ -2,6 +2,7 @@ import { z } from "zod";
 import { GameplayTagsSchema } from "../gameplay-tags/index.ts";
 import { CatalogSchema } from "../catalog/index.ts";
 import { NeighborsSchema } from "../neighbors/index.ts";
+import { StarseaSchema } from "../starsea/index.ts";
 import { ContextSchema, SourceSchema, assertValid } from "../common/identity.ts";
 import { validateDataset } from "./validate.ts";
 
@@ -12,6 +13,7 @@ export const DatasetSchema = z.strictObject({
   gameplayTags: GameplayTagsSchema,
   catalog: CatalogSchema,
   neighbors: NeighborsSchema,
+  starsea: StarseaSchema,
 });
 export type Dataset = z.infer<typeof DatasetSchema>;
 export function emptyDataset(context: Dataset["context"], source: Dataset["source"]): Dataset {
@@ -21,6 +23,7 @@ export function emptyDataset(context: Dataset["context"], source: Dataset["sourc
     gameplayTags: { tags: [] },
     catalog: { items: [], collections: [] },
     neighbors: { neighbors: [] },
+    starsea: { regions: [], islands: [], iconStyles: [] },
   };
 }
 export const parseDataset = (input: unknown): Dataset => {

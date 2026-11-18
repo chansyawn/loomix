@@ -1,11 +1,12 @@
 import { useRouterState } from "@tanstack/react-router";
 import { NeighborsReturnLink } from "@/features/neighbors/navigation";
+import { StarseaReturnLink } from "@/features/starsea/navigation";
 import {
   CollectionReturnLink,
   collectionOrigin,
   collectionListPath,
 } from "@/features/collection/navigation";
-import { collectionNavigation, homeItem } from "./navigation";
+import { collectionNavigation, homeItem, neighborsItem, starseaItem } from "./navigation";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -38,11 +39,13 @@ export function SiteHeader() {
   });
   const detail = pathname.startsWith("/collections/records/");
   const neighborDetail = /^\/neighbors\/[^/]+\/?$/.test(pathname);
+  const starseaDetail = /^\/starsea\/islets\/[^/]+\/?$/.test(pathname);
   const listPath = detail ? collectionListPath(origin?.href ?? "/collections/all") : pathname;
   const collection = collectionNavigation.items.find((item) => item.to === listPath);
   const title =
     collection?.title ??
-    (pathname === "/neighbors" ? "友邻" : pathname === "/" ? homeItem.title : "页面未找到");
+    [homeItem, neighborsItem, starseaItem].find((item) => item.to === pathname)?.title ??
+    "页面未找到";
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 px-4">
       <SidebarTrigger className="-ml-1" aria-label="切换侧栏" />
@@ -78,9 +81,17 @@ export function SiteHeader() {
               <BreadcrumbSeparator />
             </>
           )}
+          {starseaDetail && (
+            <>
+              <BreadcrumbItem>
+                <BreadcrumbLink render={<StarseaReturnLink />}>{starseaItem.title}</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+            </>
+          )}
           <BreadcrumbItem className="min-w-0">
             <BreadcrumbPage>
-              {detail || neighborDetail ? (detailTitle ?? "详情") : title}
+              {detail || neighborDetail || starseaDetail ? (detailTitle ?? "详情") : title}
             </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>

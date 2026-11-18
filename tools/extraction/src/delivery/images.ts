@@ -53,6 +53,7 @@ export async function renderImages(
     "gameplay-tags": dataset.gameplayTags,
     catalog: dataset.catalog,
     neighbors: dataset.neighbors,
+    starsea: dataset.starsea,
     assets,
   };
   const files: ReleaseManifest["files"] = [];

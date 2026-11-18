@@ -7,6 +7,9 @@ export const evidenceCollections = {
   "catalog.collections": (dataset: Dataset) => dataset.catalog.collections,
   "neighbors.neighbors": (dataset: Dataset) => dataset.neighbors.neighbors,
   "gameplayTags.tags": (dataset: Dataset) => dataset.gameplayTags.tags,
+  "starsea.regions": (dataset: Dataset) => dataset.starsea.regions,
+  "starsea.islands": (dataset: Dataset) => dataset.starsea.islands,
+  "starsea.iconStyles": (dataset: Dataset) => dataset.starsea.iconStyles,
 } as const;
 export type EvidenceCollection = keyof typeof evidenceCollections;
 

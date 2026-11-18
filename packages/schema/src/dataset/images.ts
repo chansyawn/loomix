@@ -2,7 +2,9 @@ import { ImageRefSchema, imageKey } from "../assets/index.ts";
 import type { ImageRef } from "../assets/index.ts";
 import type { Dataset } from "./index.ts";
 
-export function referencedImages(dataset: Pick<Dataset, "catalog" | "neighbors">): ImageRef[] {
+export function referencedImages(
+  dataset: Pick<Dataset, "catalog" | "neighbors" | "starsea">,
+): ImageRef[] {
   const images = new Map<string, ImageRef>();
   const visit = (value: unknown): void => {
     if (Array.isArray(value)) {

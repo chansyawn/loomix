@@ -2,6 +2,7 @@ import { parseReleaseManifest } from "@loomix/schema/release";
 import { expect, test, vi } from "vite-plus/test";
 import { parseCatalog } from "@loomix/schema/catalog";
 import { parseAssets } from "@loomix/schema/assets";
+import { parseStarsea } from "@loomix/schema/starsea";
 import { catalogFixture, fixtureRequest } from "../features/collection-fixture";
 import { createResourceReader } from "./resources";
 
@@ -11,11 +12,16 @@ const url = (input: Parameters<typeof fetch>[0]) =>
 test("a resource reader shares one manifest and uses its injected transport for all documents", async () => {
   const request = vi.fn(fixtureRequest(catalogFixture()));
   const read = createResourceReader(request);
-  await Promise.all([read("catalog", parseCatalog), read("assets", parseAssets)]);
+  const [, , starsea] = await Promise.all([
+    read("catalog", parseCatalog),
+    read("assets", parseAssets),
+    read("starsea", parseStarsea),
+  ]);
+  expect(starsea.regions).toEqual([]);
   expect(request.mock.calls.filter(([input]) => url(input).endsWith("release.json"))).toHaveLength(
     1,
   );
-  expect(request).toHaveBeenCalledTimes(3);
+  expect(request).toHaveBeenCalledTimes(4);
 });
 
 test("modified document bytes fail before domain parsing", async () => {
@@ -35,7 +41,7 @@ test("旧公共版本在读取 manifest 时拒绝，不尝试补字段", async (
     const response = await original(input, init);
     if (!url(input).endsWith("release.json")) return response;
     const manifest = parseReleaseManifest(await response.json());
-    return Response.json({ ...manifest, formatVersion: 9 });
+    return Response.json({ ...manifest, formatVersion: 11 });
   };
   await expect(createResourceReader(request)("catalog", parseCatalog)).rejects.toThrow();
 });
