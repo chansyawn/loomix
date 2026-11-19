@@ -1,10 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { Card } from "@/ui/components/card";
-import { collectionNavigation, neighborsItem } from "../layout/navigation";
+import { collectionNavigation, neighborsItem, starseaItem } from "../layout/navigation";
 
 const categories = [
   ...collectionNavigation.items.filter((item) => item.to !== "/collections/all"),
   neighborsItem,
+  starseaItem,
 ];
 
 export function CollectionShortcuts() {
@@ -13,7 +14,7 @@ export function CollectionShortcuts() {
       <h2 id="home-categories" className="mb-4 font-heading text-lg font-semibold">
         探索图鉴
       </h2>
-      <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 xl:grid-cols-7">
+      <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 xl:grid-cols-8">
         {categories.map(({ title, to, icon: Icon }) => (
           <Card key={to} padding="none" interactive>
             <Link
