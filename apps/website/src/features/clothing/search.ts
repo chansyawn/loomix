@@ -52,15 +52,17 @@ export function emptyQuery(): ViewQuery {
   return viewQuerySchema.parse({});
 }
 const setQuery = base.transform((query) => ({ ...emptyQuery(), ...query }));
-const appearanceQuery = base
+const categorizedQuery = base
   .extend({ categories: stringList.default([]) })
   .transform((query) => ({ ...emptyQuery(), ...query }));
+const views = ["items", "sets", "appearances", "neighborClothing"] as const;
 export const clothingSearchSchema = z.object({
   layout: collectionLayoutSchema,
-  view: z.enum(["items", "sets", "appearances"]).catch("items").default("items"),
+  view: z.enum(views).catch("items").default("items"),
   items: viewQuerySchema.prefault({}).catch(emptyQuery),
   sets: setQuery.prefault({}).catch(emptyQuery),
-  appearances: appearanceQuery.prefault({}).catch(emptyQuery),
+  appearances: categorizedQuery.prefault({}).catch(emptyQuery),
+  neighborClothing: categorizedQuery.prefault({}).catch(emptyQuery),
 });
 export type ClothingSearchInput = z.input<typeof clothingSearchSchema>;
 export type ClothingSearch = z.output<typeof clothingSearchSchema>;
@@ -81,7 +83,7 @@ export function compactClothingSearch(input: ClothingSearchInput): ClothingSearc
     ...(search.layout ? { layout: search.layout } : {}),
     ...(search.view !== "items" ? { view: search.view } : {}),
     ...Object.fromEntries(
-      (["items", "sets", "appearances"] as const).flatMap((view) => {
+      views.flatMap((view) => {
         const query = compactQuery(search[view]);
         return Object.keys(query).length ? [[view, query]] : [];
       }),
@@ -99,6 +101,7 @@ export const compactClothingSearchMiddleware: SearchMiddleware<ClothingSearch> =
     items: _items,
     sets: _sets,
     appearances: _appearances,
+    neighborClothing: _neighborClothing,
     ...other
   } = result;
   // 校验时从精简的 URL 表示中恢复必需的默认值。

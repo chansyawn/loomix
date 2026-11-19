@@ -7,7 +7,6 @@ import { CollectionVirtualGrid } from "../collection/virtual-grid";
 import { CollectionTable } from "../collection/table";
 import { collectionSort, tableSorting } from "../collection/sort";
 import { useCollectionLayout, saveCollectionLayout } from "../collection/use-collection-layout";
-import type { ClothingItem, ClothingSet, ClothingAppearance } from "../collection-view";
 import type { ClothingData } from "./data";
 import { ClothingCard } from "./clothing-card";
 import { filterGroups, queryClothing } from "./query";
@@ -97,8 +96,8 @@ export function ClothingPage({
               });
             }}
           />
-        ) : search.view === "items" ? (
-          <CollectionVirtualGrid<ClothingItem | ClothingSet | ClothingAppearance>
+        ) : search.view === "items" || search.view === "neighborClothing" ? (
+          <CollectionVirtualGrid
             key={resultKey}
             rows={result.rows}
             layout={presentation.grid}

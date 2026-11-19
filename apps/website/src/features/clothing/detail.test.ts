@@ -32,6 +32,7 @@ const data = {
   ],
   items: [first, second],
   sets: [set, { ...set, id: 4, componentIds: [1] }],
+  neighborClothing: [],
 };
 
 afterEach(() => vi.unstubAllGlobals());

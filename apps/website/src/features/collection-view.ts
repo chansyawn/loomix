@@ -70,6 +70,8 @@ export type ClothingItem = CategorizedRecord & {
   acquisition: string | null;
 };
 export type ClothingAppearance = CategorizedRecord;
+export type NeighborClothingItem = CategorizedRecord &
+  Pick<ItemOf<"neighborClothing">, "bodyTypes" | "price">;
 export type MiscellaneousItem = CatalogEntrySummary & {
   acquisition: string | null;
 };
@@ -109,7 +111,12 @@ export interface CollectionView {
   creatures: { series: CreatureSeries[]; items: CreatureItem[] };
   plants: PlantsData;
   dishes: { series: DishSeries[]; items: DishItem[] };
-  clothing: { sets: ClothingSet[]; items: ClothingItem[]; appearances: ClothingAppearance[] };
+  clothing: {
+    sets: ClothingSet[];
+    items: ClothingItem[];
+    appearances: ClothingAppearance[];
+    neighborClothing: NeighborClothingItem[];
+  };
   miscellaneous: MiscellaneousItem[];
 }
 
@@ -173,7 +180,7 @@ export function toCollectionView(
       sourceTreesByItemId: new Map(),
     },
     dishes: { series: [], items: [] },
-    clothing: { sets: [], items: [], appearances: [] },
+    clothing: { sets: [], items: [], appearances: [], neighborClothing: [] },
     miscellaneous: [],
   };
   for (const item of catalog.items) {
@@ -216,6 +223,14 @@ export function toCollectionView(
         break;
       case "appearance":
         view.clothing.appearances.push({ ...common, category: item.category });
+        break;
+      case "neighborClothing":
+        view.clothing.neighborClothing.push({
+          ...common,
+          category: item.category,
+          bodyTypes: item.bodyTypes,
+          price: item.price,
+        });
         break;
       case "creature":
         view.creatures.items.push({

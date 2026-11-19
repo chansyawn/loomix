@@ -1,5 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import type { ClothingItem, ClothingSet, ClothingAppearance } from "../collection-view";
+import type { ClothingSet } from "../collection-view";
+import {
+  formatNeighborClothingBodyTypes,
+  formatNeighborClothingPrice,
+} from "../neighbor-clothing/presentation";
 import {
   recordColumns,
   textColumn,
@@ -10,8 +14,7 @@ import type { CollectionColumn } from "../collection/table-columns";
 import { useCollectionOrigin } from "@/features/collection/navigation";
 import { membershipIndex } from "./query";
 import type { View } from "./search";
-
-export type ClothingRow = ClothingItem | ClothingSet | ClothingAppearance;
+import type { ClothingRow } from "./data";
 
 function NameLink({ record }: { record: ClothingRow }) {
   const origin = useCollectionOrigin();
@@ -73,6 +76,19 @@ export function clothingTableColumns(
         "category" in record ? record.category : null,
       ),
       textColumn("description", "描述", 320, (record) => record.description),
+    ];
+  if (view === "neighborClothing")
+    return [
+      ...common,
+      textColumn("category", "部位", 112, (record) =>
+        "category" in record ? record.category : null,
+      ),
+      textColumn("bodyTypes", "可用体型", 176, (record) =>
+        "bodyTypes" in record ? formatNeighborClothingBodyTypes(record.bodyTypes) : null,
+      ),
+      textColumn("price", "配置价格", 176, (record) =>
+        "price" in record ? formatNeighborClothingPrice(record.price) : null,
+      ),
     ];
   const memberships = membershipIndex(groups);
   const complete = groups.every((entry) => entry.componentIds !== null);

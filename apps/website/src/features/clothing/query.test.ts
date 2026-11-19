@@ -54,6 +54,28 @@ const data: ClothingData = {
   appearances: [
     { id: 5, name: "卷发", image: null, description: null, quality: 0, category: "发型" },
   ],
+  neighborClothing: [
+    {
+      id: 6,
+      name: "丰年连衣裙",
+      image: null,
+      description: null,
+      quality: 1,
+      category: "连衣裙",
+      bodyTypes: ["medium", "big"],
+      price: null,
+    },
+    {
+      id: 7,
+      name: "丰年手套",
+      image: "assets/icon.webp",
+      description: null,
+      quality: 3,
+      category: "手套",
+      bodyTypes: ["small"],
+      price: 20,
+    },
+  ],
 };
 const query = (patch: Partial<ReturnType<typeof emptyQuery>>) =>
   queryClothing(data, "items", { ...emptyQuery(), ...patch }).rows.map((row) => row.id);
@@ -110,6 +132,19 @@ describe("clothing queries", () => {
     expect(
       filterGroups(data, "items").find((group) => group.key === "styles")?.options,
     ).toContainEqual({ value: "古典", label: "古典" });
+  });
+  it("按部位和品阶筛选友邻服饰，并保留缺图条目", () => {
+    const neighborQuery = (patch: Partial<ReturnType<typeof emptyQuery>>) =>
+      queryClothing(data, "neighborClothing", { ...emptyQuery(), ...patch });
+    expect(neighborQuery({ sort: "quality-desc" }).rows.map((row) => row.id)).toEqual([7, 6]);
+    expect(neighborQuery({ q: " 丰年 ", categories: ["连衣裙"], qualities: ["1"] }).rows).toEqual([
+      data.neighborClothing[0],
+    ]);
+    expect(neighborQuery({ categories: ["连衣裙"], qualities: ["3"] }).total).toBe(0);
+    expect(filterGroups(data, "neighborClothing").map(({ key, label }) => [key, label])).toEqual([
+      ["categories", "部位"],
+      ["qualities", "品阶"],
+    ]);
   });
   it("retains independent view state and recovers malformed search parameters", () => {
     const search = clothingSearchSchema.parse({

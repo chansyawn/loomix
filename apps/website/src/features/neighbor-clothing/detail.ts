@@ -1,7 +1,6 @@
 import type { ItemOf } from "@loomix/schema/catalog";
 import type { OverviewRecord } from "../collection/catalog";
-
-const bodyTypeNames = { small: "小型", medium: "中型", big: "大型" } as const;
+import { formatNeighborClothingBodyTypes } from "./presentation";
 
 export type NeighborClothingDetail = {
   record: OverviewRecord & { record: ItemOf<"neighborClothing"> };
@@ -20,7 +19,7 @@ export function neighborClothingDetail(
     record: row,
     neighborName: neighborName ?? null,
     slotName: row.record.category,
-    modelSizes: row.record.bodyTypes.map((type) => bodyTypeNames[type]).join("、"),
+    modelSizes: formatNeighborClothingBodyTypes(row.record.bodyTypes),
     price: row.record.price,
     counterpartId: row.record.playerItemId,
   };

@@ -22,7 +22,7 @@ React、组件引入与测试范围遵循[Agent 协作约定](../../AGENTS.md)�
 
 [资源读取器](src/infrastructure/resources.ts)先加载资源发布清单，再按其声明读取领域文档，核对字节数与 SHA256。功能模块将[共享数据契约](../../packages/schema/README.md)转换为页面查询与展示所需的数据，网站专属规则在应用内维护，标签的可见性、分组和命名依据见[标签筛选策略](docs/tag-filter-policy.md)；领域定义遵循[领域术语表](../../GLOSSARY.md)。
 
-网站内部的 `collection` 功能目录、`CollectionView` 与 `/collections` 路由服务网站图鉴，不对应共享契约中单个 `Collection` 集合。`CatalogEntrySummary` 保存展示摘要，`ListedEntry` 表示正式条目；通用物品关联视图的 `browsable` 标记控制该视图的浏览与链接，不能用来判断正式收录资格。友邻服饰已正式收录并有独立详情，但不进入该通用关联视图的可浏览范围。
+网站内部的 `collection` 功能目录、`CollectionView` 与 `/collections` 路由服务网站图鉴，不对应共享契约中单个 `Collection` 集合。`CatalogEntrySummary` 保存展示摘要，`ListedEntry` 表示正式条目；通用物品关联视图的 `browsable` 标记控制该视图的浏览与链接，不能用来判断正式收录资格。友邻服饰已正式收录并有独立详情，但不进入该通用关联视图的可浏览范围。图鉴列表位于「服饰 → 友邻服饰」。
 
 两个 `release.json` 的位置与结构由[共享数据契约](../../packages/schema/README.md#快照图片与发布)统一维护。更新游戏数据时，按[CI/CD 与部署](../../DEPLOYMENT.md#资源更新流程)完成提取、本地验证、上传与指针更新。
 

@@ -29,7 +29,7 @@ export function filterGroups(data: ClothingData, view: View): FilterGroup<Filter
   if (view !== "sets")
     groups.push({
       key: "categories",
-      label: "分类",
+      label: view === "neighborClothing" ? "部位" : "分类",
       options: options(data[view].map((row) => row.category)),
     });
   groups.push({
@@ -72,7 +72,7 @@ function matches(selected: string[], values: string[]): boolean {
   return selected.length === 0 || selected.some((value) => values.includes(value));
 }
 export function queryClothing(data: ClothingData, view: View, query: ViewQuery) {
-  const memberships = membershipIndex(data.sets);
+  const memberships = view === "items" ? membershipIndex(data.sets) : null;
   const term = query.q.trim().toLocaleLowerCase("zh-CN");
   const rows = data[view].filter((row) => {
     if (
@@ -84,7 +84,7 @@ export function queryClothing(data: ClothingData, view: View, query: ViewQuery) 
     if (!matches(query.categories, [row.category ?? missing])) return false;
     if (!("styles" in row)) return true;
     return (
-      matches(query.sets, memberships.get(row.id)?.map((set) => String(set.id)) ?? [ungrouped]) &&
+      matches(query.sets, memberships?.get(row.id)?.map((set) => String(set.id)) ?? [ungrouped]) &&
       matches(query.colors, splitValues(row.colors)) &&
       matches(query.materials, splitValues(row.materials)) &&
       matches(query.styles, splitValues(row.styles)) &&
