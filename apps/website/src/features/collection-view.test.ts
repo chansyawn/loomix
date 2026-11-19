@@ -55,21 +55,32 @@ test("external appearance records retain their identity without entering item li
   ).toBe(8);
 });
 
-test("友邻服饰保留独立分类并且不进入玩家服饰或普通食材列表", () => {
+test("有图和缺图的友邻服饰均进入专属列表", () => {
   const { catalog, gameplayTags } = emptyDataset(fixtureContext, fixtureSource);
-  addFixtureRecords(catalog, gameplayTags, {
-    id: 9,
-    name: "云果手套",
-    kind: "neighborClothing",
-    category: "手套",
-    image: null,
-    description: "友邻专属服饰",
-    quality: 1,
-    acquisition: null,
-    neighborId: 1010,
-    playerItemId: null,
-    modelPaths: { small: null, medium: "NpcOutfits/Medium/9", big: null },
-  });
+  const file = `assets/${"a".repeat(64)}.webp`;
+  addFixtureRecords(
+    catalog,
+    gameplayTags,
+    {
+      id: 9,
+      name: "丰年连衣裙",
+      kind: "neighborClothing",
+      category: "连衣裙",
+      image: null,
+      quality: 1,
+      neighborId: 1010,
+      bodyTypes: ["medium", "big"],
+    },
+    {
+      id: 10,
+      name: "丰年手套",
+      kind: "neighborClothing",
+      category: "手套",
+      image: { assetId: file, variant: "icon" },
+      bodyTypes: ["small"],
+      price: 0,
+    },
+  );
   const view = toCollectionView(
     catalog,
     assetsFixture(catalog),
@@ -77,6 +88,18 @@ test("友邻服饰保留独立分类并且不进入玩家服饰或普通食材�
   );
   expect(view.clothing.items).toEqual([]);
   expect(view.clothing.appearances).toEqual([]);
+  expect(view.clothing.neighborClothing).toMatchObject([
+    {
+      id: 9,
+      name: "丰年连衣裙",
+      image: null,
+      category: "连衣裙",
+      quality: 1,
+      bodyTypes: ["medium", "big"],
+      price: null,
+    },
+    { id: 10, name: "丰年手套", image: file, category: "手套", bodyTypes: ["small"], price: 0 },
+  ]);
   expect(view.ingredientItemsById.get(9)).toMatchObject({
     catalogCategory: "neighborClothing",
     browsable: false,

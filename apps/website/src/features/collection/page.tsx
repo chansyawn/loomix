@@ -44,18 +44,22 @@ export function CollectionPage<V extends string>({
         >
           <TabsList
             aria-label={`${title}视图`}
-            className={cn("mb-1", tabs.length > 2 ? "w-fit max-w-full" : undefined)}
+            className={cn(
+              "mb-1",
+              tabs.length > 2 && "w-fit max-w-full",
+              tabs.length > 3 && "@max-[28rem]:grid @max-[28rem]:h-auto! @max-[28rem]:grid-cols-2",
+            )}
           >
             {tabs.map((tab) => (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
                 disabled={loading}
-                className={
-                  tabs.length > 2
-                    ? "min-w-0 flex-initial [&_svg]:hidden @min-[28rem]:[&_svg]:block"
-                    : undefined
-                }
+                className={cn(
+                  tabs.length > 2 &&
+                    "min-w-0 flex-initial [&_svg]:hidden @min-[28rem]:[&_svg]:block",
+                  tabs.length > 3 && "@max-[28rem]:h-auto",
+                )}
               >
                 {tab.icon}
                 {tab.label}

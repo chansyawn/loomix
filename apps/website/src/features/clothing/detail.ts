@@ -1,15 +1,17 @@
 import { notFound } from "@tanstack/react-router";
 import { loadClothing } from "./data";
 import type { ClothingData } from "./data";
-import type { View } from "./search";
 import { setDetailNavigation } from "../collection/detail-navigation-model";
+
+type PlayerClothingData = Pick<ClothingData, "items" | "sets" | "appearances">;
+type PlayerClothingView = keyof PlayerClothingData;
 
 export function parseClothingId(value: string): number {
   const id = Number(value);
   if (!/^[1-9]\d*$/.test(value) || !Number.isSafeInteger(id)) throw notFound();
   return id;
 }
-export function clothingDetail(data: ClothingData, view: View, id: number) {
+export function clothingDetail(data: PlayerClothingData, view: PlayerClothingView, id: number) {
   const navigation = setDetailNavigation(data, id, "套装");
   if (view === "items") {
     const record = data.items.find((row) => row.id === id);
@@ -36,7 +38,10 @@ export function clothingDetail(data: ClothingData, view: View, id: number) {
   };
 }
 export type ClothingDetail = ReturnType<typeof clothingDetail>;
-export async function loadClothingDetail(view: View, value: string): Promise<ClothingDetail> {
+export async function loadClothingDetail(
+  view: PlayerClothingView,
+  value: string,
+): Promise<ClothingDetail> {
   const id = parseClothingId(value);
   return clothingDetail(await loadClothing(), view, id);
 }

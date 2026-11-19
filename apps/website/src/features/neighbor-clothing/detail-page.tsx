@@ -3,6 +3,7 @@ import { CollectionDetailExtras, CollectionDetailLayout } from "../collection/de
 import { RecordImage } from "../collection/record-image";
 import { recordLocation } from "../collection/item-route";
 import type { NeighborClothingDetail } from "./detail";
+import { formatNeighborClothingPrice } from "./presentation";
 
 export function NeighborClothingDetailPage({ detail }: { detail: NeighborClothingDetail }) {
   const { record } = detail;
@@ -20,7 +21,7 @@ export function NeighborClothingDetailPage({ detail }: { detail: NeighborClothin
         ["部位", detail.slotName],
         ["友邻", detail.neighborName],
         ["可用体型", detail.modelSizes],
-        ["配置价格", detail.price === null ? null : `${detail.price} 友邻服饰币`],
+        ["配置价格", formatNeighborClothingPrice(detail.price)],
       ]}
     >
       <CollectionDetailExtras

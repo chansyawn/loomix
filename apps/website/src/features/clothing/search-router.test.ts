@@ -12,6 +12,7 @@ import {
   compactClothingSearch,
   compactClothingSearchMiddleware,
   clothingSearchSchema,
+  updateViewQuery,
 } from "./search";
 
 function setup(initialEntry = "/collections/clothing") {
@@ -39,6 +40,7 @@ describe("compact clothing URLs", () => {
       search: clothingSearchSchema.parse({}),
     });
     expect(empty.href).toBe("/collections/clothing");
+    expect(clothingSearchSchema.parse(defaultParseSearch(empty.searchStr)).view).toBe("items");
     const selected = router.buildLocation({
       to: "/collections/clothing",
       from: "/collections/clothing",
@@ -80,6 +82,39 @@ describe("compact clothing URLs", () => {
       lang: "zh",
       items: { categories: ["上装"] },
     });
+  });
+
+  it("友邻服饰可直达且切换标签后恢复独立查询条件", async () => {
+    const { router } = setup(
+      `/collections/clothing${defaultStringifySearch({
+        view: "neighborClothing",
+        items: { q: "毛衣" },
+        neighborClothing: {
+          q: "丰年",
+          categories: ["手套"],
+          sort: "quality-desc",
+          styles: ["古典"],
+        },
+      })}`,
+    );
+    await router.load();
+    const location = router.buildLocation({
+      to: "/collections/clothing",
+      from: "/collections/clothing",
+      search: (previous) => ({ ...clothingSearchSchema.parse(previous), view: "items" }),
+    });
+    const expected = { q: "丰年", categories: ["手套"], sort: "quality-desc" };
+    expect(defaultParseSearch(location.searchStr)).toEqual({
+      items: { q: "毛衣" },
+      neighborClothing: expected,
+    });
+    const restored = clothingSearchSchema.parse({
+      ...defaultParseSearch(location.searchStr),
+      view: "neighborClothing",
+    });
+    expect(restored.neighborClothing).toMatchObject(expected);
+    expect(updateViewQuery(restored, { q: "云果" }).items.q).toBe("毛衣");
+    expect(compactClothingSearch(restored).view).toBe("neighborClothing");
   });
 });
 

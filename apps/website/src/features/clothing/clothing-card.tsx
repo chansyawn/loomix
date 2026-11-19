@@ -1,14 +1,10 @@
-import type { ClothingItem, ClothingSet, ClothingAppearance } from "../collection-view.ts";
+import type { ClothingRow } from "./data";
 import { Link } from "@tanstack/react-router";
 import { CollectionCard } from "@/features/collection/collection-card";
 import { RecordImage } from "@/features/collection/record-image";
 import { useCollectionOrigin } from "@/features/collection/navigation";
 
-export function ClothingCard({
-  record,
-}: {
-  record: ClothingItem | ClothingSet | ClothingAppearance;
-}) {
+export function ClothingCard({ record }: { record: ClothingRow }) {
   const origin = useCollectionOrigin();
   return (
     <CollectionCard

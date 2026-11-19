@@ -50,11 +50,10 @@ function configuredReferences(
     const record = observations.diagnostics.collection.items.find((entry) => entry.id === owner.id);
     if (owner.kind === "collection" && record?.kind === "series") return [];
     const row = tables.rows(325).find((row) => tables.id(row) === owner.id);
-    const refs = [5, 4].flatMap((field) => {
+    return [5, 4].flatMap((field) => {
       const value = tables.string(row, field);
       return value ? [value] : [];
     });
-    return owner.kind === "neighborClothing" ? refs.slice(0, 1) : refs;
   }
   const [field, key, , paragraph] = owner.field.split(".");
   if (field === "images") {
@@ -225,10 +224,31 @@ export function verifyImages(
           ? "banner"
           : "icon";
     assert.equal(need.variant, variant, `Independent image variant ${need.id}`);
-    const references = configuredReferences(need, observations, tables, source);
+    let references = configuredReferences(need, observations, tables, source);
+    let placeholderOnly = false;
+    if (need.owner.kind === "neighborClothing") {
+      references = references.filter((reference) => reference.trim());
+      assert.ok(references.length, `Missing neighbor clothing icon configuration ${need.id}`);
+      const selected = references.find(
+        (reference) => normalize(reference.trim()) !== "uisprite/load/item/cloud",
+      );
+      placeholderOnly = selected === undefined;
+      if (selected !== undefined) references = [selected];
+      assert.equal(
+        need.required,
+        !placeholderOnly,
+        `Independent outfit image requirement ${need.id}`,
+      );
+      assert.equal(
+        need.reason,
+        placeholderOnly ? "neighbor_clothing_placeholder_icon" : "configured_resource_missing",
+        `Independent outfit image reason ${need.id}`,
+      );
+    }
     assert.deepEqual(need.references, references, `Independent image configuration ${need.id}`);
     const additional = need.owner.kind === "neighbor" && need.owner.field.startsWith("images.");
     const candidates = references.flatMap((reference, rank) => {
+      if (placeholderOnly) return [];
       if (additional) {
         const selections = readJson<
           {

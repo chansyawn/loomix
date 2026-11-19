@@ -4,6 +4,7 @@ import { readContent } from "./catalog/content.ts";
 import { extendCollection } from "./catalog/collection/observe.ts";
 import { detailInvestigation } from "./catalog/collection/details/investigation.ts";
 import { extractNeighborBundle } from "./neighbors/extract.ts";
+import { collectNeighborOutfitImage } from "./neighbors/outfit-image.ts";
 import {
   selectAdditionalNeighborImages,
   parseAdditionalNeighborImageSelections,
@@ -135,15 +136,9 @@ export function observe(source: string, snapshotId: string): SourceObservations 
         neighborSources(story.npcId),
       );
   const outfitImages = new Map(
-    neighbors.clothing.map((outfit) => [
-      outfit.id,
-      images.configured(
-        { kind: "neighborClothing", id: outfit.id, field: "image" },
-        outfit.imagePath,
-        "icon",
-        displaySources(outfit.id),
-        true,
-      ),
+    neighbors.clothing.map(({ id }) => [
+      id,
+      collectNeighborOutfitImage(images, id, iconReferences(id), displaySources(id)),
     ]),
   );
   const additionalImages = selectAdditionalNeighborImages(
