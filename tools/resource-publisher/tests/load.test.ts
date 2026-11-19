@@ -2,6 +2,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, expect, test } from "vite-plus/test";
+import { FORMAT_VERSION } from "@loomix/schema/common";
 import { loadReleaseDirectory } from "../src/load.ts";
 import { writeFixture } from "./fixture.ts";
 
@@ -22,7 +23,7 @@ test("读取已 materialize 的 release，不依赖图片字节", async () => {
   const value = await createFixture();
   await writeFixture(value);
   const release = await loadReleaseDirectory(value);
-  expect(release.manifest.formatVersion).toBe(12);
+  expect(release.manifest.formatVersion).toBe(FORMAT_VERSION);
   expect(release.dataset.catalog.items).toHaveLength(1);
   expect(release.assets.images).toHaveLength(1);
 });

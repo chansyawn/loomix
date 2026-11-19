@@ -19,6 +19,35 @@ import {
 const messages = (dataset: ReturnType<typeof datasetFixture>) =>
   validateDataset(dataset).map((issue) => issue.message);
 
+test("创想卡要求可展示正面，并在独立空间校验卡集", () => {
+  const dataset = datasetFixture();
+  const product = material(2);
+  const base = { assetId: "card-bg", variant: "card-background" } as const;
+  const card: ItemOf<"creationCard"> = {
+    ...material(1),
+    kind: "creationCard",
+    front: { background: base },
+    cardSetId: 2,
+    recipe: { productId: 2, materials: [{ itemId: 3, quantity: 4 }] },
+  };
+  dataset.catalog.items.push(card, product, reference(3));
+  dataset.catalog.creationCardSets.push({
+    id: 2,
+    name: "卡集",
+    acquisitionHint: null,
+    image: null,
+  });
+  expect(messages(dataset)).toEqual(["Missing usable foreground for creation card 1"]);
+  card.image = { assetId: "card-icon", variant: "icon" };
+  expect(messages(dataset)).toEqual([]);
+  expect(referencedImages(dataset)).toEqual([base, card.image]);
+  card.cardSetId = 99;
+  expect(messages(dataset)).toEqual([
+    "Unknown creation card set 99",
+    "Creation card set 2 has no admitted cards",
+  ]);
+});
+
 test("星海引用校验检查归属、展示类型和图片覆盖", () => {
   const dataset = datasetFixture();
   dataset.catalog.items.push(reference(5), material(6));

@@ -16,6 +16,8 @@ import type { EvidenceSource } from "../evidence/domain-schema.ts";
 import type { SourceObservations } from "../model.ts";
 import { imageCollector } from "./images.ts";
 import { readCatalog } from "./catalog/read.ts";
+import { readCraftingRecipes } from "./catalog/crafting/read.ts";
+import { isPlaceholderIcon } from "./catalog/crafting/cards.ts";
 import { FORMAT_VERSION } from "@loomix/schema/common";
 import { readStarsea, starseaItemIds } from "./starsea/read.ts";
 export interface FrozenPackage {
@@ -54,22 +56,34 @@ export function observe(source: string, snapshotId: string): SourceObservations 
       return value ? [value] : [];
     });
   const content = readContent(context);
-  for (const record of content.content.items)
+  const crafting = readCraftingRecipes(
+    context,
+    new Set(
+      content.content.items
+        .filter((record) => record.category === "furniture" && record.kind === "item")
+        .map((record) => record.id),
+    ),
+  );
+  const craftingProductIds = new Set(crafting.recipes.map(({ productId }) => productId));
+  for (const record of content.content.items) {
+    const usable = (reference: string) =>
+      !craftingProductIds.has(record.id) || !isPlaceholderIcon(reference);
     record.image = images.need(
       {
         kind: record.kind === "set" || record.kind === "series" ? "collection" : "item",
         id: record.id,
         field: "image",
       },
-      content.candidateImages.filter((image) => image.id === record.id),
+      content.candidateImages.filter((image) => image.id === record.id && usable(image.reference)),
       record.category === "furniture" && record.kind === "set" ? "banner" : "icon",
       displaySources(record.id),
       record.kind === "series"
         ? "series_picture_purpose_unconfirmed"
         : "image_not_configured_or_matched",
       false,
-      record.kind === "series" ? [] : iconReferences(record.id),
+      record.kind === "series" ? [] : iconReferences(record.id).filter(usable),
     );
+  }
   const collection = extendCollection(content.content, context);
   for (const seed of collection.catalog.seeds)
     seed.image = images.need(
@@ -165,6 +179,8 @@ export function observe(source: string, snapshotId: string): SourceObservations 
   const catalog = readCatalog({
     observations: collection.catalog,
     context,
+    crafting,
+    images,
     referencedItemIds: [
       ...neighbors.database.giftPreferences.flatMap((entry) => entry.itemIds),
       ...starseaItemIds(starsea.data.islands),

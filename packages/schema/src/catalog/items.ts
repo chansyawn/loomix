@@ -38,7 +38,14 @@ export const ItemSchema = z.discriminatedUnion("kind", [
     kind: z.literal("furniture"),
     furnitureCategory: NullableTextSchema,
     size: z.strictObject({ width: z.number().positive(), depth: z.number().positive() }).nullable(),
-    craftingRecipes: CraftingRecipeSchema.array(),
+  }),
+  item.extend({
+    kind: z.literal("creationCard"),
+    cardSetId: IdSchema.nullable(),
+    recipe: CraftingRecipeSchema,
+    front: z.strictObject({
+      background: ImageRefSchema.extend({ variant: z.literal("card-background") }),
+    }),
   }),
   categorized.extend({ kind: z.literal("clothing") }),
   categorized.extend({ kind: z.literal("appearance") }),

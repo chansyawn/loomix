@@ -47,7 +47,6 @@ test("同一源对象跨用途共享原图，组装同时投影图片引用和�
       category: null,
       furnitureCategory: null,
       size: null,
-      craftingRecipes: [],
       image: { use: "item:1:image" },
     },
   ];

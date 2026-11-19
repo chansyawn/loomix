@@ -34,7 +34,7 @@ export async function deliver(
     implementation,
     profileHash,
     target,
-    imagePolicy: "Lanczos3-icon256-banner1024x512-illustration1600-WebP85-alpha100-v4",
+    imagePolicy: "Lanczos3-icon256-banner1024x512-illustration1600-cardOriginal-WebP85-alpha100-v5",
   });
   const work = identityDirectory("deliveries", id);
   await withLock(artifactOnly ? `${work}.lock` : `${websiteDirectory}.lock`, async () => {

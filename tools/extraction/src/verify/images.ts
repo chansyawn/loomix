@@ -34,6 +34,13 @@ function configuredReferences(
   source: string,
 ): string[] {
   const { owner } = need;
+  if (owner.kind === "creationCardSet" || owner.field === "front.background") {
+    const [root, field] = owner.kind === "creationCardSet" ? [180, 11] : [568, 9];
+    const row = tables.rows(root).find((entry) => tables.id(entry) === owner.id);
+    assert.ok(row, `Independent crafting image owner ${need.id}`);
+    const value = tables.string(row, field);
+    return value ? [value] : [];
+  }
   if (owner.kind.startsWith("starsea")) {
     const [root, field] =
       owner.kind === "starseaRegion"
@@ -209,22 +216,40 @@ export function verifyImages(
   };
   const expectedBindings: ImageBinding[] = [];
   const candidateKeys = new Set<string>();
+  const craftingIconIds = new Set(
+    observations.catalog.items.flatMap((item) =>
+      item.kind === "creationCard" ? [item.id, item.recipe.productId] : [],
+    ),
+  );
   for (const need of observations.imageNeeds) {
     const record = observations.diagnostics.collection.items.find(
       (entry) => entry.id === need.owner.id,
     );
     const variant =
-      need.owner.kind === "neighbor" ||
-      need.owner.kind === "starseaRegion" ||
-      need.owner.kind === "starseaIsland"
-        ? "illustration"
-        : need.owner.kind === "collection" &&
-            record?.category === "furniture" &&
-            record.kind === "set"
-          ? "banner"
-          : "icon";
+      need.owner.field === "front.background"
+        ? "card-background"
+        : need.owner.kind === "neighbor" ||
+            need.owner.kind === "creationCardSet" ||
+            need.owner.kind === "starseaRegion" ||
+            need.owner.kind === "starseaIsland"
+          ? "illustration"
+          : need.owner.kind === "collection" &&
+              record?.category === "furniture" &&
+              record.kind === "set"
+            ? "banner"
+            : "icon";
     assert.equal(need.variant, variant, `Independent image variant ${need.id}`);
     let references = configuredReferences(need, observations, tables, source);
+    if (
+      need.owner.kind === "item" &&
+      need.owner.field === "image" &&
+      craftingIconIds.has(need.owner.id)
+    )
+      references = references.filter(
+        (reference) => normalize(reference.trim()) !== "uisprite/load/item/cloud",
+      );
+    if (need.owner.field === "front.background")
+      assert.equal(need.required, true, `Required card background ${need.id}`);
     let placeholderOnly = false;
     if (need.owner.kind === "neighborClothing") {
       references = references.filter((reference) => reference.trim());
@@ -267,7 +292,10 @@ export function verifyImages(
         return [{ reference, rank, object: identity({ ...selection, packageSha256 }) }];
       }
       if (!reference.startsWith("UISprite/")) return [];
-      const asset = resolved(reference, need.owner.kind.startsWith("starsea"));
+      const asset = resolved(
+        reference,
+        need.owner.kind.startsWith("starsea") || variant === "card-background",
+      );
       return asset
         ? [
             {

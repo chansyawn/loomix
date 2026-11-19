@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { EvidenceSourceSchema } from "../evidence/domain-schema.ts";
 import type { ImageRef } from "@loomix/schema/assets";
+import { ImageVariantSchema } from "@loomix/schema/assets";
 import type { EvidenceSource } from "../evidence/domain-schema.ts";
 import { digest } from "../../workflow/hashing.ts";
 
@@ -21,6 +22,7 @@ export interface ImageCandidate {
 const ImageOwnerKindSchema = z.enum([
   "item",
   "collection",
+  "creationCardSet",
   "seed",
   "stage",
   "neighbor",
@@ -111,7 +113,7 @@ export const imageNeedSchema = z.strictObject({
     id: z.number().int().positive(),
     field: z.string().min(1),
   }),
-  variant: z.enum(["icon", "banner", "illustration"]),
+  variant: ImageVariantSchema,
   required: z.boolean(),
   candidates: z
     .strictObject({

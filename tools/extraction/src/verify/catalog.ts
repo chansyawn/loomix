@@ -211,9 +211,19 @@ export function verifyCatalogSources(
     "Independent outfit admission",
   );
   const seedIds = observations.diagnostics.collection.seeds.map((entry) => entry.id);
+  const craftingProducts = new Set(
+    dataset.catalog.items.filter((item) => item.kind === "furniture").map((item) => item.id),
+  );
+  const cardIds = tables.rows(568).flatMap((row) => {
+    const id = tables.id(row);
+    return tables.uint(main.get(id), 2) === 19 && craftingProducts.has(tables.uint(row, 1, 0))
+      ? [id]
+      : [];
+  });
   const expectedFormal = new Set([
     ...expectedBase,
     ...seedIds,
+    ...cardIds,
     ...outfits.map((row) => tables.id(row)),
   ]);
   const actualFormal = [
@@ -364,9 +374,8 @@ export function verifyCatalogSources(
       )
         references.add(id);
   for (const item of dataset.catalog.items) {
-    if (item.kind === "furniture")
-      for (const recipe of item.craftingRecipes)
-        for (const material of recipe.materials ?? []) references.add(material.itemId);
+    if (item.kind === "creationCard")
+      for (const material of item.recipe.materials ?? []) references.add(material.itemId);
     if (item.kind === "plant") for (const drop of item.drops ?? []) references.add(drop.itemId);
     if (item.kind === "neighborClothing" && item.playerItemId !== null)
       references.add(item.playerItemId);

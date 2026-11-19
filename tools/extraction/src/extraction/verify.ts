@@ -69,7 +69,7 @@ export async function verifyCandidate(directory: string, writeReport = true): Pr
   }
   verifyNeighborDetails(observations.neighbors, tables);
   verifyCookingRecipes(dataset.catalog, tables);
-  verifyCraftingRelations(dataset.catalog, tables);
+  verifyCraftingRelations(dataset.catalog, tables, observations.diagnostics.crafting);
   verifyImages(directory, tables, observations, originals, imageBindings);
   verifyEvidence(directory, dataset, evidence, tables);
   // 可重现性与独立来源断言分开；此比较不能代替上面的来源验收。

@@ -66,8 +66,9 @@ export function verifyEvidence(
   for (const item of dataset.catalog.items) {
     for (const field of Object.keys(item)) {
       if (field === "id" || field === "growth") continue;
+      const fieldPath = field === "front" ? "front.background" : field;
       assert.ok(
-        covered.has(`catalog.items:${item.id}:${field}`),
+        covered.has(`catalog.items:${item.id}:${fieldPath}`),
         `Required field provenance ${item.id}.${field}`,
       );
     }
@@ -95,6 +96,12 @@ export function verifyEvidence(
         `Required collection provenance ${entry.id}.${field}`,
       );
     }
+  for (const entry of dataset.catalog.creationCardSets)
+    for (const field of ["name", "acquisitionHint", "image"])
+      assert.ok(
+        covered.has(`catalog.creationCardSets:${entry.id}:${field}`),
+        `Required creation card set provenance ${entry.id}.${field}`,
+      );
   for (const collection of ["regions", "islands", "iconStyles"] as const)
     for (const entry of dataset.starsea[collection])
       for (const field of Object.keys(entry)) {

@@ -16,7 +16,7 @@ const first: FurnitureItem = {
   colors: null,
   materials: null,
   acquisition: null,
-  craftingRecipes: [],
+  creationCards: [],
 };
 const second: FurnitureItem = { ...first, id: 2, name: "木桌" };
 const set: FurnitureSet = {
@@ -110,9 +110,21 @@ describe("furniture details", () => {
       items: [
         {
           ...first,
-          craftingRecipes: [
-            { id: 10, materials: [{ itemId: 2, quantity: 3 }] },
-            { id: 11, materials: null },
+          creationCards: [
+            {
+              id: 10,
+              name: "创想卡 10",
+              setName: null,
+              face: { background: null, foreground: null },
+              materials: [{ itemId: 2, quantity: 3 }],
+            },
+            {
+              id: 11,
+              name: "创想卡 11",
+              setName: null,
+              face: { background: null, foreground: null },
+              materials: null,
+            },
           ],
         },
         second,
@@ -124,6 +136,46 @@ describe("furniture details", () => {
         { id: 11, materials: null },
       ],
     });
+  });
+  it("uses the product icon for the card face and falls back to the card icon", async () => {
+    const background = { file: `assets/${"c".repeat(64)}.webp`, width: 390, height: 560 };
+    const foreground = `assets/${"d".repeat(64)}.webp`;
+    const productIcon = `assets/${"e".repeat(64)}.webp`;
+    for (const image of [productIcon, null]) {
+      const fixture = catalogFixture({
+        furniture: {
+          ...data,
+          items: [
+            {
+              ...first,
+              image,
+              creationCards: [
+                {
+                  id: 10,
+                  name: "创想卡：木椅",
+                  setName: null,
+                  materials: null,
+                  face: { background, foreground },
+                },
+              ],
+            },
+          ],
+          sets: [],
+        },
+      });
+      vi.stubGlobal("fetch", vi.fn(fixtureRequest(fixture)));
+      expect(await loadFurnitureDetail("items", "1")).toMatchObject({
+        recipes: [
+          {
+            name: "创想卡：木椅",
+            face: {
+              background: { file: background.file },
+              foreground: image ?? foreground,
+            },
+          },
+        ],
+      });
+    }
   });
   it("preserves member order and distinguishes unavailable from empty members", () => {
     expect(furnitureDetail(data, "sets", 3)).toMatchObject({ items: [second, first] });

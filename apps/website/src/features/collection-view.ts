@@ -4,7 +4,6 @@ import type {
   Catalog,
   Collection,
   CollectionMemberKind,
-  CraftingRecipe,
   DishEffect,
   ItemKind,
   ItemOf,
@@ -23,6 +22,7 @@ import { createIngredientTagSource } from "./ingredients/tag-source";
 import type { IngredientTagSource } from "./ingredients/tag-source";
 import { buildPlantsData } from "./plants/catalog";
 import type { PlantsData } from "./plants/model";
+import { creationCardsByProduct, type CreationCardView } from "./furniture/creation-card";
 export type { PlantItem, PlantSeries } from "./plants/model";
 export type { DishEffect } from "@loomix/schema/catalog";
 
@@ -40,7 +40,11 @@ export type FurnitureItem = CategorizedRecord & {
   colors: string | null;
   materials: string | null;
   acquisition: string | null;
-  craftingRecipes: CraftingRecipe[];
+  creationCards: CreationCardView[];
+};
+export type FurnitureMaterialUse = {
+  furniture: FurnitureItem;
+  recipes: { position: number; quantity: number }[];
 };
 export type CreatureItem = CategorizedRecord & {
   scientificName: string | null;
@@ -108,6 +112,7 @@ export interface CollectionView {
   ingredientTagSource: IngredientTagSource;
   ingredientItemsById: Map<number, IngredientItem>;
   furniture: { sets: FurnitureSet[]; items: FurnitureItem[] };
+  furnitureUsesByMaterialId: Map<number, FurnitureMaterialUse[]>;
   creatures: { series: CreatureSeries[]; items: CreatureItem[] };
   plants: PlantsData;
   dishes: { series: DishSeries[]; items: DishItem[] };
@@ -122,6 +127,7 @@ export interface CollectionView {
 
 const categoryByKind = {
   furniture: "furniture",
+  creationCard: "furniture",
   clothing: "clothing",
   appearance: "clothing",
   neighborClothing: "neighborClothing",
@@ -152,6 +158,7 @@ export function toCollectionView(
   tagIndex: GameplayTagIndex,
 ): CollectionView {
   const image = createImageResolver(assets);
+  const cardsByProduct = creationCardsByProduct(catalog, assets);
   const resolveTags = createRecordTagResolver(tagIndex);
   const tagsFor = (
     record: { tagIds: readonly number[] },
@@ -166,11 +173,12 @@ export function toCollectionView(
     quality: record.quality,
     image: image(record.image),
   });
-  const listed = catalog.items.filter(isListedItem);
+  const listed = catalog.items.filter(isListedItem).filter((item) => item.kind !== "creationCard");
   const view: CollectionView = {
     ingredientTagSource: createIngredientTagSource(tagIndex, listed),
     ingredientItemsById: new Map(),
     furniture: { sets: [], items: [] },
+    furnitureUsesByMaterialId: new Map(),
     creatures: { series: [], items: [] },
     plants: {
       series: [],
@@ -192,7 +200,10 @@ export function toCollectionView(
       quality: item.kind === "reference" ? null : item.quality,
       image: item.kind === "reference" ? null : image(item.image),
       catalogCategory: catalogCategory(item),
-      browsable: item.kind !== "reference" && item.kind !== "neighborClothing",
+      browsable:
+        item.kind !== "reference" &&
+        item.kind !== "neighborClothing" &&
+        item.kind !== "creationCard",
     });
   }
   for (const item of listed) {
@@ -208,7 +219,7 @@ export function toCollectionView(
           colors: tagsFor(item, "colors"),
           materials: tagsFor(item, "materials"),
           acquisition,
-          craftingRecipes: item.craftingRecipes,
+          creationCards: cardsByProduct.get(item.id) ?? [],
         });
         break;
       case "clothing":
@@ -291,6 +302,20 @@ export function toCollectionView(
         break;
       case "plant":
         break;
+    }
+  }
+  for (const furniture of view.furniture.items) {
+    const uses = new Map<number, FurnitureMaterialUse["recipes"]>();
+    for (const [index, card] of furniture.creationCards.entries())
+      for (const { itemId, quantity } of card.materials ?? []) {
+        const recipes = uses.get(itemId) ?? [];
+        recipes.push({ position: index + 1, quantity });
+        uses.set(itemId, recipes);
+      }
+    for (const [itemId, recipes] of uses) {
+      const entries = view.furnitureUsesByMaterialId.get(itemId) ?? [];
+      entries.push({ furniture, recipes });
+      view.furnitureUsesByMaterialId.set(itemId, entries);
     }
   }
   view.plants = buildPlantsData(catalog, assets, view.ingredientItemsById, tagIndex);

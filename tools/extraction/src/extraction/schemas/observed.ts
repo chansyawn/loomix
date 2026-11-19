@@ -2,7 +2,6 @@ import { z } from "zod";
 import { IdSchema, NullableTextSchema } from "@loomix/schema/common";
 import {
   IngredientExpressionSchema,
-  ItemAmountSchema,
   QualitySchema,
   TastesSchema,
   UnlockConditionSchema,
@@ -24,12 +23,6 @@ export const ObservedCookingRecipeSchema = z.strictObject({
   tastes: TastesSchema.nullable(),
   slots: ObservedRecipeSlotSchema.array().nullable(),
 });
-export const ObservedCraftingRecipeSchema = z.strictObject({
-  id: IdSchema,
-  productId: IdSchema,
-  materials: ItemAmountSchema.array().min(1).nullable(),
-});
-
 export const ObservedAcquisitionSchema = z.strictObject({
   sourceId: IdSchema,
   label: z.string().min(1),
@@ -102,7 +95,6 @@ export function createObservedSeedSchema<I extends z.ZodType>(image: I) {
 
 export type ObservedRecipeSlot = z.infer<typeof ObservedRecipeSlotSchema>;
 export type ObservedCookingRecipe = z.infer<typeof ObservedCookingRecipeSchema>;
-export type ObservedCraftingRecipe = z.infer<typeof ObservedCraftingRecipeSchema>;
 export type ObservedAcquisition = z.infer<typeof ObservedAcquisitionSchema>;
 export type ObservedDrop = z.infer<typeof ObservedDropSchema>;
 

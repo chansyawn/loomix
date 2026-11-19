@@ -10,6 +10,7 @@ import { recordLocation } from "@/features/collection/item-route";
 import type { FurnitureItem } from "../collection-view";
 import type { FurnitureDetail } from "./detail";
 import { CollectionDetailNavigation } from "../collection/detail-navigation";
+import { CreationCardFace } from "./creation-card-face";
 
 export function FurnitureDetailPage({ detail }: { detail: FurnitureDetail }) {
   return (
@@ -92,31 +93,37 @@ function FurnitureRecipes({
         制作配方
       </h2>
       <div className="space-y-3">
-        {recipes.map((recipe, index) => (
-          <div key={recipe.id} className="space-y-3">
-            {recipes.length > 1 && <h3 className="mb-3 text-sm font-medium">配方 {index + 1}</h3>}
-            {recipe.materials === null ? (
-              <p className="text-sm text-muted-foreground">材料信息未确认</p>
-            ) : (
-              <ul className="flex flex-wrap gap-3">
-                {recipe.materials.map((material) => (
-                  <li key={material.itemId} className="max-w-full min-w-0">
-                    <CollectionItemCard
-                      item={material.item}
-                      itemId={material.itemId}
-                      quantity={material.quantity}
-                      fallbackName="未知材料"
-                      link={
-                        material.item && material.item.browsable !== false
-                          ? recordLocation(material.item)
-                          : undefined
-                      }
-                    />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+        {recipes.map((recipe) => (
+          <article key={recipe.id} className="flex items-start gap-4">
+            <CreationCardFace {...recipe.face} />
+            <div className="min-w-0 space-y-2">
+              <h3 className="text-sm font-medium">{recipe.name}</h3>
+              {recipe.setName ? (
+                <p className="text-xs text-muted-foreground">{recipe.setName}</p>
+              ) : null}
+              {recipe.materials === null ? (
+                <p className="text-sm text-muted-foreground">材料信息未确认</p>
+              ) : (
+                <ul className="flex flex-wrap gap-3">
+                  {recipe.materials.map((material) => (
+                    <li key={material.itemId} className="max-w-full min-w-0">
+                      <CollectionItemCard
+                        item={material.item}
+                        itemId={material.itemId}
+                        quantity={material.quantity}
+                        fallbackName="未知材料"
+                        link={
+                          material.item && material.item.browsable !== false
+                            ? recordLocation(material.item)
+                            : undefined
+                        }
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </article>
         ))}
       </div>
     </section>

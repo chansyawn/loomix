@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { FORMAT_VERSION } from "@loomix/schema/common";
 import type { GameplayTags } from "@loomix/schema/gameplay-tags";
 import {
   CatalogSchema,
@@ -15,7 +16,7 @@ import { referencedImages } from "@loomix/schema/dataset/images";
 import type { CatalogEntrySummary, CollectionView } from "./collection-view.ts";
 
 export const fixtureContext = {
-  formatVersion: 12,
+  formatVersion: FORMAT_VERSION,
   snapshotId: "a".repeat(64),
   locale: "zh-CN",
 } as const;
@@ -52,7 +53,7 @@ export function catalogFixture(
     ingredientCategories?: readonly FixtureIngredientCategory[];
   } = {},
 ) {
-  const catalog: Catalog = { items: [], collections: [] };
+  const catalog: Catalog = { items: [], collections: [], creationCardSets: [] };
   const gameplayTags = tagsFixture();
   for (const category of view.ingredientCategories ?? [])
     gameplayTags.tags.push({
@@ -76,11 +77,23 @@ export function catalogFixture(
       category: record.category,
       furnitureCategory: record.furnitureCategory,
       size: width && depth ? { width, depth } : null,
-      craftingRecipes: record.craftingRecipes,
       colors: values(record.colors),
       materials: values(record.materials),
       acquisition: acquisition(record.acquisition),
     });
+    for (const card of record.creationCards) {
+      const background = card.face.background;
+      if (!background) throw new Error(`Missing fixture card background ${card.id}`);
+      add({
+        kind: "creationCard",
+        id: card.id,
+        name: card.name,
+        image: card.face.foreground ? { assetId: card.face.foreground, variant: "icon" } : null,
+        front: { background: { assetId: background.file, variant: "card-background" } },
+        cardSetId: null,
+        recipe: { productId: record.id, materials: card.materials },
+      });
+    }
   }
   for (const record of view.furniture?.sets ?? []) group(record, "furniture", record.componentIds);
   for (const record of view.creatures?.items ?? []) {
@@ -245,7 +258,8 @@ function facetTag(gameplayTags: GameplayTags, rootName: string, label: string): 
 
 // 默认补齐各种类的可空字段，并把颜色等文本属性映射为对应标签树。
 const kindDefaults: Record<string, Record<string, unknown>> = {
-  furniture: { category: null, furnitureCategory: null, size: null, craftingRecipes: [] },
+  furniture: { category: null, furnitureCategory: null, size: null },
+  creationCard: {},
   clothing: { category: null },
   appearance: { category: null },
   creature: {

@@ -19,7 +19,7 @@ export function furnitureDetail(data: FurnitureData, view: View, id: number) {
       kind: "item" as const,
       record: item,
       navigation,
-      recipes: item.craftingRecipes.map((recipe) => ({
+      recipes: item.creationCards.map((recipe) => ({
         ...recipe,
         materials:
           recipe.materials?.map((material) => ({

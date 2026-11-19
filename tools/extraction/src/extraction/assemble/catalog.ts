@@ -1,4 +1,4 @@
-import type { Catalog, Item } from "@loomix/schema/catalog";
+import type { Catalog, CreationCardSet, Item } from "@loomix/schema/catalog";
 import type { ImageRef } from "@loomix/schema/assets";
 import type { CatalogObservation } from "../model.ts";
 
@@ -10,6 +10,21 @@ export function assembleCatalog(
 ): Catalog {
   const items: Item[] = observed.items.map((item): Item => {
     if (item.kind === "reference") return item;
+    if (item.kind === "creationCard") {
+      const background = image(
+        item.front.background.use,
+        "catalog.items",
+        item.id,
+        "front.background",
+      );
+      if (background?.variant !== "card-background")
+        throw new Error(`Missing creation card background ${item.id}`);
+      return {
+        ...item,
+        front: { background: { ...background, variant: background.variant } },
+        image: image(item.image?.use ?? null, "catalog.items", item.id, "image"),
+      };
+    }
     if (item.kind !== "seed")
       return { ...item, image: image(item.image?.use ?? null, "catalog.items", item.id, "image") };
     return {
@@ -33,14 +48,19 @@ export function assembleCatalog(
     ...entry,
     image: image(entry.image?.use ?? null, "catalog.collections", entry.id, "image"),
   }));
+  const creationCardSets = observed.creationCardSets.map((entry): CreationCardSet => {
+    const art = image(entry.image?.use ?? null, "catalog.creationCardSets", entry.id, "image");
+    if (art !== null && art.variant !== "illustration")
+      throw new Error(`Invalid creation card set image ${entry.id}`);
+    return { ...entry, image: art && { assetId: art.assetId, variant: "illustration" } };
+  });
   const formal = new Set(
     [...items.filter((item) => item.kind !== "reference"), ...collections].map((entry) => entry.id),
   );
   const references = new Set([...ingredientIds, ...referencedItemIds]);
   for (const item of items) {
-    if (item.kind === "furniture")
-      for (const recipe of item.craftingRecipes)
-        for (const material of recipe.materials ?? []) references.add(material.itemId);
+    if (item.kind === "creationCard")
+      for (const material of item.recipe.materials ?? []) references.add(material.itemId);
     if (item.kind === "plant") for (const drop of item.drops ?? []) references.add(drop.itemId);
     if (item.kind === "neighborClothing" && item.playerItemId !== null)
       references.add(item.playerItemId);
@@ -55,5 +75,6 @@ export function assembleCatalog(
       )
       .sort((a, b) => a.id - b.id),
     collections: collections.sort((a, b) => a.id - b.id),
+    creationCardSets: creationCardSets.sort((a, b) => a.id - b.id),
   };
 }
