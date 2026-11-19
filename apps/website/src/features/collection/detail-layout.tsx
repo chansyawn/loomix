@@ -20,6 +20,7 @@ export type CollectionDetailSection = {
 export function CollectionDetailLayout({
   image,
   title,
+  titleActions,
   quality,
   description,
   fields,
@@ -27,6 +28,7 @@ export function CollectionDetailLayout({
 }: {
   image: ReactNode;
   title: string;
+  titleActions?: ReactNode;
   quality?: number | null;
   description?: ReactNode;
   fields: readonly DetailField[];
@@ -41,10 +43,13 @@ export function CollectionDetailLayout({
         </div>
         <div className="@container/detail-fields min-w-0 space-y-4">
           <div className="space-y-3">
-            <h1 className="flex items-center gap-3 text-3xl/tight font-semibold tracking-tight wrap-break-word sm:text-4xl">
-              {typeof quality === "number" && <QualityMarker quality={quality} />}
-              <span className="min-w-0">{title}</span>
-            </h1>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <h1 className="flex min-w-0 items-center gap-3 text-3xl/tight font-semibold tracking-tight wrap-break-word sm:text-4xl">
+                {typeof quality === "number" && <QualityMarker quality={quality} />}
+                <span className="min-w-0">{title}</span>
+              </h1>
+              {titleActions}
+            </div>
             {quality === null && <p className="text-sm text-muted-foreground">品阶：未提供</p>}
           </div>
           {description}
