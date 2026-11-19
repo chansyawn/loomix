@@ -3,12 +3,14 @@ import type { ItemOf } from "@loomix/schema/catalog";
 import type { CollectionCatalog, OverviewRecord } from "./catalog";
 import { furnitureDetail } from "../furniture/detail";
 import { clothingDetail } from "../clothing/detail";
+import { clothingCounterpart } from "../clothing/counterpart";
 import { creaturesDetail } from "../creatures/detail";
 import { plantsDetail } from "../plants/detail";
 import { dishesDetail } from "../dishes/detail";
 import { buildMiscellanyDetail } from "../miscellany/detail";
 import { buildIngredientsData, ingredientUsage } from "../ingredients/model";
 import { neighborClothingDetail } from "../neighbor-clothing/detail";
+import { setDetailNavigation } from "./detail-navigation-model";
 
 export function parseRecordId(value: string) {
   const id = Number(value);
@@ -42,12 +44,36 @@ export function collectionDetail(data: CollectionCatalog, id: number, neighborNa
     case "appearance":
       return {
         category: "clothing" as const,
-        detail: clothingDetail(
-          view.clothing,
-          collection ? "sets" : kind === "appearance" ? "appearances" : "items",
-          id,
-        ),
+        detail: {
+          ...clothingDetail(
+            view.clothing,
+            collection ? "sets" : kind === "appearance" ? "appearances" : "items",
+            id,
+          ),
+          counterpart:
+            kind === "clothing" && !collection ? clothingCounterpart(data.byId, id) : null,
+        },
       };
+    case "neighborClothing": {
+      const counterpart = clothingCounterpart(data.byId, id);
+      const navigation = counterpart
+        ? setDetailNavigation(view.clothing, counterpart.playerId, "套装")
+        : null;
+      return {
+        category: "clothing" as const,
+        detail: {
+          ...neighborClothingDetail(
+            row as OverviewRecord & { record: ItemOf<"neighborClothing"> },
+            neighborName,
+          ),
+          counterpart,
+          navigation:
+            counterpart && navigation?.groups.length
+              ? { ...navigation, highlightedId: counterpart.playerId }
+              : null,
+        },
+      };
+    }
     case "creature":
       return {
         category: "creatures" as const,
@@ -84,14 +110,6 @@ export function collectionDetail(data: CollectionCatalog, id: number, neighborNa
       };
     case "material":
       return { category: "miscellaneous" as const, detail: buildMiscellanyDetail(view, id) };
-    case "neighborClothing":
-      return {
-        category: "neighborClothing" as const,
-        detail: neighborClothingDetail(
-          row as OverviewRecord & { record: ItemOf<"neighborClothing"> },
-          neighborName,
-        ),
-      };
   }
 }
 export type RecordDetail = ReturnType<typeof collectionDetail>;

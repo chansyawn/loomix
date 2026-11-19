@@ -11,6 +11,7 @@ export type DetailNavigationGroup = Readonly<{
 export type DetailNavigationModel = Readonly<{
   groups: readonly DetailNavigationGroup[];
   notice?: string;
+  highlightedId?: number;
 }>;
 
 type SetNavigationData = {

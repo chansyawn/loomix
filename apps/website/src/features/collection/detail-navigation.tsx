@@ -14,6 +14,7 @@ export function CollectionDetailNavigation({
 }) {
   const origin = useCollectionOrigin();
   if (model.groups.length === 0 && !model.notice) return null;
+  const highlightedId = model.highlightedId ?? currentId;
   return (
     <div className="sticky top-0 z-20 min-w-0 space-y-3 border-b bg-background py-2">
       {model.groups.map((group) => (
@@ -29,8 +30,9 @@ export function CollectionDetailNavigation({
                   {...recordLocation(entry)}
                   state={{ collectionOrigin: origin }}
                   resetScroll={false}
-                  aria-current={entry.id === currentId ? "page" : undefined}
-                  className="flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:bg-muted aria-[current=page]:text-foreground"
+                  aria-current={entry.id === currentId ? "page" : entry.id === highlightedId}
+                  data-highlighted={entry.id === highlightedId ? "" : undefined}
+                  className="flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring data-highlighted:bg-muted data-highlighted:text-foreground"
                   onClick={(event) => {
                     if (
                       entry.id === currentId &&

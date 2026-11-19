@@ -1,7 +1,12 @@
 import { notFound } from "@tanstack/react-router";
 import { loadClothing } from "./data";
 import type { ClothingData } from "./data";
-import { setDetailNavigation } from "../collection/detail-navigation-model";
+import type { ClothingCounterpart } from "./counterpart";
+import {
+  setDetailNavigation,
+  type DetailNavigationModel,
+} from "../collection/detail-navigation-model";
+import type { NeighborClothingDetail } from "../neighbor-clothing/detail";
 
 type PlayerClothingData = Pick<ClothingData, "items" | "sets" | "appearances">;
 type PlayerClothingView = keyof PlayerClothingData;
@@ -38,6 +43,11 @@ export function clothingDetail(data: PlayerClothingData, view: PlayerClothingVie
   };
 }
 export type ClothingDetail = ReturnType<typeof clothingDetail>;
+export type ClothingPageDetail = (ClothingDetail | NeighborClothingDetail) & {
+  navigation: DetailNavigationModel | null;
+  counterpart: ClothingCounterpart | null;
+};
+
 export async function loadClothingDetail(
   view: PlayerClothingView,
   value: string,
