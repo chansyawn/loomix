@@ -104,3 +104,44 @@ test("删除候选或篡改绑定及其生产审计仍被独立配置和尺寸�
     ),
   ).toThrow("Independent image configuration");
 });
+
+test("从源表核对友邻服饰的云朵占位图与缺图原因", ({ onTestFinished }) => {
+  const references = ["UISprite/Load/Item/Cloud", "uisprite\\load\\item\\cloud.png"];
+  const fixture = createFixture({ 325: [[1, null, null, null, references[1]!, references[0]!]] });
+  onTestFinished(fixture.cleanup);
+  const directory = path.join(fixture.directory, "bundle");
+  const source = path.join(directory, "source");
+  fs.mkdirSync(path.join(source, "prepared"), { recursive: true });
+  writeJson(path.join(source, "prepared/asset-index.json"), []);
+  writeJson(path.join(source, "packages.json"), []);
+  writeJson(path.join(source, "client-files.json"), []);
+  writeJson(path.join(source, "bindata-manifest.json"), []);
+  writeJson(path.join(directory, "source-audit.json"), {
+    passed: true,
+    records: [],
+    configChecks: [],
+  });
+
+  const observations = observationFixture();
+  observations.imageNeeds = [
+    {
+      id: "neighborClothing:1:image",
+      owner: { kind: "neighborClothing", id: 1, field: "image" },
+      references,
+      candidates: [],
+      variant: "icon",
+      required: false,
+      sources: [],
+      reason: "neighbor_clothing_placeholder_icon",
+    },
+  ];
+  const bindings = bindImages(observations.imageNeeds, []).bindings;
+  const verify = () => verifyImages(directory, fixture.input.tables, observations, [], bindings);
+  expect(verify).not.toThrow();
+
+  observations.imageNeeds[0]!.reason = "configured_resource_missing";
+  expect(verify).toThrow("Independent outfit image reason");
+  observations.imageNeeds[0]!.reason = "neighbor_clothing_placeholder_icon";
+  observations.imageNeeds[0]!.required = true;
+  expect(verify).toThrow("Independent outfit image requirement");
+});

@@ -219,7 +219,9 @@ function buildOutfit(
   const slot = references.slots.get(Math.floor(slotCode / 1_000));
   if (!slot) throw new Error(`Unknown neighbor outfit slot ${id}/${slotCode}`);
   const slotNameZh = slot.name;
-  const imagePath = tables.string(display, 5) ?? tables.string(display, 4);
+  const imagePath = [5, 4]
+    .map((field) => tables.string(display, field))
+    .find((reference) => reference?.trim());
   if (!imagePath) throw new Error(`Missing neighbor outfit icon ${id}`);
   // 只有配置了模型的体型才能穿戴该服饰。
   const bodyTypes = (["small", "medium", "big"] as const).filter((_, index) =>
