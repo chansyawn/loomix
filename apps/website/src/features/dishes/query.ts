@@ -1,4 +1,6 @@
+import { createNameMatcher } from "@/infrastructure/name-search";
 import type { DishItem, DishSeries } from "../collection-view.ts";
+import { indexMembership } from "../collection/membership";
 import type { FilterGroup as CollectionFilterGroup } from "@/features/collection/filter-panel";
 import { qualityNames } from "@/features/collection/quality";
 import {
@@ -23,13 +25,6 @@ export function splitValues(value: string | null): string[] {
         .map((part) => part.trim())
         .filter(Boolean)
     : [missing];
-}
-
-export function membershipIndex(series: DishSeries[]): Map<number, DishSeries[]> {
-  const index = new Map<number, DishSeries[]>();
-  for (const group of series)
-    for (const id of group.dishIds ?? []) index.set(id, [...(index.get(id) ?? []), group]);
-  return index;
 }
 
 function optionList(normalized: string[]) {
@@ -119,13 +114,13 @@ function matches(selected: string[], values: string[]): boolean {
 }
 
 export function queryDishes(data: DishesBrowserData, view: View, query: ViewQuery) {
-  const memberships = membershipIndex(data.series);
+  const memberships = indexMembership(data.series, (group) => group.dishIds);
   const membershipDataComplete = data.series.every((group) => group.dishIds !== null);
-  const term = query.q.trim().toLocaleLowerCase("zh-CN");
+  const matchesName = createNameMatcher(query.q);
   const rows: (DishItem | DishSeries)[] = view === "items" ? data.items : data.series;
   const baseFiltered = rows.filter((row) => {
     if (
-      !row.name.toLocaleLowerCase("zh-CN").includes(term) ||
+      !matchesName(row.name) ||
       !matches(query.qualities, [row.quality === null ? missing : String(row.quality)])
     )
       return false;

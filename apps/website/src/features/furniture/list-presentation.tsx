@@ -11,8 +11,8 @@ export const tabs: CollectionTab<"items" | "sets">[] = [
 ];
 export function listPresentation(view: View) {
   const entry = {
-    items: { unit: "件家具", searchLabel: "搜索家具名称", placeholder: "搜索家具名称…" },
-    sets: { unit: "个套组", searchLabel: "搜索套组名称", placeholder: "搜索套组名称…" },
+    items: { unit: "件家具", searchLabel: "搜索家具名称", placeholder: "搜索家具名称或拼音…" },
+    sets: { unit: "个套组", searchLabel: "搜索套组名称", placeholder: "搜索套组名称或拼音…" },
   }[view];
   return {
     ...entry,

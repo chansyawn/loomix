@@ -28,7 +28,13 @@ function StarseaRoute() {
       data={data}
       search={resolveStarseaSearch(data.regions, search)}
       historyIndex={historyIndex}
-      onChange={(next) => void navigate({ search: next, resetScroll: false })}
+      onChange={(patch, replace) =>
+        void navigate({
+          search: (previous) => ({ ...resolveStarseaSearch(data.regions, previous), ...patch }),
+          replace,
+          resetScroll: false,
+        })
+      }
     />
   );
 }

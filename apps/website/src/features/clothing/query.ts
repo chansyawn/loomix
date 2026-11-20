@@ -1,4 +1,5 @@
-import type { ClothingSet } from "../collection-view.ts";
+import { createNameMatcher } from "@/infrastructure/name-search";
+import { indexMembership } from "../collection/membership";
 import type { FilterGroup } from "@/features/collection/filter-panel";
 import { qualityNames } from "@/features/collection/quality";
 import type { ClothingData } from "./data";
@@ -12,12 +13,6 @@ export function splitValues(value: string | null): string[] {
         .map((part) => part.trim())
         .filter(Boolean)
     : [missing];
-}
-export function membershipIndex(sets: ClothingSet[]): Map<number, ClothingSet[]> {
-  const index = new Map<number, ClothingSet[]>();
-  for (const set of sets)
-    for (const id of set.componentIds ?? []) index.set(id, [...(index.get(id) ?? []), set]);
-  return index;
 }
 function options(values: (string | null)[]) {
   return [...new Set(values.map((value) => value ?? missing))]
@@ -72,11 +67,12 @@ function matches(selected: string[], values: string[]): boolean {
   return selected.length === 0 || selected.some((value) => values.includes(value));
 }
 export function queryClothing(data: ClothingData, view: View, query: ViewQuery) {
-  const memberships = view === "items" ? membershipIndex(data.sets) : null;
-  const term = query.q.trim().toLocaleLowerCase("zh-CN");
+  const memberships =
+    view === "items" ? indexMembership(data.sets, (set) => set.componentIds) : null;
+  const matchesName = createNameMatcher(query.q);
   const rows = data[view].filter((row) => {
     if (
-      !row.name.toLocaleLowerCase("zh-CN").includes(term) ||
+      !matchesName(row.name) ||
       !matches(query.qualities, [row.quality === null ? missing : String(row.quality)])
     )
       return false;

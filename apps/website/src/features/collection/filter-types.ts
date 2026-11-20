@@ -126,11 +126,15 @@ export function toggleFilterTreeSelection(
   ];
 }
 
-export function filterTree(options: FilterOption[], term: string): FilterOption[] {
-  if (!term) return options;
+export function filterTree(
+  options: FilterOption[],
+  matchesLabel: (label: string) => boolean,
+): FilterOption[] {
   return options.flatMap((option) => {
-    const matches = option.label.includes(term);
-    const children = matches ? (option.children ?? []) : filterTree(option.children ?? [], term);
+    const matches = matchesLabel(option.label);
+    const children = matches
+      ? (option.children ?? [])
+      : filterTree(option.children ?? [], matchesLabel);
     return matches || children.length > 0 ? [{ ...option, children }] : [];
   });
 }

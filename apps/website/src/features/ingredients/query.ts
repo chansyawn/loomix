@@ -1,3 +1,4 @@
+import { createNameMatcher } from "@/infrastructure/name-search";
 import type { IngredientItem } from "../collection-view";
 import type { FilterGroup } from "../collection/filter-panel";
 import type { IngredientsData } from "./model";
@@ -28,12 +29,10 @@ export function ingredientSelection(data: IngredientsData, query: IngredientsQue
 }
 
 export function queryIngredients(data: IngredientsData, query: IngredientsQuery) {
-  const term = query.q.trim().toLocaleLowerCase("zh-CN");
+  const matchesName = createNameMatcher(query.q);
   const selection: IngredientTagSelection = ingredientSelection(data, query);
-  const active = Boolean(term || ingredientSelectedIds(selection).length);
-  const searched = [...data.itemsById.values()].filter(
-    (item) => !term || item.name.toLocaleLowerCase("zh-CN").includes(term),
-  );
+  const active = Boolean(query.q.trim() || ingredientSelectedIds(selection).length);
+  const searched = [...data.itemsById.values()].filter((item) => matchesName(item.name));
   const counts = ingredientTagCounts(data.tagSource, searched);
   const matchesTags = ingredientTagMatcher(data.tagSource, selection);
   const items = searched.filter((item) => matchesTags(item.id));

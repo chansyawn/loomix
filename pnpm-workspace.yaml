@@ -28,6 +28,7 @@ catalog:
   cn: ^0.4.0
   lucide-react: ^1.47.0
   oxc-transform-react: ^0.154.0
+  pinyin-pro: 3.29.5
   pngjs: 7.0.0
   react: ^19.2.0
   react-dom: ^19.2.0

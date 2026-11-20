@@ -17,8 +17,8 @@ export function AllLoading() {
       grid={compactGrid(164)}
       card={<CollectionCardSkeleton description tags />}
       columns={allColumns()}
-      searchLabel="搜索全部物品"
-      placeholder="搜索编号、名称或介绍"
+      searchLabel="搜索物品名称"
+      placeholder="搜索物品名称或拼音…"
       query={search.items.q}
       sort={search.items.sort}
       sortOptions={sortOptions}

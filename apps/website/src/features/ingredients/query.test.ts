@@ -14,7 +14,7 @@ describe("ingredient browsing and filtering", () => {
 
   it("searches concrete ingredient names without matching category names", () => {
     const { data } = ingredientsFixture();
-    const result = queryIngredients(data, ingredientsQuerySchema.parse({ q: " 番茄 " }));
+    const result = queryIngredients(data, ingredientsQuerySchema.parse({ q: " fan qie " }));
     expect(result.items.map((item) => item.id)).toEqual([1, 2, 3]);
     expect(queryIngredients(data, ingredientsQuerySchema.parse({ q: "水果类" })).items).toEqual([]);
   });
@@ -59,7 +59,11 @@ describe("ingredient browsing and filtering", () => {
 
   it("builds three groups and disables options outside the current search", () => {
     const { data } = ingredientsFixture();
-    const result = queryIngredients(data, ingredientsQuerySchema.parse({ q: "番茄" }));
+    const result = queryIngredients(
+      data,
+      ingredientsQuerySchema.parse({ q: "fq", ingredientQualities: ["31"] }),
+    );
+    expect(result.items.map((item) => item.id)).toEqual([2]);
     const groups = ingredientFilterGroups(data, result.counts);
     expect(groups.map((group) => group.label)).toEqual(["分类", "颜色", "食材品质"]);
     const options = flattenFilterOptions(groups[0].options);

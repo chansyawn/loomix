@@ -8,7 +8,7 @@ import {
 } from "../collection/table-columns";
 import type { CollectionColumn } from "../collection/table-columns";
 import { useCollectionOrigin } from "@/features/collection/navigation";
-import { membershipIndex } from "./query";
+import { indexMembership } from "../collection/membership";
 import type { View } from "./search";
 
 export type CreaturesRow = CreatureItem | CreatureSeries;
@@ -66,7 +66,7 @@ export function creaturesTableColumns(
       ),
       textColumn("description", "描述", 320, (record) => record.description),
     ];
-  const memberships = membershipIndex(groups);
+  const memberships = indexMembership(groups, (group) => group.creatureIds);
   const complete = groups.every((entry) => entry.creatureIds !== null);
   return [
     ...common,

@@ -67,12 +67,14 @@ function data(...records: object[]) {
   catalog.items.push({ kind: "reference", id: 99, name: "隐藏材料", description: null });
   return createCollectionCatalog(catalog, assetsFixture(catalog), gameplayTags);
 }
-test("搜索只查询正式记录的编号、名称和介绍", () => {
+test("搜索只匹配正式物品的显示名称及其拼音", () => {
   const source = data();
-  for (const q of ["1", "花材", "白名单"]) {
+  for (const q of ["花材", "huacai", "hc"]) {
     expect(queryAll(source, { ...emptyQuery(), q }).rows.map((row) => row.id)).toEqual([1]);
   }
-  expect(queryAll(source, { ...emptyQuery(), q: "隐藏材料" }).total).toBe(0);
+  for (const q of ["1", "白名单", "隐藏材料"]) {
+    expect(queryAll(source, { ...emptyQuery(), q }).total).toBe(0);
+  }
 });
 test("原始标签名称、枚举及显示名不参与文本搜索", () => {
   const source = data();
@@ -86,7 +88,7 @@ test("标签与文本、类别、品阶及获取来源取交集", () => {
     queryAll(source, {
       ...emptyQuery(),
       tags: ["11", "12", "13"],
-      q: "花材",
+      q: "huacai",
       categories: ["miscellaneous"],
       qualities: ["2"],
       acquisition: ["5"],
