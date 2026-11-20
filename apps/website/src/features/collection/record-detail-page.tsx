@@ -7,7 +7,6 @@ import { CreaturesDetailPage } from "../creatures/detail-page";
 import { PlantsDetailPage } from "../plants/detail-page";
 import { DishesDetailPage } from "../dishes/detail-page";
 import { MiscellanyDetailPage } from "../miscellany/detail-page";
-import { NeighborClothingDetailPage } from "../neighbor-clothing/detail-page";
 
 export function RecordDetailPage({
   data,
@@ -42,7 +41,5 @@ function DetailContent({ model }: { model: RecordDetail }) {
       return <DishesDetailPage detail={model.detail} />;
     case "miscellaneous":
       return <MiscellanyDetailPage detail={model.detail} />;
-    case "neighborClothing":
-      return <NeighborClothingDetailPage detail={model.detail} />;
   }
 }

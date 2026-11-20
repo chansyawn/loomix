@@ -1,58 +1,71 @@
 import { ClothingCard } from "./clothing-card";
+import { ClothingCounterpartSwitch } from "./counterpart-switch";
 import {
   CollectionDetailLayout,
   CollectionDetailExtras,
   type CollectionDetailSection,
 } from "@/features/collection/detail-layout";
 import { RecordImage } from "@/features/collection/record-image";
-import type { ClothingDetail } from "./detail";
+import type { ClothingPageDetail } from "./detail";
 import { CollectionDetailNavigation } from "../collection/detail-navigation";
+import { formatNeighborClothingPrice } from "../neighbor-clothing/presentation";
 
-export function ClothingDetailPage({ detail }: { detail: ClothingDetail }) {
+export function ClothingDetailPage({ detail }: { detail: ClothingPageDetail }) {
+  const { record, navigation, counterpart } = detail;
+  const sections = clothingDetailSections(detail);
   return (
-    <div className="min-w-0 space-y-6">
-      <CollectionDetailNavigation model={detail.navigation} currentId={detail.record.id} />
-      <ClothingDetailContent key={detail.record.id} detail={detail} />
+    <div className="flex min-w-0 flex-col gap-6">
+      {navigation && <CollectionDetailNavigation model={navigation} currentId={record.id} />}
+      <CollectionDetailLayout
+        image={<RecordImage key={record.image} image={record.image} name={record.name} eager />}
+        title={record.name}
+        titleActions={
+          counterpart && (
+            <ClothingCounterpartSwitch counterpart={counterpart} currentId={record.id} />
+          )
+        }
+        quality={record.quality}
+        description={
+          <p className="text-sm/7 whitespace-pre-line text-muted-foreground">
+            {record.description || "描述未提供"}
+          </p>
+        }
+        fields={clothingDetailFields(detail)}
+      >
+        {sections.length > 0 && <CollectionDetailExtras sections={sections} />}
+      </CollectionDetailLayout>
     </div>
   );
 }
 
-function ClothingDetailContent({ detail }: { detail: ClothingDetail }) {
-  const { record } = detail;
-  const sections = clothingDetailSections(detail);
-  const fields: [string, string | null][] =
-    detail.kind === "item"
-      ? [
-          ["分类", detail.record.category],
-          ["风格", detail.record.styles],
-          ["颜色", detail.record.colors],
-          ["材质", detail.record.materials],
-          ["获取途径", detail.record.acquisition],
-        ]
-      : detail.kind === "appearance"
-        ? [["分类", detail.record.category]]
-        : [
-            ["套装名称", detail.record.setName],
-            ["成员数量", detail.items === null ? null : `${detail.items.length} 件服装`],
-          ];
-  return (
-    <CollectionDetailLayout
-      image={<RecordImage key={record.image} image={record.image} name={record.name} eager />}
-      title={record.name}
-      quality={record.quality}
-      description={
-        <p className="text-sm/7 whitespace-pre-line text-muted-foreground">
-          {record.description || "描述未提供"}
-        </p>
-      }
-      fields={fields}
-    >
-      {sections.length > 0 && <CollectionDetailExtras sections={sections} />}
-    </CollectionDetailLayout>
-  );
+function clothingDetailFields(detail: ClothingPageDetail): [string, string | null][] {
+  switch (detail.kind) {
+    case "item":
+      return [
+        ["分类", detail.record.category],
+        ["风格", detail.record.styles],
+        ["颜色", detail.record.colors],
+        ["材质", detail.record.materials],
+        ["获取途径", detail.record.acquisition],
+      ];
+    case "appearance":
+      return [["分类", detail.record.category]];
+    case "set":
+      return [
+        ["套装名称", detail.record.setName],
+        ["成员数量", detail.items === null ? null : `${detail.items.length} 件服装`],
+      ];
+    case "neighborClothing":
+      return [
+        ["部位", detail.slotName],
+        ["友邻", detail.neighborName],
+        ["可用体型", detail.modelSizes],
+        ["配置价格", formatNeighborClothingPrice(detail.price)],
+      ];
+  }
 }
 
-function clothingDetailSections(detail: ClothingDetail): CollectionDetailSection[] {
+function clothingDetailSections(detail: ClothingPageDetail): CollectionDetailSection[] {
   const sections: CollectionDetailSection[] = [];
   if (detail.kind === "set" && detail.items?.length)
     sections.push({
