@@ -10,7 +10,7 @@ import { parseReleaseBase, sha256 } from "../src/release.ts";
 import { createR2Store, ObjectMissingError } from "../src/store.ts";
 import type { ReleaseStore } from "../src/store.ts";
 import { validateContent } from "../src/validate.ts";
-import { writeFixture, webp, imageKey } from "./fixture.ts";
+import { writeFixture, webp, imageKey, remoteImageKey } from "./fixture.ts";
 const directories: string[] = [];
 const date = new Date("2026-11-17T06:30:00Z");
 const firstId = `20261117-gtest-f${FORMAT_VERSION}-r001`;
@@ -67,7 +67,7 @@ test("发布完整版本，再次发布时占用新序号而不覆盖旧版本",
   expect(marker).toEqual({
     release: firstId,
     manifestSha256: sha256(await readFile(path.join(directory, "release.json"))),
-    storageLayout: "shared-assets-v1",
+    storageLayout: "shared-images-v1",
     uploadedImageCount: 1,
     reusedImageCount: 0,
   });
@@ -84,7 +84,7 @@ test("发布完整版本，再次发布时占用新序号而不覆盖旧版本",
     `releases/${firstId}/_upload.json`,
     `releases/${secondId}/_upload.json`,
   ]);
-  expect([...objects.keys()].filter((key) => key.endsWith(".webp"))).toEqual([imageKey]);
+  expect([...objects.keys()].filter((key) => key.endsWith(".webp"))).toEqual([remoteImageKey]);
   expect(objects.has(`releases/${firstId}/_complete.json`)).toBe(true);
 });
 
@@ -166,7 +166,7 @@ test.each([403, 404, 503])("只有 HTTP 404 被识别为对象缺失：%s", asyn
   const error = Object.assign(new Error("HEAD failed"), { $metadata: { httpStatusCode: status } });
   vi.spyOn(S3Client.prototype, "send").mockRejectedValue(error);
   const store = createR2Store("a".repeat(32), "bucket", "key", "secret");
-  const result = store.verify(imageKey, webp.length, sha256(webp));
+  const result = store.verify(remoteImageKey, webp.length, sha256(webp));
   if (status === 404) await expect(result).rejects.toBeInstanceOf(ObjectMissingError);
   else await expect(result).rejects.toBe(error);
 });
@@ -251,7 +251,7 @@ test("progress counts remotely verified images and bytes in concurrent completio
   const held = content.assets[0];
   store.verify = async (key, size, hash) => {
     await verify(key, size, hash);
-    if (key.endsWith(held.key)) await gate.promise;
+    if (key === `images/${held.sha256}.webp`) await gate.promise;
   };
   const publication = publishRelease(directory, store, (progress) => {
     updates.push(progress);
@@ -295,7 +295,7 @@ test("a failed upload suppresses progress from in-flight images and never comple
   const updates: UploadProgress[] = [];
   store.verify = async (key, size, hash) => {
     await verify(key, size, hash);
-    if (key.endsWith(content.assets[0].key)) {
+    if (key === `images/${content.assets[0].sha256}.webp`) {
       await ready.promise;
       throw new Error("Image verification failed");
     }

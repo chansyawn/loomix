@@ -1,4 +1,9 @@
-import { ImageFileSchema } from "@loomix/schema/assets";
+import {
+  ImageFileSchema,
+  SHARED_IMAGE_PREFIX,
+  SharedImageKeySchema,
+  sharedImageKey,
+} from "@loomix/schema/assets";
 import { HashSchema } from "@loomix/schema/common";
 import { ReleaseIdSchema, ReleaseMarkerSchema } from "@loomix/schema/release";
 import { z } from "zod";
@@ -50,7 +55,7 @@ async function retainedImages(
   const indexBytes = await store.read(`${prefix}assets.json`);
   if (indexBytes.length !== assets[0].bytes || sha256(indexBytes) !== assets[0].sha256)
     throw new Error(`图片索引大小或哈希不符：${release}`);
-  return assetIndex.parse(decode(indexBytes)).images.map((image) => image.file);
+  return assetIndex.parse(decode(indexBytes)).images.map((image) => sharedImageKey(image.sha256));
 }
 
 async function releasesById(store: MaintenanceStore) {
@@ -139,9 +144,9 @@ export async function planCleanup(
     }
   }
 
-  const orphanImages = (await store.list("assets/")).filter(
+  const orphanImages = (await store.list(SHARED_IMAGE_PREFIX)).filter(
     (object) =>
-      ImageFileSchema.safeParse(object.key).success &&
+      SharedImageKeySchema.safeParse(object.key).success &&
       !marked.has(object.key) &&
       now.getTime() - object.modified.getTime() >= 7 * day,
   );

@@ -1,3 +1,5 @@
+import { sharedImageKey } from "@loomix/schema/assets";
+import { SHARED_IMAGE_LAYOUT } from "@loomix/schema/release";
 import { readRegularFile } from "./files.ts";
 import type { AssetFile, ValidatedContent } from "./validate.ts";
 import { sha256 } from "./release.ts";
@@ -40,8 +42,8 @@ async function reserveRelease(
     const marker = {
       release,
       manifestSha256: content.manifestSha256,
-      storageLayout: "shared-assets-v1",
-    } as const satisfies ReleaseMarker;
+      storageLayout: SHARED_IMAGE_LAYOUT,
+    } satisfies ReleaseMarker;
     const bytes = Buffer.from(JSON.stringify(marker));
     try {
       if (
@@ -77,8 +79,9 @@ export async function publishValidatedContent(
 }
 
 async function ensureImage(asset: AssetFile, store: ReleaseStore): Promise<boolean> {
+  const key = sharedImageKey(asset.sha256);
   try {
-    await store.verify(asset.key, asset.size, asset.sha256);
+    await store.verify(key, asset.size, asset.sha256);
     return false;
   } catch (error) {
     if (!(error instanceof ObjectMissingError)) throw error;
@@ -86,8 +89,8 @@ async function ensureImage(asset: AssetFile, store: ReleaseStore): Promise<boole
   const bytes = await readRegularFile(asset.path);
   if (sha256(bytes) !== asset.sha256)
     throw new Error(`Image changed during publication: ${asset.key}`);
-  const created = await store.tryReserve(asset.key, bytes, "image/webp", asset.sha256);
-  await store.verify(asset.key, asset.size, asset.sha256);
+  const created = await store.tryReserve(key, bytes, "image/webp", asset.sha256);
+  await store.verify(key, asset.size, asset.sha256);
   return created;
 }
 

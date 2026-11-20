@@ -3,12 +3,12 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, expect, test } from "vite-plus/test";
 import { downloadRelease, immutableCacheControl, sha256 } from "../src/release.ts";
-import { writeFixture, writeDocuments, imageKey } from "./fixture.ts";
+import { writeFixture, writeDocuments, imageKey, remoteImageKey } from "./fixture.ts";
 import { material } from "../../../packages/schema/tests/fixture.ts";
 
 const directories: string[] = [];
 const base = "https://assets.loomix.fun/releases/r1/";
-const storageLayout = "shared-assets-v1" as const;
+const storageLayout = "shared-images-v1" as const;
 afterEach(async () => {
   await Promise.all(
     directories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })),
@@ -22,7 +22,7 @@ async function fixture() {
   const load = async () => {
     for (const file of ["release.json", ...release.manifest.files.map((file) => file.path)])
       files.set(file, await readFile(path.join(directory, file)));
-    files.set(imageKey, await readFile(path.join(directory, imageKey)));
+    files.set(remoteImageKey, await readFile(path.join(directory, imageKey)));
     files.set(
       "_complete.json",
       Buffer.from(
@@ -37,7 +37,7 @@ async function fixture() {
   await load();
   const request: typeof fetch = (input) => {
     const pathname = new URL(input instanceof Request ? input.url : String(input)).pathname;
-    const name = pathname.startsWith("/assets/")
+    const name = pathname.startsWith("/images/")
       ? pathname.slice(1)
       : pathname.slice("/releases/r1/".length);
     const bytes = files.get(name);
@@ -47,7 +47,7 @@ async function fixture() {
         headers: {
           "access-control-allow-origin": "https://loomix.fun",
           ...(name === "_complete.json" ? { "cache-control": "no-store" } : {}),
-          ...(name === imageKey
+          ...(name === remoteImageKey
             ? { "content-type": "image/webp", "cache-control": immutableCacheControl }
             : {}),
         },
@@ -100,9 +100,11 @@ test("rejects missing documents and incorrect release identity", async () => {
 });
 test("验证公共域名上的共享图片，缺失或字节不正确时失败", async () => {
   const { files, request } = await fixture();
-  files.delete(imageKey);
-  await expect(downloadRelease(base, request)).rejects.toThrow(`/${imageKey} returned HTTP 404`);
-  files.set(imageKey, Buffer.from("wrong"));
+  files.delete(remoteImageKey);
+  await expect(downloadRelease(base, request)).rejects.toThrow(
+    `/${remoteImageKey} returned HTTP 404`,
+  );
+  files.set(remoteImageKey, Buffer.from("wrong"));
   await expect(downloadRelease(base, request)).rejects.toThrow("Public image verification failed");
 });
 

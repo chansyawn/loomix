@@ -6,6 +6,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
+import { SHARED_IMAGE_PREFIX } from "@loomix/schema/assets";
 import { createHash } from "node:crypto";
 import { immutableCacheControl } from "./release.ts";
 
@@ -61,6 +62,11 @@ export function createR2Store(
     endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
     credentials: { accessKeyId, secretAccessKey },
     requestChecksumCalculation: "WHEN_REQUIRED",
+    requestHandler: {
+      connectionTimeout: 10_000,
+      requestTimeout: 30_000,
+      throwOnRequestTimeout: true,
+    },
   });
   async function put(
     key: string,
@@ -103,7 +109,7 @@ export function createR2Store(
       if (
         result.ContentLength !== size ||
         result.Metadata?.sha256 !== hash ||
-        (key.startsWith("assets/") &&
+        (key.startsWith(SHARED_IMAGE_PREFIX) &&
           (result.ContentType !== "image/webp" || result.CacheControl !== immutableCacheControl))
       ) {
         throw new Error(`Remote object verification failed: ${key}`);

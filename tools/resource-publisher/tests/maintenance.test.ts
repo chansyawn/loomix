@@ -17,8 +17,9 @@ function fixture() {
     const bytes = Buffer.from(label);
     const sha = sha256(bytes);
     const file = `assets/${sha}.webp`;
-    put(file, bytes, modified);
-    return { file, sha256: sha };
+    const key = `images/${sha}.webp`;
+    put(key, bytes, modified);
+    return { file, key, sha256: sha };
   };
   const store: MaintenanceStore = {
     list: async (prefix) => [...objects.values()].filter(({ key }) => key.startsWith(prefix)),
@@ -38,7 +39,9 @@ function fixture() {
   };
   const release = (id: string, images: ReturnType<typeof image>[], legacy = false) => {
     const prefix = `releases/${id}/`;
-    const index = Buffer.from(JSON.stringify({ images }));
+    const index = Buffer.from(
+      JSON.stringify({ images: images.map(({ file, sha256 }) => ({ file, sha256 })) }),
+    );
     put(`${prefix}assets.json`, index);
     const manifest = Buffer.from(
       JSON.stringify({
@@ -52,7 +55,7 @@ function fixture() {
     json(`${prefix}_complete.json`, {
       release: id,
       manifestSha256: sha256(manifest),
-      ...(legacy ? {} : { storageLayout: "shared-assets-v1" }),
+      ...(legacy ? {} : { storageLayout: "shared-images-v1" }),
     });
     json(`${prefix}_upload.json`, {});
   };
@@ -75,25 +78,27 @@ test("回收过期版本和孤儿图片，保留跨版本图片、占号和宽�
   json("releases/abandoned/release.json", {});
   json("releases/unfinished/_upload.json", {}, recent);
   json("releases/unfinished/release.json", {}, recent);
-  json("assets/other.json", {});
+  json("images/other.json", {});
+  json(orphan.file, {});
 
   const plan = await planCleanup(store, ["live"], now);
   expect(plan.expiredReleases).toEqual(["abandoned", "expired"]);
-  expect(plan.orphanImages).toEqual([orphan.file]);
+  expect(plan.orphanImages).toEqual([orphan.key]);
   expect(plan.completionMarkers).toEqual(["releases/expired/_complete.json"]);
   expect(plan.objectCount).toBe(5);
-  expect(objects.has(orphan.file)).toBe(true);
+  expect(objects.has(orphan.key)).toBe(true);
   await applyCleanup(store, plan);
 
   expect(objects.has("releases/expired/_upload.json")).toBe(true);
   expect(objects.has("releases/expired/_retired.json")).toBe(true);
   expect(objects.has("releases/legacy/_complete.json")).toBe(true);
   expect(objects.has("releases/unfinished/release.json")).toBe(true);
-  expect(objects.has("assets/other.json")).toBe(true);
-  expect(objects.has(grace.file)).toBe(true);
-  expect(objects.has(shared.file)).toBe(true);
-  expect(objects.has(fresh.file)).toBe(true);
-  expect(objects.has(orphan.file)).toBe(false);
+  expect(objects.has("images/other.json")).toBe(true);
+  expect(objects.has(orphan.file)).toBe(true);
+  expect(objects.has(grace.key)).toBe(true);
+  expect(objects.has(shared.key)).toBe(true);
+  expect(objects.has(fresh.key)).toBe(true);
+  expect(objects.has(orphan.key)).toBe(false);
   expect((await planCleanup(store, ["live"], now)).objectCount).toBe(0);
 });
 
@@ -134,8 +139,8 @@ test("删除版本文档中断后可重跑，共享图片最后删除", async ()
   const plan = await planCleanup(store, ["live"], now);
   await expect(applyCleanup(store, plan)).rejects.toThrow("删除中断");
   expect(objects.has("releases/expired/_complete.json")).toBe(false);
-  expect(objects.has(orphan.file)).toBe(true);
+  expect(objects.has(orphan.key)).toBe(true);
   removeSpy.mockRestore();
   await applyCleanup(store, await planCleanup(store, ["live"], now));
-  expect(objects.has(orphan.file)).toBe(false);
+  expect(objects.has(orphan.key)).toBe(false);
 });

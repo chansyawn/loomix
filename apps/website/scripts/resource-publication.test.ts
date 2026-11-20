@@ -157,7 +157,7 @@ test.each(["网络", "哈希", "网站检查"])(
               JSON.stringify({
                 release: firstId,
                 manifestSha256: "b".repeat(64),
-                storageLayout: "shared-assets-v1",
+                storageLayout: "shared-images-v1",
               }),
             ),
           );

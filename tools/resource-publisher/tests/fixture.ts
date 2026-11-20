@@ -12,6 +12,7 @@ export const webp = Buffer.from(
   "base64",
 );
 export const imageKey = `assets/${sha256(webp)}.webp`;
+export const remoteImageKey = `images/${sha256(webp)}.webp`;
 
 export { context, source };
 export function emptyRelease() {
