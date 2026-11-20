@@ -17,10 +17,13 @@ export type CreationCardView = {
   materials: ItemAmount[] | null;
 };
 
-export function creationCardsByProduct(catalog: Catalog, assets: Assets) {
+export type CreationCardReference = { face: CreationCardFaceData; productId: number };
+
+export function indexCreationCards(catalog: Catalog, assets: Assets) {
   const images = new Map(assets.images.map((entry) => [imageKey(entry), entry]));
   const items = new Map(catalog.items.filter(isListedItem).map((item) => [item.id, item]));
   const names = new Map(catalog.creationCardSets.map((set) => [set.id, set.name]));
+  const byId = new Map<number, CreationCardReference>();
   const byProduct = new Map<number, CreationCardView[]>();
   for (const card of catalog.items) {
     if (card.kind !== "creationCard") continue;
@@ -38,10 +41,12 @@ export function creationCardsByProduct(catalog: Catalog, assets: Assets) {
         quality: card.quality,
       },
     };
-    const cards = byProduct.get(card.recipe.productId);
+    const { productId } = card.recipe;
+    byId.set(card.id, { face: entry.face, productId });
+    const cards = byProduct.get(productId);
     if (cards) cards.push(entry);
-    else byProduct.set(card.recipe.productId, [entry]);
+    else byProduct.set(productId, [entry]);
   }
   for (const cards of byProduct.values()) cards.sort((left, right) => left.id - right.id);
-  return byProduct;
+  return { byId, byProduct };
 }

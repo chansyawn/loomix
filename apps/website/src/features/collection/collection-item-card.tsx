@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { LinkProps } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 import { Card, CardContent } from "@/ui/components/card";
 import type { CatalogEntrySummary } from "../collection-view";
 import { RecordImage } from "./record-image";
@@ -8,6 +9,7 @@ import { useCollectionOrigin } from "./navigation";
 export function CollectionItemCard({
   item,
   itemId,
+  thumbnail,
   quantity,
   description,
   link,
@@ -16,6 +18,7 @@ export function CollectionItemCard({
 }: {
   item: Pick<CatalogEntrySummary, "name" | "image"> | null;
   itemId: number;
+  thumbnail?: ReactNode;
   quantity?: number;
   description?: string;
   link?: LinkProps;
@@ -27,7 +30,9 @@ export function CollectionItemCard({
   const content = (
     <div className="flex items-center gap-3">
       <div className="size-20 shrink-0 overflow-hidden rounded-lg border bg-muted/30">
-        <RecordImage image={item?.image ?? null} name={name} inset="sm" fallback="icon" />
+        {thumbnail ?? (
+          <RecordImage image={item?.image ?? null} name={name} inset="sm" fallback="icon" />
+        )}
       </div>
       <div className="min-w-0 flex-1 space-y-1">
         <span

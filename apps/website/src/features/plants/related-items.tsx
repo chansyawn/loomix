@@ -1,8 +1,9 @@
 import type { IngredientItem } from "../collection-view";
 import { CollectionItemCard } from "../collection/collection-item-card";
+import { CreationCardFace } from "../collection/creation-card-face";
 import { recordLocation } from "../collection/item-route";
 import { useCollectionOrigin } from "@/features/collection/navigation";
-import type { PlantDrops } from "./model";
+import type { PlantDrop, PlantDrops } from "./model";
 
 export function PlantRelatedItems({
   title,
@@ -44,7 +45,6 @@ export function PlantRelatedItems({
 }
 
 export function PlantDropsInfo({ drops }: { drops: PlantDrops }) {
-  const origin = useCollectionOrigin();
   if (!drops.groups.length) return null;
   return (
     <section aria-label="产物与掉落" className="space-y-4">
@@ -69,18 +69,7 @@ export function PlantDropsInfo({ drops }: { drops: PlantDrops }) {
                   <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))] gap-3">
                     {entries.map((entry) => (
                       <li key={`${entry.source}:${entry.itemId}`} className="max-w-full min-w-0">
-                        <CollectionItemCard
-                          item={entry.item}
-                          itemId={entry.itemId}
-                          link={
-                            entry.item && entry.item.browsable !== false
-                              ? {
-                                  ...recordLocation(entry.item),
-                                  state: { collectionOrigin: origin },
-                                }
-                              : undefined
-                          }
-                        />
+                        <PlantDropCard drop={entry} />
                       </li>
                     ))}
                   </ul>
@@ -90,5 +79,30 @@ export function PlantDropsInfo({ drops }: { drops: PlantDrops }) {
         </div>
       ))}
     </section>
+  );
+}
+
+function PlantDropCard({ drop: { item, itemId, creationCard } }: { drop: PlantDrop }) {
+  const target = creationCard?.product ?? (item?.browsable !== false ? item : null);
+  return (
+    <CollectionItemCard
+      item={item}
+      itemId={itemId}
+      link={target ? recordLocation(target) : undefined}
+      thumbnail={
+        creationCard ? (
+          <div
+            aria-hidden="true"
+            className="flex size-full items-center justify-center bg-muted p-2"
+          >
+            <CreationCardFace
+              {...creationCard.face}
+              productName={creationCard.product.name}
+              className="h-full w-auto"
+            />
+          </div>
+        ) : undefined
+      }
+    />
   );
 }

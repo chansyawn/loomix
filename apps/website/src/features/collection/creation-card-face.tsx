@@ -1,7 +1,7 @@
 import { cn } from "cn";
 import { useState } from "react";
 import { ImageOffIcon } from "lucide-react";
-import { QualityBar } from "@/features/collection/quality";
+import { QualityBar } from "./quality";
 import { resourceUrl } from "@/infrastructure/resources";
 import type { CreationCardFaceData } from "./creation-card";
 
@@ -12,14 +12,15 @@ export function CreationCardFace({
   foreground,
   quality,
   productName,
-}: CreationCardFaceData & { productName: string }) {
+  className,
+}: CreationCardFaceData & { productName: string; className?: string }) {
   const [backgroundFailed, setBackgroundFailed] = useState(false);
   const [foregroundFailed, setForegroundFailed] = useState(false);
   const backdrop = backgroundFailed ? null : background;
   const backdropRatio = backdrop ? backdrop.width / backdrop.height : frameRatio;
 
   return (
-    <div className="grid aspect-39/56 w-full place-items-center">
+    <div className={cn("grid aspect-39/56 w-full place-items-center", className)}>
       <figure
         className={cn("@container relative overflow-hidden", !backdrop && "rounded-md bg-muted")}
         style={{

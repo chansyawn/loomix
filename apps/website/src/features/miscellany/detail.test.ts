@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { assetsFixture, catalogFixture, fixtureRequest } from "../collection-fixture.ts";
 import { toCollectionView } from "../collection-view.ts";
 import type { FurnitureItem, MiscellaneousItem } from "../collection-view.ts";
-import type { CreationCardView } from "../furniture/creation-card.ts";
+import type { CreationCardView } from "../collection/creation-card.ts";
 import { plantItemFixture, plantsDataFixture } from "../plants/fixture";
 import { categoryExpression, recipeFixture, recipeSlot } from "../ingredients/fixture";
 import {

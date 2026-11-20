@@ -1,6 +1,6 @@
 import { createGameplayTagIndex } from "@loomix/schema/gameplay-tags";
 import { expect, test } from "vite-plus/test";
-import { assetsFixture, catalogFixture } from "../collection-fixture";
+import { addFixtureRecords, assetsFixture, catalogFixture } from "../collection-fixture";
 import { toCollectionView } from "../collection-view";
 import {
   plantItemFixture,
@@ -122,9 +122,55 @@ test("掉落保留来源树种与果实，系列按成员分组", () => {
   ).plants;
   const groups = data.series[0].summary.drops.groups;
   expect(groups.map((group) => group.treeId)).toEqual([2, 1]);
-  expect(groups[0].entries[0].item).toMatchObject({ id: 3, name: "树胶", browsable: false });
+  expect(groups[0].entries[0]).toMatchObject({
+    item: { id: 3, name: "树胶", browsable: false },
+    creationCard: null,
+  });
   expect(groups[1].entries[1]).toMatchObject({ itemId: 4, source: "fruit" });
   expect(data.sourceTreesByItemId.get(3)?.map((item) => item.id)).toEqual([1, 2]);
+});
+
+test("树木掉落的创想卡共用配方卡面并指向产物", () => {
+  const { catalog, gameplayTags } = catalogFixture({
+    plants: plantsDataFixture({
+      items: [plantItemFixture({ id: 1, treeDrops: [{ itemId: 3, source: "felling" }] })],
+      series: [],
+    }),
+  });
+  addFixtureRecords(
+    catalog,
+    gameplayTags,
+    {
+      kind: "furniture",
+      id: 2,
+      name: "木椅",
+      image: { assetId: "chair.webp", variant: "icon" },
+    },
+    {
+      kind: "creationCard",
+      id: 3,
+      name: "创想卡：木椅",
+      image: { assetId: "card-icon.webp", variant: "icon" },
+      front: { background: { assetId: "card-frame.webp", variant: "card-background" } },
+      cardSetId: null,
+      recipe: { productId: 2, materials: null },
+    },
+  );
+  const view = toCollectionView(
+    catalog,
+    assetsFixture(catalog),
+    createGameplayTagIndex(gameplayTags.tags),
+  );
+  const [drop] = view.plants.items[0].summary.drops.groups[0].entries;
+  expect(drop).toMatchObject({
+    itemId: 3,
+    item: { name: "创想卡：木椅", browsable: false },
+    creationCard: {
+      face: view.furniture.items[0].creationCards[0].face,
+      product: { id: 2, name: "木椅" },
+    },
+  });
+  expect(drop.creationCard?.face.foreground).toBe("chair.webp");
 });
 
 test("flower and tree stage mappings include formal intermediate shrubs without linking fruit as a seed product", () => {

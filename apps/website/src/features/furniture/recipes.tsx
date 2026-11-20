@@ -1,11 +1,11 @@
 import { Link } from "@tanstack/react-router";
+import { CreationCardFace } from "@/features/collection/creation-card-face";
 import { recordLocation } from "@/features/collection/item-route";
 import { useCollectionOrigin } from "@/features/collection/navigation";
 import { RecordImage } from "@/features/collection/record-image";
 import { Card, CardContent, CardHeader } from "@/ui/components/card";
 import { Item, ItemMedia } from "@/ui/components/item";
 import { Separator } from "@/ui/components/separator";
-import { CreationCardFace } from "./creation-card-face";
 import type { FurnitureDetail } from "./detail";
 
 type Recipe = Extract<FurnitureDetail, { kind: "item" }>["recipes"][number];

@@ -22,7 +22,7 @@ import { createIngredientTagSource } from "./ingredients/tag-source";
 import type { IngredientTagSource } from "./ingredients/tag-source";
 import { buildPlantsData } from "./plants/catalog";
 import type { PlantsData } from "./plants/model";
-import { creationCardsByProduct, type CreationCardView } from "./furniture/creation-card";
+import { indexCreationCards, type CreationCardView } from "./collection/creation-card";
 export type { PlantItem, PlantSeries } from "./plants/model";
 export type { DishEffect } from "@loomix/schema/catalog";
 
@@ -158,7 +158,7 @@ export function toCollectionView(
   tagIndex: GameplayTagIndex,
 ): CollectionView {
   const image = createImageResolver(assets);
-  const cardsByProduct = creationCardsByProduct(catalog, assets);
+  const cards = indexCreationCards(catalog, assets);
   const resolveTags = createRecordTagResolver(tagIndex);
   const tagsFor = (
     record: { tagIds: readonly number[] },
@@ -219,7 +219,7 @@ export function toCollectionView(
           colors: tagsFor(item, "colors"),
           materials: tagsFor(item, "materials"),
           acquisition,
-          creationCards: cardsByProduct.get(item.id) ?? [],
+          creationCards: cards.byProduct.get(item.id) ?? [],
         });
         break;
       case "clothing":
@@ -318,6 +318,6 @@ export function toCollectionView(
       view.furnitureUsesByMaterialId.set(itemId, entries);
     }
   }
-  view.plants = buildPlantsData(catalog, assets, view.ingredientItemsById, tagIndex);
+  view.plants = buildPlantsData(catalog, assets, view.ingredientItemsById, tagIndex, cards.byId);
   return view;
 }
