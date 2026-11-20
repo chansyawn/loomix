@@ -1,44 +1,72 @@
+import { cn } from "cn";
 import { useState } from "react";
 import { ImageOffIcon } from "lucide-react";
+import { QualityBar } from "@/features/collection/quality";
 import { resourceUrl } from "@/infrastructure/resources";
 import type { CreationCardFaceData } from "./creation-card";
 
 const frameRatio = 390 / 560;
 
-export function CreationCardFace({ background, foreground }: CreationCardFaceData) {
-  const [failed, setFailed] = useState(false);
+export function CreationCardFace({
+  background,
+  foreground,
+  quality,
+  productName,
+}: CreationCardFaceData & { productName: string }) {
+  const [backgroundFailed, setBackgroundFailed] = useState(false);
+  const [foregroundFailed, setForegroundFailed] = useState(false);
+  const backdrop = backgroundFailed ? null : background;
+  const backdropRatio = backdrop ? backdrop.width / backdrop.height : frameRatio;
+
   return (
-    <div aria-hidden="true" className="grid aspect-39/56 w-24 shrink-0 place-items-center">
-      {background && foreground && !failed ? (
+    <div className="grid aspect-39/56 w-full place-items-center">
+      <figure
+        className={cn("@container relative overflow-hidden", !backdrop && "rounded-md bg-muted")}
+        style={{
+          aspectRatio: backdropRatio,
+          width: `${Math.min(1, backdropRatio / frameRatio) * 100}%`,
+        }}
+      >
+        {backdrop ? (
+          <img
+            src={resourceUrl(backdrop.file)}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            onError={() => setBackgroundFailed(true)}
+            className="absolute inset-0 size-full object-contain"
+          />
+        ) : null}
         <div
-          className="relative"
-          style={{
-            aspectRatio: `${background.width} / ${background.height}`,
-            width: `${Math.min(1, background.width / background.height / frameRatio) * 100}%`,
-          }}
+          aria-hidden="true"
+          className="absolute top-[43%] left-1/2 grid aspect-square w-[86%] -translate-1/2 place-items-center"
         >
-          <img
-            src={resourceUrl(background.file)}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            onError={() => setFailed(true)}
-            className="block size-full object-contain"
-          />
-          <img
-            src={resourceUrl(foreground)}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            onError={() => setFailed(true)}
-            className="absolute top-[43%] left-1/2 aspect-square w-[61%] -translate-1/2 object-contain"
-          />
+          {foreground && !foregroundFailed ? (
+            <img
+              src={resourceUrl(foreground)}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              onError={() => setForegroundFailed(true)}
+              className="size-full object-contain"
+            />
+          ) : (
+            <ImageOffIcon className="size-5 text-muted-foreground opacity-60" />
+          )}
         </div>
-      ) : (
-        <div className="grid size-full place-items-center rounded-md bg-muted text-muted-foreground">
-          <ImageOffIcon className="size-5 opacity-40" />
-        </div>
-      )}
+        <QualityBar
+          quality={quality}
+          className="inset-x-[10%] bottom-[3%] h-[2%] overflow-hidden rounded-full after:absolute after:inset-0 after:bg-white/25"
+        />
+        <figcaption
+          className={cn(
+            "absolute inset-x-[6%] top-[80%] bottom-[2%] grid place-items-center px-[3%] pb-[3.5%] text-center text-[8.5cqw] leading-tight font-semibold text-white",
+            (!backdrop || backdropRatio !== frameRatio) && "rounded-sm bg-black/80",
+          )}
+        >
+          <span className="line-clamp-2 wrap-anywhere">{productName}</span>
+        </figcaption>
+      </figure>
     </div>
   );
 }

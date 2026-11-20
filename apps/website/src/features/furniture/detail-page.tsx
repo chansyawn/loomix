@@ -5,12 +5,10 @@ import {
   type CollectionDetailSection,
 } from "@/features/collection/detail-layout";
 import { RecordImage as FurnitureImage } from "@/features/collection/record-image";
-import { CollectionItemCard } from "@/features/collection/collection-item-card";
-import { recordLocation } from "@/features/collection/item-route";
 import type { FurnitureItem } from "../collection-view";
 import type { FurnitureDetail } from "./detail";
 import { CollectionDetailNavigation } from "../collection/detail-navigation";
-import { CreationCardFace } from "./creation-card-face";
+import { FurnitureRecipes } from "./recipes";
 
 export function FurnitureDetailPage({ detail }: { detail: FurnitureDetail }) {
   return (
@@ -71,7 +69,7 @@ function furnitureDetailSections(detail: FurnitureDetail): CollectionDetailSecti
     if (detail.recipes?.length)
       sections.push({
         key: "furniture-recipes",
-        content: <FurnitureRecipes recipes={detail.recipes} />,
+        content: <FurnitureRecipes recipes={detail.recipes} productName={detail.record.name} />,
       });
   } else if (detail.items?.length) {
     sections.push({
@@ -80,54 +78,6 @@ function furnitureDetailSections(detail: FurnitureDetail): CollectionDetailSecti
     });
   }
   return sections;
-}
-
-function FurnitureRecipes({
-  recipes,
-}: {
-  recipes: NonNullable<Extract<FurnitureDetail, { kind: "item" }>["recipes"]>;
-}) {
-  return (
-    <section aria-labelledby="furniture-recipes" className="space-y-4">
-      <h2 id="furniture-recipes" className="text-lg font-semibold">
-        制作配方
-      </h2>
-      <div className="space-y-3">
-        {recipes.map((recipe) => (
-          <article key={recipe.id} className="flex items-start gap-4">
-            <CreationCardFace {...recipe.face} />
-            <div className="min-w-0 space-y-2">
-              <h3 className="text-sm font-medium">{recipe.name}</h3>
-              {recipe.setName ? (
-                <p className="text-xs text-muted-foreground">{recipe.setName}</p>
-              ) : null}
-              {recipe.materials === null ? (
-                <p className="text-sm text-muted-foreground">材料信息未确认</p>
-              ) : (
-                <ul className="flex flex-wrap gap-3">
-                  {recipe.materials.map((material) => (
-                    <li key={material.itemId} className="max-w-full min-w-0">
-                      <CollectionItemCard
-                        item={material.item}
-                        itemId={material.itemId}
-                        quantity={material.quantity}
-                        fallbackName="未知材料"
-                        link={
-                          material.item && material.item.browsable !== false
-                            ? recordLocation(material.item)
-                            : undefined
-                        }
-                      />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
 }
 
 function FurnitureSetMembers({ items }: { items: FurnitureItem[] }) {

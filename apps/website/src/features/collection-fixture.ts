@@ -88,6 +88,7 @@ export function catalogFixture(
         kind: "creationCard",
         id: card.id,
         name: card.name,
+        quality: card.face.quality,
         image: card.face.foreground ? { assetId: card.face.foreground, variant: "icon" } : null,
         front: { background: { assetId: background.file, variant: "card-background" } },
         cardSetId: null,

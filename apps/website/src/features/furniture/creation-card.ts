@@ -6,6 +6,7 @@ import { isListedItem } from "@loomix/schema/catalog";
 export type CreationCardFaceData = {
   background: { file: string; width: number; height: number } | null;
   foreground: string | null;
+  quality: number | null;
 };
 
 export type CreationCardView = {
@@ -34,6 +35,7 @@ export function creationCardsByProduct(catalog: Catalog, assets: Assets) {
       face: {
         background: asset ? { file: asset.file, width: asset.width, height: asset.height } : null,
         foreground: foreground ? (images.get(imageKey(foreground))?.file ?? null) : null,
+        quality: card.quality,
       },
     };
     const cards = byProduct.get(card.recipe.productId);

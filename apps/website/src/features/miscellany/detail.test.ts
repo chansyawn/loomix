@@ -47,6 +47,7 @@ function furnitureFixture(
       face: {
         background: { file: `assets/${"a".repeat(64)}.webp`, width: 390, height: 560 },
         foreground: `assets/${"b".repeat(64)}.webp`,
+        quality: null,
       },
     })),
   };

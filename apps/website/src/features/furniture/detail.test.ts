@@ -115,14 +115,14 @@ describe("furniture details", () => {
               id: 10,
               name: "创想卡 10",
               setName: null,
-              face: { background: null, foreground: null },
+              face: { background: null, foreground: null, quality: null },
               materials: [{ itemId: 2, quantity: 3 }],
             },
             {
               id: 11,
               name: "创想卡 11",
               setName: null,
-              face: { background: null, foreground: null },
+              face: { background: null, foreground: null, quality: null },
               materials: null,
             },
           ],
@@ -137,11 +137,14 @@ describe("furniture details", () => {
       ],
     });
   });
-  it("uses the product icon for the card face and falls back to the card icon", async () => {
+  it("uses the product icon and the card's own quality for the card face", async () => {
     const background = { file: `assets/${"c".repeat(64)}.webp`, width: 390, height: 560 };
     const foreground = `assets/${"d".repeat(64)}.webp`;
     const productIcon = `assets/${"e".repeat(64)}.webp`;
-    for (const image of [productIcon, null]) {
+    for (const { image, quality } of [
+      { image: productIcon, quality: 2 },
+      { image: null, quality: null },
+    ]) {
       const fixture = catalogFixture({
         furniture: {
           ...data,
@@ -149,13 +152,14 @@ describe("furniture details", () => {
             {
               ...first,
               image,
+              quality: 1,
               creationCards: [
                 {
                   id: 10,
                   name: "创想卡：木椅",
                   setName: null,
                   materials: null,
-                  face: { background, foreground },
+                  face: { background, foreground, quality },
                 },
               ],
             },
@@ -171,6 +175,7 @@ describe("furniture details", () => {
             face: {
               background: { file: background.file },
               foreground: image ?? foreground,
+              quality,
             },
           },
         ],
