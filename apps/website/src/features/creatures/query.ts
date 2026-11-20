@@ -1,4 +1,6 @@
+import { createNameMatcher } from "@/infrastructure/name-search";
 import type { CreatureItem, CreatureSeries } from "../collection-view.ts";
+import { indexMembership } from "../collection/membership";
 import type { FilterGroup } from "@/features/collection/filter-panel";
 import { qualityNames } from "@/features/collection/quality";
 import type { CreaturesData } from "./data";
@@ -12,12 +14,6 @@ function splitValues(value: string | null): string[] {
       .map((part) => part.trim())
       .filter(Boolean) ?? [];
   return values.length > 0 ? values : [missing];
-}
-export function membershipIndex(series: CreatureSeries[]): Map<number, CreatureSeries[]> {
-  const index = new Map<number, CreatureSeries[]>();
-  for (const group of series)
-    for (const id of group.creatureIds ?? []) index.set(id, [...(index.get(id) ?? []), group]);
-  return index;
 }
 function options(values: (string | null)[]) {
   return [...new Set(values.map((value) => value || missing))]
@@ -103,12 +99,12 @@ function matchesCondition(selected: string[], raw: string | null, universal: str
   );
 }
 export function queryCreatures(data: CreaturesData, view: View, query: ViewQuery) {
-  const memberships = membershipIndex(data.series);
-  const term = query.q.trim().toLocaleLowerCase("zh-CN");
+  const memberships = indexMembership(data.series, (group) => group.creatureIds);
+  const matchesName = createNameMatcher(query.q);
   const rows: (CreatureItem | CreatureSeries)[] = view === "items" ? data.items : data.series;
   const filtered = rows.filter((row) => {
     if (
-      !row.name.toLocaleLowerCase("zh-CN").includes(term) ||
+      !matchesName(row.name) ||
       !matches(query.qualities, [row.quality === null ? missing : String(row.quality)])
     )
       return false;

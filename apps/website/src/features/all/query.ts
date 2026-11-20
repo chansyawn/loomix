@@ -1,3 +1,4 @@
+import { createNameMatcher } from "@/infrastructure/name-search";
 import type { FilterGroup } from "../collection/filter-types";
 import { qualityNames } from "../collection/quality";
 import type { AllQuery, FilterKey } from "./search";
@@ -10,20 +11,18 @@ function allRecords(data: CollectionCatalog) {
 const intersects = (selected: string[], values: string[]) =>
   !selected.length || values.some((value) => selected.includes(value));
 export function queryAll(data: CollectionCatalog, query: AllQuery) {
-  const term = query.q.trim().toLocaleLowerCase("zh-CN");
-  const rows = allRecords(data).filter((row) => {
-    const text = [String(row.id), row.name, row.description]
-      .filter(Boolean)
-      .join(" ")
-      .toLocaleLowerCase("zh-CN");
-    return (
-      text.includes(term) &&
+  const matchesName = createNameMatcher(query.q);
+  const rows = allRecords(data).filter(
+    (row) =>
+      matchesName(row.name) &&
       intersects(query.categories, [row.category]) &&
       intersects(query.qualities, [row.quality === null ? "__missing" : String(row.quality)]) &&
       data.tags.matches(row.id, query.tags, query.tagMode) &&
-      intersects(query.acquisition, row.acquisition?.map((source) => String(source.sourceId)) ?? [])
-    );
-  });
+      intersects(
+        query.acquisition,
+        row.acquisition?.map((source) => String(source.sourceId)) ?? [],
+      ),
+  );
   if (query.sort !== "original")
     rows.sort((a, b) => {
       const direction = query.sort.endsWith("desc") ? -1 : 1;

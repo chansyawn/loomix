@@ -3,7 +3,7 @@ import type { CreaturesData } from "./data";
 import { loadCollectionView } from "../collection-loader";
 import { buildIngredientsData, ingredientUsage } from "../ingredients/model";
 import type { IngredientUsage } from "../ingredients/model";
-import { membershipIndex } from "./query";
+import { indexMembership } from "../collection/membership";
 import type { View } from "./search";
 
 export function parseCreaturesId(value: string): number {
@@ -26,7 +26,7 @@ export function creaturesDetail(
       record: item,
       cooking,
       catalogItems: data.items,
-      series: membershipIndex(data.series).get(id) ?? [],
+      series: indexMembership(data.series, (group) => group.creatureIds).get(id) ?? [],
     };
   }
   const series = data.series.find((row) => row.id === id);

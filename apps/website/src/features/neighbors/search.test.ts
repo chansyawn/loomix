@@ -1,6 +1,6 @@
 import { expect, test } from "vite-plus/test";
 import { neighborFixture } from "./fixture";
-import { queryNeighbors } from "./search";
+import { queryNeighbors } from "./query";
 import { toNeighborsView } from "./view";
 
 function view() {
@@ -8,20 +8,14 @@ function view() {
   return toNeighborsView(database, mapping, catalog, gameplayTags);
 }
 
-test("matches neighbor name, nickname, English name and star name", () => {
+test("只匹配友邻显示名称及其拼音", () => {
   const data = view();
-  expect(queryNeighbors(data, { q: "manna", galaxy: "" }).map((neighbor) => neighbor.id)).toEqual([
-    1,
-  ]);
-  expect(queryNeighbors(data, { q: "咪朵", galaxy: "" }).map((neighbor) => neighbor.id)).toEqual([
-    2,
-  ]);
-  expect(queryNeighbors(data, { q: "幻雪", galaxy: "" }).map((neighbor) => neighbor.id)).toEqual([
-    2,
-  ]);
-  expect(
-    queryNeighbors(data, { q: "图塔的星球", galaxy: "" }).map((neighbor) => neighbor.id),
-  ).toEqual([3]);
+  for (const q of ["幻雪", "huanxue", "hx"]) {
+    expect(queryNeighbors(data, { q, galaxy: "" }).map((neighbor) => neighbor.id)).toEqual([2]);
+  }
+  for (const q of ["manna", "咪朵", "图塔的星球"]) {
+    expect(queryNeighbors(data, { q, galaxy: "" })).toEqual([]);
+  }
 });
 
 test("keeps galaxy filtering and ignores blank queries", () => {
@@ -30,5 +24,5 @@ test("keeps galaxy filtering and ignores blank queries", () => {
   expect(queryNeighbors(data, { q: "", galaxy: "禾夏" }).map((neighbor) => neighbor.id)).toEqual([
     1, 2,
   ]);
-  expect(queryNeighbors(data, { q: "manna", galaxy: "帕沙" })).toEqual([]);
+  expect(queryNeighbors(data, { q: "huanxue", galaxy: "帕沙" })).toEqual([]);
 });

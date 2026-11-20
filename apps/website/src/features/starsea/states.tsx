@@ -13,6 +13,7 @@ export function StarseaListLoading() {
     <CollectionPage title="星海" loading>
       <div className="flex flex-col gap-4 pb-8">
         <Skeleton className="h-9 w-full max-w-96" />
+        <Skeleton className="h-9 w-full max-w-96" />
         <div className={wideGrid(80).className}>
           {[1, 2, 3, 4].map((placeholder) => (
             <Skeleton key={placeholder} className="aspect-4/3" />

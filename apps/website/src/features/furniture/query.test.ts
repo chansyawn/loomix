@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import type { FurnitureItem, FurnitureSet } from "../collection-view.ts";
-import { filterGroups, membershipIndex, queryFurniture } from "./query";
+import { indexMembership } from "../collection/membership";
+import { filterGroups, queryFurniture } from "./query";
 import { emptyQuery, missing, ungrouped } from "./search";
 
 function item(
@@ -155,7 +156,7 @@ describe("furniture catalog", () => {
     expect(ids(queryFurniture(data, "items", { ...emptyQuery(), sets: [ungrouped] }).rows)).toEqual(
       [1, 4, 6, 7],
     );
-    expect(ids(membershipIndex(sets).get(2)!)).toEqual([101, 102]);
+    expect(ids(indexMembership(sets, (set) => set.componentIds).get(2)!)).toEqual([101, 102]);
     expect(queryFurniture(data, "items", { ...emptyQuery(), sets: ["103"] }).rows).toEqual([]);
   });
 

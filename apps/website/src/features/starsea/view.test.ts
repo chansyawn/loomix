@@ -3,7 +3,7 @@ import type { Starsea } from "@loomix/schema/starsea";
 import { expect, test } from "vite-plus/test";
 import { addFixtureRecords, catalogFixture } from "../collection-fixture";
 import { neighborFixture } from "../neighbors/fixture";
-import { filterIslets } from "./search";
+import { filterIslets } from "./query";
 import { toStarseaDetail, toStarseaList } from "./view";
 
 const illustration = { assetId: "islet", variant: "illustration" } as const;
@@ -76,8 +76,19 @@ test("星屿按区域与探索顺序排列，候选去重并保留可筛选的�
   expect(list.islets.filter(({ encounterOnly }) => encounterOnly).map(({ id }) => id)).toEqual([
     79, 76,
   ]);
-  expect(filterIslets(list.islets, 1).map(({ id }) => id)).toEqual([125, 24, 79, 76]);
-  expect(filterIslets(list.islets, 2).map(({ id }) => id)).toEqual([24, 79]);
+  expect(filterIslets(list.islets, { q: "", region: 1 }).map(({ id }) => id)).toEqual([
+    125, 24, 79, 76,
+  ]);
+  expect(filterIslets(list.islets, { q: "", region: 2 }).map(({ id }) => id)).toEqual([24, 79]);
+});
+
+test("星海按星屿名匹配，并与区域筛选取交集", () => {
+  const { islets } = toStarseaList(starseaFixture(), assets);
+  for (const q of ["星屿 7", "xing yu 7", "xy7"]) {
+    expect(filterIslets(islets, { q, region: null }).map(({ id }) => id)).toEqual([79, 76]);
+    expect(filterIslets(islets, { q, region: 2 }).map(({ id }) => id)).toEqual([79]);
+  }
+  expect(filterIslets(islets, { q: "禾夏", region: 1 })).toEqual([]);
 });
 
 test("详情按星屿关联物资与友邻，区分空配置和空条目", () => {

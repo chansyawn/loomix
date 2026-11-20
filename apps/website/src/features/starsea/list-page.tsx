@@ -7,8 +7,10 @@ import { RecordImage } from "@/features/collection/record-image";
 import { CollectionTable } from "@/features/collection/table";
 import { textColumn, type CollectionColumn } from "@/features/collection/table-columns";
 import { Empty, EmptyHeader, EmptyTitle } from "@/ui/components/empty";
+import { SearchInput } from "@/ui/components/search-input";
 import { ToggleGroup, ToggleGroupItem } from "@/ui/components/toggle-group";
-import { filterIslets, type StarseaSearch } from "./search";
+import { filterIslets } from "./query";
+import type { StarseaSearch } from "./search";
 import type { StarseaIslet, StarseaList } from "./view";
 
 type Origin = { search: StarseaSearch; index: number };
@@ -102,14 +104,21 @@ export function StarseaListPage({
   data: StarseaList;
   search: StarseaSearch;
   historyIndex: number;
-  onChange: (search: StarseaSearch) => void;
+  onChange: (patch: Partial<StarseaSearch>, replace?: boolean) => void;
 }) {
-  const visible = filterIslets(data.islets, search.region);
+  const visible = filterIslets(data.islets, search);
   const origin = { search, index: historyIndex };
 
   return (
     <CollectionPage title="星海">
       <div className="flex flex-col gap-4 pb-8">
+        <SearchInput
+          className="w-full max-w-96"
+          ariaLabel="搜索星屿名"
+          placeholder="搜索星屿名或拼音…"
+          value={search.q}
+          onValueChange={(q, replace) => onChange({ q }, replace)}
+        />
         <ToggleGroup
           aria-label="星海区域筛选"
           className="max-w-full flex-wrap"
@@ -118,7 +127,7 @@ export function StarseaListPage({
           value={[search.region === null ? allRegions : String(search.region)]}
           onValueChange={([value]) => {
             if (typeof value === "string")
-              onChange({ ...search, region: value === allRegions ? null : Number(value) });
+              onChange({ region: value === allRegions ? null : Number(value) });
           }}
         >
           <ToggleGroupItem value={allRegions}>全部星海</ToggleGroupItem>
@@ -136,18 +145,18 @@ export function StarseaListPage({
           <CollectionLayoutToggle
             title="星海"
             layout={search.layout}
-            onLayoutChange={(layout) => onChange({ ...search, layout })}
+            onLayoutChange={(layout) => onChange({ layout })}
           />
         </div>
         {visible.length === 0 ? (
           <Empty>
             <EmptyHeader>
-              <EmptyTitle>暂无星屿资料</EmptyTitle>
+              <EmptyTitle>{search.q.trim() ? "未找到匹配的星屿" : "暂无星屿资料"}</EmptyTitle>
             </EmptyHeader>
           </Empty>
         ) : search.layout === "table" ? (
           <CollectionTable
-            resultKey={String(search.region)}
+            resultKey={JSON.stringify([search.region, search.q])}
             rows={visible}
             columns={isletColumns(origin)}
             getRowId={(row) => String(row.id)}

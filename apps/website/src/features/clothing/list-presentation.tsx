@@ -13,13 +13,17 @@ export const tabs: CollectionTab<View>[] = [
 ];
 export function listPresentation(view: View) {
   const entry = {
-    items: { unit: "件服装", searchLabel: "搜索服装名称", placeholder: "搜索服装名称…" },
-    sets: { unit: "个套装", searchLabel: "搜索套装名称", placeholder: "搜索套装名称…" },
-    appearances: { unit: "项外观", searchLabel: "搜索外观名称", placeholder: "搜索外观名称…" },
+    items: { unit: "件服装", searchLabel: "搜索服装名称", placeholder: "搜索服装名称或拼音…" },
+    sets: { unit: "个套装", searchLabel: "搜索套装名称", placeholder: "搜索套装名称或拼音…" },
+    appearances: {
+      unit: "项外观",
+      searchLabel: "搜索外观名称",
+      placeholder: "搜索外观名称或拼音…",
+    },
     neighborClothing: {
       unit: "件友邻服饰",
       searchLabel: "搜索友邻服饰名称",
-      placeholder: "搜索友邻服饰名称…",
+      placeholder: "搜索友邻服饰名称或拼音…",
     },
   }[view];
   return {

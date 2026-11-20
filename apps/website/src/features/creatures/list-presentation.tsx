@@ -11,8 +11,8 @@ export const tabs: CollectionTab<"items" | "series">[] = [
 ];
 export function listPresentation(view: View) {
   const entry = {
-    items: { unit: "种生物", searchLabel: "搜索生物名称", placeholder: "搜索生物名称…" },
-    series: { unit: "个系列", searchLabel: "搜索系列名称", placeholder: "搜索系列名称…" },
+    items: { unit: "种生物", searchLabel: "搜索生物名称", placeholder: "搜索生物名称或拼音…" },
+    series: { unit: "个系列", searchLabel: "搜索系列名称", placeholder: "搜索系列名称或拼音…" },
   }[view];
   return {
     ...entry,
