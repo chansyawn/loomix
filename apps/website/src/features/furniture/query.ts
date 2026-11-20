@@ -1,4 +1,6 @@
+import { createNameMatcher } from "@/infrastructure/name-search";
 import type { FurnitureItem, FurnitureSet } from "../collection-view.ts";
+import { indexMembership } from "../collection/membership";
 import type { FurnitureData } from "./data";
 import { categories, missing, ungrouped } from "./search";
 import type { FilterKey, View, ViewQuery } from "./search";
@@ -15,13 +17,6 @@ export function splitValues(value: string | null): string[] {
         .map((part) => part.trim())
         .filter(Boolean)
     : [missing];
-}
-
-export function membershipIndex(sets: FurnitureSet[]): Map<number, FurnitureSet[]> {
-  const index = new Map<number, FurnitureSet[]>();
-  for (const set of sets)
-    for (const id of set.componentIds ?? []) index.set(id, [...(index.get(id) ?? []), set]);
-  return index;
 }
 
 function options(values: (string | null)[]): Option[] {
@@ -84,12 +79,12 @@ function matches(selected: string[], values: string[]): boolean {
 }
 
 export function queryFurniture(data: FurnitureData, view: View, query: ViewQuery) {
-  const memberships = membershipIndex(data.sets);
-  const term = query.q.trim().toLocaleLowerCase("zh-CN");
+  const memberships = indexMembership(data.sets, (set) => set.componentIds);
+  const matchesName = createNameMatcher(query.q);
   const rows: (FurnitureItem | FurnitureSet)[] = view === "items" ? data.items : data.sets;
   const filtered = rows.filter((row) => {
     if (
-      !row.name.toLocaleLowerCase("zh-CN").includes(term) ||
+      !matchesName(row.name) ||
       !matches(query.qualities, [row.quality === null ? missing : String(row.quality)])
     )
       return false;

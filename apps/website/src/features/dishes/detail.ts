@@ -1,7 +1,7 @@
 import { notFound } from "@tanstack/react-router";
 import type { DishesData } from "./data";
 import { loadDishes } from "./data";
-import { membershipIndex } from "./query";
+import { indexMembership } from "../collection/membership";
 import type { DishView as View } from "./search";
 
 export function parseDishId(value: string): number {
@@ -22,7 +22,7 @@ export function dishesDetail(data: DishesData, view: View, id: number) {
       catalogItems: data.items,
       ingredientTagSource,
       ingredientItemsById,
-      series: membershipIndex(data.series).get(id) ?? [],
+      series: indexMembership(data.series, (group) => group.dishIds).get(id) ?? [],
       hasUnconfirmedSeriesMembership: data.series.some((group) => group.dishIds === null),
     };
   }

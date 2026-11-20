@@ -51,8 +51,8 @@ export function IntroSearch() {
       >
         <SearchInput
           className="min-w-0 flex-1"
-          ariaLabel="搜索图鉴"
-          placeholder="搜索家具、服饰、料理、生物……"
+          ariaLabel="搜索图鉴物品名称"
+          placeholder="搜索物品名称或拼音…"
           value={keyword}
           onValueChange={setKeyword}
         />

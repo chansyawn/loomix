@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
+import { createNameMatcher } from "@/infrastructure/name-search";
 import {
+  filterTree,
+  flattenFilterOptions,
   filterSelectionValues,
   summarizeFilterTreeSelection,
   toggleFilterTreeSelection,
@@ -30,6 +33,16 @@ const options: FilterOption[] = [
     ],
   },
 ];
+
+it("按拼音搜索选项名称并保留祖先路径与匹配分支", () => {
+  const matchedValues = (term: string) =>
+    flattenFilterOptions(filterTree(options, createNameMatcher(term))).map(
+      (option) => option.value,
+    );
+  expect(matchedValues("sanwenyu")).toEqual(["__food", "animal", "fish", "salmon"]);
+  expect(matchedValues("yl")).toEqual(["__food", "animal", "fish", "salmon"]);
+  expect(matchedValues("salmon")).toEqual([]);
+});
 
 describe("tree filter selection", () => {
   it("summarizes selected branches by their highest complete node", () => {

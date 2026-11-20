@@ -34,8 +34,8 @@ export function NeighborsListLayout({
         <div className="flex flex-wrap items-center gap-2.5">
           <SearchInput
             className="min-w-48 flex-1 sm:max-w-sm"
-            ariaLabel="搜索友邻或星球"
-            placeholder="搜索友邻或星球…"
+            ariaLabel="搜索友邻名称"
+            placeholder="搜索友邻名称或拼音…"
             value={search.q}
             onValueChange={onQueryChange}
             disabled={loading}

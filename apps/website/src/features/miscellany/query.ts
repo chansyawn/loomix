@@ -1,5 +1,6 @@
 import type { FilterGroup as CollectionFilterGroup } from "@/features/collection/filter-panel";
 import { qualityNames } from "@/features/collection/quality";
+import { createNameMatcher } from "@/infrastructure/name-search";
 import type { MiscellanyData } from "./data";
 import { missing } from "./search";
 import type { MiscellanyQuery } from "./search";
@@ -21,13 +22,12 @@ export function filterGroups(data: MiscellanyData): FilterGroup[] {
 }
 
 export function queryMiscellany(data: MiscellanyData, query: MiscellanyQuery) {
-  const term = query.q.trim().toLocaleLowerCase("zh-CN");
+  const matchesName = createNameMatcher(query.q);
   const rows = data.filter((item) => {
-    const matchesText =
-      item.name.toLocaleLowerCase("zh-CN").includes(term) ||
-      (item.description?.toLocaleLowerCase("zh-CN").includes(term) ?? false);
     const quality = item.quality === null ? missing : String(item.quality);
-    return matchesText && (query.qualities.length === 0 || query.qualities.includes(quality));
+    return (
+      matchesName(item.name) && (query.qualities.length === 0 || query.qualities.includes(quality))
+    );
   });
 
   if (query.sort !== "original")

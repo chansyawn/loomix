@@ -12,6 +12,10 @@ vp run website#dev
 
 实际访问地址以启动输出为准；根目录的 `vp run dev` 调用同一入口。
 
+## 名称搜索
+
+在当前列表中输入条目名称的片段、拼音或首字母，例如用 `fanqie` 或 `fq` 查找「番茄」。首页提交后进入「全部」页。星海按星屿名查询，可与区域筛选叠加，复制列表地址即可分享关键词、区域和布局。筛选面板内的小搜索框查找选项名称，勾选选项后应用筛选。
+
 ## 代码结构
 
 业务改动从 [features](src/features/) 入手，[routes](src/routes/) 负责路由接线；资源读取等基础设施在 [infrastructure](src/infrastructure/)，通用组件在 [ui](src/ui/)，资源验证与预览工具在 [scripts](scripts/)。自动生成的路由树不手工编辑。

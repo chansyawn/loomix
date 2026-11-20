@@ -53,8 +53,8 @@ export function AllPage({
     <CollectionPage title={title}>
       <CollectionToolbar
         title={title}
-        searchLabel="搜索全部物品"
-        placeholder="搜索编号、名称或介绍"
+        searchLabel="搜索物品名称"
+        placeholder="搜索物品名称或拼音…"
         query={query.q}
         onQueryChange={(q, replace) => update({ q }, replace)}
         sort={query.sort}

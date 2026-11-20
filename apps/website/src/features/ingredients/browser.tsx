@@ -41,8 +41,8 @@ export function IngredientsBrowser({
     <>
       <CollectionToolbar
         title="食材"
-        searchLabel="搜索食材"
-        placeholder="搜索食材名称，如番茄、虾…"
+        searchLabel="搜索食材名称"
+        placeholder="搜索食材名称或拼音…"
         query={query.q}
         onQueryChange={(q, replace) => onQueryChange({ q }, replace)}
         sort={query.sort}

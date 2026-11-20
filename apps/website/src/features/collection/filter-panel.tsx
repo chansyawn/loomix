@@ -1,5 +1,6 @@
 import { SlidersHorizontalIcon } from "lucide-react";
 import { useId, useState, type ReactNode } from "react";
+import { createNameMatcher } from "@/infrastructure/name-search";
 import {
   Accordion,
   AccordionContent,
@@ -53,10 +54,13 @@ function FilterOptions<K extends string>({
     else expanded.delete(value);
   }
   const id = useId();
-  const normalizedTerm = term.trim();
-  const options = group.tree
-    ? filterTree(group.options, normalizedTerm)
-    : group.options.filter((option) => option.label.includes(normalizedTerm));
+  const searchActive = Boolean(term.trim());
+  const matchesLabel = createNameMatcher(term);
+  const options = !searchActive
+    ? group.options
+    : group.tree
+      ? filterTree(group.options, matchesLabel)
+      : group.options.filter((option) => matchesLabel(option.label));
   const selectedCount = filterSelectionValues(group, selected).length;
   const selectableCount = flattenFilterOptions(group.options).filter(
     (option) => option.selectable !== false,
@@ -96,7 +100,7 @@ function FilterOptions<K extends string>({
           {selectableCount > 10 && (
             <Input
               aria-label={`搜索${group.label}`}
-              placeholder={`搜索${group.label}…`}
+              placeholder={`搜索${group.label}名称或拼音…`}
               value={term}
               onChange={(event) => setTerm(event.target.value)}
             />
@@ -113,7 +117,7 @@ function FilterOptions<K extends string>({
                   depth={0}
                   selected={selected}
                   expanded={expanded}
-                  searchActive={normalizedTerm.length > 0}
+                  searchActive={searchActive}
                   selectionMode={group.selectionMode}
                   onToggleValue={(value, checked) =>
                     onChange(toggleFilterSelection(group, value, checked, selected))

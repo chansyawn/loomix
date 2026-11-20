@@ -29,12 +29,15 @@ const third: MiscellaneousItem = {
 const data: MiscellanyData = [first, second, third];
 
 describe("miscellany queries", () => {
-  it("searches names and descriptions and filters selected qualities", () => {
-    const result = queryMiscellany(data, { ...emptyQuery(), q: "家具", qualities: ["1"] });
+  it("只搜索杂物的名称，并与品阶筛选取交集", () => {
+    const result = queryMiscellany(data, { ...emptyQuery(), q: "yinxingmu", qualities: ["1"] });
     expect(result.rows.map((item) => item.id)).toEqual([1]);
-    expect(
-      queryMiscellany(data, { ...emptyQuery(), q: "海岸" }).rows.map((item) => item.id),
-    ).toEqual([2]);
+    expect(queryMiscellany(data, { ...emptyQuery(), q: "贝壳" }).rows.map(({ id }) => id)).toEqual([
+      2,
+    ]);
+    for (const q of ["家具", "海岸", "hai an"]) {
+      expect(queryMiscellany(data, { ...emptyQuery(), q }).rows).toEqual([]);
+    }
     expect(
       queryMiscellany(data, { ...emptyQuery(), qualities: [missing] }).rows.map((item) => item.id),
     ).toEqual([3]);

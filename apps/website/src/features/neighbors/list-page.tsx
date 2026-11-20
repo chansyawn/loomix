@@ -1,7 +1,8 @@
 import type { NeighborsData } from "./data";
 import { NeighborsGrid, NeighborsListLayout } from "./list-layout";
 import { NeighborCard } from "./neighbor-card";
-import { queryNeighbors, type NeighborsSearch } from "./search";
+import { queryNeighbors } from "./query";
+import type { NeighborsSearch } from "./search";
 import { NeighborsEmpty } from "./states";
 
 type SearchUpdate = NeighborsSearch | ((previous: NeighborsSearch) => NeighborsSearch);

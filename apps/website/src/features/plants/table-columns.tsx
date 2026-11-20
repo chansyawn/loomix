@@ -13,7 +13,9 @@ import {
 } from "../collection/table-columns";
 import type { CollectionColumn } from "../collection/table-columns";
 import { useCollectionOrigin } from "@/features/collection/navigation";
-import { membershipIndex, seedSeries, seedSourceLabels } from "./query";
+import { acquisitionLabels } from "../collection/acquisition";
+import { indexMembership } from "../collection/membership";
+import { seedSeries } from "./model";
 import type { View } from "./search";
 import { recordLocation } from "../collection/item-route";
 import { PlantSeedLinks, SeedNameLink } from "./seed-info";
@@ -127,7 +129,7 @@ function seedTableColumns(
       width: 224,
       cell: (record) => {
         if (!isSeedRow(record)) return null;
-        const acquisition = seedSourceLabels(record);
+        const acquisition = acquisitionLabels(record.acquisition);
         return acquisition.length > 0 ? (
           <span className="block truncate" title={acquisition.join("、")}>
             {acquisition.join("、")}
@@ -161,7 +163,7 @@ export function plantsTableColumns(
   if (view === "seeds") return seedTableColumns(data);
   const groups = data?.series ?? [];
   const common = recordColumns<PlantsRow>((record) => <NameLink record={record} />);
-  const memberships = membershipIndex(groups);
+  const memberships = indexMembership(groups, (group) => group.plantIds);
   const facts: CollectionColumn<PlantsRow>[] = [
     textColumn("acquisition", "获取来源", 224, (record) =>
       isSeedRow(record) ? null : record.summary.acquisition.join("、") || null,

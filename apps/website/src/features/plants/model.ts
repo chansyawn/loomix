@@ -61,3 +61,8 @@ export interface PlantsData {
   itemRefs: ReadonlyMap<number, IngredientItem>;
   sourceTreesByItemId: ReadonlyMap<number, PlantItem[]>;
 }
+
+export function seedSeries(seed: PlantSeed, groups: PlantSeries[]): PlantSeries[] {
+  const plantIds = new Set(seed.plantIds);
+  return groups.filter((group) => group.plantIds?.some((id) => plantIds.has(id)));
+}
