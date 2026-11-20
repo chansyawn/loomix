@@ -1,6 +1,5 @@
 import { loadEnvironment } from "./environment.ts";
 import { createR2Store } from "./store.ts";
-import type { ReleaseStore } from "./store.ts";
 
 export const defaultBucket = "loomix-assets";
 
@@ -10,7 +9,7 @@ function requiredEnv(name: string): string {
   return value;
 }
 
-export function configuredStore(bucket = defaultBucket): ReleaseStore {
+export function configuredStore(bucket = defaultBucket) {
   loadEnvironment();
   const accountId = requiredEnv("CLOUDFLARE_ACCOUNT_ID");
   if (!/^[a-f0-9]{32}$/.test(accountId)) throw new Error("Invalid CLOUDFLARE_ACCOUNT_ID");

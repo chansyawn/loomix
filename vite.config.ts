@@ -43,6 +43,10 @@ export default defineConfig({
         command: "node apps/website/scripts/publish-resources.ts",
         cache: false,
       },
+      "resources:maintain": {
+        command: "node tools/resource-publisher/src/maintenance-cli.ts",
+        cache: false,
+      },
     },
     cache: {
       tasks: true,

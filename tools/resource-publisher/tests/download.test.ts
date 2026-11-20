@@ -2,12 +2,13 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, expect, test } from "vite-plus/test";
-import { downloadRelease, sha256 } from "../src/release.ts";
-import { writeFixture, writeDocuments } from "./fixture.ts";
+import { downloadRelease, immutableCacheControl, sha256 } from "../src/release.ts";
+import { writeFixture, writeDocuments, imageKey } from "./fixture.ts";
 import { material } from "../../../packages/schema/tests/fixture.ts";
 
 const directories: string[] = [];
 const base = "https://assets.loomix.fun/releases/r1/";
+const storageLayout = "shared-assets-v1" as const;
 afterEach(async () => {
   await Promise.all(
     directories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })),
@@ -21,23 +22,35 @@ async function fixture() {
   const load = async () => {
     for (const file of ["release.json", ...release.manifest.files.map((file) => file.path)])
       files.set(file, await readFile(path.join(directory, file)));
+    files.set(imageKey, await readFile(path.join(directory, imageKey)));
     files.set(
       "_complete.json",
       Buffer.from(
-        JSON.stringify({ release: "r1", manifestSha256: sha256(files.get("release.json")!) }),
+        JSON.stringify({
+          release: "r1",
+          manifestSha256: sha256(files.get("release.json")!),
+          storageLayout,
+        }),
       ),
     );
   };
   await load();
   const request: typeof fetch = (input) => {
-    const name = new URL(input instanceof Request ? input.url : String(input)).pathname.slice(
-      "/releases/r1/".length,
-    );
+    const pathname = new URL(input instanceof Request ? input.url : String(input)).pathname;
+    const name = pathname.startsWith("/assets/")
+      ? pathname.slice(1)
+      : pathname.slice("/releases/r1/".length);
     const bytes = files.get(name);
     return Promise.resolve(
       new Response(bytes ? new Uint8Array(bytes) : "missing", {
         status: bytes ? 200 : 404,
-        headers: { "access-control-allow-origin": "https://loomix.fun" },
+        headers: {
+          "access-control-allow-origin": "https://loomix.fun",
+          ...(name === "_complete.json" ? { "cache-control": "no-store" } : {}),
+          ...(name === imageKey
+            ? { "content-type": "image/webp", "cache-control": immutableCacheControl }
+            : {}),
+        },
       }),
     );
   };
@@ -50,7 +63,11 @@ test("downloads and validates every document declared by the immutable release",
 });
 test("远程完成标记必须绑定本次上传的 ID 和清单哈希", async () => {
   const { request, files } = await fixture();
-  const marker = { release: "r1", manifestSha256: sha256(files.get("release.json")!) };
+  const marker = {
+    release: "r1",
+    manifestSha256: sha256(files.get("release.json")!),
+    storageLayout,
+  };
   await expect(downloadRelease(base, request, "https://loomix.fun", marker)).resolves.toBeDefined();
   for (const expected of [
     { ...marker, manifestSha256: "a".repeat(64) },
@@ -77,9 +94,26 @@ test("rejects missing documents and incorrect release identity", async () => {
   await expect(downloadRelease(base, request)).rejects.toThrow("HTTP 404");
   files.set(
     "_complete.json",
-    Buffer.from(JSON.stringify({ release: "r2", manifestSha256: "a".repeat(64) })),
+    Buffer.from(JSON.stringify({ release: "r2", manifestSha256: "a".repeat(64), storageLayout })),
   );
   await expect(downloadRelease(base, request)).rejects.toThrow("does not match");
+});
+test("验证公共域名上的共享图片，缺失或字节不正确时失败", async () => {
+  const { files, request } = await fixture();
+  files.delete(imageKey);
+  await expect(downloadRelease(base, request)).rejects.toThrow(`/${imageKey} returned HTTP 404`);
+  files.set(imageKey, Buffer.from("wrong"));
+  await expect(downloadRelease(base, request)).rejects.toThrow("Public image verification failed");
+});
+
+test("拒绝 CDN 缓存命中的完成标记", async () => {
+  const { request } = await fixture();
+  const cachedMarker: typeof fetch = async (input, init) => {
+    const response = await request(input, init);
+    response.headers.set("cf-cache-status", "HIT");
+    return response;
+  };
+  await expect(downloadRelease(base, cachedMarker)).rejects.toThrow("must bypass caches");
 });
 test("checks cross-document references even when all byte hashes match", async () => {
   const fixtureData = await fixture();

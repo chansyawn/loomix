@@ -50,7 +50,10 @@ async function fixture() {
     const bytes = objects.get(new URL(url).pathname.slice(1));
     return new Response(bytes ? new Uint8Array(bytes) : "missing", {
       status: bytes ? 200 : 404,
-      headers: { "access-control-allow-origin": "https://loomix.fun" },
+      headers: {
+        "access-control-allow-origin": "https://loomix.fun",
+        "cache-control": "no-store",
+      },
     });
   });
   const dependencies: PublicationDependencies = {
@@ -150,7 +153,13 @@ test.each(["网络", "哈希", "网站检查"])(
         if ((input instanceof Request ? input.url : String(input)).endsWith("_complete.json"))
           objects.set(
             `releases/${firstId}/_complete.json`,
-            Buffer.from(JSON.stringify({ release: firstId, manifestSha256: "b".repeat(64) })),
+            Buffer.from(
+              JSON.stringify({
+                release: firstId,
+                manifestSha256: "b".repeat(64),
+                storageLayout: "shared-assets-v1",
+              }),
+            ),
           );
         return request(input, init);
       };

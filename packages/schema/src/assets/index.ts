@@ -25,6 +25,10 @@ export type Assets = z.infer<typeof AssetsSchema>;
 export const parseAssets = (input: unknown): Assets => AssetsSchema.parse(input);
 export const imageKey = (image: ImageRef): string => `${image.assetId}:${image.variant}`;
 
+export function sharedImagePath(file: string): string {
+  return `/${ImageFileSchema.parse(file)}`;
+}
+
 export function createImageResolver(assets: Assets): (image: ImageRef | null) => string | null {
   const index = new Map(assets.images.map((image) => [imageKey(image), image.file]));
   return (image) => (image === null ? null : (index.get(imageKey(image)) ?? null));

@@ -29,6 +29,7 @@ export const ReleaseIdSchema = z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,12
 export const ReleaseMarkerSchema = z.strictObject({
   release: ReleaseIdSchema,
   manifestSha256: HashSchema,
+  storageLayout: z.literal("shared-assets-v1"),
 });
 export const FileSchema = z.strictObject({
   kind: DocumentKindSchema,

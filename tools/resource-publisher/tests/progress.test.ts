@@ -27,7 +27,7 @@ test("non-TTY progress prints percentage milestones without ANSI control codes",
     reporter.update({ ...initial, completed, completedBytes: completed * 10_000 });
   }
   expect(target.text().split("\n").filter(Boolean)).toHaveLength(4);
-  expect(target.text()).toContain("上传图片 50% | 50/100 张 | 0.50/1.00 MB");
+  expect(target.text()).toContain("校验远程图片 50% | 50/100 张 | 0.50/1.00 MB");
   expect(target.text()).not.toContain("\u001b");
   expect(target.text()).not.toContain("发布成功");
   reporter.update({ ...initial, phase: "finalizing" });
@@ -45,7 +45,7 @@ test("TTY progress renders a cli-progress bar and restores the cursor on failure
   } finally {
     reporter.fail();
   }
-  expect(target.text()).toContain("上传图片 [");
+  expect(target.text()).toContain("校验远程图片 [");
   expect(target.text()).toContain("25/100 张 | 0.25/1.00 MB");
   expect(target.text()).toContain("\u001b[?25h");
   expect(target.text()).not.toContain("100%");

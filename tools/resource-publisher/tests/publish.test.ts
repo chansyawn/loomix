@@ -7,7 +7,7 @@ import { afterEach, expect, test, vi } from "vite-plus/test";
 import { publishValidatedContent } from "../src/publish.ts";
 import type { UploadProgress } from "../src/publish.ts";
 import { parseReleaseBase, sha256 } from "../src/release.ts";
-import { createR2Store } from "../src/store.ts";
+import { createR2Store, ObjectMissingError } from "../src/store.ts";
 import type { ReleaseStore } from "../src/store.ts";
 import { validateContent } from "../src/validate.ts";
 import { writeFixture, webp, imageKey } from "./fixture.ts";
@@ -53,8 +53,8 @@ function memoryStore(failKey?: string): { store: ReleaseStore; objects: Map<stri
       },
       async verify(key, size, hash) {
         const bytes = objects.get(key);
-        if (!bytes || bytes.length !== size || sha256(bytes) !== hash)
-          throw new Error("Verification failed");
+        if (!bytes) throw new ObjectMissingError(`Missing: ${key}`);
+        if (bytes.length !== size || sha256(bytes) !== hash) throw new Error("Verification failed");
       },
     },
   };
@@ -67,17 +67,30 @@ test("发布完整版本，再次发布时占用新序号而不覆盖旧版本",
   expect(marker).toEqual({
     release: firstId,
     manifestSha256: sha256(await readFile(path.join(directory, "release.json"))),
+    storageLayout: "shared-assets-v1",
+    uploadedImageCount: 1,
+    reusedImageCount: 0,
   });
   expect([...objects.keys()].at(-1)).toBe(`releases/${firstId}/_complete.json`);
   expect(objects.has(`releases/${firstId}/zh-CN/neighbors.json`)).toBe(true);
   expect(objects.has(`releases/${firstId}/zh-CN/starsea.json`)).toBe(true);
-  expect((await publishRelease(directory, store)).release).toBe(secondId);
+  const write = vi.spyOn(store, "tryReserve");
+  expect(await publishRelease(directory, store)).toMatchObject({
+    release: secondId,
+    uploadedImageCount: 0,
+    reusedImageCount: 1,
+  });
+  expect(write.mock.calls.map(([key]) => key)).toEqual([
+    `releases/${firstId}/_upload.json`,
+    `releases/${secondId}/_upload.json`,
+  ]);
+  expect([...objects.keys()].filter((key) => key.endsWith(".webp"))).toEqual([imageKey]);
   expect(objects.has(`releases/${firstId}/_complete.json`)).toBe(true);
 });
 
 test("an interrupted upload cannot produce a completion marker or reuse its release ID", async () => {
   const directory = await fixture();
-  const { store, objects } = memoryStore(`releases/${firstId}/${imageKey}`);
+  const { store, objects } = memoryStore(`releases/${firstId}/assets.json`);
   await expect(publishRelease(directory, store)).rejects.toThrow("Write rejected");
   expect(objects.has(`releases/${firstId}/_complete.json`)).toBe(false);
   expect((await publishRelease(directory, store)).release).toBe(secondId);
@@ -134,6 +147,28 @@ test("并发发布通过原子预留获得不同序号", async () => {
     publishRelease(directory, store),
   ]);
   expect(results.map((result) => result.release).sort()).toEqual([firstId, secondId]);
+  expect(results.map((result) => result.uploadedImageCount)).toEqual(
+    expect.arrayContaining([0, 1]),
+  );
+  expect(results.map((result) => result.reusedImageCount)).toEqual(expect.arrayContaining([0, 1]));
+});
+
+test("新增图片只上传缺失的共享对象", async () => {
+  const { store } = memoryStore();
+  await publishRelease(await fixture(), store);
+  expect(await publishRelease(await fixture(2), store)).toMatchObject({
+    uploadedImageCount: 1,
+    reusedImageCount: 1,
+  });
+});
+
+test.each([403, 404, 503])("只有 HTTP 404 被识别为对象缺失：%s", async (status) => {
+  const error = Object.assign(new Error("HEAD failed"), { $metadata: { httpStatusCode: status } });
+  vi.spyOn(S3Client.prototype, "send").mockRejectedValue(error);
+  const store = createR2Store("a".repeat(32), "bucket", "key", "secret");
+  const result = store.verify(imageKey, webp.length, sha256(webp));
+  if (status === 404) await expect(result).rejects.toBeInstanceOf(ObjectMissingError);
+  else await expect(result).rejects.toBe(error);
 });
 
 test("a failed remote integrity check prevents completion", async () => {
