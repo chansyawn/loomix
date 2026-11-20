@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { assetsFixture, catalogFixture, fixtureRequest } from "../collection-fixture.ts";
 import { toCollectionView } from "../collection-view.ts";
 import type { FurnitureItem, MiscellaneousItem } from "../collection-view.ts";
+import type { CreationCardView } from "../collection/creation-card.ts";
 import { plantItemFixture, plantsDataFixture } from "../plants/fixture";
 import { categoryExpression, recipeFixture, recipeSlot } from "../ingredients/fixture";
 import {
@@ -25,7 +26,7 @@ const data = [item];
 
 function furnitureFixture(
   id: number,
-  craftingRecipes: FurnitureItem["craftingRecipes"],
+  recipes: Pick<CreationCardView, "id" | "materials">[],
 ): FurnitureItem {
   return {
     id,
@@ -39,7 +40,16 @@ function furnitureFixture(
     colors: null,
     materials: item.name,
     acquisition: null,
-    craftingRecipes,
+    creationCards: recipes.map((recipe) => ({
+      ...recipe,
+      name: `创想卡 ${recipe.id}`,
+      setName: null,
+      face: {
+        background: { file: `assets/${"a".repeat(64)}.webp`, width: 390, height: 560 },
+        foreground: `assets/${"b".repeat(64)}.webp`,
+        quality: null,
+      },
+    })),
   };
 }
 
@@ -62,17 +72,17 @@ function relatedCatalog() {
     furniture: {
       items: [
         furnitureFixture(100, [
-          { id: 1, materials: [{ itemId: 30032, quantity: 9 }] },
-          { id: 2, materials: [{ itemId: item.id, quantity: 3 }] },
-          { id: 3, materials: [{ itemId: item.id, quantity: 5 }] },
+          { id: 11, materials: [{ itemId: 30032, quantity: 9 }] },
+          { id: 12, materials: [{ itemId: item.id, quantity: 3 }] },
+          { id: 13, materials: [{ itemId: item.id, quantity: 5 }] },
         ]),
         furnitureFixture(101, [
-          { id: 4, materials: [{ itemId: item.id, quantity: 2 }] },
-          { id: 5, materials: [{ itemId: item.id, quantity: 2 }] },
+          { id: 14, materials: [{ itemId: item.id, quantity: 2 }] },
+          { id: 15, materials: [{ itemId: item.id, quantity: 2 }] },
         ]),
         furnitureFixture(103, []),
-        furnitureFixture(104, [{ id: 6, materials: null }]),
-        furnitureFixture(105, [{ id: 7, materials: [{ itemId: 100, quantity: 1 }] }]),
+        furnitureFixture(104, [{ id: 16, materials: null }]),
+        furnitureFixture(105, [{ id: 17, materials: [{ itemId: 100, quantity: 1 }] }]),
       ],
       sets: [],
     },

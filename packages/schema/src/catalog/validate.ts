@@ -7,6 +7,9 @@ import type { Item, ItemKind } from "./items.ts";
 export function validateCatalog(catalog: Catalog): ValidationIssue[] {
   const { issues, issue, unique } = createIssueCollector("invalid_reference", ["catalog"]);
   unique([...catalog.items, ...catalog.collections], (entry) => entry.id, ["entries"]);
+  unique(catalog.creationCardSets, (entry) => entry.id, ["creationCardSets"]);
+  const cardSets = new Set(catalog.creationCardSets.map((entry) => entry.id));
+  const usedCardSets = new Set<number>();
   const items = new Map<number, Item>(catalog.items.map((item) => [item.id, item]));
   const checkItems = (
     ids: readonly number[],
@@ -25,17 +28,27 @@ export function validateCatalog(catalog: Catalog): ValidationIssue[] {
     if (item.kind === "reference") return;
     unique(item.tagIds, (id) => id, [...path, "tagIds"]);
     switch (item.kind) {
-      case "furniture":
-        unique(item.craftingRecipes, (recipe) => recipe.id, [...path, "craftingRecipes"]);
-        item.craftingRecipes.forEach((recipe, recipeIndex) =>
-          checkItems(recipe.materials?.map((material) => material.itemId) ?? [], [
-            ...path,
-            "craftingRecipes",
-            recipeIndex,
-            "materials",
-          ]),
-        );
+      case "creationCard": {
+        const product = items.get(item.recipe.productId);
+        if (!product || product.kind === "reference" || product.id === item.id)
+          issue(
+            [...path, "recipe", "productId"],
+            `Unknown formal product ${item.recipe.productId}`,
+          );
+        if (!(product && product.kind !== "reference" && product.image) && !item.image)
+          issue([...path, "front"], `Missing usable foreground for creation card ${item.id}`);
+        if (item.cardSetId !== null) {
+          if (!cardSets.has(item.cardSetId))
+            issue([...path, "cardSetId"], `Unknown creation card set ${item.cardSetId}`);
+          usedCardSets.add(item.cardSetId);
+        }
+        checkItems(item.recipe.materials?.map((material) => material.itemId) ?? [], [
+          ...path,
+          "recipe",
+          "materials",
+        ]);
         break;
+      }
       case "neighborClothing":
         if (item.neighborId === null && item.playerItemId === null)
           issue([...path, "neighborId"], "Neighbor clothing needs a resolvable association");
@@ -70,6 +83,10 @@ export function validateCatalog(catalog: Catalog): ValidationIssue[] {
         ["collections", index, "memberIds"],
         [collection.memberKind],
       );
+  });
+  catalog.creationCardSets.forEach((entry, index) => {
+    if (!usedCardSets.has(entry.id))
+      issue(["creationCardSets", index], `Creation card set ${entry.id} has no admitted cards`);
   });
   return issues;
 }

@@ -9,7 +9,7 @@ export function observationFixture(snapshotId = "c".repeat(64)): SourceObservati
     context: { ...dataset.context, snapshotId },
     source: dataset.source,
     gameplayTags: dataset.gameplayTags,
-    catalog: { items: [], collections: [] },
+    catalog: { items: [], collections: [], creationCardSets: [] },
     ingredientItemIds: [],
     neighbors: {
       schemaVersion: 4,

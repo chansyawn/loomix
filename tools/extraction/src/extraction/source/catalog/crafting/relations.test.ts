@@ -24,9 +24,9 @@ test("配方按产物收录，材料槽位保留数量", ({ onTestFinished }) =>
   onTestFinished(fixture.cleanup);
   const { tables } = fixture.input;
   const recipes = readCraftingRecipes({ tables }, new Set([1610, 1758])).recipes;
-  expect(recipes).toEqual([
-    { id: 111610, productId: 1610, materials: [{ itemId: 30104, quantity: 4 }] },
-    { id: 111758, productId: 1758, materials: null },
+  expect(recipes).toMatchObject([
+    { id: 111610, productId: 1610, cardSetId: 5, materials: [{ itemId: 30104, quantity: 4 }] },
+    { id: 111758, productId: 1758, cardSetId: 999, materials: null },
   ]);
 });
 

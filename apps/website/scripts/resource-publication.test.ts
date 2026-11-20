@@ -2,6 +2,7 @@ import { access, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:f
 import path from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, expect, test, vi } from "vite-plus/test";
+import { FORMAT_VERSION } from "@loomix/schema/common";
 import { writeFixture } from "../../../tools/resource-publisher/tests/fixture.ts";
 import { sha256 } from "@loomix/resource-publisher/release";
 import type { ReleaseStore } from "@loomix/resource-publisher/publish";
@@ -9,8 +10,8 @@ import { publishWebsiteResources } from "./resource-publication.ts";
 import type { PublicationDependencies } from "./resource-publication.ts";
 
 const roots: string[] = [];
-const firstId = "20261117-gtest-f12-r001";
-const secondId = "20261117-gtest-f12-r002";
+const firstId = `20261117-gtest-f${FORMAT_VERSION}-r001`;
+const secondId = `20261117-gtest-f${FORMAT_VERSION}-r002`;
 const original = '{"resourceBaseUrl":"https://assets.loomix.fun/releases/old/"}\n';
 
 afterEach(async () => {

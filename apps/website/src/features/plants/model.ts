@@ -1,5 +1,6 @@
 import type { Growth, ItemOf } from "@loomix/schema/catalog";
 import type { CatalogEntrySummary, IngredientItem } from "../collection-view";
+import type { CreationCardFaceData } from "../collection/creation-card";
 
 type ResolvedGrowth<G extends Growth = Growth> = G extends Growth
   ? Omit<G, "stages"> & {
@@ -13,11 +14,15 @@ export type PlantSeed = Omit<ItemOf<"seed">, "image" | "kind" | "tagIds" | "grow
   growth: PlantGrowth;
 };
 type PlantRecord = ItemOf<"plant">;
+export type PlantDrop = NonNullable<PlantRecord["drops"]>[number] & {
+  item: IngredientItem | null;
+  creationCard: { face: CreationCardFaceData; product: Pick<IngredientItem, "id" | "name"> } | null;
+};
 export interface PlantDrops {
   groups: {
     treeId: number;
     treeName: string;
-    entries: (NonNullable<PlantRecord["drops"]>[number] & { item: IngredientItem | null })[];
+    entries: PlantDrop[];
   }[];
 }
 export interface PlantGrowthGroup {

@@ -6,6 +6,7 @@ import { acquisitionLabels } from "../collection/acquisition";
 import { createImageResolver } from "@loomix/schema/assets";
 import type { Assets } from "@loomix/schema/assets";
 import type { IngredientItem } from "../collection-view";
+import type { CreationCardReference } from "../collection/creation-card";
 import type { PlantItem, PlantSeed, PlantSummary, PlantsData, PlantGrowth } from "./model";
 
 export function splitPlantValues(value: string | null): string[] {
@@ -47,6 +48,7 @@ export function buildPlantsData(
   assets: Assets,
   itemRefs: ReadonlyMap<number, IngredientItem>,
   tagIndex: GameplayTagIndex,
+  cardsById: ReadonlyMap<number, CreationCardReference>,
 ): PlantsData {
   const image = createImageResolver(assets);
   const tagsFor = createRecordTagResolver(tagIndex);
@@ -108,10 +110,18 @@ export function buildPlantsData(
                 {
                   treeId: item.id,
                   treeName: item.name,
-                  entries: item.treeDrops.map((drop) => ({
-                    ...drop,
-                    item: itemRefs.get(drop.itemId) ?? null,
-                  })),
+                  entries: item.treeDrops.map((drop) => {
+                    const card = cardsById.get(drop.itemId);
+                    const product = card ? itemRefs.get(card.productId) : undefined;
+                    return {
+                      ...drop,
+                      item: itemRefs.get(drop.itemId) ?? null,
+                      creationCard:
+                        card && product && product.browsable !== false
+                          ? { face: card.face, product: { id: product.id, name: product.name } }
+                          : null,
+                    };
+                  }),
                 },
               ]
             : [],

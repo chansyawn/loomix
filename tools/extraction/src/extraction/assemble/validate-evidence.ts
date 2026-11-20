@@ -5,6 +5,7 @@ import type { FieldEvidence } from "../evidence/domain-schema.ts";
 export const evidenceCollections = {
   "catalog.items": (dataset: Dataset) => dataset.catalog.items,
   "catalog.collections": (dataset: Dataset) => dataset.catalog.collections,
+  "catalog.creationCardSets": (dataset: Dataset) => dataset.catalog.creationCardSets,
   "neighbors.neighbors": (dataset: Dataset) => dataset.neighbors.neighbors,
   "gameplayTags.tags": (dataset: Dataset) => dataset.gameplayTags.tags,
   "starsea.regions": (dataset: Dataset) => dataset.starsea.regions,

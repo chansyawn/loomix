@@ -30,7 +30,7 @@ export const CookingRecipeSchema = z.strictObject({
 });
 export const ItemAmountSchema = z.strictObject({ itemId: IdSchema, quantity: IdSchema });
 export const CraftingRecipeSchema = z.strictObject({
-  id: IdSchema,
+  productId: IdSchema,
   materials: ItemAmountSchema.array().min(1).nullable(),
 });
 

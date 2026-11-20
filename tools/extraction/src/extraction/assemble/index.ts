@@ -32,6 +32,7 @@ export function assemble(observations: SourceObservations, originals: readonly O
     let ownerId = id;
     let ownerKind: typeof need.owner.kind;
     if (collection === "catalog.collections") ownerKind = "collection";
+    else if (collection === "catalog.creationCardSets") ownerKind = "creationCardSet";
     else if (collection === "neighbors.neighbors") ownerKind = "neighbor";
     else if (collection === "starsea.regions") ownerKind = "starseaRegion";
     else if (collection === "starsea.islands") ownerKind = "starseaIsland";
@@ -136,17 +137,10 @@ export function assemble(observations: SourceObservations, originals: readonly O
           ? "gameplayTags.tags"
           : owner === "collection"
             ? "catalog.collections"
-            : "catalog.items";
-      let fieldPath = field;
-      if (field.startsWith("craftingRecipes.")) {
-        const recipeId = Number(field.split(".")[1]);
-        const item = dataset.catalog.items.find((item) => item.id === id);
-        if (!item || item.kind !== "furniture") throw new Error(`Missing crafting owner ${id}`);
-        const index = item.craftingRecipes.findIndex((recipe) => recipe.id === recipeId);
-        if (index < 0) throw new Error(`Missing crafting recipe ${recipeId}`);
-        fieldPath = `craftingRecipes.${index}`;
-      }
-      return { ...proof, entity: { collection, id }, fieldPath };
+            : owner === "creationCardSet"
+              ? "catalog.creationCardSets"
+              : "catalog.items";
+      return { ...proof, entity: { collection, id }, fieldPath: field };
     }),
     ...imageProofs,
   ];

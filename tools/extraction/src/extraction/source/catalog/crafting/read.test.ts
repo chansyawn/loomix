@@ -5,11 +5,12 @@ const rows = (): FixtureRows => ({
   180: [],
   318: [
     [100, { text: "创想卡" }, 19],
+    [102, { text: "没有配方的创想卡" }, 19],
     [200, { text: "家具" }, 1],
     [300, { text: "木材" }, 1],
   ],
   568: [
-    [100, 200, 2, null, null, null, null, null, null, null, null, null, 300, 5],
+    [100, 200, 1, null, null, null, null, null, null, null, null, null, 300, 5],
     [101, 200, 1],
   ],
 });
@@ -18,15 +19,25 @@ function read(data: FixtureRows, finished: (cleanup: () => void) => void, ids = 
   finished(fixture.cleanup);
   return readCraftingRecipes({ tables: fixture.input.tables }, new Set(ids));
 }
-test("仅保留正式产物需要的有效制作配方，不准入卡片或材料", ({ onTestFinished }) => {
+test("仅收录正式家具关联的有效创想卡，记录排除原因", ({ onTestFinished }) => {
   const data = read(rows(), onTestFinished);
-  expect(data.recipes).toEqual([
-    { id: 100, productId: 200, materials: [{ itemId: 300, quantity: 5 }] },
+  expect(data.recipes).toMatchObject([
+    { id: 100, productId: 200, cardSetId: null, materials: [{ itemId: 300, quantity: 5 }] },
   ]);
   expect(data.audit.find((row) => row.id === 101)?.disposition).toBe("orphan_card");
-  expect(data).not.toHaveProperty("cards");
-  expect(data).not.toHaveProperty("imageReferences");
-  expect(read(rows(), onTestFinished, []).recipes).toEqual([]);
+  expect(data.audit.find((row) => row.id === 102)?.disposition).toBe("no_recipe");
+  const excluded = read(rows(), onTestFinished, []);
+  expect(excluded.recipes).toEqual([]);
+  expect(excluded.audit.find((row) => row.id === 100)?.disposition).toBe("outside_scope");
+});
+test("产量缺失或非一件时暂停收录", ({ onTestFinished }) => {
+  for (const quantity of [null, 2]) {
+    const invalid = rows();
+    invalid[568][0][2] = quantity;
+    expect(() => read(invalid, onTestFinished)).toThrow(
+      "Unsupported crafting product quantity 100",
+    );
+  }
 });
 test("空材料保持未知，不完整、重复和不存在的材料拒绝交付", ({ onTestFinished }) => {
   const empty = rows();

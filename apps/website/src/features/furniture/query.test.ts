@@ -20,7 +20,7 @@ function item(
     colors: null,
     materials: null,
     acquisition: null,
-    craftingRecipes: [],
+    creationCards: [],
     ...fields,
   };
 }

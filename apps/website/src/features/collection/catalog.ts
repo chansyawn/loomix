@@ -22,7 +22,7 @@ export const categoryNames = {
   miscellaneous: "杂物",
 };
 
-export type ListedEntry = ListedItem | Collection;
+export type ListedEntry = Exclude<ListedItem, { kind: "creationCard" }> | Collection;
 
 export function createCollectionCatalog(
   catalog: Catalog,
@@ -33,7 +33,7 @@ export function createCollectionCatalog(
   const image = createImageResolver(assets);
   const tagIndex = createGameplayTagIndex(gameplayTags.tags);
   const tagsFor = createRecordTagResolver(tagIndex);
-  const items = catalog.items.filter(isListedItem);
+  const items = catalog.items.filter(isListedItem).filter((item) => item.kind !== "creationCard");
   const row = (record: ListedEntry) => {
     const tagIds = "tagIds" in record ? record : { tagIds: [] };
     return {

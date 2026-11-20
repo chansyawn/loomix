@@ -5,11 +5,10 @@ import {
   type CollectionDetailSection,
 } from "@/features/collection/detail-layout";
 import { RecordImage as FurnitureImage } from "@/features/collection/record-image";
-import { CollectionItemCard } from "@/features/collection/collection-item-card";
-import { recordLocation } from "@/features/collection/item-route";
 import type { FurnitureItem } from "../collection-view";
 import type { FurnitureDetail } from "./detail";
 import { CollectionDetailNavigation } from "../collection/detail-navigation";
+import { FurnitureRecipes } from "./recipes";
 
 export function FurnitureDetailPage({ detail }: { detail: FurnitureDetail }) {
   return (
@@ -70,7 +69,7 @@ function furnitureDetailSections(detail: FurnitureDetail): CollectionDetailSecti
     if (detail.recipes?.length)
       sections.push({
         key: "furniture-recipes",
-        content: <FurnitureRecipes recipes={detail.recipes} />,
+        content: <FurnitureRecipes recipes={detail.recipes} productName={detail.record.name} />,
       });
   } else if (detail.items?.length) {
     sections.push({
@@ -79,48 +78,6 @@ function furnitureDetailSections(detail: FurnitureDetail): CollectionDetailSecti
     });
   }
   return sections;
-}
-
-function FurnitureRecipes({
-  recipes,
-}: {
-  recipes: NonNullable<Extract<FurnitureDetail, { kind: "item" }>["recipes"]>;
-}) {
-  return (
-    <section aria-labelledby="furniture-recipes" className="space-y-4">
-      <h2 id="furniture-recipes" className="text-lg font-semibold">
-        制作配方
-      </h2>
-      <div className="space-y-3">
-        {recipes.map((recipe, index) => (
-          <div key={recipe.id} className="space-y-3">
-            {recipes.length > 1 && <h3 className="mb-3 text-sm font-medium">配方 {index + 1}</h3>}
-            {recipe.materials === null ? (
-              <p className="text-sm text-muted-foreground">材料信息未确认</p>
-            ) : (
-              <ul className="flex flex-wrap gap-3">
-                {recipe.materials.map((material) => (
-                  <li key={material.itemId} className="max-w-full min-w-0">
-                    <CollectionItemCard
-                      item={material.item}
-                      itemId={material.itemId}
-                      quantity={material.quantity}
-                      fallbackName="未知材料"
-                      link={
-                        material.item && material.item.browsable !== false
-                          ? recordLocation(material.item)
-                          : undefined
-                      }
-                    />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        ))}
-      </div>
-    </section>
-  );
 }
 
 function FurnitureSetMembers({ items }: { items: FurnitureItem[] }) {

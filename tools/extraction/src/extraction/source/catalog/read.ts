@@ -19,7 +19,9 @@ import type { CollectionObservations } from "../../schema.ts";
 import type { ContentContext } from "./context.ts";
 import { splitTags } from "./model.ts";
 import { ingredientExpressionItemIds } from "./recipes.ts";
-import { readCraftingRecipes } from "./crafting/read.ts";
+import type { readCraftingRecipes } from "./crafting/read.ts";
+import { readCreationCards } from "./crafting/cards.ts";
+import type { imageCollector } from "../images.ts";
 import { readCatalogMetadata } from "./metadata/read.ts";
 import type { NeighborOutfit } from "../neighbors/types.ts";
 import type { ObservedAcquisition, ObservedRecipeSlot } from "../../schemas/observed.ts";
@@ -83,6 +85,8 @@ function toSlots(
 export function readCatalog({
   observations,
   context,
+  crafting,
+  images,
   referencedItemIds = [],
   neighborOutfits = [],
   neighborImage,
@@ -90,6 +94,8 @@ export function readCatalog({
 }: {
   observations: CollectionObservations;
   context: ContentContext;
+  crafting: ReturnType<typeof readCraftingRecipes>;
+  images: ReturnType<typeof imageCollector>;
   referencedItemIds?: readonly number[];
   neighborOutfits?: readonly NeighborOutfit[];
   neighborImage: (reference: string, id: number) => ImageUse | null;
@@ -163,14 +169,10 @@ export function readCatalog({
   for (const entry of categories.values())
     entry.itemIds = [...new Set(entry.itemIds)].sort((a, b) => a - b);
   const cooking = new Map(observations.cookingRecipes.map((recipe) => [recipe.productId, recipe]));
-  const crafting = new Map<number, ItemOf<"furniture">["craftingRecipes"]>();
   const admitted = catalogAdmissionIds(
     context,
     neighborOutfits.map((outfit) => outfit.id),
   );
-  const craftingRead = readCraftingRecipes(context, admitted);
-  for (const { productId, id, materials } of craftingRead.recipes)
-    crafting.set(productId, [...(crafting.get(productId) ?? []), { id, materials }]);
   const display = (id: number, field: number, name: string): string[] | null => {
     const values = splitTags(tables.string(context.ui.get(id), field)).map((key) =>
       context.vocabulary.renderDisplay(key),
@@ -221,16 +223,12 @@ export function readCatalog({
     const category = record.subcategory;
     switch (record.category) {
       case "furniture":
-        proof(record.id, "craftingRecipes", crafting.get(record.id) ?? [], [
-          { kind: "tableScan", file: "prepared/ed.obb", table: 568 },
-        ]);
         return {
           ...item,
           kind: "furniture",
           category,
           furnitureCategory: record.attributes.type,
           size: furnitureSize(record.attributes.size),
-          craftingRecipes: crafting.get(record.id) ?? [],
         };
       case "clothing":
         return { ...item, kind: "clothing", category };
@@ -328,6 +326,17 @@ export function readCatalog({
   const outfits = readOutfits(context, neighborOutfits, outfitSourcesById, neighborImage);
   items.push(...outfits.items);
   proofs.push(...outfits.proofs);
+  const {
+    cards,
+    sets,
+    proofs: cardProofs,
+  } = readCreationCards(context, crafting.recipes, images, (id) => origin(id, "item"), tagIds);
+  for (const card of cards) {
+    if (admitted.has(card.id)) throw new Error(`Conflicting creation card identity ${card.id}`);
+    admitted.add(card.id);
+    items.push(card);
+  }
+  proofs.push(...cardProofs);
   const formal = new Set([...items, ...collections].map((entry) => entry.id));
   if (formal.size !== items.length + collections.length)
     throw new Error("Catalog classification conflict");
@@ -338,9 +347,8 @@ export function readCatalog({
     ...context.ingredientCategoryBuild.associations.map((association) => association.itemId),
   ]);
   for (const item of items) {
-    if (item.kind === "furniture")
-      for (const recipe of item.craftingRecipes)
-        for (const material of recipe.materials ?? []) references.add(material.itemId);
+    if (item.kind === "creationCard")
+      for (const material of item.recipe.materials ?? []) references.add(material.itemId);
     if (item.kind === "plant") for (const drop of item.drops ?? []) references.add(drop.itemId);
     if (item.kind === "neighborClothing" && item.playerItemId !== null)
       references.add(item.playerItemId);
@@ -353,19 +361,10 @@ export function readCatalog({
   proofs.push(...referenced.proofs);
   items.sort((a, b) => a.id - b.id);
   collections.sort((a, b) => a.id - b.id);
-  for (const recipe of craftingRead.proofs) {
-    const owner = items.find(
-      (item) =>
-        item.kind === "furniture" && item.craftingRecipes.some((entry) => entry.id === recipe.id),
-    );
-    if (!owner || owner.kind !== "furniture")
-      throw new Error(`Missing crafting owner ${recipe.id}`);
-    proof(owner.id, `craftingRecipes.${recipe.id}`, recipe, source(recipe.sources));
-  }
   return {
-    catalog: { items, collections } satisfies CatalogObservation,
+    catalog: { items, collections, creationCardSets: sets } satisfies CatalogObservation,
     proofs,
-    crafting: craftingRead,
+    crafting: crafting.audit,
   };
 }
 

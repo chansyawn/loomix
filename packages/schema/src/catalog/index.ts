@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { assertValid } from "../common/identity.ts";
+import { assertValid, IdSchema, NullableTextSchema } from "../common/identity.ts";
+import { ImageRefSchema } from "../assets/index.ts";
 import { CollectionSchema, ItemSchema } from "./items.ts";
 import type { Collection, Item } from "./items.ts";
 import { validateCatalog } from "./validate.ts";
@@ -10,10 +11,18 @@ export * from "./growth.ts";
 export { createRecordTagResolver } from "./tags.ts";
 export { validateCatalog } from "./validate.ts";
 
+export const CreationCardSetSchema = z.strictObject({
+  id: IdSchema,
+  name: z.string().min(1),
+  acquisitionHint: NullableTextSchema,
+  image: ImageRefSchema.extend({ variant: z.literal("illustration") }).nullable(),
+});
 export const CatalogSchema = z.strictObject({
   items: ItemSchema.array(),
   collections: CollectionSchema.array(),
+  creationCardSets: CreationCardSetSchema.array(),
 });
+export type CreationCardSet = z.infer<typeof CreationCardSetSchema>;
 export type Catalog = z.infer<typeof CatalogSchema>;
 export function parseCatalog(input: unknown): Catalog {
   const catalog = CatalogSchema.parse(input);

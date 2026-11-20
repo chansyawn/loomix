@@ -2,7 +2,7 @@ import type { IngredientItem } from "../collection-view";
 import { CollectionItemCard } from "../collection/collection-item-card";
 import { CollectionExpandableGrid } from "../collection/expandable-grid";
 import { recordLocation } from "../collection/item-route";
-import type { MiscellanyFurnitureUse } from "./detail";
+import type { FurnitureMaterialUse } from "../collection-view";
 
 export function MiscellanySourceTrees({ items }: { items: IngredientItem[] }) {
   return (
@@ -23,7 +23,7 @@ export function MiscellanySourceTrees({ items }: { items: IngredientItem[] }) {
   );
 }
 
-function FurnitureUseCard({ usage }: { usage: MiscellanyFurnitureUse }) {
+function FurnitureUseCard({ usage }: { usage: FurnitureMaterialUse }) {
   const { furniture, recipes } = usage;
   const sameQuantity = new Set(recipes.map((recipe) => recipe.quantity)).size === 1;
   return (
@@ -42,7 +42,7 @@ function FurnitureUseCard({ usage }: { usage: MiscellanyFurnitureUse }) {
   );
 }
 
-export function MiscellanyFurnitureUses({ uses }: { uses: MiscellanyFurnitureUse[] }) {
+export function MiscellanyFurnitureUses({ uses }: { uses: FurnitureMaterialUse[] }) {
   return (
     <section aria-label="家具用途" className="space-y-4">
       <h2 className="text-lg font-semibold">家具用途</h2>

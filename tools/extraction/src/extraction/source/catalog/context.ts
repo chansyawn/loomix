@@ -30,7 +30,7 @@ export interface ContentContext {
   resolveIcon(reference: string): IconMatch | null;
 }
 
-function uiSignature(tables: Tables) {
+export function uiSignature(tables: Tables) {
   const fields = profile.fields.ui;
   return (row: TableRow) => ({
     numbers: [0, 8, 9, fields.quality, fields.description, fields.series].map((field) =>

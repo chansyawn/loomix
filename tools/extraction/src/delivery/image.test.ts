@@ -44,6 +44,27 @@ for (const size of [256, 512]) {
   });
 }
 
+test("创想卡底图保留原始比例、尺寸和透明度", async () => {
+  for (const [width, height] of [
+    [390, 560],
+    [212, 252],
+  ]) {
+    const png = await sharp({
+      create: { width, height, channels: 4, background: { r: 20, g: 80, b: 150, alpha: 0.5 } },
+    })
+      .png()
+      .toBuffer();
+    const output = await processImage(png, "card-background");
+    const { data, info } = await sharp(output.bytes)
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    assert.deepEqual([output.width, output.height], [width, height]);
+    assert.deepEqual([info.width, info.height], [width, height]);
+    assert.equal(data[3], 128);
+  }
+});
+
 test("furniture banners resize and crop centrally without distortion", async () => {
   for (const [width, height] of [
     [1024, 512],

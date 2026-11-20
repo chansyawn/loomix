@@ -16,6 +16,13 @@ export async function decodeWebp(bytes: Buffer) {
 
 export async function processImage(bytes: Buffer, variant: ImageRef["variant"]) {
   if (variant === "illustration") return processNeighborImage(bytes);
+  if (variant === "card-background") {
+    const output = await sharp(bytes, { failOn: "warning" })
+      .webp({ quality: 85, alphaQuality: 100, effort: 4 })
+      .toBuffer();
+    const { width, height } = await decodeWebp(output);
+    return { bytes: output, width, height };
+  }
   const dimensions = imageDimensions(variant);
   const output = await sharp(bytes, { failOn: "warning" })
     .resize({

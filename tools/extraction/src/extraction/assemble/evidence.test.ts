@@ -45,7 +45,6 @@ test("最终 kind 合并分类规则来源，展示分类映射到公开字段",
     category: "桌",
     furnitureCategory: "基础家具·桌",
     size: null,
-    craftingRecipes: [],
   };
   dataset.catalog.items.push(furniture);
   const base = {
