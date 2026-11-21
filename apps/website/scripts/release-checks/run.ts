@@ -41,12 +41,13 @@ function issueCount(outcomes: readonly ReleaseCheckOutcome[]): number {
   return outcomes.reduce((count, outcome) => count + outcome.issues.length, 0);
 }
 
-export function reportReleaseChecks(outcomes: readonly ReleaseCheckOutcome[]): void {
+export function reportReleaseChecks(
+  outcomes: readonly ReleaseCheckOutcome[],
+  log: (message: string) => void = console.log,
+): void {
   for (const outcome of outcomes) {
     if (outcome.issues.length === 0) {
-      console.log(
-        outcome.summary ? `✓ ${outcome.check.id}：${outcome.summary}` : `✓ ${outcome.check.id}`,
-      );
+      log(outcome.summary ? `✓ ${outcome.check.id}：${outcome.summary}` : `✓ ${outcome.check.id}`);
       continue;
     }
     console.error(`✗ ${outcome.check.id}`);
@@ -56,17 +57,21 @@ export function reportReleaseChecks(outcomes: readonly ReleaseCheckOutcome[]): v
   }
 }
 
-export function assertReleaseChecks(outcomes: readonly ReleaseCheckOutcome[]): void {
+export function assertReleaseChecks(
+  outcomes: readonly ReleaseCheckOutcome[],
+  log: (message: string) => void = console.log,
+): void {
   const count = issueCount(outcomes);
   if (count > 0) throw new Error(`发布契约检查失败：${count} 项问题`);
-  console.log(`发布契约检查通过：${outcomes.length} 项检查`);
+  log(`发布契约检查通过：${outcomes.length} 项检查`);
 }
 
 export async function runReleaseChecks(
   release: Release,
   checks: readonly ReleaseCheck[],
+  log?: (message: string) => void,
 ): Promise<void> {
   const outcomes = await collectReleaseChecks(release, checks);
-  reportReleaseChecks(outcomes);
-  assertReleaseChecks(outcomes);
+  reportReleaseChecks(outcomes, log);
+  assertReleaseChecks(outcomes, log);
 }

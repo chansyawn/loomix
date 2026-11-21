@@ -8,6 +8,7 @@ import svgr from "vite-plugin-svgr";
 import { lazyPlugins } from "vite-plus";
 import { localResources } from "./scripts/local-resources.ts";
 import { repoRoot, resolveResourceConfig } from "./scripts/resource-config.ts";
+import { builtResourceFile } from "./scripts/built-resource.ts";
 
 const config = defineConfig(({ mode }) => {
   const resources = resolveResourceConfig(mode);
@@ -19,7 +20,8 @@ const config = defineConfig(({ mode }) => {
         "verify-build": { command: "node scripts/verify-build.ts", cache: false },
         "verify-contracts": { command: "node scripts/verify-contracts.ts", cache: false },
         deploy: {
-          command: "wrangler deploy --cwd ../.. --config apps/website/dist/server/wrangler.json",
+          command:
+            "node scripts/built-resource.ts && wrangler deploy --cwd ../.. --config apps/website/dist/server/wrangler.json",
           cache: false,
         },
         verify: {
@@ -52,6 +54,18 @@ const config = defineConfig(({ mode }) => {
     resolve: { tsconfigPaths: true },
     plugins: lazyPlugins(() => [
       resources.source === "local" && localResources(resources.directory),
+      resources.source === "remote" && {
+        name: "website-resource-version",
+        apply: "build",
+        generateBundle() {
+          if (this.environment.name !== "client") return;
+          this.emitFile({
+            type: "asset",
+            fileName: builtResourceFile,
+            source: JSON.stringify({ resourceBaseUrl: resources.resourceBaseUrl }),
+          });
+        },
+      },
       tailwindcss(),
       mode !== "test" && cloudflare({ viteEnvironment: { name: "ssr" } }),
       tanstackStart(),

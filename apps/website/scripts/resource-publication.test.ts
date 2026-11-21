@@ -3,9 +3,8 @@ import path from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, expect, test, vi } from "vite-plus/test";
 import { FORMAT_VERSION } from "@loomix/schema/common";
-import { writeFixture } from "../../../tools/resource-publisher/tests/fixture.ts";
-import { sha256 } from "@loomix/resource-publisher/release";
-import type { ReleaseStore } from "@loomix/resource-publisher/publish";
+import { writeFixture } from "../../../tools/resources/tests/fixture.ts";
+import { PublicationError } from "@loomix/resources/release";
 import { publishWebsiteResources } from "./resource-publication.ts";
 import type { PublicationDependencies } from "./resource-publication.ts";
 
@@ -19,7 +18,7 @@ afterEach(async () => {
   await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
 });
 
-async function fixture() {
+async function fixture(publishedId = firstId) {
   const root = await mkdtemp(path.join(tmpdir(), "loomix-publication-"));
   roots.push(root);
   const directory = path.join(root, "resources/website");
@@ -28,44 +27,42 @@ async function fixture() {
   await mkdir(path.dirname(pointer), { recursive: true });
   await writeFile(pointer, original);
   const objects = new Map<string, Uint8Array>();
-  const store: ReleaseStore = {
-    tryReserve: vi.fn(async (key: string, bytes: Uint8Array) => {
-      if (objects.has(key)) return false;
-      objects.set(key, bytes);
-      return true;
-    }),
-    put: vi.fn(async (key: string, bytes: Uint8Array) => {
-      if (objects.has(key)) throw new Error("禁止覆盖");
-      objects.set(key, bytes);
-    }),
-    verify: vi.fn(async (key: string, size: number, hash: string) => {
-      const bytes = objects.get(key);
-      if (!bytes || bytes.length !== size || sha256(bytes) !== hash)
-        throw new Error("资源完整性错误");
-    }),
-  };
+  const publish = vi.fn<PublicationDependencies["publish"]>(async (content) => {
+    const marker = {
+      release: publishedId,
+      manifestSha256: content.manifestSha256,
+      storageLayout: "shared-images-v1",
+    } as const;
+    const prefix = `releases/${publishedId}/`;
+    for (const document of content.documents)
+      objects.set(`${prefix}${document.key}`, document.bytes);
+    objects.set(`${prefix}_complete.json`, Buffer.from(JSON.stringify(marker)));
+    return { ...marker, uploadedImageCount: 0, reusedImageCount: 0 };
+  });
   const request = vi.fn<typeof fetch>(async (input, init) => {
     expect(new Headers(init?.headers).get("Origin")).toBe("https://loomix.fun");
     const url = input instanceof Request ? input.url : String(input);
     const bytes = objects.get(new URL(url).pathname.slice(1));
     return new Response(bytes ? new Uint8Array(bytes) : "missing", {
       status: bytes ? 200 : 404,
-      headers: { "access-control-allow-origin": "https://loomix.fun" },
+      headers: {
+        "access-control-allow-origin": "https://loomix.fun",
+        "cache-control": "no-store",
+      },
     });
   });
   const dependencies: PublicationDependencies = {
-    createStore: vi.fn(() => store),
+    publish,
     check: vi.fn(async () => {}),
     request,
     now: () => new Date("2026-11-17T06:30:00Z"),
     warn: vi.fn(),
   };
-  return { root, directory, pointer, objects, store, dependencies, ...release };
+  return { root, directory, pointer, objects, dependencies, ...release };
 }
 
 test("完整发布经过两次网站检查，最终指向实际占号的远程资源", async () => {
-  const { root, pointer, objects, dependencies, dataset } = await fixture();
-  objects.set(`releases/${firstId}/_upload.json`, Buffer.from("occupied"));
+  const { root, pointer, objects, dependencies, dataset } = await fixture(secondId);
   vi.stubEnv("VITE_RESOURCE_BASE_URL", "https://unrelated.example/releases/override/");
   const result = await publishWebsiteResources(root, false, dependencies);
   expect(result).toMatchObject({ release: secondId, pointerUpdated: true, dryRun: false });
@@ -92,7 +89,7 @@ test("dry-run 不初始化凭证、不联网、不创建锁或修改指针", asy
     pointerUpdated: false,
   });
   expect(dependencies.check).toHaveBeenCalledTimes(1);
-  expect(dependencies.createStore).not.toHaveBeenCalled();
+  expect(dependencies.publish).not.toHaveBeenCalled();
   expect(dependencies.request).not.toHaveBeenCalled();
   expect(await readFile(pointer, "utf8")).toBe(original);
   await expect(access(path.join(root, "var"))).rejects.toThrow();
@@ -107,7 +104,7 @@ test("旧格式资源在任何远程操作前失败，提示重新生成交付",
   await expect(publishWebsiteResources(root, false, dependencies)).rejects.toThrow(
     "不能只修改 formatVersion",
   );
-  expect(dependencies.createStore).not.toHaveBeenCalled();
+  expect(dependencies.publish).not.toHaveBeenCalled();
   expect(dependencies.request).not.toHaveBeenCalled();
   expect(await readFile(pointer, "utf8")).toBe(original);
 });
@@ -117,19 +114,19 @@ test("本地网站检查失败时不占号，且释放发布锁", async () => {
   vi.mocked(dependencies.check).mockRejectedValue(new Error("本地契约错误"));
   await expect(publishWebsiteResources(root, false, dependencies)).rejects.toThrow("本地契约错误");
   expect(objects.size).toBe(0);
-  expect(dependencies.createStore).not.toHaveBeenCalled();
+  expect(dependencies.publish).not.toHaveBeenCalled();
   expect(await readFile(pointer, "utf8")).toBe(original);
   await expect(access(path.join(root, "var/scratch/resources-publish.lock"))).rejects.toThrow();
 });
 
-test("上传失败保留占号，报告实际 ID 和地址且不切换指针", async () => {
-  const { root, pointer, dependencies, objects, store } = await fixture();
-  vi.spyOn(store, "put").mockRejectedValue(new Error("上传失败"));
+test("上传失败时报告实际 ID 和地址且不切换指针", async () => {
+  const { root, pointer, dependencies } = await fixture();
+  vi.mocked(dependencies.publish).mockRejectedValue(
+    new PublicationError(firstId, "upload", new Error("上传失败")),
+  );
   await expect(publishWebsiteResources(root, false, dependencies)).rejects.toThrow(
     `资源地址：https://assets.loomix.fun/releases/${firstId}/`,
   );
-  expect(objects.has(`releases/${firstId}/_upload.json`)).toBe(true);
-  expect(objects.has(`releases/${firstId}/_complete.json`)).toBe(false);
   expect(dependencies.request).not.toHaveBeenCalled();
   expect(await readFile(pointer, "utf8")).toBe(original);
 });
@@ -150,13 +147,19 @@ test.each(["网络", "哈希", "网站检查"])(
         if ((input instanceof Request ? input.url : String(input)).endsWith("_complete.json"))
           objects.set(
             `releases/${firstId}/_complete.json`,
-            Buffer.from(JSON.stringify({ release: firstId, manifestSha256: "b".repeat(64) })),
+            Buffer.from(
+              JSON.stringify({
+                release: firstId,
+                manifestSha256: "b".repeat(64),
+                storageLayout: "shared-images-v1",
+              }),
+            ),
           );
         return request(input, init);
       };
     }
     await expect(publishWebsiteResources(root, false, dependencies)).rejects.toThrow(
-      `VITE_RESOURCE_BASE_URL=https://assets.loomix.fun/releases/${firstId}/ vp run website#verify-release`,
+      `vp run resources verify --url https://assets.loomix.fun/releases/${firstId}/`,
     );
     expect(objects.has(`releases/${firstId}/_complete.json`)).toBe(true);
     expect(await readFile(pointer, "utf8")).toBe(original);

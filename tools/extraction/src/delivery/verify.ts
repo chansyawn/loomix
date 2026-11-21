@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import path from "node:path";
 import { parseDataset } from "@loomix/schema/dataset";
-import { validateContent } from "@loomix/resource-publisher/validate";
+import { validateContent } from "@loomix/resources/delivery";
 import { readJson, writeJson } from "../workflow/json.ts";
 
 export async function verifyDelivery(

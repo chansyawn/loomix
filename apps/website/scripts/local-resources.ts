@@ -1,7 +1,7 @@
 import { cp } from "node:fs/promises";
 import path from "node:path";
 import type { Plugin } from "vite-plus";
-import { validateContent } from "@loomix/resource-publisher/validate";
+import { validateContent } from "@loomix/resources/delivery";
 import { localResourceMiddleware } from "./local-resource-server.ts";
 
 export async function copyLocalResources(directory: string, output: string): Promise<void> {

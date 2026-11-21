@@ -38,7 +38,8 @@ export function createUploadProgress(output: ProgressOutput = process.stderr) {
       if (!bar) {
         bar = new SingleBar({
           stream: output,
-          format: "上传图片 [{bar}] {percentage}% | {value}/{total} 张 | {bytes}/{totalBytes} MB",
+          format:
+            "校验远程图片 [{bar}] {percentage}% | {value}/{total} 张 | {bytes}/{totalBytes} MB",
           barsize: 20,
           fps: 10,
           hideCursor: true,
@@ -56,7 +57,7 @@ export function createUploadProgress(output: ProgressOutput = process.stderr) {
     if (bucket > lastBucket) {
       lastBucket = bucket;
       output.write(
-        `上传图片 ${percentage}% | ${progress.completed}/${progress.total} 张 | ${bytes}/${totalBytes} MB\n`,
+        `校验远程图片 ${percentage}% | ${progress.completed}/${progress.total} 张 | ${bytes}/${totalBytes} MB\n`,
       );
     }
   }

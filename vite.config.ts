@@ -39,8 +39,8 @@ export default defineConfig({
   },
   run: {
     tasks: {
-      "resources:publish": {
-        command: "node apps/website/scripts/publish-resources.ts",
+      resources: {
+        command: "node apps/website/scripts/resources-cli.ts",
         cache: false,
       },
     },

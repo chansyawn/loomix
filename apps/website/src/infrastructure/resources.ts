@@ -1,8 +1,11 @@
 import { documentPath, parseReleaseManifest } from "@loomix/schema/release";
 import type { DocumentKind } from "@loomix/schema/release";
+import { sharedImagePath } from "@loomix/schema/assets";
 
 const resourceBase = import.meta.env.VITE_RESOURCE_BASE_URL;
 export function resourceUrl(path: string): string {
+  if (path.startsWith("assets/") && !resourceBase.startsWith("/"))
+    return new URL(sharedImagePath(path), resourceBase).href;
   return `${resourceBase}${path}`;
 }
 

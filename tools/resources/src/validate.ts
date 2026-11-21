@@ -1,12 +1,9 @@
 import { lstat, readdir } from "node:fs/promises";
 import path from "node:path";
-import sharp from "sharp";
 import { assembleRelease, parseReleaseManifest } from "@loomix/schema/release";
 import type { DocumentKind, Release, ReleaseManifest } from "@loomix/schema/release";
 import { readRegularFile } from "./files.ts";
 import { sha256 } from "./release.ts";
-
-export { readRegularFile } from "./files.ts";
 
 export interface AssetFile {
   key: string;
@@ -90,6 +87,7 @@ export async function validateContent(directory: string): Promise<ValidatedConte
     )
       throw new Error(`Invalid WebP container: ${key}`);
     try {
+      const { default: sharp } = await import("sharp");
       const { data, info } = await sharp(bytes, { failOn: "warning" })
         .ensureAlpha()
         .raw()

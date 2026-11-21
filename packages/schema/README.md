@@ -42,7 +42,7 @@
 | `resources/website/release.json`                             | 资源发布清单，绑定来源上下文与交付文件；交付阶段即生成，不包含线上 release ID |
 | [apps/website/release.json](../../apps/website/release.json) | 网站资源指针，仅保存 `resourceBaseUrl`，供生产构建选择资源版本                |
 
-资源发布清单绑定文档的字节完整性，组装入口与校验规则以 release 模块为准。线上 release ID 由发布工具根据 UTC 日期、来源游戏版本、格式版本及原子占号自动生成，与领域快照身份独立；命名与恢复规则见[资源发布](../../tools/resource-publisher/README.md)。格式版本表达契约，不随发布次数递增；旧发布 ID 仍可解析。
+资源发布清单绑定文档的字节完整性，组装入口与校验规则以 release 模块为准。线上 release ID 由发布工具根据 UTC 日期、来源游戏版本、格式版本及原子占号自动生成，与领域快照身份独立。命名与恢复规则见[网站资源管理](../../tools/resources/README.md)。格式版本表达契约，不随发布次数递增；旧发布 ID 仍可解析。
 
 当前允许的 `formatVersion` 由 [ContextSchema](src/common/identity.ts) 定义，不保留历史版本解析分支。格式升级时，提取器、发布器和网站需使用匹配契约；先发布兼容的新资源，再更新网站资源指针，具体步骤见[CI/CD 与部署](../../DEPLOYMENT.md#资源更新流程)。
 
@@ -50,4 +50,4 @@
 
 发布契约只包含消费方需要的结构化数据；客户端原始字段、准入依据、图鉴标记、未确认候选与解析诊断保存在提取器的观察和证据中，内部恢复协议不属于公开交付格式。提取原则、流水线取舍与实现入口见[提取原理](../../tools/extraction/docs/extraction-method.md)。
 
-本包负责消费者中立的结构、引用和资源覆盖规则；网站可见性、分组与命名等假设由[发布契约检查](../../apps/website/docs/release-checks.md)负责。资源目录、文件字节与上传完整性由[资源发布](../../tools/resource-publisher/README.md)负责。
+本包负责消费者中立的结构、引用和资源覆盖规则；网站可见性、分组与命名等假设由[发布契约检查](../../apps/website/docs/release-checks.md)负责。资源目录、文件字节与上传完整性由[网站资源管理](../../tools/resources/README.md)负责。

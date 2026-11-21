@@ -8,6 +8,10 @@ export const ImageRefSchema = z.strictObject({
   variant: ImageVariantSchema,
 });
 export const ImageFileSchema = z.string().regex(/^assets\/[a-f0-9]{64}\.webp$/);
+export const SHARED_IMAGE_PREFIX = "images/";
+export const SharedImageKeySchema = z
+  .string()
+  .regex(new RegExp(`^${SHARED_IMAGE_PREFIX}[a-f0-9]{64}\\.webp$`));
 export const DeliveredImageSchema = ImageRefSchema.extend({
   file: ImageFileSchema,
   sha256: HashSchema,
@@ -24,6 +28,15 @@ export type DeliveredImage = z.infer<typeof DeliveredImageSchema>;
 export type Assets = z.infer<typeof AssetsSchema>;
 export const parseAssets = (input: unknown): Assets => AssetsSchema.parse(input);
 export const imageKey = (image: ImageRef): string => `${image.assetId}:${image.variant}`;
+
+export function sharedImageKey(sha256: string): string {
+  return `${SHARED_IMAGE_PREFIX}${HashSchema.parse(sha256)}.webp`;
+}
+
+export function sharedImagePath(file: string): string {
+  const hash = ImageFileSchema.parse(file).slice("assets/".length, -".webp".length);
+  return `/${sharedImageKey(hash)}`;
+}
 
 export function createImageResolver(assets: Assets): (image: ImageRef | null) => string | null {
   const index = new Map(assets.images.map((image) => [imageKey(image), image.file]));

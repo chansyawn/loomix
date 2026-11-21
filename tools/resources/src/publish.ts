@@ -1,11 +1,12 @@
+import { sharedImageKey } from "@loomix/schema/assets";
+import { SHARED_IMAGE_LAYOUT } from "@loomix/schema/release";
 import { readRegularFile } from "./files.ts";
-import type { ValidatedContent } from "./validate.ts";
+import type { AssetFile, ValidatedContent } from "./validate.ts";
 import { sha256 } from "./release.ts";
 import { createReleaseId } from "./release-id.ts";
-import type { ReleaseMarker } from "./release.ts";
-import type { ReleaseStore } from "./store.ts";
-
-export type { ReleaseStore } from "./store.ts";
+import { PublicationError } from "./publication.ts";
+import type { ReleaseMarker } from "@loomix/schema/release";
+import { ObjectMissingError, type ReleaseStore } from "./store.ts";
 
 export interface UploadProgress {
   phase: "images" | "finalizing" | "complete";
@@ -15,21 +16,6 @@ export interface UploadProgress {
   totalBytes: number;
 }
 
-export class PublicationError extends Error {
-  readonly release: string;
-  readonly phase: "reservation" | "upload";
-
-  constructor(release: string, phase: "reservation" | "upload", cause: unknown) {
-    super(
-      `资源发布失败：${release}（${phase}）：${cause instanceof Error ? cause.message : String(cause)}`,
-      { cause },
-    );
-    this.name = "PublicationError";
-    this.release = release;
-    this.phase = phase;
-  }
-}
-
 async function reserveRelease(
   content: ValidatedContent,
   store: ReleaseStore,
@@ -37,7 +23,11 @@ async function reserveRelease(
 ): Promise<ReleaseMarker> {
   for (let sequence = 1; sequence <= 999; sequence++) {
     const release = createReleaseId(content.release.manifest, sequence, date);
-    const marker = { release, manifestSha256: content.manifestSha256 };
+    const marker = {
+      release,
+      manifestSha256: content.manifestSha256,
+      storageLayout: SHARED_IMAGE_LAYOUT,
+    } satisfies ReleaseMarker;
     const bytes = Buffer.from(JSON.stringify(marker));
     try {
       if (
@@ -63,14 +53,29 @@ export async function publishValidatedContent(
   store: ReleaseStore,
   onProgress?: (progress: UploadProgress) => void,
   date = new Date(),
-): Promise<ReleaseMarker> {
+) {
   const marker = await reserveRelease(content, store, date);
   try {
-    await uploadContent(content, marker, store, onProgress);
-    return marker;
+    return { ...marker, ...(await uploadContent(content, marker, store, onProgress)) };
   } catch (cause) {
     throw new PublicationError(marker.release, "upload", cause);
   }
+}
+
+async function ensureImage(asset: AssetFile, store: ReleaseStore): Promise<boolean> {
+  const key = sharedImageKey(asset.sha256);
+  try {
+    await store.verify(key, asset.size, asset.sha256);
+    return false;
+  } catch (error) {
+    if (!(error instanceof ObjectMissingError)) throw error;
+  }
+  const bytes = await readRegularFile(asset.path);
+  if (sha256(bytes) !== asset.sha256)
+    throw new Error(`Image changed during publication: ${asset.key}`);
+  const created = await store.tryReserve(key, bytes, "image/webp", asset.sha256);
+  await store.verify(key, asset.size, asset.sha256);
+  return created;
 }
 
 async function uploadContent(
@@ -78,7 +83,7 @@ async function uploadContent(
   marker: ReleaseMarker,
   store: ReleaseStore,
   onProgress?: (progress: UploadProgress) => void,
-): Promise<void> {
+) {
   const prefix = `releases/${marker.release}/`;
   const progress: UploadProgress = {
     phase: "images",
@@ -89,16 +94,13 @@ async function uploadContent(
   };
   onProgress?.({ ...progress });
   const batchSize = 8;
+  let uploadedImageCount = 0;
   let active = true;
   try {
     for (let offset = 0; offset < content.assets.length; offset += batchSize) {
       await Promise.all(
         content.assets.slice(offset, offset + batchSize).map(async (asset) => {
-          const bytes = await readRegularFile(asset.path);
-          if (sha256(bytes) !== asset.sha256)
-            throw new Error(`Image changed during publication: ${asset.key}`);
-          await store.put(`${prefix}${asset.key}`, bytes, "image/webp", asset.sha256);
-          await store.verify(`${prefix}${asset.key}`, asset.size, asset.sha256);
+          if (await ensureImage(asset, store)) uploadedImageCount++;
           if (active) {
             progress.completed++;
             progress.completedBytes += asset.size;
@@ -121,7 +123,8 @@ async function uploadContent(
     await store.verify(`${prefix}${document.key}`, document.bytes.length, document.sha256);
   }
   const bytes = Buffer.from(JSON.stringify(marker));
-  await store.put(`${prefix}_complete.json`, bytes, "application/json", sha256(bytes));
+  await store.put(`${prefix}_complete.json`, bytes, "application/json", sha256(bytes), "no-store");
   await store.verify(`${prefix}_complete.json`, bytes.length, sha256(bytes));
   onProgress?.({ ...progress, phase: "complete" });
+  return { uploadedImageCount, reusedImageCount: content.assets.length - uploadedImageCount };
 }

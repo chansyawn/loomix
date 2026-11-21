@@ -1,4 +1,4 @@
-import { loadReleaseDirectory } from "@loomix/resource-publisher/load";
+import { loadReleaseDirectory } from "@loomix/resources/delivery";
 import { releaseChecks, runReleaseChecks } from "./release-checks/index.ts";
 import { resolveResourceConfig } from "./resource-config.ts";
 
