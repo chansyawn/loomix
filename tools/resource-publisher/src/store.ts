@@ -31,7 +31,6 @@ export interface StoredObject {
 export interface MaintenanceStore {
   list(prefix: string): Promise<StoredObject[]>;
   read(key: string): Promise<Uint8Array>;
-  tryReserve: ReleaseStore["tryReserve"];
   remove(keys: readonly string[]): Promise<void>;
 }
 

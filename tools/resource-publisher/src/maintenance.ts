@@ -10,7 +10,7 @@ import { z } from "zod";
 import { sha256 } from "./release.ts";
 import type { MaintenanceStore, StoredObject } from "./store.ts";
 
-const day = 86_400_000;
+const cleanupMinAge = 7 * 86_400_000;
 const legacyMarker = ReleaseMarkerSchema.omit({ storageLayout: true });
 const markerSchema = z.union([ReleaseMarkerSchema, legacyMarker]);
 const assetIndex = z.object({
@@ -72,89 +72,60 @@ async function releasesById(store: MaintenanceStore) {
 }
 
 export async function listReleases(store: MaintenanceStore) {
-  return Array.from(await releasesById(store), ([release, files]) => {
-    const completedAt = files.get("_complete.json")?.modified;
-    const retiredAt = files.get("_retired.json")?.modified;
-    return { release, completedAt, retiredAt };
-  }).sort((left, right) => left.release.localeCompare(right.release));
-}
-
-export async function setReleaseRetired(
-  store: MaintenanceStore,
-  release: string,
-  retired: boolean,
-  keep: readonly string[] = [],
-): Promise<void> {
-  ReleaseIdSchema.parse(release);
-  if (retired && keep.includes(release)) throw new Error(`资源版本受到保护：${release}`);
-  const prefix = `releases/${release}/`;
-  const marker = markerSchema.parse(decode(await store.read(`${prefix}_complete.json`)));
-  if (marker.release !== release) throw new Error(`完成标记与资源版本不符：${release}`);
-  const key = `${prefix}_retired.json`;
-  if (retired) {
-    const bytes = Buffer.from(JSON.stringify({ release }));
-    await store.tryReserve(key, bytes, "application/json", sha256(bytes));
-  } else {
-    await store.remove([key]);
-  }
+  return Array.from(await releasesById(store), ([release, files]) => ({
+    release,
+    completedAt: files.get("_complete.json")?.modified,
+  })).sort((left, right) => left.release.localeCompare(right.release));
 }
 
 export async function planCleanup(
   store: MaintenanceStore,
-  keep: readonly string[],
+  releaseIds: readonly string[],
   now = new Date(),
 ) {
-  if (!keep.length) throw new Error("至少需要提供一个受保护的资源版本");
-  const keepSet = new Set(keep.map((release) => ReleaseIdSchema.parse(release)));
+  const selected = new Set(releaseIds.map((release) => ReleaseIdSchema.parse(release)));
   const releases = await releasesById(store);
-  for (const release of keepSet) {
-    if (!releases.get(release)?.has("_complete.json"))
-      throw new Error(`受保护的资源版本缺少完成标记：${release}`);
-    if (releases.get(release)?.has("_retired.json"))
-      throw new Error(`受保护的资源版本已标记退役，请先恢复：${release}`);
-  }
+  for (const release of selected)
+    if (!releases.has(release)) throw new Error(`找不到要清理的资源版本：${release}`);
+
+  const oldEnough = (object: StoredObject) =>
+    now.getTime() - object.modified.getTime() >= cleanupMinAge;
 
   const marked = new Set<string>();
-  const expiredReleases: string[] = [];
+  const releasesToRemove: string[] = [];
   const completionMarkers: StoredObject[] = [];
   const releaseFiles: StoredObject[] = [];
   for (const [release, files] of releases) {
     const complete = files.get("_complete.json");
-    const retired = files.get("_retired.json");
-    const expired = retired && now.getTime() - retired.modified.getTime() >= 30 * day;
-    if (complete && (keepSet.has(release) || !expired)) {
+    const selectedForRemoval = selected.has(release);
+    if (complete && !selectedForRemoval) {
       for (const key of await retainedImages(store, release, complete.key)) marked.add(key);
       continue;
     }
     const upload = files.get("_upload.json");
     const content = [...files.entries()]
-      .filter(([name]) => !["_upload.json", "_retired.json", "_complete.json"].includes(name))
+      .filter(([name]) => name !== "_upload.json" && name !== "_complete.json")
       .map(([, object]) => object);
-    const abandoned =
-      !complete &&
-      !retired &&
-      upload &&
-      [upload, ...content].every((object) => now.getTime() - object.modified.getTime() >= 7 * day);
-    if (!complete && !expired && !abandoned && !upload && content.length)
+    if (!selectedForRemoval && !upload && content.length)
       throw new Error(`资源版本缺少占号或完成标记：${release}`);
-    if (expired || abandoned) {
-      if (complete || content.length) expiredReleases.push(release);
-      if (complete) completionMarkers.push(complete);
-      releaseFiles.push(...content);
-    }
+    const abandoned = upload && oldEnough(upload) && content.every(oldEnough);
+    if (!selectedForRemoval && !abandoned) continue;
+    if (complete || content.length) releasesToRemove.push(release);
+    if (complete) completionMarkers.push(complete);
+    releaseFiles.push(...content);
   }
 
   const orphanImages = (await store.list(SHARED_IMAGE_PREFIX)).filter(
     (object) =>
       SharedImageKeySchema.safeParse(object.key).success &&
       !marked.has(object.key) &&
-      now.getTime() - object.modified.getTime() >= 7 * day,
+      oldEnough(object),
   );
   const objects = [...completionMarkers, ...releaseFiles, ...orphanImages];
   const keys = (files: StoredObject[]) => files.map((file) => file.key).sort();
   return {
-    keep: [...keepSet].sort(),
-    expiredReleases: expiredReleases.sort(),
+    selectedReleases: [...selected].sort(),
+    releasesToRemove: releasesToRemove.sort(),
     completionMarkers: keys(completionMarkers),
     releaseFiles: keys(releaseFiles),
     orphanImages: keys(orphanImages),

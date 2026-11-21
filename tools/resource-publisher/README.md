@@ -45,15 +45,16 @@ vp run @loomix/resource-publisher#publish --content resources/website
 
 ## 版本维护与清理
 
-运行 `vp run resources:maintain list` 查看完成和退役时间。退役后保留 **30 天**，方便已打开的页面继续加载图片。准备一个非空 JSON 数组文件，列出实际生产和 PR 预览、待部署及计划用于回滚的资源发布 ID。新构建同时提供 `/resource-version.json`，可核对实际部署所用地址。确认版本已退出使用后执行 `retire`，重新启用前执行 `restore`，下次退役会重新计时。
+运行 `vp run resources:maintain list` 查看版本及完成时间。`gc` 默认只清理过期的未完成上传和孤儿图片。清理已完成版本时，用可重复的 `--release` 指定要删除的发布 ID。
+
+指定前确认这些版本已退出生产和 PR 预览，且没有待部署或计划回滚的构建引用它们。可查看已部署网站的 `/resource-version.json` 核对实际资源地址。建议在版本退出使用后再保留 30 天，方便已打开的页面继续加载资源。`--release` 不检查这段宽限期。
 
 ```sh
-vp run resources:maintain retire <release-id> --keep-file keep.json
-vp run resources:maintain restore <release-id>
-vp run resources:maintain gc --keep-file keep.json
-vp run resources:maintain gc --keep-file keep.json --apply <plan-id>
+vp run resources:maintain gc
+vp run resources:maintain gc --release <release-id>
+vp run resources:maintain gc --release <release-id> --apply <plan-id>
 ```
 
-在维护窗口内暂停发布、部署与回滚，等待在途任务结束，复核保护文件，再预演并使用输出的 `planId` 执行。执行时会重新计算计划，变化后需重新预演。清理先移除过期版本的完成标记和版本文件，再回收所有保留版本均未引用的共享图片。失败上传的文件和孤儿图片至少保留 **7 天**。占号标记保留，避免发布 ID 复用。若批量删除中断，重新预演后执行剩余计划。
+在维护窗口内暂停发布、部署与回滚，等待在途任务结束后预演。执行时用相同参数加上输出的 `--apply <plan-id>`。工具会重算计划，变化后需重新预演。清理依次删除完成标记、版本文件和孤儿图片。所有未指定删除的已完成版本都会保护其引用的共享图片。自动清理仅处理最近 7 天内未修改的未完成上传和孤儿图片。占号标记保留，避免发布 ID 复用。若批量删除中断，用相同参数重新预演后执行剩余计划。
 
 不要为 `images/` 配置按对象年龄删除的生命周期规则。R2 回收腾出源站空间，已缓存的响应仍可能在过期前可读。宽限期之后，长期未刷新的旧页面也可能无法加载先前未缓存的资源。

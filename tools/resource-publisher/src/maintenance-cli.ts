@@ -1,24 +1,22 @@
-import { readFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
 import { ReleaseIdSchema } from "@loomix/schema/release";
 import { z } from "zod";
 import { configuredStore, defaultBucket } from "./configuration.ts";
-import { applyCleanup, listReleases, planCleanup, setReleaseRetired } from "./maintenance.ts";
+import { applyCleanup, listReleases, planCleanup } from "./maintenance.ts";
 import { sha256 } from "./release.ts";
 
 const usage = `资源维护：
   vp run resources:maintain list
-  vp run resources:maintain retire <release-id> --keep-file <path>
-  vp run resources:maintain restore <release-id>
-  vp run resources:maintain gc --keep-file <path> [--apply <plan-id>]
-  可用 --bucket 指定目标存储桶。保护文件为资源发布 ID 的非空 JSON 数组。`;
+  vp run resources:maintain gc [--release <release-id>]... [--apply <plan-id>]
+  --release 可重复指定。省略时仅清理过期的未完成上传和孤儿图片。
+  可用 --bucket 指定目标存储桶。`;
 
 async function main(): Promise<void> {
   const { values, positionals } = parseArgs({
     allowPositionals: true,
     options: {
       bucket: { type: "string", default: defaultBucket },
-      "keep-file": { type: "string" },
+      release: { type: "string", multiple: true },
       apply: { type: "string" },
       help: { type: "boolean" },
     },
@@ -27,34 +25,23 @@ async function main(): Promise<void> {
     console.log(usage);
     return;
   }
-  const command = z.enum(["list", "retire", "restore", "gc"]).parse(positionals[0]);
-  const release =
-    command === "retire" || command === "restore"
-      ? ReleaseIdSchema.parse(positionals[1])
-      : undefined;
-  if (positionals.length !== (release ? 2 : 1) || (command !== "gc" && values.apply !== undefined))
+  const command = z.enum(["list", "gc"]).parse(positionals[0]);
+  if (
+    positionals.length !== 1 ||
+    (command === "list" && (values.release !== undefined || values.apply !== undefined))
+  )
     throw new Error(usage);
-  let keep: string[] = [];
-  if (command === "retire" || command === "gc") {
-    if (!values["keep-file"]) throw new Error("请提供 --keep-file");
-    keep = z
-      .array(ReleaseIdSchema)
-      .min(1)
-      .parse(JSON.parse(await readFile(values["keep-file"], "utf8")));
-  }
+  const releases = z.array(ReleaseIdSchema).parse(values.release ?? []);
   const store = configuredStore(values.bucket);
   if (command === "list") {
     console.log(JSON.stringify(await listReleases(store), null, 2));
-  } else if (release) {
-    await setReleaseRetired(store, release, command === "retire", keep);
-    console.log(JSON.stringify({ release, retired: command === "retire" }));
   } else {
-    const plan = await planCleanup(store, keep);
+    const plan = await planCleanup(store, releases);
     const planId = sha256(Buffer.from(JSON.stringify({ bucket: values.bucket, ...plan })));
     if (values.apply !== undefined && values.apply !== planId)
       throw new Error("清理计划已变化，请重新预演");
     console.log(JSON.stringify({ planId, ...plan }, null, 2));
-    if (values.apply) await applyCleanup(store, plan);
+    if (values.apply !== undefined) await applyCleanup(store, plan);
   }
 }
 
