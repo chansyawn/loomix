@@ -1,15 +1,11 @@
 {
-  "name": "@loomix/resource-publisher",
+  "name": "@loomix/resources",
   "private": true,
   "type": "module",
   "exports": {
-    "./release": "./src/release.ts",
-    "./release-id": "./src/release-id.ts",
-    "./publish": "./src/publish.ts",
-    "./configuration": "./src/configuration.ts",
-    "./progress": "./src/progress.ts",
-    "./validate": "./src/validate.ts",
-    "./load": "./src/load.ts"
+    "./delivery": "./src/delivery.ts",
+    "./release": "./src/release-api.ts",
+    "./maintenance": "./src/resource-maintenance.ts"
   },
   "scripts": {
     "test": "vp test"

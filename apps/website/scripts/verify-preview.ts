@@ -1,5 +1,5 @@
 import { setTimeout as delay } from "node:timers/promises";
-import { downloadRelease } from "@loomix/resource-publisher/release";
+import { downloadRelease } from "@loomix/resources/release";
 import { requireRemoteResources, resolveResourceConfig } from "./resource-config.ts";
 import { isPreviewHostname } from "../src/infrastructure/preview-domain.ts";
 

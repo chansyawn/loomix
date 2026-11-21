@@ -8,11 +8,6 @@ import {
 import type { DocumentKind, Release, ReleaseMarker } from "@loomix/schema/release";
 import { sharedImagePath } from "@loomix/schema/assets";
 
-export {
-  ReleaseIdSchema as releaseIdSchema,
-  ReleaseMarkerSchema as releaseMarkerSchema,
-} from "@loomix/schema/release";
-export type { ReleaseMarker } from "@loomix/schema/release";
 export const immutableCacheControl = "public, max-age=31536000, immutable";
 export function sha256(bytes: Uint8Array): string {
   return createHash("sha256").update(bytes).digest("hex");

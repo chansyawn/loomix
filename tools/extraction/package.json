@@ -13,7 +13,7 @@
     "test": "vp test"
   },
   "dependencies": {
-    "@loomix/resource-publisher": "workspace:*",
+    "@loomix/resources": "workspace:*",
     "@loomix/schema": "workspace:*",
     "execa": "catalog:",
     "pngjs": "catalog:",

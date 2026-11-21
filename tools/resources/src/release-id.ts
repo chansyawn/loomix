@@ -1,5 +1,4 @@
-import type { ReleaseManifest } from "@loomix/schema/release";
-import { releaseIdSchema } from "./release.ts";
+import { ReleaseIdSchema, type ReleaseManifest } from "@loomix/schema/release";
 
 export function createReleaseId(
   manifest: Pick<ReleaseManifest, "source" | "formatVersion">,
@@ -10,5 +9,5 @@ export function createReleaseId(
     throw new Error("发布序号必须在 1～999 之间");
   const day = date.toISOString().slice(0, 10).replaceAll("-", "");
   const release = `${day}-g${manifest.source.gameVersion}-f${manifest.formatVersion}-r${String(sequence).padStart(3, "0")}`;
-  return releaseIdSchema.parse(release);
+  return ReleaseIdSchema.parse(release);
 }

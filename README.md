@@ -25,7 +25,7 @@ vp run dev
 
 日常使用 `vp run test` 运行全仓测试，`vp run build` 构建所有提供构建任务的包；只操作一个包时使用 `vp run <包名>#<任务>`。测试默认执行一次，持续监听可运行 `vp run website#test watch`。提交前检查与 PR 流程见[贡献指南](CONTRIBUTING.md)。
 
-本地资源交付准备好后，使用 `vp run resources:publish` 自动校验、上传并更新本地网站资源指针；随后通过 PR 预览与部署。凭证、离线检查和失败恢复见[资源发布](tools/resource-publisher/README.md)，整体流程见[CI/CD 与部署](DEPLOYMENT.md#资源更新流程)。
+本地资源交付准备好后，使用 `vp run resources publish` 自动校验、上传并更新本地网站资源指针，随后通过 PR 预览与部署。凭证、离线检查和失败恢复见[网站资源管理](tools/resources/README.md)，整体流程见[CI/CD 与部署](DEPLOYMENT.md#资源更新流程)。
 
 ### 环境配置
 
@@ -45,7 +45,7 @@ vp run dev
 apps/website/              # 网站页面、路由、样式与网站专属文档
 packages/schema/           # 共享领域模型、资源与发布契约
 tools/extraction/          # 客户端资源提取工具及原理说明
-tools/resource-publisher/  # 不可变资源版本的校验与上传
+tools/resources/  # 资源校验、发布与清理
 resources/website/         # 当前 worktree 的本地网站资源
 ```
 
@@ -65,5 +65,5 @@ resources/website/         # 当前 worktree 的本地网站资源
 | [客户端资源提取](tools/extraction/README.md)                      | 提取工具使用者       | 首次配置、日常操作、排障与清理                 |
 | [提取原理](tools/extraction/docs/extraction-method.md)            | 提取工具维护者       | 跨业务原则、流水线取舍、版本更新与实现入口     |
 | [业务确认与调查](tools/extraction/docs/business-investigation.md) | 提取工具维护者       | 业务收录依据、确认结论与待调查事项             |
-| [资源发布](tools/resource-publisher/README.md)                    | 资源维护者           | R2 凭证、校验、上传与失败处理                  |
+| [网站资源管理](tools/resources/README.md)                         | 资源维护者           | R2 凭证、校验、发布与清理                      |
 | [共享数据契约](packages/schema/README.md)                         | 各包开发者           | 跨包约束、身份、图片与版本边界                 |

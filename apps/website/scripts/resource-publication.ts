@@ -1,16 +1,19 @@
 import path from "node:path";
 import type { Release } from "@loomix/schema/release";
-import { configuredStore } from "@loomix/resource-publisher/configuration";
-import { PublicationError, publishValidatedContent } from "@loomix/resource-publisher/publish";
-import type { ReleaseStore, UploadProgress } from "@loomix/resource-publisher/publish";
-import { downloadRelease } from "@loomix/resource-publisher/release";
-import { createReleaseId } from "@loomix/resource-publisher/release-id";
-import { validateContent } from "@loomix/resource-publisher/validate";
+import { validateContent } from "@loomix/resources/delivery";
+import {
+  describePublication,
+  downloadRelease,
+  PublicationError,
+  publishRelease,
+  type UploadProgress,
+} from "@loomix/resources/release";
 import { releaseChecks, runReleaseChecks } from "./release-checks/index.ts";
+import { defaultDeliveryPath } from "./resource-config.ts";
 import { withResourcePointer } from "./resource-pointer.ts";
 
 export interface PublicationDependencies {
-  createStore: () => ReleaseStore;
+  publish: typeof publishRelease;
   check: (release: Release) => Promise<void>;
   request: typeof fetch;
   now: () => Date;
@@ -19,8 +22,8 @@ export interface PublicationDependencies {
 }
 
 const defaults: PublicationDependencies = {
-  createStore: configuredStore,
-  check: (release) => runReleaseChecks(release, releaseChecks),
+  publish: publishRelease,
+  check: (release) => runReleaseChecks(release, releaseChecks, console.error),
   request: (...args) => fetch(...args),
   now: () => new Date(),
 };
@@ -36,19 +39,14 @@ export async function publishWebsiteResources(
 ) {
   const prepare = async () => {
     // 发布输入固定为当前工作树的本地交付，不受网站环境覆盖值影响。
-    const content = await validateContent(path.join(root, "resources/website"));
+    const content = await validateContent(path.join(root, defaultDeliveryPath));
     await dependencies.check(content.release);
     return content;
   };
   if (dryRun) {
     const content = await prepare();
     return {
-      release: createReleaseId(content.release.manifest, 1, dependencies.now()),
-      manifestSha256: content.manifestSha256,
-      assetCount: content.assets.length,
-      documentCount: content.documents.length,
-      dryRun: true,
-      reserved: false,
+      ...describePublication(content, dependencies.now()),
       pointerUpdated: false,
     } as const;
   }
@@ -56,22 +54,16 @@ export async function publishWebsiteResources(
     root,
     async (pointer) => {
       const content = await prepare();
-      const store = dependencies.createStore();
-      const marker = await publishValidatedContent(
-        content,
-        store,
-        dependencies.onProgress,
-        dependencies.now(),
-      ).catch((cause: unknown) => {
-        if (cause instanceof PublicationError)
-          throw new Error(
-            `${cause.message}\n资源地址：${resourceUrl(cause.release)}\n资源指针未更新。`,
-            {
-              cause,
-            },
-          );
-        throw cause;
-      });
+      const marker = await dependencies
+        .publish(content, { onProgress: dependencies.onProgress, now: dependencies.now() })
+        .catch((cause: unknown) => {
+          if (cause instanceof PublicationError)
+            throw new Error(
+              `${cause.message}\n资源地址：${resourceUrl(cause.release)}\n资源指针未更新。`,
+              { cause },
+            );
+          throw cause;
+        });
       const resourceBaseUrl = resourceUrl(marker.release);
       try {
         const remote = await downloadRelease(
@@ -84,7 +76,7 @@ export async function publishWebsiteResources(
         await pointer.commit(resourceBaseUrl);
       } catch (cause) {
         throw new Error(
-          `资源已上传，但本次未更新指针：${resourceBaseUrl}\nmanifestSha256=${marker.manifestSha256}\n${cause instanceof Error ? cause.message : String(cause)}\n修复后可校验此已有版本，再通过 PR 更新指针，无需重新上传：\nVITE_RESOURCE_BASE_URL=${resourceBaseUrl} vp run website#verify-release`,
+          `资源已上传，但本次未更新指针：${resourceBaseUrl}\nmanifestSha256=${marker.manifestSha256}\n${cause instanceof Error ? cause.message : String(cause)}\n修复后可校验此已有版本，再通过 PR 更新指针，无需重新上传：\nvp run resources verify --url ${resourceBaseUrl}`,
           { cause },
         );
       }

@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { verifyPublishedMarker } from "@loomix/resource-publisher/release";
+import { verifyPublishedMarker } from "@loomix/resources/release";
 import { z } from "zod";
 
 export const builtResourceFile = "resource-version.json";

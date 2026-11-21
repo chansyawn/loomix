@@ -1,6 +1,8 @@
-# 资源发布
+# 网站资源管理
 
-在仓库根目录运行。本工具校验完整本地交付，并上传不可变资源版本；整体流程见[CI/CD 与部署](../../DEPLOYMENT.md#资源更新流程)，概念边界见[领域术语表](../../GLOSSARY.md#资源发布)。下面示例使用的输入为 `resources/website/`，由其中的资源发布清单 `release.json` 描述，格式见[共享数据契约](../../packages/schema/README.md)。发布器验证领域引用图、资源覆盖、完整 WebP 像素与尺寸，并拒绝额外文件或符号链接。
+在仓库根目录运行 `vp run resources --help` 查看命令。资源发布和部署的完整流程见[CI/CD 与部署](../../DEPLOYMENT.md#资源更新流程)，术语见[领域术语表](../../GLOSSARY.md#资源发布)。
+
+脚本可通过 `node apps/website/scripts/resources-cli.ts <子命令>` 读取 stdout 上的 JSON 结果，检查明细和进度在 stderr。`vp run` 还会输出任务信息。
 
 ## 配置凭证
 
@@ -8,13 +10,16 @@
 
 ## 校验与发布
 
-日常网站资源发布使用仓库级命令：
-
 ```sh
-vp run resources:publish
+vp run resources verify --local
+vp run resources verify
+vp run resources verify --url <资源版本地址>
+vp run resources publish
 ```
 
-它固定读取当前 worktree 的 `resources/website/`，执行完整资源校验与网站契约检查，上传至 `loomix-assets`，再从公共域名验证完成标记、文档、CORS 和一张代表图片，并重跑网站检查。全部通过后才更新本地 `apps/website/release.json`。提交、PR 预览与部署按[CI/CD 与部署](../../DEPLOYMENT.md#资源更新流程)继续。网站的 `VITE_RESOURCE_BASE_URL` 覆盖值不改变此命令的输入或验证目标。
+`verify --local` 完整校验当前 worktree 的 `resources/website/` 和网站契约。远程校验会检查完成标记、文档、CORS、代表图片和网站契约。`verify` 默认按网站生产配置选版本，包括 `VITE_RESOURCE_BASE_URL` 覆盖。复核特定发布时用 `--url`。
+
+`publish` 固定读取当前 worktree 的 `resources/website/`，独立于网站的 `VITE_RESOURCE_BASE_URL`。它先校验完整交付和网站契约，上传至 `loomix-assets`，再通过公共域名复核刚上传的版本及网站契约。全部通过后才更新本地 `apps/website/release.json`。提交、PR 预览与部署按[CI/CD 与部署](../../DEPLOYMENT.md#资源更新流程)继续。
 
 每个版本独立保存资源发布清单、领域文档和图片索引。线上图片按 SHA-256 存在共享的 `images/` 前缀下。本地交付通过图片索引中的 `assets/` 相对路径读取图片。发布时验证已存在的对象，只上传缺失的图片。结果中的 `uploadedImageCount` 和 `reusedImageCount` 分别计数。图片使用长期不可变缓存，完成标记必须绕过缓存，因为部署前会用它确认该版本仍可用。
 
@@ -22,16 +27,14 @@ vp run resources:publish
 
 发布 ID 按 UTC 日期和资源清单自动生成，例如 `20261117-g0.95.2-f11-r001`。游戏版本与格式版本取自已验证清单；同一天、同游戏版本和格式版本下，通过 R2 原子预留依次占号，失败发布的号也保持占用，日内序号用尽后报错。日期与序号用于识别发布尝试，不表示完成时间；资源是否完整看完成标记，网站使用哪个版本看资源指针。格式版本仍独立表达契约，不随发布次数递增。生成约束见[命名实现](src/release-id.ts)。
 
-只有校验与上传需求，或需要指定其他输入目录、bucket 时，使用底层发布器：
+只需上传资源或需要指定输入目录、桶时使用 `upload`。
 
 ```sh
-vp run @loomix/resource-publisher#publish \
-  --content resources/website \
-  --dry-run
-vp run @loomix/resource-publisher#publish --content resources/website
+vp run resources upload --content resources/website --dry-run
+vp run resources upload --content resources/website --bucket <桶>
 ```
 
-底层命令不执行网站专属检查、不更新指针。`--content` 默认 `resources/website`，路径相对仓库根目录；`--bucket` 默认 `loomix-assets`。不再接受手动 `--release`。进度写入 stderr，最终结果 JSON 写入 stdout。完整参数见 [CLI](src/cli.ts)，上传与完成判定见[发布实现](src/publish.ts)。
+`upload` 校验交付并上传，网站专属检查、公共域名复核和指针更新由 `publish` 提供。`--content` 默认 `resources/website`，相对路径以仓库根目录为准。`--bucket` 默认 `loomix-assets`。
 
 ## 失败处理
 
@@ -45,16 +48,18 @@ vp run @loomix/resource-publisher#publish --content resources/website
 
 ## 版本维护与清理
 
-运行 `vp run resources:maintain list` 查看版本及完成时间。`gc` 默认只清理过期的未完成上传和孤儿图片。清理已完成版本时，用可重复的 `--release` 指定要删除的发布 ID。
+运行 `vp run resources list` 查看版本及完成时间。`gc` 默认只清理过期的未完成上传和孤儿图片。清理已完成版本时，用可重复的 `--release` 指定要删除的发布 ID。两个命令均可用 `--bucket` 指定目标桶。
 
 指定前确认这些版本已退出生产和 PR 预览，且没有待部署或计划回滚的构建引用它们。可查看已部署网站的 `/resource-version.json` 核对实际资源地址。建议在版本退出使用后再保留 30 天，方便已打开的页面继续加载资源。`--release` 不检查这段宽限期。
 
 ```sh
-vp run resources:maintain gc
-vp run resources:maintain gc --release <release-id>
-vp run resources:maintain gc --release <release-id> --apply <plan-id>
+vp run resources gc
+vp run resources gc --release <release-id>
+vp run resources gc --release <release-id> --apply <plan-id>
 ```
 
-在维护窗口内暂停发布、部署与回滚，等待在途任务结束后预演。执行时用相同参数加上输出的 `--apply <plan-id>`。工具会重算计划，变化后需重新预演。清理依次删除完成标记、版本文件和孤儿图片。所有未指定删除的已完成版本都会保护其引用的共享图片。自动清理仅处理最近 7 天内未修改的未完成上传和孤儿图片。占号标记保留，避免发布 ID 复用。若批量删除中断，用相同参数重新预演后执行剩余计划。
+在同一维护窗口内完成预演与执行。先暂停同桶的发布、上传和相关的部署、回滚，等待在途任务结束。执行时用相同参数加上输出的 `--apply <plan-id>`。工具会重算计划，变化后需重新预演。
+
+清理依次删除完成标记、版本文件和孤儿图片。所有未指定删除的已完成版本都会保护其引用的共享图片。自动清理仅处理最后修改距今至少 7 天的未完成上传和孤儿图片。占号标记保留，避免发布 ID 复用。`gc --apply` 先输出计划，再执行删除，以退出码判断是否成功。若批量删除中断，用相同参数重新预演后执行剩余计划。
 
 不要为 `images/` 配置按对象年龄删除的生命周期规则。R2 回收腾出源站空间，已缓存的响应仍可能在过期前可读。宽限期之后，长期未刷新的旧页面也可能无法加载先前未缓存的资源。

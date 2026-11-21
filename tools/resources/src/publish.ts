@@ -4,10 +4,9 @@ import { readRegularFile } from "./files.ts";
 import type { AssetFile, ValidatedContent } from "./validate.ts";
 import { sha256 } from "./release.ts";
 import { createReleaseId } from "./release-id.ts";
-import type { ReleaseMarker } from "./release.ts";
+import { PublicationError } from "./publication.ts";
+import type { ReleaseMarker } from "@loomix/schema/release";
 import { ObjectMissingError, type ReleaseStore } from "./store.ts";
-
-export type { ReleaseStore } from "./store.ts";
 
 export interface UploadProgress {
   phase: "images" | "finalizing" | "complete";
@@ -15,21 +14,6 @@ export interface UploadProgress {
   total: number;
   completedBytes: number;
   totalBytes: number;
-}
-
-export class PublicationError extends Error {
-  readonly release: string;
-  readonly phase: "reservation" | "upload";
-
-  constructor(release: string, phase: "reservation" | "upload", cause: unknown) {
-    super(
-      `资源发布失败：${release}（${phase}）：${cause instanceof Error ? cause.message : String(cause)}`,
-      { cause },
-    );
-    this.name = "PublicationError";
-    this.release = release;
-    this.phase = phase;
-  }
 }
 
 async function reserveRelease(

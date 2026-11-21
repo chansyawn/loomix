@@ -142,3 +142,24 @@ export async function applyCleanup(
   await store.remove(plan.releaseFiles);
   await store.remove(plan.orphanImages);
 }
+
+export interface CleanupOptions {
+  bucket: string;
+  releaseIds: readonly string[];
+  applyPlanId?: string;
+}
+
+export type CleanupReport = Awaited<ReturnType<typeof planCleanup>> & { planId: string };
+
+export async function runCleanup(
+  store: MaintenanceStore,
+  options: CleanupOptions,
+  report: (plan: CleanupReport) => void,
+): Promise<void> {
+  const plan = await planCleanup(store, options.releaseIds);
+  const planId = sha256(Buffer.from(JSON.stringify({ bucket: options.bucket, ...plan })));
+  if (options.applyPlanId !== undefined && options.applyPlanId !== planId)
+    throw new Error("清理计划已变化，请重新预演");
+  report({ planId, ...plan });
+  if (options.applyPlanId !== undefined) await applyCleanup(store, plan);
+}

@@ -1,5 +1,5 @@
 import { expect, test, vi } from "vite-plus/test";
-import { applyCleanup, listReleases, planCleanup } from "../src/maintenance.ts";
+import { applyCleanup, listReleases, planCleanup, runCleanup } from "../src/maintenance.ts";
 import { sha256 } from "../src/release.ts";
 import type { MaintenanceStore, StoredObject } from "../src/store.ts";
 
@@ -145,4 +145,27 @@ test("删除版本文档中断后可重跑，共享图片最后删除", async ()
   await applyCleanup(store, await planCleanup(store, ["selected"], now));
   expect(objects.has("releases/selected/assets.json")).toBe(false);
   expect(objects.has(orphan.key)).toBe(false);
+});
+
+test("清理执行前复核目标桶和计划，计划变化时保留对象", async () => {
+  const { store, objects, image } = fixture();
+  const orphan = image("orphan");
+  const report = vi.fn<Parameters<typeof runCleanup>[2]>();
+  const options = { bucket: "resources-test", releaseIds: [] };
+  await runCleanup(store, options, report);
+  const plan = report.mock.calls[0][0];
+  expect(plan.orphanImages).toEqual([orphan.key]);
+  await expect(
+    runCleanup(store, { ...options, bucket: "other", applyPlanId: plan.planId }, report),
+  ).rejects.toThrow("清理计划已变化");
+  const added = image("added");
+  await expect(runCleanup(store, { ...options, applyPlanId: plan.planId }, report)).rejects.toThrow(
+    "清理计划已变化",
+  );
+  expect(objects.has(orphan.key)).toBe(true);
+  expect(objects.has(added.key)).toBe(true);
+  expect(report).toHaveBeenCalledTimes(1);
+  await runCleanup(store, options, report);
+  await runCleanup(store, { ...options, applyPlanId: report.mock.calls[1][0].planId }, report);
+  expect(objects.size).toBe(0);
 });
