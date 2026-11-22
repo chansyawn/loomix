@@ -42,13 +42,18 @@ test("manifests reject corrupt outputs, unsupported schema and unsafe paths", as
     { ...manifest, clientSnapshotId: undefined },
     { ...manifest, clientSnapshotId: digest("other client") },
     { ...manifest, inputs: { ...manifest.inputs, id: digest("other client") } },
-    { ...manifest, stageManifestVersion: STAGE_MANIFEST_VERSION - 1 },
-    { ...manifest, stageManifestVersion: undefined, schemaVersion: STAGE_MANIFEST_VERSION },
     { ...manifest, id: digest("another environment") },
     { ...manifest, kind: "extraction", clientSnapshotId: undefined },
   ]) {
     atomicJson(file, altered);
     await assert.rejects(readManifest(directory, "environment"));
+  }
+  for (const altered of [
+    { ...manifest, stageManifestVersion: STAGE_MANIFEST_VERSION - 1 },
+    { ...manifest, stageManifestVersion: undefined, schemaVersion: 2 },
+  ]) {
+    atomicJson(file, altered);
+    await assert.rejects(readManifest(directory, "environment"), /refresh/);
   }
   await publishManifest(directory, manifest);
   fs.writeFileSync(path.join(directory, "output.json"), "[]");

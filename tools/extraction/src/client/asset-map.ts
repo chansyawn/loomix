@@ -1,6 +1,6 @@
 import fs from "node:fs";
-import path from "node:path";
 import sax from "sax";
+import { profile } from "../profile.ts";
 
 export interface AssetMapAsset {
   Name?: string;
@@ -86,11 +86,17 @@ export async function inspectAssetMap(file: string): Promise<{
   return { assets, baseSources, persistentSources };
 }
 
-export function resolveAssetSource(source: string, gameRoot: string): string {
-  const relative = source.replaceAll("\\", "/").match(/PetitPlanet_Data\/(.*)$/)?.[1];
-  if (!relative || relative.split("/").includes("..") || path.isAbsolute(relative))
+function snapshotAssetSource(source: string): string {
+  const segments = source.replaceAll("\\", "/").split("/");
+  const root = segments.lastIndexOf(profile.paths.gameRoot);
+  const relative = segments.slice(root + 1);
+  if (
+    root < 0 ||
+    !relative.length ||
+    relative.some((part) => !part || part === "." || part === "..")
+  )
     throw new Error(`Invalid Asset Map source: ${source}`);
-  return path.join(gameRoot, relative);
+  return segments.slice(root).join("/");
 }
 
 export function preferOverlay<T extends { Source: string }>(variants: T[]): T | undefined {
@@ -119,7 +125,6 @@ export interface AssetIndexOptions {
 
 export async function buildAssetIndex(
   xml: string,
-  gameRoot: string,
   options: AssetIndexOptions = {},
 ): Promise<{ entries: AssetMapAsset[]; audit: AssetMapAudit }> {
   const entries: AssetMapAsset[] = [];
@@ -139,14 +144,7 @@ export async function buildAssetIndex(
       (!asset.Name || !options.binDataNames.has(asset.Name))
     )
       continue;
-    const absolute = resolveAssetSource(asset.Source, gameRoot);
-    entries.push({
-      ...asset,
-      Source: path.posix.join(
-        "resources/game-client",
-        path.relative(path.dirname(gameRoot), absolute).split(path.sep).join("/"),
-      ),
-    });
+    entries.push({ ...asset, Source: snapshotAssetSource(asset.Source) });
   }
   const audit = { assets, indexed: entries.length, types, baseSources, persistentSources };
   assertAssetMapCoverage(audit);

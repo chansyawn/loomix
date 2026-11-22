@@ -7,8 +7,8 @@ export const profile = {
   manifestId: "5662883",
   animeGame: "HYG_CB1",
   paths: {
-    gameRoot: "resources/game-client/PetitPlanet_Data",
-    clientIni: "resources/game-client/config.ini",
+    gameRoot: "PetitPlanet_Data",
+    clientIni: "config.ini",
   },
   // 解码布局和验收数量对应此客户端快照；更新版本时需重新核对。
   byteMask: 0x01350257,

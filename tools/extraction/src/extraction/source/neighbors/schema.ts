@@ -139,7 +139,6 @@ const outfit = z
 
 export const NeighborClothingDatabaseSchema = z
   .strictObject({
-    schemaVersion: z.literal(2),
     source,
     items: outfit.array(),
   })
@@ -154,7 +153,6 @@ export const NeighborClothingDatabaseSchema = z
 
 export const NeighborDatabaseSchema = z
   .strictObject({
-    schemaVersion: z.literal(4),
     source,
     neighbors: record.array(),
     stars: star.array(),

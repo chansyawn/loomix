@@ -15,7 +15,6 @@ export interface ConfigSourceFile {
 }
 
 export interface ConfigSource {
-  schemaVersion: 1;
   dataRevision: number;
   branch: string;
   relativeDirectory: string;
@@ -84,7 +83,6 @@ export function selectConfigSource(gameRoot: string, clientIni: string): ConfigS
   if (!dataBundle.matchesManifest) throw new Error("Data bundle does not match data manifest");
 
   return {
-    schemaVersion: 1,
     dataRevision: revisions.data.revision,
     branch: revisions.data.branch,
     relativeDirectory: selected.relativeDirectory,

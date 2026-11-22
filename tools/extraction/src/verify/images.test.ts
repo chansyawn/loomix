@@ -20,7 +20,7 @@ test("删除候选或篡改绑定及其生产审计仍被独立配置和尺寸�
   fs.mkdirSync(path.join(source, "prepared"), { recursive: true });
   fs.mkdirSync(path.join(directory, "originals"));
   const packageSha256 = "a".repeat(64),
-    packageSource = "resources/game-client/PetitPlanet_Data/StreamingAssets/test.blk";
+    packageSource = "PetitPlanet_Data/StreamingAssets/test.blk";
   const objects: ImageObject[] = ["1", "2"].map((pathId, index) => ({
     key: objectIdentity(packageSha256, "Texture2D", pathId),
     packageSha256,
@@ -42,7 +42,7 @@ test("删除候选或篡改绑定及其生产审计仍被独立配置和尺寸�
   );
   writeJson(path.join(source, "packages.json"), [{ source: packageSource, sha256: packageSha256 }]);
   writeJson(path.join(source, "client-files.json"), [
-    { path: packageSource.replace(/^resources\/game-client\//, ""), sha256: packageSha256 },
+    { path: packageSource, sha256: packageSha256 },
   ]);
   writeJson(path.join(source, "bindata-manifest.json"), []);
   writeJson(path.join(directory, "source-audit.json"), {

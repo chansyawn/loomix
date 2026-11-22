@@ -46,11 +46,7 @@ function readSnapshotManifest(snapshotId: string): SnapshotManifest {
   const directory = snapshotDirectory(snapshotId);
   const manifestFile = within(directory, "snapshot-manifest.json");
   const manifest = snapshotManifestSchema.parse(JSON.parse(fs.readFileSync(manifestFile, "utf8")));
-  if (
-    manifest.schemaVersion !== 1 ||
-    manifest.id !== snapshotId ||
-    digest(manifest.files) !== snapshotId
-  )
+  if (manifest.id !== snapshotId || digest(manifest.files) !== snapshotId)
     throw new Error(`Client snapshot manifest is invalid: ${snapshotId}`);
   return manifest;
 }
@@ -108,21 +104,7 @@ export function clientRoot(snapshotId = selectedSnapshotId()): string {
 }
 
 export function resolveClientPath(relative: string, snapshotId?: string): string {
-  const prefix = "resources/game-client/";
-  const portable = relative.startsWith(prefix) ? relative.slice(prefix.length) : relative;
-  if (path.isAbsolute(portable) || portable.includes("\\"))
-    throw new Error(`Invalid client-relative path: ${relative}`);
-  const root = clientRoot(snapshotId);
-  const resolved = path.resolve(root, portable);
-  const fromRoot = path.relative(root, resolved);
-  if (
-    !fromRoot ||
-    fromRoot === ".." ||
-    fromRoot.startsWith(`..${path.sep}`) ||
-    path.isAbsolute(fromRoot)
-  )
-    throw new Error(`Client path escapes its snapshot: ${relative}`);
-  return resolved;
+  return within(clientRoot(snapshotId), relative);
 }
 
 export async function snapshotClient(root = clientRoot()): Promise<ClientSnapshot> {

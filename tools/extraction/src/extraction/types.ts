@@ -1,10 +1,5 @@
 import type { RecordType, RecipeSlot } from "./schema.ts";
 
-export interface WorkOptions {
-  work: string;
-  environment?: string;
-  clientSnapshotId?: string;
-}
 export interface IndexedAsset {
   Name?: string;
   Container?: string;

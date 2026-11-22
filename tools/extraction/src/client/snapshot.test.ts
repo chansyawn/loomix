@@ -46,14 +46,18 @@ test("client snapshots are content-addressed, selected explicitly, and immutable
   assert.equal(selectedSnapshotId(), first);
   assert.equal(await snapshotClient().then((snapshot) => snapshot.sha256), first);
   assert.equal(
-    fs.readFileSync(resolveClientPath("resources/game-client/PetitPlanet_Data/client.bin"), "utf8"),
+    fs.readFileSync(resolveClientPath("PetitPlanet_Data/client.bin"), "utf8"),
     "first snapshot",
   );
-  assert.throws(
-    () => resolveClientPath("resources/game-client/../../outside"),
-    /escapes its snapshot/,
-  );
+  assert.throws(() => resolveClientPath("../outside"), /Unsafe relative path/);
   assert.equal(fs.statSync(path.join(clientRoot(first), "config.ini")).mode & 0o222, 0);
+  const firstRoot = clientRoot(first);
+  fs.chmodSync(firstRoot, 0o755);
+  const link = path.join(firstRoot, "linked-client");
+  fs.symlinkSync(source, link, "dir");
+  assert.throws(() => resolveClientPath("linked-client/config.ini"), /symbolic link/);
+  fs.unlinkSync(link);
+  fs.chmodSync(firstRoot, 0o555);
 
   fs.writeFileSync(path.join(source, "PetitPlanet_Data", "client.bin"), "second snapshot");
   const second = await importClient(source);

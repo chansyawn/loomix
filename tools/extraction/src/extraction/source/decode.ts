@@ -4,7 +4,6 @@ import path from "node:path";
 import { profile } from "../../profile.ts";
 import { resolveClientPath } from "../../client/snapshot.ts";
 import { readJson, writeJson } from "../../workflow/json.ts";
-import { readManifest } from "../../workflow/manifest.ts";
 import { removeWithin } from "../../workflow/fs.ts";
 import type { AssetMapAsset } from "../../client/asset-map.ts";
 import type { ConfigSource as EnvironmentConfigSource } from "../../environment/config-source.ts";
@@ -14,10 +13,10 @@ import { decodeTextMap } from "./decode/textmap.ts";
 import { indexTables, Tables } from "./decode/tables.ts";
 import type { BinDataAsset, ConfigFile, ConfigSource, IndexedAsset } from "../types.ts";
 
-export interface DecodeOptions {
+interface DecodeOptions {
   work: string;
   environment: string;
-  clientSnapshotId?: string;
+  clientSnapshotId: string;
 }
 
 function freezeConfig(environment: string, prepared: string, snapshotId: string): ConfigSource {
@@ -39,7 +38,7 @@ function freezeConfig(environment: string, prepared: string, snapshotId: string)
       matchesManifest: true,
     };
   });
-  const relativeDirectory = path.posix.dirname(source.files[0].path.replaceAll("\\", "/"));
+  const relativeDirectory = source.relativeDirectory;
   const config: ConfigSource = {
     dataRevision: source.dataRevision,
     relativeDirectory,
@@ -92,23 +91,17 @@ export async function prepareSource({
   environment,
   clientSnapshotId,
 }: DecodeOptions): Promise<void> {
-  if (!environment)
-    throw new Error("Environment directory is required to prepare extraction input");
-  const environmentManifest = await readManifest(environment, "environment");
-  const snapshotId = environmentManifest.clientSnapshotId;
-  if (clientSnapshotId !== undefined && clientSnapshotId !== snapshotId)
-    throw new Error("Client snapshot does not match the extraction environment");
   const prepared = path.join(work, "prepared");
   removeWithin(prepared, work);
   removeWithin(path.join(work, "bindata"), work);
   fs.mkdirSync(prepared, { recursive: true });
 
-  freezeConfig(environment, prepared, snapshotId);
+  const config = freezeConfig(environment, prepared, clientSnapshotId);
   const reader = new ObbReader(path.join(prepared, "ed.obb"));
   writeJson(path.join(prepared, "obb-table-index.json"), indexTables(reader));
   const textmap = decodeTextMap(reader);
   writeJson(path.join(prepared, "textmap-zh-en.json"), {
-    source: `${path.posix.dirname(readJson<EnvironmentConfigSource>(path.join(environment, "config-source.json")).files[0].path)}/ed.obb`,
+    source: `${config.relativeDirectory}/ed.obb`,
     rootField: profile.roots.textmap,
     ...textmap,
   });
@@ -124,7 +117,7 @@ export async function prepareSource({
   writeJson(path.join(prepared, "textures.json"), textures);
   writeJson(path.join(prepared, "sprites.json"), sprites);
 
-  await exportBinData(assets, work, snapshotId);
+  await exportBinData(assets, work, clientSnapshotId);
 }
 
 export function openSource(work: string): Tables {

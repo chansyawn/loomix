@@ -7,13 +7,15 @@ import type { FileHash } from "./hashing.ts";
 import { within } from "../paths.ts";
 
 const hash = z.string().regex(/^[a-f0-9]{64}$/);
-export const STAGE_MANIFEST_VERSION = 2;
+export const STAGE_MANIFEST_VERSION = 3;
 const fileHash = z
   .object({ path: z.string(), sha256: hash, bytes: z.number().int().nonnegative() })
   .strict();
 const baseManifestSchema = z
   .object({
-    stageManifestVersion: z.literal(STAGE_MANIFEST_VERSION),
+    stageManifestVersion: z.literal(STAGE_MANIFEST_VERSION, {
+      error: "提取阶段清单版本不受支持。请运行 refresh 重新生成，并使用新的阶段 ID。",
+    }),
     id: hash,
     status: z.literal("verified"),
     createdAt: z.string().datetime(),

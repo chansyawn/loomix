@@ -1,5 +1,6 @@
 import path from "node:path";
 import { exportAssets } from "../../client/anime-studio/index.ts";
+import { resolveClientPath } from "../../client/snapshot.ts";
 import { profile } from "../../profile.ts";
 import type { ImageObject } from "./model.ts";
 
@@ -19,9 +20,8 @@ export const animeStudioExporter: ImageExporter = async ({
   const first = objects[0];
   if (!first) throw new Error("Empty image batch");
   await exportAssets({
-    input: first.source,
+    input: resolveClientPath(first.source, clientSnapshotId),
     output: destination,
-    clientSnapshotId,
     game: profile.animeGame,
     types: [first.assetType],
     names: [`^(?:${objects.map((object) => regex(object.resourceName)).join("|")})$`],

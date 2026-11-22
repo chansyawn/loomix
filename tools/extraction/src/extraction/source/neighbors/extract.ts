@@ -44,12 +44,10 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
   );
   const outfitReadings = readNeighborOutfits(tables, accepted, records, exclusions);
   const clothing = parseNeighborClothingDatabase({
-    schemaVersion: 2,
     source,
     items: normalizeNeighborClothing(outfitReadings.map((reading) => reading.value)),
   }).items;
   const database: NeighborDatabase = {
-    schemaVersion: 4,
     source: { ...source },
     neighbors,
     stars: readStars(tables, accepted, records),
@@ -69,7 +67,6 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
       ]),
     ) as Record<GiftPreferenceLevel, number>;
   const audit: NeighborExtractionAudit = {
-    schemaVersion: 2,
     source: { ...source },
     counts: {
       neighbors: result.neighbors.length,

@@ -206,7 +206,7 @@ const invalid: [string, (catalog: Catalog) => void][] = [
     },
   ],
   [
-    "old schema version",
+    "removed schema version field",
     (c) => {
       Object.assign(c, { schemaVersion: 9 });
     },

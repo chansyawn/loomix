@@ -13,7 +13,6 @@ import { inventory, filesWithin, digest } from "../../workflow/hashing.ts";
 import { verifyFiles, atomicJson } from "../../workflow/manifest.ts";
 import { z } from "zod";
 import { inspectAssetMap } from "../asset-map.ts";
-import { resolveClientPath } from "../snapshot.ts";
 
 // 平台准备与进程执行的替换点仅供模块测试使用，任务通过 index.ts 调用。
 export function createAnimeStudio({
@@ -99,7 +98,6 @@ export function createAnimeStudio({
         await prepare({ directory: staging, work, rid, platform, run: loggedRun });
         await probe(staging);
         atomicJson(path.join(staging, "ready.json"), {
-          schemaVersion: 1,
           key,
           ...identity,
           outputs: await inventory(staging),
@@ -132,21 +130,18 @@ export function createAnimeStudio({
     });
     return pending;
   }
-  async function execute(
-    { input, output, game, logFile, clientSnapshotId }: ExtractionOptions,
-    flags: string[],
-  ) {
-    const source = path.isAbsolute(input) ? input : resolveClientPath(input, clientSnapshotId);
+  async function execute({ input, output, game, logFile }: ExtractionOptions, flags: string[]) {
     const destination = path.resolve(repoRoot, output);
     if (!game) throw new Error("AnimeStudio game is required");
-    if (!fs.existsSync(source)) throw new Error(`Missing extraction input: ${source}`);
+    if (!path.isAbsolute(input)) throw new Error(`Extraction input must be absolute: ${input}`);
+    if (!fs.existsSync(input)) throw new Error(`Missing extraction input: ${input}`);
     const context = await ensure();
     const log = logFile
       ? path.resolve(repoRoot, logFile)
       : path.join(cacheRoot(), "logs", `extract-${crypto.randomUUID()}.log`);
     fs.mkdirSync(path.dirname(log), { recursive: true });
     fs.writeFileSync(log, "");
-    await run(context.executable, [source, destination, "--game", game, ...flags], {
+    await run(context.executable, [input, destination, "--game", game, ...flags], {
       env: context.env,
       logFile: log,
     });

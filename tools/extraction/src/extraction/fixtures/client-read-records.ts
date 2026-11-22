@@ -12,7 +12,6 @@ export function clientReadRecordsFixture(datasetId = "c".repeat(64)): ClientRead
     catalog: { items: [], collections: [], creationCardSets: [] },
     ingredientItemIds: [],
     neighbors: {
-      schemaVersion: 4,
       source: dataset.source,
       neighbors: [],
       stars: [],
@@ -43,7 +42,6 @@ export function clientReadRecordsFixture(datasetId = "c".repeat(64)): ClientRead
       collection: {
         ...emptyCatalog(dataset.source),
         items: [],
-        schemaVersion: 2,
         seeds: [],
         growths: [],
         details: [],

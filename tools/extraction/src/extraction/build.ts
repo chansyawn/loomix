@@ -70,7 +70,6 @@ export async function extract(environmentId: string): Promise<string> {
           profileHash,
           implementation,
           tool,
-          options: "MiHoYoBinData-json",
         },
         async (work) => {
           await prepareSource({
@@ -102,7 +101,7 @@ export async function extract(environmentId: string): Promise<string> {
       ]
         .sort()
         .map((source) => {
-          const sha256 = files.get(source.replace(/^resources\/game-client\//, ""));
+          const sha256 = files.get(source);
           if (!sha256) throw new Error(`Missing frozen package ${source}`);
           return { source, sha256 };
         });
@@ -120,11 +119,7 @@ export async function extract(environmentId: string): Promise<string> {
       });
       writeJson(path.join(staging, "originals.json"), originals);
       writeAssembly(staging, assemble(clientReadRecords, originals));
-      await audit(
-        { work: staging, environment: environmentDirectory },
-        source,
-        clientReadRecords.imageObjects,
-      );
+      await audit(staging, clientSnapshotId, source, clientReadRecords.imageObjects);
       await verifyCandidate(staging);
       await assertClientUnchanged(environment);
       if (

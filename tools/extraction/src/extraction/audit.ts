@@ -1,5 +1,4 @@
 import type {
-  WorkOptions,
   BinDataAsset,
   ConfigSource,
   SourceCheck,
@@ -10,20 +9,17 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { profile } from "../profile.ts";
-import { resolveClientPath, clientRoot } from "../client/snapshot.ts";
-import { readManifest } from "../workflow/manifest.ts";
+import { resolveClientPath } from "../client/snapshot.ts";
 import { readJson, writeJson } from "../workflow/json.ts";
 import { manifestEntry, readManifestMaps } from "../client/versions.ts";
 
 export async function audit(
-  options: WorkOptions,
+  work: string,
+  clientSnapshotId: string,
   sourceRoot: string,
   images: readonly Pick<SelectedImage, "source">[],
 ) {
-  if (!options.environment) throw new Error("Environment directory is required for source audit");
-  const environment = await readManifest(options.environment, "environment");
-  const root = resolveClientPath(profile.paths.gameRoot, environment.clientSnapshotId);
-  const rootDirectory = clientRoot(environment.clientSnapshotId);
+  const root = resolveClientPath(profile.paths.gameRoot, clientSnapshotId);
   const manifests = readManifestMaps(root, profile.manifestId);
   const bindata = readJson<BinDataAsset[]>(path.join(sourceRoot, "bindata-manifest.json"));
   const sourceFiles = new Set([
@@ -53,13 +49,15 @@ export async function audit(
   }
   let done = 0;
   for (const source of sourceFiles) {
-    const [, scope, relative] =
-      source.replaceAll("\\", "/").match(/PetitPlanet_Data\/(StreamingAssets|Persistent)\/(.*)$/) ??
-      [];
-    if (!relative || (scope !== "StreamingAssets" && scope !== "Persistent"))
+    const [, gameRoot, scope, relative] = source.match(/^([^/]+)\/([^/]+)\/(.+)$/) ?? [];
+    if (
+      gameRoot !== profile.paths.gameRoot ||
+      !relative ||
+      (scope !== "StreamingAssets" && scope !== "Persistent")
+    )
       throw new Error(`Invalid package source: ${source}`);
     const expected = manifestEntry(manifests, scope, relative);
-    const absolute = path.resolve(rootDirectory, source.replace(/^resources\/game-client\//, ""));
+    const absolute = resolveClientPath(source, clientSnapshotId);
     const hash = crypto.createHash("md5");
     for await (const bytes of fs.createReadStream(absolute)) hash.update(bytes);
     const md5 = hash.digest("hex"),
@@ -81,6 +79,6 @@ export async function audit(
     records,
     configChecks,
   };
-  writeJson(path.join(options.work, "source-audit.json"), report);
+  writeJson(path.join(work, "source-audit.json"), report);
   if (!report.passed) throw new Error("Source package checksum mismatch; see source-audit.json");
 }

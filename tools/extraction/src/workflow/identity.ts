@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { execFileSync } from "node:child_process";
 import { profile } from "../profile.ts";
 import { version, patchFile, runtimeIdentifier } from "../client/anime-studio/config.ts";
 import { digest, inventory, filesWithin } from "./hashing.ts";
@@ -35,7 +34,4 @@ export async function implementationRevision(): Promise<string> {
     contracts,
     runtime: { node: process.version, platform: process.platform, architecture: process.arch },
   });
-}
-export function gitRevision(): string {
-  return execFileSync("git", ["rev-parse", "HEAD"], { cwd: repoRoot, encoding: "utf8" }).trim();
 }

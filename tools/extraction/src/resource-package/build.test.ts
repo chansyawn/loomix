@@ -129,3 +129,17 @@ test("资源包拒绝上游清单变化与多余文件，并隔离损坏目录�
     fs.readdirSync(path.dirname(directory)).some((name) => name.startsWith(`${id}.corrupt-`)),
   ).toBe(true);
 });
+
+test("打包、验收和安装遇到旧阶段格式时提示重新生成", async () => {
+  const id = await buildResourcePackage(extractionId);
+  const bundle = path.join(workspace.root, "extractions", extractionId);
+  const extraction = await readManifest(bundle, "extraction");
+  writeJson(path.join(bundle, stageManifestFile("extraction")), {
+    ...extraction,
+    stageManifestVersion: STAGE_MANIFEST_VERSION - 1,
+  });
+  await expect(buildResourcePackage(extractionId)).rejects.toThrow(/refresh/);
+  await expect(verifyResourcePackage(id)).rejects.toThrow(/refresh/);
+  await expect(installLocalResources(id)).rejects.toThrow(/refresh/);
+  expect(fs.readdirSync(path.join(workspace.root, "installed"))).toEqual([".gitkeep"]);
+});

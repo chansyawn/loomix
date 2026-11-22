@@ -5,8 +5,6 @@ import { fileURLToPath } from "node:url";
 
 export const repoRoot = fileURLToPath(new URL("../../..", import.meta.url));
 
-export const varRoot = path.join(repoRoot, "var");
-export const scratchRoot = path.join(varRoot, "scratch");
 export const websiteDirectory = path.join(repoRoot, "resources/website");
 
 if (process.env.NODE_ENV !== "test") {

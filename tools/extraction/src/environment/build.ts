@@ -73,7 +73,6 @@ export async function init(): Promise<string> {
 
       const resourceAudit = await validateResourceManifests(gameRoot, profile.manifestId);
       writeJson(path.join(staging, "resource-manifest-audit.json"), {
-        schemaVersion: 1,
         passed: true,
         manifests: resourceAudit,
       });
@@ -84,14 +83,11 @@ export async function init(): Promise<string> {
         game: profile.animeGame,
         logFile: path.join(staging, "logs/asset-map.log"),
       });
-      const { entries, audit } = await buildAssetIndex(map, gameRoot, {
+      const { entries, audit } = await buildAssetIndex(map, {
         binDataNames: new Set(Object.values(profile.binData)),
       });
       writeJson(path.join(staging, "asset-index.json"), entries);
-      writeJson(path.join(staging, "asset-map-audit.json"), {
-        schemaVersion: 1,
-        ...audit,
-      });
+      writeJson(path.join(staging, "asset-map-audit.json"), audit);
       fs.rmSync(map, { force: true });
 
       if ((await snapshotClient(selectedClientRoot)).sha256 !== clientSnapshotId)

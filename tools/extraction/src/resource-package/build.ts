@@ -38,7 +38,6 @@ export async function buildResourcePackage(extractionId: string): Promise<string
     inputs: inputs.sha256,
     implementation,
     profileHash,
-    imagePolicy: "Lanczos3-icon256-banner1024x512-illustration1600-cardOriginal-WebP85-alpha100-v5",
   });
   const directory = identityDirectory("resource-packages", resourcePackageId);
   await withLock(`${directory}.lock`, async () => {

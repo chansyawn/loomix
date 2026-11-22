@@ -127,7 +127,7 @@ export function verifyImages(
   for (const [file, sha256] of packages)
     assert.equal(
       sha256,
-      snapshot.get(file.replace(/^resources\/game-client\//, "")),
+      snapshot.get(file),
       "Package identity comes from frozen snapshot inventory",
     );
   const audit = readJson<SourceAudit>(path.join(directory, "source-audit.json"));
