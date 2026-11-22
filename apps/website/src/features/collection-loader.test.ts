@@ -11,5 +11,5 @@ test("loads manifest-selected documents and keeps confirmed empty collections em
 });
 test("rejects failed resource requests", async () => {
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("missing", { status: 404 })));
-  await expect(loadCollectionView()).rejects.toThrow("Unable to load release");
+  await expect(loadCollectionView()).rejects.toThrow("Unable to load website resource manifest");
 });

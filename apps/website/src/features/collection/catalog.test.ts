@@ -1,5 +1,5 @@
 import { expect, test } from "vite-plus/test";
-import { addFixtureRecords, assetsFixture, catalogFixture } from "../collection-fixture";
+import { addFixtureRecords, imageIndexFixture, catalogFixture } from "../collection-fixture";
 import {
   plantItemFixture,
   plantSeedFixture,
@@ -33,7 +33,7 @@ test("共享目录为植物、种子和系列保留独立详情及公共字段",
       ],
     }),
   });
-  const data = createCollectionCatalog(catalog, assetsFixture(catalog), gameplayTags);
+  const data = createCollectionCatalog(catalog, imageIndexFixture(catalog), gameplayTags);
   expect(data.rows).toHaveLength(3);
   expect(data.byId.get(10)?.record).toMatchObject({ memberKind: "plant", memberIds: [1] });
   expect(collectionDetail(data, 10)).toMatchObject({
@@ -84,7 +84,7 @@ test("同名的玩家款和友邻款共享配对和套装导航，导航只含�
     { id: 43, name: "露草耕种", memberKind: "clothing", memberIds: [41, 42] },
     { id: 44, name: "露草外观", kind: "appearance" },
   );
-  const data = createCollectionCatalog(catalog, assetsFixture(catalog), gameplayTags);
+  const data = createCollectionCatalog(catalog, imageIndexFixture(catalog), gameplayTags);
   const counterpart = { kind: "pair", playerId: 41, neighborId: 40 };
   const navigation = { groups: [{ entries: [{ id: 43 }, { id: 41 }, { id: 42 }] }] };
   expect(collectionDetail(data, 40, "友邻甲")).toMatchObject({
@@ -122,7 +122,7 @@ test("多件友邻款指向同一玩家款时，各友邻款保留单向链接",
     { id: 41, name: "友邻帽子乙", kind: "neighborClothing", playerItemId: 42 },
     { id: 42, name: "玩家帽子", kind: "clothing" },
   );
-  const data = createCollectionCatalog(catalog, assetsFixture(catalog), gameplayTags);
+  const data = createCollectionCatalog(catalog, imageIndexFixture(catalog), gameplayTags);
   for (const id of [40, 41]) {
     expect(collectionDetail(data, id)).toMatchObject({
       detail: {
@@ -144,7 +144,7 @@ test("友邻款的对应玩家物品为空、缺失或仅供引用时不生成�
     { id: 42, name: "目标仅供引用", kind: "neighborClothing", playerItemId: 44 },
     { id: 44, name: "仅供引用的玩家款", kind: "reference" },
   );
-  const data = createCollectionCatalog(catalog, assetsFixture(catalog), gameplayTags);
+  const data = createCollectionCatalog(catalog, imageIndexFixture(catalog), gameplayTags);
   for (const id of [40, 41, 42]) {
     expect(collectionDetail(data, id)).toMatchObject({
       detail: { counterpart: null, navigation: null },

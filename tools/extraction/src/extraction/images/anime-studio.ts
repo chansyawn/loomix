@@ -4,20 +4,24 @@ import { profile } from "../../profile.ts";
 import type { ImageObject } from "./model.ts";
 
 export interface ExportRequest {
-  snapshotId: string;
+  clientSnapshotId: string;
   objects: readonly ImageObject[];
   destination: string;
 }
 export type ImageExporter = (request: ExportRequest) => Promise<ReadonlyMap<string, string>>;
 const regex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-export const animeStudioExporter: ImageExporter = async ({ snapshotId, objects, destination }) => {
+export const animeStudioExporter: ImageExporter = async ({
+  clientSnapshotId,
+  objects,
+  destination,
+}) => {
   const first = objects[0];
   if (!first) throw new Error("Empty image batch");
   await exportAssets({
     input: first.source,
     output: destination,
-    clientSnapshotId: snapshotId,
+    clientSnapshotId,
     game: profile.animeGame,
     types: [first.assetType],
     names: [`^(?:${objects.map((object) => regex(object.resourceName)).join("|")})$`],

@@ -124,7 +124,7 @@ async function deploy(number: number, sha: string): Promise<void> {
   }
   if (current.head.sha !== sha) throw new Error("PR changed; a newer workflow must deploy it");
   await comment(number, `正在发布预览。\n\n提交 ${sha}`);
-  const resourceBase = await verifyBuiltResource();
+  const { resourceBaseUrl, marker: resourceMarker } = await verifyBuiltResource();
   await execute(
     process.execPath,
     [
@@ -145,7 +145,7 @@ async function deploy(number: number, sha: string): Promise<void> {
     .object({ urls: z.array(z.string().url()) })
     .parse(await previewRequest(number, "GET"));
   const url = selectPreviewUrl(number, output.urls);
-  await retryPreview(() => verifyPreview(url, resourceBase));
+  await retryPreview(() => verifyPreview(url, resourceBaseUrl, fetch, resourceMarker));
   const latest = await currentPullRequest(number);
   if (latest.state === "closed") {
     await removePreview(number);
@@ -153,6 +153,9 @@ async function deploy(number: number, sha: string): Promise<void> {
   }
   if (latest.head.sha !== sha) throw new Error("PR changed during deployment");
   await comment(number, `预览已发布并通过 HTTP 与资源校验。\n\n[打开预览](${url})\n\n提交 ${sha}`);
+  console.log(
+    `Verified preview resource binding: ${resourceBaseUrl} (${resourceMarker.manifestSha256})`,
+  );
   console.log(`Verified Preview: ${url}`);
 }
 

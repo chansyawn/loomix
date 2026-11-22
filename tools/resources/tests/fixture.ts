@@ -3,9 +3,12 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { emptyDataset } from "@loomix/schema/dataset";
 import type { Dataset } from "@loomix/schema/dataset";
-import type { Assets } from "@loomix/schema/assets";
-import type { DocumentKind } from "@loomix/schema/release";
-import { documentPath } from "@loomix/schema/release";
+import type { ImageIndex } from "@loomix/schema/assets";
+import {
+  documentPath,
+  WEBSITE_RESOURCE_MANIFEST_FILE,
+  WebsiteResourceDocumentTypeSchema,
+} from "@loomix/schema/website-resources";
 import { sha256 } from "../src/release.ts";
 export const webp = Buffer.from(
   "UklGRuYAAABXRUJQVlA4WAoAAAAQAAAA/wAA/wAAQUxQSBIAAAABB1DAiAgAKNL//xTR/9T//gNWUDggrgAAADARAJ0BKgABAAE+bTaZSaQjIqEgKACADYlpbuF2sR7cAAAWlsnIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32ych77ZOQ99snIe+2TkPfbJyHvtk5D32rAAP7/XGb//ztbDEFS//+tt383sqAAAAAAAAAAAA==",
@@ -15,20 +18,20 @@ export const imageKey = `assets/${sha256(webp)}.webp`;
 export const remoteImageKey = `images/${sha256(webp)}.webp`;
 
 export { context, source };
-export function emptyRelease() {
-  return { dataset: emptyDataset(context, source), assets: { images: [] } as Assets };
+export function emptyWebsiteResources() {
+  return { dataset: emptyDataset(context, source), imageIndex: { images: [] } as ImageIndex };
 }
-export async function writeDocuments(directory: string, dataset: Dataset, assets: Assets) {
+export async function writeDocuments(directory: string, dataset: Dataset, imageIndex: ImageIndex) {
   const documents = {
     "gameplay-tags": dataset.gameplayTags,
     catalog: dataset.catalog,
     neighbors: dataset.neighbors,
     starsea: dataset.starsea,
     vignettes: dataset.vignettes,
-    assets,
+    "image-index": imageIndex,
   };
   const files = [];
-  for (const kind of Object.keys(documents) as DocumentKind[]) {
+  for (const kind of WebsiteResourceDocumentTypeSchema.options) {
     const file = documentPath(kind, context.locale);
     const bytes = Buffer.from(JSON.stringify(documents[kind]));
     await mkdir(path.dirname(path.join(directory, file)), { recursive: true });
@@ -36,11 +39,11 @@ export async function writeDocuments(directory: string, dataset: Dataset, assets
     files.push({ kind, path: file, sha256: sha256(bytes), bytes: bytes.length });
   }
   const manifest = { ...dataset.context, source: dataset.source, files };
-  await writeFile(path.join(directory, "release.json"), JSON.stringify(manifest));
+  await writeFile(path.join(directory, WEBSITE_RESOURCE_MANIFEST_FILE), JSON.stringify(manifest));
   return manifest;
 }
 export async function writeFixture(directory: string, imageCount = 1, payloads?: Buffer[]) {
-  const { dataset, assets } = emptyRelease();
+  const { dataset, imageIndex } = emptyWebsiteResources();
   await mkdir(path.join(directory, "assets"), { recursive: true });
   for (let i = 0; i < imageCount; i++) {
     const chunk = Buffer.alloc(8 + i * 2);
@@ -52,7 +55,7 @@ export async function writeFixture(directory: string, imageCount = 1, payloads?:
       file = `assets/${hash}.webp`;
     const image = { assetId: `image-${i}`, variant: "icon" as const };
     dataset.catalog.items.push({ ...material(i + 1), image });
-    assets.images.push({
+    imageIndex.images.push({
       ...image,
       file,
       sha256: hash,
@@ -62,5 +65,5 @@ export async function writeFixture(directory: string, imageCount = 1, payloads?:
     });
     await writeFile(path.join(directory, file), bytes);
   }
-  return { dataset, assets, manifest: await writeDocuments(directory, dataset, assets) };
+  return { dataset, imageIndex, manifest: await writeDocuments(directory, dataset, imageIndex) };
 }

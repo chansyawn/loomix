@@ -9,7 +9,7 @@ if (existsSync(new URL("resources/", client))) {
   throw new Error("Production deployment must not include local resources");
 }
 if (!existsSync(new URL(builtResourceFile, client))) {
-  throw new Error("Resource pointer is missing from the client build");
+  throw new Error("Resource version file is missing from the client build");
 }
 if (!existsSync(new URL("../server/wrangler.json", client))) {
   throw new Error("Worker build configuration is missing");

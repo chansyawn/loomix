@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { FORMAT_VERSION } from "@loomix/schema/common";
 import { buildAssetIndex } from "../client/asset-map.ts";
 import { buildAssetMap, ensureAnimeStudio } from "../client/anime-studio/index.ts";
 import {
@@ -14,36 +15,47 @@ import { digest, inventory } from "../workflow/hashing.ts";
 import { implementationRevision, profileHash, toolIdentity } from "../workflow/identity.ts";
 import { writeJson } from "../workflow/json.ts";
 import { withLock } from "../workflow/lock.ts";
-import { publishManifest, readManifest } from "../workflow/manifest.ts";
+import { publishManifest, STAGE_MANIFEST_VERSION } from "../workflow/manifest.ts";
 import type { Manifest } from "../workflow/manifest.ts";
 import { swapDirectory } from "../workflow/swap.ts";
 import { selectConfigSource } from "./config-source.ts";
 import { validateResourceManifests } from "./resource-audit.ts";
+import { ENVIRONMENT_OUTPUT_FILES } from "./files.ts";
+import { readVerifiedEnvironment } from "./verify.ts";
 
 export async function init(): Promise<string> {
   const clientSnapshotId = selectedSnapshotId();
   const selectedClientRoot = clientRoot(clientSnapshotId);
   if (!fs.existsSync(selectedClientRoot))
     throw new Error(`Missing client snapshot: ${selectedClientRoot}`);
-  console.log("Hashing client snapshot");
+  console.error("Hashing client snapshot");
   const snapshot = await snapshotClient(selectedClientRoot);
+  if (snapshot.sha256 !== clientSnapshotId) throw new Error("Selected client snapshot changed");
   const animeStudio = await ensureAnimeStudio();
   const tool = toolIdentity();
   const implementation = await implementationRevision();
-  const identity = { client: snapshot.sha256, profileHash, tool: animeStudio, implementation };
+  const identity = {
+    schemaVersion: STAGE_MANIFEST_VERSION,
+    formatVersion: FORMAT_VERSION,
+    clientSnapshotId,
+    profileHash,
+    tool: animeStudio,
+    implementation,
+  };
   const id = digest(identity);
   const directory = identityDirectory("environments", id);
 
   await withLock(`${directory}.lock`, async () => {
     try {
-      const existing = await readManifest(directory, "environment");
+      const existing = await readVerifiedEnvironment(directory);
       if (
         existing.id !== id ||
+        existing.clientSnapshotId !== clientSnapshotId ||
         existing.implementation !== implementation ||
         existing.profileHash !== profileHash
       )
         throw new Error("Changed environment identity");
-      console.log(`Reusing verified environment ${id}`);
+      console.error(`Reusing verified environment ${id}`);
       return;
     } catch {
       /* 不完整或已变更的环境一律不可复用。 */
@@ -82,22 +94,17 @@ export async function init(): Promise<string> {
       });
       fs.rmSync(map, { force: true });
 
-      if (digest((await snapshotClient(selectedClientRoot)).files) !== identity.client)
+      if ((await snapshotClient(selectedClientRoot)).sha256 !== clientSnapshotId)
         throw new Error("Client changed during initialization");
-      const outputs = await inventory(staging, [
-        "config-source.json",
-        "asset-index.json",
-        "asset-map-audit.json",
-        "resource-manifest-audit.json",
-      ]);
+      const outputs = await inventory(staging, [...ENVIRONMENT_OUTPUT_FILES]);
       const manifest: Manifest = {
-        schemaVersion: 1,
+        schemaVersion: STAGE_MANIFEST_VERSION,
         kind: "environment",
         id,
         clientSnapshotId,
         status: "verified",
         createdAt: new Date().toISOString(),
-        inputs: { id: profile.gameVersion, sha256: identity.client, files: snapshot.files },
+        inputs: { id: clientSnapshotId, sha256: snapshot.sha256, files: snapshot.files },
         implementation,
         profileHash,
         tools: {

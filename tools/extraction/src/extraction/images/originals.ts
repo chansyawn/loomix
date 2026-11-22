@@ -44,7 +44,7 @@ export async function exportOriginals(options: {
   index: readonly IndexedAsset[];
   cache: string;
   work: string;
-  snapshotId: string;
+  clientSnapshotId: string;
   tool: string;
   implementation: string;
   exporter?: ImageExporter;
@@ -65,7 +65,7 @@ export async function exportOriginals(options: {
         const output = path.join(staging, "output");
         fs.mkdirSync(output);
         const receipt = await exporter({
-          snapshotId: options.snapshotId,
+          clientSnapshotId: options.clientSnapshotId,
           objects,
           destination: output,
         });

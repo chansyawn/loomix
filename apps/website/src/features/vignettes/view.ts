@@ -1,4 +1,4 @@
-import { createImageResolver, type Assets } from "@loomix/schema/assets";
+import { createImageResolver, type ImageIndex } from "@loomix/schema/assets";
 import { createCatalogIndex, isListedItem, type Catalog, type Item } from "@loomix/schema/catalog";
 import { createGameplayTagIndex, tagLabel, type GameplayTags } from "@loomix/schema/gameplay-tags";
 import type { Neighbors } from "@loomix/schema/neighbors";
@@ -33,8 +33,8 @@ function summarize(
   };
 }
 
-export function toVignetteList({ templates }: Vignettes, assets: Assets) {
-  const image = createImageResolver(assets);
+export function toVignetteList({ templates }: Vignettes, imageIndex: ImageIndex) {
+  const image = createImageResolver(imageIndex);
   return [...templates]
     .sort((left, right) => left.id - right.id)
     .map((entry) => summarize(entry, image));
@@ -46,13 +46,13 @@ export function toVignetteDetail(
   id: number,
   {
     vignettes,
-    assets,
+    imageIndex,
     catalog,
     gameplayTags,
     neighbors,
   }: {
     vignettes: Vignettes;
-    assets: Assets;
+    imageIndex: ImageIndex;
     catalog: Catalog;
     gameplayTags: GameplayTags;
     neighbors: Neighbors;
@@ -61,7 +61,7 @@ export function toVignetteDetail(
   const template = vignettes.templates.find((entry) => entry.id === id);
   if (!template) return null;
 
-  const image = createImageResolver(assets);
+  const image = createImageResolver(imageIndex);
   const { items } = createCatalogIndex(catalog);
   const fallback = new Map(vignettes.fallbackItems.map((entry) => [entry.id, entry.name.zh]));
   const neighborById = new Map(neighbors.neighbors.map((entry) => [entry.id, entry]));

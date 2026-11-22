@@ -84,9 +84,9 @@ export function createAnimeStudio({
         return contextAt(directory);
       } catch (error) {
         if (errorCode(error) !== "ENOENT")
-          console.log(`AnimeStudio cache needs preparation; see ${logFile}`);
+          console.error(`AnimeStudio cache needs preparation; see ${logFile}`);
       }
-      console.log(`Preparing AnimeStudio ${rid}; see ${logFile}`);
+      console.error(`Preparing AnimeStudio ${rid}; see ${logFile}`);
       fs.rmSync(staging, { recursive: true, force: true });
       fs.mkdirSync(staging, { recursive: true });
       fs.mkdirSync(work, { recursive: true });

@@ -66,7 +66,7 @@ export async function validateResourceManifests(
       else checked++;
     }
     reports.push({ manifest, checked, uninstalled, withoutChecksum });
-    console.log(
+    console.error(
       `Manifest ${manifest}: ${entries.length} entries, ${checked} installed files verified`,
     );
   }

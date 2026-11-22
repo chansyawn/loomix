@@ -2,7 +2,7 @@ import { createGameplayTagIndex } from "@loomix/schema/gameplay-tags";
 import { expect, test } from "vite-plus/test";
 import { emptyDataset } from "@loomix/schema/dataset";
 import {
-  assetsFixture,
+  imageIndexFixture,
   fixtureContext,
   fixtureSource,
   addFixtureRecords,
@@ -29,7 +29,7 @@ test("catalog entries control listing while reference entities remain available 
   );
   const view = toCollectionView(
     catalog,
-    assetsFixture(catalog),
+    imageIndexFixture(catalog),
     createGameplayTagIndex(gameplayTags.tags),
   );
   expect(view.miscellaneous.map((item) => item.id)).toEqual([1]);
@@ -50,7 +50,7 @@ test("external appearance records retain their identity without entering item li
     description: null,
   });
   expect(
-    toCollectionView(catalog, assetsFixture(catalog), createGameplayTagIndex(gameplayTags.tags))
+    toCollectionView(catalog, imageIndexFixture(catalog), createGameplayTagIndex(gameplayTags.tags))
       .clothing.appearances[0].id,
   ).toBe(8);
 });
@@ -83,7 +83,7 @@ test("有图和缺图的友邻服饰均进入专属列表", () => {
   );
   const view = toCollectionView(
     catalog,
-    assetsFixture(catalog),
+    imageIndexFixture(catalog),
     createGameplayTagIndex(gameplayTags.tags),
   );
   expect(view.clothing.items).toEqual([]);
@@ -132,7 +132,7 @@ test("creature details retain scientific names and localized acquisition labels"
   });
 
   expect(
-    toCollectionView(catalog, assetsFixture(catalog), createGameplayTagIndex(gameplayTags.tags))
+    toCollectionView(catalog, imageIndexFixture(catalog), createGameplayTagIndex(gameplayTags.tags))
       .creatures.items[0],
   ).toMatchObject({
     scientificName: "Cyprinus carpio",
@@ -173,7 +173,7 @@ test("dish details retain tastes, structured effects, unlock requirements and ac
   });
 
   expect(
-    toCollectionView(catalog, assetsFixture(catalog), createGameplayTagIndex(gameplayTags.tags))
+    toCollectionView(catalog, imageIndexFixture(catalog), createGameplayTagIndex(gameplayTags.tags))
       .dishes.items[0],
   ).toMatchObject({
     strength: 40,
@@ -212,7 +212,7 @@ test("furniture, clothing and materials display structured acquisition condition
   );
   const view = toCollectionView(
     catalog,
-    assetsFixture(catalog),
+    imageIndexFixture(catalog),
     createGameplayTagIndex(gameplayTags.tags),
   );
   for (const item of [view.furniture.items[0], view.clothing.items[0], view.miscellaneous[0]]) {

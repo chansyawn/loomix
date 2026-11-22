@@ -12,6 +12,7 @@
     "./assets": "./src/assets/index.ts",
     "./dataset": "./src/dataset/index.ts",
     "./release": "./src/release/index.ts",
+    "./website-resources": "./src/website-resources/index.ts",
     "./common": "./src/common/identity.ts",
     "./dataset/images": "./src/dataset/images.ts"
   },

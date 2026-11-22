@@ -133,7 +133,7 @@ test("跨领域共享对象只导一次，不同对象相同 PNG 仅共享内容
       index: indexOf(objects),
       cache: path.join(root, "cache"),
       work: path.join(root, "bundle"),
-      snapshotId: "c".repeat(64),
+      clientSnapshotId: "c".repeat(64),
       tool: "tool-bytes-v1",
       implementation: "implementation-v1",
       exporter,
@@ -167,7 +167,7 @@ test("损坏 PNG 和不完整 exporter 回执不能登记原图", async () => {
       index: indexOf([first]),
       cache: path.join(root, "cache"),
       work: root,
-      snapshotId: "c".repeat(64),
+      clientSnapshotId: "c".repeat(64),
       tool: "tool",
       implementation: "impl",
     };

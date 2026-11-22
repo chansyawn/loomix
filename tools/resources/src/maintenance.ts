@@ -1,35 +1,18 @@
 import {
-  ImageFileSchema,
+  ImageIndexSchema,
   SHARED_IMAGE_PREFIX,
   SharedImageKeySchema,
   sharedImageKey,
 } from "@loomix/schema/assets";
-import { HashSchema } from "@loomix/schema/common";
 import { ReleaseIdSchema, ReleaseMarkerSchema } from "@loomix/schema/release";
-import { z } from "zod";
+import {
+  WEBSITE_RESOURCE_MANIFEST_FILE,
+  WebsiteResourceManifestSchema,
+} from "@loomix/schema/website-resources";
 import { sha256 } from "./release.ts";
 import type { MaintenanceStore, StoredObject } from "./store.ts";
 
 const cleanupMinAge = 7 * 86_400_000;
-const legacyMarker = ReleaseMarkerSchema.omit({ storageLayout: true });
-const markerSchema = z.union([ReleaseMarkerSchema, legacyMarker]);
-const assetIndex = z.object({
-  images: z.array(
-    z
-      .object({ file: ImageFileSchema, sha256: HashSchema })
-      .refine((image) => image.file === `assets/${image.sha256}.webp`),
-  ),
-});
-const manifestIndex = z.object({
-  files: z.array(
-    z.object({
-      kind: z.string(),
-      path: z.string(),
-      sha256: HashSchema,
-      bytes: z.number().int().positive(),
-    }),
-  ),
-});
 
 function decode(bytes: Uint8Array): unknown {
   return JSON.parse(Buffer.from(bytes).toString("utf8"));
@@ -40,22 +23,21 @@ async function retainedImages(
   release: string,
   completionKey: string,
 ): Promise<string[]> {
-  const marker = markerSchema.parse(decode(await store.read(completionKey)));
+  const marker = ReleaseMarkerSchema.parse(decode(await store.read(completionKey)));
   if (marker.release !== release) throw new Error(`完成标记与资源版本不符：${release}`);
-  if (!("storageLayout" in marker)) return [];
   const prefix = `releases/${release}/`;
-  const manifestBytes = await store.read(`${prefix}release.json`);
+  const manifestBytes = await store.read(`${prefix}${WEBSITE_RESOURCE_MANIFEST_FILE}`);
   if (sha256(manifestBytes) !== marker.manifestSha256)
-    throw new Error(`资源发布清单哈希不符：${release}`);
-  const assets = manifestIndex
-    .parse(decode(manifestBytes))
-    .files.filter((file) => file.kind === "assets");
-  if (assets.length !== 1 || assets[0].path !== "assets.json")
-    throw new Error(`资源发布清单未声明有效的图片索引：${release}`);
-  const indexBytes = await store.read(`${prefix}assets.json`);
-  if (indexBytes.length !== assets[0].bytes || sha256(indexBytes) !== assets[0].sha256)
+    throw new Error(`网站资源清单哈希不符：${release}`);
+  const manifest = WebsiteResourceManifestSchema.parse(decode(manifestBytes));
+  const index = manifest.files.find((file) => file.kind === "image-index");
+  if (!index) throw new Error(`网站资源清单缺少图片索引：${release}`);
+  const indexBytes = await store.read(`${prefix}${index.path}`);
+  if (indexBytes.length !== index.bytes || sha256(indexBytes) !== index.sha256)
     throw new Error(`图片索引大小或哈希不符：${release}`);
-  return assetIndex.parse(decode(indexBytes)).images.map((image) => sharedImageKey(image.sha256));
+  return ImageIndexSchema.parse(decode(indexBytes)).images.map((image) =>
+    sharedImageKey(image.sha256),
+  );
 }
 
 async function releasesById(store: MaintenanceStore) {
@@ -72,10 +54,10 @@ async function releasesById(store: MaintenanceStore) {
 }
 
 export async function listReleases(store: MaintenanceStore) {
-  return Array.from(await releasesById(store), ([release, files]) => ({
-    release,
+  return Array.from(await releasesById(store), ([releaseId, files]) => ({
+    releaseId,
     completedAt: files.get("_complete.json")?.modified,
-  })).sort((left, right) => left.release.localeCompare(right.release));
+  })).sort((left, right) => left.releaseId.localeCompare(right.releaseId));
 }
 
 export async function planCleanup(

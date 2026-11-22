@@ -14,8 +14,8 @@ vp install
 
 启动前先准备网站资源，任选一种方式：
 
-- 本地资源：按[客户端资源提取](tools/extraction/README.md)配置客户端，执行提取、验证与本地落地（materialize），将完整资源交付写入 `resources/website/`。已有共享交付时可直接落地。
-- 已发布资源：在根目录环境文件中将 `VITE_RESOURCE_BASE_URL` 设为与当前契约兼容的资源版本 HTTPS 地址；[网站资源指针](apps/website/release.json)记录了生产构建默认使用的地址。
+- 本地资源可提取、打包和验证后安装到 `resources/website/`。已有共享资源包时可直接安装。[客户端资源提取](tools/extraction/README.md)
+- 已发布资源通过 `VITE_RESOURCE_BASE_URL` 指定与当前契约匹配的 HTTPS 地址。生产默认使用网站资源地址配置。[resource-address.json](apps/website/resource-address.json)
 
 开发和测试默认读取本地资源，首次克隆只有占位文件，需要先完成上述资源准备。随后启动网站：
 
@@ -25,7 +25,7 @@ vp run dev
 
 日常使用 `vp run test` 运行全仓测试，`vp run build` 构建所有提供构建任务的包；只操作一个包时使用 `vp run <包名>#<任务>`。测试默认执行一次，持续监听可运行 `vp run website#test watch`。提交前检查与 PR 流程见[贡献指南](CONTRIBUTING.md)。
 
-本地资源交付准备好后，使用 `vp run resources publish` 自动校验、上传并更新本地网站资源指针，随后通过 PR 预览与部署。凭证、离线检查和失败恢复见[网站资源管理](tools/resources/README.md)，整体流程见[CI/CD 与部署](DEPLOYMENT.md#资源更新流程)。
+安装本地资源后，使用 `vp run resources publish` 校验、上传并更新网站资源地址配置，随后通过 PR 预览与部署。[网站资源管理](tools/resources/README.md) · [CI/CD 与部署](DEPLOYMENT.md#资源更新流程)
 
 ### 环境配置
 
@@ -37,7 +37,7 @@ vp run dev
 | Wrangler 部署      | `.env`、可选的 `.env.local`                              | `.env.local` 优先       |
 | 提取器、资源发布器 | `.env`                                                   | 不读取 local 或模式文件 |
 
-`VITE_RESOURCE_BASE_URL` 默认无需配置：开发和测试使用 `resources/website/`，生产读取网站资源指针 `apps/website/release.json`。只有 `VITE_` 前缀变量可暴露给客户端，请勿为凭证使用该前缀。
+`VITE_RESOURCE_BASE_URL` 默认无需配置。开发和测试使用 `resources/website/`，生产读取 `apps/website/resource-address.json`。只有 `VITE_` 前缀变量可暴露给客户端，请勿为凭证使用该前缀。
 
 ## 目录结构
 

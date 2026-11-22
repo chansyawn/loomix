@@ -6,4 +6,9 @@ export {
   withUploadProgress,
 } from "./publication.ts";
 export type { UploadProgress } from "./publish.ts";
-export { downloadRelease, parseReleaseBase, verifyPublishedMarker } from "./release.ts";
+export {
+  downloadRelease,
+  parseReleaseBase,
+  verifyPublishedManifest,
+  verifyPublishedMarker,
+} from "./release.ts";

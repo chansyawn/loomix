@@ -2,7 +2,7 @@ import { collectionFilterChips } from "../collection/filter-chips";
 import { flattenFilterOptions } from "../collection/filter-types";
 import { expect, test } from "vite-plus/test";
 import { defaultParseSearch, defaultStringifySearch } from "@tanstack/react-router";
-import { catalogFixture, assetsFixture, addFixtureRecords } from "../collection-fixture";
+import { catalogFixture, imageIndexFixture, addFixtureRecords } from "../collection-fixture";
 import { createCollectionCatalog } from "../collection/catalog";
 import { queryAll, filterGroups } from "./query";
 import { allSearchSchema, compactAllSearch, emptyQuery } from "./search";
@@ -65,7 +65,7 @@ function data(...records: object[]) {
   );
   addFixtureRecords(catalog, gameplayTags, ...records);
   catalog.items.push({ kind: "reference", id: 99, name: "隐藏材料", description: null });
-  return createCollectionCatalog(catalog, assetsFixture(catalog), gameplayTags);
+  return createCollectionCatalog(catalog, imageIndexFixture(catalog), gameplayTags);
 }
 test("搜索只匹配正式物品的显示名称及其拼音", () => {
   const source = data();
@@ -140,7 +140,7 @@ test.each([{ memberIds: [] }, { memberIds: null }])(
 test("只有集合时结果为空，动态筛选排除集合属性及空品阶", () => {
   const { catalog, gameplayTags } = catalogFixture();
   addFixtureRecords(catalog, gameplayTags, ...groupRecords(null));
-  const source = createCollectionCatalog(catalog, assetsFixture(catalog), gameplayTags);
+  const source = createCollectionCatalog(catalog, imageIndexFixture(catalog), gameplayTags);
   expect(queryAll(source, emptyQuery())).toEqual({ rows: [], total: 0 });
   const groups = filterGroups(source);
   expect(groups.find((group) => group.key === "acquisition")?.options).toEqual([]);
@@ -168,7 +168,7 @@ test("集合黑名单允许外观和种子参与搜索与类别筛选", () => {
     category: "发型",
     acquisition: null,
   });
-  const source = createCollectionCatalog(catalog, assetsFixture(catalog), gameplayTags);
+  const source = createCollectionCatalog(catalog, imageIndexFixture(catalog), gameplayTags);
   expect(queryAll(source, emptyQuery()).rows.map((row) => row.id)).toEqual([10, 20, 30]);
   for (const [q, category, id] of [
     ["种子", "plants", 20],
@@ -236,7 +236,7 @@ test("白名单策略隐藏白名单外根与未引用分支，并静默丢弃�
       tagIds: [],
     },
   );
-  const source = createCollectionCatalog(catalog, assetsFixture(catalog), gameplayTags, {
+  const source = createCollectionCatalog(catalog, imageIndexFixture(catalog), gameplayTags, {
     tagPolicy: {
       rootNames: ["颜色"],
       labelOverrides: { 食材_红色: "红色" },

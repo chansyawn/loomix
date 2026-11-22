@@ -1,12 +1,13 @@
 import { createHash } from "node:crypto";
-import {
-  assembleRelease,
-  parseReleaseManifest,
-  ReleaseIdSchema,
-  ReleaseMarkerSchema,
-} from "@loomix/schema/release";
-import type { DocumentKind, Release, ReleaseMarker } from "@loomix/schema/release";
 import { sharedImagePath } from "@loomix/schema/assets";
+import { ReleaseIdSchema, ReleaseMarkerSchema, type ReleaseMarker } from "@loomix/schema/release";
+import {
+  assembleWebsiteResources,
+  WEBSITE_RESOURCE_MANIFEST_FILE,
+  WebsiteResourceManifestSchema,
+  type WebsiteResourceDocumentType,
+  type WebsiteResources,
+} from "@loomix/schema/website-resources";
 
 export const immutableCacheControl = "public, max-age=31536000, immutable";
 export function sha256(bytes: Uint8Array): string {
@@ -73,26 +74,43 @@ export async function verifyPublishedMarker(
   return marker;
 }
 
-export async function downloadRelease(
+export async function verifyPublishedManifest(
   value: string,
   request: typeof fetch = fetch,
   origin = "https://loomix.fun",
   expectedMarker?: ReleaseMarker,
-): Promise<Release> {
+) {
   const base = parseReleaseBase(value);
-  const fetchFile = async (name: string): Promise<Buffer> =>
-    Buffer.from(await (await requestResource(new URL(name, base), request, origin)).arrayBuffer());
   const marker = await verifyPublishedMarker(value, request, origin);
   if (
     expectedMarker &&
     (marker.release !== expectedMarker.release ||
       marker.manifestSha256 !== expectedMarker.manifestSha256)
   )
-    throw new Error("Remote release does not match the uploaded release marker");
-  const bytes = await fetchFile("release.json");
-  if (sha256(bytes) !== marker.manifestSha256) throw new Error("Release manifest SHA-256 mismatch");
-  const manifest = parseReleaseManifest(JSON.parse(bytes.toString("utf8")));
-  const documents = new Map<DocumentKind, unknown>();
+    throw new Error("Remote release does not match the expected completion marker");
+  const response = await requestResource(
+    new URL(WEBSITE_RESOURCE_MANIFEST_FILE, base),
+    request,
+    origin,
+  );
+  const bytes = Buffer.from(await response.arrayBuffer());
+  if (sha256(bytes) !== marker.manifestSha256)
+    throw new Error("Website resource manifest SHA-256 mismatch");
+  const manifest = WebsiteResourceManifestSchema.parse(JSON.parse(bytes.toString("utf8")));
+  return { marker, manifest };
+}
+
+export async function downloadRelease(
+  value: string,
+  request: typeof fetch = fetch,
+  origin = "https://loomix.fun",
+  expectedMarker?: ReleaseMarker,
+): Promise<WebsiteResources> {
+  const base = parseReleaseBase(value);
+  const fetchFile = async (name: string): Promise<Buffer> =>
+    Buffer.from(await (await requestResource(new URL(name, base), request, origin)).arrayBuffer());
+  const { manifest } = await verifyPublishedManifest(value, request, origin, expectedMarker);
+  const documents = new Map<WebsiteResourceDocumentType, unknown>();
   await Promise.all(
     manifest.files.map(async (file) => {
       const bytes = await fetchFile(file.path);
@@ -101,8 +119,8 @@ export async function downloadRelease(
       documents.set(file.kind, JSON.parse(bytes.toString("utf8")));
     }),
   );
-  const release = assembleRelease(manifest, documents);
-  const image = release.assets.images[0];
+  const resources = assembleWebsiteResources(manifest, documents);
+  const image = resources.imageIndex.images[0];
   if (image) {
     const response = await requestResource(
       new URL(sharedImagePath(image.file), base),
@@ -123,5 +141,5 @@ export async function downloadRelease(
     )
       throw new Error(`Public image verification failed: ${image.file}`);
   }
-  return release;
+  return resources;
 }

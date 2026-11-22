@@ -30,7 +30,7 @@ React、组件引入与测试范围遵循[Agent 协作约定](../../AGENTS.md)�
 
 家具详情的制作配方与树木详情的砍树掉落共用创想卡面。点击掉落里的创想卡可进入对应家具详情。杂物详情的制作材料用途来自同一份卡片配方。
 
-两个 `release.json` 的位置与结构由[共享数据契约](../../packages/schema/README.md#快照图片与发布)统一维护。更新游戏数据时，按[CI/CD 与部署](../../DEPLOYMENT.md#资源更新流程)完成提取、本地验证、上传与指针更新。
+本地与线上网站资源共用 `resource-manifest.json`。生产构建默认使用 `resource-address.json` 的资源地址。更新游戏数据时按部署文档完成打包、安装、发布与地址更新。[共享数据契约](../../packages/schema/README.md#资料集图片与发布) · [CI/CD 与部署](../../DEPLOYMENT.md#资源更新流程)
 
 ## 常用检查
 
@@ -38,7 +38,7 @@ React、组件引入与测试范围遵循[Agent 协作约定](../../AGENTS.md)�
 | -------------------------------------------- | ------------------------------------------------------------------------------------ |
 | `vp run website#test`                        | 网站的非 UI 测试                                                                     |
 | `vp run website#build`                       | 构建网站                                                                             |
-| `vp run --no-cache website#verify-contracts` | 校验本地资源是否满足网站的数据假设，需先 materialize                                 |
+| `vp run --no-cache website#verify-contracts` | 校验已安装的本地资源是否满足网站的数据假设                                           |
 | `vp run --no-cache website#verify-release`   | 校验选定的已发布资源及网站数据假设                                                   |
 | `vp run website#verify-build`                | 校验已有构建产物的静态资源边界                                                       |
 | `vp run website#verify`                      | 执行完整发布前验证，需访问已发布资源；见[CI/CD 与部署](../../DEPLOYMENT.md#正式发布) |

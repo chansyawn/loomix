@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "vite-plus/test";
 import {
+  assertClientUnchanged,
   clientRoot,
   importClient,
   resolveClientPath,
@@ -11,6 +12,9 @@ import {
   selectedSnapshotId,
   snapshotClient,
 } from "./snapshot.ts";
+import { STAGE_MANIFEST_VERSION } from "../workflow/manifest.ts";
+import type { StageManifest } from "../workflow/manifest.ts";
+import { digest } from "../workflow/hashing.ts";
 
 function restoreWriteAccess(root: string): void {
   for (const name of fs.readdirSync(root)) {
@@ -55,4 +59,26 @@ test("client snapshots are content-addressed, selected explicitly, and immutable
   const second = await importClient(source);
   assert.notEqual(second, first);
   assert.equal(selectedSnapshotId(), first);
+  const snapshot = await snapshotClient(clientRoot(first));
+  const environment = {
+    schemaVersion: STAGE_MANIFEST_VERSION,
+    kind: "environment",
+    id: digest("environment"),
+    clientSnapshotId: first,
+    status: "verified",
+    createdAt: new Date().toISOString(),
+    inputs: { id: first, ...snapshot },
+    implementation: digest("implementation"),
+    profileHash: digest("profile"),
+    tools: {},
+    outputs: snapshot.files,
+    result: { passed: true, validation: "passed", failures: [] },
+  } satisfies StageManifest<"environment">;
+  await selectClient(second);
+  assert.equal(selectedSnapshotId(), second);
+  await assertClientUnchanged(environment);
+  await assert.rejects(
+    assertClientUnchanged({ ...environment, clientSnapshotId: second }),
+    /Client snapshot changed/,
+  );
 });

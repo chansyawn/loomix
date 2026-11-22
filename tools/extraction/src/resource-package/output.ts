@@ -2,7 +2,23 @@ import { errorCode } from "../workflow/errors.ts";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { ContextSchema } from "@loomix/schema/common";
+import {
+  documentPath,
+  WEBSITE_RESOURCE_MANIFEST_FILE,
+  WebsiteResourceDocumentTypeSchema,
+} from "@loomix/schema/website-resources";
 import { repoRoot } from "../paths.ts";
+
+const resourceLocales = ContextSchema.shape.locale.options;
+const resourceDirectories = new Set<string>(["assets", ...resourceLocales]);
+const resourceDocuments = new Set([
+  ".gitkeep",
+  WEBSITE_RESOURCE_MANIFEST_FILE,
+  ...resourceLocales.flatMap((locale) =>
+    WebsiteResourceDocumentTypeSchema.options.map((kind) => documentPath(kind, locale)),
+  ),
+]);
 
 function contains(parent: string, child: string) {
   const relative = path.relative(parent.toLowerCase(), child.toLowerCase());
@@ -64,12 +80,10 @@ export function safeOutput(output: string) {
         const file = path.join(directory, name);
         const stat = fs.lstatSync(file);
         if (stat.isSymbolicLink()) throw new Error("Output cannot contain a link");
-        if (stat.isDirectory() && ["assets", "zh-CN", "en-US"].includes(key)) visit(file, key);
+        if (stat.isDirectory() && resourceDirectories.has(key)) visit(file, key);
         else if (
           !stat.isFile() ||
-          !/^(?:\.gitkeep|release\.json|assets\.json|(?:zh-CN|en-US)\/(?:catalog|gameplay-tags|neighbors|starsea|vignettes|world)\.json|assets\/[a-f0-9]{64}\.webp)$/.test(
-            key,
-          )
+          (!resourceDocuments.has(key) && !/^assets\/[a-f0-9]{64}\.webp$/.test(key))
         )
           throw new Error(`Output contains unrelated file: ${key}`);
       }

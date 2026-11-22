@@ -33,20 +33,20 @@ vp run website#release
 
 ## 资源发布与 CORS
 
-生产构建默认从[网站资源指针](apps/website/release.json)读取资源地址，`VITE_RESOURCE_BASE_URL` 可覆盖；变量默认行为见[根 README](README.md#环境配置)。部署要求使用已发布的 HTTPS 资源版本，本地资源目录不能用于发布。
+生产构建默认读取网站资源地址配置，可通过 `VITE_RESOURCE_BASE_URL` 覆盖。部署要求使用已发布的 HTTPS 资源地址。[resource-address.json](apps/website/resource-address.json) · [根 README](README.md#环境配置)
 
-网站资源指针与资源发布清单的文件位置和结构见[共享数据契约](packages/schema/README.md#快照图片与发布)，概念边界见[领域术语表](GLOSSARY.md#资源发布)。
+网站资源地址配置和网站资源清单的结构见[共享数据契约](packages/schema/README.md#资料集图片与发布)。
 
 ### 资源更新流程
 
-1. **提取与落地**：按[客户端资源提取](tools/extraction/README.md#提取与交付)执行 refresh、完整链 verify 与 materialize，得到当前 worktree 的本地交付。
-2. **发布资源**：运行 `vp run resources publish`，自动检查本地资源与网站契约、分配发布 ID、上传 R2，并在远程检查通过后更新本地网站资源指针。操作前可加 `--dry-run` 做离线检查。参数、占号规则和失败恢复见[网站资源管理](tools/resources/README.md#校验与发布)。若报告标签问题，按[标签筛选策略](apps/website/docs/tag-filter-policy.md#维护与检查)调整配置，并完成人工验收。游戏数据与图片由资源发布命令单独上传。
-3. **提交指针**：通过 PR 提交 `apps/website/release.json`，连同必要的契约和网站代码变更一起提交；资源格式须与当前共享契约兼容。
-4. **预览与部署**：CI 的 `verify-release` 校验指针所选的已发布资源并运行发布契约检查。正式和预览部署在切换前校验构建产物实际绑定的完成标记。预览验收通过后合并，由正式发布流程部署。
+1. 运行 `refresh`、`verify` 和 `install-resources`，得到当前工作区的网站资源。[客户端资源提取](tools/extraction/README.md#提取打包与本地安装)
+2. 运行 `vp run resources publish` 校验、上传 R2 并在远程检查通过后更新网站资源地址配置。可先加 `--dry-run` 做离线检查。若报告标签问题，调整配置并完成人工验收。[网站资源管理](tools/resources/README.md#校验与发布) · [标签筛选策略](apps/website/docs/tag-filter-policy.md#维护与检查)
+3. 将 `apps/website/resource-address.json` 与相同格式的契约和网站代码一同提交到 PR。格式切换时移除环境中指向旧版本的 `VITE_RESOURCE_BASE_URL` 覆盖。
+4. `verify-release` 校验配置选择的线上资源及网站契约。预览和正式部署前检查构建产物的 `/resource-version.json`，核对配置地址与该版本的完成标记及清单。预览验收通过后合并，由正式发布流程部署。
 
 仓库级命令在上传前后运行同一套网站检查；底层资源发布器只负责目录、字节与上传完整性。部署仍独立执行发布契约检查，操作入口与失败恢复由上述工具文档维护。
 
-切换共享图片布局时，先通过新版发布器生成资源版本，再把新版网站和新指针一起部署。首次切换会更换图片 URL。保留旧构建及与其配对的资源版本，退出使用后按[网站资源管理](tools/resources/README.md#版本维护与清理)清理。
+格式切换前记录生产提交及其 `/resource-version.json` 所指向的版本。需要回滚时一并恢复网站代码和原资源地址，通过部署流程验证网站仍能读取原数据和图片。旧格式资源退出使用后再执行清理。[网站资源管理](tools/resources/README.md#版本维护与清理)
 
 检查资源域名的缓存规则。`/releases/*/_complete.json` 必须绕过 CDN 缓存，`/images/*.webp` 的成功响应应保留对象上的不可变缓存头，`404` 应绕过缓存，确保回收后重新发布的同一哈希能立即访问。
 

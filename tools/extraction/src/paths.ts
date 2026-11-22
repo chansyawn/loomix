@@ -59,9 +59,13 @@ export function within(root: string, relative: string): string {
 }
 
 export function identityDirectory(
-  kind: "environments" | "extractions" | "deliveries",
+  kind: "environments" | "extractions" | "resource-packages",
   id: string,
 ): string {
-  if (!/^[a-f0-9]{64}$/.test(id)) throw new Error(`Invalid ${kind} identity: ${id}`);
+  assertIdentity(id, kind);
   return within(artifactsRoot(), `${kind}/${id}`);
+}
+
+export function assertIdentity(id: string, name: string): void {
+  if (!/^[a-f0-9]{64}$/.test(id)) throw new Error(`Invalid ${name} identity: ${id}`);
 }

@@ -1,9 +1,9 @@
-import type { Release } from "@loomix/schema/release";
+import type { WebsiteResources } from "@loomix/schema/website-resources";
 import { expect, test } from "vite-plus/test";
 import { assertReleaseChecks, collectReleaseChecks, runReleaseChecks } from "./run.ts";
 import type { ReleaseCheck } from "./types.ts";
 
-const release = {} as Release;
+const release = {} as WebsiteResources;
 const passing: ReleaseCheck = {
   id: "passing",
   run: () => ({ summary: "通过", issues: [] }),

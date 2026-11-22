@@ -1,7 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
+import { FORMAT_VERSION } from "@loomix/schema/common";
 import { cacheRoot, identityDirectory } from "../paths.ts";
-import { readManifest } from "../workflow/manifest.ts";
+import { stageInputs, STAGE_MANIFEST_VERSION, verifyStageInputs } from "../workflow/manifest.ts";
+import { readVerifiedEnvironment } from "../environment/verify.ts";
 import type { Manifest } from "../workflow/manifest.ts";
 import { digest, inventory } from "../workflow/hashing.ts";
 import { implementationRevision, profileHash, toolIdentity } from "../workflow/identity.ts";
@@ -13,7 +15,9 @@ import { prepareSource } from "./source/decode.ts";
 import { cachedDirectory, copyCachedDirectory } from "./cache.ts";
 import { neighborAllowlist } from "./source/neighbors/allowlist.ts";
 import { admissionsFile, parseAdmissions } from "./source/catalog/admissions.ts";
-import { observe } from "./source/observe.ts";
+import { readClientRecords } from "./source/read-client-records.ts";
+import { CLIENT_READ_RECORDS_FILE } from "./files.ts";
+import { CLIENT_READ_RECORDS_VERSION } from "./model.ts";
 import { assemble } from "./assemble/index.ts";
 import { exportOriginals } from "./images/originals.ts";
 import { audit } from "./audit.ts";
@@ -24,7 +28,7 @@ import { vignetteAdmissionsFile } from "./source/vignettes/profile.ts";
 
 export async function extract(environmentId: string): Promise<string> {
   const environmentDirectory = identityDirectory("environments", environmentId);
-  const environment = await readManifest(environmentDirectory, "environment");
+  const environment = await readVerifiedEnvironment(environmentDirectory);
   if (
     environment.profileHash !== profileHash ||
     environment.tools.animeStudioInput !== digest(toolIdentity())
@@ -35,10 +39,7 @@ export async function extract(environmentId: string): Promise<string> {
     throw new Error("Initialized tool bytes changed; run init again");
   await assertClientUnchanged(environment);
   const implementation = await implementationRevision();
-  const inputs = await inventory(environmentDirectory, [
-    "environment-manifest.json",
-    ...environment.outputs.map((file) => file.path),
-  ]);
+  const inputs = await stageInputs(environmentDirectory, environment);
   const admissionsBytes = fs.readFileSync(
     new URL("./source/catalog/supplemental-admissions.json", import.meta.url),
   );
@@ -48,9 +49,11 @@ export async function extract(environmentId: string): Promise<string> {
   );
   const vignetteAdmissions = parseVignetteAdmissions(vignetteBytes);
   const id = digest({
-    format: 2,
+    schemaVersion: STAGE_MANIFEST_VERSION,
+    formatVersion: FORMAT_VERSION,
+    clientReadRecordsVersion: CLIENT_READ_RECORDS_VERSION,
     environmentId,
-    inputs: digest(inputs),
+    inputs: inputs.sha256,
     profileHash,
     implementation,
     tool,
@@ -60,13 +63,13 @@ export async function extract(environmentId: string): Promise<string> {
   const destination = identityDirectory("extractions", id);
   await sealExtraction(destination, async (staging) => {
     try {
-      const snapshotId = environment.clientSnapshotId ?? environment.inputs.sha256;
+      const clientSnapshotId = environment.clientSnapshotId;
       const decoded = await cachedDirectory(
         path.join(cacheRoot(), "decode"),
         {
           format: 2,
           inputs,
-          snapshotId,
+          clientSnapshotId,
           profileHash,
           implementation,
           tool,
@@ -76,7 +79,7 @@ export async function extract(environmentId: string): Promise<string> {
           await prepareSource({
             work,
             environment: environmentDirectory,
-            clientSnapshotId: snapshotId,
+            clientSnapshotId,
           });
           fs.rmSync(path.join(work, "logs"), { recursive: true, force: true });
         },
@@ -90,7 +93,7 @@ export async function extract(environmentId: string): Promise<string> {
         path.join(source, "additional-images.json"),
       );
       writeJson(path.join(source, "neighbor-allowlist.json"), neighborAllowlist);
-      const snapshotFiles = clientSnapshotFiles(snapshotId);
+      const snapshotFiles = clientSnapshotFiles(clientSnapshotId);
       writeJson(path.join(source, "client-files.json"), snapshotFiles);
       const files = new Map(snapshotFiles.map((file) => [file.path, file.sha256]));
       const packages = [
@@ -107,23 +110,23 @@ export async function extract(environmentId: string): Promise<string> {
           return { source, sha256 };
         });
       writeJson(path.join(source, "packages.json"), packages);
-      const observations = observe(source, id);
-      writeJson(path.join(staging, "observations.json"), observations);
+      const clientReadRecords = readClientRecords(source, id);
+      writeJson(path.join(staging, CLIENT_READ_RECORDS_FILE), clientReadRecords);
       const originals = await exportOriginals({
-        objects: observations.imageObjects,
+        objects: clientReadRecords.imageObjects,
         index: readJson<IndexedAsset[]>(path.join(source, "prepared/asset-index.json")),
         cache: path.join(cacheRoot(), "originals"),
         work: staging,
-        snapshotId,
+        clientSnapshotId,
         tool,
         implementation,
       });
       writeJson(path.join(staging, "originals.json"), originals);
-      writeAssembly(staging, assemble(observations, originals));
+      writeAssembly(staging, assemble(clientReadRecords, originals));
       await audit(
         { work: staging, environment: environmentDirectory },
         source,
-        observations.imageObjects,
+        clientReadRecords.imageObjects,
       );
       await verifyCandidate(staging);
       await assertClientUnchanged(environment);
@@ -133,18 +136,23 @@ export async function extract(environmentId: string): Promise<string> {
       )
         throw new Error("Tool or implementation changed during extraction");
       const manifest: Manifest = {
-        schemaVersion: 1,
+        schemaVersion: STAGE_MANIFEST_VERSION,
         kind: "extraction",
         id,
         status: "verified",
         createdAt: new Date().toISOString(),
-        inputs: { id: environmentId, sha256: digest(inputs), files: inputs },
+        inputs,
         implementation,
         profileHash,
         tools: environment.tools,
         outputs: await inventory(staging),
         result: { passed: true, validation: "passed", failures: [] },
       };
+      await verifyStageInputs(
+        manifest,
+        environmentDirectory,
+        await readVerifiedEnvironment(environmentDirectory),
+      );
       return manifest;
     } catch (error) {
       const failures = path.join(cacheRoot(), "failures");
@@ -153,6 +161,7 @@ export async function extract(environmentId: string): Promise<string> {
       throw error;
     }
   });
-  await verifyExtraction(destination);
+  const { manifest } = await verifyExtraction(destination);
+  await verifyStageInputs(manifest, environmentDirectory, environment);
   return id;
 }

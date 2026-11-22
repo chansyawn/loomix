@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -6,8 +7,9 @@ import { assertAssetMapCoverage } from "../client/asset-map.ts";
 import { profile } from "../profile.ts";
 import { readJson } from "../workflow/json.ts";
 import { readManifest } from "../workflow/manifest.ts";
-import type { Manifest } from "../workflow/manifest.ts";
+import type { StageManifest } from "../workflow/manifest.ts";
 import type { ConfigSource } from "./config-source.ts";
+import { ENVIRONMENT_OUTPUT_FILES } from "./files.ts";
 
 interface AssetMapAudit {
   assets: number;
@@ -21,11 +23,22 @@ interface ResourceAudit {
   manifests: { manifest: string; checked: number }[];
 }
 
-export async function verifyEnvironment(directory: string): Promise<Manifest> {
+export async function readVerifiedEnvironment(
+  directory: string,
+): Promise<StageManifest<"environment">> {
   const manifest = await readManifest(directory, "environment");
+  assert.deepEqual(
+    manifest.outputs.map((file) => file.path).sort(),
+    ENVIRONMENT_OUTPUT_FILES,
+    "Extraction environment manifest output file set",
+  );
+  return manifest;
+}
+
+export async function verifyEnvironment(directory: string): Promise<StageManifest<"environment">> {
+  const manifest = await readVerifiedEnvironment(directory);
   await assertClientUnchanged(manifest);
-  const snapshotId = manifest.clientSnapshotId ?? manifest.inputs.sha256;
-  const gameRoot = resolveClientPath(profile.paths.gameRoot, snapshotId);
+  const gameRoot = resolveClientPath(profile.paths.gameRoot, manifest.clientSnapshotId);
   const source = readJson<ConfigSource>(path.join(directory, "config-source.json"));
   if (
     source.dataRevision !== profile.dataRevision ||

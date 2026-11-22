@@ -1,6 +1,6 @@
 import { createGameplayTagIndex } from "@loomix/schema/gameplay-tags";
 import { expect, test } from "vite-plus/test";
-import { addFixtureRecords, assetsFixture, catalogFixture } from "../collection-fixture";
+import { addFixtureRecords, imageIndexFixture, catalogFixture } from "../collection-fixture";
 import { toCollectionView } from "../collection-view";
 import {
   plantItemFixture,
@@ -27,7 +27,7 @@ test("植物视图保留种子和单品关联，共享食材使用物品自身�
   });
   const view = toCollectionView(
     catalog,
-    assetsFixture(catalog),
+    imageIndexFixture(catalog),
     createGameplayTagIndex(gameplayTags.tags),
   );
   expect(view.plants.items.map((item) => item.id)).toEqual([1, 2]);
@@ -60,7 +60,7 @@ test("summarizes structured origins without parsing punctuation in localized lab
   plant.acquisition = [{ sourceId: 1, label: "采集，限时活动" }];
   const data = toCollectionView(
     catalog,
-    assetsFixture(catalog),
+    imageIndexFixture(catalog),
     createGameplayTagIndex(gameplayTags.tags),
   ).plants;
   expect(data.series[0].summary.galaxies).toEqual(["禾夏，星系", "帕沙"]);
@@ -83,7 +83,7 @@ test("derives every seed for a plant from stage references without duplicate pro
   });
   const data = toCollectionView(
     catalog,
-    assetsFixture(catalog),
+    imageIndexFixture(catalog),
     createGameplayTagIndex(gameplayTags.tags),
   ).plants;
   expect(data.items[0].summary.seeds.map((seed) => seed.id)).toEqual([10, 11]);
@@ -117,7 +117,7 @@ test("掉落保留来源树种与果实，系列按成员分组", () => {
   catalog.items.push({ kind: "reference", id: 3, name: "树胶", description: null });
   const data = toCollectionView(
     catalog,
-    assetsFixture(catalog),
+    imageIndexFixture(catalog),
     createGameplayTagIndex(gameplayTags.tags),
   ).plants;
   const groups = data.series[0].summary.drops.groups;
@@ -158,7 +158,7 @@ test("树木掉落的创想卡共用配方卡面并指向产物", () => {
   );
   const view = toCollectionView(
     catalog,
-    assetsFixture(catalog),
+    imageIndexFixture(catalog),
     createGameplayTagIndex(gameplayTags.tags),
   );
   const [drop] = view.plants.items[0].summary.drops.groups[0].entries;
@@ -203,7 +203,7 @@ test("flower and tree stage mappings include formal intermediate shrubs without 
   });
   const data = toCollectionView(
     catalog,
-    assetsFixture(catalog),
+    imageIndexFixture(catalog),
     createGameplayTagIndex(gameplayTags.tags),
   ).plants;
   expect(data.items[0].summary.seeds.map((seed) => seed.id)).toEqual([20]);

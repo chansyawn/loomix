@@ -95,8 +95,9 @@ export async function prepareSource({
   if (!environment)
     throw new Error("Environment directory is required to prepare extraction input");
   const environmentManifest = await readManifest(environment, "environment");
-  const snapshotId =
-    clientSnapshotId ?? environmentManifest.clientSnapshotId ?? environmentManifest.inputs.sha256;
+  const snapshotId = environmentManifest.clientSnapshotId;
+  if (clientSnapshotId !== undefined && clientSnapshotId !== snapshotId)
+    throw new Error("Client snapshot does not match the extraction environment");
   const prepared = path.join(work, "prepared");
   removeWithin(prepared, work);
   removeWithin(path.join(work, "bindata"), work);

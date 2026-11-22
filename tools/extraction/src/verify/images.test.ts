@@ -3,7 +3,7 @@ import path from "node:path";
 import { test, expect } from "vite-plus/test";
 import { PNG } from "pngjs";
 import { createFixture } from "../extraction/source/neighbors/fixtures/tables.ts";
-import { observationFixture } from "../extraction/fixtures/observations.ts";
+import { clientReadRecordsFixture } from "../extraction/fixtures/client-read-records.ts";
 import { writeJson } from "../workflow/json.ts";
 import { digest } from "../workflow/hashing.ts";
 import { objectIdentity } from "../extraction/images/model.ts";
@@ -50,7 +50,7 @@ test("删除候选或篡改绑定及其生产审计仍被独立配置和尺寸�
     records: [{ source: packageSource, matchesManifest: true }],
     configChecks: [],
   });
-  const observations = observationFixture();
+  const observations = clientReadRecordsFixture();
   observations.imageObjects = objects;
   observations.imageNeeds = [
     {
@@ -122,7 +122,7 @@ test("从源表核对友邻服饰的云朵占位图与缺图原因", ({ onTestFi
     configChecks: [],
   });
 
-  const observations = observationFixture();
+  const observations = clientReadRecordsFixture();
   observations.imageNeeds = [
     {
       id: "neighborClothing:1:image",

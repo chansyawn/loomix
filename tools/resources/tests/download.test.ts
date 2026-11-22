@@ -2,6 +2,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, expect, test } from "vite-plus/test";
+import { WEBSITE_RESOURCE_MANIFEST_FILE } from "@loomix/schema/website-resources";
 import { downloadRelease, immutableCacheControl, sha256 } from "../src/release.ts";
 import { writeFixture, writeDocuments, imageKey, remoteImageKey } from "./fixture.ts";
 import { material } from "../../../packages/schema/tests/fixture.ts";
@@ -20,7 +21,10 @@ async function fixture() {
   const release = await writeFixture(directory);
   const files = new Map<string, Buffer>();
   const load = async () => {
-    for (const file of ["release.json", ...release.manifest.files.map((file) => file.path)])
+    for (const file of [
+      WEBSITE_RESOURCE_MANIFEST_FILE,
+      ...release.manifest.files.map((file) => file.path),
+    ])
       files.set(file, await readFile(path.join(directory, file)));
     files.set(remoteImageKey, await readFile(path.join(directory, imageKey)));
     files.set(
@@ -28,7 +32,7 @@ async function fixture() {
       Buffer.from(
         JSON.stringify({
           release: "r1",
-          manifestSha256: sha256(files.get("release.json")!),
+          manifestSha256: sha256(files.get(WEBSITE_RESOURCE_MANIFEST_FILE)!),
           storageLayout,
         }),
       ),
@@ -65,7 +69,7 @@ test("远程完成标记必须绑定本次上传的 ID 和清单哈希", async (
   const { request, files } = await fixture();
   const marker = {
     release: "r1",
-    manifestSha256: sha256(files.get("release.json")!),
+    manifestSha256: sha256(files.get(WEBSITE_RESOURCE_MANIFEST_FILE)!),
     storageLayout,
   };
   await expect(downloadRelease(base, request, "https://loomix.fun", marker)).resolves.toBeDefined();
@@ -74,15 +78,15 @@ test("远程完成标记必须绑定本次上传的 ID 和清单哈希", async (
     { ...marker, release: "other" },
   ])
     await expect(downloadRelease(base, request, "https://loomix.fun", expected)).rejects.toThrow(
-      "uploaded release marker",
+      "expected completion marker",
     );
 });
 test.each([
-  "release.json",
+  WEBSITE_RESOURCE_MANIFEST_FILE,
   "zh-CN/catalog.json",
   "zh-CN/gameplay-tags.json",
   "zh-CN/neighbors.json",
-  "assets.json",
+  "image-index.json",
 ])("rejects changed bytes in %s", async (file) => {
   const { files, request } = await fixture();
   files.set(file, Buffer.concat([files.get(file)!, Buffer.from("\n")]));
@@ -90,7 +94,7 @@ test.each([
 });
 test("rejects missing documents and incorrect release identity", async () => {
   const { files, request } = await fixture();
-  files.delete("assets.json");
+  files.delete("image-index.json");
   await expect(downloadRelease(base, request)).rejects.toThrow("HTTP 404");
   files.set(
     "_complete.json",
@@ -120,7 +124,7 @@ test("拒绝 CDN 缓存命中的完成标记", async () => {
 test("checks cross-document references even when all byte hashes match", async () => {
   const fixtureData = await fixture();
   fixtureData.dataset.catalog.items[0] = { ...material(1), tagIds: [999] };
-  await writeDocuments(fixtureData.directory, fixtureData.dataset, fixtureData.assets);
+  await writeDocuments(fixtureData.directory, fixtureData.dataset, fixtureData.imageIndex);
   await fixtureData.load();
   await expect(downloadRelease(base, fixtureData.request)).rejects.toThrow("Unknown tag 999");
 });

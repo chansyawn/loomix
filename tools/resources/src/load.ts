@@ -1,51 +1,46 @@
 import path from "node:path";
-import { assembleRelease, parseReleaseManifest } from "@loomix/schema/release";
-import type { DocumentKind, Release, ReleaseManifest } from "@loomix/schema/release";
-import { readRegularFile } from "./files.ts";
+import {
+  assembleWebsiteResources,
+  WEBSITE_RESOURCE_MANIFEST_FILE,
+  WebsiteResourceManifestSchema,
+  type WebsiteResourceDocumentType,
+  type WebsiteResourceManifest,
+  type WebsiteResources,
+} from "@loomix/schema/website-resources";
+import { isMissingFile, readRegularFile } from "./files.ts";
 import { sha256 } from "./release.ts";
 
-function isMissingFile(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    (error as NodeJS.ErrnoException).code === "ENOENT"
-  );
-}
-
-// 只校验清单声明的文档，不读取图片字节；完整目录校验仍由 validateContent 负责。
-export async function loadReleaseDirectory(directory: string): Promise<Release> {
-  const manifestPath = path.join(directory, "release.json");
+// 只校验清单声明的文档，不读取图片字节；完整目录校验由 validateWebsiteResources 负责。
+export async function loadWebsiteResources(directory: string): Promise<WebsiteResources> {
+  const manifestPath = path.join(directory, WEBSITE_RESOURCE_MANIFEST_FILE);
   let manifestBytes: Buffer;
   try {
     manifestBytes = await readRegularFile(manifestPath);
   } catch (cause) {
     if (isMissingFile(cause))
-      throw new Error(
-        `未找到本地 release：${manifestPath}；请先 materialize 到 resources/website。`,
-        {
-          cause,
-        },
-      );
+      throw new Error(`未找到本地网站资源清单：${manifestPath}。请先安装本地资源。`, {
+        cause,
+      });
     throw cause;
   }
 
-  let manifest: ReleaseManifest;
+  let manifest: WebsiteResourceManifest;
   try {
-    manifest = parseReleaseManifest(JSON.parse(manifestBytes.toString("utf8")));
+    manifest = WebsiteResourceManifestSchema.parse(JSON.parse(manifestBytes.toString("utf8")));
   } catch (cause) {
-    throw new Error(`本地 release 清单不符合当前契约：${manifestPath}；请重新 materialize。`, {
+    throw new Error(`本地网站资源清单不符合当前契约：${manifestPath}。请重新安装本地资源。`, {
       cause,
     });
   }
 
-  const documents = new Map<DocumentKind, unknown>();
+  const documents = new Map<WebsiteResourceDocumentType, unknown>();
   for (const file of manifest.files) {
     let bytes: Buffer;
     try {
       bytes = await readRegularFile(path.join(directory, file.path));
     } catch (cause) {
       if (isMissingFile(cause))
-        throw new Error(`本地 release 缺少文档：${file.path}；请重新 materialize。`, { cause });
+        throw new Error(`本地网站资源缺少文档：${file.path}。请重新安装本地资源。`, { cause });
       throw cause;
     }
     if (bytes.length !== file.bytes || sha256(bytes) !== file.sha256)
@@ -53,16 +48,16 @@ export async function loadReleaseDirectory(directory: string): Promise<Release> 
     try {
       documents.set(file.kind, JSON.parse(bytes.toString("utf8")));
     } catch (cause) {
-      throw new Error(`本地 release 文档不是合法 JSON：${file.path}；请重新 materialize。`, {
+      throw new Error(`本地网站资源文档不是合法 JSON：${file.path}。请重新安装本地资源。`, {
         cause,
       });
     }
   }
 
   try {
-    return assembleRelease(manifest, documents);
+    return assembleWebsiteResources(manifest, documents);
   } catch (cause) {
-    throw new Error(`本地 release 内容不符合当前契约：${directory}；请重新 materialize。`, {
+    throw new Error(`本地网站资源不符合当前契约：${directory}。请重新安装本地资源。`, {
       cause,
     });
   }

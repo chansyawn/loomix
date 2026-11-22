@@ -22,9 +22,8 @@ export async function audit(
 ) {
   if (!options.environment) throw new Error("Environment directory is required for source audit");
   const environment = await readManifest(options.environment, "environment");
-  const snapshotId = environment.clientSnapshotId ?? environment.inputs.sha256;
-  const root = resolveClientPath(profile.paths.gameRoot, snapshotId);
-  const rootDirectory = clientRoot(snapshotId);
+  const root = resolveClientPath(profile.paths.gameRoot, environment.clientSnapshotId);
+  const rootDirectory = clientRoot(environment.clientSnapshotId);
   const manifests = readManifestMaps(root, profile.manifestId);
   const bindata = readJson<BinDataAsset[]>(path.join(sourceRoot, "bindata-manifest.json"));
   const sourceFiles = new Set([
@@ -74,7 +73,7 @@ export async function audit(
     });
     done++;
     if (done % 20 === 0 || done === sourceFiles.size)
-      console.log(`  Source packages ${done}/${sourceFiles.size}`);
+      console.error(`  Source packages ${done}/${sourceFiles.size}`);
   }
   const report = {
     passed: [...records, ...configChecks].every((r) => r.matchesManifest),

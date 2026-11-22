@@ -6,7 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "vite-plus/test";
 import { FORMAT_VERSION } from "@loomix/schema/common";
-import { DocumentKindSchema } from "@loomix/schema/release";
+import { WebsiteResourceDocumentTypeSchema } from "@loomix/schema/website-resources";
 
 const cli = fileURLToPath(new URL("./resources-cli.ts", import.meta.url));
 const env = { ...process.env };
@@ -33,10 +33,10 @@ test("dry run from another directory returns only JSON without credentials or pr
       { cwd: tmpdir(), env, encoding: "utf8" },
     );
     expect(result.status, result.stderr).toBe(0);
-    expect(JSON.parse(result.stdout)).toMatchObject({
-      release: expect.stringMatching(new RegExp(`^\\d{8}-gtest-f${FORMAT_VERSION}-r001$`)),
-      assetCount: 0,
-      documentCount: DocumentKindSchema.options.length + 1,
+    expect(JSON.parse(result.stdout)).toEqual({
+      releaseId: expect.stringMatching(new RegExp(`^\\d{8}-gtest-f${FORMAT_VERSION}-r001$`)),
+      imageFileCount: 0,
+      documentCount: WebsiteResourceDocumentTypeSchema.options.length + 1,
       manifestSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
       dryRun: true,
       reserved: false,

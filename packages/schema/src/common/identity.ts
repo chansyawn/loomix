@@ -9,10 +9,10 @@ export const SourceSchema = z.strictObject({
   resourceRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
   manifestId: z.string().regex(/^\d+$/),
 });
-export const FORMAT_VERSION = 15;
+export const FORMAT_VERSION = 16;
 export const ContextSchema = z.strictObject({
   formatVersion: z.literal(FORMAT_VERSION),
-  snapshotId: HashSchema,
+  datasetId: HashSchema,
   locale: z.enum(["zh-CN", "en-US"]),
 });
 export type Source = z.infer<typeof SourceSchema>;

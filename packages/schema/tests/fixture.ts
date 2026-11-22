@@ -7,7 +7,7 @@ import { FORMAT_VERSION } from "../src/common/identity.ts";
 
 export const context = {
   formatVersion: FORMAT_VERSION,
-  snapshotId: "a".repeat(64),
+  datasetId: "a".repeat(64),
   locale: "zh-CN",
 } as const;
 export const source = {

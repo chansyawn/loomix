@@ -3,11 +3,11 @@ import { parseDataset, validateDataset } from "../src/dataset/index.ts";
 import { CatalogSchema } from "../src/catalog/index.ts";
 import type { ItemOf } from "../src/catalog/index.ts";
 import {
-  DocumentKindSchema,
+  WebsiteResourceDocumentTypeSchema,
   documentPath,
-  parseRelease,
-  parseReleaseManifest,
-} from "../src/release/index.ts";
+  parseWebsiteResources,
+  parseWebsiteResourceManifest,
+} from "../src/website-resources/index.ts";
 import { referencedImages } from "../src/dataset/images.ts";
 import {
   collection,
@@ -58,12 +58,12 @@ test("小栖地的引用须由同一数据集覆盖", () => {
   );
 });
 
-test("发布清单须包含唯一的小栖地文档，图片索引须包含模板配图", () => {
+test("网站资源清单须包含唯一的小栖地文档，图片索引须包含模板配图", () => {
   const dataset = datasetFixture();
   const entry = vignette();
   dataset.vignettes.templates.push(entry);
   dataset.catalog.items.push(material(2));
-  const files = DocumentKindSchema.options.map((kind) => ({
+  const files = WebsiteResourceDocumentTypeSchema.options.map((kind) => ({
     kind,
     path: documentPath(kind, context.locale),
     bytes: 1,
@@ -72,14 +72,44 @@ test("发布清单须包含唯一的小栖地文档，图片索引须包含模�
   const manifest = { ...context, source, files };
   const vignetteFile = files.find(({ kind }) => kind === "vignettes")!;
   expect(() =>
-    parseReleaseManifest({ ...manifest, files: files.filter((file) => file !== vignetteFile) }),
+    parseWebsiteResourceManifest({
+      ...manifest,
+      files: files.filter((file) => file !== vignetteFile),
+    }),
   ).toThrow("Exactly one document");
-  expect(() => parseReleaseManifest({ ...manifest, files: [...files, vignetteFile] })).toThrow(
-    "Exactly one document",
-  );
-  expect(() => parseRelease({ manifest, dataset, assets: { images: [] } })).toThrow(
+  expect(() =>
+    parseWebsiteResourceManifest({ ...manifest, files: [...files, vignetteFile] }),
+  ).toThrow("Exactly one document");
+  expect(() => parseWebsiteResources({ manifest, dataset, imageIndex: { images: [] } })).toThrow(
     "Missing image flowerbed:illustration",
   );
+});
+
+test("网站资源清单使用资料集 ID 与全局图片索引，并拒绝旧格式", () => {
+  const manifest = {
+    ...context,
+    source,
+    files: WebsiteResourceDocumentTypeSchema.options.map((kind) => ({
+      kind,
+      path: documentPath(kind, context.locale),
+      sha256: "b".repeat(64),
+      bytes: 1,
+    })),
+  };
+  expect(parseWebsiteResourceManifest(manifest).datasetId).toBe(context.datasetId);
+  expect(documentPath("image-index", "en-US")).toBe("image-index.json");
+  const { datasetId, ...previousManifest } = manifest;
+  expect(() =>
+    parseWebsiteResourceManifest({ ...previousManifest, snapshotId: datasetId, formatVersion: 15 }),
+  ).toThrow();
+  expect(() =>
+    parseWebsiteResourceManifest({
+      ...manifest,
+      files: manifest.files.map((file) =>
+        file.kind === "image-index" ? { ...file, path: "assets.json" } : file,
+      ),
+    }),
+  ).toThrow("Unexpected document path");
 });
 
 test("创想卡要求可展示正面，并在独立空间校验卡集", () => {
@@ -256,19 +286,19 @@ test("所有嵌套图片引用使用同一遍历并校验资源覆盖", () => {
   dataset.catalog.items.push({ ...material(1), image });
   expect(referencedImages(dataset)).toEqual([image, story]);
   expect(() =>
-    parseRelease({
+    parseWebsiteResources({
       manifest: {
         ...context,
         source,
-        files: DocumentKindSchema.options.map((kind) => ({
+        files: WebsiteResourceDocumentTypeSchema.options.map((kind) => ({
           kind,
-          path: kind === "assets" ? "assets.json" : `zh-CN/${kind}.json`,
+          path: documentPath(kind, context.locale),
           sha256: "b".repeat(64),
           bytes: 1,
         })),
       },
       dataset,
-      assets: { images: [] },
+      imageIndex: { images: [] },
     }),
   ).toThrow("Missing image");
 });

@@ -1,4 +1,4 @@
-import { loadReleaseDirectory } from "@loomix/resources/delivery";
+import { loadWebsiteResources } from "@loomix/resources/website-resources";
 import { releaseChecks, runReleaseChecks } from "./release-checks/index.ts";
 import { resolveResourceConfig } from "./resource-config.ts";
 
@@ -9,8 +9,8 @@ if (config.source !== "local") {
   );
 }
 
-const release = await loadReleaseDirectory(config.directory);
+const resources = await loadWebsiteResources(config.directory);
 console.log(
-  `检查本地资源：snapshotId=${release.manifest.snapshotId}，formatVersion=${release.manifest.formatVersion}，locale=${release.manifest.locale}`,
+  `检查本地网站资源：datasetId=${resources.manifest.datasetId}，formatVersion=${resources.manifest.formatVersion}，locale=${resources.manifest.locale}`,
 );
-await runReleaseChecks(release, releaseChecks);
+await runReleaseChecks(resources, releaseChecks);

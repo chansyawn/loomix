@@ -4,17 +4,18 @@
 
 ## 模块入口
 
-| 模块                                        | 职责                                 |
-| ------------------------------------------- | ------------------------------------ |
-| [catalog](src/catalog/index.ts)             | 物品、集合、配方、生长配置与引用校验 |
-| [gameplay-tags](src/gameplay-tags/index.ts) | 标签树、子树查询与标签解析           |
-| [neighbors](src/neighbors/index.ts)         | 友邻及其内嵌资料                     |
-| [starsea](src/starsea/index.ts)             | 星海区域、星屿与探索关系             |
-| [vignettes](src/vignettes/index.ts)         | 小栖地模板、布景条件与关联资料       |
-| [dataset](src/dataset/index.ts)             | 统一领域快照与跨领域校验             |
-| [assets](src/assets/index.ts)               | 图片引用与交付文件映射               |
-| [release](src/release/index.ts)             | 发布清单、文档组装与资源覆盖校验     |
-| [common](src/common/identity.ts)            | 身份、来源、语言与格式版本           |
+| 模块                                                | 职责                                 |
+| --------------------------------------------------- | ------------------------------------ |
+| [catalog](src/catalog/index.ts)                     | 物品、集合、配方、生长配置与引用校验 |
+| [gameplay-tags](src/gameplay-tags/index.ts)         | 标签树、子树查询与标签解析           |
+| [neighbors](src/neighbors/index.ts)                 | 友邻及其内嵌资料                     |
+| [starsea](src/starsea/index.ts)                     | 星海区域、星屿与探索关系             |
+| [vignettes](src/vignettes/index.ts)                 | 小栖地模板、布景条件与关联资料       |
+| [dataset](src/dataset/index.ts)                     | 游戏资料集与跨领域校验               |
+| [assets](src/assets/index.ts)                       | 图片引用、网站图片文件与图片索引     |
+| [website-resources](src/website-resources/index.ts) | 网站资源清单、文档组装与资源覆盖校验 |
+| [release](src/release/index.ts)                     | 线上发布 ID 与存储标记               |
+| [common](src/common/identity.ts)                    | 身份、来源、语言与格式版本           |
 
 ## 领域映射与约束
 
@@ -26,29 +27,27 @@
 
 物品 `tagIds` 保存直接标签并稳定去重，不展开祖先；`gameplay-tags` 保存完整标签树的内部名、父级和显示文本。颜色、材质、风格、产区和食材分类由对应子树派生，送礼偏好与食谱引用统一标签。来源等多值字段使用数组，不从展示字符串反向拆解。
 
-`category` 与 `furnitureCategory` 分别保存展示分类与家具分类。家具尺寸、生物体型范围和菜肴力气以数值交付，展示文案由网站拼接；页面 DTO 与展示层命名不进入共享契约。
+`category` 与 `furnitureCategory` 分别保存展示分类与家具分类。家具尺寸、生物体型范围和菜肴力气以数值保存，展示文案由网站拼接；页面 DTO 与展示层命名不进入共享契约。
 
 未知值在可空字段中显式表示为 `null`，与已确认的空数组不同。例如制作配方的 `materials: null` 表示材料未知，不表示免费制作。结构严格拒绝附加字段，恒为未知的候选字段不进入发布契约。
 
-## 快照、图片与发布
+## 资料集、图片与发布
 
-领域快照的 `context.snapshotId` 当前取自生成它的 extraction ID，不是客户端快照 ID、delivery ID 或线上 release ID。`source` 保存客户端版本与资源来源版本，`context` 保存领域快照身份、语言和格式版本；语言不改变实体字段名。
+游戏资料集的 `context.datasetId` 取生成它的提取结果 ID。`source` 保存客户端版本与资源来源版本，`context` 保存资料集身份、语言和格式版本。语言不改变实体字段名。
 
-领域实体通过图片身份与用途引用资源，不保存交付路径；图片索引负责定位文件并验证完整性，同一源图的不同用途分别登记。结构以 assets 模块为准。
+资料按图片身份与用途引用资源。`image-index.json` 为每组身份及用途登记转换后的文件与完整性信息。结构以 `assets` 模块为准。
 
-两个同名文件使用不同结构，不能相互替换：
+| 文件                                                              | 概念与结构                                                      |
+| ----------------------------------------------------------------- | --------------------------------------------------------------- |
+| `resources/website/resource-manifest.json`                        | 网站资源清单，在打包时生成，绑定来源上下文、资料文档与图片索引  |
+| [resource-address.json](../../apps/website/resource-address.json) | 网站资源地址配置，保存 `resourceBaseUrl` 供生产构建选择资源版本 |
 
-| 文件                                                         | 概念与结构                                                                    |
-| ------------------------------------------------------------ | ----------------------------------------------------------------------------- |
-| `resources/website/release.json`                             | 资源发布清单，绑定来源上下文与交付文件；交付阶段即生成，不包含线上 release ID |
-| [apps/website/release.json](../../apps/website/release.json) | 网站资源指针，仅保存 `resourceBaseUrl`，供生产构建选择资源版本                |
+本地和线上共用 `website-resources` 模块的组装入口与验证规则。线上发布 ID 由发布工具生成，格式版本表达数据契约。命名与恢复规则见[网站资源管理](../../tools/resources/README.md)。
 
-资源发布清单绑定文档的字节完整性，组装入口与校验规则以 release 模块为准。线上 release ID 由发布工具根据 UTC 日期、来源游戏版本、格式版本及原子占号自动生成，与领域快照身份独立。命名与恢复规则见[网站资源管理](../../tools/resources/README.md)。格式版本表达契约，不随发布次数递增；旧发布 ID 仍可解析。
-
-当前允许的 `formatVersion` 由 [ContextSchema](src/common/identity.ts) 定义，不保留历史版本解析分支。格式升级时，提取器、发布器和网站需使用匹配契约；先发布兼容的新资源，再更新网站资源指针，具体步骤见[CI/CD 与部署](../../DEPLOYMENT.md#资源更新流程)。
+提取器、发布器和网站均使用 `ContextSchema` 定义的当前格式。升级时先发布新格式资源，再随网站代码更新资源地址配置。[CI/CD 与部署](../../DEPLOYMENT.md#资源更新流程)
 
 ## 与其他层的边界
 
-发布契约只包含消费方需要的结构化数据；客户端原始字段、准入依据、图鉴标记、未确认候选与解析诊断保存在提取器的观察和证据中，内部恢复协议不属于公开交付格式。提取原则、流水线取舍与实现入口见[提取原理](../../tools/extraction/docs/extraction-method.md)。
+共享契约包含消费方需要的结构化资料。客户端原始字段、准入依据、图鉴标记、未确认候选与解析诊断保存在客户端读取记录和字段依据中。[提取原理](../../tools/extraction/docs/extraction-method.md)
 
 本包负责消费者中立的结构、引用和资源覆盖规则；网站可见性、分组与命名等假设由[发布契约检查](../../apps/website/docs/release-checks.md)负责。资源目录、文件字节与上传完整性由[网站资源管理](../../tools/resources/README.md)负责。

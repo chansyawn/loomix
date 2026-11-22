@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import type { Catalog } from "@loomix/schema/catalog";
 import type { Tables } from "../extraction/source/decode/tables.ts";
-import type { SourceObservations } from "../extraction/model.ts";
+import type { ClientReadRecords } from "../extraction/model.ts";
 
 export function verifyCraftingRelations(
   catalog: Catalog,
   tables: Tables,
-  audit: SourceObservations["diagnostics"]["crafting"],
+  audit: ClientReadRecords["diagnostics"]["crafting"],
 ): void {
   const furnitureIds = new Set(
     catalog.items.filter((item) => item.kind === "furniture").map((item) => item.id),

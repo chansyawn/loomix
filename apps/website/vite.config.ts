@@ -43,7 +43,7 @@ const config = defineConfig(({ mode }) => {
         },
         "deploy:check": {
           command:
-            "wrangler deploy --cwd ../.. --config apps/website/dist/server/wrangler.json --dry-run",
+            "node scripts/built-resource.ts && wrangler deploy --cwd ../.. --config apps/website/dist/server/wrangler.json --dry-run",
           cache: false,
         },
       },

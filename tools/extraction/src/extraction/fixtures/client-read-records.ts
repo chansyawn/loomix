@@ -1,13 +1,14 @@
 import { datasetFixture } from "../../../../../packages/schema/tests/fixture.ts";
 import { emptyCatalog } from "../schema.ts";
-import type { SourceObservations } from "../model.ts";
+import { CLIENT_READ_RECORDS_VERSION } from "../model.ts";
+import type { ClientReadRecords } from "../model.ts";
 
-export function observationFixture(snapshotId = "c".repeat(64)): SourceObservations {
+export function clientReadRecordsFixture(datasetId = "c".repeat(64)): ClientReadRecords {
   const dataset = datasetFixture();
   return {
-    version: 2,
+    version: CLIENT_READ_RECORDS_VERSION,
     vignettes: { templates: [], candidates: [], proofs: [], rows: [] },
-    context: { ...dataset.context, snapshotId },
+    context: { ...dataset.context, datasetId },
     source: dataset.source,
     gameplayTags: dataset.gameplayTags,
     catalog: { items: [], collections: [], creationCardSets: [] },

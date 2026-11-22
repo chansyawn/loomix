@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import path from "node:path";
 import { readCandidate, readVerifiedExtraction } from "./bundle.ts";
-import { observe } from "./source/observe.ts";
+import { readClientRecords } from "./source/read-client-records.ts";
 import { Tables, indexTables } from "./source/decode/tables.ts";
 import { decodeTextMap } from "./source/decode/textmap.ts";
 import { ObbReader } from "./source/decode/obb.ts";
@@ -20,7 +20,13 @@ import { verifyVignettes } from "../verify/vignettes.ts";
 
 export async function verifyCandidate(directory: string, writeReport = true): Promise<void> {
   const bundle = readCandidate(directory);
-  const { dataset, observations, originals, imageBindings, evidence } = bundle;
+  const {
+    dataset,
+    clientReadRecords: observations,
+    originals,
+    imageBindings,
+    fieldEvidence,
+  } = bundle;
   const source = path.join(directory, "source");
   const reader = new ObbReader(path.join(source, "prepared/ed.obb"));
   assert.deepEqual(
@@ -80,23 +86,23 @@ export async function verifyCandidate(directory: string, writeReport = true): Pr
   verifyCookingRecipes(dataset.catalog, tables);
   verifyCraftingRelations(dataset.catalog, tables, observations.diagnostics.crafting);
   verifyImages(directory, tables, observations, originals, imageBindings);
-  verifyEvidence(directory, dataset, evidence, tables);
+  verifyEvidence(directory, dataset, fieldEvidence, tables);
   // 可重现性与独立来源断言分开；此比较不能代替上面的来源验收。
   assert.deepEqual(
     observations,
-    observe(source, dataset.context.snapshotId),
-    "Reproducible source observations",
+    readClientRecords(source, dataset.context.datasetId),
+    "Reproducible client read records",
   );
   if (writeReport)
     writeJson(path.join(directory, "validation.json"), {
       passed: true,
       independentSources: true,
       reproducible: true,
-      snapshotId: dataset.context.snapshotId,
+      datasetId: dataset.context.datasetId,
     });
 }
 
-export async function verifyExtraction(directory: string, _writeReports = false) {
+export async function verifyExtraction(directory: string) {
   const bundle = await readVerifiedExtraction(directory);
   await verifyCandidate(directory, false);
   return bundle;

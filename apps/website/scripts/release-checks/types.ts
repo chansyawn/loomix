@@ -1,4 +1,4 @@
-import type { Release } from "@loomix/schema/release";
+import type { WebsiteResources } from "@loomix/schema/website-resources";
 
 export interface ReleaseCheckIssue {
   message: string;
@@ -12,5 +12,5 @@ export interface ReleaseCheckResult {
 
 export interface ReleaseCheck {
   id: string;
-  run(release: Release): ReleaseCheckResult | Promise<ReleaseCheckResult>;
+  run(resources: WebsiteResources): ReleaseCheckResult | Promise<ReleaseCheckResult>;
 }

@@ -4,7 +4,7 @@ import { clientsRoot, selectionsRoot, within } from "../paths.ts";
 import { digest, inventory } from "../workflow/hashing.ts";
 import type { FileHash } from "../workflow/hashing.ts";
 import { atomicJson } from "../workflow/manifest.ts";
-import type { Manifest } from "../workflow/manifest.ts";
+import type { StageManifest } from "../workflow/manifest.ts";
 import { withLock } from "../workflow/lock.ts";
 import { copyTree } from "../workflow/copy.ts";
 import { z } from "zod";
@@ -191,15 +191,17 @@ export async function selectClient(snapshotId: string): Promise<void> {
   });
 }
 
-export async function assertClientUnchanged(environment: Manifest): Promise<void> {
-  const snapshotId = environment.clientSnapshotId ?? environment.inputs.sha256;
+export async function assertClientUnchanged(
+  environment: StageManifest<"environment">,
+): Promise<void> {
+  const snapshotId = environment.clientSnapshotId;
   const manifest = readSnapshotManifest(snapshotId);
   const root = clientRoot(snapshotId);
-  const files = await inventory(root);
+  const { sha256 } = await snapshotClient(root);
   if (
-    digest(files) !== environment.inputs.sha256 ||
-    digest(files) !== manifest.id ||
-    digest(files) !== digest(manifest.files)
+    sha256 !== environment.inputs.id ||
+    sha256 !== environment.inputs.sha256 ||
+    sha256 !== manifest.id
   )
     throw new Error("Client snapshot changed; import and select it again");
 }

@@ -2,11 +2,11 @@ import assert from "node:assert/strict";
 import type { Dataset } from "@loomix/schema/dataset";
 import type { Tables } from "../extraction/source/decode/tables.ts";
 import type { TableRow } from "../extraction/types.ts";
-import type { SourceObservations } from "../extraction/model.ts";
+import type { ClientReadRecords } from "../extraction/model.ts";
 
 export function verifyStarseaSources(
   { starsea, neighbors }: Dataset,
-  observed: SourceObservations["starsea"]["diagnostics"],
+  observed: ClientReadRecords["starsea"]["diagnostics"],
   tables: Tables,
 ) {
   const byId = (root: number) =>

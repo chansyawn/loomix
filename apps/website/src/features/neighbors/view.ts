@@ -1,5 +1,5 @@
 import { createImageResolver } from "@loomix/schema/assets";
-import type { Assets } from "@loomix/schema/assets";
+import type { ImageIndex } from "@loomix/schema/assets";
 import { createCatalogIndex, type Catalog } from "@loomix/schema/catalog";
 import type { CatalogIndex } from "@loomix/schema/catalog";
 import { createGameplayTagIndex, tagLabel } from "@loomix/schema/gameplay-tags";
@@ -41,11 +41,11 @@ function preferencesOf(
 
 export function toNeighborsView(
   database: Neighbors,
-  assets: Assets,
+  imageIndex: ImageIndex,
   catalog: Catalog,
   gameplayTags: GameplayTags,
 ) {
-  const image = createImageResolver(assets);
+  const image = createImageResolver(imageIndex);
   const index = createCatalogIndex(catalog);
   const tags = createGameplayTagIndex(gameplayTags.tags);
   const neighbors = database.neighbors.map((neighbor) => {

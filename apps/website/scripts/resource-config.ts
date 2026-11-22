@@ -2,12 +2,15 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadEnv } from "vite-plus";
-import { z } from "zod";
 import { parseReleaseBase } from "@loomix/resources/release";
+import {
+  parseResourceAddressConfig,
+  resourceAddressConfigPath,
+} from "./resource-address-config.ts";
 
 export const websiteRoot = fileURLToPath(new URL("../", import.meta.url));
 export const repoRoot = path.resolve(websiteRoot, "../..");
-export const defaultDeliveryPath = "resources/website";
+export const defaultLocalResourcesPath = "resources/website";
 export type ResourceConfig =
   | { source: "local"; directory: string; resourceBaseUrl: "/resources/" }
   | { source: "remote"; resourceBaseUrl: string };
@@ -18,12 +21,12 @@ export function resolveResourceConfig(mode: string, root: string = websiteRoot):
   let value = env.VITE_RESOURCE_BASE_URL;
   if (value === undefined) {
     if (mode === "development" || mode === "test") {
-      value = defaultDeliveryPath;
+      value = defaultLocalResourcesPath;
     } else {
-      const release = z
-        .strictObject({ resourceBaseUrl: z.string() })
-        .parse(JSON.parse(readFileSync(path.join(root, "release.json"), "utf8")));
-      value = release.resourceBaseUrl;
+      const config = parseResourceAddressConfig(
+        JSON.parse(readFileSync(resourceAddressConfigPath(root), "utf8")),
+      );
+      return { source: "remote", resourceBaseUrl: config.resourceBaseUrl };
     }
   }
   if (/^https:\/\//i.test(value)) {

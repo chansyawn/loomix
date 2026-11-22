@@ -3,7 +3,7 @@ import path from "node:path";
 import { test, expect } from "vite-plus/test";
 import { datasetFixture, material } from "../../../../packages/schema/tests/fixture.ts";
 import { createFixture } from "../extraction/source/neighbors/fixtures/tables.ts";
-import { observationFixture } from "../extraction/fixtures/observations.ts";
+import { clientReadRecordsFixture } from "../extraction/fixtures/client-read-records.ts";
 import { writeJson } from "../workflow/json.ts";
 import { verifyCatalogSources } from "./catalog.ts";
 
@@ -34,7 +34,7 @@ test("数据和证据同时篡改品阶、分类、标签或收录，独立来�
   });
   const dataset = datasetFixture();
   dataset.catalog.items = [{ ...material(1), quality: null }];
-  const observations = observationFixture();
+  const observations = clientReadRecordsFixture();
   observations.diagnostics.collection.items = [
     {
       id: 1,

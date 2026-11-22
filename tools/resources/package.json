@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./delivery": "./src/delivery.ts",
+    "./website-resources": "./src/website-resources.ts",
     "./release": "./src/release-api.ts",
     "./maintenance": "./src/resource-maintenance.ts"
   },

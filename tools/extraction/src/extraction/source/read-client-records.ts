@@ -13,7 +13,8 @@ import { readJson } from "../../workflow/json.ts";
 import { catalogSource, profile } from "../../profile.ts";
 import type { IndexedAsset } from "../types.ts";
 import type { EvidenceSource } from "../evidence/domain-schema.ts";
-import type { SourceObservations } from "../model.ts";
+import { CLIENT_READ_RECORDS_VERSION } from "../model.ts";
+import type { ClientReadRecords } from "../model.ts";
 import { imageCollector } from "./images.ts";
 import { readCatalog } from "./catalog/read.ts";
 import { readCraftingRecipes } from "./catalog/crafting/read.ts";
@@ -27,7 +28,7 @@ export interface FrozenPackage {
   sha256: string;
 }
 
-export function observe(source: string, snapshotId: string): SourceObservations {
+export function readClientRecords(source: string, datasetId: string): ClientReadRecords {
   const context = createContentContext(source);
   const index = readJson<IndexedAsset[]>(path.join(source, "prepared/asset-index.json"));
   const packages = readJson<FrozenPackage[]>(path.join(source, "packages.json"));
@@ -224,14 +225,14 @@ export function observe(source: string, snapshotId: string): SourceObservations 
     reasonCode: null,
   }));
   return {
-    version: 2,
+    version: CLIENT_READ_RECORDS_VERSION,
     vignettes: readVignettes(
       context.tables,
       context.gameplayTags.index,
       readVignetteAdmissions(source),
       images,
     ),
-    context: { formatVersion: FORMAT_VERSION, snapshotId, locale: "zh-CN" },
+    context: { formatVersion: FORMAT_VERSION, datasetId, locale: "zh-CN" },
     source: { ...catalogSource, manifestId: profile.manifestId },
     gameplayTags: { tags: context.gameplayTags.tags.map(({ enumName: _enumName, ...tag }) => tag) },
     catalog: catalog.catalog,
