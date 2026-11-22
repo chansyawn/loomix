@@ -74,6 +74,7 @@ test("发布完整版本，再次发布时占用新序号而不覆盖旧版本",
   expect([...objects.keys()].at(-1)).toBe(`releases/${firstId}/_complete.json`);
   expect(objects.has(`releases/${firstId}/zh-CN/neighbors.json`)).toBe(true);
   expect(objects.has(`releases/${firstId}/zh-CN/starsea.json`)).toBe(true);
+  expect(objects.has(`releases/${firstId}/zh-CN/vignettes.json`)).toBe(true);
   const write = vi.spyOn(store, "tryReserve");
   expect(await publishRelease(directory, store)).toMatchObject({
     release: secondId,

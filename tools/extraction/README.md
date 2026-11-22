@@ -50,7 +50,7 @@ vp run @loomix/extraction#refresh -- --help
 
 具体输出以各阶段 manifest 的 `outputs` 为准。调查时从提取结果的 `observations.json` 查源观察、排除项与未确认候选，从 `evidence.json` 查最终字段依据；结构入口见[提取原理](docs/extraction-method.md#按任务定位实现)。
 
-小栖地收录在提取快照 `dataset.json` 的 `vignettes` 字段，配图可通过 `originals.json` 定位到封存 PNG。只需要这些数据时，运行 `init` 和 `extract` 即可。现有网站交付按 v14 契约取用这份快照。准入证据及版本边界见[业务确认与调查](docs/business-investigation.md#小栖地)。
+小栖地自 v15 起随其他领域数据和配图一起交付。旧格式的封存与交付可用生成它们的代码版本复验。更新本地网站资源时，从已核对的冻结客户端重新运行 `refresh`、`verify` 与 `materialize`。准入证据及版本边界见[业务确认与调查](docs/business-investigation.md#小栖地)。
 
 ## 故障恢复与清理
 

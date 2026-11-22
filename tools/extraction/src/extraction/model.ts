@@ -56,5 +56,7 @@ interface SourceObservationFields {
   };
 }
 
-export type SourceObservations = SourceObservationFields &
-  ({ version: 1 } | { version: 2; vignettes: ReturnType<typeof readVignettes> });
+export type SourceObservations = SourceObservationFields & {
+  version: 2;
+  vignettes: ReturnType<typeof readVignettes>;
+};

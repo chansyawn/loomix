@@ -49,3 +49,22 @@ export const VignettesSchema = z.strictObject({
 });
 export type Vignette = z.infer<typeof VignetteSchema>;
 export type Vignettes = z.infer<typeof VignettesSchema>;
+export const parseVignettes = (input: unknown): Vignettes => VignettesSchema.parse(input);
+
+export function vignetteTargets(template: Pick<Vignette, "requirements" | "placementRules">) {
+  return [
+    ...template.requirements.flatMap(({ target, support }) =>
+      support ? [target, support] : [target],
+    ),
+    ...template.placementRules.flatMap((rule) =>
+      rule.kind === "adjacent" ? rule.targets : rule.kind === "near-water" ? [rule.target] : [],
+    ),
+  ];
+}
+
+export function vignetteObjectIds(template: Pick<Vignette, "requirements" | "placementRules">) {
+  return [
+    ...vignetteTargets(template).flatMap((target) => ("itemId" in target ? [target.itemId] : [])),
+    ...template.requirements.flatMap(({ examples }) => examples.map(({ itemId }) => itemId)),
+  ];
+}

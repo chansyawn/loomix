@@ -6,6 +6,7 @@ import { createIssueCollector } from "../common/identity.ts";
 import type { ValidationIssue } from "../common/identity.ts";
 import { GiftLevelSchema } from "../neighbors/index.ts";
 import { validateStarsea } from "../starsea/validate.ts";
+import { validateVignettes } from "../vignettes/validate.ts";
 
 export function validateDataset(dataset: Dataset): ValidationIssue[] {
   const treeIssues = validateGameplayTags(dataset.gameplayTags.tags);
@@ -16,6 +17,7 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
   const items = new Map(catalog.items.map((item) => [item.id, item]));
   const neighborIds = new Set(neighbors.neighbors.map((neighbor) => neighbor.id));
   issues.push(...validateStarsea(dataset.starsea, items, neighborIds));
+  issues.push(...validateVignettes(dataset.vignettes, items, tags, neighborIds));
   const checkTags = (ids: readonly number[], path: (string | number)[]) => {
     for (const id of ids) if (!tags.has(id)) issue(path, `Unknown tag ${id}`);
   };

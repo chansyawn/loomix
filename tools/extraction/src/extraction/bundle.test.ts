@@ -8,8 +8,6 @@ import { writeAssembly, readCandidate, readVerifiedExtraction, sealExtraction } 
 import { digest, inventory } from "../workflow/hashing.ts";
 import { writeJson } from "../workflow/json.ts";
 import type { Manifest } from "../workflow/manifest.ts";
-import type { SourceObservations } from "./model.ts";
-import { publishedDataset } from "./dataset.ts";
 
 async function build(staging: string, id: string): Promise<Manifest> {
   const observations = observationFixture(id);
@@ -75,23 +73,23 @@ test("仅在封存完整性损坏时隔离旧目录；新封存必须覆盖精�
   }
 });
 
-test("新观察格式要求在共享快照中封存小栖地，发布时仍使用 v14 字段", () => {
+test("封存要求统一的小栖地数据，且旧格式须重新提取", () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-vignettes-"));
   try {
-    const legacy = observationFixture("c".repeat(64));
-    const observations: SourceObservations = {
-      ...legacy,
-      version: 2,
-      vignettes: { templates: [], candidates: [], proofs: [], rows: [] },
-    };
+    const observations = observationFixture();
     writeJson(path.join(directory, "observations.json"), observations);
     writeJson(path.join(directory, "originals.json"), []);
     writeAssembly(directory, assemble(observations, []));
     const bundle = readCandidate(directory);
     expect(bundle.dataset.vignettes).toEqual({ templates: [], fallbackItems: [] });
-    expect(publishedDataset(bundle.dataset)).toEqual(assemble(legacy, []).dataset);
-    writeJson(path.join(directory, "dataset.json"), publishedDataset(bundle.dataset));
+    const { vignettes: _vignettes, ...incomplete } = bundle.dataset;
+    writeJson(path.join(directory, "dataset.json"), incomplete);
     expect(() => readCandidate(directory)).toThrow("vignettes");
+    writeJson(path.join(directory, "observations.json"), {
+      ...observations,
+      context: { ...observations.context, formatVersion: 14 },
+    });
+    expect(() => readCandidate(directory)).toThrow("请重新提取");
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });
   }

@@ -3,7 +3,8 @@ import crypto from "node:crypto";
 import { withLock } from "../workflow/lock.ts";
 import assert from "node:assert/strict";
 import path from "node:path";
-import { parseExtractionDataset } from "./dataset.ts";
+import { ContextSchema } from "@loomix/schema/common";
+import { parseDataset } from "@loomix/schema/dataset";
 import { EvidenceSchema } from "./evidence/domain-schema.ts";
 import type { SourceObservations } from "./model.ts";
 import {
@@ -27,10 +28,10 @@ export function writeAssembly(directory: string, assembly: Assembly): void {
 
 export function readCandidate(directory: string) {
   const observations = readJson<SourceObservations>(path.join(directory, "observations.json"));
-  if (observations.version !== 1 && observations.version !== 2)
-    throw new Error("Unsupported source observations");
-  if (observations.version === 2 && !observations.vignettes)
-    throw new Error("Missing vignette source observations");
+  if (!ContextSchema.safeParse(observations.context).success)
+    throw new Error("封存的提取快照与当前契约不符，请重新提取。");
+  if (observations.version !== 2) throw new Error("Unsupported source observations");
+  if (!observations.vignettes) throw new Error("Missing vignette source observations");
   observations.imageNeeds = imageNeedSchema.array().parse(observations.imageNeeds);
   observations.imageObjects = imageObjectSchema.array().parse(observations.imageObjects);
   uniqueObjects(observations.imageObjects);
@@ -38,10 +39,7 @@ export function readCandidate(directory: string) {
     .array()
     .parse(readJson(path.join(directory, "originals.json")));
   const rebuilt = assemble(observations, originals);
-  const dataset = parseExtractionDataset(
-    readJson(path.join(directory, "dataset.json")),
-    observations.version,
-  );
+  const dataset = parseDataset(readJson(path.join(directory, "dataset.json")));
   const evidence = EvidenceSchema.parse(readJson(path.join(directory, "evidence.json")));
   assert.deepEqual(dataset, rebuilt.dataset, "Dataset matches source observations");
   assert.deepEqual(evidence, rebuilt.evidence, "Evidence matches source observations");

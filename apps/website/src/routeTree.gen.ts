@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as NeighborsRouteImport } from './routes/neighbors'
 import { Route as StarseaRouteImport } from './routes/starsea'
+import { Route as VignettesRouteImport } from './routes/vignettes'
 import { Route as CollectionsAllRouteImport } from './routes/collections.all'
 import { Route as CollectionsClothingRouteImport } from './routes/collections.clothing'
 import { Route as CollectionsCreaturesRouteImport } from './routes/collections.creatures'
@@ -20,6 +21,7 @@ import { Route as CollectionsFurnitureRouteImport } from './routes/collections.f
 import { Route as CollectionsMiscellanyRouteImport } from './routes/collections.miscellany'
 import { Route as CollectionsPlantsRouteImport } from './routes/collections.plants'
 import { Route as NeighborsIdRouteImport } from './routes/neighbors_.$id'
+import { Route as VignettesIdRouteImport } from './routes/vignettes_.$id'
 import { Route as CollectionsRecordsIdRouteImport } from './routes/collections.records.$id'
 import { Route as StarseaIsletsIdRouteImport } from './routes/starsea_.islets.$id'
 
@@ -36,6 +38,11 @@ const NeighborsRoute = NeighborsRouteImport.update({
 const StarseaRoute = StarseaRouteImport.update({
   id: '/starsea',
   path: '/starsea',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VignettesRoute = VignettesRouteImport.update({
+  id: '/vignettes',
+  path: '/vignettes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CollectionsAllRoute = CollectionsAllRouteImport.update({
@@ -78,6 +85,11 @@ const NeighborsIdRoute = NeighborsIdRouteImport.update({
   path: '/neighbors/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VignettesIdRoute = VignettesIdRouteImport.update({
+  id: '/vignettes_/$id',
+  path: '/vignettes/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CollectionsRecordsIdRoute = CollectionsRecordsIdRouteImport.update({
   id: '/collections/records/$id',
   path: '/collections/records/$id',
@@ -93,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/neighbors': typeof NeighborsRoute
   '/starsea': typeof StarseaRoute
+  '/vignettes': typeof VignettesRoute
   '/collections/all': typeof CollectionsAllRoute
   '/collections/clothing': typeof CollectionsClothingRoute
   '/collections/creatures': typeof CollectionsCreaturesRoute
@@ -101,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/collections/miscellany': typeof CollectionsMiscellanyRoute
   '/collections/plants': typeof CollectionsPlantsRoute
   '/neighbors/$id': typeof NeighborsIdRoute
+  '/vignettes/$id': typeof VignettesIdRoute
   '/collections/records/$id': typeof CollectionsRecordsIdRoute
   '/starsea/islets/$id': typeof StarseaIsletsIdRoute
 }
@@ -108,6 +122,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/neighbors': typeof NeighborsRoute
   '/starsea': typeof StarseaRoute
+  '/vignettes': typeof VignettesRoute
   '/collections/all': typeof CollectionsAllRoute
   '/collections/clothing': typeof CollectionsClothingRoute
   '/collections/creatures': typeof CollectionsCreaturesRoute
@@ -116,6 +131,7 @@ export interface FileRoutesByTo {
   '/collections/miscellany': typeof CollectionsMiscellanyRoute
   '/collections/plants': typeof CollectionsPlantsRoute
   '/neighbors/$id': typeof NeighborsIdRoute
+  '/vignettes/$id': typeof VignettesIdRoute
   '/collections/records/$id': typeof CollectionsRecordsIdRoute
   '/starsea/islets/$id': typeof StarseaIsletsIdRoute
 }
@@ -124,6 +140,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/neighbors': typeof NeighborsRoute
   '/starsea': typeof StarseaRoute
+  '/vignettes': typeof VignettesRoute
   '/collections/all': typeof CollectionsAllRoute
   '/collections/clothing': typeof CollectionsClothingRoute
   '/collections/creatures': typeof CollectionsCreaturesRoute
@@ -132,6 +149,7 @@ export interface FileRoutesById {
   '/collections/miscellany': typeof CollectionsMiscellanyRoute
   '/collections/plants': typeof CollectionsPlantsRoute
   '/neighbors_/$id': typeof NeighborsIdRoute
+  '/vignettes_/$id': typeof VignettesIdRoute
   '/collections/records/$id': typeof CollectionsRecordsIdRoute
   '/starsea_/islets/$id': typeof StarseaIsletsIdRoute
 }
@@ -141,6 +159,7 @@ export interface FileRouteTypes {
     | '/'
     | '/neighbors'
     | '/starsea'
+    | '/vignettes'
     | '/collections/all'
     | '/collections/clothing'
     | '/collections/creatures'
@@ -149,6 +168,7 @@ export interface FileRouteTypes {
     | '/collections/miscellany'
     | '/collections/plants'
     | '/neighbors/$id'
+    | '/vignettes/$id'
     | '/collections/records/$id'
     | '/starsea/islets/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -156,6 +176,7 @@ export interface FileRouteTypes {
     | '/'
     | '/neighbors'
     | '/starsea'
+    | '/vignettes'
     | '/collections/all'
     | '/collections/clothing'
     | '/collections/creatures'
@@ -164,6 +185,7 @@ export interface FileRouteTypes {
     | '/collections/miscellany'
     | '/collections/plants'
     | '/neighbors/$id'
+    | '/vignettes/$id'
     | '/collections/records/$id'
     | '/starsea/islets/$id'
   id:
@@ -171,6 +193,7 @@ export interface FileRouteTypes {
     | '/'
     | '/neighbors'
     | '/starsea'
+    | '/vignettes'
     | '/collections/all'
     | '/collections/clothing'
     | '/collections/creatures'
@@ -179,6 +202,7 @@ export interface FileRouteTypes {
     | '/collections/miscellany'
     | '/collections/plants'
     | '/neighbors_/$id'
+    | '/vignettes_/$id'
     | '/collections/records/$id'
     | '/starsea_/islets/$id'
   fileRoutesById: FileRoutesById
@@ -187,6 +211,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   NeighborsRoute: typeof NeighborsRoute
   StarseaRoute: typeof StarseaRoute
+  VignettesRoute: typeof VignettesRoute
   CollectionsAllRoute: typeof CollectionsAllRoute
   CollectionsClothingRoute: typeof CollectionsClothingRoute
   CollectionsCreaturesRoute: typeof CollectionsCreaturesRoute
@@ -195,6 +220,7 @@ export interface RootRouteChildren {
   CollectionsMiscellanyRoute: typeof CollectionsMiscellanyRoute
   CollectionsPlantsRoute: typeof CollectionsPlantsRoute
   NeighborsIdRoute: typeof NeighborsIdRoute
+  VignettesIdRoute: typeof VignettesIdRoute
   CollectionsRecordsIdRoute: typeof CollectionsRecordsIdRoute
   StarseaIsletsIdRoute: typeof StarseaIsletsIdRoute
 }
@@ -220,6 +246,13 @@ declare module '@tanstack/react-router' {
       path: '/starsea'
       fullPath: '/starsea'
       preLoaderRoute: typeof StarseaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vignettes': {
+      id: '/vignettes'
+      path: '/vignettes'
+      fullPath: '/vignettes'
+      preLoaderRoute: typeof VignettesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/collections/all': {
@@ -278,6 +311,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NeighborsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vignettes_/$id': {
+      id: '/vignettes_/$id'
+      path: '/vignettes/$id'
+      fullPath: '/vignettes/$id'
+      preLoaderRoute: typeof VignettesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/collections/records/$id': {
       id: '/collections/records/$id'
       path: '/collections/records/$id'
@@ -299,6 +339,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   NeighborsRoute: NeighborsRoute,
   StarseaRoute: StarseaRoute,
+  VignettesRoute: VignettesRoute,
   CollectionsAllRoute: CollectionsAllRoute,
   CollectionsClothingRoute: CollectionsClothingRoute,
   CollectionsCreaturesRoute: CollectionsCreaturesRoute,
@@ -307,6 +348,7 @@ const rootRouteChildren: RootRouteChildren = {
   CollectionsMiscellanyRoute: CollectionsMiscellanyRoute,
   CollectionsPlantsRoute: CollectionsPlantsRoute,
   NeighborsIdRoute: NeighborsIdRoute,
+  VignettesIdRoute: VignettesIdRoute,
   CollectionsRecordsIdRoute: CollectionsRecordsIdRoute,
   StarseaIsletsIdRoute: StarseaIsletsIdRoute,
 }

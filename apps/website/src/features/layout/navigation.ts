@@ -4,6 +4,7 @@ import {
   CookingPotIcon,
   OrbitIcon,
   HomeIcon,
+  MapPinnedIcon,
   PackageIcon,
   ShirtIcon,
   SproutIcon,
@@ -27,3 +28,4 @@ export const collectionNavigation = {
 
 export const neighborsItem = { title: "友邻", to: "/neighbors", icon: UsersRoundIcon } as const;
 export const starseaItem = { title: "星海", to: "/starsea", icon: OrbitIcon } as const;
+export const vignettesItem = { title: "小栖地", to: "/vignettes", icon: MapPinnedIcon } as const;

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import type { Vignette, Vignettes } from "@loomix/schema/vignettes";
+import { vignetteObjectIds } from "@loomix/schema/vignettes";
 import type { GameplayTagIndex } from "@loomix/schema/gameplay-tags";
 import type { FieldEvidence, EvidenceSource } from "../../evidence/domain-schema.ts";
 import type { TableRow } from "../../types.ts";
@@ -283,22 +284,4 @@ export function readVignettes(
     proofs,
     rows: observe,
   };
-}
-
-export function vignetteTargets(template: Pick<Vignette, "requirements" | "placementRules">) {
-  return [
-    ...template.requirements.flatMap(({ target, support }) =>
-      support ? [target, support] : [target],
-    ),
-    ...template.placementRules.flatMap((rule) =>
-      rule.kind === "adjacent" ? rule.targets : rule.kind === "near-water" ? [rule.target] : [],
-    ),
-  ];
-}
-
-export function vignetteObjectIds(template: Pick<Vignette, "requirements" | "placementRules">) {
-  return [
-    ...vignetteTargets(template).flatMap((target) => ("itemId" in target ? [target.itemId] : [])),
-    ...template.requirements.flatMap(({ examples }) => examples.map(({ itemId }) => itemId)),
-  ];
 }

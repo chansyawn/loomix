@@ -2,7 +2,12 @@ import { expect, test } from "vite-plus/test";
 import { parseDataset, validateDataset } from "../src/dataset/index.ts";
 import { CatalogSchema } from "../src/catalog/index.ts";
 import type { ItemOf } from "../src/catalog/index.ts";
-import { DocumentKindSchema, parseRelease } from "../src/release/index.ts";
+import {
+  DocumentKindSchema,
+  documentPath,
+  parseRelease,
+  parseReleaseManifest,
+} from "../src/release/index.ts";
 import { referencedImages } from "../src/dataset/images.ts";
 import {
   collection,
@@ -14,10 +19,68 @@ import {
   reference,
   seed,
   source,
+  vignette,
 } from "./fixture.ts";
 
 const messages = (dataset: ReturnType<typeof datasetFixture>) =>
   validateDataset(dataset).map((issue) => issue.message);
+
+test("小栖地的引用须由同一数据集覆盖", () => {
+  const dataset = datasetFixture();
+  const entry = vignette();
+  dataset.vignettes.templates.push(entry);
+  dataset.vignettes.fallbackItems.push({ id: 2, name: { zh: "花株", en: "Flower" } });
+  expect(messages(dataset)).toEqual([]);
+  expect(referencedImages(dataset)).toEqual([entry.illustration]);
+
+  dataset.vignettes.templates.push({
+    ...entry,
+    requirements: [
+      {
+        ...entry.requirements[0]!,
+        support: { allTagIds: [5] },
+        examples: [{ itemId: 6, quantity: 1 }],
+      },
+    ],
+  });
+  dataset.catalog.items.push(material(2));
+  entry.creatureItemIds.push(2);
+  entry.neighborIds.push(3);
+  expect(messages(dataset)).toEqual(
+    expect.arrayContaining([
+      "Duplicate identity 1002",
+      "Unknown vignette item 6",
+      "Unknown vignette tag 5",
+      "Invalid vignette creature 2",
+      "Unknown vignette neighbor 3",
+      "Unneeded vignette fallback 2",
+    ]),
+  );
+});
+
+test("发布清单须包含唯一的小栖地文档，图片索引须包含模板配图", () => {
+  const dataset = datasetFixture();
+  const entry = vignette();
+  dataset.vignettes.templates.push(entry);
+  dataset.catalog.items.push(material(2));
+  const files = DocumentKindSchema.options.map((kind) => ({
+    kind,
+    path: documentPath(kind, context.locale),
+    bytes: 1,
+    sha256: "a".repeat(64),
+  }));
+  const manifest = { ...context, source, files };
+  const vignetteFile = files.find(({ kind }) => kind === "vignettes")!;
+  expect(() =>
+    parseReleaseManifest({ ...manifest, files: files.filter((file) => file !== vignetteFile) }),
+  ).toThrow("Exactly one document");
+  expect(() => parseReleaseManifest({ ...manifest, files: [...files, vignetteFile] })).toThrow(
+    "Exactly one document",
+  );
+  expect(() => parseRelease({ manifest, dataset, assets: { images: [] } })).toThrow(
+    "Missing image flowerbed:illustration",
+  );
+});
 
 test("创想卡要求可展示正面，并在独立空间校验卡集", () => {
   const dataset = datasetFixture();

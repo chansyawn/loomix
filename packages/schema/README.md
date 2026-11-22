@@ -10,6 +10,7 @@
 | [gameplay-tags](src/gameplay-tags/index.ts) | 标签树、子树查询与标签解析           |
 | [neighbors](src/neighbors/index.ts)         | 友邻及其内嵌资料                     |
 | [starsea](src/starsea/index.ts)             | 星海区域、星屿与探索关系             |
+| [vignettes](src/vignettes/index.ts)         | 小栖地模板、布景条件与关联资料       |
 | [dataset](src/dataset/index.ts)             | 统一领域快照与跨领域校验             |
 | [assets](src/assets/index.ts)               | 图片引用与交付文件映射               |
 | [release](src/release/index.ts)             | 发布清单、文档组装与资源覆盖校验     |

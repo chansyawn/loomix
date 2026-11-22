@@ -1,12 +1,19 @@
 import { useRouterState } from "@tanstack/react-router";
 import { NeighborsReturnLink } from "@/features/neighbors/navigation";
 import { StarseaReturnLink } from "@/features/starsea/navigation";
+import { VignetteReturnLink } from "@/features/vignettes/navigation";
 import {
   CollectionReturnLink,
   collectionOrigin,
   collectionListPath,
 } from "@/features/collection/navigation";
-import { collectionNavigation, homeItem, neighborsItem, starseaItem } from "./navigation";
+import {
+  collectionNavigation,
+  homeItem,
+  neighborsItem,
+  starseaItem,
+  vignettesItem,
+} from "./navigation";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -40,11 +47,13 @@ export function SiteHeader() {
   const detail = pathname.startsWith("/collections/records/");
   const neighborDetail = /^\/neighbors\/[^/]+\/?$/.test(pathname);
   const starseaDetail = /^\/starsea\/islets\/[^/]+\/?$/.test(pathname);
+  const vignetteDetail = /^\/vignettes\/[^/]+\/?$/.test(pathname);
   const listPath = detail ? collectionListPath(origin?.href ?? "/collections/all") : pathname;
   const collection = collectionNavigation.items.find((item) => item.to === listPath);
   const title =
     collection?.title ??
-    [homeItem, neighborsItem, starseaItem].find((item) => item.to === pathname)?.title ??
+    [homeItem, neighborsItem, starseaItem, vignettesItem].find((item) => item.to === pathname)
+      ?.title ??
     "页面未找到";
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 px-4">
@@ -89,9 +98,21 @@ export function SiteHeader() {
               <BreadcrumbSeparator />
             </>
           )}
+          {vignetteDetail && (
+            <>
+              <BreadcrumbItem>
+                <BreadcrumbLink render={<VignetteReturnLink />}>
+                  {vignettesItem.title}
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+            </>
+          )}
           <BreadcrumbItem className="min-w-0">
             <BreadcrumbPage>
-              {detail || neighborDetail || starseaDetail ? (detailTitle ?? "详情") : title}
+              {detail || neighborDetail || starseaDetail || vignetteDetail
+                ? (detailTitle ?? "详情")
+                : title}
             </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
