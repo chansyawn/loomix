@@ -1,6 +1,5 @@
 import fs from "node:fs";
 import path from "node:path";
-import { parseDataset } from "@loomix/schema/dataset";
 import { AssetsSchema } from "@loomix/schema/assets";
 import { documentPath, parseRelease } from "@loomix/schema/release";
 import type { ReleaseManifest, DocumentKind } from "@loomix/schema/release";
@@ -15,7 +14,7 @@ export async function renderImages(
   options: WorkOptions,
   extraction: Pick<VerifiedExtraction, "directory" | "dataset" | "imageJobs">,
 ): Promise<void> {
-  const dataset = parseDataset(extraction.dataset);
+  const { dataset } = extraction;
   const jobs = extraction.imageJobs;
   const staging = path.join(options.work, "staging");
   fs.mkdirSync(path.join(staging, "assets"), { recursive: true });
@@ -54,6 +53,7 @@ export async function renderImages(
     catalog: dataset.catalog,
     neighbors: dataset.neighbors,
     starsea: dataset.starsea,
+    vignettes: dataset.vignettes,
     assets,
   };
   const files: ReleaseManifest["files"] = [];

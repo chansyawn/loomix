@@ -5,7 +5,8 @@ import type { SourceObservations } from "../model.ts";
 export function observationFixture(snapshotId = "c".repeat(64)): SourceObservations {
   const dataset = datasetFixture();
   return {
-    version: 1,
+    version: 2,
+    vignettes: { templates: [], candidates: [], proofs: [], rows: [] },
     context: { ...dataset.context, snapshotId },
     source: dataset.source,
     gameplayTags: dataset.gameplayTags,

@@ -1,7 +1,7 @@
-import { parseDataset } from "@loomix/schema/dataset";
 import type { ImageRef } from "@loomix/schema/assets";
 import { imageKey } from "@loomix/schema/assets";
 import { referencedImages } from "@loomix/schema/dataset/images";
+import { parseDataset } from "@loomix/schema/dataset";
 import type { FieldEvidence } from "../evidence/domain-schema.ts";
 import { EvidenceSchema } from "../evidence/domain-schema.ts";
 import { bindImages } from "../images/bind.ts";
@@ -37,6 +37,7 @@ export function assemble(observations: SourceObservations, originals: readonly O
     else if (collection === "starsea.regions") ownerKind = "starseaRegion";
     else if (collection === "starsea.islands") ownerKind = "starseaIsland";
     else if (collection === "starsea.iconStyles") ownerKind = "starseaIconStyle";
+    else if (collection === "vignettes.templates") ownerKind = "vignette";
     else {
       const item = observations.catalog.items.find((item) => item.id === id);
       if (!item) throw new Error(`Missing image owner ${id}`);
@@ -88,6 +89,19 @@ export function assemble(observations: SourceObservations, originals: readonly O
       return { category: entry.category, neighborId: entry.neighborId, image: result };
     }),
   );
+  const catalogIds = new Set(catalog.items.map(({ id }) => id));
+  const vignettes = {
+    templates: observations.vignettes.templates.map((template) => ({
+      ...template,
+      illustration: image(
+        template.illustration.use,
+        "vignettes.templates",
+        template.id,
+        "illustration",
+      ),
+    })),
+    fallbackItems: observations.vignettes.candidates.filter(({ id }) => !catalogIds.has(id)),
+  };
   const dataset = parseDataset({
     context: observations.context,
     source: observations.source,
@@ -121,6 +135,7 @@ export function assemble(observations: SourceObservations, originals: readonly O
         icon: image(style.icon?.use ?? null, "starsea.iconStyles", style.id, "icon"),
       })),
     },
+    vignettes,
   });
   const fields = [
     ...buildDomainEvidence(
@@ -131,6 +146,11 @@ export function assemble(observations: SourceObservations, originals: readonly O
     ),
     ...plantingDomainEvidence(observations.plantProofs, dataset),
     ...observations.starsea.proofs,
+    ...observations.vignettes.proofs.filter(
+      (proof) =>
+        proof.entity.collection !== "vignettes.fallbackItems" ||
+        !catalogIds.has(Number(proof.entity.id)),
+    ),
     ...observations.proofs.map(({ owner, id, field, ...proof }) => {
       const collection =
         owner === "tag"

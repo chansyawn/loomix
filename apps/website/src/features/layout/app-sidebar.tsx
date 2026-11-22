@@ -9,6 +9,7 @@ import {
   homeItem,
   neighborsItem,
   starseaItem,
+  vignettesItem,
 } from "@/features/layout/navigation";
 import { Button } from "@/ui/components/button";
 import {
@@ -83,6 +84,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               >
                 <starseaItem.icon />
                 <span>{starseaItem.title}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                render={<Link to={vignettesItem.to} activeProps={{ "data-active": true }} />}
+              >
+                <vignettesItem.icon />
+                <span>{vignettesItem.title}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

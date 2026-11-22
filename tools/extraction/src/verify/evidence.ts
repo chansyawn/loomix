@@ -111,4 +111,13 @@ export function verifyEvidence(
           `Required starsea provenance ${collection}:${entry.id}.${field}`,
         );
       }
+  for (const collection of ["templates", "fallbackItems"] as const)
+    for (const entry of dataset.vignettes[collection])
+      for (const field of Object.keys(entry)) {
+        if (field === "id") continue;
+        assert.ok(
+          covered.has(`vignettes.${collection}:${entry.id}:${field}`),
+          `Required vignette provenance ${collection}:${entry.id}:${field}`,
+        );
+      }
 }

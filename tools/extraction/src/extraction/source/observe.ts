@@ -20,6 +20,8 @@ import { readCraftingRecipes } from "./catalog/crafting/read.ts";
 import { isPlaceholderIcon } from "./catalog/crafting/cards.ts";
 import { FORMAT_VERSION } from "@loomix/schema/common";
 import { readStarsea, starseaItemIds } from "./starsea/read.ts";
+import { readVignetteAdmissions } from "./vignettes/admissions.ts";
+import { readVignettes } from "./vignettes/read.ts";
 export interface FrozenPackage {
   source: string;
   sha256: string;
@@ -222,7 +224,13 @@ export function observe(source: string, snapshotId: string): SourceObservations 
     reasonCode: null,
   }));
   return {
-    version: 1,
+    version: 2,
+    vignettes: readVignettes(
+      context.tables,
+      context.gameplayTags.index,
+      readVignetteAdmissions(source),
+      images,
+    ),
     context: { formatVersion: FORMAT_VERSION, snapshotId, locale: "zh-CN" },
     source: { ...catalogSource, manifestId: profile.manifestId },
     gameplayTags: { tags: context.gameplayTags.tags.map(({ enumName: _enumName, ...tag }) => tag) },

@@ -4,7 +4,7 @@ import path from "node:path";
 import { test, expect } from "vite-plus/test";
 import { observationFixture } from "./fixtures/observations.ts";
 import { assemble } from "./assemble/index.ts";
-import { writeAssembly, readVerifiedExtraction, sealExtraction } from "./bundle.ts";
+import { writeAssembly, readCandidate, readVerifiedExtraction, sealExtraction } from "./bundle.ts";
 import { digest, inventory } from "../workflow/hashing.ts";
 import { writeJson } from "../workflow/json.ts";
 import type { Manifest } from "../workflow/manifest.ts";
@@ -70,5 +70,27 @@ test("仅在封存完整性损坏时隔离旧目录；新封存必须覆盖精�
     await expect(readVerifiedExtraction(directory)).rejects.toThrow("file set");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("封存要求统一的小栖地数据，且旧格式须重新提取", () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-vignettes-"));
+  try {
+    const observations = observationFixture();
+    writeJson(path.join(directory, "observations.json"), observations);
+    writeJson(path.join(directory, "originals.json"), []);
+    writeAssembly(directory, assemble(observations, []));
+    const bundle = readCandidate(directory);
+    expect(bundle.dataset.vignettes).toEqual({ templates: [], fallbackItems: [] });
+    const { vignettes: _vignettes, ...incomplete } = bundle.dataset;
+    writeJson(path.join(directory, "dataset.json"), incomplete);
+    expect(() => readCandidate(directory)).toThrow("vignettes");
+    writeJson(path.join(directory, "observations.json"), {
+      ...observations,
+      context: { ...observations.context, formatVersion: 14 },
+    });
+    expect(() => readCandidate(directory)).toThrow("请重新提取");
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
   }
 });

@@ -50,6 +50,8 @@ vp run @loomix/extraction#refresh -- --help
 
 具体输出以各阶段 manifest 的 `outputs` 为准。调查时从提取结果的 `observations.json` 查源观察、排除项与未确认候选，从 `evidence.json` 查最终字段依据；结构入口见[提取原理](docs/extraction-method.md#按任务定位实现)。
 
+小栖地自 v15 起随其他领域数据和配图一起交付。旧格式的封存与交付可用生成它们的代码版本复验。更新本地网站资源时，从已核对的冻结客户端重新运行 `refresh`、`verify` 与 `materialize`。准入证据及版本边界见[业务确认与调查](docs/business-investigation.md#小栖地)。
+
 ## 故障恢复与清理
 
 失败后先查看命令错误及日志：工具准备日志在 `cache/anime-studio/logs/`，提取诊断在 `cache/failures/`，批次诊断在 `cache/decode/failures/` 和 `cache/originals/failures/`。修复原因后重跑；已完成且通过复验的昂贵批次可复用，不必先清空缓存。工具版本或下载失效时检查 [AnimeStudio 配置](src/client/anime-studio/config.ts)，显式更新固定版本与摘要，不自动跟随最新构建。

@@ -24,6 +24,7 @@ export async function writeDocuments(directory: string, dataset: Dataset, assets
     catalog: dataset.catalog,
     neighbors: dataset.neighbors,
     starsea: dataset.starsea,
+    vignettes: dataset.vignettes,
     assets,
   };
   const files = [];

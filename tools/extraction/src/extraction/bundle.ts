@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 import { withLock } from "../workflow/lock.ts";
 import assert from "node:assert/strict";
 import path from "node:path";
+import { ContextSchema } from "@loomix/schema/common";
 import { parseDataset } from "@loomix/schema/dataset";
 import { EvidenceSchema } from "./evidence/domain-schema.ts";
 import type { SourceObservations } from "./model.ts";
@@ -27,7 +28,10 @@ export function writeAssembly(directory: string, assembly: Assembly): void {
 
 export function readCandidate(directory: string) {
   const observations = readJson<SourceObservations>(path.join(directory, "observations.json"));
-  if (observations.version !== 1) throw new Error("Unsupported source observations");
+  if (!ContextSchema.safeParse(observations.context).success)
+    throw new Error("封存的提取快照与当前契约不符，请重新提取。");
+  if (observations.version !== 2) throw new Error("Unsupported source observations");
+  if (!observations.vignettes) throw new Error("Missing vignette source observations");
   observations.imageNeeds = imageNeedSchema.array().parse(observations.imageNeeds);
   observations.imageObjects = imageObjectSchema.array().parse(observations.imageObjects);
   uniqueObjects(observations.imageObjects);

@@ -8,6 +8,7 @@
     "./catalog": "./src/catalog/index.ts",
     "./neighbors": "./src/neighbors/index.ts",
     "./starsea": "./src/starsea/index.ts",
+    "./vignettes": "./src/vignettes/index.ts",
     "./assets": "./src/assets/index.ts",
     "./dataset": "./src/dataset/index.ts",
     "./release": "./src/release/index.ts",

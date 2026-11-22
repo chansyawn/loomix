@@ -2,6 +2,7 @@ import { emptyDataset } from "../src/dataset/index.ts";
 import type { Dataset } from "../src/dataset/index.ts";
 import type { Collection, ItemOf } from "../src/catalog/index.ts";
 import type { Neighbor } from "../src/neighbors/index.ts";
+import type { Vignette } from "../src/vignettes/index.ts";
 import { FORMAT_VERSION } from "../src/common/identity.ts";
 
 export const context = {
@@ -17,6 +18,29 @@ export const source = {
 };
 
 export const datasetFixture = (): Dataset => emptyDataset(context, source);
+
+export const vignette = (id = 1002): Vignette => ({
+  id,
+  name: { zh: "微风花丛地", en: "Breezy Flowerbed" },
+  illustration: { assetId: "flowerbed", variant: "illustration" },
+  stars: 2,
+  footprint: { width: 6, height: 6 },
+  site: "land",
+  requirements: [
+    {
+      target: { itemId: 2 },
+      support: null,
+      quantity: { configured: 6, displayed: 6 },
+      area: null,
+      label: { zh: "任意花株", en: "Any Flower" },
+      examples: [],
+    },
+  ],
+  placementRules: [{ kind: "range", ruleId: 1, text: null }],
+  creatureItemIds: [],
+  neighborIds: [],
+  hints: [],
+});
 
 const listed = {
   name: "物品",

@@ -11,6 +11,8 @@ export const evidenceCollections = {
   "starsea.regions": (dataset: Dataset) => dataset.starsea.regions,
   "starsea.islands": (dataset: Dataset) => dataset.starsea.islands,
   "starsea.iconStyles": (dataset: Dataset) => dataset.starsea.iconStyles,
+  "vignettes.templates": (dataset: Dataset) => dataset.vignettes.templates,
+  "vignettes.fallbackItems": (dataset: Dataset) => dataset.vignettes.fallbackItems,
 } as const;
 export type EvidenceCollection = keyof typeof evidenceCollections;
 

@@ -34,6 +34,13 @@ function configuredReferences(
   source: string,
 ): string[] {
   const { owner } = need;
+  if (owner.kind === "vignette") {
+    const row = tables.byId(291).get(owner.id);
+    assert.ok(row && owner.field === "illustration", `Independent vignette image owner ${need.id}`);
+    const reference = tables.string(row, 3);
+    assert.ok(reference, `Missing vignette image reference ${need.id}`);
+    return [reference];
+  }
   if (owner.kind === "creationCardSet" || owner.field === "front.background") {
     const [root, field] = owner.kind === "creationCardSet" ? [180, 11] : [568, 9];
     const row = tables.rows(root).find((entry) => tables.id(entry) === owner.id);
@@ -231,6 +238,7 @@ export function verifyImages(
         : need.owner.kind === "neighbor" ||
             need.owner.kind === "creationCardSet" ||
             need.owner.kind === "starseaRegion" ||
+            need.owner.kind === "vignette" ||
             need.owner.kind === "starseaIsland"
           ? "illustration"
           : need.owner.kind === "collection" &&
@@ -250,6 +258,8 @@ export function verifyImages(
       );
     if (need.owner.field === "front.background")
       assert.equal(need.required, true, `Required card background ${need.id}`);
+    if (need.owner.kind === "vignette")
+      assert.equal(need.required, true, `Required vignette illustration ${need.id}`);
     let placeholderOnly = false;
     if (need.owner.kind === "neighborClothing") {
       references = references.filter((reference) => reference.trim());

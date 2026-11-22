@@ -208,6 +208,7 @@ export function fixtureRequest({
     catalog,
     neighbors: { neighbors: [] },
     starsea: { regions: [], islands: [], iconStyles: [] },
+    vignettes: { templates: [], fallbackItems: [] },
     assets: assetsFixture(catalog),
   };
   const files = DocumentKindSchema.options.map((kind) => {

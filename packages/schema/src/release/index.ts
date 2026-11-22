@@ -9,12 +9,14 @@ import { DatasetSchema, validateDataset } from "../dataset/index.ts";
 import { referencedImages } from "../dataset/images.ts";
 import { NeighborsSchema } from "../neighbors/index.ts";
 import { StarseaSchema } from "../starsea/index.ts";
+import { VignettesSchema } from "../vignettes/index.ts";
 
 export const documentSchemas = {
   "gameplay-tags": GameplayTagsSchema,
   catalog: CatalogSchema,
   neighbors: NeighborsSchema,
   starsea: StarseaSchema,
+  vignettes: VignettesSchema,
   assets: AssetsSchema,
 };
 export const DocumentKindSchema = z.enum([
@@ -22,6 +24,7 @@ export const DocumentKindSchema = z.enum([
   "catalog",
   "neighbors",
   "starsea",
+  "vignettes",
   "assets",
 ]);
 export type DocumentKind = z.infer<typeof DocumentKindSchema>;
@@ -131,6 +134,7 @@ export function assembleRelease(
       catalog: documents.get("catalog"),
       neighbors: documents.get("neighbors"),
       starsea: documents.get("starsea"),
+      vignettes: documents.get("vignettes"),
     },
     assets: documents.get("assets"),
   });

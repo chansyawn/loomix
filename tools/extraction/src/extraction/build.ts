@@ -19,6 +19,8 @@ import { exportOriginals } from "./images/originals.ts";
 import { audit } from "./audit.ts";
 import { verifyExtraction, verifyCandidate } from "./verify.ts";
 import { writeAssembly, sealExtraction } from "./bundle.ts";
+import { parseVignetteAdmissions } from "./source/vignettes/admissions.ts";
+import { vignetteAdmissionsFile } from "./source/vignettes/profile.ts";
 
 export async function extract(environmentId: string): Promise<string> {
   const environmentDirectory = identityDirectory("environments", environmentId);
@@ -41,6 +43,10 @@ export async function extract(environmentId: string): Promise<string> {
     new URL("./source/catalog/supplemental-admissions.json", import.meta.url),
   );
   const admissions = parseAdmissions(admissionsBytes);
+  const vignetteBytes = fs.readFileSync(
+    new URL("./source/vignettes/admissions.json", import.meta.url),
+  );
+  const vignetteAdmissions = parseVignetteAdmissions(vignetteBytes);
   const id = digest({
     format: 2,
     environmentId,
@@ -49,6 +55,7 @@ export async function extract(environmentId: string): Promise<string> {
     implementation,
     tool,
     admissions: admissions.sha256,
+    vignetteAdmissions: vignetteAdmissions.sha256,
   });
   const destination = identityDirectory("extractions", id);
   await sealExtraction(destination, async (staging) => {
@@ -77,6 +84,7 @@ export async function extract(environmentId: string): Promise<string> {
       const source = path.join(staging, "source");
       copyCachedDirectory(decoded, source);
       fs.writeFileSync(path.join(source, admissionsFile), admissionsBytes);
+      fs.writeFileSync(path.join(source, vignetteAdmissionsFile), vignetteBytes);
       fs.copyFileSync(
         new URL("./source/neighbors/additional-images.json", import.meta.url),
         path.join(source, "additional-images.json"),

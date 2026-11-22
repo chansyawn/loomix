@@ -31,9 +31,9 @@ test("读取已 materialize 的 release，不依赖图片字节", async () => {
 test("拒绝被篡改的星海文档", async () => {
   const value = await createFixture();
   await writeFixture(value);
-  await writeFile(path.join(value, "zh-CN/starsea.json"), "{}");
+  await writeFile(path.join(value, "zh-CN/vignettes.json"), "{}");
   await expect(loadReleaseDirectory(value)).rejects.toThrow(
-    "Document SHA-256 or size mismatch: zh-CN/starsea.json",
+    "Document SHA-256 or size mismatch: zh-CN/vignettes.json",
   );
 });
 
