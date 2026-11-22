@@ -6,7 +6,6 @@ import path from "node:path";
 import { ContextSchema } from "@loomix/schema/common";
 import { parseDataset } from "@loomix/schema/dataset";
 import { FieldEvidenceReportSchema } from "./evidence/domain-schema.ts";
-import { CLIENT_READ_RECORDS_VERSION } from "./model.ts";
 import type { ClientReadRecords } from "./model.ts";
 import { CLIENT_READ_RECORDS_FILE, DATASET_FILE, FIELD_EVIDENCE_FILE } from "./files.ts";
 import {
@@ -34,8 +33,6 @@ export function readCandidate(directory: string) {
   );
   if (!ContextSchema.safeParse(clientReadRecords.context).success)
     throw new Error("封存的提取结果与当前契约不符，请重新提取。");
-  if (clientReadRecords.version !== CLIENT_READ_RECORDS_VERSION)
-    throw new Error("Unsupported client read records version");
   if (!clientReadRecords.vignettes) throw new Error("Missing vignette client read records");
   clientReadRecords.imageNeeds = imageNeedSchema.array().parse(clientReadRecords.imageNeeds);
   clientReadRecords.imageObjects = imageObjectSchema.array().parse(clientReadRecords.imageObjects);

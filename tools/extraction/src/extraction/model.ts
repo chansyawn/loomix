@@ -28,10 +28,8 @@ export interface SourceProof extends Omit<FieldEvidence, "entity" | "fieldPath">
   id: number;
   field: string;
 }
-export const CLIENT_READ_RECORDS_VERSION = 3;
 
 export interface ClientReadRecords {
-  version: typeof CLIENT_READ_RECORDS_VERSION;
   vignettes: ReturnType<typeof readVignettes>;
   context: Dataset["context"];
   source: Dataset["source"];

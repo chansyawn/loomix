@@ -17,7 +17,6 @@ import { neighborAllowlist } from "./source/neighbors/allowlist.ts";
 import { admissionsFile, parseAdmissions } from "./source/catalog/admissions.ts";
 import { readClientRecords } from "./source/read-client-records.ts";
 import { CLIENT_READ_RECORDS_FILE } from "./files.ts";
-import { CLIENT_READ_RECORDS_VERSION } from "./model.ts";
 import { assemble } from "./assemble/index.ts";
 import { exportOriginals } from "./images/originals.ts";
 import { audit } from "./audit.ts";
@@ -51,7 +50,6 @@ export async function extract(environmentId: string): Promise<string> {
   const id = digest({
     stageManifestVersion: STAGE_MANIFEST_VERSION,
     formatVersion: FORMAT_VERSION,
-    clientReadRecordsVersion: CLIENT_READ_RECORDS_VERSION,
     environmentId,
     inputs: inputs.sha256,
     profileHash,

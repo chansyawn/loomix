@@ -13,7 +13,6 @@ import { readJson } from "../../workflow/json.ts";
 import { catalogSource, profile } from "../../profile.ts";
 import type { IndexedAsset } from "../types.ts";
 import type { EvidenceSource } from "../evidence/domain-schema.ts";
-import { CLIENT_READ_RECORDS_VERSION } from "../model.ts";
 import type { ClientReadRecords } from "../model.ts";
 import { imageCollector } from "./images.ts";
 import { readCatalog } from "./catalog/read.ts";
@@ -225,7 +224,6 @@ export function readClientRecords(source: string, datasetId: string): ClientRead
     reasonCode: null,
   }));
   return {
-    version: CLIENT_READ_RECORDS_VERSION,
     vignettes: readVignettes(
       context.tables,
       context.gameplayTags.index,

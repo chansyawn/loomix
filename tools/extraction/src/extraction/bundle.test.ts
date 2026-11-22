@@ -91,8 +91,6 @@ test("封存要求统一的小栖地数据，且旧格式须重新提取", () =>
     const { vignettes: _vignettes, ...incomplete } = bundle.dataset;
     writeJson(path.join(directory, DATASET_FILE), incomplete);
     expect(() => readCandidate(directory)).toThrow("vignettes");
-    writeJson(path.join(directory, CLIENT_READ_RECORDS_FILE), { ...observations, version: 2 });
-    expect(() => readCandidate(directory)).toThrow("Unsupported client read records version");
     writeJson(path.join(directory, CLIENT_READ_RECORDS_FILE), {
       ...observations,
       context: { ...observations.context, formatVersion: 15 },
