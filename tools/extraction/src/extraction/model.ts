@@ -9,6 +9,7 @@ import type { CollectionEvidence } from "./source/catalog/collection/evidence.ts
 import type { NeighborEvidence } from "./source/neighbors/types.ts";
 import type { CollectionObservations } from "./schema.ts";
 import type { readStarsea } from "./source/starsea/read.ts";
+import type { readVignettes } from "./source/vignettes/read.ts";
 
 export interface ImageUse {
   use: string;
@@ -27,8 +28,7 @@ export interface SourceProof extends Omit<FieldEvidence, "entity" | "fieldPath">
   id: number;
   field: string;
 }
-export interface SourceObservations {
-  version: 1;
+interface SourceObservationFields {
   context: Dataset["context"];
   source: Dataset["source"];
   gameplayTags: Dataset["gameplayTags"];
@@ -55,3 +55,6 @@ export interface SourceObservations {
     neighbors: unknown;
   };
 }
+
+export type SourceObservations = SourceObservationFields &
+  ({ version: 1 } | { version: 2; vignettes: ReturnType<typeof readVignettes> });

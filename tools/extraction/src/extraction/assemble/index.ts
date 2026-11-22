@@ -1,4 +1,3 @@
-import { parseDataset } from "@loomix/schema/dataset";
 import type { ImageRef } from "@loomix/schema/assets";
 import { imageKey } from "@loomix/schema/assets";
 import { referencedImages } from "@loomix/schema/dataset/images";
@@ -13,6 +12,7 @@ import { validateDomainEvidence } from "./validate-evidence.ts";
 import { assembleCatalog } from "./catalog.ts";
 import { plantingDomainEvidence } from "./planting-evidence.ts";
 import { starseaItemIds } from "../source/starsea/read.ts";
+import { parseExtractionDataset, publishedDataset } from "../dataset.ts";
 
 export function assemble(observations: SourceObservations, originals: readonly OriginalImage[]) {
   const bound = bindImages(observations.imageNeeds, originals);
@@ -37,6 +37,7 @@ export function assemble(observations: SourceObservations, originals: readonly O
     else if (collection === "starsea.regions") ownerKind = "starseaRegion";
     else if (collection === "starsea.islands") ownerKind = "starseaIsland";
     else if (collection === "starsea.iconStyles") ownerKind = "starseaIconStyle";
+    else if (collection === "vignettes.templates") ownerKind = "vignette";
     else {
       const item = observations.catalog.items.find((item) => item.id === id);
       if (!item) throw new Error(`Missing image owner ${id}`);
@@ -88,40 +89,60 @@ export function assemble(observations: SourceObservations, originals: readonly O
       return { category: entry.category, neighborId: entry.neighborId, image: result };
     }),
   );
-  const dataset = parseDataset({
-    context: observations.context,
-    source: observations.source,
-    gameplayTags: observations.gameplayTags,
-    catalog,
-    neighbors,
-    starsea: {
-      regions: observations.starsea.data.regions.map((region) => ({
-        ...region,
-        stationImage: image(
-          region.stationImage?.use ?? null,
-          "starsea.regions",
-          region.id,
-          "stationImage",
-        ),
-        mapImage: region.mapImage
-          ? image(region.mapImage.use, "starsea.regions", region.id, "mapImage")
-          : null,
-      })),
-      islands: observations.starsea.data.islands.map((island) => ({
-        ...island,
-        illustration: image(
-          island.illustration?.use ?? null,
-          "starsea.islands",
-          island.id,
-          "illustration",
-        ),
-      })),
-      iconStyles: observations.starsea.data.iconStyles.map((style) => ({
-        ...style,
-        icon: image(style.icon?.use ?? null, "starsea.iconStyles", style.id, "icon"),
-      })),
+  const catalogIds = new Set(catalog.items.map(({ id }) => id));
+  const vignettes =
+    observations.version === 2
+      ? {
+          templates: observations.vignettes.templates.map((template) => ({
+            ...template,
+            illustration: image(
+              template.illustration.use,
+              "vignettes.templates",
+              template.id,
+              "illustration",
+            ),
+          })),
+          fallbackItems: observations.vignettes.candidates.filter(({ id }) => !catalogIds.has(id)),
+        }
+      : undefined;
+  const dataset = parseExtractionDataset(
+    {
+      context: observations.context,
+      source: observations.source,
+      gameplayTags: observations.gameplayTags,
+      catalog,
+      neighbors,
+      starsea: {
+        regions: observations.starsea.data.regions.map((region) => ({
+          ...region,
+          stationImage: image(
+            region.stationImage?.use ?? null,
+            "starsea.regions",
+            region.id,
+            "stationImage",
+          ),
+          mapImage: region.mapImage
+            ? image(region.mapImage.use, "starsea.regions", region.id, "mapImage")
+            : null,
+        })),
+        islands: observations.starsea.data.islands.map((island) => ({
+          ...island,
+          illustration: image(
+            island.illustration?.use ?? null,
+            "starsea.islands",
+            island.id,
+            "illustration",
+          ),
+        })),
+        iconStyles: observations.starsea.data.iconStyles.map((style) => ({
+          ...style,
+          icon: image(style.icon?.use ?? null, "starsea.iconStyles", style.id, "icon"),
+        })),
+      },
+      ...(vignettes ? { vignettes } : {}),
     },
-  });
+    observations.version,
+  );
   const fields = [
     ...buildDomainEvidence(
       dataset,
@@ -131,6 +152,13 @@ export function assemble(observations: SourceObservations, originals: readonly O
     ),
     ...plantingDomainEvidence(observations.plantProofs, dataset),
     ...observations.starsea.proofs,
+    ...(observations.version === 2
+      ? observations.vignettes.proofs.filter(
+          (proof) =>
+            proof.entity.collection !== "vignettes.fallbackItems" ||
+            !catalogIds.has(Number(proof.entity.id)),
+        )
+      : []),
     ...observations.proofs.map(({ owner, id, field, ...proof }) => {
       const collection =
         owner === "tag"
@@ -154,7 +182,7 @@ export function assemble(observations: SourceObservations, originals: readonly O
       ),
     })),
   });
-  const used = new Set(referencedImages(dataset).map(imageKey));
+  const used = new Set(referencedImages(publishedDataset(dataset)).map(imageKey));
   const jobs = bound.jobs.filter((job) => used.has(imageKey(job)));
   if (jobs.length !== used.size)
     throw new Error("Image jobs do not cover the published reference graph");

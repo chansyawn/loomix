@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import type { Dataset } from "@loomix/schema/dataset";
+import type { ExtractionDataset } from "../extraction/dataset.ts";
 import type { Evidence } from "../extraction/evidence/domain-schema.ts";
 import type { Tables } from "../extraction/source/decode/tables.ts";
 import { digest } from "../workflow/hashing.ts";
@@ -11,7 +11,7 @@ import { evidenceEntity, evidenceField } from "../extraction/assemble/validate-e
 
 export function verifyEvidence(
   directory: string,
-  dataset: Dataset,
+  dataset: ExtractionDataset,
   evidence: Evidence,
   tables: Tables,
 ): void {
@@ -111,4 +111,14 @@ export function verifyEvidence(
           `Required starsea provenance ${collection}:${entry.id}.${field}`,
         );
       }
+  if (dataset.vignettes)
+    for (const collection of ["templates", "fallbackItems"] as const)
+      for (const entry of dataset.vignettes[collection])
+        for (const field of Object.keys(entry)) {
+          if (field === "id") continue;
+          assert.ok(
+            covered.has(`vignettes.${collection}:${entry.id}:${field}`),
+            `Required vignette provenance ${collection}:${entry.id}:${field}`,
+          );
+        }
 }

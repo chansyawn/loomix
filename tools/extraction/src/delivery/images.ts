@@ -10,12 +10,13 @@ import { writeJson } from "../workflow/json.ts";
 import { digest } from "../workflow/hashing.ts";
 import { within } from "../paths.ts";
 import { processImage } from "./image.ts";
+import { publishedDataset } from "../extraction/dataset.ts";
 
 export async function renderImages(
   options: WorkOptions,
   extraction: Pick<VerifiedExtraction, "directory" | "dataset" | "imageJobs">,
 ): Promise<void> {
-  const dataset = parseDataset(extraction.dataset);
+  const dataset = parseDataset(publishedDataset(extraction.dataset));
   const jobs = extraction.imageJobs;
   const staging = path.join(options.work, "staging");
   fs.mkdirSync(path.join(staging, "assets"), { recursive: true });

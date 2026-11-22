@@ -1,5 +1,6 @@
 import type { Dataset } from "@loomix/schema/dataset";
 import type { FieldEvidence } from "../evidence/domain-schema.ts";
+import type { ExtractionDataset } from "../dataset.ts";
 
 // 证据只能指向发布数据中实际存在的实体；友邻子数据均通过友邻实体的字段路径定位。
 export const evidenceCollections = {
@@ -11,16 +12,18 @@ export const evidenceCollections = {
   "starsea.regions": (dataset: Dataset) => dataset.starsea.regions,
   "starsea.islands": (dataset: Dataset) => dataset.starsea.islands,
   "starsea.iconStyles": (dataset: Dataset) => dataset.starsea.iconStyles,
+  "vignettes.templates": (dataset: ExtractionDataset) => dataset.vignettes?.templates ?? [],
+  "vignettes.fallbackItems": (dataset: ExtractionDataset) => dataset.vignettes?.fallbackItems ?? [],
 } as const;
 export type EvidenceCollection = keyof typeof evidenceCollections;
 
 export function evidenceEntity(
-  dataset: Dataset,
+  dataset: ExtractionDataset,
   collection: string,
   id: string | number,
 ): object | undefined {
   const entries = Reflect.get(evidenceCollections, collection) as
-    | ((dataset: Dataset) => readonly { id: number }[])
+    | ((dataset: ExtractionDataset) => readonly { id: number }[])
     | undefined;
   return entries?.(dataset).find((entry) => String(entry.id) === String(id));
 }
@@ -44,7 +47,10 @@ const uniqueSources = (sources: FieldEvidence["sources"]) => [
   ...new Map(sources.map((source) => [sourceKey(source), source])).values(),
 ];
 
-export function validateDomainEvidence(dataset: Dataset, fields: FieldEvidence[]): FieldEvidence[] {
+export function validateDomainEvidence(
+  dataset: ExtractionDataset,
+  fields: FieldEvidence[],
+): FieldEvidence[] {
   const merged = new Map<string, FieldEvidence>();
   for (const proof of fields) {
     const { collection, id } = proof.entity;

@@ -50,6 +50,8 @@ vp run @loomix/extraction#refresh -- --help
 
 具体输出以各阶段 manifest 的 `outputs` 为准。调查时从提取结果的 `observations.json` 查源观察、排除项与未确认候选，从 `evidence.json` 查最终字段依据；结构入口见[提取原理](docs/extraction-method.md#按任务定位实现)。
 
+小栖地收录在提取快照 `dataset.json` 的 `vignettes` 字段，配图可通过 `originals.json` 定位到封存 PNG。只需要这些数据时，运行 `init` 和 `extract` 即可。现有网站交付按 v14 契约取用这份快照。准入证据及版本边界见[业务确认与调查](docs/business-investigation.md#小栖地)。
+
 ## 故障恢复与清理
 
 失败后先查看命令错误及日志：工具准备日志在 `cache/anime-studio/logs/`，提取诊断在 `cache/failures/`，批次诊断在 `cache/decode/failures/` 和 `cache/originals/failures/`。修复原因后重跑；已完成且通过复验的昂贵批次可复用，不必先清空缓存。工具版本或下载失效时检查 [AnimeStudio 配置](src/client/anime-studio/config.ts)，显式更新固定版本与摘要，不自动跟随最新构建。

@@ -30,6 +30,7 @@ const ImageOwnerKindSchema = z.enum([
   "starseaRegion",
   "starseaIsland",
   "starseaIconStyle",
+  "vignette",
 ]);
 export interface ImageOwner {
   kind: z.infer<typeof ImageOwnerKindSchema>;
