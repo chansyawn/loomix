@@ -49,7 +49,7 @@ export async function extract(environmentId: string): Promise<string> {
   );
   const vignetteAdmissions = parseVignetteAdmissions(vignetteBytes);
   const id = digest({
-    schemaVersion: STAGE_MANIFEST_VERSION,
+    stageManifestVersion: STAGE_MANIFEST_VERSION,
     formatVersion: FORMAT_VERSION,
     clientReadRecordsVersion: CLIENT_READ_RECORDS_VERSION,
     environmentId,
@@ -67,7 +67,6 @@ export async function extract(environmentId: string): Promise<string> {
       const decoded = await cachedDirectory(
         path.join(cacheRoot(), "decode"),
         {
-          format: 2,
           inputs,
           clientSnapshotId,
           profileHash,
@@ -136,7 +135,7 @@ export async function extract(environmentId: string): Promise<string> {
       )
         throw new Error("Tool or implementation changed during extraction");
       const manifest: Manifest = {
-        schemaVersion: STAGE_MANIFEST_VERSION,
+        stageManifestVersion: STAGE_MANIFEST_VERSION,
         kind: "extraction",
         id,
         status: "verified",

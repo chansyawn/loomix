@@ -18,7 +18,7 @@ async function build(staging: string, id: string): Promise<Manifest> {
   writeJson(path.join(staging, "validation.json"), { passed: true, datasetId: id });
   writeAssembly(staging, assemble(observations, []));
   return {
-    schemaVersion: STAGE_MANIFEST_VERSION,
+    stageManifestVersion: STAGE_MANIFEST_VERSION,
     kind: "extraction",
     id,
     status: "verified",

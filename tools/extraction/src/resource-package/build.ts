@@ -32,7 +32,7 @@ export async function buildResourcePackage(extractionId: string): Promise<string
   const implementation = await implementationRevision();
   const inputs = await stageInputs(extractionDirectory, extraction.manifest);
   const resourcePackageId = digest({
-    schemaVersion: STAGE_MANIFEST_VERSION,
+    stageManifestVersion: STAGE_MANIFEST_VERSION,
     formatVersion: FORMAT_VERSION,
     extractionId,
     inputs: inputs.sha256,
@@ -62,7 +62,7 @@ export async function buildResourcePackage(extractionId: string): Promise<string
       writeJson(path.join(staging, VALIDATION_FILE), validation);
       assertPackageFileSet(staging, files);
       const manifest: StageManifest<"resource-package"> = {
-        schemaVersion: STAGE_MANIFEST_VERSION,
+        stageManifestVersion: STAGE_MANIFEST_VERSION,
         kind: "resource-package",
         id: resourcePackageId,
         status: "verified",

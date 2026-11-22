@@ -35,7 +35,7 @@ export async function init(): Promise<string> {
   const tool = toolIdentity();
   const implementation = await implementationRevision();
   const identity = {
-    schemaVersion: STAGE_MANIFEST_VERSION,
+    stageManifestVersion: STAGE_MANIFEST_VERSION,
     formatVersion: FORMAT_VERSION,
     clientSnapshotId,
     profileHash,
@@ -98,7 +98,7 @@ export async function init(): Promise<string> {
         throw new Error("Client changed during initialization");
       const outputs = await inventory(staging, [...ENVIRONMENT_OUTPUT_FILES]);
       const manifest: Manifest = {
-        schemaVersion: STAGE_MANIFEST_VERSION,
+        stageManifestVersion: STAGE_MANIFEST_VERSION,
         kind: "environment",
         id,
         clientSnapshotId,

@@ -61,7 +61,7 @@ test("client snapshots are content-addressed, selected explicitly, and immutable
   assert.equal(selectedSnapshotId(), first);
   const snapshot = await snapshotClient(clientRoot(first));
   const environment = {
-    schemaVersion: STAGE_MANIFEST_VERSION,
+    stageManifestVersion: STAGE_MANIFEST_VERSION,
     kind: "environment",
     id: digest("environment"),
     clientSnapshotId: first,

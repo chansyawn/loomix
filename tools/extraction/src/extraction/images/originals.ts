@@ -55,7 +55,6 @@ export async function exportOriginals(options: {
     const cache = await cachedDirectory(
       options.cache,
       {
-        version: 1,
         tool: options.tool,
         implementation: options.implementation,
         game: profile.animeGame,

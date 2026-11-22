@@ -22,7 +22,7 @@ test("manifests reject corrupt outputs, unsupported schema and unsafe paths", as
   fs.mkdirSync(directory);
   fs.writeFileSync(path.join(directory, "output.json"), "{}");
   const manifest: Manifest = {
-    schemaVersion: STAGE_MANIFEST_VERSION,
+    stageManifestVersion: STAGE_MANIFEST_VERSION,
     kind: "environment",
     clientSnapshotId: digest([]),
     id,
@@ -42,7 +42,8 @@ test("manifests reject corrupt outputs, unsupported schema and unsafe paths", as
     { ...manifest, clientSnapshotId: undefined },
     { ...manifest, clientSnapshotId: digest("other client") },
     { ...manifest, inputs: { ...manifest.inputs, id: digest("other client") } },
-    { ...manifest, schemaVersion: 1 },
+    { ...manifest, stageManifestVersion: STAGE_MANIFEST_VERSION - 1 },
+    { ...manifest, stageManifestVersion: undefined, schemaVersion: STAGE_MANIFEST_VERSION },
     { ...manifest, id: digest("another environment") },
     { ...manifest, kind: "extraction", clientSnapshotId: undefined },
   ]) {

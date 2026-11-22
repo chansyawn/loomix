@@ -45,7 +45,7 @@ const extractionId = "c".repeat(64);
 const environmentId = "d".repeat(64);
 const clientSnapshotId = digest([]);
 const stage = {
-  schemaVersion: STAGE_MANIFEST_VERSION,
+  stageManifestVersion: STAGE_MANIFEST_VERSION,
   status: "verified",
   createdAt: "2026-10-26T00:00:00.000Z",
   implementation: "b".repeat(64),

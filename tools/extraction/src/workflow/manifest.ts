@@ -13,7 +13,7 @@ const fileHash = z
   .strict();
 const baseManifestSchema = z
   .object({
-    schemaVersion: z.literal(STAGE_MANIFEST_VERSION),
+    stageManifestVersion: z.literal(STAGE_MANIFEST_VERSION),
     id: hash,
     status: z.literal("verified"),
     createdAt: z.string().datetime(),
