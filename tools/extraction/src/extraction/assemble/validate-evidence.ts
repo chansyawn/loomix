@@ -5,11 +5,11 @@ import type { FieldEvidence } from "../evidence/domain-schema.ts";
 export const evidenceCollections = {
   "catalog.items": (dataset: Dataset) => dataset.catalog.items,
   "catalog.collections": (dataset: Dataset) => dataset.catalog.collections,
-  "catalog.creationCardSets": (dataset: Dataset) => dataset.catalog.creationCardSets,
+  "catalog.inspoBoxes": (dataset: Dataset) => dataset.catalog.inspoBoxes,
   "neighbors.neighbors": (dataset: Dataset) => dataset.neighbors.neighbors,
   "gameplayTags.tags": (dataset: Dataset) => dataset.gameplayTags.tags,
   "starsea.regions": (dataset: Dataset) => dataset.starsea.regions,
-  "starsea.islands": (dataset: Dataset) => dataset.starsea.islands,
+  "starsea.islets": (dataset: Dataset) => dataset.starsea.islets,
   "starsea.iconStyles": (dataset: Dataset) => dataset.starsea.iconStyles,
   "vignettes.templates": (dataset: Dataset) => dataset.vignettes.templates,
   "vignettes.fallbackItems": (dataset: Dataset) => dataset.vignettes.fallbackItems,

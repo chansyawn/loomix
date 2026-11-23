@@ -1,5 +1,5 @@
 import type { IngredientExpression, RecipeSlot } from "@loomix/schema/catalog";
-import type { IngredientItem } from "../collection-view";
+import type { IngredientItem } from "../omnidex-view";
 
 export type RecipeConditionToken =
   | {

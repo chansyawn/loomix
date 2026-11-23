@@ -1,8 +1,8 @@
 import { useRouter } from "@tanstack/react-router";
-import { CollectionDetailLoading } from "@/features/collection/detail-layout";
-import { wideGrid } from "@/features/collection/grid-layout";
-import { CollectionPage } from "@/features/collection/page";
-import { CollectionLoadError } from "@/features/collection/states";
+import { DetailLoading } from "@/features/omnidex/detail-layout";
+import { wideGrid } from "@/features/omnidex/grid-layout";
+import { ListPage } from "@/features/omnidex/page";
+import { ListLoadError } from "@/features/omnidex/states";
 import { Button } from "@/ui/components/button";
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/ui/components/empty";
 import { Skeleton } from "@/ui/components/skeleton";
@@ -10,7 +10,7 @@ import { VignetteReturnLink } from "./navigation";
 
 export function VignetteListLoading() {
   return (
-    <CollectionPage title="小栖地" loading>
+    <ListPage title="小栖地" loading>
       <div className="space-y-4">
         <Skeleton className="h-9 w-full max-w-96" />
         <div className={wideGrid(80).className}>
@@ -19,17 +19,17 @@ export function VignetteListLoading() {
           ))}
         </div>
       </div>
-    </CollectionPage>
+    </ListPage>
   );
 }
 
 export function VignetteDetailLoading() {
-  return <CollectionDetailLoading label="正在加载小栖地资料" />;
+  return <DetailLoading label="正在加载小栖地资料" />;
 }
 
 export function VignetteError() {
   const router = useRouter();
-  return <CollectionLoadError title="小栖地" onRetry={() => void router.invalidate()} />;
+  return <ListLoadError title="小栖地" onRetry={() => void router.invalidate()} />;
 }
 
 export function VignetteNotFound() {

@@ -137,7 +137,7 @@ const outfit = z
       ctx.addIssue({ code: "custom", path: ["offers"], message: "Duplicate outfit offer ID" });
   });
 
-export const NeighborClothingDatabaseSchema = z
+export const NeighborOutfitDatabaseSchema = z
   .strictObject({
     source,
     items: outfit.array(),
@@ -226,14 +226,14 @@ export const NeighborDatabaseSchema = z
 
 export type NeighborDatabase = z.infer<typeof NeighborDatabaseSchema>;
 export type NeighborOutfit = z.infer<typeof outfit>;
-export type NeighborClothingDatabase = z.infer<typeof NeighborClothingDatabaseSchema>;
+export type NeighborOutfitDatabase = z.infer<typeof NeighborOutfitDatabaseSchema>;
 
 export function parseNeighborDatabase(input: unknown): NeighborDatabase {
   return NeighborDatabaseSchema.parse(input);
 }
 
-export function parseNeighborClothingDatabase(input: unknown): NeighborClothingDatabase {
-  return NeighborClothingDatabaseSchema.parse(input);
+export function parseNeighborOutfitDatabase(input: unknown): NeighborOutfitDatabase {
+  return NeighborOutfitDatabaseSchema.parse(input);
 }
 
 // 只保留网站展示的友邻补充图分类。

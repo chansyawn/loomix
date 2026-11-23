@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { RecordImage } from "../collection/record-image";
-import { recordLocation } from "../collection/item-route";
-import type { IngredientItem } from "../collection-view";
+import { RecordImage } from "../omnidex/record-image";
+import { catalogEntryLocation } from "../omnidex/entry-location";
+import type { IngredientItem } from "../omnidex-view";
 import {
   Accordion,
   AccordionContent,
@@ -11,7 +11,7 @@ import {
 import { Badge } from "@/ui/components/badge";
 import { Item, ItemContent } from "@/ui/components/item";
 import type { DishesDetail } from "./detail";
-import { useCollectionOrigin } from "@/features/collection/navigation";
+import { useOmnidexOrigin } from "@/features/omnidex/navigation";
 import {
   buildDishRecipeSlots,
   type DishRecipeSlotView,
@@ -19,11 +19,11 @@ import {
 } from "./recipe-presentation";
 
 function IngredientCard({ item }: { item: IngredientItem }) {
-  const origin = useCollectionOrigin();
+  const origin = useOmnidexOrigin();
   return (
     <Link
-      {...recordLocation(item)}
-      state={{ collectionOrigin: origin }}
+      {...catalogEntryLocation(item)}
+      state={{ omnidexOrigin: origin }}
       className="group/recipe-item block min-w-0 rounded-xl no-underline outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     >
       <Item variant="muted" size="sm" className="h-full">

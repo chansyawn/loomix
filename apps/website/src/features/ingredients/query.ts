@@ -1,6 +1,6 @@
 import { createNameMatcher } from "@/infrastructure/name-search";
-import type { IngredientItem } from "../collection-view";
-import type { FilterGroup } from "../collection/filter-panel";
+import type { IngredientItem } from "../omnidex-view";
+import type { FilterGroup } from "../omnidex/filter-panel";
 import type { IngredientsData } from "./model";
 import type { IngredientsQuery } from "./search";
 import {

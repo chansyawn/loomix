@@ -1,7 +1,7 @@
 import type { IngredientExpression } from "@loomix/schema/catalog";
 import { createGameplayTagIndex } from "@loomix/schema/gameplay-tags";
 import type { GameplayTag } from "@loomix/schema/gameplay-tags";
-import type { DishItem, IngredientItem } from "../collection-view";
+import type { DishItem, IngredientItem } from "../omnidex-view";
 import { buildIngredientsData } from "./model";
 import { createIngredientTagSource } from "./tag-source";
 import type { IngredientTagSource } from "./tag-source";

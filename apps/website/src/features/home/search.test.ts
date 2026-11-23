@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { allSearchSchema, compactAllSearch } from "../all/search";
+import { catalogSearchSchema, compactCatalogSearch } from "../catalog/search";
 import { createHomeSearch } from "./search";
 
 describe("首页搜索", () => {
@@ -13,8 +13,8 @@ describe("首页搜索", () => {
     expect(search?.items.tags).toEqual([]);
     expect(search?.items.categories).toEqual([]);
     expect(search?.layout).toBeUndefined();
-    expect(allSearchSchema.parse(JSON.parse(JSON.stringify(compactAllSearch(search!))))).toEqual(
-      search,
-    );
+    expect(
+      catalogSearchSchema.parse(JSON.parse(JSON.stringify(compactCatalogSearch(search!)))),
+    ).toEqual(search);
   });
 });

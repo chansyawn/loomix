@@ -1,18 +1,18 @@
 import { Link } from "@tanstack/react-router";
-import type { IngredientItem } from "../collection-view";
-import { recordLocation } from "../collection/item-route";
-import { recordColumns, tableLinkClassName, textColumn } from "../collection/table-columns";
-import type { CollectionColumn } from "../collection/table-columns";
-import { useCollectionOrigin } from "@/features/collection/navigation";
+import type { IngredientItem } from "../omnidex-view";
+import { catalogEntryLocation } from "../omnidex/entry-location";
+import { recordColumns, tableLinkClassName, textColumn } from "../omnidex/table-columns";
+import type { ListColumn } from "../omnidex/table-columns";
+import { useOmnidexOrigin } from "@/features/omnidex/navigation";
 import { ingredientLeafTags } from "./model";
 import type { IngredientsData } from "./model";
 
 function IngredientLink({ item }: { item: IngredientItem }) {
-  const origin = useCollectionOrigin();
+  const origin = useOmnidexOrigin();
   return (
     <Link
-      {...recordLocation(item)}
-      state={{ collectionOrigin: origin }}
+      {...catalogEntryLocation(item)}
+      state={{ omnidexOrigin: origin }}
       className={tableLinkClassName}
       title={item.name}
     >
@@ -21,7 +21,7 @@ function IngredientLink({ item }: { item: IngredientItem }) {
   );
 }
 
-export function ingredientTableColumns(data: IngredientsData): CollectionColumn<IngredientItem>[] {
+export function ingredientTableColumns(data: IngredientsData): ListColumn<IngredientItem>[] {
   const [name] = recordColumns<IngredientItem>((item) => <IngredientLink item={item} />);
   return [
     { ...name!, header: "食材" },

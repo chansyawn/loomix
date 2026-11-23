@@ -96,13 +96,13 @@ export function verifyEvidence(
         `Required collection provenance ${entry.id}.${field}`,
       );
     }
-  for (const entry of dataset.catalog.creationCardSets)
+  for (const entry of dataset.catalog.inspoBoxes)
     for (const field of ["name", "acquisitionHint", "image"])
       assert.ok(
-        covered.has(`catalog.creationCardSets:${entry.id}:${field}`),
+        covered.has(`catalog.inspoBoxes:${entry.id}:${field}`),
         `Required creation card set provenance ${entry.id}.${field}`,
       );
-  for (const collection of ["regions", "islands", "iconStyles"] as const)
+  for (const collection of ["regions", "islets", "iconStyles"] as const)
     for (const entry of dataset.starsea[collection])
       for (const field of Object.keys(entry)) {
         if (field === "id") continue;

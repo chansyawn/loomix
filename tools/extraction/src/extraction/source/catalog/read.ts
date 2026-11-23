@@ -20,7 +20,7 @@ import type { ContentContext } from "./context.ts";
 import { splitTags } from "./model.ts";
 import { ingredientExpressionItemIds } from "./recipes.ts";
 import type { readCraftingRecipes } from "./crafting/read.ts";
-import { readCreationCards } from "./crafting/cards.ts";
+import { readInspoCards } from "./crafting/cards.ts";
 import type { imageCollector } from "../images.ts";
 import { readCatalogMetadata } from "./metadata/read.ts";
 import type { NeighborOutfit } from "../neighbors/types.ts";
@@ -330,7 +330,7 @@ export function readCatalog({
     cards,
     sets,
     proofs: cardProofs,
-  } = readCreationCards(context, crafting.recipes, images, (id) => origin(id, "item"), tagIds);
+  } = readInspoCards(context, crafting.recipes, images, (id) => origin(id, "item"), tagIds);
   for (const card of cards) {
     if (admitted.has(card.id)) throw new Error(`Conflicting creation card identity ${card.id}`);
     admitted.add(card.id);
@@ -347,10 +347,10 @@ export function readCatalog({
     ...context.ingredientCategoryBuild.associations.map((association) => association.itemId),
   ]);
   for (const item of items) {
-    if (item.kind === "creationCard")
+    if (item.kind === "inspoCard")
       for (const material of item.recipe.materials ?? []) references.add(material.itemId);
     if (item.kind === "plant") for (const drop of item.drops ?? []) references.add(drop.itemId);
-    if (item.kind === "neighborClothing" && item.playerItemId !== null)
+    if (item.kind === "neighborOutfit" && item.playerItemId !== null)
       references.add(item.playerItemId);
   }
   const referenced = readReferences(
@@ -362,7 +362,7 @@ export function readCatalog({
   items.sort((a, b) => a.id - b.id);
   collections.sort((a, b) => a.id - b.id);
   return {
-    catalog: { items, collections, creationCardSets: sets } satisfies CatalogObservation,
+    catalog: { items, collections, inspoBoxes: sets } satisfies CatalogObservation,
     proofs,
     crafting: crafting.audit,
   };

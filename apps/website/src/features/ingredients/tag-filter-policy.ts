@@ -1,8 +1,4 @@
-import {
-  TAG_LABEL_OVERRIDES,
-  TAG_LABEL_PREFIXES,
-  type TagLabelPolicy,
-} from "../collection/tags.ts";
+import { TAG_LABEL_OVERRIDES, TAG_LABEL_PREFIXES, type TagLabelPolicy } from "../omnidex/tags.ts";
 
 export type IngredientTagGroupKey =
   | "ingredientCategories"

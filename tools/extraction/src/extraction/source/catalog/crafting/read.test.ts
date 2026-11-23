@@ -22,7 +22,7 @@ function read(data: FixtureRows, finished: (cleanup: () => void) => void, ids = 
 test("仅收录正式家具关联的有效创想卡，记录排除原因", ({ onTestFinished }) => {
   const data = read(rows(), onTestFinished);
   expect(data.recipes).toMatchObject([
-    { id: 100, productId: 200, cardSetId: null, materials: [{ itemId: 300, quantity: 5 }] },
+    { id: 100, productId: 200, inspoBoxId: null, materials: [{ itemId: 300, quantity: 5 }] },
   ]);
   expect(data.audit.find((row) => row.id === 101)?.disposition).toBe("orphan_card");
   expect(data.audit.find((row) => row.id === 102)?.disposition).toBe("no_recipe");

@@ -1,14 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import { Card } from "@/ui/components/card";
-import { collectionNavigation, neighborsItem, starseaItem } from "../layout/navigation";
+import { catalogItem, omnidexNavigation, neighborsItem, starseaItem } from "../layout/navigation";
 
 const categories = [
-  ...collectionNavigation.items.filter((item) => item.to !== "/collections/all"),
+  ...omnidexNavigation.items.filter((item) => item.to !== catalogItem.to),
   neighborsItem,
   starseaItem,
 ];
 
-export function CollectionShortcuts() {
+export function OmnidexShortcuts() {
   return (
     <section aria-labelledby="home-categories">
       <h2 id="home-categories" className="mb-4 font-heading text-lg font-semibold">

@@ -181,7 +181,7 @@ export function buildDomainEvidence(
           fieldPath: "$",
           status: "confirmed",
           sources: [auditSource(proof.source)],
-          ruleId: "client.catalog.neighborClothing",
+          ruleId: "client.catalog.neighborOutfit",
           reasonCode: null,
         });
       continue;

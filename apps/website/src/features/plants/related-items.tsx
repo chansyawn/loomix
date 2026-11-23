@@ -1,8 +1,8 @@
-import type { IngredientItem } from "../collection-view";
-import { CollectionItemCard } from "../collection/collection-item-card";
-import { CreationCardFace } from "../collection/creation-card-face";
-import { recordLocation } from "../collection/item-route";
-import { useCollectionOrigin } from "@/features/collection/navigation";
+import type { IngredientItem } from "../omnidex-view";
+import { CatalogItemCard } from "../omnidex/catalog-item-card";
+import { InspoCardFace } from "../omnidex/inspo-card-face";
+import { catalogEntryLocation } from "../omnidex/entry-location";
+import { useOmnidexOrigin } from "@/features/omnidex/navigation";
 import type { PlantDrop, PlantDrops } from "./model";
 
 export function PlantRelatedItems({
@@ -14,7 +14,7 @@ export function PlantRelatedItems({
   items: IngredientItem[];
   unlistedCount?: number;
 }) {
-  const origin = useCollectionOrigin();
+  const origin = useOmnidexOrigin();
   if (!items.length && !unlistedCount) return null;
   return (
     <section aria-label={title} className="space-y-4">
@@ -22,15 +22,15 @@ export function PlantRelatedItems({
       <ul className="flex flex-wrap gap-3">
         {items.map((item) => (
           <li key={item.id} className="max-w-full min-w-0">
-            <CollectionItemCard
+            <CatalogItemCard
               item={item}
               itemId={item.id}
               link={
                 item.browsable === false
                   ? undefined
                   : {
-                      ...recordLocation(item),
-                      state: { collectionOrigin: origin },
+                      ...catalogEntryLocation(item),
+                      state: { omnidexOrigin: origin },
                     }
               }
             />
@@ -82,22 +82,22 @@ export function PlantDropsInfo({ drops }: { drops: PlantDrops }) {
   );
 }
 
-function PlantDropCard({ drop: { item, itemId, creationCard } }: { drop: PlantDrop }) {
-  const target = creationCard?.product ?? (item?.browsable !== false ? item : null);
+function PlantDropCard({ drop: { item, itemId, inspoCard } }: { drop: PlantDrop }) {
+  const target = inspoCard?.product ?? (item?.browsable !== false ? item : null);
   return (
-    <CollectionItemCard
+    <CatalogItemCard
       item={item}
       itemId={itemId}
-      link={target ? recordLocation(target) : undefined}
+      link={target ? catalogEntryLocation(target) : undefined}
       thumbnail={
-        creationCard ? (
+        inspoCard ? (
           <div
             aria-hidden="true"
             className="flex size-full items-center justify-center bg-muted p-2"
           >
-            <CreationCardFace
-              {...creationCard.face}
-              productName={creationCard.product.name}
+            <InspoCardFace
+              {...inspoCard.face}
+              productName={inspoCard.product.name}
               className="h-full w-auto"
             />
           </div>

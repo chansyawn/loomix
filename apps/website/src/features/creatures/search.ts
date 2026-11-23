@@ -1,6 +1,6 @@
 import type { SearchMiddleware } from "@tanstack/react-router";
 import { z } from "zod";
-import { collectionLayoutSchema } from "../collection/layout";
+import { listLayoutSchema } from "../omnidex/layout";
 
 export const missing = "__missing";
 export const ungrouped = "__ungrouped";
@@ -63,7 +63,7 @@ const seriesQuerySchema = viewQuerySchema
   .pick({ q: true, sort: true, qualities: true })
   .transform((query): ViewQuery => ({ ...emptyQuery(), ...query }));
 export const creaturesSearchSchema = z.object({
-  layout: collectionLayoutSchema,
+  layout: listLayoutSchema,
   view: z.enum(["items", "series"]).catch("items").default("items"),
   items: viewQuerySchema.prefault({}).catch(emptyQuery),
   series: seriesQuerySchema.prefault({}).catch(emptyQuery),

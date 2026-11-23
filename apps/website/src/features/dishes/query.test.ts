@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
-import type { DishItem, DishSeries } from "../collection-view.ts";
-import { flattenFilterOptions } from "../collection/filter-types";
+import type { DishItem, DishSeries } from "../omnidex-view.ts";
+import { flattenFilterOptions } from "../omnidex/filter-types";
 import {
   categoryExpression,
   ingredientsFixture,

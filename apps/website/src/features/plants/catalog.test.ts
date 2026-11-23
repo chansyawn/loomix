@@ -1,7 +1,7 @@
 import { createGameplayTagIndex } from "@loomix/schema/gameplay-tags";
 import { expect, test } from "vite-plus/test";
-import { addFixtureRecords, imageIndexFixture, catalogFixture } from "../collection-fixture";
-import { toCollectionView } from "../collection-view";
+import { addFixtureRecords, imageIndexFixture, catalogFixture } from "../omnidex-fixture";
+import { toOmnidexView } from "../omnidex-view";
 import {
   plantItemFixture,
   plantSeedFixture,
@@ -25,7 +25,7 @@ test("植物视图保留种子和单品关联，共享食材使用物品自身�
       seeds: [plantSeedFixture({ id: 30, plantIds: [1] })],
     }),
   });
-  const view = toCollectionView(
+  const view = toOmnidexView(
     catalog,
     imageIndexFixture(catalog),
     createGameplayTagIndex(gameplayTags.tags),
@@ -58,7 +58,7 @@ test("summarizes structured origins without parsing punctuation in localized lab
   );
   plant.tagIds = [1001, 1002];
   plant.acquisition = [{ sourceId: 1, label: "采集，限时活动" }];
-  const data = toCollectionView(
+  const data = toOmnidexView(
     catalog,
     imageIndexFixture(catalog),
     createGameplayTagIndex(gameplayTags.tags),
@@ -81,7 +81,7 @@ test("derives every seed for a plant from stage references without duplicate pro
       seeds: [plantSeedFixture({ id: 10 }), plantSeedFixture({ id: 11 })],
     }),
   });
-  const data = toCollectionView(
+  const data = toOmnidexView(
     catalog,
     imageIndexFixture(catalog),
     createGameplayTagIndex(gameplayTags.tags),
@@ -115,7 +115,7 @@ test("掉落保留来源树种与果实，系列按成员分组", () => {
   });
   catalog.items = catalog.items.filter((item) => item.id !== 3);
   catalog.items.push({ kind: "reference", id: 3, name: "树胶", description: null });
-  const data = toCollectionView(
+  const data = toOmnidexView(
     catalog,
     imageIndexFixture(catalog),
     createGameplayTagIndex(gameplayTags.tags),
@@ -124,7 +124,7 @@ test("掉落保留来源树种与果实，系列按成员分组", () => {
   expect(groups.map((group) => group.treeId)).toEqual([2, 1]);
   expect(groups[0].entries[0]).toMatchObject({
     item: { id: 3, name: "树胶", browsable: false },
-    creationCard: null,
+    inspoCard: null,
   });
   expect(groups[1].entries[1]).toMatchObject({ itemId: 4, source: "fruit" });
   expect(data.sourceTreesByItemId.get(3)?.map((item) => item.id)).toEqual([1, 2]);
@@ -147,16 +147,16 @@ test("树木掉落的创想卡共用配方卡面并指向产物", () => {
       image: { assetId: "chair.webp", variant: "icon" },
     },
     {
-      kind: "creationCard",
+      kind: "inspoCard",
       id: 3,
       name: "创想卡：木椅",
       image: { assetId: "card-icon.webp", variant: "icon" },
       front: { background: { assetId: "card-frame.webp", variant: "card-background" } },
-      cardSetId: null,
+      inspoBoxId: null,
       recipe: { productId: 2, materials: null },
     },
   );
-  const view = toCollectionView(
+  const view = toOmnidexView(
     catalog,
     imageIndexFixture(catalog),
     createGameplayTagIndex(gameplayTags.tags),
@@ -165,12 +165,12 @@ test("树木掉落的创想卡共用配方卡面并指向产物", () => {
   expect(drop).toMatchObject({
     itemId: 3,
     item: { name: "创想卡：木椅", browsable: false },
-    creationCard: {
-      face: view.furniture.items[0].creationCards[0].face,
+    inspoCard: {
+      face: view.furniture.items[0].inspoCards[0].face,
       product: { id: 2, name: "木椅" },
     },
   });
-  expect(drop.creationCard?.face.foreground).toBe("chair.webp");
+  expect(drop.inspoCard?.face.foreground).toBe("chair.webp");
 });
 
 test("flower and tree stage mappings include formal intermediate shrubs without linking fruit as a seed product", () => {
@@ -201,7 +201,7 @@ test("flower and tree stage mappings include formal intermediate shrubs without 
       seeds: [tree, flower],
     }),
   });
-  const data = toCollectionView(
+  const data = toOmnidexView(
     catalog,
     imageIndexFixture(catalog),
     createGameplayTagIndex(gameplayTags.tags),

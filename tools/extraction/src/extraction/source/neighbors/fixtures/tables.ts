@@ -137,7 +137,7 @@ export function fixtureRows(): FixtureRows {
         ...Array<Cell>(14).fill(null),
         10001010,
         ...Array<Cell>(10).fill(null),
-        "UISprite/Island.png",
+        "UISprite/Islet.png",
       ],
       [77, text("普通岛屿"), ...Array(14).fill(null), 7700],
     ],

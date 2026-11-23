@@ -1,5 +1,5 @@
 import type { GameplayTag, GameplayTagIndex } from "@loomix/schema/gameplay-tags";
-import { resolveTagFilterLabel } from "../collection/tags.ts";
+import { resolveTagFilterLabel } from "../omnidex/tags.ts";
 import {
   INGREDIENT_LABEL_POLICY,
   INGREDIENT_TAG_GROUPS,

@@ -1,5 +1,5 @@
-import { CollectionDetailLayout } from "../collection/detail-layout";
-import { RecordImage } from "../collection/record-image";
+import { DetailLayout } from "../omnidex/detail-layout";
+import { RecordImage } from "../omnidex/record-image";
 import type { PlantsDetail } from "./detail";
 import { PlantsCard } from "./plants-card";
 import { SeedGrowthStages } from "./seed-growth";
@@ -14,7 +14,7 @@ export function SeedDetailPage({ detail }: { detail: Extract<PlantsDetail, { kin
   if (growth.kind === "crop")
     fields.push(["收获茬数", growth.harvestCount === null ? null : `${growth.harvestCount} 茬`]);
   return (
-    <CollectionDetailLayout
+    <DetailLayout
       image={<RecordImage image={record.image} name={record.name} eager />}
       title={record.name}
       quality={record.quality}
@@ -38,6 +38,6 @@ export function SeedDetailPage({ detail }: { detail: Extract<PlantsDetail, { kin
           </div>
         </section>
       )}
-    </CollectionDetailLayout>
+    </DetailLayout>
   );
 }

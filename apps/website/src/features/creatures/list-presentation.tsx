@@ -1,11 +1,11 @@
 import { BugIcon, LayersIcon } from "lucide-react";
-import { CollectionCardSkeleton } from "../collection/card-skeleton";
-import { compactGrid, wideGrid } from "../collection/grid-layout";
-import type { CollectionTab } from "../collection/page";
+import { ListCardSkeleton } from "../omnidex/card-skeleton";
+import { compactGrid, wideGrid } from "../omnidex/grid-layout";
+import type { ListTab } from "../omnidex/page";
 import type { View } from "./search";
 
 export const title = "生物";
-export const tabs: CollectionTab<"items" | "series">[] = [
+export const tabs: ListTab<"items" | "series">[] = [
   { value: "items", label: "生物", icon: <BugIcon /> },
   { value: "series", label: "生物系列", icon: <LayersIcon /> },
 ];
@@ -18,7 +18,7 @@ export function listPresentation(view: View) {
     ...entry,
     grid: view === "items" ? compactGrid(78) : wideGrid(124),
     card: (
-      <CollectionCardSkeleton
+      <ListCardSkeleton
         imageClassName={view === "series" ? "aspect-2/1" : "aspect-square"}
         description={view === "series"}
         tags

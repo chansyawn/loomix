@@ -1,28 +1,28 @@
+import { catalogEntryLocation } from "@/features/omnidex/entry-location";
 import { Link } from "@tanstack/react-router";
-import type { ClothingSet } from "../collection-view";
+import type { ClothingOutfit } from "../omnidex-view";
 import {
-  formatNeighborClothingBodyTypes,
-  formatNeighborClothingPrice,
-} from "../neighbor-clothing/presentation";
+  formatNeighborOutfitBodyTypes,
+  formatNeighborOutfitPrice,
+} from "../neighbor-outfit/presentation";
 import {
   recordColumns,
   textColumn,
   tableLinkClassName,
   MembershipCell,
-} from "../collection/table-columns";
-import type { CollectionColumn } from "../collection/table-columns";
-import { useCollectionOrigin } from "@/features/collection/navigation";
-import { indexMembership } from "../collection/membership";
+} from "../omnidex/table-columns";
+import type { ListColumn } from "../omnidex/table-columns";
+import { useOmnidexOrigin } from "@/features/omnidex/navigation";
+import { indexMembership } from "../omnidex/membership";
 import type { View } from "./search";
 import type { ClothingRow } from "./data";
 
 function NameLink({ record }: { record: ClothingRow }) {
-  const origin = useCollectionOrigin();
+  const origin = useOmnidexOrigin();
   return (
     <Link
-      to="/collections/records/$id"
-      params={{ id: String(record.id) }}
-      state={{ collectionOrigin: origin }}
+      {...catalogEntryLocation(record)}
+      state={{ omnidexOrigin: origin }}
       className={tableLinkClassName}
       title={record.name}
     >
@@ -31,8 +31,8 @@ function NameLink({ record }: { record: ClothingRow }) {
   );
 }
 
-function MemberLinks({ groups, complete }: { groups: ClothingSet[]; complete: boolean }) {
-  const origin = useCollectionOrigin();
+function MemberLinks({ groups, complete }: { groups: ClothingOutfit[]; complete: boolean }) {
+  const origin = useOmnidexOrigin();
   return (
     <MembershipCell
       groups={groups}
@@ -41,9 +41,8 @@ function MemberLinks({ groups, complete }: { groups: ClothingSet[]; complete: bo
       renderLink={(entry) => (
         <Link
           key={entry.id}
-          to="/collections/records/$id"
-          params={{ id: String(entry.id) }}
-          state={{ collectionOrigin: origin }}
+          {...catalogEntryLocation(entry)}
+          state={{ omnidexOrigin: origin }}
           className={tableLinkClassName}
         >
           {entry.name}
@@ -55,10 +54,10 @@ function MemberLinks({ groups, complete }: { groups: ClothingSet[]; complete: bo
 
 export function clothingTableColumns(
   view: View,
-  groups: ClothingSet[] = [],
-): CollectionColumn<ClothingRow>[] {
+  groups: ClothingOutfit[] = [],
+): ListColumn<ClothingRow>[] {
   const common = recordColumns<ClothingRow>((record) => <NameLink record={record} />);
-  if (view === "sets")
+  if (view === "outfits")
     return [
       ...common,
 
@@ -77,17 +76,17 @@ export function clothingTableColumns(
       ),
       textColumn("description", "描述", 320, (record) => record.description),
     ];
-  if (view === "neighborClothing")
+  if (view === "neighborOutfit")
     return [
       ...common,
       textColumn("category", "部位", 112, (record) =>
         "category" in record ? record.category : null,
       ),
       textColumn("bodyTypes", "可用体型", 176, (record) =>
-        "bodyTypes" in record ? formatNeighborClothingBodyTypes(record.bodyTypes) : null,
+        "bodyTypes" in record ? formatNeighborOutfitBodyTypes(record.bodyTypes) : null,
       ),
       textColumn("price", "配置价格", 176, (record) =>
-        "price" in record ? formatNeighborClothingPrice(record.price) : null,
+        "price" in record ? formatNeighborOutfitPrice(record.price) : null,
       ),
     ];
   const memberships = indexMembership(groups, (group) => group.componentIds);
@@ -104,7 +103,7 @@ export function clothingTableColumns(
       "styles" in record ? record.acquisition : null,
     ),
     {
-      id: "sets",
+      id: "outfits",
       header: "所属套装",
       width: 240,
       cell: (record) => (

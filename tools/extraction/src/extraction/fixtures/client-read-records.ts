@@ -9,7 +9,7 @@ export function clientReadRecordsFixture(datasetId = "c".repeat(64)): ClientRead
     context: { ...dataset.context, datasetId },
     source: dataset.source,
     gameplayTags: dataset.gameplayTags,
-    catalog: { items: [], collections: [], creationCardSets: [] },
+    catalog: { items: [], collections: [], inspoBoxes: [] },
     ingredientItemIds: [],
     neighbors: {
       source: dataset.source,
@@ -19,11 +19,11 @@ export function clientReadRecordsFixture(datasetId = "c".repeat(64)): ClientRead
       giftPreferences: [],
     },
     starsea: {
-      data: { regions: [], islands: [], iconStyles: [] },
+      data: { regions: [], islets: [], iconStyles: [] },
       proofs: [],
       diagnostics: {
         regions: [],
-        islands: [],
+        islets: [],
         encounters: [],
         iconStyles: [],
         resourceProfiles: [],

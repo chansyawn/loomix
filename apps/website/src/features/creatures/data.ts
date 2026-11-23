@@ -1,8 +1,8 @@
-import { loadCollectionView } from "../collection-loader.ts";
-import type { CollectionView } from "../collection-view.ts";
+import { loadOmnidexView } from "../omnidex-loader.ts";
+import type { OmnidexView } from "../omnidex-view.ts";
 
-export type CreaturesData = CollectionView["creatures"];
+export type CreaturesData = OmnidexView["creatures"];
 
 export async function loadCreatures(): Promise<CreaturesData> {
-  return (await loadCollectionView()).creatures;
+  return (await loadOmnidexView()).creatures;
 }

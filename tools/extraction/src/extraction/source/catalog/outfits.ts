@@ -16,7 +16,7 @@ export function readOutfits(
   const { tables } = context;
   const metadata = readCatalogMetadata(tables, context.gameplayTags.index);
   const proofs: SourceProof[] = [];
-  const items = outfits.map((outfit): WithImageUses<ItemOf<"neighborClothing">> => {
+  const items = outfits.map((outfit): WithImageUses<ItemOf<"neighborOutfit">> => {
     const rows = tables.rows(325).filter((row) => tables.id(row) === outfit.id);
     const qualities = rows.map((row) => tables.uint(row, 15, 0));
     if (new Set(qualities).size > 1)
@@ -27,9 +27,9 @@ export function readOutfits(
     if (!use) throw new Error(`Missing neighbor clothing image ${outfit.id}`);
     const origin = acquisition(context, outfit.id);
     const tags = metadata.record(outfit.id);
-    const value: WithImageUses<ItemOf<"neighborClothing">> = {
+    const value: WithImageUses<ItemOf<"neighborOutfit">> = {
       id: outfit.id,
-      kind: "neighborClothing",
+      kind: "neighborOutfit",
       name: outfit.nameZh,
       description: outfit.descriptionZh,
       quality: qualities[0] ?? 0,
@@ -62,7 +62,7 @@ export function readOutfits(
         field,
         status: value[field] === null ? "absent" : "confirmed",
         sources,
-        ruleId: "client.neighborClothing.explicit_configuration",
+        ruleId: "client.neighborOutfit.explicit_configuration",
         reasonCode: value[field] === null ? "not_configured" : null,
       });
     proofs.push({
@@ -81,7 +81,7 @@ export function readOutfits(
             })),
           )
         : sources,
-      ruleId: "client.neighborClothing.quality",
+      ruleId: "client.neighborOutfit.quality",
       reasonCode: null,
     });
     proofs.push({

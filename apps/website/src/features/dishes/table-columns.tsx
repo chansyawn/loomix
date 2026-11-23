@@ -1,26 +1,26 @@
+import { catalogEntryLocation } from "@/features/omnidex/entry-location";
 import { Link } from "@tanstack/react-router";
-import type { DishItem, DishSeries } from "../collection-view";
+import type { DishItem, DishSeries } from "../omnidex-view";
 import {
   recordColumns,
   textColumn,
   tableLinkClassName,
   MembershipCell,
-} from "../collection/table-columns";
-import type { CollectionColumn } from "../collection/table-columns";
-import { useCollectionOrigin } from "@/features/collection/navigation";
-import { indexMembership } from "../collection/membership";
+} from "../omnidex/table-columns";
+import type { ListColumn } from "../omnidex/table-columns";
+import { useOmnidexOrigin } from "@/features/omnidex/navigation";
+import { indexMembership } from "../omnidex/membership";
 import { unlockConditionLabel, effectSummary, formatTastes } from "./presentation";
 import type { DishView as View } from "./search";
 
 export type DishesRow = DishItem | DishSeries;
 
 function NameLink({ record }: { record: DishesRow }) {
-  const origin = useCollectionOrigin();
+  const origin = useOmnidexOrigin();
   return (
     <Link
-      to="/collections/records/$id"
-      params={{ id: String(record.id) }}
-      state={{ collectionOrigin: origin }}
+      {...catalogEntryLocation(record)}
+      state={{ omnidexOrigin: origin }}
       className={tableLinkClassName}
       title={record.name}
     >
@@ -30,7 +30,7 @@ function NameLink({ record }: { record: DishesRow }) {
 }
 
 function MemberLinks({ groups, complete }: { groups: DishSeries[]; complete: boolean }) {
-  const origin = useCollectionOrigin();
+  const origin = useOmnidexOrigin();
   return (
     <MembershipCell
       groups={groups}
@@ -39,9 +39,8 @@ function MemberLinks({ groups, complete }: { groups: DishSeries[]; complete: boo
       renderLink={(entry) => (
         <Link
           key={entry.id}
-          to="/collections/records/$id"
-          params={{ id: String(entry.id) }}
-          state={{ collectionOrigin: origin }}
+          {...catalogEntryLocation(entry)}
+          state={{ omnidexOrigin: origin }}
           className={tableLinkClassName}
         >
           {entry.name}
@@ -51,10 +50,7 @@ function MemberLinks({ groups, complete }: { groups: DishSeries[]; complete: boo
   );
 }
 
-export function dishesTableColumns(
-  view: View,
-  groups: DishSeries[] = [],
-): CollectionColumn<DishesRow>[] {
+export function dishesTableColumns(view: View, groups: DishSeries[] = []): ListColumn<DishesRow>[] {
   const common = recordColumns<DishesRow>((record) => <NameLink record={record} />);
   if (view === "series")
     return [

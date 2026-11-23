@@ -1,16 +1,16 @@
-import { acquisitionLabels } from "../collection/acquisition";
-import { indexMembership } from "../collection/membership";
-import type { PlantItem, PlantSeries } from "../collection-view.ts";
+import { acquisitionLabels } from "../omnidex/acquisition";
+import { indexMembership } from "../omnidex/membership";
+import type { PlantItem, PlantSeries } from "../omnidex-view.ts";
 import type { PlantsData } from "./data";
 import { seedSeries } from "./model";
 import { missing, ungrouped } from "./search";
 import type { FilterKey, View, ViewQuery } from "./search";
-import type { FilterGroup as CollectionFilterGroup } from "@/features/collection/filter-panel";
-import { qualityNames } from "@/features/collection/quality";
+import type { FilterGroup as ListFilterGroup } from "@/features/omnidex/filter-panel";
+import { qualityNames } from "@/features/omnidex/quality";
 import { createNameMatcher } from "@/infrastructure/name-search";
 
 export type Option = { value: string; label: string };
-export type FilterGroup = CollectionFilterGroup<FilterKey>;
+export type FilterGroup = ListFilterGroup<FilterKey>;
 
 export function splitValues(value: string | null): string[] {
   return value

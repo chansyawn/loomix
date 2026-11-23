@@ -1,5 +1,5 @@
-import { CollectionPage } from "../collection/page";
-import { saveCollectionLayout, useCollectionLayout } from "../collection/use-collection-layout";
+import { ListPage } from "../omnidex/page";
+import { saveListLayout, useListLayout } from "../omnidex/use-list-layout";
 import { IngredientsBrowser } from "../ingredients/browser";
 import type { DishesBrowserData } from "./data";
 import type { DishesSearch } from "./search";
@@ -17,9 +17,9 @@ export function DishesPage({
   search: DishesSearch;
   onSearchChange: (update: SearchUpdate, replace?: boolean) => Promise<void>;
 }) {
-  const layout = useCollectionLayout(search.layout);
+  const layout = useListLayout(search.layout);
   return (
-    <CollectionPage
+    <ListPage
       title={title}
       tabs={tabs.map((tab) => ({
         ...tab,
@@ -41,7 +41,7 @@ export function DishesPage({
             )
           }
           onLayoutChange={(next) => {
-            saveCollectionLayout(next);
+            saveListLayout(next);
             void onSearchChange((previous) => ({ ...previous, layout: next }));
           }}
         />
@@ -52,6 +52,6 @@ export function DishesPage({
           onSearchChange={onSearchChange}
         />
       )}
-    </CollectionPage>
+    </ListPage>
   );
 }

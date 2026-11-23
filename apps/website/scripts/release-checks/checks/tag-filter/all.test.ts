@@ -1,5 +1,5 @@
 import { expect, test } from "vite-plus/test";
-import { ALL_TAG_FILTER_POLICY } from "../../../../src/features/all/tag-filter-policy.ts";
+import { CATALOG_TAG_FILTER_POLICY } from "../../../../src/features/catalog/tag-filter-policy.ts";
 import { checkAllTagFilter } from "./all.ts";
 import { allFilterFixture } from "../fixture.ts";
 import type { TagFilterFixture } from "../fixture.ts";
@@ -57,7 +57,7 @@ test("报告可见标签中的内部命名", () => {
     path: `标签 ${child.id}`,
     message: "可见标签仍含内部命名：坏_标签",
   });
-  expect(ALL_TAG_FILTER_POLICY.rootNames).toContain("食材");
+  expect(CATALOG_TAG_FILTER_POLICY.rootNames).toContain("食材");
 });
 
 test("报告同级重名", () => {

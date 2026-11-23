@@ -40,8 +40,8 @@ export const ItemSchema = z.discriminatedUnion("kind", [
     size: z.strictObject({ width: z.number().positive(), depth: z.number().positive() }).nullable(),
   }),
   item.extend({
-    kind: z.literal("creationCard"),
-    cardSetId: IdSchema.nullable(),
+    kind: z.literal("inspoCard"),
+    inspoBoxId: IdSchema.nullable(),
     recipe: CraftingRecipeSchema,
     front: z.strictObject({
       background: ImageRefSchema.extend({ variant: z.literal("card-background") }),
@@ -50,7 +50,7 @@ export const ItemSchema = z.discriminatedUnion("kind", [
   categorized.extend({ kind: z.literal("clothing") }),
   categorized.extend({ kind: z.literal("appearance") }),
   categorized.extend({
-    kind: z.literal("neighborClothing"),
+    kind: z.literal("neighborOutfit"),
     neighborId: IdSchema.nullable(),
     playerItemId: IdSchema.nullable(),
     bodyTypes: BodyTypeSchema.array().min(1),

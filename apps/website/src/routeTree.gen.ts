@@ -10,19 +10,19 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CatalogRouteImport } from './routes/catalog'
+import { Route as ClothingRouteImport } from './routes/clothing'
+import { Route as CreaturesRouteImport } from './routes/creatures'
+import { Route as DishesRouteImport } from './routes/dishes'
+import { Route as FurnitureRouteImport } from './routes/furniture'
+import { Route as MiscellaneousRouteImport } from './routes/miscellaneous'
 import { Route as NeighborsRouteImport } from './routes/neighbors'
+import { Route as PlantsRouteImport } from './routes/plants'
 import { Route as StarseaRouteImport } from './routes/starsea'
 import { Route as VignettesRouteImport } from './routes/vignettes'
-import { Route as CollectionsAllRouteImport } from './routes/collections.all'
-import { Route as CollectionsClothingRouteImport } from './routes/collections.clothing'
-import { Route as CollectionsCreaturesRouteImport } from './routes/collections.creatures'
-import { Route as CollectionsDishesRouteImport } from './routes/collections.dishes'
-import { Route as CollectionsFurnitureRouteImport } from './routes/collections.furniture'
-import { Route as CollectionsMiscellanyRouteImport } from './routes/collections.miscellany'
-import { Route as CollectionsPlantsRouteImport } from './routes/collections.plants'
+import { Route as CatalogIdRouteImport } from './routes/catalog_.$id'
 import { Route as NeighborsIdRouteImport } from './routes/neighbors_.$id'
 import { Route as VignettesIdRouteImport } from './routes/vignettes_.$id'
-import { Route as CollectionsRecordsIdRouteImport } from './routes/collections.records.$id'
 import { Route as StarseaIsletsIdRouteImport } from './routes/starsea_.islets.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -30,9 +30,44 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CatalogRoute = CatalogRouteImport.update({
+  id: '/catalog',
+  path: '/catalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClothingRoute = ClothingRouteImport.update({
+  id: '/clothing',
+  path: '/clothing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CreaturesRoute = CreaturesRouteImport.update({
+  id: '/creatures',
+  path: '/creatures',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DishesRoute = DishesRouteImport.update({
+  id: '/dishes',
+  path: '/dishes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FurnitureRoute = FurnitureRouteImport.update({
+  id: '/furniture',
+  path: '/furniture',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MiscellaneousRoute = MiscellaneousRouteImport.update({
+  id: '/miscellaneous',
+  path: '/miscellaneous',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NeighborsRoute = NeighborsRouteImport.update({
   id: '/neighbors',
   path: '/neighbors',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlantsRoute = PlantsRouteImport.update({
+  id: '/plants',
+  path: '/plants',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StarseaRoute = StarseaRouteImport.update({
@@ -45,39 +80,9 @@ const VignettesRoute = VignettesRouteImport.update({
   path: '/vignettes',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CollectionsAllRoute = CollectionsAllRouteImport.update({
-  id: '/collections/all',
-  path: '/collections/all',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CollectionsClothingRoute = CollectionsClothingRouteImport.update({
-  id: '/collections/clothing',
-  path: '/collections/clothing',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CollectionsCreaturesRoute = CollectionsCreaturesRouteImport.update({
-  id: '/collections/creatures',
-  path: '/collections/creatures',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CollectionsDishesRoute = CollectionsDishesRouteImport.update({
-  id: '/collections/dishes',
-  path: '/collections/dishes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CollectionsFurnitureRoute = CollectionsFurnitureRouteImport.update({
-  id: '/collections/furniture',
-  path: '/collections/furniture',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CollectionsMiscellanyRoute = CollectionsMiscellanyRouteImport.update({
-  id: '/collections/miscellany',
-  path: '/collections/miscellany',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CollectionsPlantsRoute = CollectionsPlantsRouteImport.update({
-  id: '/collections/plants',
-  path: '/collections/plants',
+const CatalogIdRoute = CatalogIdRouteImport.update({
+  id: '/catalog_/$id',
+  path: '/catalog/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NeighborsIdRoute = NeighborsIdRouteImport.update({
@@ -90,11 +95,6 @@ const VignettesIdRoute = VignettesIdRouteImport.update({
   path: '/vignettes/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CollectionsRecordsIdRoute = CollectionsRecordsIdRouteImport.update({
-  id: '/collections/records/$id',
-  path: '/collections/records/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const StarseaIsletsIdRoute = StarseaIsletsIdRouteImport.update({
   id: '/starsea_/islets/$id',
   path: '/starsea/islets/$id',
@@ -103,125 +103,125 @@ const StarseaIsletsIdRoute = StarseaIsletsIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/catalog': typeof CatalogRoute
+  '/clothing': typeof ClothingRoute
+  '/creatures': typeof CreaturesRoute
+  '/dishes': typeof DishesRoute
+  '/furniture': typeof FurnitureRoute
+  '/miscellaneous': typeof MiscellaneousRoute
   '/neighbors': typeof NeighborsRoute
+  '/plants': typeof PlantsRoute
   '/starsea': typeof StarseaRoute
   '/vignettes': typeof VignettesRoute
-  '/collections/all': typeof CollectionsAllRoute
-  '/collections/clothing': typeof CollectionsClothingRoute
-  '/collections/creatures': typeof CollectionsCreaturesRoute
-  '/collections/dishes': typeof CollectionsDishesRoute
-  '/collections/furniture': typeof CollectionsFurnitureRoute
-  '/collections/miscellany': typeof CollectionsMiscellanyRoute
-  '/collections/plants': typeof CollectionsPlantsRoute
+  '/catalog/$id': typeof CatalogIdRoute
   '/neighbors/$id': typeof NeighborsIdRoute
   '/vignettes/$id': typeof VignettesIdRoute
-  '/collections/records/$id': typeof CollectionsRecordsIdRoute
   '/starsea/islets/$id': typeof StarseaIsletsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/catalog': typeof CatalogRoute
+  '/clothing': typeof ClothingRoute
+  '/creatures': typeof CreaturesRoute
+  '/dishes': typeof DishesRoute
+  '/furniture': typeof FurnitureRoute
+  '/miscellaneous': typeof MiscellaneousRoute
   '/neighbors': typeof NeighborsRoute
+  '/plants': typeof PlantsRoute
   '/starsea': typeof StarseaRoute
   '/vignettes': typeof VignettesRoute
-  '/collections/all': typeof CollectionsAllRoute
-  '/collections/clothing': typeof CollectionsClothingRoute
-  '/collections/creatures': typeof CollectionsCreaturesRoute
-  '/collections/dishes': typeof CollectionsDishesRoute
-  '/collections/furniture': typeof CollectionsFurnitureRoute
-  '/collections/miscellany': typeof CollectionsMiscellanyRoute
-  '/collections/plants': typeof CollectionsPlantsRoute
+  '/catalog/$id': typeof CatalogIdRoute
   '/neighbors/$id': typeof NeighborsIdRoute
   '/vignettes/$id': typeof VignettesIdRoute
-  '/collections/records/$id': typeof CollectionsRecordsIdRoute
   '/starsea/islets/$id': typeof StarseaIsletsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/catalog': typeof CatalogRoute
+  '/clothing': typeof ClothingRoute
+  '/creatures': typeof CreaturesRoute
+  '/dishes': typeof DishesRoute
+  '/furniture': typeof FurnitureRoute
+  '/miscellaneous': typeof MiscellaneousRoute
   '/neighbors': typeof NeighborsRoute
+  '/plants': typeof PlantsRoute
   '/starsea': typeof StarseaRoute
   '/vignettes': typeof VignettesRoute
-  '/collections/all': typeof CollectionsAllRoute
-  '/collections/clothing': typeof CollectionsClothingRoute
-  '/collections/creatures': typeof CollectionsCreaturesRoute
-  '/collections/dishes': typeof CollectionsDishesRoute
-  '/collections/furniture': typeof CollectionsFurnitureRoute
-  '/collections/miscellany': typeof CollectionsMiscellanyRoute
-  '/collections/plants': typeof CollectionsPlantsRoute
+  '/catalog_/$id': typeof CatalogIdRoute
   '/neighbors_/$id': typeof NeighborsIdRoute
   '/vignettes_/$id': typeof VignettesIdRoute
-  '/collections/records/$id': typeof CollectionsRecordsIdRoute
   '/starsea_/islets/$id': typeof StarseaIsletsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/catalog'
+    | '/clothing'
+    | '/creatures'
+    | '/dishes'
+    | '/furniture'
+    | '/miscellaneous'
     | '/neighbors'
+    | '/plants'
     | '/starsea'
     | '/vignettes'
-    | '/collections/all'
-    | '/collections/clothing'
-    | '/collections/creatures'
-    | '/collections/dishes'
-    | '/collections/furniture'
-    | '/collections/miscellany'
-    | '/collections/plants'
+    | '/catalog/$id'
     | '/neighbors/$id'
     | '/vignettes/$id'
-    | '/collections/records/$id'
     | '/starsea/islets/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/catalog'
+    | '/clothing'
+    | '/creatures'
+    | '/dishes'
+    | '/furniture'
+    | '/miscellaneous'
     | '/neighbors'
+    | '/plants'
     | '/starsea'
     | '/vignettes'
-    | '/collections/all'
-    | '/collections/clothing'
-    | '/collections/creatures'
-    | '/collections/dishes'
-    | '/collections/furniture'
-    | '/collections/miscellany'
-    | '/collections/plants'
+    | '/catalog/$id'
     | '/neighbors/$id'
     | '/vignettes/$id'
-    | '/collections/records/$id'
     | '/starsea/islets/$id'
   id:
     | '__root__'
     | '/'
+    | '/catalog'
+    | '/clothing'
+    | '/creatures'
+    | '/dishes'
+    | '/furniture'
+    | '/miscellaneous'
     | '/neighbors'
+    | '/plants'
     | '/starsea'
     | '/vignettes'
-    | '/collections/all'
-    | '/collections/clothing'
-    | '/collections/creatures'
-    | '/collections/dishes'
-    | '/collections/furniture'
-    | '/collections/miscellany'
-    | '/collections/plants'
+    | '/catalog_/$id'
     | '/neighbors_/$id'
     | '/vignettes_/$id'
-    | '/collections/records/$id'
     | '/starsea_/islets/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CatalogRoute: typeof CatalogRoute
+  ClothingRoute: typeof ClothingRoute
+  CreaturesRoute: typeof CreaturesRoute
+  DishesRoute: typeof DishesRoute
+  FurnitureRoute: typeof FurnitureRoute
+  MiscellaneousRoute: typeof MiscellaneousRoute
   NeighborsRoute: typeof NeighborsRoute
+  PlantsRoute: typeof PlantsRoute
   StarseaRoute: typeof StarseaRoute
   VignettesRoute: typeof VignettesRoute
-  CollectionsAllRoute: typeof CollectionsAllRoute
-  CollectionsClothingRoute: typeof CollectionsClothingRoute
-  CollectionsCreaturesRoute: typeof CollectionsCreaturesRoute
-  CollectionsDishesRoute: typeof CollectionsDishesRoute
-  CollectionsFurnitureRoute: typeof CollectionsFurnitureRoute
-  CollectionsMiscellanyRoute: typeof CollectionsMiscellanyRoute
-  CollectionsPlantsRoute: typeof CollectionsPlantsRoute
+  CatalogIdRoute: typeof CatalogIdRoute
   NeighborsIdRoute: typeof NeighborsIdRoute
   VignettesIdRoute: typeof VignettesIdRoute
-  CollectionsRecordsIdRoute: typeof CollectionsRecordsIdRoute
   StarseaIsletsIdRoute: typeof StarseaIsletsIdRoute
 }
 
@@ -234,11 +234,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/catalog': {
+      id: '/catalog'
+      path: '/catalog'
+      fullPath: '/catalog'
+      preLoaderRoute: typeof CatalogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clothing': {
+      id: '/clothing'
+      path: '/clothing'
+      fullPath: '/clothing'
+      preLoaderRoute: typeof ClothingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/creatures': {
+      id: '/creatures'
+      path: '/creatures'
+      fullPath: '/creatures'
+      preLoaderRoute: typeof CreaturesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dishes': {
+      id: '/dishes'
+      path: '/dishes'
+      fullPath: '/dishes'
+      preLoaderRoute: typeof DishesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/furniture': {
+      id: '/furniture'
+      path: '/furniture'
+      fullPath: '/furniture'
+      preLoaderRoute: typeof FurnitureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/miscellaneous': {
+      id: '/miscellaneous'
+      path: '/miscellaneous'
+      fullPath: '/miscellaneous'
+      preLoaderRoute: typeof MiscellaneousRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/neighbors': {
       id: '/neighbors'
       path: '/neighbors'
       fullPath: '/neighbors'
       preLoaderRoute: typeof NeighborsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plants': {
+      id: '/plants'
+      path: '/plants'
+      fullPath: '/plants'
+      preLoaderRoute: typeof PlantsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/starsea': {
@@ -255,53 +304,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VignettesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/collections/all': {
-      id: '/collections/all'
-      path: '/collections/all'
-      fullPath: '/collections/all'
-      preLoaderRoute: typeof CollectionsAllRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/collections/clothing': {
-      id: '/collections/clothing'
-      path: '/collections/clothing'
-      fullPath: '/collections/clothing'
-      preLoaderRoute: typeof CollectionsClothingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/collections/creatures': {
-      id: '/collections/creatures'
-      path: '/collections/creatures'
-      fullPath: '/collections/creatures'
-      preLoaderRoute: typeof CollectionsCreaturesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/collections/dishes': {
-      id: '/collections/dishes'
-      path: '/collections/dishes'
-      fullPath: '/collections/dishes'
-      preLoaderRoute: typeof CollectionsDishesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/collections/furniture': {
-      id: '/collections/furniture'
-      path: '/collections/furniture'
-      fullPath: '/collections/furniture'
-      preLoaderRoute: typeof CollectionsFurnitureRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/collections/miscellany': {
-      id: '/collections/miscellany'
-      path: '/collections/miscellany'
-      fullPath: '/collections/miscellany'
-      preLoaderRoute: typeof CollectionsMiscellanyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/collections/plants': {
-      id: '/collections/plants'
-      path: '/collections/plants'
-      fullPath: '/collections/plants'
-      preLoaderRoute: typeof CollectionsPlantsRouteImport
+    '/catalog_/$id': {
+      id: '/catalog_/$id'
+      path: '/catalog/$id'
+      fullPath: '/catalog/$id'
+      preLoaderRoute: typeof CatalogIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/neighbors_/$id': {
@@ -318,13 +325,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VignettesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/collections/records/$id': {
-      id: '/collections/records/$id'
-      path: '/collections/records/$id'
-      fullPath: '/collections/records/$id'
-      preLoaderRoute: typeof CollectionsRecordsIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/starsea_/islets/$id': {
       id: '/starsea_/islets/$id'
       path: '/starsea/islets/$id'
@@ -337,19 +337,19 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CatalogRoute: CatalogRoute,
+  ClothingRoute: ClothingRoute,
+  CreaturesRoute: CreaturesRoute,
+  DishesRoute: DishesRoute,
+  FurnitureRoute: FurnitureRoute,
+  MiscellaneousRoute: MiscellaneousRoute,
   NeighborsRoute: NeighborsRoute,
+  PlantsRoute: PlantsRoute,
   StarseaRoute: StarseaRoute,
   VignettesRoute: VignettesRoute,
-  CollectionsAllRoute: CollectionsAllRoute,
-  CollectionsClothingRoute: CollectionsClothingRoute,
-  CollectionsCreaturesRoute: CollectionsCreaturesRoute,
-  CollectionsDishesRoute: CollectionsDishesRoute,
-  CollectionsFurnitureRoute: CollectionsFurnitureRoute,
-  CollectionsMiscellanyRoute: CollectionsMiscellanyRoute,
-  CollectionsPlantsRoute: CollectionsPlantsRoute,
+  CatalogIdRoute: CatalogIdRoute,
   NeighborsIdRoute: NeighborsIdRoute,
   VignettesIdRoute: VignettesIdRoute,
-  CollectionsRecordsIdRoute: CollectionsRecordsIdRoute,
   StarseaIsletsIdRoute: StarseaIsletsIdRoute,
 }
 export const routeTree = rootRouteImport

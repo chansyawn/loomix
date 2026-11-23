@@ -1,22 +1,18 @@
 import { ClothingCard } from "./clothing-card";
 import { ClothingCounterpartSwitch } from "./counterpart-switch";
-import {
-  CollectionDetailLayout,
-  CollectionDetailExtras,
-  type CollectionDetailSection,
-} from "@/features/collection/detail-layout";
-import { RecordImage } from "@/features/collection/record-image";
+import { DetailLayout, DetailExtras, type DetailSection } from "@/features/omnidex/detail-layout";
+import { RecordImage } from "@/features/omnidex/record-image";
 import type { ClothingPageDetail } from "./detail";
-import { CollectionDetailNavigation } from "../collection/detail-navigation";
-import { formatNeighborClothingPrice } from "../neighbor-clothing/presentation";
+import { CatalogEntryNavigation } from "../omnidex/detail-navigation";
+import { formatNeighborOutfitPrice } from "../neighbor-outfit/presentation";
 
 export function ClothingDetailPage({ detail }: { detail: ClothingPageDetail }) {
   const { record, navigation, counterpart } = detail;
   const sections = clothingDetailSections(detail);
   return (
     <div className="flex min-w-0 flex-col gap-6">
-      {navigation && <CollectionDetailNavigation model={navigation} currentId={record.id} />}
-      <CollectionDetailLayout
+      {navigation && <CatalogEntryNavigation model={navigation} currentId={record.id} />}
+      <DetailLayout
         image={<RecordImage key={record.image} image={record.image} name={record.name} eager />}
         title={record.name}
         titleActions={
@@ -32,8 +28,8 @@ export function ClothingDetailPage({ detail }: { detail: ClothingPageDetail }) {
         }
         fields={clothingDetailFields(detail)}
       >
-        {sections.length > 0 && <CollectionDetailExtras sections={sections} />}
-      </CollectionDetailLayout>
+        {sections.length > 0 && <DetailExtras sections={sections} />}
+      </DetailLayout>
     </div>
   );
 }
@@ -52,21 +48,21 @@ function clothingDetailFields(detail: ClothingPageDetail): [string, string | nul
       return [["分类", detail.record.category]];
     case "set":
       return [
-        ["套装名称", detail.record.setName],
+        ["套装名称", detail.record.outfitName],
         ["成员数量", detail.items === null ? null : `${detail.items.length} 件服装`],
       ];
-    case "neighborClothing":
+    case "neighborOutfit":
       return [
         ["部位", detail.slotName],
         ["友邻", detail.neighborName],
         ["可用体型", detail.modelSizes],
-        ["配置价格", formatNeighborClothingPrice(detail.price)],
+        ["配置价格", formatNeighborOutfitPrice(detail.price)],
       ];
   }
 }
 
-function clothingDetailSections(detail: ClothingPageDetail): CollectionDetailSection[] {
-  const sections: CollectionDetailSection[] = [];
+function clothingDetailSections(detail: ClothingPageDetail): DetailSection[] {
+  const sections: DetailSection[] = [];
   if (detail.kind === "set" && detail.items?.length)
     sections.push({
       key: "related-clothing",

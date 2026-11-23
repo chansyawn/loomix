@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { buttonVariants } from "@/ui/components/button";
-import { recordLocation } from "../collection/item-route";
-import { useCollectionOrigin } from "../collection/navigation";
+import { catalogEntryLocation } from "../omnidex/entry-location";
+import { useOmnidexOrigin } from "../omnidex/navigation";
 import type { ClothingCounterpart } from "./counterpart";
 
 export function ClothingCounterpartSwitch({
@@ -11,12 +11,12 @@ export function ClothingCounterpartSwitch({
   counterpart: ClothingCounterpart;
   currentId: number;
 }) {
-  const origin = useCollectionOrigin();
+  const origin = useOmnidexOrigin();
   if (counterpart.kind === "player-link")
     return (
       <Link
-        {...recordLocation({ id: counterpart.playerId })}
-        state={{ collectionOrigin: origin }}
+        {...catalogEntryLocation({ id: counterpart.playerId })}
+        state={{ omnidexOrigin: origin }}
         resetScroll={false}
         className={buttonVariants({ variant: "outline", size: "sm" })}
       >
@@ -46,8 +46,8 @@ export function ClothingCounterpartSwitch({
         ) : (
           <Link
             key={id}
-            {...recordLocation({ id })}
-            state={{ collectionOrigin: origin }}
+            {...catalogEntryLocation({ id })}
+            state={{ omnidexOrigin: origin }}
             resetScroll={false}
             className={buttonVariants({ variant: "ghost", size: "sm" })}
           >

@@ -1,12 +1,12 @@
 import { z } from "zod";
-import { collectionLayoutSchema } from "@/features/collection/layout";
+import { listLayoutSchema } from "@/features/omnidex/layout";
 
 export const starseaSearchDefaults = { q: "", region: null, layout: "grid" } as const;
 
 export const starseaSearchSchema = z.object({
   q: z.string().catch(starseaSearchDefaults.q).default(starseaSearchDefaults.q),
   region: z.number().int().positive().nullable().catch(null).default(null),
-  layout: collectionLayoutSchema.transform((value) => value ?? starseaSearchDefaults.layout),
+  layout: listLayoutSchema.transform((value) => value ?? starseaSearchDefaults.layout),
 });
 
 export type StarseaSearch = z.output<typeof starseaSearchSchema>;

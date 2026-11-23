@@ -1,9 +1,9 @@
 export { extractNeighbors } from "./extract.ts";
 export {
-  NeighborClothingDatabaseSchema,
+  NeighborOutfitDatabaseSchema,
   NeighborDatabaseSchema,
-  parseNeighborClothingDatabase,
+  parseNeighborOutfitDatabase,
   parseNeighborDatabase,
 } from "./schema.ts";
-export { verifyNeighborClothing, verifyNeighbors } from "./verify.ts";
+export { verifyNeighborOutfit, verifyNeighbors } from "./verify.ts";
 export type * from "./types.ts";

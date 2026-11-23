@@ -5,8 +5,8 @@ import { readHouse } from "./housing.ts";
 import { readRoster, readStars, readStories } from "./adapters.ts";
 import { readGiftPreferences } from "./preferences.ts";
 import { readNeighborOutfits } from "./outfits.ts";
-import { compareText, normalizeNeighborClothing, normalizeNeighbors } from "./normalize.ts";
-import { parseNeighborClothingDatabase, parseNeighborDatabase } from "./schema.ts";
+import { compareText, normalizeNeighborOutfit, normalizeNeighbors } from "./normalize.ts";
+import { parseNeighborOutfitDatabase, parseNeighborDatabase } from "./schema.ts";
 import type {
   GiftPreferenceLevel,
   NeighborDatabase,
@@ -43,9 +43,9 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
     exclusions,
   );
   const outfitReadings = readNeighborOutfits(tables, accepted, records, exclusions);
-  const clothing = parseNeighborClothingDatabase({
+  const clothing = parseNeighborOutfitDatabase({
     source,
-    items: normalizeNeighborClothing(outfitReadings.map((reading) => reading.value)),
+    items: normalizeNeighborOutfit(outfitReadings.map((reading) => reading.value)),
   }).items;
   const database: NeighborDatabase = {
     source: { ...source },

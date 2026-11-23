@@ -1,9 +1,10 @@
+import { catalogItem } from "@/features/layout/navigation";
 import { Badge } from "@/ui/components/badge";
 import type { NeighborDetail } from "./data";
 import { Link } from "@tanstack/react-router";
-import { allSearchForTag } from "../all/search";
-import { recordLocation } from "../collection/item-route";
-import { RecordImage } from "../collection/record-image";
+import { catalogSearchForTag } from "../catalog/search";
+import { catalogEntryLocation } from "../omnidex/entry-location";
+import { RecordImage } from "../omnidex/record-image";
 
 export function NeighborPreferences({
   preferences,
@@ -54,7 +55,7 @@ export function NeighborPreferences({
                                 <span className={className}>{content}</span>
                               ) : (
                                 <Link
-                                  {...recordLocation({ id: item.recordId })}
+                                  {...catalogEntryLocation({ id: item.recordId })}
                                   className={`${className} outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring`}
                                 >
                                   {content}
@@ -76,7 +77,7 @@ export function NeighborPreferences({
                           key={tag.id}
                           variant="secondary"
                           className="max-w-full wrap-anywhere whitespace-normal"
-                          render={<Link to="/collections/all" search={allSearchForTag(tag.id)} />}
+                          render={<Link to={catalogItem.to} search={catalogSearchForTag(tag.id)} />}
                         >
                           {tag.name}
                         </Badge>

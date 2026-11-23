@@ -1,7 +1,7 @@
 import type { ImageIndex } from "@loomix/schema/assets";
 import type { Starsea } from "@loomix/schema/starsea";
 import { expect, test } from "vite-plus/test";
-import { addFixtureRecords, catalogFixture } from "../collection-fixture";
+import { addFixtureRecords, catalogFixture } from "../omnidex-fixture";
 import { neighborFixture } from "../neighbors/fixture";
 import { filterIslets } from "./query";
 import { toStarseaDetail, toStarseaList } from "./view";
@@ -25,12 +25,12 @@ function starseaFixture(): Starsea {
         unlockTip: null,
         mapImage: null,
         stationImage: null,
-        explorationIslandIds: [125, 24],
+        explorationIsletIds: [125, 24],
         encounters: [
-          { neighborId: 1, candidateIslandIds: [79, 125] },
-          { neighborId: 2, candidateIslandIds: [79, 76] },
-          { neighborId: 3, candidateIslandIds: null },
-          { neighborId: 4, candidateIslandIds: [] },
+          { neighborId: 1, candidateIsletIds: [79, 125] },
+          { neighborId: 2, candidateIsletIds: [79, 76] },
+          { neighborId: 3, candidateIsletIds: null },
+          { neighborId: 4, candidateIsletIds: [] },
         ],
       },
       {
@@ -40,11 +40,11 @@ function starseaFixture(): Starsea {
         unlockTip: null,
         mapImage: null,
         stationImage: null,
-        explorationIslandIds: [24],
-        encounters: [{ neighborId: 1, candidateIslandIds: [79] }],
+        explorationIsletIds: [24],
+        encounters: [{ neighborId: 1, candidateIsletIds: [79] }],
       },
     ],
-    islands: [24, 76, 79, 125, 999].map((id) => ({
+    islets: [24, 76, 79, 125, 999].map((id) => ({
       id,
       name: `星屿 ${id}`,
       iconStyleId: 1,
@@ -129,6 +129,6 @@ test("详情按星屿关联物资与友邻，区分空配置和空条目", () =>
 test("关联缺失时报告数据错误", () => {
   const starsea = starseaFixture();
   const { database, catalog } = neighborFixture();
-  starsea.islands = [];
+  starsea.islets = [];
   expect(() => toStarseaDetail(125, starsea, imageIndex, catalog, database)).toThrow("islet: 125");
 });

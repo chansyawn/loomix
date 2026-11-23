@@ -1,5 +1,5 @@
 import type { IngredientExpression } from "@loomix/schema/catalog";
-import type { CollectionView, DishItem, IngredientItem } from "../collection-view";
+import type { OmnidexView, DishItem, IngredientItem } from "../omnidex-view";
 import { ingredientLeafTags as leafTagsOf, ingredientUsageTags } from "./tag-filter";
 import type { IngredientTag, IngredientTagSource } from "./tag-source";
 
@@ -43,7 +43,7 @@ function flattenIndex(index: MatchIndex): Map<number, IngredientDishMatch[]> {
 }
 
 export function buildIngredientsData(
-  view: Pick<CollectionView, "ingredientTagSource" | "ingredientItemsById" | "dishes">,
+  view: Pick<OmnidexView, "ingredientTagSource" | "ingredientItemsById" | "dishes">,
 ): IngredientsData {
   const tagSource = view.ingredientTagSource;
   const itemsById = new Map<number, IngredientItem>();

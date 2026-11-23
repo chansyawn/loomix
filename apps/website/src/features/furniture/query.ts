@@ -1,14 +1,14 @@
 import { createNameMatcher } from "@/infrastructure/name-search";
-import type { FurnitureItem, FurnitureSet } from "../collection-view.ts";
-import { indexMembership } from "../collection/membership";
+import type { FurnitureItem, FurnitureSet } from "../omnidex-view.ts";
+import { indexMembership } from "../omnidex/membership";
 import type { FurnitureData } from "./data";
 import { categories, missing, ungrouped } from "./search";
 import type { FilterKey, View, ViewQuery } from "./search";
-import type { FilterGroup as CollectionFilterGroup } from "@/features/collection/filter-panel";
+import type { FilterGroup as ListFilterGroup } from "@/features/omnidex/filter-panel";
 
-import { qualityNames } from "@/features/collection/quality";
+import { qualityNames } from "@/features/omnidex/quality";
 export type Option = { value: string; label: string };
-export type FilterGroup = CollectionFilterGroup<FilterKey>;
+export type FilterGroup = ListFilterGroup<FilterKey>;
 
 export function splitValues(value: string | null): string[] {
   return value

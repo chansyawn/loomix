@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { Skeleton } from "@/ui/components/skeleton";
-import { RecordImage } from "@/features/collection/record-image";
-import { CollectionItemLink } from "@/features/collection/item-link";
-import type { PlantItem, PlantSeries } from "../collection-view";
+import { RecordImage } from "@/features/omnidex/record-image";
+import { CatalogItemLink } from "@/features/omnidex/item-link";
+import type { PlantItem, PlantSeries } from "../omnidex-view";
 import type { PlantsData } from "./data";
 import type { PlantSeed } from "./model";
 import {
@@ -10,14 +10,14 @@ import {
   textColumn,
   tableLinkClassName,
   MembershipCell,
-} from "../collection/table-columns";
-import type { CollectionColumn } from "../collection/table-columns";
-import { useCollectionOrigin } from "@/features/collection/navigation";
-import { acquisitionLabels } from "../collection/acquisition";
-import { indexMembership } from "../collection/membership";
+} from "../omnidex/table-columns";
+import type { ListColumn } from "../omnidex/table-columns";
+import { useOmnidexOrigin } from "@/features/omnidex/navigation";
+import { acquisitionLabels } from "../omnidex/acquisition";
+import { indexMembership } from "../omnidex/membership";
 import { seedSeries } from "./model";
 import type { View } from "./search";
-import { recordLocation } from "../collection/item-route";
+import { catalogEntryLocation } from "../omnidex/entry-location";
 import { PlantSeedLinks, SeedNameLink } from "./seed-info";
 
 export type PlantsRow = PlantItem | PlantSeries | PlantSeed;
@@ -27,12 +27,12 @@ function isSeedRow(record: PlantsRow): record is PlantSeed {
 }
 
 function NameLink({ record }: { record: PlantsRow }) {
-  const origin = useCollectionOrigin();
+  const origin = useOmnidexOrigin();
   if (isSeedRow(record)) return <SeedNameLink seed={record} />;
   return (
     <Link
-      {...recordLocation(record)}
-      state={{ collectionOrigin: origin }}
+      {...catalogEntryLocation(record)}
+      state={{ omnidexOrigin: origin }}
       className={tableLinkClassName}
       title={record.name}
     >
@@ -42,7 +42,7 @@ function NameLink({ record }: { record: PlantsRow }) {
 }
 
 function MemberLinks({ groups, complete }: { groups: PlantSeries[]; complete: boolean }) {
-  const origin = useCollectionOrigin();
+  const origin = useOmnidexOrigin();
   return (
     <MembershipCell
       groups={groups}
@@ -51,8 +51,8 @@ function MemberLinks({ groups, complete }: { groups: PlantSeries[]; complete: bo
       renderLink={(entry) => (
         <Link
           key={entry.id}
-          {...recordLocation(entry)}
-          state={{ collectionOrigin: origin }}
+          {...catalogEntryLocation(entry)}
+          state={{ omnidexOrigin: origin }}
           className={tableLinkClassName}
         >
           {entry.name}
@@ -69,14 +69,14 @@ function SeedProductLinks({
   seed: PlantSeed;
   itemRefs: PlantsData["itemRefs"] | undefined;
 }) {
-  const origin = useCollectionOrigin();
+  const origin = useOmnidexOrigin();
   if (!itemRefs) return null;
   return (
     <div className="flex flex-wrap gap-x-3 gap-y-1">
       {seed.plantIds.map((id) => {
         const product = itemRefs.get(id);
         return product ? (
-          <CollectionItemLink key={id} item={product} state={{ collectionOrigin: origin }} />
+          <CatalogItemLink key={id} item={product} state={{ omnidexOrigin: origin }} />
         ) : (
           <span key={id} className="text-muted-foreground">
             未收录
@@ -87,9 +87,7 @@ function SeedProductLinks({
   );
 }
 
-function seedTableColumns(
-  data?: Pick<PlantsData, "series" | "itemRefs">,
-): CollectionColumn<PlantsRow>[] {
+function seedTableColumns(data?: Pick<PlantsData, "series" | "itemRefs">): ListColumn<PlantsRow>[] {
   const groups = data?.series ?? [];
   const complete = groups.every((group) => group.plantIds !== null);
   return [
@@ -159,12 +157,12 @@ function seedTableColumns(
 export function plantsTableColumns(
   view: View,
   data?: Pick<PlantsData, "series" | "itemRefs">,
-): CollectionColumn<PlantsRow>[] {
+): ListColumn<PlantsRow>[] {
   if (view === "seeds") return seedTableColumns(data);
   const groups = data?.series ?? [];
   const common = recordColumns<PlantsRow>((record) => <NameLink record={record} />);
   const memberships = indexMembership(groups, (group) => group.plantIds);
-  const facts: CollectionColumn<PlantsRow>[] = [
+  const facts: ListColumn<PlantsRow>[] = [
     textColumn("acquisition", "获取来源", 224, (record) =>
       isSeedRow(record) ? null : record.summary.acquisition.join("、") || null,
     ),

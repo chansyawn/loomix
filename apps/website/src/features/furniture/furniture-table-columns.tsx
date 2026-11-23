@@ -1,25 +1,25 @@
+import { catalogEntryLocation } from "@/features/omnidex/entry-location";
 import { Link } from "@tanstack/react-router";
-import type { FurnitureItem, FurnitureSet } from "../collection-view";
+import type { FurnitureItem, FurnitureSet } from "../omnidex-view";
 import {
   recordColumns,
   textColumn,
   tableLinkClassName,
   MembershipCell,
-} from "../collection/table-columns";
-import type { CollectionColumn } from "../collection/table-columns";
-import { useCollectionOrigin } from "@/features/collection/navigation";
-import { indexMembership } from "../collection/membership";
+} from "../omnidex/table-columns";
+import type { ListColumn } from "../omnidex/table-columns";
+import { useOmnidexOrigin } from "@/features/omnidex/navigation";
+import { indexMembership } from "../omnidex/membership";
 import type { View } from "./search";
 
 export type FurnitureRow = FurnitureItem | FurnitureSet;
 
-function NameLink({ record, view }: { record: FurnitureRow; view: View }) {
-  const origin = useCollectionOrigin();
+function NameLink({ record }: { record: FurnitureRow }) {
+  const origin = useOmnidexOrigin();
   return (
     <Link
-      to={view === "items" ? "/collections/records/$id" : "/collections/records/$id"}
-      params={{ id: String(record.id) }}
-      state={{ collectionOrigin: origin }}
+      {...catalogEntryLocation(record)}
+      state={{ omnidexOrigin: origin }}
       className={tableLinkClassName}
       title={record.name}
     >
@@ -29,7 +29,7 @@ function NameLink({ record, view }: { record: FurnitureRow; view: View }) {
 }
 
 function MemberLinks({ groups, complete }: { groups: FurnitureSet[]; complete: boolean }) {
-  const origin = useCollectionOrigin();
+  const origin = useOmnidexOrigin();
   return (
     <MembershipCell
       groups={groups}
@@ -38,9 +38,8 @@ function MemberLinks({ groups, complete }: { groups: FurnitureSet[]; complete: b
       renderLink={(entry) => (
         <Link
           key={entry.id}
-          to="/collections/records/$id"
-          params={{ id: String(entry.id) }}
-          state={{ collectionOrigin: origin }}
+          {...catalogEntryLocation(entry)}
+          state={{ omnidexOrigin: origin }}
           className={tableLinkClassName}
         >
           {entry.name}
@@ -53,8 +52,8 @@ function MemberLinks({ groups, complete }: { groups: FurnitureSet[]; complete: b
 export function furnitureTableColumns(
   view: View,
   groups: FurnitureSet[] = [],
-): CollectionColumn<FurnitureRow>[] {
-  const common = recordColumns<FurnitureRow>((record) => <NameLink record={record} view={view} />);
+): ListColumn<FurnitureRow>[] {
+  const common = recordColumns<FurnitureRow>((record) => <NameLink record={record} />);
   if (view === "sets")
     return [
       ...common,

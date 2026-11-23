@@ -11,7 +11,7 @@ export function readCraftingRecipes(
 ) {
   const main = tables.byId(318);
   const sets = tables.byId(180);
-  const recipes: (CraftingRecipe & { id: number; cardSetId: number | null; row: TableRow })[] = [];
+  const recipes: (CraftingRecipe & { id: number; inspoBoxId: number | null; row: TableRow })[] = [];
   const audit = [];
   const recipeRows = tables.byId(568);
   for (const row of recipeRows.values()) {
@@ -38,10 +38,16 @@ export function readCraftingRecipes(
     });
     if (new Set(materials.map((material) => material.itemId)).size !== materials.length)
       throw new Error(`Duplicate crafting material ${id}`);
-    const cardSetId = tables.uint(row, 3);
-    if (cardSetId !== null && !sets.has(cardSetId))
-      throw new Error(`Unknown crafting collection ${id}:${cardSetId}`);
-    recipes.push({ id, productId, cardSetId, materials: materials.length ? materials : null, row });
+    const inspoBoxId = tables.uint(row, 3);
+    if (inspoBoxId !== null && !sets.has(inspoBoxId))
+      throw new Error(`Unknown crafting collection ${id}:${inspoBoxId}`);
+    recipes.push({
+      id,
+      productId,
+      inspoBoxId,
+      materials: materials.length ? materials : null,
+      row,
+    });
   }
   for (const row of main.values()) {
     const id = tables.id(row);

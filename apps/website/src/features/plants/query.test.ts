@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import type { PlantItem, PlantSeries } from "../collection-view.ts";
+import type { PlantItem, PlantSeries } from "../omnidex-view.ts";
 import type { PlantSeed } from "./model";
 import {
   plantItemFixture,

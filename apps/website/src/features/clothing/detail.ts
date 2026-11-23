@@ -5,10 +5,10 @@ import type { ClothingCounterpart } from "./counterpart";
 import {
   setDetailNavigation,
   type DetailNavigationModel,
-} from "../collection/detail-navigation-model";
-import type { NeighborClothingDetail } from "../neighbor-clothing/detail";
+} from "../omnidex/detail-navigation-model";
+import type { NeighborOutfitDetail } from "../neighbor-outfit/detail";
 
-type PlayerClothingData = Pick<ClothingData, "items" | "sets" | "appearances">;
+type PlayerClothingData = Pick<ClothingData, "items" | "outfits" | "appearances">;
 type PlayerClothingView = keyof PlayerClothingData;
 
 export function parseClothingId(value: string): number {
@@ -17,7 +17,7 @@ export function parseClothingId(value: string): number {
   return id;
 }
 export function clothingDetail(data: PlayerClothingData, view: PlayerClothingView, id: number) {
-  const navigation = setDetailNavigation(data, id, "套装");
+  const navigation = setDetailNavigation({ items: data.items, sets: data.outfits }, id, "套装");
   if (view === "items") {
     const record = data.items.find((row) => row.id === id);
     if (!record) throw notFound();
@@ -32,7 +32,7 @@ export function clothingDetail(data: PlayerClothingData, view: PlayerClothingVie
     if (!record) throw notFound();
     return { kind: "appearance" as const, record, navigation };
   }
-  const record = data.sets.find((row) => row.id === id);
+  const record = data.outfits.find((row) => row.id === id);
   if (!record) throw notFound();
   const items = new Map(data.items.map((item) => [item.id, item]));
   return {
@@ -43,7 +43,7 @@ export function clothingDetail(data: PlayerClothingData, view: PlayerClothingVie
   };
 }
 export type ClothingDetail = ReturnType<typeof clothingDetail>;
-export type ClothingPageDetail = (ClothingDetail | NeighborClothingDetail) & {
+export type ClothingPageDetail = (ClothingDetail | NeighborOutfitDetail) & {
   navigation: DetailNavigationModel | null;
   counterpart: ClothingCounterpart | null;
 };

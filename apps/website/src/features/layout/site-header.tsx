@@ -2,13 +2,14 @@ import { useRouterState } from "@tanstack/react-router";
 import { NeighborsReturnLink } from "@/features/neighbors/navigation";
 import { StarseaReturnLink } from "@/features/starsea/navigation";
 import { VignetteReturnLink } from "@/features/vignettes/navigation";
+import { OmnidexReturnLink } from "@/features/omnidex/navigation";
 import {
-  CollectionReturnLink,
-  collectionOrigin,
-  collectionListPath,
-} from "@/features/collection/navigation";
+  catalogEntryRouteId,
+  omnidexOrigin,
+  omnidexReturnLocation,
+} from "@/features/omnidex/entry-location";
 import {
-  collectionNavigation,
+  omnidexNavigation,
   homeItem,
   neighborsItem,
   starseaItem,
@@ -26,14 +27,15 @@ import { Separator } from "@/ui/components/separator";
 import { SidebarTrigger } from "@/ui/components/sidebar";
 
 export function SiteHeader() {
-  const { pathname, origin, detailTitle } = useRouterState({
+  const { pathname, detail, origin, detailTitle } = useRouterState({
     select: (state) => {
       const data: unknown = state.matches.at(-1)?.loaderData;
       const record: unknown =
         data && typeof data === "object" && "record" in data ? data.record : data;
       return {
         pathname: state.location.pathname,
-        origin: collectionOrigin(state.location),
+        detail: state.matches.some((match) => match.routeId === catalogEntryRouteId),
+        origin: omnidexOrigin(state.location),
         detailTitle:
           record &&
           typeof record === "object" &&
@@ -44,14 +46,13 @@ export function SiteHeader() {
       };
     },
   });
-  const detail = pathname.startsWith("/collections/records/");
   const neighborDetail = /^\/neighbors\/[^/]+\/?$/.test(pathname);
   const starseaDetail = /^\/starsea\/islets\/[^/]+\/?$/.test(pathname);
   const vignetteDetail = /^\/vignettes\/[^/]+\/?$/.test(pathname);
-  const listPath = detail ? collectionListPath(origin?.href ?? "/collections/all") : pathname;
-  const collection = collectionNavigation.items.find((item) => item.to === listPath);
+  const listPath = detail ? omnidexReturnLocation(origin).to : pathname;
+  const omnidexItem = omnidexNavigation.items.find((item) => item.to === listPath);
   const title =
-    collection?.title ??
+    omnidexItem?.title ??
     [homeItem, neighborsItem, starseaItem, vignettesItem].find((item) => item.to === pathname)
       ?.title ??
     "页面未找到";
@@ -64,10 +65,10 @@ export function SiteHeader() {
       />
       <Breadcrumb aria-label="页面导航">
         <BreadcrumbList>
-          {collection && (
+          {omnidexItem && (
             <>
               <BreadcrumbItem className="hidden md:inline-flex">
-                {collectionNavigation.title}
+                {omnidexNavigation.title}
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
             </>
@@ -75,8 +76,8 @@ export function SiteHeader() {
           {detail && (
             <>
               <BreadcrumbItem>
-                <BreadcrumbLink render={<CollectionReturnLink />}>
-                  {collection?.title ?? "全部"}
+                <BreadcrumbLink render={<OmnidexReturnLink />}>
+                  {omnidexItem?.title ?? "全部"}
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />

@@ -2,11 +2,11 @@ import { growthPlantIds, createRecordTagResolver } from "@loomix/schema/catalog"
 import type { Catalog, ItemOf } from "@loomix/schema/catalog";
 import { tagLabel } from "@loomix/schema/gameplay-tags";
 import type { GameplayTagIndex } from "@loomix/schema/gameplay-tags";
-import { acquisitionLabels } from "../collection/acquisition";
+import { acquisitionLabels } from "../omnidex/acquisition";
 import { createImageResolver } from "@loomix/schema/assets";
 import type { ImageIndex } from "@loomix/schema/assets";
-import type { IngredientItem } from "../collection-view";
-import type { CreationCardReference } from "../collection/creation-card";
+import type { IngredientItem } from "../omnidex-view";
+import type { InspoCardReference } from "../omnidex/inspo-card";
 import type { PlantItem, PlantSeed, PlantSummary, PlantsData, PlantGrowth } from "./model";
 
 export function splitPlantValues(value: string | null): string[] {
@@ -48,7 +48,7 @@ export function buildPlantsData(
   imageIndex: ImageIndex,
   itemRefs: ReadonlyMap<number, IngredientItem>,
   tagIndex: GameplayTagIndex,
-  cardsById: ReadonlyMap<number, CreationCardReference>,
+  cardsById: ReadonlyMap<number, InspoCardReference>,
 ): PlantsData {
   const image = createImageResolver(imageIndex);
   const tagsFor = createRecordTagResolver(tagIndex);
@@ -116,7 +116,7 @@ export function buildPlantsData(
                     return {
                       ...drop,
                       item: itemRefs.get(drop.itemId) ?? null,
-                      creationCard:
+                      inspoCard:
                         card && product && product.browsable !== false
                           ? { face: card.face, product: { id: product.id, name: product.name } }
                           : null,

@@ -3,7 +3,7 @@ import { createCatalogIndex, isListedItem, type Catalog } from "@loomix/schema/c
 import type { Neighbors } from "@loomix/schema/neighbors";
 import type { Starsea } from "@loomix/schema/starsea";
 
-type Island = Starsea["islands"][number];
+type Islet = Starsea["islets"][number];
 type Region = Starsea["regions"][number];
 type StarseaRegion = Pick<Region, "id" | "name" | "galaxyName" | "unlockTip">;
 
@@ -20,45 +20,45 @@ function requireEntry<Entry>(index: ReadonlyMap<number, Entry>, id: number, kind
 }
 
 function indexStarsea(starsea: Starsea, image: ReturnType<typeof createImageResolver>) {
-  const islandById = new Map(starsea.islands.map((island) => [island.id, island]));
+  const isletById = new Map(starsea.islets.map((islet) => [islet.id, islet]));
   const styleById = new Map(starsea.iconStyles.map((style) => [style.id, style]));
-  const membershipsByIsland = new Map<number, RegionMembership[]>();
+  const membershipsByIslet = new Map<number, RegionMembership[]>();
 
   const regions = starsea.regions.map((source) => {
     const { id, name, galaxyName, unlockTip } = source;
     const region = { id, name, galaxyName, unlockTip };
     const local = new Map<number, RegionMembership>(
-      source.explorationIslandIds.map((islandId) => [
-        islandId,
+      source.explorationIsletIds.map((isletId) => [
+        isletId,
         { region, exploration: true, neighborIds: new Set<number>() },
       ]),
     );
-    for (const { neighborId, candidateIslandIds } of source.encounters) {
-      for (const islandId of candidateIslandIds ?? []) {
-        const membership = local.get(islandId) ?? {
+    for (const { neighborId, candidateIsletIds } of source.encounters) {
+      for (const isletId of candidateIsletIds ?? []) {
+        const membership = local.get(isletId) ?? {
           region,
           exploration: false,
           neighborIds: new Set<number>(),
         };
         membership.neighborIds.add(neighborId);
-        local.set(islandId, membership);
+        local.set(isletId, membership);
       }
     }
-    for (const [islandId, membership] of local) {
-      requireEntry(islandById, islandId, "islet");
-      const memberships = membershipsByIsland.get(islandId) ?? [];
+    for (const [isletId, membership] of local) {
+      requireEntry(isletById, isletId, "islet");
+      const memberships = membershipsByIslet.get(isletId) ?? [];
       memberships.push(membership);
-      membershipsByIsland.set(islandId, memberships);
+      membershipsByIslet.set(isletId, memberships);
     }
     return region;
   });
 
-  function summarize(island: Island, memberships: RegionMembership[]) {
-    const style = requireEntry(styleById, island.iconStyleId, "icon style");
-    const illustration = image(island.illustration);
+  function summarize(islet: Islet, memberships: RegionMembership[]) {
+    const style = requireEntry(styleById, islet.iconStyleId, "icon style");
+    const illustration = image(islet.illustration);
     return {
-      id: island.id,
-      name: island.name,
+      id: islet.id,
+      name: islet.name,
       image: illustration ?? image(style.icon),
       illustrated: illustration !== null,
       regions: memberships.map(({ region }) => region),
@@ -66,18 +66,18 @@ function indexStarsea(starsea: Starsea, image: ReturnType<typeof createImageReso
     };
   }
 
-  return { regions, islandById, membershipsByIsland, summarize };
+  return { regions, isletById, membershipsByIslet, summarize };
 }
 
 export function toStarseaList(starsea: Starsea, imageIndex: ImageIndex) {
-  const { regions, islandById, membershipsByIsland, summarize } = indexStarsea(
+  const { regions, isletById, membershipsByIslet, summarize } = indexStarsea(
     starsea,
     createImageResolver(imageIndex),
   );
   return {
     regions,
-    islets: Array.from(membershipsByIsland, ([id, memberships]) =>
-      summarize(requireEntry(islandById, id, "islet"), memberships),
+    islets: Array.from(membershipsByIslet, ([id, memberships]) =>
+      summarize(requireEntry(isletById, id, "islet"), memberships),
     ),
   };
 }
@@ -93,10 +93,10 @@ export function toStarseaDetail(
   neighbors: Neighbors,
 ) {
   const image = createImageResolver(imageIndex);
-  const { islandById, membershipsByIsland, summarize } = indexStarsea(starsea, image);
-  const memberships = membershipsByIsland.get(isletId);
+  const { isletById, membershipsByIslet, summarize } = indexStarsea(starsea, image);
+  const memberships = membershipsByIslet.get(isletId);
   if (!memberships) return null;
-  const island = requireEntry(islandById, isletId, "islet");
+  const islet = requireEntry(isletById, isletId, "islet");
   const { items } = createCatalogIndex(catalog);
   const neighborById = new Map(neighbors.neighbors.map((neighbor) => [neighbor.id, neighbor]));
   const neighborIds = new Set(memberships.flatMap((membership) => [...membership.neighborIds]));
@@ -112,9 +112,9 @@ export function toStarseaDetail(
   }
 
   return {
-    ...summarize(island, memberships),
-    creatures: displayItems(island.displayedCreatureIds),
-    specialties: displayItems(island.displayedSpecialtyIds),
+    ...summarize(islet, memberships),
+    creatures: displayItems(islet.displayedCreatureIds),
+    specialties: displayItems(islet.displayedSpecialtyIds),
     encounterNeighbors: Array.from(neighborIds, (id) => {
       const neighbor = requireEntry(neighborById, id, "neighbor");
       return {

@@ -1,7 +1,7 @@
 import { createNameMatcher } from "@/infrastructure/name-search";
-import { indexMembership } from "../collection/membership";
-import type { FilterGroup } from "@/features/collection/filter-panel";
-import { qualityNames } from "@/features/collection/quality";
+import { indexMembership } from "../omnidex/membership";
+import type { FilterGroup } from "@/features/omnidex/filter-panel";
+import { qualityNames } from "@/features/omnidex/quality";
 import type { ClothingData } from "./data";
 import { missing, ungrouped } from "./search";
 import type { FilterKey, View, ViewQuery } from "./search";
@@ -21,10 +21,10 @@ function options(values: (string | null)[]) {
 }
 export function filterGroups(data: ClothingData, view: View): FilterGroup<FilterKey>[] {
   const groups: FilterGroup<FilterKey>[] = [];
-  if (view !== "sets")
+  if (view !== "outfits")
     groups.push({
       key: "categories",
-      label: view === "neighborClothing" ? "部位" : "分类",
+      label: view === "neighborOutfit" ? "部位" : "分类",
       options: options(data[view].map((row) => row.category)),
     });
   groups.push({
@@ -38,9 +38,9 @@ export function filterGroups(data: ClothingData, view: View): FilterGroup<Filter
   });
   if (view === "items") {
     groups.push({
-      key: "sets",
+      key: "outfits",
       label: "所属套装",
-      options: data.sets
+      options: data.outfits
         .map((set) => ({ value: String(set.id), label: set.name }))
         .concat([{ value: ungrouped, label: "未归入套装" }]),
     });
@@ -68,7 +68,7 @@ function matches(selected: string[], values: string[]): boolean {
 }
 export function queryClothing(data: ClothingData, view: View, query: ViewQuery) {
   const memberships =
-    view === "items" ? indexMembership(data.sets, (set) => set.componentIds) : null;
+    view === "items" ? indexMembership(data.outfits, (set) => set.componentIds) : null;
   const matchesName = createNameMatcher(query.q);
   const rows = data[view].filter((row) => {
     if (
@@ -80,7 +80,10 @@ export function queryClothing(data: ClothingData, view: View, query: ViewQuery) 
     if (!matches(query.categories, [row.category ?? missing])) return false;
     if (!("styles" in row)) return true;
     return (
-      matches(query.sets, memberships?.get(row.id)?.map((set) => String(set.id)) ?? [ungrouped]) &&
+      matches(
+        query.outfits,
+        memberships?.get(row.id)?.map((set) => String(set.id)) ?? [ungrouped],
+      ) &&
       matches(query.colors, splitValues(row.colors)) &&
       matches(query.materials, splitValues(row.materials)) &&
       matches(query.styles, splitValues(row.styles)) &&

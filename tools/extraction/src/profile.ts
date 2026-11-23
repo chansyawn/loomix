@@ -21,10 +21,10 @@ export const profile = {
     explorationLists: 651,
     regions: 652,
     encounters: 653,
-    islands: 654,
+    islets: 654,
     resourceProfiles: 655,
     dropGroups: 563,
-    testIslandIds: [101],
+    testIsletIds: [101],
   },
   roots: {
     textmap: 1,

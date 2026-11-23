@@ -9,37 +9,37 @@ export function validateStarsea(
 ) {
   const { issues, issue, unique } = createIssueCollector("invalid_reference", ["starsea"]);
   unique(starsea.regions, (region) => region.id, ["regions"]);
-  unique(starsea.islands, (island) => island.id, ["islands"]);
+  unique(starsea.islets, (islet) => islet.id, ["islets"]);
   unique(starsea.iconStyles, (style) => style.id, ["iconStyles"]);
-  const islands = new Set(starsea.islands.map((island) => island.id));
+  const islets = new Set(starsea.islets.map((islet) => islet.id));
   const styles = new Set(starsea.iconStyles.map((style) => style.id));
-  const linkedIslands = new Set<number>();
-  const checkIslands = (ids: number[], path: (string | number)[]) => {
+  const linkedIslets = new Set<number>();
+  const checkIslets = (ids: number[], path: (string | number)[]) => {
     unique(ids, (id) => id, path);
     ids.forEach((id, index) => {
-      if (!islands.has(id)) issue([...path, index], `Unknown island ${id}`);
-      linkedIslands.add(id);
+      if (!islets.has(id)) issue([...path, index], `Unknown islet ${id}`);
+      linkedIslets.add(id);
     });
   };
   starsea.regions.forEach((region, index) => {
     const path = ["regions", index];
-    checkIslands(region.explorationIslandIds, [...path, "explorationIslandIds"]);
+    checkIslets(region.explorationIsletIds, [...path, "explorationIsletIds"]);
     unique(region.encounters, (entry) => entry.neighborId, [...path, "encounters"]);
     region.encounters.forEach((entry, encounterIndex) => {
       const encounterPath = [...path, "encounters", encounterIndex];
       if (!neighbors.has(entry.neighborId))
         issue([...encounterPath, "neighborId"], `Unknown neighbor ${entry.neighborId}`);
-      if (entry.candidateIslandIds)
-        checkIslands(entry.candidateIslandIds, [...encounterPath, "candidateIslandIds"]);
+      if (entry.candidateIsletIds)
+        checkIslets(entry.candidateIsletIds, [...encounterPath, "candidateIsletIds"]);
     });
   });
-  starsea.islands.forEach((island, index) => {
-    const path = ["islands", index];
-    if (!linkedIslands.has(island.id)) issue(path, `Unlinked island ${island.id}`);
-    if (!styles.has(island.iconStyleId))
-      issue([...path, "iconStyleId"], `Unknown icon style ${island.iconStyleId}`);
+  starsea.islets.forEach((islet, index) => {
+    const path = ["islets", index];
+    if (!linkedIslets.has(islet.id)) issue(path, `Unlinked islet ${islet.id}`);
+    if (!styles.has(islet.iconStyleId))
+      issue([...path, "iconStyleId"], `Unknown icon style ${islet.iconStyleId}`);
     for (const field of ["displayedCreatureIds", "displayedSpecialtyIds"] as const) {
-      const ids = island[field] ?? [];
+      const ids = islet[field] ?? [];
       unique(ids, (id) => id, [...path, field]);
       ids.forEach((id, itemIndex) => {
         const item = items.get(id);

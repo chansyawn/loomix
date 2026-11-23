@@ -1,6 +1,6 @@
 import type { IngredientExpression, RecipeSlot } from "@loomix/schema/catalog";
 import { describe, expect, it } from "vite-plus/test";
-import type { IngredientItem } from "../collection-view";
+import type { IngredientItem } from "../omnidex-view";
 import { buildDishRecipeSlots, type RecipeConditionToken } from "./recipe-presentation";
 
 const tagLabels = new Map([

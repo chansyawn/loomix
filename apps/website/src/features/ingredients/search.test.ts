@@ -13,23 +13,21 @@ import {
   compactDishesSearchMiddleware,
   updateViewQuery,
 } from "../dishes/search";
-import { collectionOrigin } from "@/features/collection/navigation";
+import { omnidexOrigin } from "@/features/omnidex/entry-location";
 import { emptyIngredientsQuery, ingredientFiltersForTag, ingredientsQuerySchema } from "./search";
 
 function setup() {
   const root = createRootRoute();
   const list = createRoute({
     getParentRoute: () => root,
-    path: "/collections/dishes",
+    path: "/dishes",
     validateSearch: dishesSearchSchema,
     search: { middlewares: [compactDishesSearchMiddleware] },
   });
-  const item = createRoute({ getParentRoute: () => root, path: "/collections/records/$id" });
+  const item = createRoute({ getParentRoute: () => root, path: "/catalog/$id" });
   return createRouter({
     history: createMemoryHistory({
-      initialEntries: [
-        "/collections/dishes?view=ingredients&ingredients=%7B%22q%22%3A%22番茄%22%7D",
-      ],
+      initialEntries: ["/dishes?view=ingredients&ingredients=%7B%22q%22%3A%22番茄%22%7D"],
     }),
     routeTree: root.addChildren([list, item]),
   });
@@ -87,13 +85,13 @@ describe("ingredient URL state", () => {
     const router = setup();
     await router.load();
     const initial = router.state.location;
-    const origin = collectionOrigin(initial);
+    const origin = omnidexOrigin(initial);
     await router.navigate({
-      to: "/collections/records/$id",
+      to: "/catalog/$id",
       params: { id: "1" },
-      state: { collectionOrigin: origin },
+      state: { omnidexOrigin: origin },
     });
-    const retained = collectionOrigin(router.state.location)!;
+    const retained = omnidexOrigin(router.state.location)!;
     expect(retained).toEqual(origin);
     expect(
       dishesSearchSchema.parse(defaultParseSearch(retained.href.split("?")[1])).ingredients.q,

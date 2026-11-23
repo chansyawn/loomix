@@ -1,23 +1,23 @@
 import { Link } from "@tanstack/react-router";
-import type { IngredientItem } from "../collection-view";
-import { compactGrid } from "../collection/grid-layout";
-import { CollectionCard } from "../collection/collection-card";
-import { RecordImage } from "../collection/record-image";
-import { recordLocation } from "../collection/item-route";
-import { useCollectionOrigin } from "@/features/collection/navigation";
+import type { IngredientItem } from "../omnidex-view";
+import { compactGrid } from "../omnidex/grid-layout";
+import { ListCard } from "../omnidex/list-card";
+import { RecordImage } from "../omnidex/record-image";
+import { catalogEntryLocation } from "../omnidex/entry-location";
+import { useOmnidexOrigin } from "@/features/omnidex/navigation";
 import { ingredientLeafTags } from "./model";
 import type { IngredientsData } from "./model";
 
 function IngredientCard({ item, data }: { item: IngredientItem; data: IngredientsData }) {
-  const origin = useCollectionOrigin();
+  const origin = useOmnidexOrigin();
   const tags = ingredientLeafTags(data, item.id);
   return (
-    <CollectionCard
+    <ListCard
       name={item.name}
       quality={item.quality}
       image={<RecordImage image={item.image} name={item.name} />}
       titleLink={
-        <Link {...recordLocation(item)} state={{ collectionOrigin: origin }}>
+        <Link {...catalogEntryLocation(item)} state={{ omnidexOrigin: origin }}>
           {item.name}
         </Link>
       }

@@ -1,11 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { CollectionCard } from "@/features/collection/collection-card";
-import { wideGrid } from "@/features/collection/grid-layout";
-import { CollectionLayoutToggle } from "@/features/collection/layout-toggle";
-import { CollectionPage } from "@/features/collection/page";
-import { RecordImage } from "@/features/collection/record-image";
-import { CollectionTable } from "@/features/collection/table";
-import { textColumn, type CollectionColumn } from "@/features/collection/table-columns";
+import { ListCard } from "@/features/omnidex/list-card";
+import { wideGrid } from "@/features/omnidex/grid-layout";
+import { ListLayoutToggle } from "@/features/omnidex/layout-toggle";
+import { ListPage } from "@/features/omnidex/page";
+import { RecordImage } from "@/features/omnidex/record-image";
+import { ListTable } from "@/features/omnidex/table";
+import { textColumn, type ListColumn } from "@/features/omnidex/table-columns";
 import { Empty, EmptyHeader, EmptyTitle } from "@/ui/components/empty";
 import { SearchInput } from "@/ui/components/search-input";
 import { ToggleGroup, ToggleGroupItem } from "@/ui/components/toggle-group";
@@ -46,7 +46,7 @@ function IsletLink({
 function IsletCard({ islet, origin }: { islet: StarseaIslet; origin: Origin }) {
   const region = regionNames(islet);
   return (
-    <CollectionCard
+    <ListCard
       name={islet.name}
       quality={null}
       image={
@@ -65,7 +65,7 @@ function IsletCard({ islet, origin }: { islet: StarseaIslet; origin: Origin }) {
   );
 }
 
-function isletColumns(origin: Origin): CollectionColumn<StarseaIslet>[] {
+function isletColumns(origin: Origin): ListColumn<StarseaIslet>[] {
   return [
     {
       id: "name",
@@ -110,7 +110,7 @@ export function StarseaListPage({
   const origin = { search, index: historyIndex };
 
   return (
-    <CollectionPage title="星海">
+    <ListPage title="星海">
       <div className="flex flex-col gap-4 pb-8">
         <SearchInput
           className="w-full max-w-96"
@@ -142,7 +142,7 @@ export function StarseaListPage({
             共 <span className="font-medium text-foreground tabular-nums">{visible.length}</span>{" "}
             座星屿
           </p>
-          <CollectionLayoutToggle
+          <ListLayoutToggle
             title="星海"
             layout={search.layout}
             onLayoutChange={(layout) => onChange({ layout })}
@@ -155,7 +155,7 @@ export function StarseaListPage({
             </EmptyHeader>
           </Empty>
         ) : search.layout === "table" ? (
-          <CollectionTable
+          <ListTable
             resultKey={JSON.stringify([search.region, search.q])}
             rows={visible}
             columns={isletColumns(origin)}
@@ -172,6 +172,6 @@ export function StarseaListPage({
           </div>
         )}
       </div>
-    </CollectionPage>
+    </ListPage>
   );
 }

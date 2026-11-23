@@ -204,7 +204,7 @@ export function verifyCatalogSources(
   assert.deepEqual(
     sorted(
       dataset.catalog.items
-        .filter((entry) => entry.kind === "neighborClothing")
+        .filter((entry) => entry.kind === "neighborOutfit")
         .map((entry) => entry.id),
     ),
     sorted(outfits.map((row) => tables.id(row))),
@@ -353,9 +353,9 @@ export function verifyCatalogSources(
     }
   const formal = new Set(expectedFormal);
   const references = new Set<number>();
-  for (const island of dataset.starsea.islands) {
-    for (const id of island.displayedCreatureIds ?? []) references.add(id);
-    for (const id of island.displayedSpecialtyIds ?? []) references.add(id);
+  for (const islet of dataset.starsea.islets) {
+    for (const id of islet.displayedCreatureIds ?? []) references.add(id);
+    for (const id of islet.displayedSpecialtyIds ?? []) references.add(id);
   }
   for (const neighbor of dataset.neighbors.neighbors)
     for (const preference of Object.values(neighbor.gifts))
@@ -374,10 +374,10 @@ export function verifyCatalogSources(
       )
         references.add(id);
   for (const item of dataset.catalog.items) {
-    if (item.kind === "creationCard")
+    if (item.kind === "inspoCard")
       for (const material of item.recipe.materials ?? []) references.add(material.itemId);
     if (item.kind === "plant") for (const drop of item.drops ?? []) references.add(drop.itemId);
-    if (item.kind === "neighborClothing" && item.playerItemId !== null)
+    if (item.kind === "neighborOutfit" && item.playerItemId !== null)
       references.add(item.playerItemId);
   }
   assert.deepEqual(

@@ -1,5 +1,5 @@
 import type { GameplayTag } from "@loomix/schema/gameplay-tags";
-import { TAG_LABEL_OVERRIDES } from "../../../../src/features/collection/tags.ts";
+import { TAG_LABEL_OVERRIDES } from "../../../../src/features/omnidex/tags.ts";
 import type { ReleaseCheck, ReleaseCheckResult } from "../../types.ts";
 
 export function checkTagLabels(tags: readonly GameplayTag[]): ReleaseCheckResult {

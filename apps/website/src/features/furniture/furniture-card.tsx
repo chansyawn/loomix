@@ -1,22 +1,19 @@
+import { catalogEntryLocation } from "@/features/omnidex/entry-location";
 import { Link } from "@tanstack/react-router";
-import { RecordImage as FurnitureImage } from "@/features/collection/record-image";
-import { useCollectionOrigin } from "@/features/collection/navigation";
-import type { FurnitureItem, FurnitureSet } from "../collection-view.ts";
-import { CollectionCard } from "@/features/collection/collection-card";
+import { RecordImage as FurnitureImage } from "@/features/omnidex/record-image";
+import { useOmnidexOrigin } from "@/features/omnidex/navigation";
+import type { FurnitureItem, FurnitureSet } from "../omnidex-view.ts";
+import { ListCard } from "@/features/omnidex/list-card";
 
 export function FurnitureCard({ item }: { item: FurnitureItem }) {
-  const origin = useCollectionOrigin();
+  const origin = useOmnidexOrigin();
   return (
-    <CollectionCard
+    <ListCard
       name={item.name}
       quality={item.quality}
       image={<FurnitureImage key={item.image} image={item.image} name={item.name} />}
       titleLink={
-        <Link
-          to="/collections/records/$id"
-          params={{ id: String(item.id) }}
-          state={{ collectionOrigin: origin }}
-        >
+        <Link {...catalogEntryLocation(item)} state={{ omnidexOrigin: origin }}>
           {item.name}
         </Link>
       }
@@ -26,9 +23,9 @@ export function FurnitureCard({ item }: { item: FurnitureItem }) {
 }
 
 export function FurnitureSetCard({ set }: { set: FurnitureSet }) {
-  const origin = useCollectionOrigin();
+  const origin = useOmnidexOrigin();
   return (
-    <CollectionCard
+    <ListCard
       name={set.name}
       quality={set.quality}
       image={
@@ -42,11 +39,7 @@ export function FurnitureSetCard({ set }: { set: FurnitureSet }) {
         />
       }
       titleLink={
-        <Link
-          to="/collections/records/$id"
-          params={{ id: String(set.id) }}
-          state={{ collectionOrigin: origin }}
-        >
+        <Link {...catalogEntryLocation(set)} state={{ omnidexOrigin: origin }}>
           {set.name}
         </Link>
       }

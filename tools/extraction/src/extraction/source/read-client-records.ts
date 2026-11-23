@@ -185,7 +185,7 @@ export function readClientRecords(source: string, datasetId: string): ClientRead
     images,
     referencedItemIds: [
       ...neighbors.database.giftPreferences.flatMap((entry) => entry.itemIds),
-      ...starseaItemIds(starsea.data.islands),
+      ...starseaItemIds(starsea.data.islets),
     ],
     neighborOutfits: neighbors.clothing,
     outfitSourcesById: neighbors.clothingSources,

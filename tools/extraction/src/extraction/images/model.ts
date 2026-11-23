@@ -22,13 +22,13 @@ export interface ImageCandidate {
 const ImageOwnerKindSchema = z.enum([
   "item",
   "collection",
-  "creationCardSet",
+  "inspoBox",
   "seed",
   "stage",
   "neighbor",
-  "neighborClothing",
+  "neighborOutfit",
   "starseaRegion",
-  "starseaIsland",
+  "starseaIslet",
   "starseaIconStyle",
   "vignette",
 ]);
