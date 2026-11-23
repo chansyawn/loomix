@@ -102,8 +102,8 @@ export async function verifyCandidate(directory: string, writeReport = true): Pr
     });
 }
 
-export async function verifyExtraction(directory: string) {
-  const bundle = await readVerifiedExtraction(directory);
+export async function verifyExtraction(directory: string, expectedId?: string) {
+  const bundle = await readVerifiedExtraction(directory, expectedId);
   await verifyCandidate(directory, false);
   return bundle;
 }

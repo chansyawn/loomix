@@ -1,10 +1,16 @@
 import fs from "node:fs";
 import path from "node:path";
 import { FORMAT_VERSION } from "@loomix/schema/common";
-import { cacheRoot, identityDirectory } from "../paths.ts";
-import { stageInputs, STAGE_MANIFEST_VERSION, verifyStageInputs } from "../workflow/manifest.ts";
+import { cacheRoot } from "../paths.ts";
+import {
+  resolveStage,
+  stageInputs,
+  stageOutput,
+  STAGE_MANIFEST_VERSION,
+  verifyStageInputs,
+} from "../workflow/manifest.ts";
 import { readVerifiedEnvironment } from "../environment/verify.ts";
-import type { Manifest } from "../workflow/manifest.ts";
+import type { Manifest, StageLocation } from "../workflow/manifest.ts";
 import { digest, inventory } from "../workflow/hashing.ts";
 import { implementationRevision, profileHash, toolIdentity } from "../workflow/identity.ts";
 import { ensureAnimeStudio } from "../client/anime-studio/index.ts";
@@ -25,9 +31,12 @@ import { writeAssembly, sealExtraction } from "./bundle.ts";
 import { parseVignetteAdmissions } from "./source/vignettes/admissions.ts";
 import { vignetteAdmissionsFile } from "./source/vignettes/profile.ts";
 
-export async function extract(environmentId: string): Promise<string> {
-  const environmentDirectory = identityDirectory("environments", environmentId);
-  const environment = await readVerifiedEnvironment(environmentDirectory);
+export async function extract(environmentReference: string): Promise<StageLocation> {
+  const { directory: environmentDirectory, id: environmentId } = resolveStage(
+    "environment",
+    environmentReference,
+  );
+  const environment = await readVerifiedEnvironment(environmentDirectory, environmentId);
   if (
     environment.profileHash !== profileHash ||
     environment.tools.animeStudioInput !== digest(toolIdentity())
@@ -59,7 +68,7 @@ export async function extract(environmentId: string): Promise<string> {
     admissions: admissions.sha256,
     vignetteAdmissions: vignetteAdmissions.sha256,
   });
-  const destination = identityDirectory("extractions", id);
+  const destination = stageOutput("extraction", id, environmentDirectory);
   await sealExtraction(destination, async (staging) => {
     try {
       const decoded = await cachedDirectory(
@@ -142,7 +151,7 @@ export async function extract(environmentId: string): Promise<string> {
       await verifyStageInputs(
         manifest,
         environmentDirectory,
-        await readVerifiedEnvironment(environmentDirectory),
+        await readVerifiedEnvironment(environmentDirectory, environmentId),
       );
       return manifest;
     } catch (error) {
@@ -152,7 +161,7 @@ export async function extract(environmentId: string): Promise<string> {
       throw error;
     }
   });
-  const { manifest } = await verifyExtraction(destination);
+  const { manifest } = await verifyExtraction(destination.directory, id);
   await verifyStageInputs(manifest, environmentDirectory, environment);
-  return id;
+  return destination;
 }

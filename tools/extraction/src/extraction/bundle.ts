@@ -16,7 +16,13 @@ import {
 } from "./images/model.ts";
 import { readJson, writeJson } from "../workflow/json.ts";
 import { filesWithin } from "../workflow/hashing.ts";
-import { readManifest, publishManifest, stageManifestFile } from "../workflow/manifest.ts";
+import {
+  assertStageDestination,
+  readManifest,
+  publishManifest,
+  stageManifestFile,
+} from "../workflow/manifest.ts";
+import type { Manifest, StageLocation } from "../workflow/manifest.ts";
 import type { Assembly } from "./assemble/index.ts";
 import { assemble } from "./assemble/index.ts";
 
@@ -64,8 +70,8 @@ export function readCandidate(directory: string) {
   return { directory, clientReadRecords, originals, ...rebuilt };
 }
 
-export async function readVerifiedExtraction(directory: string) {
-  const manifest = await readManifest(directory, "extraction");
+export async function readVerifiedExtraction(directory: string, expectedId?: string) {
+  const manifest = await readManifest(directory, "extraction", expectedId);
   assert.deepEqual(
     filesWithin(directory)
       .filter((file) => file !== stageManifestFile("extraction"))
@@ -85,13 +91,15 @@ export async function readVerifiedExtraction(directory: string) {
 export type VerifiedExtraction = Awaited<ReturnType<typeof readVerifiedExtraction>>;
 
 export async function sealExtraction(
-  directory: string,
-  build: (staging: string) => Promise<import("../workflow/manifest.ts").Manifest>,
+  destination: StageLocation,
+  build: (staging: string) => Promise<Manifest>,
 ): Promise<void> {
+  const { directory, id } = destination;
   await withLock(`${directory}.lock`, async () => {
+    assertStageDestination("extraction", destination);
     if (fs.existsSync(directory)) {
       try {
-        await readVerifiedExtraction(directory);
+        await readVerifiedExtraction(directory, id);
         return;
       } catch {
         fs.renameSync(directory, `${directory}.corrupt-${crypto.randomUUID()}`);
@@ -101,7 +109,7 @@ export async function sealExtraction(
     const staging = fs.mkdtempSync(`${directory}.staging-`);
     try {
       const manifest = await build(staging);
-      if (manifest.kind !== "extraction" || manifest.id !== path.basename(directory))
+      if (manifest.kind !== "extraction" || manifest.id !== id)
         throw new Error("Extraction seal identity mismatch");
       await publishManifest(staging, manifest);
       fs.renameSync(staging, directory);

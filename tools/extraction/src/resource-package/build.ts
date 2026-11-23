@@ -2,15 +2,18 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { FORMAT_VERSION } from "@loomix/schema/common";
-import { cacheRoot, identityDirectory } from "../paths.ts";
+import { cacheRoot } from "../paths.ts";
 import {
+  assertStageDestination,
   publishManifest,
   readManifest,
+  resolveStage,
   STAGE_MANIFEST_VERSION,
   stageInputs,
+  stageOutput,
   verifyStageInputs,
 } from "../workflow/manifest.ts";
-import type { StageManifest } from "../workflow/manifest.ts";
+import type { StageLocation, StageManifest } from "../workflow/manifest.ts";
 import { digest, inventory } from "../workflow/hashing.ts";
 import { implementationRevision, profileHash } from "../workflow/identity.ts";
 import { writeJson } from "../workflow/json.ts";
@@ -24,9 +27,12 @@ import {
 } from "./verify.ts";
 import { VALIDATION_FILE } from "./files.ts";
 
-export async function buildResourcePackage(extractionId: string): Promise<string> {
-  const extractionDirectory = identityDirectory("extractions", extractionId);
-  const extraction = await readVerifiedExtraction(extractionDirectory);
+export async function buildResourcePackage(extractionReference: string): Promise<StageLocation> {
+  const { directory: extractionDirectory, id: extractionId } = resolveStage(
+    "extraction",
+    extractionReference,
+  );
+  const extraction = await readVerifiedExtraction(extractionDirectory, extractionId);
   if (extraction.manifest.profileHash !== profileHash)
     throw new Error("Extraction profile differs from the current profile; extract again");
   const implementation = await implementationRevision();
@@ -39,13 +45,15 @@ export async function buildResourcePackage(extractionId: string): Promise<string
     implementation,
     profileHash,
   });
-  const directory = identityDirectory("resource-packages", resourcePackageId);
+  const destination = stageOutput("resource-package", resourcePackageId, extractionDirectory);
+  const { directory } = destination;
   await withLock(`${directory}.lock`, async () => {
+    assertStageDestination("resource-package", destination);
     if (fs.existsSync(directory)) {
       try {
         await verifySealedResourcePackage(
           directory,
-          await readManifest(directory, "resource-package"),
+          await readManifest(directory, "resource-package", resourcePackageId),
           extraction,
         );
         console.error(`Reusing verified resource package ${resourcePackageId}`);
@@ -76,7 +84,7 @@ export async function buildResourcePackage(extractionId: string): Promise<string
       await verifyStageInputs(
         manifest,
         extractionDirectory,
-        (await readVerifiedExtraction(extractionDirectory)).manifest,
+        (await readVerifiedExtraction(extractionDirectory, extractionId)).manifest,
       );
       if ((await implementationRevision()) !== implementation)
         throw new Error("Implementation changed during resource packaging; rerun package");
@@ -99,5 +107,5 @@ export async function buildResourcePackage(extractionId: string): Promise<string
       fs.rmSync(staging, { recursive: true, force: true });
     }
   });
-  return resourcePackageId;
+  return destination;
 }

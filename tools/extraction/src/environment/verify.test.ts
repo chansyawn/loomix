@@ -7,7 +7,7 @@ import { importClient, resolveClientSnapshot } from "../client/snapshot.ts";
 import { profile } from "../profile.ts";
 import { digest, inventory } from "../workflow/hashing.ts";
 import { writeJson } from "../workflow/json.ts";
-import { publishManifest, STAGE_MANIFEST_VERSION } from "../workflow/manifest.ts";
+import { publishManifest, stageOutput, STAGE_MANIFEST_VERSION } from "../workflow/manifest.ts";
 import { verifyEnvironment } from "./verify.ts";
 
 test("环境复验固定读取已绑定的客户端快照", async (testContext) => {
@@ -43,8 +43,8 @@ test("环境复验固定读取已绑定的客户端快照", async (testContext) 
   });
   const bound = await importClient(source, profile.paths);
   const id = digest("environment");
-  const directory = path.join(root, id);
-  fs.mkdirSync(directory);
+  const { directory } = stageOutput("environment", id, bound.directory);
+  fs.mkdirSync(directory, { recursive: true });
   writeJson(path.join(directory, "config-source.json"), {
     dataRevision: profile.dataRevision,
     branch: profile.branch,

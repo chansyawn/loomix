@@ -29,6 +29,7 @@ export interface ClientVersion {
 }
 
 export const clientVersionPattern = String.raw`\d+(?:\.\d+)+`;
+export const clientVersionLabelPattern = `${clientVersionPattern}(?:-d\\d+-r\\d+-m\\d+)?`;
 const gameVersionPattern = new RegExp(`^${clientVersionPattern}$`);
 const revisionSchema = z.object({ revision: z.number().int().nonnegative() });
 const dataRevisionSchema = revisionSchema.extend({ branch: z.string().trim().min(1) });

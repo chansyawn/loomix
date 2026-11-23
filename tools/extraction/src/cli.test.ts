@@ -21,9 +21,9 @@ test("帮助可从工作区之外调用，且不初始化客户端或工具", ()
   ]) {
     const help = run(...args);
     assert.equal(help.status, 0, help.stderr);
-    assert.match(help.stdout, /package --extraction ID/);
+    assert.match(help.stdout, /package --extraction ID\|NAME/);
     assert.match(help.stdout, /refresh \[--snapshot ID\]/);
-    assert.match(help.stdout, /install-resources --resource-package ID/);
+    assert.match(help.stdout, /install-resources --resource-package ID\|NAME/);
     assert.match(help.stdout, /resources\/website/);
     assert.equal(help.stderr, "");
   }

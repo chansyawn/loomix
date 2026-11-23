@@ -26,8 +26,9 @@ interface ResourceAudit {
 
 export async function readVerifiedEnvironment(
   directory: string,
+  expectedId?: string,
 ): Promise<StageManifest<"environment">> {
-  const manifest = await readManifest(directory, "environment");
+  const manifest = await readManifest(directory, "environment", expectedId);
   assert.deepEqual(
     manifest.outputs.map((file) => file.path).sort(),
     ENVIRONMENT_OUTPUT_FILES,
@@ -36,8 +37,11 @@ export async function readVerifiedEnvironment(
   return manifest;
 }
 
-export async function verifyEnvironment(directory: string): Promise<StageManifest<"environment">> {
-  const manifest = await readVerifiedEnvironment(directory);
+export async function verifyEnvironment(
+  directory: string,
+  expectedId?: string,
+): Promise<StageManifest<"environment">> {
+  const manifest = await readVerifiedEnvironment(directory, expectedId);
   const snapshot = openClientSnapshot(manifest.clientSnapshotId);
   await snapshot.verify();
   const gameRoot = snapshot.resolvePath(profile.paths.gameRoot);

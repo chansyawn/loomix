@@ -1,15 +1,19 @@
 import path from "node:path";
-import { identityDirectory, websiteDirectory } from "../paths.ts";
+import { websiteDirectory } from "../paths.ts";
 import { withLock } from "../workflow/lock.ts";
+import { resolveStage, type StageLocation } from "../workflow/manifest.ts";
 import { verifyResourcePackage } from "../verify.ts";
 import { WEBSITE_RESOURCE_DIRECTORY } from "./files.ts";
 import { replaceLocalResources } from "./replace.ts";
 
-export async function installLocalResources(resourcePackageId: string): Promise<void> {
-  const directory = identityDirectory("resource-packages", resourcePackageId);
+export async function installLocalResources(
+  resourcePackageReference: string,
+): Promise<StageLocation> {
+  const resourcePackage = resolveStage("resource-package", resourcePackageReference);
+  const { directory } = resourcePackage;
   await withLock(`${directory}.lock`, async () => {
     await withLock(`${websiteDirectory}.lock`, async () => {
-      const manifest = await verifyResourcePackage(resourcePackageId);
+      const manifest = await verifyResourcePackage(resourcePackage);
       const prefix = `${WEBSITE_RESOURCE_DIRECTORY}/`;
       await replaceLocalResources(
         path.join(directory, WEBSITE_RESOURCE_DIRECTORY),
@@ -21,4 +25,5 @@ export async function installLocalResources(resourcePackageId: string): Promise<
       );
     });
   });
+  return resourcePackage;
 }

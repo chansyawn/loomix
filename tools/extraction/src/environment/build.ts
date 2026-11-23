@@ -4,21 +4,25 @@ import { FORMAT_VERSION } from "@loomix/schema/common";
 import { buildAssetIndex } from "../client/asset-map.ts";
 import { buildAssetMap, ensureAnimeStudio } from "../client/anime-studio/index.ts";
 import { resolveClientSnapshot } from "../client/snapshot.ts";
-import { identityDirectory } from "../paths.ts";
 import { profile } from "../profile.ts";
 import { digest, inventory } from "../workflow/hashing.ts";
 import { implementationRevision, profileHash, toolIdentity } from "../workflow/identity.ts";
 import { writeJson } from "../workflow/json.ts";
 import { withLock } from "../workflow/lock.ts";
-import { publishManifest, STAGE_MANIFEST_VERSION } from "../workflow/manifest.ts";
-import type { Manifest } from "../workflow/manifest.ts";
+import {
+  assertStageDestination,
+  publishManifest,
+  stageOutput,
+  STAGE_MANIFEST_VERSION,
+} from "../workflow/manifest.ts";
+import type { Manifest, StageLocation } from "../workflow/manifest.ts";
 import { swapDirectory } from "../workflow/swap.ts";
 import { selectConfigSource } from "./config-source.ts";
 import { validateResourceManifests } from "./resource-audit.ts";
 import { ENVIRONMENT_OUTPUT_FILES } from "./files.ts";
 import { readVerifiedEnvironment } from "./verify.ts";
 
-export async function init(snapshotId?: string): Promise<string> {
+export async function init(snapshotId?: string): Promise<StageLocation> {
   const { snapshot, diagnostics } = resolveClientSnapshot(profile, snapshotId);
   const clientSnapshotId = snapshot.id;
   for (const diagnostic of diagnostics) console.error(`Skipping client snapshot ${diagnostic}`);
@@ -38,13 +42,14 @@ export async function init(snapshotId?: string): Promise<string> {
     implementation,
   };
   const id = digest(identity);
-  const directory = identityDirectory("environments", id);
+  const destination = stageOutput("environment", id, snapshot.directory);
+  const { directory } = destination;
 
   await withLock(`${directory}.lock`, async () => {
+    assertStageDestination("environment", destination);
     try {
-      const existing = await readVerifiedEnvironment(directory);
+      const existing = await readVerifiedEnvironment(directory, id);
       if (
-        existing.id !== id ||
         existing.clientSnapshotId !== clientSnapshotId ||
         existing.implementation !== implementation ||
         existing.profileHash !== profileHash
@@ -123,5 +128,5 @@ export async function init(snapshotId?: string): Promise<string> {
       );
     }
   });
-  return id;
+  return destination;
 }

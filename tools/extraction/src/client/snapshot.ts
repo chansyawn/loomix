@@ -8,7 +8,7 @@ import { atomicJson } from "../workflow/manifest.ts";
 import { withLock } from "../workflow/lock.ts";
 import { copyTree } from "../workflow/copy.ts";
 import { errorCode, errorMessage } from "../workflow/errors.ts";
-import { clientVersionLabel, clientVersionMatches, clientVersionPattern } from "./versions.ts";
+import { clientVersionLabel, clientVersionMatches, clientVersionLabelPattern } from "./versions.ts";
 import type { ClientLayout, ClientVersion } from "./versions.ts";
 
 export interface ClientSnapshot {
@@ -21,9 +21,7 @@ export interface ClientSnapshot {
 
 type SnapshotProfile = ClientVersion & { paths: ClientLayout };
 const prefixLength = 12;
-const directoryPattern = new RegExp(
-  `^${clientVersionPattern}(?:-d\\d+-r\\d+-m\\d+)?--([a-f0-9]{${prefixLength}})$`,
-);
+const directoryPattern = new RegExp(`^${clientVersionLabelPattern}--([a-f0-9]{${prefixLength}})$`);
 
 const snapshotManifestSchema = z.object({
   schemaVersion: z.literal(1),

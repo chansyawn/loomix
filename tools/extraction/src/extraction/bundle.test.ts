@@ -35,20 +35,26 @@ async function build(staging: string, id: string): Promise<Manifest> {
 test("失败构建不封存；有效结果验证后复用，不调用会失败的构建，也不依赖缓存存活", async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-seal-"));
   const id = "c".repeat(64);
-  const directory = path.join(root, id);
+  const directory = path.join(root, `0.95.2--${id.slice(0, 12)}`);
+  const destination = { id, directory };
   try {
     await expect(
-      sealExtraction(directory, async (staging) => {
+      sealExtraction(destination, async (staging) => {
         fs.writeFileSync(path.join(staging, "partial"), "partial");
         throw new Error("failed build");
       }),
     ).rejects.toThrow("failed build");
     expect(fs.existsSync(directory)).toBe(false);
-    await sealExtraction(directory, (staging) => build(staging, id));
+    await expect(
+      sealExtraction(destination, (staging) =>
+        build(staging, `${id.slice(0, 12)}${"d".repeat(52)}`),
+      ),
+    ).rejects.toThrow("Extraction seal identity mismatch");
+    await sealExtraction(destination, (staging) => build(staging, id));
     const before = await inventory(directory);
     fs.mkdirSync(path.join(root, "cache"));
     fs.rmSync(path.join(root, "cache"), { recursive: true });
-    await sealExtraction(directory, async () => {
+    await sealExtraction(destination, async () => {
       throw new Error("must never rebuild a valid seal");
     });
     expect(await inventory(directory)).toEqual(before);
@@ -61,11 +67,12 @@ test("失败构建不封存；有效结果验证后复用，不调用会失败�
 test("仅在封存完整性损坏时隔离旧目录；新封存必须覆盖精确文件集", async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-seal-corrupt-"));
   const id = "c".repeat(64);
-  const directory = path.join(root, id);
+  const directory = path.join(root, `0.95.2--${id.slice(0, 12)}`);
+  const destination = { id, directory };
   try {
-    await sealExtraction(directory, (staging) => build(staging, id));
+    await sealExtraction(destination, (staging) => build(staging, id));
     fs.writeFileSync(path.join(directory, DATASET_FILE), "corrupt");
-    await sealExtraction(directory, (staging) => build(staging, id));
+    await sealExtraction(destination, (staging) => build(staging, id));
     expect((await readVerifiedExtraction(directory)).manifest.id).toBe(id);
     expect(fs.readdirSync(root).filter((name) => name.includes(".corrupt-"))).toHaveLength(1);
     fs.writeFileSync(path.join(directory, "unexpected"), "polluted");

@@ -9,16 +9,18 @@ import { errorDetails } from "./workflow/errors.ts";
 import { assertIdentity, repoRoot } from "./paths.ts";
 import { importClient } from "./client/snapshot.ts";
 import { profile } from "./profile.ts";
+import { resolveStage, type StageLocation } from "./workflow/manifest.ts";
 
 const usage = `客户端提取
   client import --source PATH
   init [--snapshot ID]
-  extract --environment ID
-  package --extraction ID
+  extract --environment ID|NAME
+  package --extraction ID|NAME
   refresh [--snapshot ID]
-  verify --resource-package ID
-  install-resources --resource-package ID
+  verify --resource-package ID|NAME
+  install-resources --resource-package ID|NAME
 
+ID 为完整 SHA-256，NAME 为准确的产物目录名。
 LOOMIX_DATA_ROOT 必须指向共享数据目录。package 生成网站资源包，install-resources 将已验证的资源包安装到当前工作区的 resources/website/。`;
 
 const commands = {
@@ -71,8 +73,7 @@ async function main(): Promise<void> {
     throw new Error("Missing --source path; use --help");
   if (option && option !== "source" && option !== "snapshot" && argument === undefined)
     throw new Error(`Missing --${option} ID; use --help`);
-  if (typeof argument === "string" && option && option !== "source")
-    assertIdentity(argument, option);
+  if (argument !== undefined && option === "snapshot") assertIdentity(argument, option);
 
   switch (command) {
     case "client import": {
@@ -86,34 +87,42 @@ async function main(): Promise<void> {
       break;
     }
     case "init":
-      console.log(`environment-id: ${await init(argument)}`);
+      printStage("environment", await init(argument));
       break;
     case "extract":
-      console.log(`extraction-id: ${await extract(requireArgument(argument))}`);
+      printStage("extraction", await extract(requireArgument(argument)));
       break;
     case "package":
-      console.log(`resource-package-id: ${await buildResourcePackage(requireArgument(argument))}`);
+      printStage("resource-package", await buildResourcePackage(requireArgument(argument)));
       break;
     case "refresh": {
-      const environmentId = await init(argument);
-      const extractionId = await extract(environmentId);
-      const resourcePackageId = await buildResourcePackage(extractionId);
-      console.log(
-        `environment-id: ${environmentId}\nextraction-id: ${extractionId}\nresource-package-id: ${resourcePackageId}`,
-      );
+      const environment = await init(argument);
+      const extraction = await extract(environment.id);
+      const resourcePackage = await buildResourcePackage(extraction.id);
+      printStage("environment", environment);
+      printStage("extraction", extraction);
+      printStage("resource-package", resourcePackage);
       break;
     }
-    case "verify":
-      await verifyResourcePackage(requireArgument(argument));
-      console.log(`verified-resource-package-id: ${argument}`);
+    case "verify": {
+      const resourcePackage = resolveStage("resource-package", requireArgument(argument));
+      await verifyResourcePackage(resourcePackage);
+      printStage("verified-resource-package", resourcePackage);
       break;
+    }
     case "install-resources":
-      await installLocalResources(requireArgument(argument));
-      console.log(`installed-resource-package-id: ${argument}`);
+      printStage(
+        "installed-resource-package",
+        await installLocalResources(requireArgument(argument)),
+      );
       break;
     default:
       throw new Error("Missing command; use --help");
   }
+}
+
+function printStage(label: string, { id, directory }: StageLocation): void {
+  console.log(`${label}-id: ${id}\n${label}-directory: ${directory}`);
 }
 
 function requireArgument(value: unknown): string {

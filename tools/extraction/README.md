@@ -48,7 +48,7 @@ vp run @loomix/extraction#install-resources --resource-package <resource-package
 vp run @loomix/extraction#refresh -- --help
 ```
 
-帮助可在未准备工具时运行。各阶段使用各自的 ID。相对输入路径以仓库根目录为准。[CLI](src/cli.ts) · [共享数据契约](../../packages/schema/README.md#资料集图片与发布)
+帮助可在未准备工具时运行。阶段命令打印完整 ID 和目录路径。`--environment`、`--extraction` 和 `--resource-package` 接受对应阶段的完整 ID 或准确的目录名。`--snapshot` 使用完整快照 ID。`client import --source` 的相对路径以仓库根目录为准。[CLI](src/cli.ts) · [共享数据契约](../../packages/schema/README.md#资料集图片与发布)
 
 ## 输入、缓存与产物
 
@@ -62,11 +62,15 @@ vp run @loomix/extraction#refresh -- --help
 | worktree `resources/website/` | 当前网站读取的本地资源               |
 | worktree `var/scratch/`       | 临时调查文件                         |
 
+`artifacts/` 下按阶段分目录。提取环境与提取结果沿用客户端快照的版本标签，加上各自的短哈希，例如 `0.95.2-d1449213-r1391927-m5662883--2336736f9d09`。网站资源包在版本标签末尾加网站资源格式号，如 `-f16`。完整 SHA-256 保存在阶段清单中，用于验证和关联上游。
+
 具体输出以各阶段清单的 `outputs` 为准。调查时从 `client-read-records.json` 查读取记录、排除项与候选，从 `field-evidence.json` 查最终字段依据。[提取原理](docs/extraction-method.md#按任务定位实现)
 
 每个代码版本仅接受对应的提取阶段格式。遇到阶段清单版本不受支持时，使用匹配客户端快照运行 `refresh`，再使用新的阶段 ID 打包、验收或安装。客户端资源包的来源路径相对于该客户端快照根目录。
 
 从旧客户端目录布局升级时，先准备共享根之外的独立客户端来源，并停止共用该数据根的提取任务。清除 `LOOMIX_DATA_ROOT` 下的 `client/`、`clients/`、`selections/`、`artifacts/` 与 `cache/`，再重新导入、提取和验收。此操作会删除旧快照、产物及工具缓存，共用该目录的 worktree 需要升级后再运行提取。
+
+如果只有阶段目录仍使用纯哈希命名，可在停止共用该数据根的提取任务后按上述规则重命名现有封存目录。保留清单原始字节，改名后从资源包运行 `verify` 核对整条链路。也可删除旧产物后运行 `refresh` 重建。
 
 升级网站资源格式时，停止本工作区的安装和发布任务。若 `resources/website/` 中已有旧格式资源，先整体移到同文件系统的备份位置，恢复受跟踪的 `.gitkeep` 占位，再运行上述命令。若安装失败，可移回备份。
 
@@ -76,4 +80,4 @@ vp run @loomix/extraction#refresh -- --help
 
 `install-resources` 替换本地资源失败时恢复旧目录。切换期间，本地资源可能短暂不可用。线上更新步骤见[CI/CD 与部署](../../DEPLOYMENT.md#资源更新流程)。
 
-无运行任务时再清理失败的暂存目录、缓存或不再使用的产物。按资源包 ID 清理共享根 `artifacts/resource-packages/`，保留各 worktree 在用和计划用于回滚的资源包及其上游完整链。删除恢复缓存不会影响已有封存提取结果。客户端、共享缓存及产物、临时文件和日志均不提交。
+无运行任务时再清理失败的暂存目录、缓存或不再使用的产物。保留各 worktree 在用和计划用于回滚的资源包及其上游完整链。删除恢复缓存不会影响已有封存提取结果。如果构建提示目录哈希冲突或无法确认目录身份，先检查清单并移走占用目录，再重试。客户端、共享缓存及产物、临时文件和日志均不提交。
