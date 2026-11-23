@@ -1,4 +1,5 @@
 import { EventCountdownList } from "../events/event-countdown-list";
+import { SiteNoticeFooter } from "../layout/site-notice";
 import { IntroSearch } from "./intro-search";
 import { OmnidexShortcuts } from "./shortcuts";
 
@@ -8,6 +9,7 @@ export function HomePage() {
       <IntroSearch />
       <OmnidexShortcuts />
       <EventCountdownList />
+      <SiteNoticeFooter />
     </div>
   );
 }
