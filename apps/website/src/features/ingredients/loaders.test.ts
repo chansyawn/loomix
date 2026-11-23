@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import type { CreatureItem, MiscellaneousItem } from "../collection-view";
-import { catalogFixture, fixtureRequest } from "../collection-fixture";
+import type { CreatureItem, MiscellaneousItem } from "../omnidex-view";
+import { catalogFixture, fixtureRequest } from "../omnidex-fixture";
 import { plantItemFixture, plantsDataFixture } from "../plants/fixture";
 import { loadPlantsDetail } from "../plants/detail";
 import { loadCreaturesDetail } from "../creatures/detail";
-import { loadMiscellanyDetail } from "../miscellany/detail";
+import { loadMiscellaneousDetail } from "../miscellaneous/detail";
 import { loadDishes } from "../dishes/data";
 import { categoryExpression, recipeFixture, recipeSlot } from "./fixture";
 
@@ -72,7 +72,7 @@ describe("ingredient data loading", () => {
     expect(creature.kind === "item" && creature.cooking?.dishes[0].dish.id).toBe(100);
     expect(request).toHaveBeenCalledTimes(4);
     request.mockClear();
-    const material = await loadMiscellanyDetail("3");
+    const material = await loadMiscellaneousDetail("3");
     expect(material.record.id).toBe(3);
     expect(material.cooking?.dishes[0].dish.id).toBe(100);
     expect(request).toHaveBeenCalledTimes(4);

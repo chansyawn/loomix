@@ -1,5 +1,5 @@
 import { expect, test } from "vite-plus/test";
-import { TAG_LABEL_OVERRIDES } from "../../../../src/features/collection/tags.ts";
+import { TAG_LABEL_OVERRIDES } from "../../../../src/features/omnidex/tags.ts";
 import { labelFixture } from "../fixture.ts";
 import { checkTagLabels } from "./labels.ts";
 

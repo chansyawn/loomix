@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
-import { collectionFilterChips } from "../collection/filter-chips";
-import { flattenFilterOptions } from "../collection/filter-types";
+import { listFilterChips } from "../omnidex/filter-chips";
+import { flattenFilterOptions } from "../omnidex/filter-types";
 import { ingredientsFixture } from "./fixture";
 import {
   acceptIngredientTagIds,
@@ -113,7 +113,7 @@ describe("ingredient tag filtering", () => {
     const { data } = ingredientsFixture();
     const counts = ingredientTagCounts(data.tagSource, data.itemsById.values());
     const groups = ingredientFilterGroups(data.tagSource, counts);
-    const chips = collectionFilterChips(groups, selection(["2"], ["21"], ["31"]), () => {}, {
+    const chips = listFilterChips(groups, selection(["2"], ["21"], ["31"]), () => {}, {
       value: "",
       clear: () => {},
     });

@@ -1,7 +1,7 @@
 import { isNotFound } from "@tanstack/react-router";
 import { describe, expect, it, vi, afterEach } from "vite-plus/test";
-import { catalogFixture, fixtureRequest } from "../collection-fixture.ts";
-import type { FurnitureItem, FurnitureSet } from "../collection-view.ts";
+import { catalogFixture, fixtureRequest } from "../omnidex-fixture.ts";
+import type { FurnitureItem, FurnitureSet } from "../omnidex-view.ts";
 import { furnitureDetail, loadFurnitureDetail, parseFurnitureId } from "./detail";
 
 const first: FurnitureItem = {
@@ -16,7 +16,7 @@ const first: FurnitureItem = {
   colors: null,
   materials: null,
   acquisition: null,
-  creationCards: [],
+  inspoCards: [],
 };
 const second: FurnitureItem = { ...first, id: 2, name: "木桌" };
 const set: FurnitureSet = {
@@ -110,18 +110,18 @@ describe("furniture details", () => {
       items: [
         {
           ...first,
-          creationCards: [
+          inspoCards: [
             {
               id: 10,
               name: "创想卡 10",
-              setName: null,
+              inspoBoxName: null,
               face: { background: null, foreground: null, quality: null },
               materials: [{ itemId: 2, quantity: 3 }],
             },
             {
               id: 11,
               name: "创想卡 11",
-              setName: null,
+              inspoBoxName: null,
               face: { background: null, foreground: null, quality: null },
               materials: null,
             },
@@ -153,11 +153,11 @@ describe("furniture details", () => {
               ...first,
               image,
               quality: 1,
-              creationCards: [
+              inspoCards: [
                 {
                   id: 10,
                   name: "创想卡：木椅",
-                  setName: null,
+                  inspoBoxName: null,
                   materials: null,
                   face: { background, foreground, quality },
                 },

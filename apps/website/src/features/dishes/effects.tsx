@@ -1,5 +1,5 @@
 import { Badge } from "@/ui/components/badge";
-import type { DishItem } from "../collection-view";
+import type { DishItem } from "../omnidex-view";
 
 function effectMetadata(effect: NonNullable<DishItem["effects"]>[number]): string[] {
   return [

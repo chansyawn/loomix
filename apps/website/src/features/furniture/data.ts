@@ -1,11 +1,11 @@
-import { loadCollectionView } from "../collection-loader.ts";
-import type { CollectionView } from "../collection-view.ts";
+import { loadOmnidexView } from "../omnidex-loader.ts";
+import type { OmnidexView } from "../omnidex-view.ts";
 
-export type FurnitureData = CollectionView["furniture"] & {
-  ingredientItemsById?: CollectionView["ingredientItemsById"];
+export type FurnitureData = OmnidexView["furniture"] & {
+  ingredientItemsById?: OmnidexView["ingredientItemsById"];
 };
 
 export async function loadFurniture(): Promise<FurnitureData> {
-  const collection = await loadCollectionView();
+  const collection = await loadOmnidexView();
   return { ...collection.furniture, ingredientItemsById: collection.ingredientItemsById };
 }

@@ -1,7 +1,7 @@
 import { isNotFound } from "@tanstack/react-router";
 import { describe, expect, it, vi, afterEach } from "vite-plus/test";
-import { catalogFixture, fixtureRequest } from "../collection-fixture.ts";
-import type { ClothingItem, ClothingSet } from "../collection-view.ts";
+import { catalogFixture, fixtureRequest } from "../omnidex-fixture.ts";
+import type { ClothingItem, ClothingOutfit } from "../omnidex-view.ts";
 import { clothingDetail, loadClothingDetail, parseClothingId } from "./detail";
 
 const first: ClothingItem = {
@@ -17,13 +17,13 @@ const first: ClothingItem = {
   acquisition: null,
 };
 const second: ClothingItem = { ...first, id: 2, name: "木桌" };
-const set: ClothingSet = {
+const set: ClothingOutfit = {
   id: 3,
   name: "木制套装",
   image: null,
   quality: null,
   description: null,
-  setName: null,
+  outfitName: null,
   componentIds: [2, 1],
 };
 const data = {
@@ -31,8 +31,8 @@ const data = {
     { id: 5, name: "卷发", image: null, quality: null, description: null, category: "发型" },
   ],
   items: [first, second],
-  sets: [set, { ...set, id: 4, componentIds: [1] }],
-  neighborClothing: [],
+  outfits: [set, { ...set, id: 4, componentIds: [1] }],
+  neighborOutfit: [],
 };
 
 afterEach(() => vi.unstubAllGlobals());
@@ -54,15 +54,15 @@ describe("clothing details", () => {
       kind: "item",
       record: first,
     });
-    expect(clothingDetail({ ...data, sets: [] }, "items", 1).navigation.groups).toEqual([]);
+    expect(clothingDetail({ ...data, outfits: [] }, "items", 1).navigation.groups).toEqual([]);
   });
   it("preserves member order and distinguishes unavailable from empty members", () => {
-    expect(clothingDetail(data, "sets", 3)).toMatchObject({ items: [second, first] });
+    expect(clothingDetail(data, "outfits", 3)).toMatchObject({ items: [second, first] });
     expect(
-      clothingDetail({ ...data, sets: [{ ...set, componentIds: null }] }, "sets", 3),
+      clothingDetail({ ...data, outfits: [{ ...set, componentIds: null }] }, "outfits", 3),
     ).toMatchObject({ items: null });
     expect(
-      clothingDetail({ ...data, sets: [{ ...set, componentIds: [] }] }, "sets", 3),
+      clothingDetail({ ...data, outfits: [{ ...set, componentIds: [] }] }, "outfits", 3),
     ).toMatchObject({ items: [] });
   });
   it("shows appearances independently from clothing items", () => {
@@ -78,15 +78,17 @@ describe("clothing details", () => {
       [3, 2, 1],
       [4, 1],
     ]);
-    expect(clothingDetail(data, "sets", 3).navigation.groups).toEqual([item.navigation.groups[0]]);
+    expect(clothingDetail(data, "outfits", 3).navigation.groups).toEqual([
+      item.navigation.groups[0],
+    ]);
   });
   it("treats missing records and IDs of the wrong kind as not found", () => {
     for (const [view, id] of [
       ["items", 3],
-      ["sets", 1],
+      ["outfits", 1],
       ["items", 999],
       ["appearances", 1],
-      ["sets", 5],
+      ["outfits", 5],
     ] as const) {
       try {
         clothingDetail(data, view, id);

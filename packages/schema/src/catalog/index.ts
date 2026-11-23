@@ -11,7 +11,7 @@ export * from "./growth.ts";
 export { createRecordTagResolver } from "./tags.ts";
 export { validateCatalog } from "./validate.ts";
 
-export const CreationCardSetSchema = z.strictObject({
+export const InspoBoxSchema = z.strictObject({
   id: IdSchema,
   name: z.string().min(1),
   acquisitionHint: NullableTextSchema,
@@ -20,9 +20,9 @@ export const CreationCardSetSchema = z.strictObject({
 export const CatalogSchema = z.strictObject({
   items: ItemSchema.array(),
   collections: CollectionSchema.array(),
-  creationCardSets: CreationCardSetSchema.array(),
+  inspoBoxes: InspoBoxSchema.array(),
 });
-export type CreationCardSet = z.infer<typeof CreationCardSetSchema>;
+export type InspoBox = z.infer<typeof InspoBoxSchema>;
 export type Catalog = z.infer<typeof CatalogSchema>;
 export function parseCatalog(input: unknown): Catalog {
   const catalog = CatalogSchema.parse(input);

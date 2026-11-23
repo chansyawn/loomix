@@ -1,4 +1,4 @@
-import type { FilterGroup, FilterOption } from "../collection/filter-types";
+import type { FilterGroup, FilterOption } from "../omnidex/filter-types";
 import {
   INGREDIENT_USAGE_EXCLUDED,
   INGREDIENT_TAG_GROUPS,

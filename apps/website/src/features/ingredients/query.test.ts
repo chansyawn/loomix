@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { flattenFilterOptions } from "../collection/filter-types";
+import { flattenFilterOptions } from "../omnidex/filter-types";
 import { ingredientsFixture } from "./fixture";
 import { ingredientFilterGroups, queryIngredients } from "./query";
 import { ingredientsQuerySchema } from "./search";

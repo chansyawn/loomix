@@ -67,32 +67,32 @@ export function readStarsea(
   };
   const regionRows = rows(roots.regions);
   const regionIds = new Set(regionRows.map((row) => tables.id(row)));
-  const islandRows = rows(roots.islands);
-  const allIslands = new Set(islandRows.map((row) => tables.id(row)));
-  const excluded = new Set<number>(roots.testIslandIds);
-  const assertKnownIsland = (id: number) => {
-    if (!allIslands.has(id) || excluded.has(id))
-      throw new Error(`Invalid linked starsea island ${id}`);
+  const isletRows = rows(roots.islets);
+  const allIslets = new Set(isletRows.map((row) => tables.id(row)));
+  const excluded = new Set<number>(roots.testIsletIds);
+  const assertKnownIslet = (id: number) => {
+    if (!allIslets.has(id) || excluded.has(id))
+      throw new Error(`Invalid linked starsea islet ${id}`);
   };
   const galaxyRows = tables.byId(roots.galaxies);
   const explorationRows = rows(roots.explorationLists);
   const encounters = tables.rows(roots.encounters).map((row) => {
     const regions = tables.vector(row, 4);
-    const islands = tables.vector(row, 3);
+    const islets = tables.vector(row, 3);
     if (!regions?.length || regions.some((id) => !regionIds.has(id)))
       throw new Error(`Invalid starsea encounter regions at ${row.rowOffset}`);
-    islands?.forEach(assertKnownIsland);
+    islets?.forEach(assertKnownIslet);
     return {
       row,
       neighborId: tables.id(row),
       regions,
-      islands,
+      islets,
       field1: tables.uint(row, 1),
       field5: tables.vector(row, 5),
     };
   });
 
-  const activeIslands = new Set<number>();
+  const activeIslets = new Set<number>();
   const regions: WithImageUses<Starsea["regions"]> = regionRows.map((row) => {
     const id = tables.id(row);
     const galaxyId = tables.uint(row, 1);
@@ -102,13 +102,13 @@ export function readStarsea(
     const matching = explorationRows.filter(
       (entry) => tables.uint(entry, 1) === galaxyId && tables.uint(entry, 2) === layer,
     );
-    const explorationIslandIds = tables.vector(row, 6);
+    const explorationIsletIds = tables.vector(row, 6);
     const listed = matching.flatMap((entry) => tables.vector(entry, 3) ?? []);
-    if (!explorationIslandIds || JSON.stringify(explorationIslandIds) !== JSON.stringify(listed))
+    if (!explorationIsletIds || JSON.stringify(explorationIsletIds) !== JSON.stringify(listed))
       throw new Error(`Conflicting exploration lists for starsea region ${id}`);
-    for (const island of explorationIslandIds) {
-      assertKnownIsland(island);
-      activeIslands.add(island);
+    for (const islet of explorationIsletIds) {
+      assertKnownIslet(islet);
+      activeIslets.add(islet);
     }
     const pool = encounters.filter(
       (entry) => entry.regions.includes(id) && neighborIds.has(entry.neighborId),
@@ -122,13 +122,13 @@ export function readStarsea(
     const regionEncounters = [...byNeighbor]
       .sort(([first], [second]) => first - second)
       .map(([neighborId, entries]) => {
-        const candidateIslandIds = entries.every(
-          (entry) => entry.regions.length === 1 && entry.islands !== null,
+        const candidateIsletIds = entries.every(
+          (entry) => entry.regions.length === 1 && entry.islets !== null,
         )
-          ? [...new Set(entries.flatMap((entry) => entry.islands ?? []))]
+          ? [...new Set(entries.flatMap((entry) => entry.islets ?? []))]
           : null;
-        candidateIslandIds?.forEach((island) => activeIslands.add(island));
-        return { neighborId, candidateIslandIds };
+        candidateIsletIds?.forEach((islet) => activeIslets.add(islet));
+        return { neighborId, candidateIsletIds };
       });
     const unlockKey = tables.string(row, 9);
     const unlockTip = tables.key(unlockKey);
@@ -143,7 +143,7 @@ export function readStarsea(
       [tableSource(row, 9)],
       unlockTip ? undefined : "unlock_tip_not_configured",
     );
-    recordProof(collection, id, "explorationIslandIds", [
+    recordProof(collection, id, "explorationIsletIds", [
       tableSource(row, 1, 3, 6),
       ...matching.map((entry) => tableSource(entry, 1, 2, 3)),
     ]);
@@ -172,12 +172,12 @@ export function readStarsea(
       unlockTip,
       mapImage: null,
       stationImage: { use: stationImage },
-      explorationIslandIds,
+      explorationIsletIds,
       encounters: regionEncounters,
     };
   });
 
-  const rawIslands = islandRows.map((row) => ({
+  const rawIslets = isletRows.map((row) => ({
     id: tables.id(row),
     name: localized(row, 1),
     sceneId: tables.uint(row, 16),
@@ -189,18 +189,18 @@ export function readStarsea(
     displayedCreatureIds: itemIds(row, 25),
     displayedSpecialtyIds: itemIds(row, 26),
     illustrationPath: asset(row, 27),
-    disposition: activeIslands.has(tables.id(row))
+    disposition: activeIslets.has(tables.id(row))
       ? "linked"
       : excluded.has(tables.id(row))
         ? "test"
         : "unplaced",
     source: tableSource(row, 0, 1, 16, 17, 18, 20, 21, 22, 25, 26, 27),
   }));
-  const islands: WithImageUses<Starsea["islands"]> = rawIslands.flatMap((island, index) => {
-    const { id, name, iconStyleId, displayedCreatureIds, displayedSpecialtyIds } = island;
-    if (!activeIslands.has(id)) return [];
-    const row = islandRows[index];
-    const collection = "starsea.islands";
+  const islets: WithImageUses<Starsea["islets"]> = rawIslets.flatMap((islet, index) => {
+    const { id, name, iconStyleId, displayedCreatureIds, displayedSpecialtyIds } = islet;
+    if (!activeIslets.has(id)) return [];
+    const row = isletRows[index];
+    const collection = "starsea.islets";
     recordProof(collection, id, "name", [tableSource(row, 1)]);
     recordProof(collection, id, "iconStyleId", [tableSource(row, 17)]);
     recordProof(
@@ -218,8 +218,8 @@ export function readStarsea(
       displayedSpecialtyIds ? undefined : "display_list_not_configured",
     );
     const use = images.configured(
-      { kind: "starseaIsland", id, field: "illustration" },
-      island.illustrationPath,
+      { kind: "starseaIslet", id, field: "illustration" },
+      islet.illustrationPath,
       "illustration",
       [tableSource(row, 27)],
     );
@@ -241,10 +241,10 @@ export function readStarsea(
     return { id, name: localized(row, 1), icon: { use } };
   });
   return {
-    data: { regions, islands, iconStyles },
+    data: { regions, islets, iconStyles },
     proofs,
     diagnostics: {
-      islands: rawIslands,
+      islets: rawIslets,
       regions: regionRows.map((row) => {
         const sdfPath = asset(row, 12);
         return {
@@ -263,7 +263,7 @@ export function readStarsea(
         ...entry,
         disposition: !neighborIds.has(entry.neighborId)
           ? "unlisted_neighbor"
-          : entry.regions.length > 1 || entry.islands === null
+          : entry.regions.length > 1 || entry.islets === null
             ? "region_only"
             : "linked",
         source: tableSource(row, 0, 1, 3, 4, 5),
@@ -280,10 +280,10 @@ export function readStarsea(
 }
 
 export function starseaItemIds(
-  islands: Pick<Starsea["islands"][number], "displayedCreatureIds" | "displayedSpecialtyIds">[],
+  islets: Pick<Starsea["islets"][number], "displayedCreatureIds" | "displayedSpecialtyIds">[],
 ) {
-  return islands.flatMap((island) => [
-    ...(island.displayedCreatureIds ?? []),
-    ...(island.displayedSpecialtyIds ?? []),
+  return islets.flatMap((islet) => [
+    ...(islet.displayedCreatureIds ?? []),
+    ...(islet.displayedSpecialtyIds ?? []),
   ]);
 }

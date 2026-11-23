@@ -1,8 +1,8 @@
 import { useRouter } from "@tanstack/react-router";
-import { CollectionDetailLoading } from "@/features/collection/detail-layout";
-import { CollectionPage } from "@/features/collection/page";
-import { wideGrid } from "@/features/collection/grid-layout";
-import { CollectionLoadError } from "@/features/collection/states";
+import { DetailLoading } from "@/features/omnidex/detail-layout";
+import { ListPage } from "@/features/omnidex/page";
+import { wideGrid } from "@/features/omnidex/grid-layout";
+import { ListLoadError } from "@/features/omnidex/states";
 import { Button } from "@/ui/components/button";
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/ui/components/empty";
 import { Skeleton } from "@/ui/components/skeleton";
@@ -10,7 +10,7 @@ import { StarseaReturnLink } from "./navigation";
 
 export function StarseaListLoading() {
   return (
-    <CollectionPage title="星海" loading>
+    <ListPage title="星海" loading>
       <div className="flex flex-col gap-4 pb-8">
         <Skeleton className="h-9 w-full max-w-96" />
         <Skeleton className="h-9 w-full max-w-96" />
@@ -20,17 +20,17 @@ export function StarseaListLoading() {
           ))}
         </div>
       </div>
-    </CollectionPage>
+    </ListPage>
   );
 }
 
 export function StarseaDetailLoading() {
-  return <CollectionDetailLoading label="正在加载星屿资料" />;
+  return <DetailLoading label="正在加载星屿资料" />;
 }
 
 export function StarseaError() {
   const router = useRouter();
-  return <CollectionLoadError title="星海" onRetry={() => void router.invalidate()} />;
+  return <ListLoadError title="星海" onRetry={() => void router.invalidate()} />;
 }
 
 export function StarseaNotFound() {

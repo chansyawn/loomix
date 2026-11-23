@@ -1,11 +1,11 @@
 import { BeanIcon, LayersIcon, SproutIcon } from "lucide-react";
-import { CollectionCardSkeleton } from "../collection/card-skeleton";
-import { compactGrid } from "../collection/grid-layout";
-import type { CollectionTab } from "../collection/page";
+import { ListCardSkeleton } from "../omnidex/card-skeleton";
+import { compactGrid } from "../omnidex/grid-layout";
+import type { ListTab } from "../omnidex/page";
 import type { View } from "./search";
 
 export const title = "植物";
-export const tabs: CollectionTab<"items" | "series" | "seeds">[] = [
+export const tabs: ListTab<"items" | "series" | "seeds">[] = [
   { value: "items", label: "植物单品", icon: <SproutIcon /> },
   { value: "series", label: "植物系列", icon: <LayersIcon /> },
   { value: "seeds", label: "种子", icon: <BeanIcon /> },
@@ -19,6 +19,6 @@ export function listPresentation(view: View) {
   return {
     ...entry,
     grid: compactGrid(view === "items" ? 78 : 124),
-    card: <CollectionCardSkeleton description={view !== "items"} tags />,
+    card: <ListCardSkeleton description={view !== "items"} tags />,
   };
 }

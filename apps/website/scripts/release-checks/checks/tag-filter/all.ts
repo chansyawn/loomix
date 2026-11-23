@@ -1,11 +1,11 @@
 import { isListedItem } from "@loomix/schema/catalog";
 import { createGameplayTagIndex } from "@loomix/schema/gameplay-tags";
-import { ALL_TAG_FILTER_POLICY } from "../../../../src/features/all/tag-filter-policy.ts";
+import { CATALOG_TAG_FILTER_POLICY } from "../../../../src/features/catalog/tag-filter-policy.ts";
 import {
   flattenFilterOptions,
   type FilterOption,
-} from "../../../../src/features/collection/filter-types.ts";
-import { createCollectionTagFilter } from "../../../../src/features/collection/tags.ts";
+} from "../../../../src/features/omnidex/filter-types.ts";
+import { createOmnidexTagFilter } from "../../../../src/features/omnidex/tags.ts";
 import type { ReleaseCheck, ReleaseCheckIssue, ReleaseCheckResult } from "../../types.ts";
 import type { TagFilterInput } from "./types.ts";
 
@@ -26,12 +26,12 @@ function checkSiblingLabels(
 export function checkAllTagFilter({ tags, records }: TagFilterInput): ReleaseCheckResult {
   const issues: ReleaseCheckIssue[] = [];
   const tagIndex = createGameplayTagIndex(tags);
-  const filter = createCollectionTagFilter([...tags], tagIndex, records, ALL_TAG_FILTER_POLICY);
+  const filter = createOmnidexTagFilter([...tags], tagIndex, records, CATALOG_TAG_FILTER_POLICY);
   const options = filter.options();
   const flattened = flattenFilterOptions(options);
   const visibleIds = new Set(flattened.map((option) => option.value));
 
-  for (const name of ALL_TAG_FILTER_POLICY.rootNames) {
+  for (const name of CATALOG_TAG_FILTER_POLICY.rootNames) {
     const root = tags.find((tag) => tag.parentId === null && tag.internalName === name);
     if (!root) issues.push({ path: "gameplay-tags", message: `白名单根不存在：${name}` });
     else if (!visibleIds.has(String(root.id)))

@@ -1,8 +1,8 @@
-import type { CatalogEntrySummary } from "../collection-view";
+import type { CatalogEntrySummary } from "../omnidex-view";
 import type {
   DetailNavigationEntry,
   DetailNavigationGroup,
-} from "../collection/detail-navigation-model";
+} from "../omnidex/detail-navigation-model";
 import type { PlantItem, PlantSeed, PlantSeries, PlantsData } from "./model";
 
 export type PlantDetailNavigationModel = Readonly<{

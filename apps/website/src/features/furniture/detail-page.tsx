@@ -1,19 +1,15 @@
 import { FurnitureCard } from "./furniture-card";
-import {
-  CollectionDetailLayout,
-  CollectionDetailExtras,
-  type CollectionDetailSection,
-} from "@/features/collection/detail-layout";
-import { RecordImage as FurnitureImage } from "@/features/collection/record-image";
-import type { FurnitureItem } from "../collection-view";
+import { DetailLayout, DetailExtras, type DetailSection } from "@/features/omnidex/detail-layout";
+import { RecordImage as FurnitureImage } from "@/features/omnidex/record-image";
+import type { FurnitureItem } from "../omnidex-view";
 import type { FurnitureDetail } from "./detail";
-import { CollectionDetailNavigation } from "../collection/detail-navigation";
+import { CatalogEntryNavigation } from "../omnidex/detail-navigation";
 import { FurnitureRecipes } from "./recipes";
 
 export function FurnitureDetailPage({ detail }: { detail: FurnitureDetail }) {
   return (
     <div className="min-w-0 space-y-6">
-      <CollectionDetailNavigation model={detail.navigation} currentId={detail.record.id} />
+      <CatalogEntryNavigation model={detail.navigation} currentId={detail.record.id} />
       <FurnitureDetailContent key={detail.record.id} detail={detail} />
     </div>
   );
@@ -37,7 +33,7 @@ function FurnitureDetailContent({ detail }: { detail: FurnitureDetail }) {
           ["成员数量", detail.items === null ? null : `${detail.items.length} 件家具`],
         ];
   return (
-    <CollectionDetailLayout
+    <DetailLayout
       image={
         <FurnitureImage
           key={record.image}
@@ -58,13 +54,13 @@ function FurnitureDetailContent({ detail }: { detail: FurnitureDetail }) {
       }
       fields={fields}
     >
-      {sections.length > 0 && <CollectionDetailExtras sections={sections} />}
-    </CollectionDetailLayout>
+      {sections.length > 0 && <DetailExtras sections={sections} />}
+    </DetailLayout>
   );
 }
 
-function furnitureDetailSections(detail: FurnitureDetail): CollectionDetailSection[] {
-  const sections: CollectionDetailSection[] = [];
+function furnitureDetailSections(detail: FurnitureDetail): DetailSection[] {
+  const sections: DetailSection[] = [];
   if (detail.kind === "item") {
     if (detail.recipes?.length)
       sections.push({

@@ -8,6 +8,12 @@
 
 种子通过可连接正式植物的确定性种植关系准入，入口为[种植读取](../src/extraction/source/catalog/plants/read.ts)；友邻及其服饰通过对应准入规则筛选，入口为[友邻准入名单](../src/extraction/source/neighbors/allowlist.ts)与[友邻服饰](../src/extraction/source/neighbors/outfits.ts)。
 
+## 客户端显示用语
+
+`0.95.2`（数据修订 `1449213`）活动配置 `ed.obb` 的中英 TextMap 将万象收藏称为 `Omnidex`（`2111100511`），杂物称为 `Miscellaneous`（`2110969575`），烹饪分类称为 `Dishes`（`3935948819`）。服饰套装使用 `Outfits`（`3935948846`），家具套组使用 `Sets`（`578165405`）。
+
+同一份 TextMap 中，友邻服饰为 `Neighbor Outfit`（`301435305`），星屿为 `Islet`（`154047077`），创想卡为 `Inspo Card`（`180227326`），创想卡集为 `InspoBox`（`461758315`）。`Catalog` 是本站目录及路由用语，不是客户端「全部」（`All`）的显示名。
+
 ## 已确认与未确认的调查线索
 
 - `0.95.2`（数据修订 `1449213`）的展示表 `325` 中，部分友邻服饰的大小图都指向 `UISprite/Load/Item/Cloud`。解包确认该资源为通用云朵图，同一客户端中仍可定位这些服饰的模型资源。资料集将占位云朵视为缺图，保留服饰及原始图片配置依据。[友邻服饰图标](../src/extraction/source/neighbors/outfit-image.ts)

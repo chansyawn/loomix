@@ -1,11 +1,8 @@
 import type { LinkProps } from "@tanstack/react-router";
-import {
-  CollectionDetailLayout,
-  CollectionDetailRelatedGrid,
-} from "@/features/collection/detail-layout";
-import { CollectionItemCard } from "@/features/collection/collection-item-card";
-import { recordLocation } from "@/features/collection/item-route";
-import { RecordImage } from "@/features/collection/record-image";
+import { DetailLayout, DetailRelatedGrid } from "@/features/omnidex/detail-layout";
+import { CatalogItemCard } from "@/features/omnidex/catalog-item-card";
+import { catalogEntryLocation } from "@/features/omnidex/entry-location";
+import { RecordImage } from "@/features/omnidex/record-image";
 import { VignetteRequirements } from "./requirements";
 import type { VignetteDetail } from "./view";
 
@@ -24,16 +21,11 @@ function RelatedEntries({
     <section className="space-y-2">
       <h2 className="text-xl font-semibold">关联{title}</h2>
       {entries.length ? (
-        <CollectionDetailRelatedGrid>
+        <DetailRelatedGrid>
           {entries.map((entry) => (
-            <CollectionItemCard
-              key={entry.id}
-              item={entry}
-              itemId={entry.id}
-              link={itemLink(entry)}
-            />
+            <CatalogItemCard key={entry.id} item={entry} itemId={entry.id} link={itemLink(entry)} />
           ))}
-        </CollectionDetailRelatedGrid>
+        </DetailRelatedGrid>
       ) : (
         <p className="text-sm text-muted-foreground">暂无关联{title}</p>
       )}
@@ -43,7 +35,7 @@ function RelatedEntries({
 
 export function VignetteDetailPage({ entry }: { entry: VignetteDetail }) {
   return (
-    <CollectionDetailLayout
+    <DetailLayout
       image={
         <RecordImage
           key={entry.image}
@@ -66,8 +58,8 @@ export function VignetteDetailPage({ entry }: { entry: VignetteDetail }) {
         entries={entry.neighbors}
         itemLink={({ id }) => ({ to: "/neighbors/$id", params: { id: String(id) } })}
       />
-      <RelatedEntries title="生物" entries={entry.creatures} itemLink={recordLocation} />
+      <RelatedEntries title="生物" entries={entry.creatures} itemLink={catalogEntryLocation} />
       <VignetteRequirements requirements={entry.requirements} />
-    </CollectionDetailLayout>
+    </DetailLayout>
   );
 }

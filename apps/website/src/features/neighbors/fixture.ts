@@ -1,4 +1,4 @@
-import { addFixtureRecords } from "../collection-fixture";
+import { addFixtureRecords } from "../omnidex-fixture";
 import { parseNeighbors } from "@loomix/schema/neighbors";
 import type { Neighbor } from "@loomix/schema/neighbors";
 import type { ImageIndex } from "@loomix/schema/assets";
@@ -99,7 +99,7 @@ export function neighborFixture() {
       asset("item", "icon", "5".repeat(64)),
     ],
   };
-  const catalog: Catalog = { items: [], collections: [], creationCardSets: [] };
+  const catalog: Catalog = { items: [], collections: [], inspoBoxes: [] };
   const gameplayTags: GameplayTags = {
     tags: [
       { id: 1, displayName: "树生水果", internalName: "水果", parentId: null },

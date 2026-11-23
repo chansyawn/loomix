@@ -10,11 +10,11 @@ import { describe, expect, it } from "vite-plus/test";
 import { z } from "zod";
 import { compactDishesSearch, compactDishesSearchMiddleware, dishesSearchSchema } from "./search";
 
-function setup(initialEntry = "/collections/dishes") {
+function setup(initialEntry = "/dishes") {
   const root = createRootRoute({ validateSearch: z.object({ lang: z.string().optional() }) });
   const dishes = createRoute({
     getParentRoute: () => root,
-    path: "/collections/dishes",
+    path: "/dishes",
     validateSearch: dishesSearchSchema,
     search: { middlewares: [compactDishesSearchMiddleware] },
   });
@@ -28,14 +28,14 @@ describe("compact dish URLs", () => {
   it("omits defaults and serializes only meaningful view fields", () => {
     const router = setup();
     const empty = router.buildLocation({
-      to: "/collections/dishes",
-      from: "/collections/dishes",
+      to: "/dishes",
+      from: "/dishes",
       search: dishesSearchSchema.parse({}),
     });
-    expect(empty.href).toBe("/collections/dishes");
+    expect(empty.href).toBe("/dishes");
     const selected = router.buildLocation({
-      to: "/collections/dishes",
-      from: "/collections/dishes",
+      to: "/dishes",
+      from: "/dishes",
       search: dishesSearchSchema.parse({
         items: {
           q: "鱼",
@@ -79,13 +79,12 @@ describe("compact dish URLs", () => {
 
   it("preserves parent parameters and removes unsupported nested values", async () => {
     const router = setup(
-      "/collections/dishes" +
-        defaultStringifySearch({ lang: "zh", items: { cookwares: ["烤架"], page: 4 } }),
+      "/dishes" + defaultStringifySearch({ lang: "zh", items: { cookwares: ["烤架"], page: 4 } }),
     );
     await router.load();
     const location = router.buildLocation({
-      to: "/collections/dishes",
-      from: "/collections/dishes",
+      to: "/dishes",
+      from: "/dishes",
       search: (previous) => ({ ...previous, ...dishesSearchSchema.parse(previous) }),
     });
     expect(defaultParseSearch(location.searchStr)).toEqual({
@@ -105,10 +104,10 @@ describe("layout URL overrides", () => {
       expect(dishesSearchSchema.parse(defaultParseSearch(defaultStringifySearch(compact)))).toEqual(
         search,
       );
-      const location = router.buildLocation({ to: "/collections/dishes", search });
+      const location = router.buildLocation({ to: "/dishes", search });
       expect(defaultParseSearch(location.searchStr)).toMatchObject({ layout });
       const cleared = router.buildLocation({
-        to: "/collections/dishes",
+        to: "/dishes",
         search: dishesSearchSchema.parse({ ...search, items: {} }),
       });
       expect(defaultParseSearch(cleared.searchStr)).toEqual({ layout });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import type { CreatureItem, CreatureSeries } from "../collection-view.ts";
+import type { CreatureItem, CreatureSeries } from "../omnidex-view.ts";
 import { filterGroups, queryCreatures } from "./query";
 import { emptyQuery, missing, ungrouped } from "./search";
 

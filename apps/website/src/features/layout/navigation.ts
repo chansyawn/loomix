@@ -12,17 +12,18 @@ import {
 } from "lucide-react";
 
 export const homeItem = { title: "首页", to: "/", icon: HomeIcon } as const;
+export const catalogItem = { title: "全部", to: "/catalog", icon: PackageIcon } as const;
 
-export const collectionNavigation = {
+export const omnidexNavigation = {
   title: "万象收藏",
   items: [
-    { title: "全部", to: "/collections/all", icon: PackageIcon },
-    { title: "家具", to: "/collections/furniture", icon: ArmchairIcon },
-    { title: "植物", to: "/collections/plants", icon: SproutIcon },
-    { title: "生物", to: "/collections/creatures", icon: BugIcon },
-    { title: "杂物", to: "/collections/miscellany", icon: PackageIcon },
-    { title: "服饰", to: "/collections/clothing", icon: ShirtIcon },
-    { title: "烹饪", to: "/collections/dishes", icon: CookingPotIcon },
+    catalogItem,
+    { title: "家具", to: "/furniture", icon: ArmchairIcon },
+    { title: "植物", to: "/plants", icon: SproutIcon },
+    { title: "生物", to: "/creatures", icon: BugIcon },
+    { title: "杂物", to: "/miscellaneous", icon: PackageIcon },
+    { title: "服饰", to: "/clothing", icon: ShirtIcon },
+    { title: "烹饪", to: "/dishes", icon: CookingPotIcon },
   ],
 } as const;
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
-import type { FurnitureItem, FurnitureSet } from "../collection-view.ts";
-import { indexMembership } from "../collection/membership";
+import type { FurnitureItem, FurnitureSet } from "../omnidex-view.ts";
+import { indexMembership } from "../omnidex/membership";
 import { filterGroups, queryFurniture } from "./query";
 import { emptyQuery, missing, ungrouped } from "./search";
 
@@ -21,7 +21,7 @@ function item(
     colors: null,
     materials: null,
     acquisition: null,
-    creationCards: [],
+    inspoCards: [],
     ...fields,
   };
 }

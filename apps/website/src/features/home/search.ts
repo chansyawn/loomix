@@ -1,6 +1,6 @@
-import { allSearchSchema, type AllSearch } from "../all/search";
+import { catalogSearchSchema, type CatalogSearch } from "../catalog/search";
 
-export function createHomeSearch(keyword: string): AllSearch | null {
+export function createHomeSearch(keyword: string): CatalogSearch | null {
   const q = keyword.trim();
-  return q ? allSearchSchema.parse({ items: { q } }) : null;
+  return q ? catalogSearchSchema.parse({ items: { q } }) : null;
 }

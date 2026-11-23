@@ -1,6 +1,6 @@
 import type { SearchMiddleware } from "@tanstack/react-router";
 import { z } from "zod";
-import { collectionLayoutSchema } from "../collection/layout";
+import { listLayoutSchema } from "../omnidex/layout";
 
 export const categories = ["起居", "装饰物", "功能家具", "硬装", "绿植", "户外布设", "其他"];
 export const missing = "__missing";
@@ -72,7 +72,7 @@ const setQuerySchema = viewQuerySchema
 
 export const furnitureSearchSchema = z.object({
   view: z.enum(["items", "sets"]).catch("items").default("items"),
-  layout: collectionLayoutSchema,
+  layout: listLayoutSchema,
   items: itemQuerySchema.prefault({}).catch(emptyQuery),
   sets: setQuerySchema.prefault({}).catch(emptyQuery),
 });

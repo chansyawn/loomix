@@ -1,12 +1,12 @@
-import { RecordImage } from "@/features/collection/record-image";
+import { RecordImage } from "@/features/omnidex/record-image";
 import {
-  CollectionDetailLayout,
-  CollectionDetailRelatedGrid,
-  CollectionDetailExtras,
-  type CollectionDetailSection,
-} from "@/features/collection/detail-layout";
+  DetailLayout,
+  DetailRelatedGrid,
+  DetailExtras,
+  type DetailSection,
+} from "@/features/omnidex/detail-layout";
 import { CreaturesCard, CreatureSeriesCard } from "./creatures-card";
-import { SeriesImage } from "../collection/series-image";
+import { SeriesImage } from "../omnidex/series-image";
 import type { CreaturesDetail } from "./detail";
 import { ItemCookingUsage } from "../ingredients/item-usage";
 
@@ -32,7 +32,7 @@ export function CreaturesDetailPage({ detail }: { detail: CreaturesDetail }) {
           ["成员数量", detail.items === null ? null : `${detail.items.length} 种生物`],
         ];
   return (
-    <CollectionDetailLayout
+    <DetailLayout
       image={
         detail.kind === "item" ? (
           <RecordImage key={record.image} image={record.image} name={record.name} eager />
@@ -58,12 +58,12 @@ export function CreaturesDetailPage({ detail }: { detail: CreaturesDetail }) {
       fields={fields}
     >
       <CreaturesExtras detail={detail} />
-    </CollectionDetailLayout>
+    </DetailLayout>
   );
 }
 
 function CreaturesExtras({ detail }: { detail: CreaturesDetail }) {
-  const sections: CollectionDetailSection[] = [];
+  const sections: DetailSection[] = [];
   if (detail.kind === "item" && detail.cooking)
     sections.push({
       key: "creature-cooking",
@@ -74,7 +74,7 @@ function CreaturesExtras({ detail }: { detail: CreaturesDetail }) {
     (detail.kind === "series" && detail.items?.length)
   )
     sections.push({ key: "related-creatures", content: <CreaturesRelated detail={detail} /> });
-  return <CollectionDetailExtras sections={sections} />;
+  return <DetailExtras sections={sections} />;
 }
 
 function CreaturesRelated({ detail }: { detail: CreaturesDetail }) {
@@ -84,11 +84,11 @@ function CreaturesRelated({ detail }: { detail: CreaturesDetail }) {
         {detail.kind === "item" ? "所属系列" : "系列成员"}
       </h2>
       {detail.kind === "item" ? (
-        <CollectionDetailRelatedGrid>
+        <DetailRelatedGrid>
           {detail.series.map((series) => (
             <CreatureSeriesCard key={series.id} series={series} items={detail.catalogItems} />
           ))}
-        </CollectionDetailRelatedGrid>
+        </DetailRelatedGrid>
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-3">
           {detail.items?.map((item) => (

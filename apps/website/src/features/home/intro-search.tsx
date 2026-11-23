@@ -1,3 +1,4 @@
+import { catalogItem } from "@/features/layout/navigation";
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowRightIcon } from "lucide-react";
@@ -46,7 +47,7 @@ export function IntroSearch() {
         onSubmit={(event) => {
           event.preventDefault();
           const search = createHomeSearch(keyword);
-          if (search) void navigate({ to: "/collections/all", search });
+          if (search) void navigate({ to: catalogItem.to, search });
         }}
       >
         <SearchInput

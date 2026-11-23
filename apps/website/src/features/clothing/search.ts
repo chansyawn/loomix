@@ -1,6 +1,6 @@
 import type { SearchMiddleware } from "@tanstack/react-router";
 import { z } from "zod";
-import { collectionLayoutSchema } from "../collection/layout";
+import { listLayoutSchema } from "../omnidex/layout";
 
 export const missing = "__missing";
 export const ungrouped = "__ungrouped";
@@ -14,7 +14,7 @@ export const sortOptions = {
 export const filterKeys = [
   "categories",
   "qualities",
-  "sets",
+  "outfits",
   "colors",
   "materials",
   "styles",
@@ -41,7 +41,7 @@ const base = z.object({
 });
 const viewQuerySchema = base.extend({
   categories: stringList.default([]),
-  sets: stringList.default([]),
+  outfits: stringList.default([]),
   colors: stringList.default([]),
   materials: stringList.default([]),
   styles: stringList.default([]),
@@ -51,18 +51,18 @@ export type ViewQuery = z.output<typeof viewQuerySchema>;
 export function emptyQuery(): ViewQuery {
   return viewQuerySchema.parse({});
 }
-const setQuery = base.transform((query) => ({ ...emptyQuery(), ...query }));
+const outfitQuery = base.transform((query) => ({ ...emptyQuery(), ...query }));
 const categorizedQuery = base
   .extend({ categories: stringList.default([]) })
   .transform((query) => ({ ...emptyQuery(), ...query }));
-const views = ["items", "sets", "appearances", "neighborClothing"] as const;
+const views = ["items", "outfits", "appearances", "neighborOutfit"] as const;
 export const clothingSearchSchema = z.object({
-  layout: collectionLayoutSchema,
+  layout: listLayoutSchema,
   view: z.enum(views).catch("items").default("items"),
   items: viewQuerySchema.prefault({}).catch(emptyQuery),
-  sets: setQuery.prefault({}).catch(emptyQuery),
+  outfits: outfitQuery.prefault({}).catch(emptyQuery),
   appearances: categorizedQuery.prefault({}).catch(emptyQuery),
-  neighborClothing: categorizedQuery.prefault({}).catch(emptyQuery),
+  neighborOutfit: categorizedQuery.prefault({}).catch(emptyQuery),
 });
 export type ClothingSearchInput = z.input<typeof clothingSearchSchema>;
 export type ClothingSearch = z.output<typeof clothingSearchSchema>;
@@ -99,9 +99,9 @@ export const compactClothingSearchMiddleware: SearchMiddleware<ClothingSearch> =
     layout: _layout,
     view: _view,
     items: _items,
-    sets: _sets,
+    outfits: _outfits,
     appearances: _appearances,
-    neighborClothing: _neighborClothing,
+    neighborOutfit: _neighborOutfit,
     ...other
   } = result;
   // 校验时从精简的 URL 表示中恢复必需的默认值。

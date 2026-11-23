@@ -116,15 +116,15 @@ test("创想卡要求可展示正面，并在独立空间校验卡集", () => {
   const dataset = datasetFixture();
   const product = material(2);
   const base = { assetId: "card-bg", variant: "card-background" } as const;
-  const card: ItemOf<"creationCard"> = {
+  const card: ItemOf<"inspoCard"> = {
     ...material(1),
-    kind: "creationCard",
+    kind: "inspoCard",
     front: { background: base },
-    cardSetId: 2,
+    inspoBoxId: 2,
     recipe: { productId: 2, materials: [{ itemId: 3, quantity: 4 }] },
   };
   dataset.catalog.items.push(card, product, reference(3));
-  dataset.catalog.creationCardSets.push({
+  dataset.catalog.inspoBoxes.push({
     id: 2,
     name: "卡集",
     acquisitionHint: null,
@@ -134,7 +134,7 @@ test("创想卡要求可展示正面，并在独立空间校验卡集", () => {
   card.image = { assetId: "card-icon", variant: "icon" };
   expect(messages(dataset)).toEqual([]);
   expect(referencedImages(dataset)).toEqual([base, card.image]);
-  card.cardSetId = 99;
+  card.inspoBoxId = 99;
   expect(messages(dataset)).toEqual([
     "Unknown creation card set 99",
     "Creation card set 2 has no admitted cards",
@@ -145,9 +145,9 @@ test("星海引用校验检查归属、展示类型和图片覆盖", () => {
   const dataset = datasetFixture();
   dataset.catalog.items.push(reference(5), material(6));
   dataset.neighbors.neighbors.push(neighbor(11));
-  const icon = { assetId: "island-icon", variant: "icon" } as const;
+  const icon = { assetId: "islet-icon", variant: "icon" } as const;
   dataset.starsea.iconStyles.push({ id: 1, name: "河鱼", icon });
-  dataset.starsea.islands.push({
+  dataset.starsea.islets.push({
     id: 2,
     name: "星屿",
     iconStyleId: 1,
@@ -162,21 +162,21 @@ test("星海引用校验检查归属、展示类型和图片覆盖", () => {
     unlockTip: null,
     mapImage: null,
     stationImage: null,
-    explorationIslandIds: [2],
-    encounters: [{ neighborId: 11, candidateIslandIds: null }],
+    explorationIsletIds: [2],
+    encounters: [{ neighborId: 11, candidateIsletIds: null }],
   });
   expect(messages(dataset)).toEqual([]);
   expect(referencedImages(dataset)).toEqual([icon]);
   const region = dataset.starsea.regions[0];
-  region.explorationIslandIds.push(2, 9);
-  region.encounters.push({ neighborId: 14, candidateIslandIds: [8] });
-  dataset.starsea.islands[0].displayedCreatureIds = [6, 7];
+  region.explorationIsletIds.push(2, 9);
+  region.encounters.push({ neighborId: 14, candidateIsletIds: [8] });
+  dataset.starsea.islets[0].displayedCreatureIds = [6, 7];
   expect(messages(dataset)).toEqual(
     expect.arrayContaining([
       "Duplicate identity 2",
-      "Unknown island 9",
+      "Unknown islet 9",
       "Unknown neighbor 14",
-      "Unknown island 8",
+      "Unknown islet 8",
       "Expected creature or reference item 6",
       "Unknown item 7",
     ]),
@@ -233,9 +233,9 @@ test("种子内嵌生长配置，阶段必须指向正式植物", () => {
 
 test("友邻服饰必须关联已知友邻或玩家服饰", () => {
   const dataset = datasetFixture();
-  const outfit: ItemOf<"neighborClothing"> = {
+  const outfit: ItemOf<"neighborOutfit"> = {
     ...material(1160001),
-    kind: "neighborClothing",
+    kind: "neighborOutfit",
     category: "头戴物",
     neighborId: 11,
     playerItemId: 60001,

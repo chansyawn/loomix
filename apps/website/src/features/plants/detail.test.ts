@@ -1,6 +1,6 @@
 import { isNotFound } from "@tanstack/react-router";
 import { afterEach, expect, test, vi } from "vite-plus/test";
-import { catalogFixture, fixtureRequest } from "../collection-fixture";
+import { catalogFixture, fixtureRequest } from "../omnidex-fixture";
 import {
   plantItemFixture,
   plantSeedFixture,

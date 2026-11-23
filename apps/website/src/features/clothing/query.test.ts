@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import type { ClothingItem } from "../collection-view.ts";
+import type { ClothingItem } from "../omnidex-view.ts";
 import type { ClothingData } from "./data";
 import { filterGroups, queryClothing } from "./query";
 import { clothingSearchSchema, emptyQuery, missing, ungrouped, updateViewQuery } from "./search";
@@ -40,21 +40,21 @@ const third: ClothingItem = {
 };
 const data: ClothingData = {
   items: [first, second, third],
-  sets: [
+  outfits: [
     {
       id: 4,
       name: "暖冬",
       quality: 2,
       image: null,
       description: null,
-      setName: "暖冬",
+      outfitName: "暖冬",
       componentIds: [1],
     },
   ],
   appearances: [
     { id: 5, name: "卷发", image: null, description: null, quality: 0, category: "发型" },
   ],
-  neighborClothing: [
+  neighborOutfit: [
     {
       id: 6,
       name: "丰年连衣裙",
@@ -89,7 +89,7 @@ describe("clothing queries", () => {
         styles: ["古典"],
         acquisition: ["商店"],
         qualities: ["1"],
-        sets: ["4"],
+        outfits: ["4"],
       }),
     ).toEqual([1]);
     expect(query({ colors: ["白色", "黑色"] })).toEqual([1, 2]);
@@ -107,7 +107,7 @@ describe("clothing queries", () => {
         acquisition: [missing],
       }),
     ).toEqual([3]);
-    expect(query({ sets: [ungrouped] })).toEqual([2, 3]);
+    expect(query({ outfits: [ungrouped] })).toEqual([2, 3]);
   });
   it("sorts without mutating source data and keeps missing qualities last", () => {
     expect(query({ sort: "quality-desc" })).toEqual([2, 1, 3]);
@@ -118,13 +118,13 @@ describe("clothing queries", () => {
     expect(data.items).toEqual([first, second, third]);
   });
   it("supports set and appearance queries with appropriate filter options", () => {
-    expect(queryClothing(data, "sets", { ...emptyQuery(), q: "冬", qualities: ["2"] }).total).toBe(
-      1,
-    );
+    expect(
+      queryClothing(data, "outfits", { ...emptyQuery(), q: "冬", qualities: ["2"] }).total,
+    ).toBe(1);
     expect(
       queryClothing(data, "appearances", { ...emptyQuery(), categories: ["眼睛"] }).total,
     ).toBe(0);
-    expect(filterGroups(data, "sets").map((group) => group.key)).toEqual(["qualities"]);
+    expect(filterGroups(data, "outfits").map((group) => group.key)).toEqual(["qualities"]);
     expect(filterGroups(data, "appearances").map((group) => group.key)).toEqual([
       "categories",
       "qualities",
@@ -135,13 +135,13 @@ describe("clothing queries", () => {
   });
   it("按部位和品阶筛选友邻服饰，并保留缺图条目", () => {
     const neighborQuery = (patch: Partial<ReturnType<typeof emptyQuery>>) =>
-      queryClothing(data, "neighborClothing", { ...emptyQuery(), ...patch });
+      queryClothing(data, "neighborOutfit", { ...emptyQuery(), ...patch });
     expect(neighborQuery({ sort: "quality-desc" }).rows.map((row) => row.id)).toEqual([7, 6]);
     expect(neighborQuery({ q: " 丰年 ", categories: ["连衣裙"], qualities: ["1"] }).rows).toEqual([
-      data.neighborClothing[0],
+      data.neighborOutfit[0],
     ]);
     expect(neighborQuery({ categories: ["连衣裙"], qualities: ["3"] }).total).toBe(0);
-    expect(filterGroups(data, "neighborClothing").map(({ key, label }) => [key, label])).toEqual([
+    expect(filterGroups(data, "neighborOutfit").map(({ key, label }) => [key, label])).toEqual([
       ["categories", "部位"],
       ["qualities", "品阶"],
     ]);
@@ -159,12 +159,12 @@ describe("clothing queries", () => {
       clothingSearchSchema.parse({
         view: "bad",
         items: { q: 42, sort: "bad", qualities: ["9", 0, "1", "1"], colors: "bad" },
-        sets: null,
+        outfits: null,
       }),
     ).toMatchObject({
       view: "items",
       items: { q: "", sort: "original", qualities: ["1"], colors: [] },
-      sets: emptyQuery(),
+      outfits: emptyQuery(),
     });
   });
 });

@@ -1,7 +1,7 @@
 import { isNotFound } from "@tanstack/react-router";
 import { describe, expect, it, vi, afterEach } from "vite-plus/test";
-import { catalogFixture, fixtureRequest } from "../collection-fixture.ts";
-import type { CreatureItem, CreatureSeries } from "../collection-view.ts";
+import { catalogFixture, fixtureRequest } from "../omnidex-fixture.ts";
+import type { CreatureItem, CreatureSeries } from "../omnidex-view.ts";
 import { creaturesDetail, loadCreaturesDetail, parseCreaturesId } from "./detail";
 
 const first: CreatureItem = {

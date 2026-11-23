@@ -15,7 +15,7 @@ export function IngredientTagLink({
 }) {
   return (
     <Link
-      to="/collections/dishes"
+      to="/dishes"
       search={{
         view: "ingredients",
         ingredients: ingredientFiltersForTag(category),

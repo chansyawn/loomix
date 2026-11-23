@@ -2,7 +2,7 @@ import { notFound } from "@tanstack/react-router";
 import type { FurnitureData } from "./data";
 import { loadFurniture } from "./data";
 import type { View } from "./search";
-import { setDetailNavigation } from "../collection/detail-navigation-model";
+import { setDetailNavigation } from "../omnidex/detail-navigation-model";
 
 export function parseFurnitureId(value: string): number {
   const id = Number(value);
@@ -19,7 +19,7 @@ export function furnitureDetail(data: FurnitureData, view: View, id: number) {
       kind: "item" as const,
       record: item,
       navigation,
-      recipes: item.creationCards.map((recipe) => ({
+      recipes: item.inspoCards.map((recipe) => ({
         ...recipe,
         materials:
           recipe.materials?.map((material) => ({

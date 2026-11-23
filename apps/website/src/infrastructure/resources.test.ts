@@ -6,7 +6,7 @@ import { expect, test, vi } from "vite-plus/test";
 import { parseCatalog } from "@loomix/schema/catalog";
 import { parseImageIndex } from "@loomix/schema/assets";
 import { parseStarsea } from "@loomix/schema/starsea";
-import { catalogFixture, fixtureRequest } from "../features/collection-fixture";
+import { catalogFixture, fixtureRequest } from "../features/omnidex-fixture";
 import { createResourceReader } from "./resources";
 
 const url = (input: Parameters<typeof fetch>[0]) =>

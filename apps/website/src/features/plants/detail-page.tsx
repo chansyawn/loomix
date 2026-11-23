@@ -1,24 +1,20 @@
-import {
-  CollectionDetailLayout,
-  CollectionDetailExtras,
-  type CollectionDetailSection,
-} from "@/features/collection/detail-layout";
-import { RecordImage } from "@/features/collection/record-image";
-import { CollectionItemCard } from "../collection/collection-item-card";
+import { DetailLayout, DetailExtras, type DetailSection } from "@/features/omnidex/detail-layout";
+import { RecordImage } from "@/features/omnidex/record-image";
+import { CatalogItemCard } from "../omnidex/catalog-item-card";
 import { PlantsCard } from "./plants-card";
 import type { PlantsDetail } from "./detail";
 import { PlantDropsInfo, PlantRelatedItems } from "./related-items";
 import { ItemCookingUsage } from "../ingredients/item-usage";
 import { plantSeriesFields } from "./series-fields";
 import { SeedDetailPage } from "./seed-detail-page";
-import { CollectionDetailNavigation } from "../collection/detail-navigation";
+import { CatalogEntryNavigation } from "../omnidex/detail-navigation";
 
 type PlantOrSeriesDetail = Exclude<PlantsDetail, { kind: "seed" }>;
 
 export function PlantsDetailPage({ detail }: { detail: PlantsDetail }) {
   return (
     <div className="min-w-0 space-y-6">
-      <CollectionDetailNavigation
+      <CatalogEntryNavigation
         model={{
           groups: detail.navigation.groups,
           notice: detail.navigation.hasUnconfirmedMembership
@@ -57,7 +53,7 @@ function PlantOrSeriesDetailPage({ detail }: { detail: PlantOrSeriesDetail }) {
     fields.push(["花色", summary.flowerColors.join("、")]);
 
   return (
-    <CollectionDetailLayout
+    <DetailLayout
       image={<RecordImage image={record.image} name={record.name} eager />}
       title={record.name}
       quality={record.quality}
@@ -70,13 +66,13 @@ function PlantOrSeriesDetailPage({ detail }: { detail: PlantOrSeriesDetail }) {
       }
       fields={fields}
     >
-      {sections.length > 0 && <CollectionDetailExtras sections={sections} />}
-    </CollectionDetailLayout>
+      {sections.length > 0 && <DetailExtras sections={sections} />}
+    </DetailLayout>
   );
 }
 
-function plantDetailSections(detail: PlantOrSeriesDetail): CollectionDetailSection[] {
-  const sections: CollectionDetailSection[] = [];
+function plantDetailSections(detail: PlantOrSeriesDetail): DetailSection[] {
+  const sections: DetailSection[] = [];
   if (detail.kind === "item") {
     if (detail.matureForms.length > 0)
       sections.push({ key: "plant-mature", content: <PlantMatureForms detail={detail} /> });
@@ -133,7 +129,7 @@ function PlantMatureForms({ detail }: { detail: Extract<PlantsDetail, { kind: "i
           <div className="flex flex-wrap gap-3">
             {stages.map((stage) => (
               <div key={stage.id} className="w-72 max-w-full">
-                <CollectionItemCard
+                <CatalogItemCard
                   item={{ name: detail.record.name, image: stage.image }}
                   itemId={detail.record.id}
                   description={detail.record.description || "描述未提供"}

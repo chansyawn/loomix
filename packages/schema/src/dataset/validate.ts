@@ -30,7 +30,7 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
     const path = ["catalog", "items", index];
     if (item.kind === "reference") return;
     checkTags(item.tagIds, [...path, "tagIds"]);
-    if (item.kind === "neighborClothing" && item.neighborId !== null)
+    if (item.kind === "neighborOutfit" && item.neighborId !== null)
       if (!neighborIds.has(item.neighborId))
         issue([...path, "neighborId"], `Unknown neighbor ${item.neighborId}`);
     if (item.kind === "dish")

@@ -1,9 +1,9 @@
 import { notFound } from "@tanstack/react-router";
 import type { CreaturesData } from "./data";
-import { loadCollectionView } from "../collection-loader";
+import { loadOmnidexView } from "../omnidex-loader";
 import { buildIngredientsData, ingredientUsage } from "../ingredients/model";
 import type { IngredientUsage } from "../ingredients/model";
-import { indexMembership } from "../collection/membership";
+import { indexMembership } from "../omnidex/membership";
 import type { View } from "./search";
 
 export function parseCreaturesId(value: string): number {
@@ -43,7 +43,7 @@ export type CreaturesDetail = ReturnType<typeof creaturesDetail>;
 
 export async function loadCreaturesDetail(view: View, value: string): Promise<CreaturesDetail> {
   const id = parseCreaturesId(value);
-  const collection = await loadCollectionView();
+  const collection = await loadOmnidexView();
   return creaturesDetail(
     collection.creatures,
     view,

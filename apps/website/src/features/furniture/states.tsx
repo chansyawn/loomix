@@ -1,7 +1,7 @@
 import { useRouterState } from "@tanstack/react-router";
-import { CollectionLoading } from "../collection/loading";
-import { CollectionEmpty, CollectionLoadError } from "../collection/states";
-import { useCollectionLayout } from "../collection/use-collection-layout";
+import { ListLoading } from "../omnidex/loading";
+import { ListEmpty, ListLoadError } from "../omnidex/states";
+import { useListLayout } from "../omnidex/use-list-layout";
 import { furnitureSearchSchema, sortOptions } from "./search";
 import { furnitureTableColumns } from "./furniture-table-columns";
 import { title, tabs, listPresentation } from "./list-presentation";
@@ -10,10 +10,10 @@ export function FurnitureLoading() {
   const raw = useRouterState({ select: (state) => state.location.search });
   const search = furnitureSearchSchema.parse(raw);
   const query = search[search.view];
-  const layout = useCollectionLayout(search.layout);
+  const layout = useListLayout(search.layout);
   const presentation = listPresentation(search.view);
   return (
-    <CollectionLoading
+    <ListLoading
       title={title}
       tabs={tabs}
       view={search.view}
@@ -28,9 +28,9 @@ export function FurnitureLoading() {
 }
 
 export function FurnitureEmpty({ onClear }: { onClear: () => void }) {
-  return <CollectionEmpty title={title} onClear={onClear} />;
+  return <ListEmpty title={title} onClear={onClear} />;
 }
 
 export function FurnitureLoadError({ onRetry }: { onRetry: () => void }) {
-  return <CollectionLoadError title={title} onRetry={onRetry} />;
+  return <ListLoadError title={title} onRetry={onRetry} />;
 }

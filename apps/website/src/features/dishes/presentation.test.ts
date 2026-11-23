@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import type { DishItem } from "../collection-view.ts";
+import type { DishItem } from "../omnidex-view.ts";
 import { unlockConditionLabel, effectSummary, effectValues, formatTastes } from "./presentation";
 
 const dish: DishItem = {

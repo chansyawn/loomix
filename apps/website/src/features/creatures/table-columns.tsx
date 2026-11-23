@@ -1,25 +1,25 @@
+import { catalogEntryLocation } from "@/features/omnidex/entry-location";
 import { Link } from "@tanstack/react-router";
-import type { CreatureItem, CreatureSeries } from "../collection-view";
+import type { CreatureItem, CreatureSeries } from "../omnidex-view";
 import {
   recordColumns,
   textColumn,
   tableLinkClassName,
   MembershipCell,
-} from "../collection/table-columns";
-import type { CollectionColumn } from "../collection/table-columns";
-import { useCollectionOrigin } from "@/features/collection/navigation";
-import { indexMembership } from "../collection/membership";
+} from "../omnidex/table-columns";
+import type { ListColumn } from "../omnidex/table-columns";
+import { useOmnidexOrigin } from "@/features/omnidex/navigation";
+import { indexMembership } from "../omnidex/membership";
 import type { View } from "./search";
 
 export type CreaturesRow = CreatureItem | CreatureSeries;
 
 function NameLink({ record }: { record: CreaturesRow }) {
-  const origin = useCollectionOrigin();
+  const origin = useOmnidexOrigin();
   return (
     <Link
-      to="/collections/records/$id"
-      params={{ id: String(record.id) }}
-      state={{ collectionOrigin: origin }}
+      {...catalogEntryLocation(record)}
+      state={{ omnidexOrigin: origin }}
       className={tableLinkClassName}
       title={record.name}
     >
@@ -29,7 +29,7 @@ function NameLink({ record }: { record: CreaturesRow }) {
 }
 
 function MemberLinks({ groups, complete }: { groups: CreatureSeries[]; complete: boolean }) {
-  const origin = useCollectionOrigin();
+  const origin = useOmnidexOrigin();
   return (
     <MembershipCell
       groups={groups}
@@ -38,9 +38,8 @@ function MemberLinks({ groups, complete }: { groups: CreatureSeries[]; complete:
       renderLink={(entry) => (
         <Link
           key={entry.id}
-          to="/collections/records/$id"
-          params={{ id: String(entry.id) }}
-          state={{ collectionOrigin: origin }}
+          {...catalogEntryLocation(entry)}
+          state={{ omnidexOrigin: origin }}
           className={tableLinkClassName}
         >
           {entry.name}
@@ -53,7 +52,7 @@ function MemberLinks({ groups, complete }: { groups: CreatureSeries[]; complete:
 export function creaturesTableColumns(
   view: View,
   groups: CreatureSeries[] = [],
-): CollectionColumn<CreaturesRow>[] {
+): ListColumn<CreaturesRow>[] {
   const common = recordColumns<CreaturesRow>((record) => <NameLink record={record} />);
   if (view === "series")
     return [

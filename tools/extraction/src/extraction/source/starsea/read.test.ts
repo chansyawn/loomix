@@ -10,7 +10,7 @@ import type { FixtureRows } from "../neighbors/fixtures/tables.ts";
 import { readStarsea } from "./read.ts";
 
 function fixtureRows(): FixtureRows {
-  const island = (
+  const islet = (
     id: number,
     style: number,
     display: string | null,
@@ -42,7 +42,7 @@ function fixtureRows(): FixtureRows {
       [13, 100, null, { vector: [3] }, { vector: [1, 2] }],
       [14, 100, null, { vector: [] }, { vector: [2] }],
     ],
-    654: [island(1, 1, "20,20"), island(2, 10, null), island(3, 10, null), island(101, 1, null)],
+    654: [islet(1, 1, "20,20"), islet(2, 10, null), islet(3, 10, null), islet(101, 1, null)],
     655: [[1, 1, null, "特产:81"]],
   };
 }
@@ -69,32 +69,32 @@ test("区域关系可反查，未知候选与空候选独立，星屿物品引�
     const { starsea } = dataset;
     expect(starsea.regions.map((region) => region.encounters)).toEqual([
       [
-        { neighborId: 11, candidateIslandIds: [2] },
-        { neighborId: 12, candidateIslandIds: [2] },
-        { neighborId: 13, candidateIslandIds: null },
+        { neighborId: 11, candidateIsletIds: [2] },
+        { neighborId: 12, candidateIsletIds: [2] },
+        { neighborId: 13, candidateIsletIds: null },
       ],
       [
-        { neighborId: 13, candidateIslandIds: null },
-        { neighborId: 14, candidateIslandIds: [] },
+        { neighborId: 13, candidateIsletIds: null },
+        { neighborId: 14, candidateIsletIds: [] },
       ],
     ]);
-    expect(starsea.islands.map((entry) => entry.id)).toEqual([1, 2]);
+    expect(starsea.islets.map((entry) => entry.id)).toEqual([1, 2]);
     expect(
-      starsea.islands
+      starsea.islets
         .filter((entry) => entry.displayedCreatureIds?.includes(20))
         .map((entry) => entry.id),
     ).toEqual([1]);
     expect(dataset.catalog.items.map((entry) => entry.id)).toEqual([20]);
     expect(validateDataset(dataset)).toEqual([]);
-    expect(observations.starsea.diagnostics.islands.map((entry) => entry.disposition)).toEqual([
+    expect(observations.starsea.diagnostics.islets.map((entry) => entry.disposition)).toEqual([
       "linked",
       "linked",
       "unplaced",
       "test",
     ]);
     verifyStarseaSources(dataset, observations.starsea.diagnostics, tables);
-    starsea.regions[0].encounters[0].candidateIslandIds = [1];
-    observations.starsea.data.regions[0].encounters[0].candidateIslandIds = [1];
+    starsea.regions[0].encounters[0].candidateIsletIds = [1];
+    observations.starsea.data.regions[0].encounters[0].candidateIsletIds = [1];
     expect(() => verifyStarseaSources(dataset, observations.starsea.diagnostics, tables)).toThrow(
       "Independent starsea region and encounter configuration",
     );

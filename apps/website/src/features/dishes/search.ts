@@ -1,6 +1,6 @@
 import type { SearchMiddleware } from "@tanstack/react-router";
 import { z } from "zod";
-import { collectionLayoutSchema } from "../collection/layout";
+import { listLayoutSchema } from "../omnidex/layout";
 import {
   compactIngredientsQuery,
   emptyIngredientsQuery,
@@ -88,7 +88,7 @@ const seriesQuerySchema = viewQuerySchema
   .transform((query): ViewQuery => ({ ...emptyQuery(), ...query }));
 
 export const dishesSearchSchema = z.object({
-  layout: collectionLayoutSchema,
+  layout: listLayoutSchema,
   view: z.enum(["items", "ingredients", "series"]).catch("items").default("items"),
   items: viewQuerySchema.prefault({}).catch(emptyQuery),
   series: seriesQuerySchema.prefault({}).catch(emptyQuery),

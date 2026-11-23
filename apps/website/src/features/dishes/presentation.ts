@@ -1,4 +1,4 @@
-import type { DishItem } from "../collection-view.ts";
+import type { DishItem } from "../omnidex-view.ts";
 
 export function formatTastes(tastes: DishItem["tastes"]): string | null {
   return tastes?.join(" / ") ?? null;

@@ -4,7 +4,7 @@ import { IdSchema, NullableTextSchema } from "../common/identity.ts";
 
 const EncounterSchema = z.strictObject({
   neighborId: IdSchema,
-  candidateIslandIds: IdSchema.array().nullable(),
+  candidateIsletIds: IdSchema.array().nullable(),
 });
 
 const RegionSchema = z.strictObject({
@@ -14,11 +14,11 @@ const RegionSchema = z.strictObject({
   unlockTip: NullableTextSchema,
   mapImage: ImageRefSchema.nullable(),
   stationImage: ImageRefSchema.nullable(),
-  explorationIslandIds: IdSchema.array(),
+  explorationIsletIds: IdSchema.array(),
   encounters: EncounterSchema.array(),
 });
 
-const IslandSchema = z.strictObject({
+const IsletSchema = z.strictObject({
   id: IdSchema,
   name: z.string().min(1),
   iconStyleId: IdSchema,
@@ -35,7 +35,7 @@ const IconStyleSchema = z.strictObject({
 
 export const StarseaSchema = z.strictObject({
   regions: RegionSchema.array(),
-  islands: IslandSchema.array(),
+  islets: IsletSchema.array(),
   iconStyles: IconStyleSchema.array(),
 });
 

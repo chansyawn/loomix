@@ -1,13 +1,13 @@
-import { CollectionPage } from "../collection/page";
-import { CollectionToolbar } from "../collection/toolbar";
-import { CollectionResultsSummary } from "../collection/results-summary";
-import { collectionFilterChips } from "../collection/filter-chips";
-import { FilterPanel } from "../collection/filter-panel";
-import { CollectionVirtualGrid } from "../collection/virtual-grid";
-import { CollectionTable } from "../collection/table";
-import { collectionSort, tableSorting } from "../collection/sort";
-import { useCollectionLayout, saveCollectionLayout } from "../collection/use-collection-layout";
-import type { CreatureItem, CreatureSeries } from "../collection-view";
+import { ListPage } from "../omnidex/page";
+import { ListToolbar } from "../omnidex/toolbar";
+import { ListResultsSummary } from "../omnidex/results-summary";
+import { listFilterChips } from "../omnidex/filter-chips";
+import { FilterPanel } from "../omnidex/filter-panel";
+import { VirtualGrid } from "../omnidex/virtual-grid";
+import { ListTable } from "../omnidex/table";
+import { listSort, tableSorting } from "../omnidex/sort";
+import { useListLayout, saveListLayout } from "../omnidex/use-list-layout";
+import type { CreatureItem, CreatureSeries } from "../omnidex-view";
 import type { CreaturesData } from "./data";
 import { CreaturesCard, CreatureSeriesCard } from "./creatures-card";
 import { filterGroups, queryCreatures } from "./query";
@@ -29,7 +29,7 @@ export function CreaturesPage({
   onSearchChange: (update: SearchUpdate, replace?: boolean) => Promise<void>;
 }) {
   const query = search[search.view];
-  const layout = useCollectionLayout(search.layout);
+  const layout = useListLayout(search.layout);
   const presentation = listPresentation(search.view);
   const result = queryCreatures(data, search.view, query);
   const groups = filterGroups(data).filter(
@@ -40,19 +40,19 @@ export function CreaturesPage({
     void onSearchChange((previous) => updateViewQuery(previous, patch), replace);
   const clear = () =>
     void onSearchChange((previous) => ({ ...previous, [previous.view]: emptyQuery() }));
-  const chips = collectionFilterChips(groups, query, (key, values) => update({ [key]: values }), {
+  const chips = listFilterChips(groups, query, (key, values) => update({ [key]: values }), {
     value: query.q,
     clear: () => update({ q: "" }),
   });
   const columns = creaturesTableColumns(search.view, data.series);
   return (
-    <CollectionPage
+    <ListPage
       title={title}
       tabs={tabs.map((tab) => ({ ...tab, count: data[tab.value].length }))}
       view={search.view}
       onViewChange={(view) => void onSearchChange((previous) => ({ ...previous, view }))}
     >
-      <CollectionToolbar
+      <ListToolbar
         title={title}
         searchLabel={presentation.searchLabel}
         placeholder={presentation.placeholder}
@@ -63,7 +63,7 @@ export function CreaturesPage({
         onSortChange={(sort) => update({ sort })}
         layout={layout}
         onLayoutChange={(next) => {
-          saveCollectionLayout(next);
+          saveListLayout(next);
           void onSearchChange((previous) => ({ ...previous, layout: next }));
         }}
         filters={
@@ -77,7 +77,7 @@ export function CreaturesPage({
           />
         }
       />
-      <CollectionResultsSummary
+      <ListResultsSummary
         total={result.total}
         unit={presentation.unit}
         chips={chips}
@@ -85,7 +85,7 @@ export function CreaturesPage({
       />
       {result.total > 0 ? (
         layout === "table" ? (
-          <CollectionTable
+          <ListTable
             resultKey={resultKey}
             rows={result.rows}
             columns={columns}
@@ -95,12 +95,12 @@ export function CreaturesPage({
             onSortingChange={(updater) => {
               const previous = tableSorting(query.sort);
               update({
-                sort: collectionSort(typeof updater === "function" ? updater(previous) : updater),
+                sort: listSort(typeof updater === "function" ? updater(previous) : updater),
               });
             }}
           />
         ) : (
-          <CollectionVirtualGrid<CreatureItem | CreatureSeries>
+          <VirtualGrid<CreatureItem | CreatureSeries>
             key={resultKey}
             rows={result.rows}
             layout={presentation.grid}
@@ -117,6 +117,6 @@ export function CreaturesPage({
       ) : (
         <CreaturesEmpty onClear={clear} view={search.view} />
       )}
-    </CollectionPage>
+    </ListPage>
   );
 }

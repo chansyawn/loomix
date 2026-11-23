@@ -1,11 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { CollectionCard } from "@/features/collection/collection-card";
-import { wideGrid } from "@/features/collection/grid-layout";
-import { CollectionLayoutToggle } from "@/features/collection/layout-toggle";
-import { CollectionPage } from "@/features/collection/page";
-import { RecordImage } from "@/features/collection/record-image";
-import { CollectionTable } from "@/features/collection/table";
-import { textColumn, type CollectionColumn } from "@/features/collection/table-columns";
+import { ListCard } from "@/features/omnidex/list-card";
+import { wideGrid } from "@/features/omnidex/grid-layout";
+import { ListLayoutToggle } from "@/features/omnidex/layout-toggle";
+import { ListPage } from "@/features/omnidex/page";
+import { RecordImage } from "@/features/omnidex/record-image";
+import { ListTable } from "@/features/omnidex/table";
+import { textColumn, type ListColumn } from "@/features/omnidex/table-columns";
 import { Empty, EmptyHeader, EmptyTitle } from "@/ui/components/empty";
 import { SearchInput } from "@/ui/components/search-input";
 import { ToggleGroup, ToggleGroupItem } from "@/ui/components/toggle-group";
@@ -28,7 +28,7 @@ function VignetteLink({ entry, origin }: { entry: VignetteSummary; origin: Vigne
   );
 }
 
-function columns(origin: VignetteOrigin): CollectionColumn<VignetteSummary>[] {
+function columns(origin: VignetteOrigin): ListColumn<VignetteSummary>[] {
   return [
     {
       id: "name",
@@ -68,7 +68,7 @@ export function VignetteListPage({
   const origin = { search, index: historyIndex };
 
   return (
-    <CollectionPage title="小栖地">
+    <ListPage title="小栖地">
       <div className="flex flex-col gap-4 pb-8">
         <SearchInput
           className="w-full max-w-96"
@@ -99,7 +99,7 @@ export function VignetteListPage({
             共 <span className="font-medium text-foreground tabular-nums">{visible.length}</span>{" "}
             处小栖地
           </p>
-          <CollectionLayoutToggle
+          <ListLayoutToggle
             title="小栖地"
             layout={search.layout}
             onLayoutChange={(layout) => onChange({ layout })}
@@ -112,7 +112,7 @@ export function VignetteListPage({
             </EmptyHeader>
           </Empty>
         ) : search.layout === "table" ? (
-          <CollectionTable
+          <ListTable
             resultKey={JSON.stringify([search.site, search.q])}
             rows={visible}
             columns={columns(origin)}
@@ -124,7 +124,7 @@ export function VignetteListPage({
         ) : (
           <div className={grid.className}>
             {visible.map((entry) => (
-              <CollectionCard
+              <ListCard
                 key={entry.id}
                 name={entry.name}
                 quality={null}
@@ -143,6 +143,6 @@ export function VignetteListPage({
           </div>
         )}
       </div>
-    </CollectionPage>
+    </ListPage>
   );
 }

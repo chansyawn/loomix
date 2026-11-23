@@ -1,22 +1,19 @@
+import { catalogEntryLocation } from "@/features/omnidex/entry-location";
 import type { ClothingRow } from "./data";
 import { Link } from "@tanstack/react-router";
-import { CollectionCard } from "@/features/collection/collection-card";
-import { RecordImage } from "@/features/collection/record-image";
-import { useCollectionOrigin } from "@/features/collection/navigation";
+import { ListCard } from "@/features/omnidex/list-card";
+import { RecordImage } from "@/features/omnidex/record-image";
+import { useOmnidexOrigin } from "@/features/omnidex/navigation";
 
 export function ClothingCard({ record }: { record: ClothingRow }) {
-  const origin = useCollectionOrigin();
+  const origin = useOmnidexOrigin();
   return (
-    <CollectionCard
+    <ListCard
       name={record.name}
       quality={record.quality}
       image={<RecordImage key={record.image} image={record.image} name={record.name} />}
       titleLink={
-        <Link
-          to="/collections/records/$id"
-          params={{ id: String(record.id) }}
-          state={{ collectionOrigin: origin }}
-        >
+        <Link {...catalogEntryLocation(record)} state={{ omnidexOrigin: origin }}>
           {record.name}
         </Link>
       }

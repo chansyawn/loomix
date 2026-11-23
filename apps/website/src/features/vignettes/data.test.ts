@@ -1,6 +1,6 @@
 import { isNotFound } from "@tanstack/react-router";
 import { expect, test, vi } from "vite-plus/test";
-import { catalogFixture, fixtureRequest } from "../collection-fixture";
+import { catalogFixture, fixtureRequest } from "../omnidex-fixture";
 import { loadVignetteDetail, loadVignetteList } from "./data";
 
 const requestUrl = (input: Parameters<typeof fetch>[0]) =>

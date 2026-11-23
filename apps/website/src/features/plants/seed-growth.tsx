@@ -1,5 +1,5 @@
-import { CollectionItemCard } from "../collection/collection-item-card";
-import { recordLocation } from "../collection/item-route";
+import { CatalogItemCard } from "../omnidex/catalog-item-card";
+import { catalogEntryLocation } from "../omnidex/entry-location";
 import { growthStageGroups } from "./growth";
 import type { PlantSeed } from "./model";
 
@@ -19,12 +19,14 @@ export function SeedGrowthStages({ seed }: { seed: PlantSeed }) {
               if (!stage) return null;
               return (
                 <div key={id} className="w-72 max-w-full">
-                  <CollectionItemCard
+                  <CatalogItemCard
                     item={stage}
                     itemId={id}
                     description={`${group.label} ${index + 1}`}
                     link={
-                      stage.plantId === null ? undefined : recordLocation({ id: stage.plantId })
+                      stage.plantId === null
+                        ? undefined
+                        : catalogEntryLocation({ id: stage.plantId })
                     }
                   />
                 </div>

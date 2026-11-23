@@ -1,11 +1,11 @@
-import { RecordImage } from "@/features/collection/record-image";
-import { SeriesImage } from "../collection/series-image";
+import { RecordImage } from "@/features/omnidex/record-image";
+import { SeriesImage } from "../omnidex/series-image";
 import {
-  CollectionDetailLayout,
-  CollectionDetailRelatedGrid,
-  CollectionDetailExtras,
-  type CollectionDetailSection,
-} from "@/features/collection/detail-layout";
+  DetailLayout,
+  DetailRelatedGrid,
+  DetailExtras,
+  type DetailSection,
+} from "@/features/omnidex/detail-layout";
 import { DishesCard, DishSeriesCard } from "./dishes-card";
 import type { DishesDetail } from "./detail";
 import { DishRecipe } from "./recipe";
@@ -31,7 +31,7 @@ export function DishesDetailPage({ detail }: { detail: DishesDetail }) {
         ];
 
   return (
-    <CollectionDetailLayout
+    <DetailLayout
       image={
         detail.kind === "item" ? (
           <RecordImage key={record.image} image={record.image} name={record.name} eager />
@@ -57,12 +57,12 @@ export function DishesDetailPage({ detail }: { detail: DishesDetail }) {
       fields={fields}
     >
       <DishesExtras detail={detail} />
-    </CollectionDetailLayout>
+    </DetailLayout>
   );
 }
 
 function DishesExtras({ detail }: { detail: DishesDetail }) {
-  const sections: CollectionDetailSection[] = [];
+  const sections: DetailSection[] = [];
   if (detail.kind === "item") {
     if (detail.record.effects?.length)
       sections.push({
@@ -77,7 +77,7 @@ function DishesExtras({ detail }: { detail: DishesDetail }) {
     (detail.kind === "series" && detail.items?.length)
   )
     sections.push({ key: "related-dishes", content: <DishesRelated detail={detail} /> });
-  return <CollectionDetailExtras sections={sections} />;
+  return <DetailExtras sections={sections} />;
 }
 
 function DishesRelated({ detail }: { detail: DishesDetail }) {
@@ -88,11 +88,11 @@ function DishesRelated({ detail }: { detail: DishesDetail }) {
       </h2>
       {detail.kind === "item" ? (
         <>
-          <CollectionDetailRelatedGrid>
+          <DetailRelatedGrid>
             {detail.series.map((series) => (
               <DishSeriesCard key={series.id} series={series} items={detail.catalogItems} />
             ))}
-          </CollectionDetailRelatedGrid>
+          </DetailRelatedGrid>
           {detail.hasUnconfirmedSeriesMembership && (
             <p className="text-sm text-muted-foreground">其他系列的成员关系未确认</p>
           )}

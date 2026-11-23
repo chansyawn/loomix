@@ -1,6 +1,6 @@
 import { notFound } from "@tanstack/react-router";
 import type { PlantsData } from "./data";
-import { loadCollectionView } from "../collection-loader";
+import { loadOmnidexView } from "../omnidex-loader";
 import { buildIngredientsData, ingredientUsage } from "../ingredients/model";
 import type { IngredientsData } from "../ingredients/model";
 import { plantDetailNavigation } from "./detail-navigation-model";
@@ -60,7 +60,7 @@ export type PlantsDetail = ReturnType<typeof plantsDetail>;
 
 export async function loadPlantsDetail(view: View, value: string): Promise<PlantsDetail> {
   const id = parsePlantId(value);
-  const collection = await loadCollectionView();
+  const collection = await loadOmnidexView();
   return plantsDetail(
     collection.plants,
     view,

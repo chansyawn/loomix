@@ -1,8 +1,8 @@
 import { isNotFound } from "@tanstack/react-router";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { createGameplayTagIndex } from "@loomix/schema/gameplay-tags";
-import { catalogFixture, fixtureRequest } from "../collection-fixture.ts";
-import type { DishItem, DishSeries } from "../collection-view.ts";
+import { catalogFixture, fixtureRequest } from "../omnidex-fixture.ts";
+import type { DishItem, DishSeries } from "../omnidex-view.ts";
 import { createIngredientTagSource } from "../ingredients/tag-source";
 import { dishesDetail, loadDishesDetail, parseDishId } from "./detail";
 

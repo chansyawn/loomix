@@ -1,17 +1,17 @@
-import { loadCollectionView } from "../collection-loader.ts";
-import type { CollectionView, IngredientItem } from "../collection-view.ts";
+import { loadOmnidexView } from "../omnidex-loader.ts";
+import type { OmnidexView, IngredientItem } from "../omnidex-view.ts";
 import { buildIngredientsData } from "../ingredients/model";
 import type { IngredientsData } from "../ingredients/model";
 import type { IngredientTagSource } from "../ingredients/tag-source";
 
-export type DishesData = CollectionView["dishes"] & {
+export type DishesData = OmnidexView["dishes"] & {
   ingredientTagSource: IngredientTagSource;
   ingredientItemsById: ReadonlyMap<number, IngredientItem>;
 };
 export type DishesBrowserData = DishesData & { ingredients: IngredientsData };
 
 export async function loadDishes(): Promise<DishesBrowserData> {
-  const view = await loadCollectionView();
+  const view = await loadOmnidexView();
   return {
     ...view.dishes,
     ingredientTagSource: view.ingredientTagSource,

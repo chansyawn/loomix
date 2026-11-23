@@ -1,7 +1,7 @@
-import { CollectionDetailLayout } from "@/features/collection/detail-layout";
-import { CollectionItemCard } from "@/features/collection/collection-item-card";
-import { recordLocation } from "@/features/collection/item-route";
-import { RecordImage } from "@/features/collection/record-image";
+import { DetailLayout } from "@/features/omnidex/detail-layout";
+import { CatalogItemCard } from "@/features/omnidex/catalog-item-card";
+import { catalogEntryLocation } from "@/features/omnidex/entry-location";
+import { RecordImage } from "@/features/omnidex/record-image";
 import type { StarseaDetail } from "./view";
 
 const relatedCardGrid = "grid grid-cols-[repeat(auto-fill,minmax(min(100%,13rem),1fr))] gap-3";
@@ -14,10 +14,10 @@ function IsletItems({ title, items }: { title: string; items: StarseaDetail["cre
         <ul className={relatedCardGrid}>
           {items.map((item) => (
             <li key={item.id} className="min-w-0">
-              <CollectionItemCard
+              <CatalogItemCard
                 item={item}
                 itemId={item.id}
-                link={item.browsable ? recordLocation(item) : undefined}
+                link={item.browsable ? catalogEntryLocation(item) : undefined}
               />
             </li>
           ))}
@@ -41,7 +41,7 @@ function EncounterSection({ neighbors }: { neighbors: StarseaDetail["encounterNe
           <ul className={relatedCardGrid}>
             {neighbors.map((neighbor) => (
               <li key={neighbor.id} className="min-w-0">
-                <CollectionItemCard
+                <CatalogItemCard
                   item={neighbor}
                   itemId={neighbor.id}
                   link={{ to: "/neighbors/$id", params: { id: String(neighbor.id) } }}
@@ -61,7 +61,7 @@ export function StarseaDetailPage({ islet }: { islet: StarseaDetail }) {
   const galaxies = [...new Set(islet.regions.map(({ galaxyName }) => galaxyName))];
   const unlockTips = [...new Set(islet.regions.flatMap(({ unlockTip }) => unlockTip ?? []))];
   return (
-    <CollectionDetailLayout
+    <DetailLayout
       image={
         <RecordImage
           key={islet.image}
@@ -89,6 +89,6 @@ export function StarseaDetailPage({ islet }: { islet: StarseaDetail }) {
         <IsletItems title="特产" items={islet.specialties} />
       </div>
       <EncounterSection neighbors={islet.encounterNeighbors} />
-    </CollectionDetailLayout>
+    </DetailLayout>
   );
 }

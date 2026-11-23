@@ -24,7 +24,7 @@ export type WithImageUses<T> = T extends ImageRef
 export type CatalogObservation = WithImageUses<Catalog>;
 
 export interface SourceProof extends Omit<FieldEvidence, "entity" | "fieldPath"> {
-  owner: "item" | "collection" | "creationCardSet" | "tag";
+  owner: "item" | "collection" | "inspoBox" | "tag";
   id: number;
   field: string;
 }

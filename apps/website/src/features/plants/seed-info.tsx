@@ -1,12 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { recordLocation } from "../collection/item-route";
-import { useCollectionOrigin } from "@/features/collection/navigation";
+import { catalogEntryLocation } from "../omnidex/entry-location";
+import { useOmnidexOrigin } from "@/features/omnidex/navigation";
 import type { PlantSeed } from "./model";
 
 export function SeedNameLink({ seed }: { seed: PlantSeed }) {
-  const origin = useCollectionOrigin();
+  const origin = useOmnidexOrigin();
   return (
-    <Link {...recordLocation(seed)} state={{ collectionOrigin: origin }}>
+    <Link {...catalogEntryLocation(seed)} state={{ omnidexOrigin: origin }}>
       {seed.name}
     </Link>
   );

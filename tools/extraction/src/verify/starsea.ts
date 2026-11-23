@@ -16,14 +16,14 @@ export function verifyStarseaSources(
   const npcPool = tables.rows(653);
   const listedNeighbors = new Set(neighbors.neighbors.map((entry) => entry.id));
   const explorerRows = byId(651);
-  const linkedIslands = new Set<number>();
+  const linkedIslets = new Set<number>();
   const expectedRegions = byId(652).map((row) => {
     const id = tables.id(row);
     const galaxyId = tables.uint(row, 1);
     const galaxy = tables.rows(650).find((entry) => tables.id(entry) === galaxyId);
     assert.ok(galaxy, `Independent region galaxy ${id}`);
-    const explorationIslandIds = vector(row, 6);
-    assert.ok(explorationIslandIds, `Independent region exploration ${id}`);
+    const explorationIsletIds = vector(row, 6);
+    assert.ok(explorationIsletIds, `Independent region exploration ${id}`);
     const fromExplorationTable = explorerRows
       .filter(
         (entry) =>
@@ -31,11 +31,11 @@ export function verifyStarseaSources(
       )
       .flatMap((entry) => vector(entry, 3) ?? []);
     assert.deepEqual(
-      explorationIslandIds,
+      explorationIsletIds,
       fromExplorationTable,
       `Independent region exploration order ${id}`,
     );
-    explorationIslandIds.forEach((island) => linkedIslands.add(island));
+    explorationIsletIds.forEach((islet) => linkedIslets.add(islet));
     const encounters = [];
     for (const neighborId of [...listedNeighbors].sort((first, second) => first - second)) {
       const matching = npcPool.filter(
@@ -45,29 +45,29 @@ export function verifyStarseaSources(
       const candidates = new Set<number>();
       let resolved = true;
       for (const entry of matching) {
-        const islands = vector(entry, 3);
-        if (!islands || vector(entry, 4)?.length !== 1) {
+        const islets = vector(entry, 3);
+        if (!islets || vector(entry, 4)?.length !== 1) {
           resolved = false;
           continue;
         }
-        for (const islandId of islands) {
-          const island = tables.rows(654).find((candidate) => tables.id(candidate) === islandId);
+        for (const isletId of islets) {
+          const islet = tables.rows(654).find((candidate) => tables.id(candidate) === isletId);
           assert.ok(
-            island && tables.uint(island, 17) === 10,
-            `Independent encounter NPC island ${islandId}`,
+            islet && tables.uint(islet, 17) === 10,
+            `Independent encounter NPC islet ${isletId}`,
           );
-          candidates.add(islandId);
+          candidates.add(isletId);
         }
       }
-      if (resolved) for (const islandId of candidates) linkedIslands.add(islandId);
-      encounters.push({ neighborId, candidateIslandIds: resolved ? [...candidates] : null });
+      if (resolved) for (const isletId of candidates) linkedIslets.add(isletId);
+      encounters.push({ neighborId, candidateIsletIds: resolved ? [...candidates] : null });
     }
     return {
       id,
       name: text(row, 4),
       galaxyName: text(galaxy, 1),
       unlockTip: tables.key(tables.string(row, 9)),
-      explorationIslandIds,
+      explorationIsletIds,
       encounters,
     };
   });
@@ -79,20 +79,20 @@ export function verifyStarseaSources(
     expectedRegions,
     "Independent starsea region and encounter configuration",
   );
-  const islandRows = byId(654);
+  const isletRows = byId(654);
   assert.deepEqual(
-    observed.islands.map(({ id }) => id),
-    islandRows.map((row) => tables.id(row)),
-    "Complete island observations",
+    observed.islets.map(({ id }) => id),
+    isletRows.map((row) => tables.id(row)),
+    "Complete islet observations",
   );
   const readDisplayList = (row: TableRow, field: number) => {
     const raw = tables.string(row, field);
     return raw?.trim() ? Array.from(new Set(raw.split(",").map(Number))) : null;
   };
   assert.deepEqual(
-    starsea.islands.map(({ illustration: _illustration, ...island }) => island),
-    islandRows
-      .filter((row) => linkedIslands.has(tables.id(row)))
+    starsea.islets.map(({ illustration: _illustration, ...islet }) => islet),
+    isletRows
+      .filter((row) => linkedIslets.has(tables.id(row)))
       .map((row) => ({
         id: tables.id(row),
         name: text(row, 1),
@@ -100,7 +100,7 @@ export function verifyStarseaSources(
         displayedCreatureIds: readDisplayList(row, 25),
         displayedSpecialtyIds: readDisplayList(row, 26),
       })),
-    "Independent starsea islands and display lists",
+    "Independent starsea islets and display lists",
   );
   assert.deepEqual(
     starsea.iconStyles.map(({ icon: _icon, ...style }) => style),

@@ -15,11 +15,11 @@ import {
   updateViewQuery,
 } from "./search";
 
-function setup(initialEntry = "/collections/clothing") {
+function setup(initialEntry = "/clothing") {
   const root = createRootRoute({ validateSearch: z.object({ lang: z.string().optional() }) });
   const clothing = createRoute({
     getParentRoute: () => root,
-    path: "/collections/clothing",
+    path: "/clothing",
     validateSearch: clothingSearchSchema,
     search: { middlewares: [compactClothingSearchMiddleware] },
   });
@@ -35,15 +35,15 @@ describe("compact clothing URLs", () => {
   it("omits all defaults and only serializes meaningful nested fields", () => {
     const { router } = setup();
     const empty = router.buildLocation({
-      to: "/collections/clothing",
-      from: "/collections/clothing",
+      to: "/clothing",
+      from: "/clothing",
       search: clothingSearchSchema.parse({}),
     });
-    expect(empty.href).toBe("/collections/clothing");
+    expect(empty.href).toBe("/clothing");
     expect(clothingSearchSchema.parse(defaultParseSearch(empty.searchStr)).view).toBe("items");
     const selected = router.buildLocation({
-      to: "/collections/clothing",
-      from: "/collections/clothing",
+      to: "/clothing",
+      from: "/clothing",
       search: clothingSearchSchema.parse({
         items: { q: "桌", colors: ["白色"], sort: "quality-desc" },
       }),
@@ -55,10 +55,15 @@ describe("compact clothing URLs", () => {
 
   it("round trips through URL encoding and compacts idempotently", () => {
     const search = clothingSearchSchema.parse({
-      view: "sets",
-      items: { q: '桌 & + # ? "', categories: ["上装"], colors: ["白色"], sets: ["__ungrouped"] },
+      view: "outfits",
+      items: {
+        q: '桌 & + # ? "',
+        categories: ["上装"],
+        colors: ["白色"],
+        outfits: ["__ungrouped"],
+      },
       appearances: { q: "卷发", categories: ["发型"], sort: "name-desc" },
-      sets: { q: "套装", qualities: ["__missing", "2"], sort: "name-asc" },
+      outfits: { q: "套装", qualities: ["__missing", "2"], sort: "name-asc" },
     });
     const compact = compactClothingSearch(search);
     const restored = clothingSearchSchema.parse(
@@ -70,12 +75,12 @@ describe("compact clothing URLs", () => {
 
   it("preserves parent parameters while stripping unsupported clothing fields", async () => {
     const { router } = setup(
-      `/collections/clothing${defaultStringifySearch({ lang: "zh", items: { categories: ["上装"], page: 4 } })}`,
+      `/clothing${defaultStringifySearch({ lang: "zh", items: { categories: ["上装"], page: 4 } })}`,
     );
     await router.load();
     const location = router.buildLocation({
-      to: "/collections/clothing",
-      from: "/collections/clothing",
+      to: "/clothing",
+      from: "/clothing",
       search: (previous) => ({ ...previous, ...clothingSearchSchema.parse(previous) }),
     });
     expect(defaultParseSearch(location.searchStr)).toEqual({
@@ -86,10 +91,10 @@ describe("compact clothing URLs", () => {
 
   it("友邻服饰可直达且切换标签后恢复独立查询条件", async () => {
     const { router } = setup(
-      `/collections/clothing${defaultStringifySearch({
-        view: "neighborClothing",
+      `/clothing${defaultStringifySearch({
+        view: "neighborOutfit",
         items: { q: "毛衣" },
-        neighborClothing: {
+        neighborOutfit: {
           q: "丰年",
           categories: ["手套"],
           sort: "quality-desc",
@@ -99,22 +104,22 @@ describe("compact clothing URLs", () => {
     );
     await router.load();
     const location = router.buildLocation({
-      to: "/collections/clothing",
-      from: "/collections/clothing",
+      to: "/clothing",
+      from: "/clothing",
       search: (previous) => ({ ...clothingSearchSchema.parse(previous), view: "items" }),
     });
     const expected = { q: "丰年", categories: ["手套"], sort: "quality-desc" };
     expect(defaultParseSearch(location.searchStr)).toEqual({
       items: { q: "毛衣" },
-      neighborClothing: expected,
+      neighborOutfit: expected,
     });
     const restored = clothingSearchSchema.parse({
       ...defaultParseSearch(location.searchStr),
-      view: "neighborClothing",
+      view: "neighborOutfit",
     });
-    expect(restored.neighborClothing).toMatchObject(expected);
+    expect(restored.neighborOutfit).toMatchObject(expected);
     expect(updateViewQuery(restored, { q: "云果" }).items.q).toBe("毛衣");
-    expect(compactClothingSearch(restored).view).toBe("neighborClothing");
+    expect(compactClothingSearch(restored).view).toBe("neighborOutfit");
   });
 });
 
@@ -128,10 +133,10 @@ describe("layout URL overrides", () => {
       expect(
         clothingSearchSchema.parse(defaultParseSearch(defaultStringifySearch(compact))),
       ).toEqual(search);
-      const location = router.buildLocation({ to: "/collections/clothing", search });
+      const location = router.buildLocation({ to: "/clothing", search });
       expect(defaultParseSearch(location.searchStr)).toMatchObject({ layout });
       const cleared = router.buildLocation({
-        to: "/collections/clothing",
+        to: "/clothing",
         search: clothingSearchSchema.parse({ ...search, items: {} }),
       });
       expect(defaultParseSearch(cleared.searchStr)).toEqual({ layout });

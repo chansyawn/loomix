@@ -1,8 +1,8 @@
 import { createNameMatcher } from "@/infrastructure/name-search";
-import type { DishItem, DishSeries } from "../collection-view.ts";
-import { indexMembership } from "../collection/membership";
-import type { FilterGroup as CollectionFilterGroup } from "@/features/collection/filter-panel";
-import { qualityNames } from "@/features/collection/quality";
+import type { DishItem, DishSeries } from "../omnidex-view.ts";
+import { indexMembership } from "../omnidex/membership";
+import type { FilterGroup as ListFilterGroup } from "@/features/omnidex/filter-panel";
+import { qualityNames } from "@/features/omnidex/quality";
 import {
   dishIngredientTagCounts,
   ingredientFilterGroups as buildIngredientFilterGroups,
@@ -16,7 +16,7 @@ import { unlockConditionLabel, effectValues } from "./presentation";
 import { missing, ungrouped } from "./search";
 import type { FilterKey, DishView as View, ViewQuery } from "./search";
 
-export type FilterGroup = CollectionFilterGroup<FilterKey>;
+export type FilterGroup = ListFilterGroup<FilterKey>;
 
 export function splitValues(value: string | null): string[] {
   return value

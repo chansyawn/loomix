@@ -1,0 +1,43 @@
+import type { FilterGroup as ListFilterGroup } from "@/features/omnidex/filter-panel";
+import { qualityNames } from "@/features/omnidex/quality";
+import { createNameMatcher } from "@/infrastructure/name-search";
+import type { MiscellaneousData } from "./data";
+import { missing } from "./search";
+import type { MiscellaneousQuery } from "./search";
+
+export type FilterGroup = ListFilterGroup<"qualities">;
+
+export function filterGroups(data: MiscellaneousData): FilterGroup[] {
+  return [
+    {
+      key: "qualities",
+      label: "品阶",
+      options: qualityNames
+        .map((label, value) => ({ value: String(value), label }))
+        .concat(
+          data.some((item) => item.quality === null) ? [{ value: missing, label: "未提供" }] : [],
+        ),
+    },
+  ];
+}
+
+export function queryMiscellaneous(data: MiscellaneousData, query: MiscellaneousQuery) {
+  const matchesName = createNameMatcher(query.q);
+  const rows = data.filter((item) => {
+    const quality = item.quality === null ? missing : String(item.quality);
+    return (
+      matchesName(item.name) && (query.qualities.length === 0 || query.qualities.includes(quality))
+    );
+  });
+
+  if (query.sort !== "original")
+    rows.sort((a, b) => {
+      const direction = query.sort.endsWith("desc") ? -1 : 1;
+      if (query.sort.startsWith("name")) return direction * a.name.localeCompare(b.name, "zh-CN");
+      if (a.quality === null) return b.quality === null ? 0 : 1;
+      if (b.quality === null) return -1;
+      return direction * (a.quality - b.quality);
+    });
+
+  return { rows, total: rows.length };
+}

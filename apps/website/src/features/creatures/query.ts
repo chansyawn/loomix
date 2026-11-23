@@ -1,8 +1,8 @@
 import { createNameMatcher } from "@/infrastructure/name-search";
-import type { CreatureItem, CreatureSeries } from "../collection-view.ts";
-import { indexMembership } from "../collection/membership";
-import type { FilterGroup } from "@/features/collection/filter-panel";
-import { qualityNames } from "@/features/collection/quality";
+import type { CreatureItem, CreatureSeries } from "../omnidex-view.ts";
+import { indexMembership } from "../omnidex/membership";
+import type { FilterGroup } from "@/features/omnidex/filter-panel";
+import { qualityNames } from "@/features/omnidex/quality";
 import type { CreaturesData } from "./data";
 import { categories, missing, ungrouped, seasons, times, weather } from "./search";
 import type { FilterKey, View, ViewQuery } from "./search";

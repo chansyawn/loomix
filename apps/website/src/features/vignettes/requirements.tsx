@@ -1,5 +1,5 @@
-import { CollectionItemCard } from "@/features/collection/collection-item-card";
-import { recordLocation } from "@/features/collection/item-route";
+import { CatalogItemCard } from "@/features/omnidex/catalog-item-card";
+import { catalogEntryLocation } from "@/features/omnidex/entry-location";
 import {
   Accordion,
   AccordionContent,
@@ -65,10 +65,10 @@ function ConditionItems({ title, condition }: { title: string; condition: Condit
         >
           {items.map((item) => (
             <li key={item.id} className="min-w-0">
-              <CollectionItemCard
+              <CatalogItemCard
                 item={item}
                 itemId={item.id}
-                link={item.browsable ? recordLocation(item) : undefined}
+                link={item.browsable ? catalogEntryLocation(item) : undefined}
               />
             </li>
           ))}

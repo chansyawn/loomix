@@ -1,27 +1,24 @@
+import { catalogEntryLocation } from "@/features/omnidex/entry-location";
 import { Link } from "@tanstack/react-router";
-import type { DishItem, DishSeries } from "../collection-view.ts";
-import { RecordImage } from "@/features/collection/record-image";
-import { CollectionCard } from "@/features/collection/collection-card";
-import { SeriesImage } from "../collection/series-image";
-import { useCollectionOrigin } from "@/features/collection/navigation";
+import type { DishItem, DishSeries } from "../omnidex-view.ts";
+import { RecordImage } from "@/features/omnidex/record-image";
+import { ListCard } from "@/features/omnidex/list-card";
+import { SeriesImage } from "../omnidex/series-image";
+import { useOmnidexOrigin } from "@/features/omnidex/navigation";
 import { formatTastes } from "./presentation";
 
 export function DishesCard({ item }: { item: DishItem }) {
-  const origin = useCollectionOrigin();
+  const origin = useOmnidexOrigin();
   const attributes = [formatTastes(item.tastes), item.difficulty, item.cookware]
     .filter(Boolean)
     .join(" · ");
   return (
-    <CollectionCard
+    <ListCard
       name={item.name}
       quality={item.quality}
       image={<RecordImage key={item.image} image={item.image} name={item.name} />}
       titleLink={
-        <Link
-          to="/collections/records/$id"
-          params={{ id: String(item.id) }}
-          state={{ collectionOrigin: origin }}
-        >
+        <Link {...catalogEntryLocation(item)} state={{ omnidexOrigin: origin }}>
           {item.name}
         </Link>
       }
@@ -31,9 +28,9 @@ export function DishesCard({ item }: { item: DishItem }) {
 }
 
 export function DishSeriesCard({ series, items }: { series: DishSeries; items: DishItem[] }) {
-  const origin = useCollectionOrigin();
+  const origin = useOmnidexOrigin();
   return (
-    <CollectionCard
+    <ListCard
       name={series.name}
       quality={series.quality}
       image={
@@ -45,11 +42,7 @@ export function DishSeriesCard({ series, items }: { series: DishSeries; items: D
         />
       }
       titleLink={
-        <Link
-          to="/collections/records/$id"
-          params={{ id: String(series.id) }}
-          state={{ collectionOrigin: origin }}
-        >
+        <Link {...catalogEntryLocation(series)} state={{ omnidexOrigin: origin }}>
           {series.name}
         </Link>
       }

@@ -20,9 +20,7 @@ export function verifyCraftingRelations(
   );
   const expectedIds = new Set(expected.map((row) => tables.id(row)));
   const cards = new Map(
-    catalog.items.flatMap((item) =>
-      item.kind === "creationCard" ? [[item.id, item] as const] : [],
-    ),
+    catalog.items.flatMap((item) => (item.kind === "inspoCard" ? [[item.id, item] as const] : [])),
   );
   const sets = tables.byId(180);
   assert.deepEqual(
@@ -59,8 +57,8 @@ export function verifyCraftingRelations(
     const { recipe } = card;
     assert.equal(tables.uint(row, 2), 1, `Crafting product quantity ${card.id}`);
     assert.equal(recipe.productId, tables.uint(row, 1), `Crafting product ${card.id}`);
-    assert.equal(card.cardSetId, tables.uint(row, 3), `Crafting card set ${card.id}`);
-    if (card.cardSetId !== null) usedSets.add(card.cardSetId);
+    assert.equal(card.inspoBoxId, tables.uint(row, 3), `Crafting card set ${card.id}`);
+    if (card.inspoBoxId !== null) usedSets.add(card.inspoBoxId);
     const materials = [12, 14, 16, 18].flatMap((field) => {
       const itemId = tables.uint(row, field),
         quantity = tables.uint(row, field + 1);
@@ -73,10 +71,10 @@ export function verifyCraftingRelations(
     );
   }
   assert.deepEqual(
-    catalog.creationCardSets.map((entry) => entry.id),
+    catalog.inspoBoxes.map((entry) => entry.id),
     [...usedSets].sort((a, b) => a - b),
   );
-  for (const entry of catalog.creationCardSets)
+  for (const entry of catalog.inspoBoxes)
     assert.equal(
       entry.name,
       tables.text(sets.get(entry.id), 1),

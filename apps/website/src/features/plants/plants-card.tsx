@@ -1,21 +1,21 @@
 import { SeedNameLink } from "./seed-info";
 import { Link } from "@tanstack/react-router";
-import type { PlantItem, PlantSeries } from "../collection-view.ts";
+import type { PlantItem, PlantSeries } from "../omnidex-view.ts";
 import type { PlantSeed } from "./model";
-import { RecordImage } from "@/features/collection/record-image";
-import { CollectionCard } from "@/features/collection/collection-card";
-import { useCollectionOrigin } from "@/features/collection/navigation";
-import { recordLocation } from "../collection/item-route";
+import { RecordImage } from "@/features/omnidex/record-image";
+import { ListCard } from "@/features/omnidex/list-card";
+import { useOmnidexOrigin } from "@/features/omnidex/navigation";
+import { catalogEntryLocation } from "../omnidex/entry-location";
 
 export function PlantsCard({ item }: { item: PlantItem }) {
-  const origin = useCollectionOrigin();
+  const origin = useOmnidexOrigin();
   return (
-    <CollectionCard
+    <ListCard
       name={item.name}
       quality={item.quality}
       image={<RecordImage key={item.image} image={item.image} name={item.name} />}
       titleLink={
-        <Link {...recordLocation(item)} state={{ collectionOrigin: origin }}>
+        <Link {...catalogEntryLocation(item)} state={{ omnidexOrigin: origin }}>
           {item.name}
         </Link>
       }
@@ -25,14 +25,14 @@ export function PlantsCard({ item }: { item: PlantItem }) {
 }
 
 export function PlantSeriesCard({ series }: { series: PlantSeries }) {
-  const origin = useCollectionOrigin();
+  const origin = useOmnidexOrigin();
   return (
-    <CollectionCard
+    <ListCard
       name={series.name}
       quality={series.quality}
       image={<RecordImage key={series.image} image={series.image} name={series.name} />}
       titleLink={
-        <Link {...recordLocation(series)} state={{ collectionOrigin: origin }}>
+        <Link {...catalogEntryLocation(series)} state={{ omnidexOrigin: origin }}>
           {series.name}
         </Link>
       }
@@ -44,7 +44,7 @@ export function PlantSeriesCard({ series }: { series: PlantSeries }) {
 
 export function SeedCard({ seed }: { seed: PlantSeed }) {
   return (
-    <CollectionCard
+    <ListCard
       name={seed.name}
       quality={seed.quality}
       image={<RecordImage key={seed.image} image={seed.image} name={seed.name} />}

@@ -32,10 +32,10 @@ export function assemble(observations: ClientReadRecords, originals: readonly Or
     let ownerId = id;
     let ownerKind: typeof need.owner.kind;
     if (collection === "catalog.collections") ownerKind = "collection";
-    else if (collection === "catalog.creationCardSets") ownerKind = "creationCardSet";
+    else if (collection === "catalog.inspoBoxes") ownerKind = "inspoBox";
     else if (collection === "neighbors.neighbors") ownerKind = "neighbor";
     else if (collection === "starsea.regions") ownerKind = "starseaRegion";
-    else if (collection === "starsea.islands") ownerKind = "starseaIsland";
+    else if (collection === "starsea.islets") ownerKind = "starseaIslet";
     else if (collection === "starsea.iconStyles") ownerKind = "starseaIconStyle";
     else if (collection === "vignettes.templates") ownerKind = "vignette";
     else {
@@ -50,8 +50,8 @@ export function assemble(observations: ClientReadRecords, originals: readonly Or
         ownerKind =
           item.kind === "seed"
             ? "seed"
-            : item.kind === "neighborClothing"
-              ? "neighborClothing"
+            : item.kind === "neighborOutfit"
+              ? "neighborOutfit"
               : "item";
     }
     if (need.owner.id !== ownerId || need.owner.kind !== ownerKind)
@@ -73,7 +73,7 @@ export function assemble(observations: ClientReadRecords, originals: readonly Or
   };
   const catalog = assembleCatalog(observations.catalog, image, observations.ingredientItemIds, [
     ...observations.neighbors.giftPreferences.flatMap((entry) => entry.itemIds),
-    ...starseaItemIds(observations.starsea.data.islands),
+    ...starseaItemIds(observations.starsea.data.islets),
   ]);
   const neighbors = buildNeighbors(
     observations.neighbors,
@@ -121,12 +121,12 @@ export function assemble(observations: ClientReadRecords, originals: readonly Or
           ? image(region.mapImage.use, "starsea.regions", region.id, "mapImage")
           : null,
       })),
-      islands: observations.starsea.data.islands.map((island) => ({
-        ...island,
+      islets: observations.starsea.data.islets.map((islet) => ({
+        ...islet,
         illustration: image(
-          island.illustration?.use ?? null,
-          "starsea.islands",
-          island.id,
+          islet.illustration?.use ?? null,
+          "starsea.islets",
+          islet.id,
           "illustration",
         ),
       })),
@@ -157,8 +157,8 @@ export function assemble(observations: ClientReadRecords, originals: readonly Or
           ? "gameplayTags.tags"
           : owner === "collection"
             ? "catalog.collections"
-            : owner === "creationCardSet"
-              ? "catalog.creationCardSets"
+            : owner === "inspoBox"
+              ? "catalog.inspoBoxes"
               : "catalog.items";
       return { ...proof, entity: { collection, id }, fieldPath: field };
     }),

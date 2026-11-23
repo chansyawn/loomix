@@ -41,8 +41,8 @@ function configuredReferences(
     assert.ok(reference, `Missing vignette image reference ${need.id}`);
     return [reference];
   }
-  if (owner.kind === "creationCardSet" || owner.field === "front.background") {
-    const [root, field] = owner.kind === "creationCardSet" ? [180, 11] : [568, 9];
+  if (owner.kind === "inspoBox" || owner.field === "front.background") {
+    const [root, field] = owner.kind === "inspoBox" ? [180, 11] : [568, 9];
     const row = tables.rows(root).find((entry) => tables.id(entry) === owner.id);
     assert.ok(row, `Independent crafting image owner ${need.id}`);
     const value = tables.string(row, field);
@@ -52,7 +52,7 @@ function configuredReferences(
     const [root, field] =
       owner.kind === "starseaRegion"
         ? [652, 13]
-        : owner.kind === "starseaIsland"
+        : owner.kind === "starseaIslet"
           ? [654, 27]
           : [628, 2];
     const row = tables.rows(root).find((entry) => tables.id(entry) === owner.id);
@@ -225,7 +225,7 @@ export function verifyImages(
   const candidateKeys = new Set<string>();
   const craftingIconIds = new Set(
     observations.catalog.items.flatMap((item) =>
-      item.kind === "creationCard" ? [item.id, item.recipe.productId] : [],
+      item.kind === "inspoCard" ? [item.id, item.recipe.productId] : [],
     ),
   );
   for (const need of observations.imageNeeds) {
@@ -236,10 +236,10 @@ export function verifyImages(
       need.owner.field === "front.background"
         ? "card-background"
         : need.owner.kind === "neighbor" ||
-            need.owner.kind === "creationCardSet" ||
+            need.owner.kind === "inspoBox" ||
             need.owner.kind === "starseaRegion" ||
             need.owner.kind === "vignette" ||
-            need.owner.kind === "starseaIsland"
+            need.owner.kind === "starseaIslet"
           ? "illustration"
           : need.owner.kind === "collection" &&
               record?.category === "furniture" &&
@@ -261,7 +261,7 @@ export function verifyImages(
     if (need.owner.kind === "vignette")
       assert.equal(need.required, true, `Required vignette illustration ${need.id}`);
     let placeholderOnly = false;
-    if (need.owner.kind === "neighborClothing") {
+    if (need.owner.kind === "neighborOutfit") {
       references = references.filter((reference) => reference.trim());
       assert.ok(references.length, `Missing neighbor clothing icon configuration ${need.id}`);
       const selected = references.find(

@@ -1,6 +1,6 @@
 import type { GameplayTag } from "@loomix/schema/gameplay-tags";
-import { TAG_FILTER_ROOT_NAMES } from "../../../src/features/all/tag-filter-policy.ts";
-import { TAG_LABEL_OVERRIDES } from "../../../src/features/collection/tags.ts";
+import { TAG_FILTER_ROOT_NAMES } from "../../../src/features/catalog/tag-filter-policy.ts";
+import { TAG_LABEL_OVERRIDES } from "../../../src/features/omnidex/tags.ts";
 import { INGREDIENT_TAG_GROUPS } from "../../../src/features/ingredients/tag-filter-policy.ts";
 
 export interface TagFilterFixture {

@@ -1,11 +1,15 @@
 import { useRouterState } from "@tanstack/react-router";
-import { collectionOrigin, collectionListPath } from "../collection/navigation";
+import {
+  catalogEntryRouteId,
+  omnidexOrigin,
+  omnidexReturnLocation,
+} from "../omnidex/entry-location";
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
 import GithubIcon from "@/assets/icons/github.svg?react";
 import { site } from "@/site";
 import {
-  collectionNavigation,
+  omnidexNavigation,
   homeItem,
   neighborsItem,
   starseaItem,
@@ -27,8 +31,8 @@ import {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const activePath = useRouterState({
     select: (state) =>
-      state.location.pathname.startsWith("/collections/records/")
-        ? collectionListPath(collectionOrigin(state.location)?.href ?? "/collections/all")
+      state.matches.some((match) => match.routeId === catalogEntryRouteId)
+        ? omnidexReturnLocation(omnidexOrigin(state.location)).to
         : state.location.pathname,
   });
   return (
@@ -97,9 +101,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenu>
         </SidebarGroup>
         <SidebarGroup>
-          <SidebarGroupLabel>{collectionNavigation.title}</SidebarGroupLabel>
+          <SidebarGroupLabel>{omnidexNavigation.title}</SidebarGroupLabel>
           <SidebarMenu>
-            {collectionNavigation.items.map((item) => {
+            {omnidexNavigation.items.map((item) => {
               const Icon = item.icon;
               return (
                 <SidebarMenuItem key={item.to}>

@@ -125,8 +125,8 @@ test("从源表核对友邻服饰的云朵占位图与缺图原因", ({ onTestFi
   const observations = clientReadRecordsFixture();
   observations.imageNeeds = [
     {
-      id: "neighborClothing:1:image",
-      owner: { kind: "neighborClothing", id: 1, field: "image" },
+      id: "neighborOutfit:1:image",
+      owner: { kind: "neighborOutfit", id: 1, field: "image" },
       references,
       candidates: [],
       variant: "icon",

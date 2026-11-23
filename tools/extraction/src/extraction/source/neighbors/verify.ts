@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { profile } from "../../../profile.ts";
 import { StoryLayoutSchema } from "@loomix/schema/neighbors";
 import { extractNeighborBundle, extractNeighbors } from "./extract.ts";
-import { parseNeighborClothingDatabase, parseNeighborDatabase } from "./schema.ts";
+import { parseNeighborOutfitDatabase, parseNeighborDatabase } from "./schema.ts";
 import type { NeighborDatabase, NeighborExtractionInput } from "./types.ts";
 
 export function verifyNeighbors(value: unknown, input: NeighborExtractionInput): NeighborDatabase {
@@ -106,8 +106,8 @@ export function verifyNeighbors(value: unknown, input: NeighborExtractionInput):
   return database;
 }
 
-export function verifyNeighborClothing(value: unknown, input: NeighborExtractionInput) {
-  const clothing = parseNeighborClothingDatabase(value);
+export function verifyNeighborOutfit(value: unknown, input: NeighborExtractionInput) {
+  const clothing = parseNeighborOutfitDatabase(value);
   const extracted = extractNeighborBundle(input);
   assert.deepEqual(clothing.source, input.source, "Neighbor clothing source metadata");
   assert.deepEqual(

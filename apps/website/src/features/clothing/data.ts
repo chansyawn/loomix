@@ -1,9 +1,9 @@
-import { loadCollectionView } from "../collection-loader.ts";
-import type { CollectionView } from "../collection-view.ts";
+import { loadOmnidexView } from "../omnidex-loader.ts";
+import type { OmnidexView } from "../omnidex-view.ts";
 
-export type ClothingData = CollectionView["clothing"];
+export type ClothingData = OmnidexView["clothing"];
 export type ClothingRow = ClothingData[keyof ClothingData][number];
 
 export async function loadClothing(): Promise<ClothingData> {
-  return (await loadCollectionView()).clothing;
+  return (await loadOmnidexView()).clothing;
 }

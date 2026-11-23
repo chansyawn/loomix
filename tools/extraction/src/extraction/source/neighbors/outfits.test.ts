@@ -3,8 +3,8 @@ import { test } from "vite-plus/test";
 import { extractNeighborBundle } from "./extract.ts";
 import {
   extractNeighbors,
-  parseNeighborClothingDatabase,
-  verifyNeighborClothing,
+  parseNeighborOutfitDatabase,
+  verifyNeighborOutfit,
   verifyNeighbors,
 } from "./index.ts";
 import { neighborImagePaths } from "./schema.ts";
@@ -119,7 +119,7 @@ test("extracts confirmed outfits, explicit counterparts, configured offers and c
     ),
   );
   verifyNeighbors(database, fixture.input);
-  verifyNeighborClothing({ source: database.source, items: clothing }, fixture.input);
+  verifyNeighborOutfit({ source: database.source, items: clothing }, fixture.input);
 });
 
 test("outfit serialization is stable across row order and equivalent duplicate displays", (context) => {
@@ -242,14 +242,14 @@ test("outfit validation and frozen-source verification reject incomplete or tamp
     const invalid = structuredClone(clothingData);
     change(invalid);
     assert.throws(() => {
-      parseNeighborClothingDatabase(invalid);
-      verifyNeighborClothing(invalid, fixture.input);
+      parseNeighborOutfitDatabase(invalid);
+      verifyNeighborOutfit(invalid, fixture.input);
     });
   }
   const missing = structuredClone(clothingData);
   missing.items.pop();
-  assert.throws(() => verifyNeighborClothing(missing, fixture.input), /frozen sources/);
+  assert.throws(() => verifyNeighborOutfit(missing, fixture.input), /frozen sources/);
   const changed = structuredClone(clothingData);
   changed.items[1]!.offers[0]!.configuredPrice = 121;
-  assert.throws(() => verifyNeighborClothing(changed, fixture.input), /frozen sources/);
+  assert.throws(() => verifyNeighborOutfit(changed, fixture.input), /frozen sources/);
 });

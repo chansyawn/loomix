@@ -8,7 +8,7 @@ export function collectNeighborOutfitImage(
   references: readonly string[],
   sources: EvidenceSource[],
 ): string {
-  const owner = { kind: "neighborClothing", id, field: "image" } as const;
+  const owner = { kind: "neighborOutfit", id, field: "image" } as const;
   const configured = references.filter((reference) => reference.trim());
   if (!configured.length) throw new Error(`Missing neighbor outfit icon ${id}`);
   const reference = configured.find(

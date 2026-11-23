@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { collectionLayoutSchema } from "@/features/collection/layout";
+import { listLayoutSchema } from "@/features/omnidex/layout";
 import { createNameMatcher } from "@/infrastructure/name-search";
 import type { VignetteSummary } from "./view";
 
@@ -8,7 +8,7 @@ export const vignetteSearchDefaults = { q: "", site: null, layout: "grid" } as c
 export const vignetteSearchSchema = z.object({
   q: z.string().catch("").default(""),
   site: z.enum(["land", "water-edge", "beach"]).nullable().catch(null).default(null),
-  layout: collectionLayoutSchema.transform((value) => value ?? vignetteSearchDefaults.layout),
+  layout: listLayoutSchema.transform((value) => value ?? vignetteSearchDefaults.layout),
 });
 
 export type VignetteSearch = z.output<typeof vignetteSearchSchema>;

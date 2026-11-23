@@ -1,7 +1,7 @@
 import { notFound } from "@tanstack/react-router";
 import type { DishesData } from "./data";
 import { loadDishes } from "./data";
-import { indexMembership } from "../collection/membership";
+import { indexMembership } from "../omnidex/membership";
 import type { DishView as View } from "./search";
 
 export function parseDishId(value: string): number {

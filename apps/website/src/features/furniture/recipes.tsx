@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { CreationCardFace } from "@/features/collection/creation-card-face";
-import { recordLocation } from "@/features/collection/item-route";
-import { useCollectionOrigin } from "@/features/collection/navigation";
-import { RecordImage } from "@/features/collection/record-image";
+import { InspoCardFace } from "@/features/omnidex/inspo-card-face";
+import { catalogEntryLocation } from "@/features/omnidex/entry-location";
+import { useOmnidexOrigin } from "@/features/omnidex/navigation";
+import { RecordImage } from "@/features/omnidex/record-image";
 import { Card, CardContent, CardHeader } from "@/ui/components/card";
 import { Item, ItemMedia } from "@/ui/components/item";
 import { Separator } from "@/ui/components/separator";
@@ -33,7 +33,7 @@ export function FurnitureRecipes({
               <div className="grid gap-3 @min-[17rem]/recipes:grid-cols-[8.5rem_auto_minmax(0,1fr)] @min-[17rem]/recipes:gap-0">
                 <CardHeader className="justify-items-center self-start">
                   <div className="w-28 max-w-full">
-                    <CreationCardFace {...recipe.face} productName={productName} />
+                    <InspoCardFace {...recipe.face} productName={productName} />
                   </div>
                 </CardHeader>
                 <Separator className="mx-3 @min-[17rem]/recipes:hidden data-horizontal:w-auto" />
@@ -62,11 +62,11 @@ export function FurnitureRecipes({
 }
 
 function RecipeMaterial({ item, itemId, quantity }: Material) {
-  const origin = useCollectionOrigin();
+  const origin = useOmnidexOrigin();
   const name = item?.name ?? `未知材料 #${itemId}`;
   const link =
     item && item.browsable !== false ? (
-      <Link {...recordLocation(item)} state={{ collectionOrigin: origin }} />
+      <Link {...catalogEntryLocation(item)} state={{ omnidexOrigin: origin }} />
     ) : undefined;
 
   return (
