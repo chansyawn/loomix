@@ -1,6 +1,7 @@
 import { expect, test } from "vite-plus/test";
 import { collection, material } from "../../../../../packages/schema/tests/fixture.ts";
 import { clientReadRecordsFixture } from "../fixtures/client-read-records.ts";
+import { emptyFlowerHybridization } from "../fixtures/flower-hybridization.ts";
 import { assemble } from "./index.ts";
 import { objectIdentity } from "../images/model.ts";
 import type { ImageNeed, ImageObject } from "../images/model.ts";
@@ -53,7 +54,8 @@ test("同一源对象跨用途共享原图，组装同时投影图片引用和�
   observations.catalog.collections = [
     { ...collection(2, "furniture", [1]), image: { use: "collection:2:image" } },
   ];
-  const result = assemble(observations, [original]);
+  const input = emptyFlowerHybridization(observations.source);
+  const result = assemble(observations, [original], input);
   expect(result.dataset.catalog.items[0]).toMatchObject({
     image: { assetId: object.key, variant: "icon" },
   });
@@ -74,7 +76,7 @@ test("同一源对象跨用途共享原图，组装同时投影图片引用和�
       }),
     ]),
   );
-  expect(JSON.stringify(assemble(observations, [original]))).toBe(JSON.stringify(result));
+  expect(JSON.stringify(assemble(observations, [original], input))).toBe(JSON.stringify(result));
 });
 
 test("种子和同号阶段保留独立用途，缺图原因投影到嵌套字段", () => {
@@ -109,7 +111,7 @@ test("种子和同号阶段保留独立用途，缺图原因投影到嵌套字�
   plantNeed.candidates = [];
   plantNeed.references = [];
   observations.imageNeeds.push(plantNeed);
-  const result = assemble(observations, [original]);
+  const result = assemble(observations, [original], emptyFlowerHybridization(observations.source));
   expect(result.imageJobs).toHaveLength(1);
   expect(result.imageBindings).toEqual(
     expect.arrayContaining([
@@ -132,12 +134,14 @@ test("同图不同 owner 不得借用对方用途，防止图片正确但来源�
   observations.imageObjects = [object];
   observations.imageNeeds = [need("item", 1, "icon"), need("item", 2, "icon")];
   observations.catalog.items = [{ ...material(1), image: { use: "item:2:image" } }];
-  expect(() => assemble(observations, [original])).toThrow("different owner");
+  expect(() =>
+    assemble(observations, [original], emptyFlowerHybridization(observations.source)),
+  ).toThrow("different owner");
   observations.catalog.items = [
     { ...material(1), image: { use: "item:1:image" } },
     { ...material(2), image: { use: "item:2:image" } },
   ];
-  const result = assemble(observations, [original]);
+  const result = assemble(observations, [original], emptyFlowerHybridization(observations.source));
   expect(result.imageJobs).toHaveLength(1);
   expect(
     result.fieldEvidence.fields

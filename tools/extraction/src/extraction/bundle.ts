@@ -25,6 +25,12 @@ import {
 import type { Manifest, StageLocation } from "../workflow/manifest.ts";
 import type { Assembly } from "./assemble/index.ts";
 import { assemble } from "./assemble/index.ts";
+import {
+  flowerHybridizationFile,
+  parseFlowerHybridization,
+} from "./external/flower-hybridization.ts";
+import { admissionsFile } from "./source/catalog/admissions.ts";
+import { vignetteAdmissionsFile } from "./source/vignettes/profile.ts";
 
 export function writeAssembly(directory: string, assembly: Assembly): void {
   writeJson(path.join(directory, DATASET_FILE), assembly.dataset);
@@ -46,17 +52,17 @@ export function readCandidate(directory: string) {
   const originals = originalImageSchema
     .array()
     .parse(readJson(path.join(directory, "originals.json")));
-  const rebuilt = assemble(clientReadRecords, originals);
+  const flowerHybridization = parseFlowerHybridization(
+    fs.readFileSync(path.join(directory, "source", flowerHybridizationFile)),
+    clientReadRecords.source,
+  );
+  const rebuilt = assemble(clientReadRecords, originals, flowerHybridization);
   const dataset = parseDataset(readJson(path.join(directory, DATASET_FILE)));
   const fieldEvidence = FieldEvidenceReportSchema.parse(
     readJson(path.join(directory, FIELD_EVIDENCE_FILE)),
   );
-  assert.deepEqual(dataset, rebuilt.dataset, "Dataset matches client read records");
-  assert.deepEqual(
-    fieldEvidence,
-    rebuilt.fieldEvidence,
-    "Field evidence matches client read records",
-  );
+  assert.deepEqual(dataset, rebuilt.dataset, "Dataset matches frozen inputs");
+  assert.deepEqual(fieldEvidence, rebuilt.fieldEvidence, "Field evidence matches frozen inputs");
   assert.deepEqual(
     readJson(path.join(directory, "image-bindings.json")),
     rebuilt.imageBindings,
@@ -67,7 +73,7 @@ export function readCandidate(directory: string) {
     rebuilt.imageJobs,
     "Image jobs cover the exact reference graph",
   );
-  return { directory, clientReadRecords, originals, ...rebuilt };
+  return { directory, clientReadRecords, originals, flowerHybridization, ...rebuilt };
 }
 
 export async function readVerifiedExtraction(directory: string, expectedId?: string) {
@@ -80,6 +86,19 @@ export async function readVerifiedExtraction(directory: string, expectedId?: str
     "Sealed extraction file set",
   );
   const bundle = readCandidate(directory);
+  const { admissions, vignetteAdmissions, external } = manifest.identityInputs;
+  const hashes = new Map(manifest.outputs.map((file) => [file.path, file.sha256]));
+  assert.equal(hashes.get(`source/${admissionsFile}`), admissions, "Frozen admissions identity");
+  assert.equal(
+    hashes.get(`source/${vignetteAdmissionsFile}`),
+    vignetteAdmissions,
+    "Frozen vignette admissions identity",
+  );
+  assert.deepEqual(
+    external,
+    [{ path: `source/${flowerHybridizationFile}`, sha256: bundle.flowerHybridization.sha256 }],
+    "Frozen external input identity",
+  );
   assert.equal(bundle.dataset.context.datasetId, manifest.id, "Sealed dataset identity");
   const validation = readJson<{ passed: boolean; datasetId: string }>(
     path.join(directory, "validation.json"),

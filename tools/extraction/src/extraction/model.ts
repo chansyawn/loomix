@@ -21,7 +21,11 @@ export type WithImageUses<T> = T extends ImageRef
     : T extends object
       ? { [Key in keyof T]: WithImageUses<T[Key]> }
       : T;
-export type CatalogObservation = WithImageUses<Catalog>;
+export type CatalogObservation = WithImageUses<
+  Omit<Catalog, "collections"> & {
+    collections: Omit<Catalog["collections"][number], "flowerHybridization">[];
+  }
+>;
 
 export interface SourceProof extends Omit<FieldEvidence, "entity" | "fieldPath"> {
   owner: "item" | "collection" | "inspoBox" | "tag";

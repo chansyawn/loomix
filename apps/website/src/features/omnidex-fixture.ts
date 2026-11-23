@@ -72,7 +72,13 @@ export function catalogFixture(
     memberKind: CollectionMemberKind,
     memberIds: number[] | null,
   ) =>
-    catalog.collections.push({ ...catalogBase(record), memberKind, memberIds, acquisition: null });
+    catalog.collections.push({
+      ...catalogBase(record),
+      memberKind,
+      memberIds,
+      acquisition: null,
+      flowerHybridization: null,
+    });
   for (const record of view.furniture?.items ?? []) {
     const [width, depth] = record.size?.split("x").map(Number) ?? [];
     add({
@@ -314,6 +320,7 @@ export function addFixtureRecords(
         quality: null,
         acquisition: null,
         memberIds: null,
+        flowerHybridization: null,
         ...raw,
       } as Collection);
       continue;

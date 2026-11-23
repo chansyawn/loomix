@@ -13,6 +13,9 @@ import { readVerifiedEnvironment } from "../environment/verify.ts";
 import type { Manifest, StageLocation } from "../workflow/manifest.ts";
 import { digest, inventory } from "../workflow/hashing.ts";
 import { implementationRevision, profileHash, toolIdentity } from "../workflow/identity.ts";
+import { extractionId } from "../workflow/extraction-identity.ts";
+import type { ExtractionIdentity } from "../workflow/extraction-identity.ts";
+import { catalogSource } from "../profile.ts";
 import { ensureAnimeStudio } from "../client/anime-studio/index.ts";
 import { openClientSnapshot } from "../client/snapshot.ts";
 import { readJson, writeJson } from "../workflow/json.ts";
@@ -30,6 +33,10 @@ import { verifyExtraction, verifyCandidate } from "./verify.ts";
 import { writeAssembly, sealExtraction } from "./bundle.ts";
 import { parseVignetteAdmissions } from "./source/vignettes/admissions.ts";
 import { vignetteAdmissionsFile } from "./source/vignettes/profile.ts";
+import {
+  flowerHybridizationFile,
+  parseFlowerHybridization,
+} from "./external/flower-hybridization.ts";
 
 export async function extract(environmentReference: string): Promise<StageLocation> {
   const { directory: environmentDirectory, id: environmentId } = resolveStage(
@@ -57,7 +64,11 @@ export async function extract(environmentReference: string): Promise<StageLocati
     new URL("./source/vignettes/admissions.json", import.meta.url),
   );
   const vignetteAdmissions = parseVignetteAdmissions(vignetteBytes);
-  const id = digest({
+  const flowerBytes = fs.readFileSync(
+    new URL(`../../data/${flowerHybridizationFile}`, import.meta.url),
+  );
+  const flowerHybridization = parseFlowerHybridization(flowerBytes, catalogSource);
+  const identityInputs: ExtractionIdentity = {
     stageManifestVersion: STAGE_MANIFEST_VERSION,
     formatVersion: FORMAT_VERSION,
     environmentId,
@@ -67,7 +78,9 @@ export async function extract(environmentReference: string): Promise<StageLocati
     tool,
     admissions: admissions.sha256,
     vignetteAdmissions: vignetteAdmissions.sha256,
-  });
+    external: [{ path: `source/${flowerHybridizationFile}`, sha256: flowerHybridization.sha256 }],
+  };
+  const id = extractionId(identityInputs);
   const destination = stageOutput("extraction", id, environmentDirectory);
   await sealExtraction(destination, async (staging) => {
     try {
@@ -93,6 +106,9 @@ export async function extract(environmentReference: string): Promise<StageLocati
       copyCachedDirectory(decoded, source);
       fs.writeFileSync(path.join(source, admissionsFile), admissionsBytes);
       fs.writeFileSync(path.join(source, vignetteAdmissionsFile), vignetteBytes);
+      const flowerFile = path.join(source, flowerHybridizationFile);
+      fs.mkdirSync(path.dirname(flowerFile), { recursive: true });
+      fs.writeFileSync(flowerFile, flowerBytes);
       fs.copyFileSync(
         new URL("./source/neighbors/additional-images.json", import.meta.url),
         path.join(source, "additional-images.json"),
@@ -126,7 +142,7 @@ export async function extract(environmentReference: string): Promise<StageLocati
         implementation,
       });
       writeJson(path.join(staging, "originals.json"), originals);
-      writeAssembly(staging, assemble(clientReadRecords, originals));
+      writeAssembly(staging, assemble(clientReadRecords, originals, flowerHybridization));
       await audit(staging, snapshot.resolvePath, source, clientReadRecords.imageObjects);
       await verifyCandidate(staging);
       await snapshot.verify();
@@ -142,6 +158,7 @@ export async function extract(environmentReference: string): Promise<StageLocati
         status: "verified",
         createdAt: new Date().toISOString(),
         inputs,
+        identityInputs,
         implementation,
         profileHash,
         tools: environment.tools,

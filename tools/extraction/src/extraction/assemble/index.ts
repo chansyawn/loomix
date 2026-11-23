@@ -13,8 +13,14 @@ import { validateDomainEvidence } from "./validate-evidence.ts";
 import { assembleCatalog } from "./catalog.ts";
 import { plantingDomainEvidence } from "./planting-evidence.ts";
 import { starseaItemIds } from "../source/starsea/read.ts";
+import { assembleFlowerHybridization } from "../external/flower-hybridization.ts";
+import type { FrozenFlowerHybridization } from "../external/flower-hybridization.ts";
 
-export function assemble(observations: ClientReadRecords, originals: readonly OriginalImage[]) {
+export function assemble(
+  observations: ClientReadRecords,
+  originals: readonly OriginalImage[],
+  flowerHybridization: FrozenFlowerHybridization,
+) {
   const bound = bindImages(observations.imageNeeds, originals);
   const needs = new Map(observations.imageNeeds.map((need) => [need.id, need]));
   const objects = new Map(observations.imageObjects.map((object) => [object.key, object]));
@@ -71,10 +77,19 @@ export function assemble(observations: ClientReadRecords, originals: readonly Or
     });
     return result;
   };
-  const catalog = assembleCatalog(observations.catalog, image, observations.ingredientItemIds, [
-    ...observations.neighbors.giftPreferences.flatMap((entry) => entry.itemIds),
-    ...starseaItemIds(observations.starsea.data.islets),
-  ]);
+  const clientCatalog = assembleCatalog(
+    observations.catalog,
+    image,
+    observations.ingredientItemIds,
+    [
+      ...observations.neighbors.giftPreferences.flatMap((entry) => entry.itemIds),
+      ...starseaItemIds(observations.starsea.data.islets),
+    ],
+  );
+  const { catalog, fields: flowerProofs } = assembleFlowerHybridization(
+    clientCatalog,
+    flowerHybridization,
+  );
   const neighbors = buildNeighbors(
     observations.neighbors,
     (use, id, fieldPath) => image(use, "neighbors.neighbors", id, fieldPath),
@@ -138,6 +153,7 @@ export function assemble(observations: ClientReadRecords, originals: readonly Or
     vignettes,
   });
   const fields = [
+    ...flowerProofs,
     ...buildDomainEvidence(
       dataset,
       observations.recordProofs,

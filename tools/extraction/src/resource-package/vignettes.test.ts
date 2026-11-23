@@ -6,6 +6,7 @@ import { expect, test } from "vite-plus/test";
 import { vignette } from "../../../../packages/schema/tests/fixture.ts";
 import { loadWebsiteResources } from "@loomix/resources/website-resources";
 import { assemble } from "../extraction/assemble/index.ts";
+import { freezeFlowerFixture } from "../extraction/fixtures/flower-hybridization.ts";
 import { readCandidate, writeAssembly } from "../extraction/bundle.ts";
 import { clientReadRecordsFixture } from "../extraction/fixtures/client-read-records.ts";
 import { CLIENT_READ_RECORDS_FILE } from "../extraction/files.ts";
@@ -59,7 +60,8 @@ test("小栖地及其配图可从提取结果打包、验证并安装", async ()
     });
     writeJson(path.join(directory, CLIENT_READ_RECORDS_FILE), observations);
     writeJson(path.join(directory, "originals.json"), originals);
-    writeAssembly(directory, assemble(observations, originals));
+    const flowerHybridization = freezeFlowerFixture(directory, observations.source);
+    writeAssembly(directory, assemble(observations, originals, flowerHybridization));
     const bundle = readCandidate(directory);
     expect(bundle.imageJobs).toMatchObject([{ assetId: object, variant: "illustration" }]);
 

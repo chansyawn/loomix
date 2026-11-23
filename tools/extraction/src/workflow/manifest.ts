@@ -8,9 +8,10 @@ import type { FileHash } from "./hashing.ts";
 import { artifactsRoot, assertIdentity, within } from "../paths.ts";
 import { clientVersionLabelPattern } from "../client/versions.ts";
 import { errorCode } from "./errors.ts";
+import { ExtractionIdentitySchema, extractionId } from "./extraction-identity.ts";
 
 const hash = z.string().regex(/^[a-f0-9]{64}$/);
-export const STAGE_MANIFEST_VERSION = 6;
+export const STAGE_MANIFEST_VERSION = 7;
 const fileHash = z
   .object({ path: z.string(), sha256: hash, bytes: z.number().int().nonnegative() })
   .strict();
@@ -38,7 +39,10 @@ const baseManifestSchema = z
   .strict();
 const manifestSchema = z.discriminatedUnion("kind", [
   baseManifestSchema.extend({ kind: z.literal("environment"), clientSnapshotId: hash }),
-  baseManifestSchema.extend({ kind: z.literal("extraction") }),
+  baseManifestSchema.extend({
+    kind: z.literal("extraction"),
+    identityInputs: ExtractionIdentitySchema,
+  }),
   baseManifestSchema.extend({ kind: z.literal("resource-package") }),
 ]);
 export type Manifest = z.infer<typeof manifestSchema>;
@@ -115,6 +119,19 @@ function validateInputInventory(manifest: Manifest): void {
       manifest.clientSnapshotId !== manifest.inputs.sha256)
   )
     throw new Error("Environment client snapshot identity mismatch");
+  if (manifest.kind === "extraction") {
+    const identity = manifest.identityInputs;
+    if (
+      identity.stageManifestVersion !== manifest.stageManifestVersion ||
+      identity.environmentId !== manifest.inputs.id ||
+      identity.inputs !== manifest.inputs.sha256 ||
+      identity.profileHash !== manifest.profileHash ||
+      identity.implementation !== manifest.implementation ||
+      identity.tool !== manifest.tools.animeStudio ||
+      extractionId(identity) !== manifest.id
+    )
+      throw new Error("Extraction manifest identity inputs mismatch");
+  }
 }
 
 export async function stageInputs(
