@@ -8,7 +8,7 @@ import {
 import { CreaturesCard, CreatureSeriesCard } from "./creatures-card";
 import { SeriesImage } from "../omnidex/series-image";
 import type { CreaturesDetail } from "./detail";
-import { ItemCookingUsage } from "../ingredients/item-usage";
+import { ItemIngredientTags } from "../ingredients/item-usage";
 
 export function CreaturesDetailPage({ detail }: { detail: CreaturesDetail }) {
   const { record } = detail;
@@ -67,7 +67,7 @@ function CreaturesExtras({ detail }: { detail: CreaturesDetail }) {
   if (detail.kind === "item" && detail.cooking)
     sections.push({
       key: "creature-cooking",
-      content: <ItemCookingUsage usage={detail.cooking} />,
+      content: <ItemIngredientTags tags={detail.cooking.tags} />,
     });
   if (
     (detail.kind === "item" && detail.series.length > 0) ||

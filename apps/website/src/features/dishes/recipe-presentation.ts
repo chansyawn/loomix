@@ -14,6 +14,7 @@ export type RecipeConditionToken =
 export type DishRecipeSlotView = {
   conditionTokens: RecipeConditionToken[];
   candidates: IngredientItem[];
+  references: IngredientItem[];
 };
 
 function appendConditionTokens(
@@ -60,7 +61,7 @@ function candidateItems(
 ): IngredientItem[] {
   return [...new Set(itemIds)].flatMap((id) => {
     const item = items.get(id);
-    return item && item.browsable !== false ? [item] : [];
+    return item ? [item] : [];
   });
 }
 
@@ -69,8 +70,12 @@ export function buildDishRecipeSlots(
   tags: ReadonlyMap<number, { name: string }>,
   items: ReadonlyMap<number, IngredientItem>,
 ): DishRecipeSlotView[] {
-  return slots.map((slot) => ({
-    conditionTokens: conditionTokens(slot.expression, tags),
-    candidates: candidateItems(slot.itemIds, items),
-  }));
+  return slots.map((slot) => {
+    const matches = candidateItems(slot.itemIds, items);
+    return {
+      conditionTokens: conditionTokens(slot.expression, tags),
+      candidates: matches.filter((item) => item.browsable !== false),
+      references: matches.filter((item) => item.browsable === false),
+    };
+  });
 }

@@ -169,15 +169,15 @@ describe("miscellaneous details", () => {
       {
         id: 100,
         recipes: [
-          { position: 2, quantity: 3 },
-          { position: 3, quantity: 5 },
+          { id: 12, position: 2, quantity: 3 },
+          { id: 13, position: 3, quantity: 5 },
         ],
       },
       {
         id: 101,
         recipes: [
-          { position: 1, quantity: 2 },
-          { position: 2, quantity: 2 },
+          { id: 14, position: 1, quantity: 2 },
+          { id: 15, position: 2, quantity: 2 },
         ],
       },
     ]);

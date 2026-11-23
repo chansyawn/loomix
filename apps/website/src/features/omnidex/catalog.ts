@@ -4,6 +4,7 @@ import {
   isListedItem,
   type Catalog,
   type Collection,
+  type Item,
   type ListedItem,
 } from "@loomix/schema/catalog";
 import { createGameplayTagIndex, tagLabel } from "@loomix/schema/gameplay-tags";
@@ -11,6 +12,7 @@ import type { GameplayTags } from "@loomix/schema/gameplay-tags";
 import { catalogCategory, toOmnidexView } from "../omnidex-view";
 import { acquisitionText } from "../omnidex/acquisition";
 import { createOmnidexTagFilter, type TagTreePolicy } from "./tags";
+import { buildIngredientsData, type IngredientsData } from "../ingredients/model";
 
 export const categoryNames = {
   furniture: "家具",
@@ -24,6 +26,12 @@ export const categoryNames = {
 
 export type ListedEntry = Exclude<ListedItem, { kind: "inspoCard" }> | Collection;
 
+export function hasCatalogItemDetail(
+  item: Item,
+): item is Exclude<ListedItem, { kind: "inspoCard" }> {
+  return isListedItem(item) && item.kind !== "inspoCard";
+}
+
 export function createOmnidexCatalog(
   catalog: Catalog,
   imageIndex: ImageIndex,
@@ -33,7 +41,7 @@ export function createOmnidexCatalog(
   const image = createImageResolver(imageIndex);
   const tagIndex = createGameplayTagIndex(gameplayTags.tags);
   const tagsFor = createRecordTagResolver(tagIndex);
-  const items = catalog.items.filter(isListedItem).filter((item) => item.kind !== "inspoCard");
+  const items = catalog.items.filter(hasCatalogItemDetail);
   const row = (record: ListedEntry) => {
     const tagIds = "tagIds" in record ? record : { tagIds: [] };
     return {
@@ -52,12 +60,19 @@ export function createOmnidexCatalog(
     };
   };
   const rows = [...items, ...catalog.collections].map(row).sort((a, b) => a.id - b.id);
+  const view = toOmnidexView(catalog, imageIndex, tagIndex);
+  let ingredients: IngredientsData | undefined;
   return {
     catalog,
+    tagIndex,
+    image,
     tags: createOmnidexTagFilter(gameplayTags.tags, tagIndex, items, options.tagPolicy),
     rows,
     byId: new Map(rows.map((entry) => [entry.id, entry])),
-    view: toOmnidexView(catalog, imageIndex, tagIndex),
+    view,
+    get ingredients() {
+      return (ingredients ??= buildIngredientsData(view));
+    },
   };
 }
 export type OmnidexCatalog = ReturnType<typeof createOmnidexCatalog>;

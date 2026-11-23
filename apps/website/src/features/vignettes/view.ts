@@ -3,10 +3,11 @@ import { createCatalogIndex, isListedItem, type Catalog, type Item } from "@loom
 import { createGameplayTagIndex, tagLabel, type GameplayTags } from "@loomix/schema/gameplay-tags";
 import type { Neighbors } from "@loomix/schema/neighbors";
 import type { Vignette, Vignettes } from "@loomix/schema/vignettes";
+import { hasCatalogItemDetail } from "../omnidex/catalog";
+import { createRequirementMatcher, type RequirementTarget } from "./requirement-matching";
 
 export const siteLabels = { land: "陆地", "water-edge": "水边", beach: "沙滩" } as const;
 
-type Target = Vignette["requirements"][number]["target"];
 type ImageResolver = ReturnType<typeof createImageResolver>;
 type DisplayItem = { id: number; name: string; image: string | null; browsable: boolean };
 type Condition =
@@ -66,7 +67,7 @@ export function toVignetteDetail(
   const fallback = new Map(vignettes.fallbackItems.map((entry) => [entry.id, entry.name.zh]));
   const neighborById = new Map(neighbors.neighbors.map((entry) => [entry.id, entry]));
   const tagIndex = createGameplayTagIndex(gameplayTags.tags);
-  const subtrees = new Map<number, ReadonlySet<number>>();
+  const matchesRequirement = createRequirementMatcher(tagIndex);
   const tagMatches = new Map<string, DisplayItem[]>();
   const listedItems = [...items.values()]
     .filter(isListedItem)
@@ -74,31 +75,39 @@ export function toVignetteDetail(
 
   function describeItem(item: Item): DisplayItem {
     return isListedItem(item)
-      ? { id: item.id, name: item.name, image: image(item.image), browsable: true }
+      ? {
+          id: item.id,
+          name: item.name,
+          image: image(item.image),
+          browsable: hasCatalogItemDetail(item),
+        }
       : { id: item.id, name: item.name, image: null, browsable: false };
   }
 
-  function subtree(tagId: number) {
-    const existing = subtrees.get(tagId);
-    if (existing) return existing;
-    const group = new Set(tagIndex.subtree(tagId).map((tag) => tag.id));
-    subtrees.set(tagId, group);
-    return group;
+  function describeItemId(itemId: number): DisplayItem {
+    const item = items.get(itemId);
+    return item
+      ? describeItem(item)
+      : {
+          id: itemId,
+          name: requiredEntry(fallback.get(itemId), `item ${itemId}`),
+          image: null,
+          browsable: false,
+        };
   }
 
   function matchingItems(tagIds: number[]) {
     const key = [...tagIds].sort((left, right) => left - right).join(",");
     const existing = tagMatches.get(key);
     if (existing) return existing;
-    const groups = tagIds.map(subtree);
     const matches = listedItems
-      .filter((item) => groups.every((group) => item.tagIds.some((tag) => group.has(tag))))
+      .filter((item) => matchesRequirement(item, { allTagIds: tagIds }))
       .map(describeItem);
     tagMatches.set(key, matches);
     return matches;
   }
 
-  function describeCondition(target: Target): Condition {
+  function describeCondition(target: RequirementTarget): Condition {
     if ("allTagIds" in target) {
       return {
         kind: "tags",
@@ -106,19 +115,7 @@ export function toVignetteDetail(
         matches: matchingItems(target.allTagIds),
       };
     }
-    const { itemId } = target;
-    const item = items.get(itemId);
-    return {
-      kind: "item",
-      item: item
-        ? describeItem(item)
-        : {
-            id: itemId,
-            name: requiredEntry(fallback.get(itemId), `item ${itemId}`),
-            image: null,
-            browsable: false,
-          },
-    };
+    return { kind: "item", item: describeItemId(target.itemId) };
   }
 
   return {
@@ -130,6 +127,39 @@ export function toVignetteDetail(
       area: area ? `${area.width} × ${area.height} 格` : null,
       quantity,
     })),
+    referenceItems: template.requirements.flatMap(({ examples }, index) =>
+      examples.length
+        ? [
+            {
+              position: index + 1,
+              items: examples.map(({ itemId, quantity }) => ({
+                item: describeItemId(itemId),
+                quantity,
+              })),
+            },
+          ]
+        : [],
+    ),
+    placementRules: template.placementRules.map((rule) => {
+      const targetName = (target: RequirementTarget) =>
+        "itemId" in target
+          ? describeItemId(target.itemId).name
+          : target.allTagIds.map((tagId) => tagLabel(tagIndex.get(tagId))).join(" 且 ");
+      const labels = {
+        range: "在布景范围内摆放",
+        adjacent: "相邻摆放",
+        "near-water": "靠近水边",
+        "align-water": "与水边对齐",
+        "on-beach": "在沙滩上摆放",
+      };
+      const targets =
+        rule.kind === "adjacent" ? rule.targets : rule.kind === "near-water" ? [rule.target] : [];
+      return {
+        id: rule.ruleId,
+        label: rule.text?.zh ?? labels[rule.kind],
+        targets: targets.map(targetName),
+      };
+    }),
     creatures: template.creatureItemIds.map((itemId) => {
       const item = items.get(itemId);
       return describeItem(

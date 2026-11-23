@@ -4,6 +4,7 @@ import { CatalogItemCard } from "@/features/omnidex/catalog-item-card";
 import { catalogEntryLocation } from "@/features/omnidex/entry-location";
 import { RecordImage } from "@/features/omnidex/record-image";
 import { VignetteRequirements } from "./requirements";
+import { VignettePlacementRules, VignetteReferenceItems } from "./placement-reference";
 import type { VignetteDetail } from "./view";
 
 type RelatedEntry = VignetteDetail["neighbors"][number];
@@ -53,13 +54,15 @@ export function VignetteDetailPage({ entry }: { entry: VignetteDetail }) {
         ["地形", entry.terrain],
       ]}
     >
+      <VignetteRequirements key={entry.id} requirements={entry.requirements} />
+      <VignettePlacementRules rules={entry.placementRules} />
+      <VignetteReferenceItems key={entry.id} entry={entry} />
       <RelatedEntries
         title="友邻"
         entries={entry.neighbors}
         itemLink={({ id }) => ({ to: "/neighbors/$id", params: { id: String(id) } })}
       />
       <RelatedEntries title="生物" entries={entry.creatures} itemLink={catalogEntryLocation} />
-      <VignetteRequirements requirements={entry.requirements} />
     </DetailLayout>
   );
 }

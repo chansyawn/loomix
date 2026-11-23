@@ -65,6 +65,10 @@ test("目标与承载物独立匹配，标签条件相交且包含子标签", ()
     area: "2 × 2 格",
   });
   expect(detail?.requirements[0]).not.toHaveProperty("examples");
+  expect(detail?.referenceItems).toMatchObject([
+    { position: 1, items: [{ item: { id: 2 }, quantity: 2 }] },
+  ]);
+  expect(detail?.placementRules).toMatchObject([{ label: "在布景范围内摆放" }]);
 });
 
 test("空的标签匹配保留条件，指定物品可使用补名", () => {

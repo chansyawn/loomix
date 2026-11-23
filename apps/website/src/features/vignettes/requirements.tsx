@@ -1,5 +1,6 @@
-import { CatalogItemCard } from "@/features/omnidex/catalog-item-card";
 import { catalogEntryLocation } from "@/features/omnidex/entry-location";
+import { gameplayAnchor, useGameplayAccordion } from "@/features/omnidex/gameplay-anchors";
+import { GameplayRelationItem } from "@/features/omnidex/gameplay-relation-item";
 import {
   Accordion,
   AccordionContent,
@@ -65,10 +66,11 @@ function ConditionItems({ title, condition }: { title: string; condition: Condit
         >
           {items.map((item) => (
             <li key={item.id} className="min-w-0">
-              <CatalogItemCard
-                item={item}
-                itemId={item.id}
-                link={item.browsable ? catalogEntryLocation(item) : undefined}
+              <GameplayRelationItem
+                name={item.name}
+                image={item.image}
+                note={item.browsable ? undefined : "无图鉴详情"}
+                destination={item.browsable ? catalogEntryLocation(item) : undefined}
               />
             </li>
           ))}
@@ -85,6 +87,10 @@ export function VignetteRequirements({
 }: {
   requirements: VignetteDetail["requirements"];
 }) {
+  const expansion = useGameplayAccordion(
+    "requirement",
+    requirements.map((_, index) => index + 1),
+  );
   return (
     <section aria-labelledby="vignette-requirements" className="min-w-0 space-y-3">
       <h2 id="vignette-requirements" className="text-xl font-semibold">
@@ -93,21 +99,11 @@ export function VignetteRequirements({
       <p className="text-sm text-muted-foreground">
         物品按图鉴标签匹配，布景完成还取决于游戏内条件。
       </p>
-      <Accordion multiple>
+      <Accordion multiple {...expansion}>
         {requirements.map((row, index) => {
-          const key = String(index);
-          const expandable =
-            conditionItems(row.target).length > 0 ||
-            (row.support && conditionItems(row.support).length > 0);
-          if (!expandable)
-            return (
-              <div key={key} className="flex min-h-11 items-center p-4 not-last:border-b">
-                <RequirementSummary row={row} />
-              </div>
-            );
-
+          const anchor = gameplayAnchor("requirement", index + 1);
           return (
-            <AccordionItem key={key} value={key}>
+            <AccordionItem key={anchor} id={anchor} value={anchor} className="scroll-mt-4">
               <AccordionTrigger className="items-start text-left">
                 <RequirementSummary row={row} />
               </AccordionTrigger>
@@ -116,10 +112,10 @@ export function VignetteRequirements({
                   <ConditionItems
                     title={
                       row.support
-                        ? "摆放物品"
+                        ? "摆放物"
                         : row.target.kind === "tags"
-                          ? "图鉴匹配物品"
-                          : "指定物品"
+                          ? "摆放物 · 匹配物品"
+                          : "摆放物 · 指定物品"
                     }
                     condition={row.target}
                   />

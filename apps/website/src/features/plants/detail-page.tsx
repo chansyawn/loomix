@@ -4,7 +4,7 @@ import { CatalogItemCard } from "../omnidex/catalog-item-card";
 import { PlantsCard } from "./plants-card";
 import type { PlantsDetail } from "./detail";
 import { PlantDropsInfo, PlantRelatedItems } from "./related-items";
-import { ItemCookingUsage } from "../ingredients/item-usage";
+import { ItemIngredientTags } from "../ingredients/item-usage";
 import { plantSeriesFields } from "./series-fields";
 import { SeedDetailPage } from "./seed-detail-page";
 import { CatalogEntryNavigation } from "../omnidex/detail-navigation";
@@ -89,7 +89,7 @@ function plantDetailSections(detail: PlantOrSeriesDetail): DetailSection[] {
     if (detail.cooking)
       sections.push({
         key: "plant-cooking",
-        content: <ItemCookingUsage usage={detail.cooking} />,
+        content: <ItemIngredientTags tags={detail.cooking.tags} />,
       });
   } else {
     sections.push({

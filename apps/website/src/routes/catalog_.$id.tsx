@@ -7,6 +7,8 @@ import { ListLoadError } from "@/features/omnidex/states";
 import { OmnidexReturnLink } from "@/features/omnidex/navigation";
 import { createResourceReader } from "@/infrastructure/resources";
 import { parseNeighbors } from "@loomix/schema/neighbors";
+import { catalogGameplayUses, vignetteGameplayUses } from "@/features/omnidex/gameplay-uses-model";
+import { readVignetteTemplates } from "@/features/vignettes/data";
 export const Route = createFileRoute("/catalog_/$id")({
   ssr: false,
   loader: async ({ params }) => {
@@ -25,7 +27,15 @@ export const Route = createFileRoute("/catalog_/$id")({
             (neighbor) => neighbor.id === neighborId,
           )?.name
         : undefined;
-    return { data, record: row, model: catalogEntryDetail(data, id, neighborName) };
+    const model = catalogEntryDetail(data, id, neighborName);
+    if (!("kind" in record)) return { record: row, model };
+    return {
+      record: row,
+      model,
+      uses: catalogGameplayUses(data, id),
+      readVignetteUses: async () =>
+        vignetteGameplayUses(data, record, await readVignetteTemplates(load)),
+    };
   },
   pendingComponent: () => <DetailLoading label="正在加载物品详情" />,
   errorComponent: DetailError,
@@ -38,8 +48,16 @@ export const Route = createFileRoute("/catalog_/$id")({
   component: DetailRoute,
 });
 function DetailRoute() {
-  const { data, record, model } = Route.useLoaderData();
-  return <CatalogEntryPage data={data} id={record.id} model={model} />;
+  const { record, model, uses, readVignetteUses } = Route.useLoaderData();
+  return (
+    <CatalogEntryPage
+      key={record.id}
+      record={record}
+      model={model}
+      uses={uses}
+      readVignetteUses={readVignetteUses}
+    />
+  );
 }
 function DetailError() {
   const router = useRouter();

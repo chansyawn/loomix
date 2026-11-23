@@ -1,5 +1,5 @@
-import { useRecordCommonFields } from "./catalog-entry-context";
-import { Fragment, type ReactNode } from "react";
+import { CatalogEntryContext, useRecordCommonFields } from "./catalog-entry-context";
+import { Fragment, useContext, type ReactNode } from "react";
 import { InfoIcon } from "lucide-react";
 import { QualityMarker } from "./quality";
 import { Skeleton } from "@/ui/components/skeleton";
@@ -35,6 +35,7 @@ export function DetailLayout({
   children?: ReactNode;
 }) {
   const commonFields = useRecordCommonFields(fields);
+  const detailFooter = useContext(CatalogEntryContext)?.detailFooter;
   return (
     <section className="pb-8">
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(18rem,26rem)_minmax(0,1fr)] lg:gap-12">
@@ -68,12 +69,19 @@ export function DetailLayout({
           </dl>
         </div>
       </div>
-      {children && <div className="mt-10 space-y-6 border-t-3 border-dotted pt-8">{children}</div>}
+      {(children || detailFooter) && (
+        <div className="mt-10 space-y-6 border-t-3 border-dotted pt-8">
+          {children}
+          {detailFooter}
+        </div>
+      )}
     </section>
   );
 }
 
 export function DetailExtras({ sections }: { sections: readonly DetailSection[] }) {
+  const detailFooter = useContext(CatalogEntryContext)?.detailFooter;
+  if (sections.length === 0 && detailFooter) return null;
   if (sections.length === 0)
     return (
       <Empty variant="muted" className="min-h-72">

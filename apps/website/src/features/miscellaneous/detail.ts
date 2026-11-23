@@ -17,7 +17,11 @@ export function findMiscellaneousDetail(data: MiscellaneousData, value: string) 
   return item;
 }
 
-export function buildMiscellaneousDetail(collection: OmnidexView, id: number) {
+export function buildMiscellaneousDetail(
+  collection: OmnidexView,
+  id: number,
+  ingredients = buildIngredientsData(collection),
+) {
   const record = collection.miscellaneous.find((item) => item.id === id);
   if (!record) throw notFound();
   return {
@@ -25,7 +29,7 @@ export function buildMiscellaneousDetail(collection: OmnidexView, id: number) {
     sourceTrees: (collection.plants.sourceTreesByItemId.get(id) ?? []).flatMap(
       (tree) => collection.plants.itemRefs.get(tree.id) ?? [],
     ),
-    cooking: ingredientUsage(buildIngredientsData(collection), id),
+    cooking: ingredientUsage(ingredients, id),
     furnitureUses: collection.furnitureUsesByMaterialId.get(id) ?? [],
   };
 }

@@ -1,4 +1,4 @@
-import type { OmnidexCatalog } from "./catalog";
+import type { CatalogEntryRow } from "./catalog";
 import type { CatalogEntryDetail } from "./catalog-entry-detail";
 import { CatalogEntryContext } from "./catalog-entry-context";
 import { FurnitureDetailPage } from "../furniture/detail-page";
@@ -7,23 +7,47 @@ import { CreaturesDetailPage } from "../creatures/detail-page";
 import { PlantsDetailPage } from "../plants/detail-page";
 import { DishesDetailPage } from "../dishes/detail-page";
 import { MiscellaneousDetailPage } from "../miscellaneous/detail-page";
+import { GameplayUses, useVignetteGameplayUses } from "./gameplay-uses";
+import type { catalogGameplayUses, GameplayUse } from "./gameplay-uses-model";
 
 export function CatalogEntryPage({
-  data,
-  id,
+  record,
   model,
+  uses,
+  readVignetteUses,
 }: {
-  data: OmnidexCatalog;
-  id: number;
+  record: CatalogEntryRow;
   model: CatalogEntryDetail;
+  uses?: ReturnType<typeof catalogGameplayUses>;
+  readVignetteUses?: () => Promise<GameplayUse[]>;
 }) {
+  const content = useRef<HTMLDivElement>(null);
+  const restore = useElementScrollRestoration({ id: "wiki-content" });
+  const pendingScroll = useRef<{ element: HTMLElement; from: number; to: number } | null>(null);
+  const vignette = useVignetteGameplayUses(readVignetteUses, () => {
+    const element = content.current?.closest<HTMLElement>(
+      '[data-scroll-restoration-id="wiki-content"]',
+    );
+    if (!element || !restore) return;
+    const maxScroll = Math.max(0, element.scrollHeight - element.clientHeight);
+    if (restore.scrollY > maxScroll && element.scrollTop === maxScroll)
+      pendingScroll.current = { element, from: maxScroll, to: restore.scrollY };
+  });
+  useLayoutEffect(() => {
+    const scroll = pendingScroll.current;
+    if (!scroll) return;
+    pendingScroll.current = null;
+    if (scroll.element.scrollTop === scroll.from) scroll.element.scrollTop = scroll.to;
+  }, [vignette]);
+  const detailFooter =
+    uses && (uses.crafting.length || uses.cooking.length || vignette.length) ? (
+      <GameplayUses itemId={record.id} uses={{ ...uses, vignette }} />
+    ) : null;
   return (
-    <CatalogEntryContext
-      value={{
-        record: data.byId.get(id)!,
-      }}
-    >
-      <DetailContent model={model} />
+    <CatalogEntryContext value={{ record, detailFooter }}>
+      <div ref={content}>
+        <DetailContent model={model} />
+      </div>
     </CatalogEntryContext>
   );
 }
@@ -43,3 +67,5 @@ function DetailContent({ model }: { model: CatalogEntryDetail }) {
       return <MiscellaneousDetailPage detail={model.detail} />;
   }
 }
+import { useElementScrollRestoration } from "@tanstack/react-router";
+import { useLayoutEffect, useRef } from "react";

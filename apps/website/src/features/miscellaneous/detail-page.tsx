@@ -1,8 +1,8 @@
 import { DetailExtras, DetailLayout, type DetailSection } from "@/features/omnidex/detail-layout";
 import { RecordImage } from "@/features/omnidex/record-image";
-import { ItemCookingUsage } from "../ingredients/item-usage";
+import { ItemIngredientTags } from "../ingredients/item-usage";
 import type { MiscellaneousDetail } from "./detail";
-import { MiscellaneousFurnitureUses, MiscellaneousSourceTrees } from "./related-items";
+import { MiscellaneousSourceTrees } from "./related-items";
 
 export function MiscellaneousDetailPage({ detail }: { detail: MiscellaneousDetail }) {
   const item = detail.record;
@@ -33,12 +33,7 @@ function MiscellaneousExtras({ detail }: { detail: MiscellaneousDetail }) {
   if (detail.cooking)
     sections.push({
       key: "miscellaneous-cooking",
-      content: <ItemCookingUsage usage={detail.cooking} />,
-    });
-  if (detail.furnitureUses.length > 0)
-    sections.push({
-      key: "miscellaneous-furniture",
-      content: <MiscellaneousFurnitureUses uses={detail.furnitureUses} />,
+      content: <ItemIngredientTags tags={detail.cooking.tags} />,
     });
   return <DetailExtras sections={sections} />;
 }

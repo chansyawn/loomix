@@ -44,7 +44,7 @@ export type FurnitureItem = CategorizedRecord & {
 };
 export type FurnitureMaterialUse = {
   furniture: FurnitureItem;
-  recipes: { position: number; quantity: number }[];
+  recipes: { id: number; position: number; quantity: number }[];
 };
 export type CreatureItem = CategorizedRecord & {
   scientificName: string | null;
@@ -311,7 +311,7 @@ export function toOmnidexView(
     for (const [index, card] of furniture.inspoCards.entries())
       for (const { itemId, quantity } of card.materials ?? []) {
         const recipes = uses.get(itemId) ?? [];
-        recipes.push({ position: index + 1, quantity });
+        recipes.push({ id: card.id, position: index + 1, quantity });
         uses.set(itemId, recipes);
       }
     for (const [itemId, recipes] of uses) {
