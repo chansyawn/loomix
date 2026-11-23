@@ -6,14 +6,13 @@
 
 先按[根 README](../../README.md#本地开发)安装依赖，并按其中的环境配置说明，在根目录 `.env` 中填写共享数据目录的绝对路径 `LOOMIX_DATA_ROOT`。准备支持平台上的客户端文件；支持平台以 [AnimeStudio 平台配置](src/client/anime-studio/config.ts)为准，首次准备工具需要网络、Git 与归档解压工具。
 
-在仓库根目录导入并选择客户端；来源也可以是仓库外的绝对路径：
+在仓库根目录导入客户端。来源应指向包含 `config.ini` 和客户端数据目录的文件夹，可使用仓库外的绝对路径。
 
 ```sh
-vp run @loomix/extraction#client -- import --source resources/game-client
-vp run @loomix/extraction#client -- select --snapshot <snapshot-id>
+vp run @loomix/extraction#client -- import --source /path/to/client
 ```
 
-使用导入命令打印的 snapshot ID。导入会校验并冻结客户端；新提取环境绑定所选快照，后续切换选择不会改变已有提取环境的输入。客户端更新时先按[提取原理](docs/extraction-method.md#客户端更新与调查)确认版本适配，再重新导入、选择，旧快照保留。
+导入会校验并冻结客户端，打印完整快照 ID 和可读的版本目录。`init` 和 `refresh` 默认使用唯一符合当前版本配置的快照。无匹配时导入所需版本。有多个匹配时向该次命令传入 `--snapshot <完整 ID>`，显式指定的版本也必须匹配。客户端更新时先确认版本适配，再导入新客户端。参见[提取原理](docs/extraction-method.md#客户端更新与调查)。
 
 ## 提取、打包与本地安装
 
@@ -55,17 +54,19 @@ vp run @loomix/extraction#refresh -- --help
 
 同机 worktree 共享 `LOOMIX_DATA_ROOT` 下的客户端、工具缓存和版本化产物；本地网站资源与临时调查文件各自独立。
 
-| 位置                          | 用途                             |
-| ----------------------------- | -------------------------------- |
-| 共享根 `clients/`             | 只读客户端快照                   |
-| 共享根 `cache/`               | 工具准备、昂贵批次恢复与失败诊断 |
-| 共享根 `artifacts/`           | 封存的提取环境、提取结果与资源包 |
-| worktree `resources/website/` | 当前网站读取的本地资源           |
-| worktree `var/scratch/`       | 临时调查文件                     |
+| 位置                          | 用途                                 |
+| ----------------------------- | ------------------------------------ |
+| 共享根 `clients/`             | 按客户端版本和哈希前缀命名的只读快照 |
+| 共享根 `cache/`               | 工具准备、昂贵批次恢复与失败诊断     |
+| 共享根 `artifacts/`           | 封存的提取环境、提取结果与资源包     |
+| worktree `resources/website/` | 当前网站读取的本地资源               |
+| worktree `var/scratch/`       | 临时调查文件                         |
 
 具体输出以各阶段清单的 `outputs` 为准。调查时从 `client-read-records.json` 查读取记录、排除项与候选，从 `field-evidence.json` 查最终字段依据。[提取原理](docs/extraction-method.md#按任务定位实现)
 
-每个代码版本仅接受对应的提取阶段格式。遇到阶段清单版本不受支持时，从已选客户端快照运行 `refresh`，再使用新的阶段 ID 打包、验收或安装。旧产物可用生成它们的代码版本复验。客户端资源包的来源路径相对于该客户端快照根目录。
+每个代码版本仅接受对应的提取阶段格式。遇到阶段清单版本不受支持时，使用匹配客户端快照运行 `refresh`，再使用新的阶段 ID 打包、验收或安装。客户端资源包的来源路径相对于该客户端快照根目录。
+
+从旧客户端目录布局升级时，先准备共享根之外的独立客户端来源，并停止共用该数据根的提取任务。清除 `LOOMIX_DATA_ROOT` 下的 `client/`、`clients/`、`selections/`、`artifacts/` 与 `cache/`，再重新导入、提取和验收。此操作会删除旧快照、产物及工具缓存，共用该目录的 worktree 需要升级后再运行提取。
 
 升级网站资源格式时，停止本工作区的安装和发布任务。若 `resources/website/` 中已有旧格式资源，先整体移到同文件系统的备份位置，恢复受跟踪的 `.gitkeep` 占位，再运行上述命令。若安装失败，可移回备份。
 

@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { profile } from "../profile.ts";
-import { readClientVersion, readRevisions, readVersionManifest } from "../client/versions.ts";
+import { clientVersionMatches, readVersionManifest } from "../client/versions.ts";
 import type { VersionEntry } from "../client/versions.ts";
 
 export interface ConfigSourceFile {
@@ -44,19 +44,9 @@ function inspect(
 }
 
 export function selectConfigSource(gameRoot: string, clientIni: string): ConfigSource {
-  const version = readClientVersion(clientIni);
-  if (version !== profile.gameVersion)
-    throw new Error(
-      `Client ${version} is not the verified ${profile.gameVersion}; update the profile and re-identify fields`,
-    );
+  if (!clientVersionMatches(gameRoot, clientIni, profile))
+    throw new Error("Client version and manifest revisions do not match the verified profile");
   const versions = path.join(gameRoot, "Persistent/versions", profile.manifestId);
-  const revisions = readRevisions(versions);
-  if (
-    revisions.data.revision !== profile.dataRevision ||
-    revisions.data.branch !== profile.branch ||
-    revisions.resource.revision !== profile.resourceRevision
-  )
-    throw new Error("Manifest revisions do not match the verified profile");
   const manifest = readVersionManifest(path.join(versions, "data_versions.json"));
   const expected = (relative: string) => manifest.find((entry) => entry.path === relative);
 
@@ -83,8 +73,8 @@ export function selectConfigSource(gameRoot: string, clientIni: string): ConfigS
   if (!dataBundle.matchesManifest) throw new Error("Data bundle does not match data manifest");
 
   return {
-    dataRevision: revisions.data.revision,
-    branch: revisions.data.branch,
+    dataRevision: profile.dataRevision,
+    branch: profile.branch,
     relativeDirectory: selected.relativeDirectory,
     files: selected.files,
     dataBundle,

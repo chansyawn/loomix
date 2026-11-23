@@ -49,7 +49,7 @@ test("manifests reject corrupt outputs, unsupported schema and unsafe paths", as
     await assert.rejects(readManifest(directory, "environment"));
   }
   for (const altered of [
-    { ...manifest, stageManifestVersion: STAGE_MANIFEST_VERSION - 1 },
+    ...[3, 4, 5].map((stageManifestVersion) => ({ ...manifest, stageManifestVersion })),
     { ...manifest, stageManifestVersion: undefined, schemaVersion: 2 },
   ]) {
     atomicJson(file, altered);

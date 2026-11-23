@@ -134,12 +134,14 @@ test("打包、验收和安装遇到旧阶段格式时提示重新生成", async
   const id = await buildResourcePackage(extractionId);
   const bundle = path.join(workspace.root, "extractions", extractionId);
   const extraction = await readManifest(bundle, "extraction");
-  writeJson(path.join(bundle, stageManifestFile("extraction")), {
-    ...extraction,
-    stageManifestVersion: STAGE_MANIFEST_VERSION - 1,
-  });
-  await expect(buildResourcePackage(extractionId)).rejects.toThrow(/refresh/);
-  await expect(verifyResourcePackage(id)).rejects.toThrow(/refresh/);
-  await expect(installLocalResources(id)).rejects.toThrow(/refresh/);
+  for (const stageManifestVersion of [3, 4, 5]) {
+    writeJson(path.join(bundle, stageManifestFile("extraction")), {
+      ...extraction,
+      stageManifestVersion,
+    });
+    await expect(buildResourcePackage(extractionId)).rejects.toThrow(/refresh/);
+    await expect(verifyResourcePackage(id)).rejects.toThrow(/refresh/);
+    await expect(installLocalResources(id)).rejects.toThrow(/refresh/);
+  }
   expect(fs.readdirSync(path.join(workspace.root, "installed"))).toEqual([".gitkeep"]);
 });

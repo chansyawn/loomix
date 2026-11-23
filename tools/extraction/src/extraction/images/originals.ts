@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { profile } from "../../profile.ts";
+import type { ClientSnapshot } from "../../client/snapshot.ts";
 import { PNG } from "pngjs";
 import { digest } from "../../workflow/hashing.ts";
 import { within } from "../../paths.ts";
@@ -44,7 +45,7 @@ export async function exportOriginals(options: {
   index: readonly IndexedAsset[];
   cache: string;
   work: string;
-  clientSnapshotId: string;
+  resolvePath: ClientSnapshot["resolvePath"];
   tool: string;
   implementation: string;
   exporter?: ImageExporter;
@@ -64,7 +65,7 @@ export async function exportOriginals(options: {
         const output = path.join(staging, "output");
         fs.mkdirSync(output);
         const receipt = await exporter({
-          clientSnapshotId: options.clientSnapshotId,
+          resolvePath: options.resolvePath,
           objects,
           destination: output,
         });

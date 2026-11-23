@@ -15,12 +15,14 @@ test("帮助可从工作区之外调用，且不初始化客户端或工具", ()
   for (const args of [
     ["--help"],
     ["client", "--help"],
-    ["client", "--", "select", "--help"],
+    ["client", "--", "import", "--help"],
+    ["refresh", "--help"],
     ["package", "--", "--help"],
   ]) {
     const help = run(...args);
     assert.equal(help.status, 0, help.stderr);
     assert.match(help.stdout, /package --extraction ID/);
+    assert.match(help.stdout, /refresh \[--snapshot ID\]/);
     assert.match(help.stdout, /install-resources --resource-package ID/);
     assert.match(help.stdout, /resources\/website/);
     assert.equal(help.stderr, "");
@@ -34,8 +36,11 @@ test("命令拒绝无效 ID、多余参数和旧命令", () => {
     [["refresh", "extra"], /Unexpected argument/],
     [["client", "import", "extra"], /Unexpected argument/],
     [["client", "import", "--source="], /Empty --source/],
-    [["client", "select"], /Missing --snapshot ID/],
-    [["client", "select", "--snapshot", "short"], /Invalid snapshot identity/],
+    [["client", "import"], /Missing --source/],
+    [["client", "import", "--source", "one", "--source", "two"], /Repeated option/],
+    [["client", "select", "--snapshot", id], /Unknown command/],
+    [["init", "--snapshot", "short"], /Invalid snapshot identity/],
+    [["refresh", "--snapshot="], /Invalid snapshot identity/],
     [["extract", "--environment", "short"], /Invalid environment identity/],
     [["package", "--extraction", "short"], /Invalid extraction identity/],
     [["package", "--extraction", id, "--extraction", id], /Repeated option/],

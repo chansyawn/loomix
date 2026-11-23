@@ -2,7 +2,8 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { profile } from "../../profile.ts";
-import { resolveClientPath } from "../../client/snapshot.ts";
+import type { ClientSnapshot } from "../../client/snapshot.ts";
+import { within } from "../../paths.ts";
 import { readJson, writeJson } from "../../workflow/json.ts";
 import { removeWithin } from "../../workflow/fs.ts";
 import type { AssetMapAsset } from "../../client/asset-map.ts";
@@ -16,14 +17,13 @@ import type { BinDataAsset, ConfigFile, ConfigSource, IndexedAsset } from "../ty
 interface DecodeOptions {
   work: string;
   environment: string;
-  clientSnapshotId: string;
+  resolvePath: ClientSnapshot["resolvePath"];
 }
 
-function freezeConfig(environment: string, prepared: string, snapshotId: string): ConfigSource {
+function freezeConfig(environment: string, prepared: string, gameRoot: string): ConfigSource {
   const source = readJson<EnvironmentConfigSource>(path.join(environment, "config-source.json"));
-  const gameRoot = resolveClientPath(profile.paths.gameRoot, snapshotId);
   const files: ConfigFile[] = source.files.map((file) => {
-    const original = path.join(gameRoot, file.path);
+    const original = within(gameRoot, file.path);
     const bytes = fs.readFileSync(original);
     const sha256 = crypto.createHash("sha256").update(bytes).digest("hex");
     if (sha256 !== file.sha256) throw new Error(`Config source changed: ${file.path}`);
@@ -51,7 +51,7 @@ function freezeConfig(environment: string, prepared: string, snapshotId: string)
 async function exportBinData(
   assets: AssetMapAsset[],
   work: string,
-  snapshotId: string,
+  resolvePath: ClientSnapshot["resolvePath"],
 ): Promise<BinDataAsset[]> {
   const wanted = new Set(Object.values(profile.binData));
   const candidates = assets.filter(
@@ -67,7 +67,7 @@ async function exportBinData(
     const asset = preferred[0];
     const destination = path.join(work, "bindata", name);
     await exportAssets({
-      input: resolveClientPath(asset.Source, snapshotId),
+      input: resolvePath(asset.Source),
       output: destination,
       game: profile.animeGame,
       types: ["MiHoYoBinData"],
@@ -89,14 +89,14 @@ async function exportBinData(
 export async function prepareSource({
   work,
   environment,
-  clientSnapshotId,
+  resolvePath,
 }: DecodeOptions): Promise<void> {
   const prepared = path.join(work, "prepared");
   removeWithin(prepared, work);
   removeWithin(path.join(work, "bindata"), work);
   fs.mkdirSync(prepared, { recursive: true });
 
-  const config = freezeConfig(environment, prepared, clientSnapshotId);
+  const config = freezeConfig(environment, prepared, resolvePath(profile.paths.gameRoot));
   const reader = new ObbReader(path.join(prepared, "ed.obb"));
   writeJson(path.join(prepared, "obb-table-index.json"), indexTables(reader));
   const textmap = decodeTextMap(reader);
@@ -117,7 +117,7 @@ export async function prepareSource({
   writeJson(path.join(prepared, "textures.json"), textures);
   writeJson(path.join(prepared, "sprites.json"), sprites);
 
-  await exportBinData(assets, work, clientSnapshotId);
+  await exportBinData(assets, work, resolvePath);
 }
 
 export function openSource(work: string): Tables {

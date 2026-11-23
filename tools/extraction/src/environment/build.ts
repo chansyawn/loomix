@@ -3,12 +3,7 @@ import path from "node:path";
 import { FORMAT_VERSION } from "@loomix/schema/common";
 import { buildAssetIndex } from "../client/asset-map.ts";
 import { buildAssetMap, ensureAnimeStudio } from "../client/anime-studio/index.ts";
-import {
-  clientRoot,
-  selectedSnapshotId,
-  snapshotClient,
-  resolveClientPath,
-} from "../client/snapshot.ts";
+import { resolveClientSnapshot } from "../client/snapshot.ts";
 import { identityDirectory } from "../paths.ts";
 import { profile } from "../profile.ts";
 import { digest, inventory } from "../workflow/hashing.ts";
@@ -23,14 +18,14 @@ import { validateResourceManifests } from "./resource-audit.ts";
 import { ENVIRONMENT_OUTPUT_FILES } from "./files.ts";
 import { readVerifiedEnvironment } from "./verify.ts";
 
-export async function init(): Promise<string> {
-  const clientSnapshotId = selectedSnapshotId();
-  const selectedClientRoot = clientRoot(clientSnapshotId);
-  if (!fs.existsSync(selectedClientRoot))
-    throw new Error(`Missing client snapshot: ${selectedClientRoot}`);
-  console.error("Hashing client snapshot");
-  const snapshot = await snapshotClient(selectedClientRoot);
-  if (snapshot.sha256 !== clientSnapshotId) throw new Error("Selected client snapshot changed");
+export async function init(snapshotId?: string): Promise<string> {
+  const { snapshot, diagnostics } = resolveClientSnapshot(profile, snapshotId);
+  const clientSnapshotId = snapshot.id;
+  for (const diagnostic of diagnostics) console.error(`Skipping client snapshot ${diagnostic}`);
+  console.error(
+    `Verifying client ${profile.gameVersion} snapshot ${clientSnapshotId} (${snapshot.directory})`,
+  );
+  await snapshot.verify();
   const animeStudio = await ensureAnimeStudio();
   const tool = toolIdentity();
   const implementation = await implementationRevision();
@@ -64,10 +59,10 @@ export async function init(): Promise<string> {
     fs.rmSync(staging, { recursive: true, force: true });
     fs.mkdirSync(staging, { recursive: true });
     try {
-      const gameRoot = resolveClientPath(profile.paths.gameRoot, clientSnapshotId);
+      const gameRoot = snapshot.resolvePath(profile.paths.gameRoot);
       const configSource = selectConfigSource(
         gameRoot,
-        resolveClientPath(profile.paths.clientIni, clientSnapshotId),
+        snapshot.resolvePath(profile.paths.clientIni),
       );
       writeJson(path.join(staging, "config-source.json"), configSource);
 
@@ -90,8 +85,7 @@ export async function init(): Promise<string> {
       writeJson(path.join(staging, "asset-map-audit.json"), audit);
       fs.rmSync(map, { force: true });
 
-      if ((await snapshotClient(selectedClientRoot)).sha256 !== clientSnapshotId)
-        throw new Error("Client changed during initialization");
+      await snapshot.verify();
       const outputs = await inventory(staging, [...ENVIRONMENT_OUTPUT_FILES]);
       const manifest: Manifest = {
         stageManifestVersion: STAGE_MANIFEST_VERSION,
@@ -100,7 +94,7 @@ export async function init(): Promise<string> {
         clientSnapshotId,
         status: "verified",
         createdAt: new Date().toISOString(),
-        inputs: { id: clientSnapshotId, sha256: snapshot.sha256, files: snapshot.files },
+        inputs: { id: clientSnapshotId, sha256: clientSnapshotId, files: [...snapshot.files] },
         implementation,
         profileHash,
         tools: {

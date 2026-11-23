@@ -49,7 +49,7 @@ tools/resources/  # 资源校验、发布与清理
 resources/website/         # 当前 worktree 的本地网站资源
 ```
 
-`LOOMIX_DATA_ROOT` 指定本机共享数据目录，保存只读客户端快照、工具缓存和验证产物；`resources/game-client/` 可作首次导入来源，`var/scratch/` 用于当前 worktree 的临时调查。`resources/` 与 `var/` 下的本地数据由根目录 `.gitignore` 忽略。目录用途与产物查询见[客户端资源提取](tools/extraction/README.md#输入缓存与产物)。
+`LOOMIX_DATA_ROOT` 指定本机共享数据目录，保存按版本命名的只读客户端快照、工具缓存和验证产物。导入时显式指定客户端来源。`var/scratch/` 用于当前 worktree 的临时调查。`resources/` 与 `var/` 下的本地数据由根目录 `.gitignore` 忽略。目录用途与产物查询见[客户端资源提取](tools/extraction/README.md#输入缓存与产物)。
 
 ## 文档
 

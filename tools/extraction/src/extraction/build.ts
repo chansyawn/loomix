@@ -8,7 +8,7 @@ import type { Manifest } from "../workflow/manifest.ts";
 import { digest, inventory } from "../workflow/hashing.ts";
 import { implementationRevision, profileHash, toolIdentity } from "../workflow/identity.ts";
 import { ensureAnimeStudio } from "../client/anime-studio/index.ts";
-import { assertClientUnchanged, clientSnapshotFiles } from "../client/snapshot.ts";
+import { openClientSnapshot } from "../client/snapshot.ts";
 import { readJson, writeJson } from "../workflow/json.ts";
 import type { IndexedAsset } from "./types.ts";
 import { prepareSource } from "./source/decode.ts";
@@ -36,7 +36,8 @@ export async function extract(environmentId: string): Promise<string> {
   const tool = await ensureAnimeStudio();
   if (environment.tools.animeStudio !== tool)
     throw new Error("Initialized tool bytes changed; run init again");
-  await assertClientUnchanged(environment);
+  const snapshot = openClientSnapshot(environment.clientSnapshotId);
+  await snapshot.verify();
   const implementation = await implementationRevision();
   const inputs = await stageInputs(environmentDirectory, environment);
   const admissionsBytes = fs.readFileSync(
@@ -61,12 +62,11 @@ export async function extract(environmentId: string): Promise<string> {
   const destination = identityDirectory("extractions", id);
   await sealExtraction(destination, async (staging) => {
     try {
-      const clientSnapshotId = environment.clientSnapshotId;
       const decoded = await cachedDirectory(
         path.join(cacheRoot(), "decode"),
         {
           inputs,
-          clientSnapshotId,
+          clientSnapshotId: snapshot.id,
           profileHash,
           implementation,
           tool,
@@ -75,7 +75,7 @@ export async function extract(environmentId: string): Promise<string> {
           await prepareSource({
             work,
             environment: environmentDirectory,
-            clientSnapshotId,
+            resolvePath: snapshot.resolvePath,
           });
           fs.rmSync(path.join(work, "logs"), { recursive: true, force: true });
         },
@@ -89,9 +89,8 @@ export async function extract(environmentId: string): Promise<string> {
         path.join(source, "additional-images.json"),
       );
       writeJson(path.join(source, "neighbor-allowlist.json"), neighborAllowlist);
-      const snapshotFiles = clientSnapshotFiles(clientSnapshotId);
-      writeJson(path.join(source, "client-files.json"), snapshotFiles);
-      const files = new Map(snapshotFiles.map((file) => [file.path, file.sha256]));
+      writeJson(path.join(source, "client-files.json"), snapshot.files);
+      const files = new Map(snapshot.files.map((file) => [file.path, file.sha256]));
       const packages = [
         ...new Set(
           readJson<IndexedAsset[]>(path.join(source, "prepared/asset-index.json")).map(
@@ -113,15 +112,15 @@ export async function extract(environmentId: string): Promise<string> {
         index: readJson<IndexedAsset[]>(path.join(source, "prepared/asset-index.json")),
         cache: path.join(cacheRoot(), "originals"),
         work: staging,
-        clientSnapshotId,
+        resolvePath: snapshot.resolvePath,
         tool,
         implementation,
       });
       writeJson(path.join(staging, "originals.json"), originals);
       writeAssembly(staging, assemble(clientReadRecords, originals));
-      await audit(staging, clientSnapshotId, source, clientReadRecords.imageObjects);
+      await audit(staging, snapshot.resolvePath, source, clientReadRecords.imageObjects);
       await verifyCandidate(staging);
-      await assertClientUnchanged(environment);
+      await snapshot.verify();
       if (
         (await ensureAnimeStudio()) !== tool ||
         (await implementationRevision()) !== implementation

@@ -7,15 +7,15 @@ import { installLocalResources } from "./resource-package/install.ts";
 import { verifyResourcePackage } from "./verify.ts";
 import { errorDetails } from "./workflow/errors.ts";
 import { assertIdentity, repoRoot } from "./paths.ts";
-import { importClient, selectClient } from "./client/snapshot.ts";
+import { importClient } from "./client/snapshot.ts";
+import { profile } from "./profile.ts";
 
 const usage = `客户端提取
-  client import [--source PATH]
-  client select --snapshot ID
-  init
+  client import --source PATH
+  init [--snapshot ID]
   extract --environment ID
   package --extraction ID
-  refresh
+  refresh [--snapshot ID]
   verify --resource-package ID
   install-resources --resource-package ID
 
@@ -24,11 +24,10 @@ LOOMIX_DATA_ROOT 必须指向共享数据目录。package 生成网站资源包�
 const commands = {
   client: null,
   "client import": "source",
-  "client select": "snapshot",
-  init: null,
+  init: "snapshot",
   extract: "environment",
   package: "extraction",
-  refresh: null,
+  refresh: "snapshot",
   verify: "resource-package",
   "install-resources": "resource-package",
 } as const;
@@ -68,23 +67,26 @@ async function main(): Promise<void> {
     console.log(usage);
     return;
   }
-  if (option && option !== "source" && typeof argument !== "string")
+  if (option === "source" && argument === undefined)
+    throw new Error("Missing --source path; use --help");
+  if (option && option !== "source" && option !== "snapshot" && argument === undefined)
     throw new Error(`Missing --${option} ID; use --help`);
   if (typeof argument === "string" && option && option !== "source")
     assertIdentity(argument, option);
 
   switch (command) {
-    case "client import":
+    case "client import": {
+      const snapshot = await importClient(
+        path.resolve(repoRoot, requireArgument(argument)),
+        profile.paths,
+      );
       console.log(
-        `client-snapshot-id: ${await importClient(path.resolve(repoRoot, typeof argument === "string" ? argument : "resources/game-client"))}`,
+        `client-snapshot-id: ${snapshot.id}\nclient-snapshot-directory: ${snapshot.directory}`,
       );
       break;
-    case "client select":
-      await selectClient(requireArgument(argument));
-      console.log(`selected-client-snapshot-id: ${argument}`);
-      break;
+    }
     case "init":
-      console.log(`environment-id: ${await init()}`);
+      console.log(`environment-id: ${await init(argument)}`);
       break;
     case "extract":
       console.log(`extraction-id: ${await extract(requireArgument(argument))}`);
@@ -93,7 +95,7 @@ async function main(): Promise<void> {
       console.log(`resource-package-id: ${await buildResourcePackage(requireArgument(argument))}`);
       break;
     case "refresh": {
-      const environmentId = await init();
+      const environmentId = await init(argument);
       const extractionId = await extract(environmentId);
       const resourcePackageId = await buildResourcePackage(extractionId);
       console.log(

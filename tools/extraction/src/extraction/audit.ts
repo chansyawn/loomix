@@ -9,17 +9,17 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { profile } from "../profile.ts";
-import { resolveClientPath } from "../client/snapshot.ts";
+import type { ClientSnapshot } from "../client/snapshot.ts";
 import { readJson, writeJson } from "../workflow/json.ts";
 import { manifestEntry, readManifestMaps } from "../client/versions.ts";
 
 export async function audit(
   work: string,
-  clientSnapshotId: string,
+  resolvePath: ClientSnapshot["resolvePath"],
   sourceRoot: string,
   images: readonly Pick<SelectedImage, "source">[],
 ) {
-  const root = resolveClientPath(profile.paths.gameRoot, clientSnapshotId);
+  const root = resolvePath(profile.paths.gameRoot);
   const manifests = readManifestMaps(root, profile.manifestId);
   const bindata = readJson<BinDataAsset[]>(path.join(sourceRoot, "bindata-manifest.json"));
   const sourceFiles = new Set([
@@ -57,7 +57,7 @@ export async function audit(
     )
       throw new Error(`Invalid package source: ${source}`);
     const expected = manifestEntry(manifests, scope, relative);
-    const absolute = resolveClientPath(source, clientSnapshotId);
+    const absolute = resolvePath(source);
     const hash = crypto.createHash("md5");
     for await (const bytes of fs.createReadStream(absolute)) hash.update(bytes);
     const md5 = hash.digest("hex"),

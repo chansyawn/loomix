@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { assertClientUnchanged, resolveClientPath } from "../client/snapshot.ts";
+import { openClientSnapshot } from "../client/snapshot.ts";
+import { within } from "../paths.ts";
 import { assertAssetMapCoverage } from "../client/asset-map.ts";
 import { profile } from "../profile.ts";
 import { readJson } from "../workflow/json.ts";
@@ -37,8 +38,9 @@ export async function readVerifiedEnvironment(
 
 export async function verifyEnvironment(directory: string): Promise<StageManifest<"environment">> {
   const manifest = await readVerifiedEnvironment(directory);
-  await assertClientUnchanged(manifest);
-  const gameRoot = resolveClientPath(profile.paths.gameRoot, manifest.clientSnapshotId);
+  const snapshot = openClientSnapshot(manifest.clientSnapshotId);
+  await snapshot.verify();
+  const gameRoot = snapshot.resolvePath(profile.paths.gameRoot);
   const source = readJson<ConfigSource>(path.join(directory, "config-source.json"));
   if (
     source.dataRevision !== profile.dataRevision ||
@@ -48,7 +50,7 @@ export async function verifyEnvironment(directory: string): Promise<StageManifes
   )
     throw new Error("Environment config source is not verified");
   for (const file of source.files) {
-    const bytes = fs.readFileSync(path.join(gameRoot, file.path));
+    const bytes = fs.readFileSync(within(gameRoot, file.path));
     const sha256 = crypto.createHash("sha256").update(bytes).digest("hex");
     if (sha256 !== file.sha256) throw new Error(`Config source changed: ${file.path}`);
   }

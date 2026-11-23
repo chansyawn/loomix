@@ -33,10 +33,6 @@ export function clientsRoot(): string {
   return path.join(dataRoot(), "clients");
 }
 
-export function selectionsRoot(): string {
-  return path.join(dataRoot(), "selections");
-}
-
 export function within(root: string, relative: string): string {
   if (path.isAbsolute(relative) || relative.includes("\\"))
     throw new Error(`Unsafe relative path: ${relative}`);

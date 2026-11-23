@@ -7,7 +7,7 @@ import type { FileHash } from "./hashing.ts";
 import { within } from "../paths.ts";
 
 const hash = z.string().regex(/^[a-f0-9]{64}$/);
-export const STAGE_MANIFEST_VERSION = 4;
+export const STAGE_MANIFEST_VERSION = 6;
 const fileHash = z
   .object({ path: z.string(), sha256: hash, bytes: z.number().int().nonnegative() })
   .strict();
