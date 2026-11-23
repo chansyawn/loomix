@@ -3,10 +3,10 @@ import { imageKey } from "@loomix/schema/assets";
 import { referencedImages } from "@loomix/schema/dataset/images";
 import { parseDataset } from "@loomix/schema/dataset";
 import type { FieldEvidence } from "../evidence/domain-schema.ts";
-import { EvidenceSchema } from "../evidence/domain-schema.ts";
+import { FieldEvidenceReportSchema } from "../evidence/domain-schema.ts";
 import { bindImages } from "../images/bind.ts";
 import type { OriginalImage } from "../images/model.ts";
-import type { SourceObservations } from "../model.ts";
+import type { ClientReadRecords } from "../model.ts";
 import { buildNeighbors } from "./neighbors.ts";
 import { buildDomainEvidence } from "./evidence.ts";
 import { validateDomainEvidence } from "./validate-evidence.ts";
@@ -14,7 +14,7 @@ import { assembleCatalog } from "./catalog.ts";
 import { plantingDomainEvidence } from "./planting-evidence.ts";
 import { starseaItemIds } from "../source/starsea/read.ts";
 
-export function assemble(observations: SourceObservations, originals: readonly OriginalImage[]) {
+export function assemble(observations: ClientReadRecords, originals: readonly OriginalImage[]) {
   const bound = bindImages(observations.imageNeeds, originals);
   const needs = new Map(observations.imageNeeds.map((need) => [need.id, need]));
   const objects = new Map(observations.imageObjects.map((object) => [object.key, object]));
@@ -164,9 +164,9 @@ export function assemble(observations: SourceObservations, originals: readonly O
     }),
     ...imageProofs,
   ];
-  const evidence = EvidenceSchema.parse({
+  const fieldEvidence = FieldEvidenceReportSchema.parse({
     ...dataset.context,
-    kind: "evidence",
+    kind: "field-evidence",
     fields: validateDomainEvidence(dataset, fields).map((proof) => ({
       ...proof,
       sources: proof.sources.map((source) =>
@@ -177,7 +177,7 @@ export function assemble(observations: SourceObservations, originals: readonly O
   const used = new Set(referencedImages(dataset).map(imageKey));
   const jobs = bound.jobs.filter((job) => used.has(imageKey(job)));
   if (jobs.length !== used.size)
-    throw new Error("Image jobs do not cover the published reference graph");
-  return { dataset, evidence, imageBindings: bound.bindings, imageJobs: jobs };
+    throw new Error("Image jobs do not cover the dataset reference graph");
+  return { dataset, fieldEvidence, imageBindings: bound.bindings, imageJobs: jobs };
 }
 export type Assembly = ReturnType<typeof assemble>;

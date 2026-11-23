@@ -1,7 +1,7 @@
 import { addFixtureRecords } from "../collection-fixture";
 import { parseNeighbors } from "@loomix/schema/neighbors";
 import type { Neighbor } from "@loomix/schema/neighbors";
-import type { Assets } from "@loomix/schema/assets";
+import type { ImageIndex } from "@loomix/schema/assets";
 import type { Catalog } from "@loomix/schema/catalog";
 import type { GameplayTags } from "@loomix/schema/gameplay-tags";
 
@@ -89,7 +89,7 @@ export function neighborFixture() {
           : { love: noGift, favor: noGift, dislike: noGift },
   }));
   const database = parseNeighbors({ neighbors });
-  const mapping: Assets = {
+  const mapping: ImageIndex = {
     images: [
       asset("star", "illustration", "a".repeat(64)),
       asset("story", "illustration", "a".repeat(64)),

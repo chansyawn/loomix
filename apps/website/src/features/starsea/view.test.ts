@@ -1,4 +1,4 @@
-import type { Assets } from "@loomix/schema/assets";
+import type { ImageIndex } from "@loomix/schema/assets";
 import type { Starsea } from "@loomix/schema/starsea";
 import { expect, test } from "vite-plus/test";
 import { addFixtureRecords, catalogFixture } from "../collection-fixture";
@@ -8,7 +8,7 @@ import { toStarseaDetail, toStarseaList } from "./view";
 
 const illustration = { assetId: "islet", variant: "illustration" } as const;
 const icon = { assetId: "radar", variant: "icon" } as const;
-const assets: Assets = {
+const imageIndex: ImageIndex = {
   images: [illustration, icon].map((ref) => {
     const sha256 = (ref === illustration ? "a" : "b").repeat(64);
     return { ...ref, file: `assets/${sha256}.webp`, sha256, bytes: 1, width: 10, height: 10 };
@@ -58,19 +58,19 @@ function starseaFixture(): Starsea {
 
 test("星屿图片依次使用插画、雷达图标和占位", () => {
   const starsea = starseaFixture();
-  expect(toStarseaList(starsea, assets).islets[0]).toMatchObject({
-    image: assets.images[0].file,
+  expect(toStarseaList(starsea, imageIndex).islets[0]).toMatchObject({
+    image: imageIndex.images[0].file,
     illustrated: true,
   });
-  expect(toStarseaList(starsea, { images: [assets.images[1]] }).islets[0]).toMatchObject({
-    image: assets.images[1].file,
+  expect(toStarseaList(starsea, { images: [imageIndex.images[1]] }).islets[0]).toMatchObject({
+    image: imageIndex.images[1].file,
     illustrated: false,
   });
   expect(toStarseaList(starsea, { images: [] }).islets[0].image).toBeNull();
 });
 
 test("星屿按区域与探索顺序排列，候选去重并保留可筛选的区域归属", () => {
-  const list = toStarseaList(starseaFixture(), assets);
+  const list = toStarseaList(starseaFixture(), imageIndex);
   expect(list.regions.map(({ id }) => id)).toEqual([1, 2]);
   expect(list.islets.map(({ id }) => id)).toEqual([125, 24, 79, 76]);
   expect(list.islets.filter(({ encounterOnly }) => encounterOnly).map(({ id }) => id)).toEqual([
@@ -83,7 +83,7 @@ test("星屿按区域与探索顺序排列，候选去重并保留可筛选的�
 });
 
 test("星海按星屿名匹配，并与区域筛选取交集", () => {
-  const { islets } = toStarseaList(starseaFixture(), assets);
+  const { islets } = toStarseaList(starseaFixture(), imageIndex);
   for (const q of ["星屿 7", "xing yu 7", "xy7"]) {
     expect(filterIslets(islets, { q, region: null }).map(({ id }) => id)).toEqual([79, 76]);
     expect(filterIslets(islets, { q, region: 2 }).map(({ id }) => id)).toEqual([79]);
@@ -95,14 +95,14 @@ test("详情按星屿关联物资与友邻，区分空配置和空条目", () =>
   const starsea = starseaFixture();
   const { database, mapping } = neighborFixture();
   const { catalog, gameplayTags } = catalogFixture();
-  const relatedAssets = { images: [...assets.images, ...mapping.images] };
+  const relatedImages = { images: [...imageIndex.images, ...mapping.images] };
   addFixtureRecords(
     catalog,
     gameplayTags,
     { id: 11, name: "同名鱼", kind: "creature", image: { assetId: "item", variant: "icon" } },
     { id: 12, name: "同名鱼", kind: "reference" },
   );
-  const detail = toStarseaDetail(125, starsea, relatedAssets, catalog, database);
+  const detail = toStarseaDetail(125, starsea, relatedImages, catalog, database);
   expect(detail?.creatures).toEqual([
     { id: 12, name: "同名鱼", image: null, browsable: false },
     { id: 11, name: "同名鱼", image: `assets/${"5".repeat(64)}.webp`, browsable: true },
@@ -111,7 +111,7 @@ test("详情按星屿关联物资与友邻，区分空配置和空条目", () =>
   expect(detail?.encounterNeighbors).toEqual([
     { id: 1, name: "蛮蛮", image: `assets/${"c".repeat(64)}.webp` },
   ]);
-  const missingRole = { images: relatedAssets.images.filter((image) => image.assetId !== "role") };
+  const missingRole = { images: relatedImages.images.filter((image) => image.assetId !== "role") };
   const candidate = toStarseaDetail(79, starsea, missingRole, catalog, database);
   expect(candidate?.encounterNeighbors.map(({ id }) => id)).toEqual([1, 2]);
   expect(candidate?.encounterNeighbors.map(({ image }) => image)).toEqual([
@@ -120,13 +120,15 @@ test("详情按星屿关联物资与友邻，区分空配置和空条目", () =>
   ]);
   expect(candidate?.regions.map(({ id }) => id)).toEqual([1, 2]);
   expect(candidate?.specialties).toBeNull();
-  expect(toStarseaDetail(24, starsea, assets, catalog, database)?.encounterNeighbors).toEqual([]);
-  expect(toStarseaDetail(999, starsea, assets, catalog, database)).toBeNull();
+  expect(toStarseaDetail(24, starsea, imageIndex, catalog, database)?.encounterNeighbors).toEqual(
+    [],
+  );
+  expect(toStarseaDetail(999, starsea, imageIndex, catalog, database)).toBeNull();
 });
 
 test("关联缺失时报告数据错误", () => {
   const starsea = starseaFixture();
   const { database, catalog } = neighborFixture();
   starsea.islands = [];
-  expect(() => toStarseaDetail(125, starsea, assets, catalog, database)).toThrow("islet: 125");
+  expect(() => toStarseaDetail(125, starsea, imageIndex, catalog, database)).toThrow("islet: 125");
 });

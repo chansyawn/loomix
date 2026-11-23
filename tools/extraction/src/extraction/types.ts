@@ -1,13 +1,5 @@
 import type { RecordType, RecipeSlot } from "./schema.ts";
 
-export interface WorkOptions {
-  work: string;
-  environment?: string;
-  clientSnapshotId?: string;
-}
-export interface ContentOptions extends WorkOptions {
-  output: string;
-}
 export interface IndexedAsset {
   Name?: string;
   Container?: string;
@@ -133,7 +125,4 @@ export interface SourceAudit {
   checkedPackages: number;
   records: SourceCheck[];
   configChecks: (Omit<SourceCheck, "source"> & { file: string })[];
-}
-export interface ValidationReport {
-  passed: boolean;
 }

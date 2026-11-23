@@ -1,4 +1,8 @@
-import { DocumentKindSchema, documentPath } from "@loomix/schema/release";
+import {
+  documentPath,
+  WEBSITE_RESOURCE_MANIFEST_FILE,
+  WebsiteResourceDocumentTypeSchema,
+} from "@loomix/schema/website-resources";
 import { createReadStream } from "node:fs";
 import { realpath, stat } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
@@ -6,9 +10,9 @@ import path from "node:path";
 import { pipeline } from "node:stream/promises";
 
 const documentPaths = new Set([
-  "release.json",
+  WEBSITE_RESOURCE_MANIFEST_FILE,
   ...["zh-CN", "en-US"].flatMap((locale) =>
-    DocumentKindSchema.options.map((kind) => documentPath(kind, locale)),
+    WebsiteResourceDocumentTypeSchema.options.map((kind) => documentPath(kind, locale)),
   ),
 ]);
 

@@ -1,4 +1,4 @@
-import type { Release } from "@loomix/schema/release";
+import type { WebsiteResources } from "@loomix/schema/website-resources";
 import type { ReleaseCheck, ReleaseCheckIssue } from "./types.ts";
 
 export interface ReleaseCheckOutcome {
@@ -13,7 +13,7 @@ function errorMessage(error: unknown): string {
 }
 
 export async function collectReleaseChecks(
-  release: Release,
+  resources: WebsiteResources,
   checks: readonly ReleaseCheck[],
 ): Promise<ReleaseCheckOutcome[]> {
   const ids = new Set<string>();
@@ -24,7 +24,7 @@ export async function collectReleaseChecks(
   const outcomes: ReleaseCheckOutcome[] = [];
   for (const check of checks) {
     try {
-      const result = await check.run(release);
+      const result = await check.run(resources);
       outcomes.push({ check, summary: result.summary, issues: result.issues });
     } catch (error) {
       outcomes.push({
@@ -67,11 +67,11 @@ export function assertReleaseChecks(
 }
 
 export async function runReleaseChecks(
-  release: Release,
+  resources: WebsiteResources,
   checks: readonly ReleaseCheck[],
   log?: (message: string) => void,
 ): Promise<void> {
-  const outcomes = await collectReleaseChecks(release, checks);
+  const outcomes = await collectReleaseChecks(resources, checks);
   reportReleaseChecks(outcomes, log);
   assertReleaseChecks(outcomes, log);
 }

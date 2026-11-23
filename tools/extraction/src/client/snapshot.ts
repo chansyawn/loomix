@@ -1,29 +1,27 @@
 import fs from "node:fs";
 import path from "node:path";
-import { clientsRoot, selectionsRoot, within } from "../paths.ts";
+import { z } from "zod";
+import { assertIdentity, clientsRoot, within } from "../paths.ts";
 import { digest, inventory } from "../workflow/hashing.ts";
 import type { FileHash } from "../workflow/hashing.ts";
 import { atomicJson } from "../workflow/manifest.ts";
-import type { Manifest } from "../workflow/manifest.ts";
 import { withLock } from "../workflow/lock.ts";
 import { copyTree } from "../workflow/copy.ts";
-import { z } from "zod";
+import { errorCode, errorMessage } from "../workflow/errors.ts";
+import { clientVersionLabel, clientVersionMatches, clientVersionLabelPattern } from "./versions.ts";
+import type { ClientLayout, ClientVersion } from "./versions.ts";
 
 export interface ClientSnapshot {
-  files: FileHash[];
-  sha256: string;
+  readonly id: string;
+  readonly directory: string;
+  readonly files: readonly FileHash[];
+  readonly resolvePath: (relative: string) => string;
+  verify(): Promise<void>;
 }
 
-interface SnapshotManifest {
-  schemaVersion: 1;
-  id: string;
-  files: FileHash[];
-}
-
-interface ClientSelection {
-  schemaVersion: 1;
-  snapshotId: string;
-}
+type SnapshotProfile = ClientVersion & { paths: ClientLayout };
+const prefixLength = 12;
+const directoryPattern = new RegExp(`^${clientVersionLabelPattern}--([a-f0-9]{${prefixLength}})$`);
 
 const snapshotManifestSchema = z.object({
   schemaVersion: z.literal(1),
@@ -37,22 +35,46 @@ const snapshotManifestSchema = z.object({
   ),
 });
 
-function snapshotDirectory(snapshotId: string): string {
-  if (!/^[a-f0-9]{64}$/.test(snapshotId)) throw new Error("Invalid client snapshot ID");
-  return within(clientsRoot(), snapshotId);
+function snapshotNames(): string[] {
+  try {
+    return fs
+      .readdirSync(clientsRoot())
+      .filter((name) => directoryPattern.test(name))
+      .sort();
+  } catch (error) {
+    if (errorCode(error) === "ENOENT") return [];
+    throw error;
+  }
 }
 
-function readSnapshotManifest(snapshotId: string): SnapshotManifest {
-  const directory = snapshotDirectory(snapshotId);
+function contentRoot(directory: string): string {
+  const root = within(directory, "game-client");
+  if (!fs.lstatSync(root).isDirectory()) throw new Error(`Invalid client snapshot root: ${root}`);
+  return root;
+}
+
+function readSnapshot(name: string): ClientSnapshot {
+  const store = clientsRoot();
+  const directory = within(store, name);
   const manifestFile = within(directory, "snapshot-manifest.json");
   const manifest = snapshotManifestSchema.parse(JSON.parse(fs.readFileSync(manifestFile, "utf8")));
   if (
-    manifest.schemaVersion !== 1 ||
-    manifest.id !== snapshotId ||
-    digest(manifest.files) !== snapshotId
+    !name.endsWith(`--${manifest.id.slice(0, prefixLength)}`) ||
+    digest(manifest.files) !== manifest.id
   )
-    throw new Error(`Client snapshot manifest is invalid: ${snapshotId}`);
-  return manifest;
+    throw new Error(`Client snapshot manifest is invalid: ${manifestFile}`);
+  contentRoot(directory);
+  const root = () => within(store, `${name}/game-client`);
+  return {
+    id: manifest.id,
+    directory,
+    files: manifest.files,
+    resolvePath: (relative) => within(root(), relative),
+    async verify() {
+      if (digest(await inventory(root())) !== manifest.id)
+        throw new Error(`Client snapshot inventory changed: ${manifest.id} (${directory})`);
+    },
+  };
 }
 
 function makeSnapshotReadOnly(root: string): void {
@@ -78,132 +100,130 @@ function removeSnapshot(root: string): void {
     for (const name of fs.readdirSync(directory)) {
       const file = path.join(directory, name);
       if (fs.lstatSync(file).isDirectory()) makeWritable(file);
-      else fs.chmodSync(file, 0o644);
     }
   };
   makeWritable(root);
   fs.rmSync(root, { recursive: true, force: true });
 }
 
-export function selectedSnapshotId(): string {
-  const file = within(selectionsRoot(), "client.json");
-  let selection: ClientSelection;
-  try {
-    selection = JSON.parse(fs.readFileSync(file, "utf8")) as ClientSelection;
-  } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT")
-      throw new Error("No client snapshot selected; run client import and client select first");
-    throw error;
+function describe(snapshots: readonly ClientSnapshot[]): string {
+  return snapshots.map(({ id, directory }) => `${id} ${directory}`).join("\n");
+}
+
+function findSnapshot(id: string): ClientSnapshot | undefined {
+  const matches: ClientSnapshot[] = [];
+  const diagnostics: string[] = [];
+  const suffix = `--${id.slice(0, prefixLength)}`;
+  for (const name of snapshotNames()) {
+    if (!name.endsWith(suffix)) continue;
+    try {
+      const snapshot = readSnapshot(name);
+      if (snapshot.id === id) matches.push(snapshot);
+    } catch (error) {
+      diagnostics.push(`${name}: ${errorMessage(error)}`);
+    }
   }
-  if (selection.schemaVersion !== 1) throw new Error("Client selection version is unsupported");
-  readSnapshotManifest(selection.snapshotId);
-  return selection.snapshotId;
+  if (matches.length > 1) throw new Error(`Duplicate client snapshot ID:\n${describe(matches)}`);
+  if (!matches.length && diagnostics.length)
+    throw new Error(`Cannot open client snapshot ${id}:\n${diagnostics.join("\n")}`);
+  return matches[0];
 }
 
-export function clientRoot(snapshotId = selectedSnapshotId()): string {
-  const root = within(snapshotDirectory(snapshotId), "game-client");
-  if (!fs.existsSync(root) || !fs.lstatSync(root).isDirectory())
-    throw new Error(`Client snapshot directory is missing: ${root}`);
-  return root;
+export function openClientSnapshot(id: string): ClientSnapshot {
+  assertIdentity(id, "client snapshot");
+  const snapshot = findSnapshot(id);
+  if (!snapshot) throw new Error(`Missing client snapshot: ${id}`);
+  return snapshot;
 }
 
-export function resolveClientPath(relative: string, snapshotId?: string): string {
-  const prefix = "resources/game-client/";
-  const portable = relative.startsWith(prefix) ? relative.slice(prefix.length) : relative;
-  if (path.isAbsolute(portable) || portable.includes("\\"))
-    throw new Error(`Invalid client-relative path: ${relative}`);
-  const root = clientRoot(snapshotId);
-  const resolved = path.resolve(root, portable);
-  const fromRoot = path.relative(root, resolved);
+export function resolveClientSnapshot(
+  profile: SnapshotProfile,
+  id?: string,
+): { snapshot: ClientSnapshot; diagnostics: string[] } {
+  const expected = `${profile.gameVersion}, ${profile.branch}, data ${profile.dataRevision}, resources ${profile.resourceRevision}, manifest ${profile.manifestId}`;
+  const matchesProfile = (resolvePath: ClientSnapshot["resolvePath"]) =>
+    clientVersionMatches(
+      resolvePath(profile.paths.gameRoot),
+      resolvePath(profile.paths.clientIni),
+      profile,
+    );
+  if (id !== undefined) {
+    const snapshot = openClientSnapshot(id);
+    if (!matchesProfile(snapshot.resolvePath))
+      throw new Error(`Client snapshot ${id} does not match the verified profile (${expected})`);
+    return { snapshot, diagnostics: [] };
+  }
+
+  const matches: ClientSnapshot[] = [];
+  const diagnostics: string[] = [];
+  for (const name of snapshotNames()) {
+    try {
+      const root = contentRoot(within(clientsRoot(), name));
+      if (matchesProfile((relative) => within(root, relative))) matches.push(readSnapshot(name));
+    } catch (error) {
+      diagnostics.push(`${name}: ${errorMessage(error)}`);
+    }
+  }
+  if (matches.length === 1) return { snapshot: matches[0], diagnostics };
+  const details = diagnostics.length ? `\n${diagnostics.join("\n")}` : "";
+  if (matches.length === 0) {
+    throw new Error(
+      `No client snapshot matches the verified profile (${expected}). Run client import --source PATH.${details}`,
+    );
+  }
+  if (new Set(matches.map((snapshot) => snapshot.id)).size !== matches.length)
+    throw new Error(`Duplicate client snapshot ID:\n${describe(matches)}${details}`);
+  throw new Error(
+    `Multiple matching client snapshots; use --snapshot ID:\n${describe(matches)}${details}`,
+  );
+}
+
+export async function importClient(source: string, layout: ClientLayout): Promise<ClientSnapshot> {
+  if (fs.lstatSync(source).isSymbolicLink()) throw new Error(`Refusing symbolic link: ${source}`);
+  const input = fs.realpathSync(source);
+  clientVersionLabel(input, layout);
+  const store = within(path.dirname(clientsRoot()), "clients");
+  fs.mkdirSync(path.dirname(store), { recursive: true });
+  const shared = path.join(fs.realpathSync(path.dirname(store)), path.basename(store));
+  const relative = path.relative(input, shared);
   if (
-    !fromRoot ||
-    fromRoot === ".." ||
-    fromRoot.startsWith(`..${path.sep}`) ||
-    path.isAbsolute(fromRoot)
+    relative === "" ||
+    (!path.isAbsolute(relative) && relative !== ".." && !relative.startsWith(`..${path.sep}`))
   )
-    throw new Error(`Client path escapes its snapshot: ${relative}`);
-  return resolved;
-}
-
-export async function snapshotClient(root = clientRoot()): Promise<ClientSnapshot> {
-  const files = await inventory(root);
-  return { files, sha256: digest(files) };
-}
-
-export async function importClient(source: string): Promise<string> {
-  const input = path.resolve(source);
-  if (!fs.existsSync(input) || !fs.lstatSync(input).isDirectory())
-    throw new Error(`Client source is not a directory: ${input}`);
-  const snapshot = await snapshotClient(input);
-  const destination = snapshotDirectory(snapshot.sha256);
-  fs.mkdirSync(clientsRoot(), { recursive: true });
-  return withLock(`${destination}.lock`, async () => {
-    const client = path.join(destination, "game-client");
-    if (fs.existsSync(destination)) {
-      const existing = readSnapshotManifest(snapshot.sha256);
-      const current = await snapshotClient(client);
-      if (current.sha256 !== existing.id) throw new Error("Existing client snapshot is corrupt");
-      return snapshot.sha256;
+    throw new Error(`Client source contains the snapshot store: ${input}`);
+  fs.mkdirSync(store, { recursive: true });
+  const id = digest(await inventory(input));
+  const prefix = id.slice(0, prefixLength);
+  return withLock(within(clientsRoot(), `${prefix}.lock`), async () => {
+    const existing = findSnapshot(id);
+    if (existing) {
+      await existing.verify();
+      return existing;
     }
 
-    const staging = `${destination}.${process.pid}.staging`;
-    fs.rmSync(staging, { recursive: true, force: true });
-    fs.mkdirSync(staging, { recursive: true });
+    const staging = fs.mkdtempSync(within(clientsRoot(), ".import-"));
     try {
-      copyTree(input, path.join(staging, "game-client"));
-      const copied = await snapshotClient(path.join(staging, "game-client"));
-      if (copied.sha256 !== snapshot.sha256)
-        throw new Error("Client bytes changed while importing");
+      const root = path.join(staging, "game-client");
+      copyTree(input, root);
+      const files = await inventory(root);
+      if (digest(files) !== id) throw new Error("Client bytes changed while importing");
+      const name = `${clientVersionLabel(root, layout)}--${prefix}`;
+      const destination = within(clientsRoot(), name);
+      if (fs.existsSync(destination))
+        throw new Error(
+          `Client snapshot directory collision: ${destination} (${readSnapshot(name).id}, ${id})`,
+        );
       atomicJson(path.join(staging, "snapshot-manifest.json"), {
         schemaVersion: 1,
-        id: snapshot.sha256,
-        files: copied.files,
-      } satisfies SnapshotManifest);
+        id,
+        files,
+      });
+      makeSnapshotReadOnly(staging);
       fs.renameSync(staging, destination);
-      try {
-        makeSnapshotReadOnly(destination);
-      } catch (error) {
-        removeSnapshot(destination);
-        throw error;
-      }
-      return snapshot.sha256;
+      return readSnapshot(name);
     } catch (error) {
       removeSnapshot(staging);
       throw error;
     }
   });
-}
-
-export async function selectClient(snapshotId: string): Promise<void> {
-  const directory = snapshotDirectory(snapshotId);
-  const manifest = readSnapshotManifest(snapshotId);
-  const root = path.join(directory, "game-client");
-  const actual = await snapshotClient(root);
-  if (actual.sha256 !== snapshotId || digest(manifest.files) !== actual.sha256)
-    throw new Error("Client snapshot inventory changed");
-  const selections = selectionsRoot();
-  fs.mkdirSync(selections, { recursive: true });
-  await withLock(path.join(selections, "client.lock"), async () => {
-    atomicJson(path.join(selections, "client.json"), {
-      schemaVersion: 1,
-      snapshotId,
-    } satisfies ClientSelection);
-  });
-}
-
-export async function assertClientUnchanged(environment: Manifest): Promise<void> {
-  const snapshotId = environment.clientSnapshotId ?? environment.inputs.sha256;
-  const manifest = readSnapshotManifest(snapshotId);
-  const root = clientRoot(snapshotId);
-  const files = await inventory(root);
-  if (
-    digest(files) !== environment.inputs.sha256 ||
-    digest(files) !== manifest.id ||
-    digest(files) !== digest(manifest.files)
-  )
-    throw new Error("Client snapshot changed; import and select it again");
-}
-
-export function clientSnapshotFiles(snapshotId: string): readonly FileHash[] {
-  return readSnapshotManifest(snapshotId).files;
 }

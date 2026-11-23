@@ -5,8 +5,6 @@ import { fileURLToPath } from "node:url";
 
 export const repoRoot = fileURLToPath(new URL("../../..", import.meta.url));
 
-export const varRoot = path.join(repoRoot, "var");
-export const scratchRoot = path.join(varRoot, "scratch");
 export const websiteDirectory = path.join(repoRoot, "resources/website");
 
 if (process.env.NODE_ENV !== "test") {
@@ -35,10 +33,6 @@ export function clientsRoot(): string {
   return path.join(dataRoot(), "clients");
 }
 
-export function selectionsRoot(): string {
-  return path.join(dataRoot(), "selections");
-}
-
 export function within(root: string, relative: string): string {
   if (path.isAbsolute(relative) || relative.includes("\\"))
     throw new Error(`Unsafe relative path: ${relative}`);
@@ -58,10 +52,6 @@ export function within(root: string, relative: string): string {
   return file;
 }
 
-export function identityDirectory(
-  kind: "environments" | "extractions" | "deliveries",
-  id: string,
-): string {
-  if (!/^[a-f0-9]{64}$/.test(id)) throw new Error(`Invalid ${kind} identity: ${id}`);
-  return within(artifactsRoot(), `${kind}/${id}`);
+export function assertIdentity(id: string, name: string): void {
+  if (!/^[a-f0-9]{64}$/.test(id)) throw new Error(`Invalid ${name} identity: ${id}`);
 }

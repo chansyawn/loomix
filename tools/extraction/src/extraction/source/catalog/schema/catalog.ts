@@ -13,7 +13,6 @@ import type { CatalogRecord, CatalogSource, RecordType } from "./records.ts";
 export function createCatalogSchema(image: z.ZodType<string | null> = DeliveredImageSchema) {
   return z
     .strictObject({
-      schemaVersion: z.literal(2),
       source: CatalogSourceSchema,
       ingredientCategories: IngredientCategorySchema.array(),
       items: createCatalogRecordSchema(image).array(),
@@ -212,7 +211,6 @@ export function parseCatalog(input: unknown): Catalog {
 }
 export function emptyCatalog(source: CatalogSource): Catalog {
   return {
-    schemaVersion: 2,
     source: { ...source },
     ingredientCategories: [],
     items: [],

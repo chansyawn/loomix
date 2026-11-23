@@ -9,7 +9,7 @@ import type { UploadProgress } from "../src/publish.ts";
 import { parseReleaseBase, sha256 } from "../src/release.ts";
 import { createR2Store, ObjectMissingError } from "../src/store.ts";
 import type { ReleaseStore } from "../src/store.ts";
-import { validateContent } from "../src/validate.ts";
+import { validateWebsiteResources } from "../src/website-resources.ts";
 import { writeFixture, webp, imageKey, remoteImageKey } from "./fixture.ts";
 const directories: string[] = [];
 const date = new Date("2026-11-17T06:30:00Z");
@@ -20,7 +20,12 @@ async function publishRelease(
   store: ReleaseStore,
   onProgress?: (progress: UploadProgress) => void,
 ) {
-  return publishValidatedContent(await validateContent(directory), store, onProgress, date);
+  return publishValidatedContent(
+    await validateWebsiteResources(directory),
+    store,
+    onProgress,
+    date,
+  );
 }
 async function fixture(imageCount = 1): Promise<string> {
   const directory = await mkdtemp(path.join(tmpdir(), "loomix-publisher-"));
@@ -66,7 +71,7 @@ test("发布完整版本，再次发布时占用新序号而不覆盖旧版本",
   const marker = await publishRelease(directory, store);
   expect(marker).toEqual({
     release: firstId,
-    manifestSha256: sha256(await readFile(path.join(directory, "release.json"))),
+    manifestSha256: sha256(await readFile(path.join(directory, "resource-manifest.json"))),
     storageLayout: "shared-images-v1",
     uploadedImageCount: 1,
     reusedImageCount: 0,
@@ -91,7 +96,7 @@ test("发布完整版本，再次发布时占用新序号而不覆盖旧版本",
 
 test("an interrupted upload cannot produce a completion marker or reuse its release ID", async () => {
   const directory = await fixture();
-  const { store, objects } = memoryStore(`releases/${firstId}/assets.json`);
+  const { store, objects } = memoryStore(`releases/${firstId}/image-index.json`);
   await expect(publishRelease(directory, store)).rejects.toThrow("Write rejected");
   expect(objects.has(`releases/${firstId}/_complete.json`)).toBe(false);
   expect((await publishRelease(directory, store)).release).toBe(secondId);
@@ -182,25 +187,25 @@ test("a failed remote integrity check prevents completion", async () => {
   expect(objects.has(`releases/${firstId}/_complete.json`)).toBe(false);
 });
 
-test("rejects missing, extra, corrupt, and invalidly referenced assets before publication", async () => {
+test("rejects missing, extra, corrupt, and invalidly referenced images before publication", async () => {
   const directory = await fixture();
   await writeFile(path.join(directory, imageKey), Buffer.from("corrupt"));
-  await expect(validateContent(directory)).rejects.toThrow("SHA-256 or size mismatch");
+  await expect(validateWebsiteResources(directory)).rejects.toThrow("SHA-256 or size mismatch");
   await rm(path.join(directory, imageKey));
-  await expect(validateContent(directory)).rejects.toThrow("exactly the declared");
+  await expect(validateWebsiteResources(directory)).rejects.toThrow("exactly the declared");
   await writeFile(path.join(directory, imageKey), webp);
   await writeFile(path.join(directory, "assets/extra.webp"), webp);
-  await expect(validateContent(directory)).rejects.toThrow("exactly the declared");
+  await expect(validateWebsiteResources(directory)).rejects.toThrow("exactly the declared");
   await rm(path.join(directory, "assets/extra.webp"));
   await writeFile(path.join(directory, "zh-CN/catalog.json"), "{}");
-  await expect(validateContent(directory)).rejects.toThrow();
+  await expect(validateWebsiteResources(directory)).rejects.toThrow();
 });
 
 test("rejects a non-WebP or truncated container even when its hash matches", async () => {
   for (const bytes of [Buffer.from("not a WebP image"), webp.subarray(0, webp.length - 2)]) {
     const directory = await fixture(0);
     await writeFixture(directory, 1, [bytes]);
-    await expect(validateContent(directory)).rejects.toThrow("Invalid WebP container");
+    await expect(validateWebsiteResources(directory)).rejects.toThrow("Invalid WebP container");
   }
 });
 test.each(["../escape", "r1/path", "", ".", ".."])("rejects unsafe release ID %s", (release) => {
@@ -223,14 +228,14 @@ test("requires an immutable HTTPS release base", () => {
 test("allows a regular directory placeholder without publishing it", async () => {
   const directory = await fixture();
   await writeFile(path.join(directory, ".gitkeep"), "");
-  const content = await validateContent(directory);
-  expect(content.assets.map((asset) => asset.key)).toEqual([imageKey]);
+  const content = await validateWebsiteResources(directory);
+  expect(content.imageFiles.map((image) => image.key)).toEqual([imageKey]);
   const { store, objects } = memoryStore();
   await publishRelease(directory, store);
   expect([...objects.keys()].some((key) => key.endsWith(".gitkeep"))).toBe(false);
   await rm(path.join(directory, ".gitkeep"));
   await mkdir(path.join(directory, ".gitkeep"));
-  await expect(validateContent(directory)).rejects.toThrow("regular file");
+  await expect(validateWebsiteResources(directory)).rejects.toThrow("regular file");
 });
 
 function deferred() {
@@ -243,13 +248,13 @@ function deferred() {
 
 test("progress counts remotely verified images and bytes in concurrent completion order", async () => {
   const directory = await fixture(3);
-  const content = await validateContent(directory);
+  const content = await validateWebsiteResources(directory);
   const { store } = memoryStore();
   const verify = store.verify.bind(store);
   const gate = deferred();
   const otherImages = deferred();
   const updates: UploadProgress[] = [];
-  const held = content.assets[0];
+  const held = content.imageFiles[0];
   store.verify = async (key, size, hash) => {
     await verify(key, size, hash);
     if (key === `images/${held.sha256}.webp`) await gate.promise;
@@ -262,7 +267,7 @@ test("progress counts remotely verified images and bytes in concurrent completio
     await otherImages.promise;
     expect(updates.map((p) => p.completed)).toEqual([0, 1, 2]);
     expect(updates.at(-1)?.completedBytes).toBe(
-      content.assets.slice(1).reduce((sum, a) => sum + a.size, 0),
+      content.imageFiles.slice(1).reduce((sum, image) => sum + image.size, 0),
     );
   } finally {
     gate.resolve();
@@ -280,14 +285,14 @@ test("progress counts remotely verified images and bytes in concurrent completio
     phase: "complete",
     completed: 3,
     total: 3,
-    completedBytes: content.assets.reduce((sum, a) => sum + a.size, 0),
-    totalBytes: content.assets.reduce((sum, a) => sum + a.size, 0),
+    completedBytes: content.imageFiles.reduce((sum, image) => sum + image.size, 0),
+    totalBytes: content.imageFiles.reduce((sum, image) => sum + image.size, 0),
   });
 });
 
 test("a failed upload suppresses progress from in-flight images and never completes", async () => {
   const directory = await fixture(2);
-  const content = await validateContent(directory);
+  const content = await validateWebsiteResources(directory);
   const { store, objects } = memoryStore();
   const verify = store.verify.bind(store);
   const ready = deferred();
@@ -296,7 +301,7 @@ test("a failed upload suppresses progress from in-flight images and never comple
   const updates: UploadProgress[] = [];
   store.verify = async (key, size, hash) => {
     await verify(key, size, hash);
-    if (key === `images/${content.assets[0].sha256}.webp`) {
+    if (key === `images/${content.imageFiles[0].sha256}.webp`) {
       await ready.promise;
       throw new Error("Image verification failed");
     }
@@ -344,7 +349,7 @@ test("failure to verify the completion marker never reports successful publicati
 });
 
 test("只重试已占用序号，r999 之后停止且不上传", async () => {
-  const content = await validateContent(await fixture(0));
+  const content = await validateWebsiteResources(await fixture(0));
   const { store } = memoryStore();
   const reserve = vi.spyOn(store, "tryReserve").mockResolvedValue(false);
   const put = vi.spyOn(store, "put");
@@ -359,7 +364,7 @@ test("只重试已占用序号，r999 之后停止且不上传", async () => {
 });
 
 test("r999 可以发布，UTC 日期或来源版本变化后重新从 r001 开始", async () => {
-  const content = await validateContent(await fixture(0));
+  const content = await validateWebsiteResources(await fixture(0));
   const { store } = memoryStore();
   const reserve = vi.spyOn(store, "tryReserve");
   for (let sequence = 1; sequence < 999; sequence++) reserve.mockResolvedValueOnce(false);
@@ -370,15 +375,15 @@ test("r999 可以发布，UTC 日期或来源版本变化后重新从 r001 开�
     (await publishValidatedContent(content, store, undefined, new Date("2026-11-18T00:00:00Z")))
       .release,
   ).toBe(`20261118-gtest-f${FORMAT_VERSION}-r001`);
-  content.release.manifest.source.gameVersion = "new";
+  content.websiteResources.manifest.source.gameVersion = "new";
   expect((await publishValidatedContent(content, store, undefined, date)).release).toBe(
     `20261117-gnew-f${FORMAT_VERSION}-r001`,
   );
 });
 
 test("不合法的来源版本在预留前失败", async () => {
-  const content = await validateContent(await fixture(0));
-  content.release.manifest.source.gameVersion = "../unsafe";
+  const content = await validateWebsiteResources(await fixture(0));
+  content.websiteResources.manifest.source.gameVersion = "../unsafe";
   const { store } = memoryStore();
   const reserve = vi.spyOn(store, "tryReserve");
   await expect(publishValidatedContent(content, store, undefined, date)).rejects.toThrow();
@@ -387,7 +392,7 @@ test("不合法的来源版本在预留前失败", async () => {
 
 test("图片在验证后发生变化会停止上传并保留占号", async () => {
   const directory = await fixture();
-  const content = await validateContent(directory);
+  const content = await validateWebsiteResources(directory);
   await writeFile(path.join(directory, imageKey), "changed");
   const { store, objects } = memoryStore();
   await expect(publishValidatedContent(content, store, undefined, date)).rejects.toMatchObject({

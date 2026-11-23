@@ -1,5 +1,9 @@
-import { documentPath, parseReleaseManifest } from "@loomix/schema/release";
-import type { DocumentKind } from "@loomix/schema/release";
+import {
+  documentPath,
+  WEBSITE_RESOURCE_MANIFEST_FILE,
+  WebsiteResourceManifestSchema,
+  type WebsiteResourceDocumentType,
+} from "@loomix/schema/website-resources";
 import { sharedImagePath } from "@loomix/schema/assets";
 
 const resourceBase = import.meta.env.VITE_RESOURCE_BASE_URL;
@@ -10,13 +14,16 @@ export function resourceUrl(path: string): string {
 }
 
 export function createResourceReader(request: typeof fetch = fetch) {
-  const pendingManifest = request(resourceUrl("release.json")).then(async (response) => {
-    if (!response.ok) throw new Error(`Unable to load release: ${response.status}`);
-    return parseReleaseManifest(await response.json());
-  });
-  // 文档通过清单中的哈希绑定到同一发布，无需逐个核对上下文。
+  const pendingManifest = request(resourceUrl(WEBSITE_RESOURCE_MANIFEST_FILE)).then(
+    async (response) => {
+      if (!response.ok)
+        throw new Error(`Unable to load website resource manifest: ${response.status}`);
+      return WebsiteResourceManifestSchema.parse(await response.json());
+    },
+  );
+  // 文档通过清单中的哈希绑定到同一套网站资源，无需逐个核对上下文。
   return async function loadResourceDocument<T>(
-    kind: DocumentKind,
+    kind: WebsiteResourceDocumentType,
     parse: (input: unknown) => T,
   ): Promise<T> {
     const manifest = await pendingManifest;

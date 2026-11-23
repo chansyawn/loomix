@@ -234,7 +234,6 @@ export function buildCookingAudit(input: CookingAuditInput) {
     (record) => record.fields.ingredientSlots.length > 0,
   );
   return {
-    schemaVersion: 1,
     source: { gameVersion: profile.gameVersion, dataRevision: profile.dataRevision },
     counts: {
       table122Rows: records.length,

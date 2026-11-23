@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import path from "node:path";
 import type { Dataset } from "@loomix/schema/dataset";
-import type { SourceObservations } from "../extraction/model.ts";
+import type { ClientReadRecords } from "../extraction/model.ts";
 import type { Tables } from "../extraction/source/decode/tables.ts";
 import type { BinDataAsset } from "../extraction/types.ts";
 import { parseTagBinData } from "../extraction/source/decode/bindata.ts";
@@ -24,7 +24,7 @@ const sorted = (values: Iterable<number>) => [...values].sort((a, b) => a - b);
 
 export function verifyCatalogSources(
   dataset: Dataset,
-  observations: SourceObservations,
+  observations: ClientReadRecords,
   tables: Tables,
   source: string,
 ): void {

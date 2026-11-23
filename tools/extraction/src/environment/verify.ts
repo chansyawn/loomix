@@ -1,13 +1,16 @@
+import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { assertClientUnchanged, resolveClientPath } from "../client/snapshot.ts";
+import { openClientSnapshot } from "../client/snapshot.ts";
+import { within } from "../paths.ts";
 import { assertAssetMapCoverage } from "../client/asset-map.ts";
 import { profile } from "../profile.ts";
 import { readJson } from "../workflow/json.ts";
 import { readManifest } from "../workflow/manifest.ts";
-import type { Manifest } from "../workflow/manifest.ts";
+import type { StageManifest } from "../workflow/manifest.ts";
 import type { ConfigSource } from "./config-source.ts";
+import { ENVIRONMENT_OUTPUT_FILES } from "./files.ts";
 
 interface AssetMapAudit {
   assets: number;
@@ -21,11 +24,27 @@ interface ResourceAudit {
   manifests: { manifest: string; checked: number }[];
 }
 
-export async function verifyEnvironment(directory: string): Promise<Manifest> {
-  const manifest = await readManifest(directory, "environment");
-  await assertClientUnchanged(manifest);
-  const snapshotId = manifest.clientSnapshotId ?? manifest.inputs.sha256;
-  const gameRoot = resolveClientPath(profile.paths.gameRoot, snapshotId);
+export async function readVerifiedEnvironment(
+  directory: string,
+  expectedId?: string,
+): Promise<StageManifest<"environment">> {
+  const manifest = await readManifest(directory, "environment", expectedId);
+  assert.deepEqual(
+    manifest.outputs.map((file) => file.path).sort(),
+    ENVIRONMENT_OUTPUT_FILES,
+    "Extraction environment manifest output file set",
+  );
+  return manifest;
+}
+
+export async function verifyEnvironment(
+  directory: string,
+  expectedId?: string,
+): Promise<StageManifest<"environment">> {
+  const manifest = await readVerifiedEnvironment(directory, expectedId);
+  const snapshot = openClientSnapshot(manifest.clientSnapshotId);
+  await snapshot.verify();
+  const gameRoot = snapshot.resolvePath(profile.paths.gameRoot);
   const source = readJson<ConfigSource>(path.join(directory, "config-source.json"));
   if (
     source.dataRevision !== profile.dataRevision ||
@@ -35,7 +54,7 @@ export async function verifyEnvironment(directory: string): Promise<Manifest> {
   )
     throw new Error("Environment config source is not verified");
   for (const file of source.files) {
-    const bytes = fs.readFileSync(path.join(gameRoot, file.path));
+    const bytes = fs.readFileSync(within(gameRoot, file.path));
     const sha256 = crypto.createHash("sha256").update(bytes).digest("hex");
     if (sha256 !== file.sha256) throw new Error(`Config source changed: ${file.path}`);
   }

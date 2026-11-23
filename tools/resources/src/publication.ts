@@ -1,7 +1,7 @@
 import { createReleaseId } from "./release-id.ts";
 import { configuredStore } from "./configuration.ts";
 import type { UploadProgress } from "./publish.ts";
-import type { ValidatedContent } from "./validate.ts";
+import type { ValidatedWebsiteResources } from "./validate.ts";
 
 export class PublicationError extends Error {
   readonly release: string;
@@ -18,11 +18,11 @@ export class PublicationError extends Error {
   }
 }
 
-export function describePublication(content: ValidatedContent, now?: Date) {
+export function describePublication(content: ValidatedWebsiteResources, now?: Date) {
   return {
-    release: createReleaseId(content.release.manifest, 1, now),
+    releaseId: createReleaseId(content.websiteResources.manifest, 1, now),
     manifestSha256: content.manifestSha256,
-    assetCount: content.assets.length,
+    imageFileCount: content.imageFiles.length,
     documentCount: content.documents.length,
     dryRun: true,
     reserved: false,
@@ -30,7 +30,7 @@ export function describePublication(content: ValidatedContent, now?: Date) {
 }
 
 export async function publishRelease(
-  content: ValidatedContent,
+  content: ValidatedWebsiteResources,
   options: { bucket?: string; now?: Date; onProgress?: (progress: UploadProgress) => void } = {},
 ) {
   const store = await configuredStore(options.bucket);

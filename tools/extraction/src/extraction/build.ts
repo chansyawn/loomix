@@ -1,19 +1,28 @@
 import fs from "node:fs";
 import path from "node:path";
-import { cacheRoot, identityDirectory } from "../paths.ts";
-import { readManifest } from "../workflow/manifest.ts";
-import type { Manifest } from "../workflow/manifest.ts";
+import { FORMAT_VERSION } from "@loomix/schema/common";
+import { cacheRoot } from "../paths.ts";
+import {
+  resolveStage,
+  stageInputs,
+  stageOutput,
+  STAGE_MANIFEST_VERSION,
+  verifyStageInputs,
+} from "../workflow/manifest.ts";
+import { readVerifiedEnvironment } from "../environment/verify.ts";
+import type { Manifest, StageLocation } from "../workflow/manifest.ts";
 import { digest, inventory } from "../workflow/hashing.ts";
 import { implementationRevision, profileHash, toolIdentity } from "../workflow/identity.ts";
 import { ensureAnimeStudio } from "../client/anime-studio/index.ts";
-import { assertClientUnchanged, clientSnapshotFiles } from "../client/snapshot.ts";
+import { openClientSnapshot } from "../client/snapshot.ts";
 import { readJson, writeJson } from "../workflow/json.ts";
 import type { IndexedAsset } from "./types.ts";
 import { prepareSource } from "./source/decode.ts";
 import { cachedDirectory, copyCachedDirectory } from "./cache.ts";
 import { neighborAllowlist } from "./source/neighbors/allowlist.ts";
 import { admissionsFile, parseAdmissions } from "./source/catalog/admissions.ts";
-import { observe } from "./source/observe.ts";
+import { readClientRecords } from "./source/read-client-records.ts";
+import { CLIENT_READ_RECORDS_FILE } from "./files.ts";
 import { assemble } from "./assemble/index.ts";
 import { exportOriginals } from "./images/originals.ts";
 import { audit } from "./audit.ts";
@@ -22,9 +31,12 @@ import { writeAssembly, sealExtraction } from "./bundle.ts";
 import { parseVignetteAdmissions } from "./source/vignettes/admissions.ts";
 import { vignetteAdmissionsFile } from "./source/vignettes/profile.ts";
 
-export async function extract(environmentId: string): Promise<string> {
-  const environmentDirectory = identityDirectory("environments", environmentId);
-  const environment = await readManifest(environmentDirectory, "environment");
+export async function extract(environmentReference: string): Promise<StageLocation> {
+  const { directory: environmentDirectory, id: environmentId } = resolveStage(
+    "environment",
+    environmentReference,
+  );
+  const environment = await readVerifiedEnvironment(environmentDirectory, environmentId);
   if (
     environment.profileHash !== profileHash ||
     environment.tools.animeStudioInput !== digest(toolIdentity())
@@ -33,12 +45,10 @@ export async function extract(environmentId: string): Promise<string> {
   const tool = await ensureAnimeStudio();
   if (environment.tools.animeStudio !== tool)
     throw new Error("Initialized tool bytes changed; run init again");
-  await assertClientUnchanged(environment);
+  const snapshot = openClientSnapshot(environment.clientSnapshotId);
+  await snapshot.verify();
   const implementation = await implementationRevision();
-  const inputs = await inventory(environmentDirectory, [
-    "environment-manifest.json",
-    ...environment.outputs.map((file) => file.path),
-  ]);
+  const inputs = await stageInputs(environmentDirectory, environment);
   const admissionsBytes = fs.readFileSync(
     new URL("./source/catalog/supplemental-admissions.json", import.meta.url),
   );
@@ -48,35 +58,33 @@ export async function extract(environmentId: string): Promise<string> {
   );
   const vignetteAdmissions = parseVignetteAdmissions(vignetteBytes);
   const id = digest({
-    format: 2,
+    stageManifestVersion: STAGE_MANIFEST_VERSION,
+    formatVersion: FORMAT_VERSION,
     environmentId,
-    inputs: digest(inputs),
+    inputs: inputs.sha256,
     profileHash,
     implementation,
     tool,
     admissions: admissions.sha256,
     vignetteAdmissions: vignetteAdmissions.sha256,
   });
-  const destination = identityDirectory("extractions", id);
+  const destination = stageOutput("extraction", id, environmentDirectory);
   await sealExtraction(destination, async (staging) => {
     try {
-      const snapshotId = environment.clientSnapshotId ?? environment.inputs.sha256;
       const decoded = await cachedDirectory(
         path.join(cacheRoot(), "decode"),
         {
-          format: 2,
           inputs,
-          snapshotId,
+          clientSnapshotId: snapshot.id,
           profileHash,
           implementation,
           tool,
-          options: "MiHoYoBinData-json",
         },
         async (work) => {
           await prepareSource({
             work,
             environment: environmentDirectory,
-            clientSnapshotId: snapshotId,
+            resolvePath: snapshot.resolvePath,
           });
           fs.rmSync(path.join(work, "logs"), { recursive: true, force: true });
         },
@@ -90,9 +98,8 @@ export async function extract(environmentId: string): Promise<string> {
         path.join(source, "additional-images.json"),
       );
       writeJson(path.join(source, "neighbor-allowlist.json"), neighborAllowlist);
-      const snapshotFiles = clientSnapshotFiles(snapshotId);
-      writeJson(path.join(source, "client-files.json"), snapshotFiles);
-      const files = new Map(snapshotFiles.map((file) => [file.path, file.sha256]));
+      writeJson(path.join(source, "client-files.json"), snapshot.files);
+      const files = new Map(snapshot.files.map((file) => [file.path, file.sha256]));
       const packages = [
         ...new Set(
           readJson<IndexedAsset[]>(path.join(source, "prepared/asset-index.json")).map(
@@ -102,49 +109,50 @@ export async function extract(environmentId: string): Promise<string> {
       ]
         .sort()
         .map((source) => {
-          const sha256 = files.get(source.replace(/^resources\/game-client\//, ""));
+          const sha256 = files.get(source);
           if (!sha256) throw new Error(`Missing frozen package ${source}`);
           return { source, sha256 };
         });
       writeJson(path.join(source, "packages.json"), packages);
-      const observations = observe(source, id);
-      writeJson(path.join(staging, "observations.json"), observations);
+      const clientReadRecords = readClientRecords(source, id);
+      writeJson(path.join(staging, CLIENT_READ_RECORDS_FILE), clientReadRecords);
       const originals = await exportOriginals({
-        objects: observations.imageObjects,
+        objects: clientReadRecords.imageObjects,
         index: readJson<IndexedAsset[]>(path.join(source, "prepared/asset-index.json")),
         cache: path.join(cacheRoot(), "originals"),
         work: staging,
-        snapshotId,
+        resolvePath: snapshot.resolvePath,
         tool,
         implementation,
       });
       writeJson(path.join(staging, "originals.json"), originals);
-      writeAssembly(staging, assemble(observations, originals));
-      await audit(
-        { work: staging, environment: environmentDirectory },
-        source,
-        observations.imageObjects,
-      );
+      writeAssembly(staging, assemble(clientReadRecords, originals));
+      await audit(staging, snapshot.resolvePath, source, clientReadRecords.imageObjects);
       await verifyCandidate(staging);
-      await assertClientUnchanged(environment);
+      await snapshot.verify();
       if (
         (await ensureAnimeStudio()) !== tool ||
         (await implementationRevision()) !== implementation
       )
         throw new Error("Tool or implementation changed during extraction");
       const manifest: Manifest = {
-        schemaVersion: 1,
+        stageManifestVersion: STAGE_MANIFEST_VERSION,
         kind: "extraction",
         id,
         status: "verified",
         createdAt: new Date().toISOString(),
-        inputs: { id: environmentId, sha256: digest(inputs), files: inputs },
+        inputs,
         implementation,
         profileHash,
         tools: environment.tools,
         outputs: await inventory(staging),
         result: { passed: true, validation: "passed", failures: [] },
       };
+      await verifyStageInputs(
+        manifest,
+        environmentDirectory,
+        await readVerifiedEnvironment(environmentDirectory, environmentId),
+      );
       return manifest;
     } catch (error) {
       const failures = path.join(cacheRoot(), "failures");
@@ -153,6 +161,7 @@ export async function extract(environmentId: string): Promise<string> {
       throw error;
     }
   });
-  await verifyExtraction(destination);
-  return id;
+  const { manifest } = await verifyExtraction(destination.directory, id);
+  await verifyStageInputs(manifest, environmentDirectory, environment);
+  return destination;
 }

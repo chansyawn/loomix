@@ -5,7 +5,7 @@ import { PNG } from "pngjs";
 import { digest } from "../workflow/hashing.ts";
 import { readJson } from "../workflow/json.ts";
 import { within } from "../paths.ts";
-import type { SourceObservations } from "../extraction/model.ts";
+import type { ClientReadRecords } from "../extraction/model.ts";
 import type {
   ImageBinding,
   OriginalImage,
@@ -29,7 +29,7 @@ const identity = (object: Pick<ImageObject, "packageSha256" | "assetType" | "pat
 
 function configuredReferences(
   need: ImageNeed,
-  observations: SourceObservations,
+  observations: ClientReadRecords,
   tables: Tables,
   source: string,
 ): string[] {
@@ -109,7 +109,7 @@ function configuredReferences(
 export function verifyImages(
   directory: string,
   tables: Tables,
-  observations: SourceObservations,
+  observations: ClientReadRecords,
   originals: OriginalImage[],
   bindings: ImageBinding[],
 ): void {
@@ -127,7 +127,7 @@ export function verifyImages(
   for (const [file, sha256] of packages)
     assert.equal(
       sha256,
-      snapshot.get(file.replace(/^resources\/game-client\//, "")),
+      snapshot.get(file),
       "Package identity comes from frozen snapshot inventory",
     );
   const audit = readJson<SourceAudit>(path.join(directory, "source-audit.json"));

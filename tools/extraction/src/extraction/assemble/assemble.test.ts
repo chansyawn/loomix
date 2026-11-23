@@ -1,6 +1,6 @@
 import { expect, test } from "vite-plus/test";
 import { collection, material } from "../../../../../packages/schema/tests/fixture.ts";
-import { observationFixture } from "../fixtures/observations.ts";
+import { clientReadRecordsFixture } from "../fixtures/client-read-records.ts";
 import { assemble } from "./index.ts";
 import { objectIdentity } from "../images/model.ts";
 import type { ImageNeed, ImageObject } from "../images/model.ts";
@@ -37,7 +37,7 @@ const need = (
 });
 
 test("同一源对象跨用途共享原图，组装同时投影图片引用和具体来源", () => {
-  const observations = observationFixture();
+  const observations = clientReadRecordsFixture();
   observations.imageObjects = [object];
   observations.imageNeeds = [need("item", 1, "icon"), need("collection", 2, "banner")];
   observations.catalog.items = [
@@ -61,7 +61,7 @@ test("同一源对象跨用途共享原图，组装同时投影图片引用和�
     image: { assetId: object.key, variant: "banner" },
   });
   expect(result.imageJobs).toHaveLength(2);
-  expect(result.evidence.fields).toEqual(
+  expect(result.fieldEvidence.fields).toEqual(
     expect.arrayContaining([
       expect.objectContaining({
         entity: { collection: "catalog.items", id: 1 },
@@ -78,7 +78,7 @@ test("同一源对象跨用途共享原图，组装同时投影图片引用和�
 });
 
 test("种子和同号阶段保留独立用途，缺图原因投影到嵌套字段", () => {
-  const observations = observationFixture();
+  const observations = clientReadRecordsFixture();
   const seed = need("seed", 1, "icon");
   const stage = need("stage", 1, "icon");
   stage.references = [];
@@ -117,7 +117,7 @@ test("种子和同号阶段保留独立用途，缺图原因投影到嵌套字�
       { use: stage.id, object: null, reason: stage.reason },
     ]),
   );
-  expect(result.evidence.fields).toContainEqual(
+  expect(result.fieldEvidence.fields).toContainEqual(
     expect.objectContaining({
       entity: { collection: "catalog.items", id: 1 },
       fieldPath: "growth.stages.0.image",
@@ -128,7 +128,7 @@ test("种子和同号阶段保留独立用途，缺图原因投影到嵌套字�
 });
 
 test("同图不同 owner 不得借用对方用途，防止图片正确但来源归属错误", () => {
-  const observations = observationFixture();
+  const observations = clientReadRecordsFixture();
   observations.imageObjects = [object];
   observations.imageNeeds = [need("item", 1, "icon"), need("item", 2, "icon")];
   observations.catalog.items = [{ ...material(1), image: { use: "item:2:image" } }];
@@ -140,7 +140,7 @@ test("同图不同 owner 不得借用对方用途，防止图片正确但来源�
   const result = assemble(observations, [original]);
   expect(result.imageJobs).toHaveLength(1);
   expect(
-    result.evidence.fields
+    result.fieldEvidence.fields
       .filter((proof) => proof.fieldPath === "image")
       .map((proof) => proof.entity.id),
   ).toEqual([1, 2]);

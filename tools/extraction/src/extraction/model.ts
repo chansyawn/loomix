@@ -28,7 +28,9 @@ export interface SourceProof extends Omit<FieldEvidence, "entity" | "fieldPath">
   id: number;
   field: string;
 }
-interface SourceObservationFields {
+
+export interface ClientReadRecords {
+  vignettes: ReturnType<typeof readVignettes>;
   context: Dataset["context"];
   source: Dataset["source"];
   gameplayTags: Dataset["gameplayTags"];
@@ -55,8 +57,3 @@ interface SourceObservationFields {
     neighbors: unknown;
   };
 }
-
-export type SourceObservations = SourceObservationFields & {
-  version: 2;
-  vignettes: ReturnType<typeof readVignettes>;
-};

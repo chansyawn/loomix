@@ -9,6 +9,8 @@ import {
   parseVersionManifest,
   readClientVersion,
   readManifestMaps,
+  readRevisions,
+  clientVersionLabel,
 } from "./versions.ts";
 
 function fixture(t: TestContext): string {
@@ -58,15 +60,29 @@ test("data manifests override matching resource-update entries", (t) => {
 
 test("client version and revisions are read from the snapshot", (t) => {
   const root = fixture(t);
-  fs.writeFileSync(path.join(root, "config.ini"), "game_version=0.95.2\n");
-  fs.mkdirSync(path.join(root, "versions"));
+  const clientIni = path.join(root, "config.ini");
+  const layout = { clientIni: "config.ini", gameRoot: "Game_Data" };
+  const versions = path.join(root, layout.gameRoot, "Persistent/versions");
+  const current = path.join(versions, "1");
+  fs.writeFileSync(clientIni, "game_version=0.95.2\n");
+  fs.mkdirSync(current, { recursive: true });
+  assert.equal(readRevisions(current), undefined);
+  assert.equal(clientVersionLabel(root, layout), "0.95.2");
   fs.writeFileSync(
-    path.join(root, "versions/data_revision.json"),
+    path.join(current, "data_revision.json"),
     JSON.stringify({ revision: 1449213, branch: "live_0.95" }),
   );
-  fs.writeFileSync(
-    path.join(root, "versions/res_revision.json"),
-    JSON.stringify({ revision: 1391927 }),
-  );
-  assert.equal(readClientVersion(path.join(root, "config.ini")), "0.95.2");
+  assert.throws(() => readRevisions(current), /Incomplete revisions/);
+  fs.writeFileSync(path.join(current, "res_revision.json"), JSON.stringify({ revision: 1391927 }));
+  assert.deepEqual(readRevisions(current), {
+    data: { revision: 1449213, branch: "live_0.95" },
+    resource: { revision: 1391927 },
+  });
+  assert.equal(clientVersionLabel(root, layout), "0.95.2-d1449213-r1391927-m1");
+  fs.cpSync(current, path.join(versions, "2"), { recursive: true });
+  assert.equal(clientVersionLabel(root, layout), "0.95.2");
+  fs.writeFileSync(path.join(current, "res_revision.json"), '{"revision":-1}');
+  assert.throws(() => readRevisions(current));
+  fs.writeFileSync(clientIni, "game_version=../0.95.2\n");
+  assert.throws(() => readClientVersion(clientIni), /Invalid game_version/);
 });

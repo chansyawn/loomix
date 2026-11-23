@@ -1,7 +1,10 @@
-import { parseReleaseManifest } from "@loomix/schema/release";
+import {
+  WEBSITE_RESOURCE_MANIFEST_FILE,
+  WebsiteResourceManifestSchema,
+} from "@loomix/schema/website-resources";
 import { expect, test, vi } from "vite-plus/test";
 import { parseCatalog } from "@loomix/schema/catalog";
-import { parseAssets } from "@loomix/schema/assets";
+import { parseImageIndex } from "@loomix/schema/assets";
 import { parseStarsea } from "@loomix/schema/starsea";
 import { catalogFixture, fixtureRequest } from "../features/collection-fixture";
 import { createResourceReader } from "./resources";
@@ -14,13 +17,13 @@ test("a resource reader shares one manifest and uses its injected transport for 
   const read = createResourceReader(request);
   const [, , starsea] = await Promise.all([
     read("catalog", parseCatalog),
-    read("assets", parseAssets),
+    read("image-index", parseImageIndex),
     read("starsea", parseStarsea),
   ]);
   expect(starsea.regions).toEqual([]);
-  expect(request.mock.calls.filter(([input]) => url(input).endsWith("release.json"))).toHaveLength(
-    1,
-  );
+  expect(
+    request.mock.calls.filter(([input]) => url(input).endsWith(WEBSITE_RESOURCE_MANIFEST_FILE)),
+  ).toHaveLength(1);
   expect(request).toHaveBeenCalledTimes(4);
 });
 
@@ -35,13 +38,13 @@ test("modified document bytes fail before domain parsing", async () => {
   expect(parse).not.toHaveBeenCalled();
 });
 
-test("旧公共版本在读取 manifest 时拒绝，不尝试补字段", async () => {
+test("读取网站资源清单时拒绝旧格式", async () => {
   const original = fixtureRequest(catalogFixture());
   const request: typeof fetch = async (input, init) => {
     const response = await original(input, init);
-    if (!url(input).endsWith("release.json")) return response;
-    const manifest = parseReleaseManifest(await response.json());
-    return Response.json({ ...manifest, formatVersion: 11 });
+    if (!url(input).endsWith(WEBSITE_RESOURCE_MANIFEST_FILE)) return response;
+    const manifest = WebsiteResourceManifestSchema.parse(await response.json());
+    return Response.json({ ...manifest, formatVersion: manifest.formatVersion - 1 });
   };
   await expect(createResourceReader(request)("catalog", parseCatalog)).rejects.toThrow();
 });

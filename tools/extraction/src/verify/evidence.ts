@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import type { Dataset } from "@loomix/schema/dataset";
-import type { Evidence } from "../extraction/evidence/domain-schema.ts";
+import type { FieldEvidenceReport } from "../extraction/evidence/domain-schema.ts";
 import type { Tables } from "../extraction/source/decode/tables.ts";
 import { digest } from "../workflow/hashing.ts";
 import { within } from "../paths.ts";
@@ -12,7 +12,7 @@ import { evidenceEntity, evidenceField } from "../extraction/assemble/validate-e
 export function verifyEvidence(
   directory: string,
   dataset: Dataset,
-  evidence: Evidence,
+  evidence: FieldEvidenceReport,
   tables: Tables,
 ): void {
   const assets = readJson<{ Source: string; PathID: string }[]>(

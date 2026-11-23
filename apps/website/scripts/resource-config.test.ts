@@ -14,7 +14,7 @@ beforeEach(() => {
   website = path.join(repository, "apps/website");
   mkdirSync(website, { recursive: true });
   writeFileSync(
-    path.join(website, "release.json"),
+    path.join(website, "resource-address.json"),
     JSON.stringify({ resourceBaseUrl: releaseUrl }),
   );
 });
@@ -55,9 +55,9 @@ test("根目录模式配置覆盖通用配置，进程变量优先于所有文�
   });
 });
 
-test("缺少覆盖值时，开发和测试使用本地资源，生产读取网站发布文件", () => {
+test("缺少覆盖值时，开发和测试使用本地资源，生产读取网站资源地址配置", () => {
   writeFileSync(path.join(repository, ".env"), "LOOMIX_PRIVATE_MARKER=server-only\n");
-  writeFileSync(path.join(repository, "release.json"), "{}");
+  writeFileSync(path.join(repository, "resource-address.json"), "{}");
   writeFileSync(path.join(website, ".env"), "VITE_RESOURCE_BASE_URL=resources/legacy/\n");
   for (const mode of ["development", "test"]) {
     expect(resolveResourceConfig(mode, website)).toEqual({

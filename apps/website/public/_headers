@@ -1,2 +1,5 @@
 https://:deployment.preview.loomix.fun/*
   X-Robots-Tag: noindex
+
+/resource-version.json
+  Cache-Control: no-store

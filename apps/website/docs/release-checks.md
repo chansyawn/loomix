@@ -10,7 +10,7 @@
 
 ## 运行方式
 
-本地资源完成 `materialize` 后运行：
+安装本地资源后运行：
 
 ```bash
 vp run --no-cache website#verify-contracts

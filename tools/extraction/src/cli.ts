@@ -1,71 +1,133 @@
 import path from "node:path";
-import { parseArgs } from "node:util";
+import { parseArgs, type ParseArgsOptionDescriptor } from "node:util";
 import { init } from "./environment/build.ts";
 import { extract } from "./extraction/build.ts";
-import { deliver } from "./delivery/build.ts";
-import { materialize } from "./delivery/materialize.ts";
-import { verify } from "./verify.ts";
+import { buildResourcePackage } from "./resource-package/build.ts";
+import { installLocalResources } from "./resource-package/install.ts";
+import { verifyResourcePackage } from "./verify.ts";
 import { errorDetails } from "./workflow/errors.ts";
-import { repoRoot } from "./paths.ts";
-import { importClient, selectClient } from "./client/snapshot.ts";
+import { assertIdentity, repoRoot } from "./paths.ts";
+import { importClient } from "./client/snapshot.ts";
+import { profile } from "./profile.ts";
+import { resolveStage, type StageLocation } from "./workflow/manifest.ts";
+
+const usage = `客户端提取
+  client import --source PATH
+  init [--snapshot ID]
+  extract --environment ID|NAME
+  package --extraction ID|NAME
+  refresh [--snapshot ID]
+  verify --resource-package ID|NAME
+  install-resources --resource-package ID|NAME
+
+ID 为完整 SHA-256，NAME 为准确的产物目录名。
+LOOMIX_DATA_ROOT 必须指向共享数据目录。package 生成网站资源包，install-resources 将已验证的资源包安装到当前工作区的 resources/website/。`;
+
+const commands = {
+  client: null,
+  "client import": "source",
+  init: "snapshot",
+  extract: "environment",
+  package: "extraction",
+  refresh: "snapshot",
+  verify: "resource-package",
+  "install-resources": "resource-package",
+} as const;
+
+function isCommand(command: string): command is keyof typeof commands {
+  return Object.hasOwn(commands, command);
+}
 
 async function main(): Promise<void> {
-  const args = process.argv.slice(2).filter((argument) => argument !== "--");
-  const command = args[0]?.startsWith("-") ? undefined : args.shift();
-  const { values, positionals } = parseArgs({
+  const args = process.argv.slice(2);
+  let command = args[0]?.startsWith("-") ? undefined : args.shift();
+  if (args[0] === "--") args.shift();
+  if (command === "client" && args[0] && !args[0].startsWith("-"))
+    command = `client ${args.shift()}`;
+  if (command !== undefined && !isCommand(command))
+    throw new Error(`Unknown command: ${command}; use --help`);
+  const option = command === undefined ? null : commands[command];
+  const options: Record<string, ParseArgsOptionDescriptor> = {
+    help: { type: "boolean", short: "h" },
+  };
+  if (option) options[option] = { type: "string" };
+  const { values, tokens } = parseArgs({
     args,
-    allowPositionals: true,
-    options: {
-      help: { type: "boolean", short: "h" },
-      environment: { type: "string" },
-      extraction: { type: "string" },
-      delivery: { type: "string" },
-      snapshot: { type: "string" },
-      source: { type: "string" },
-      "artifact-only": { type: "boolean" },
-      website: { type: "boolean" },
-    },
+    tokens: true,
+    options,
   });
+  const seen = new Set<string>();
+  let argument: string | undefined;
+  for (const token of tokens) {
+    if (token.kind !== "option") throw new Error(`Unexpected argument: ${args[token.index]}`);
+    if (seen.has(token.name)) throw new Error(`Repeated option: --${token.name}`);
+    seen.add(token.name);
+    if (token.name === option) argument = token.value;
+  }
+  if (option === "source" && argument === "") throw new Error("Empty --source path");
   if (values.help) {
-    console.log(
-      "客户端提取：client import [--source PATH] | client select --snapshot ID | init | extract --environment ID | deliver --extraction ID [--website] | materialize --delivery ID | refresh | verify --delivery ID\nLOOMIX_DATA_ROOT 必须指向共享数据目录。deliver 默认生成不可变资源交付；materialize 将已验证交付落地到当前 worktree 的 resources/website/。",
-    );
+    console.log(usage);
     return;
   }
-  if (command === "client" && positionals[0] === "import") {
-    const source = path.resolve(repoRoot, values.source ?? "resources/game-client");
-    console.log(`client-snapshot-id: ${await importClient(source)}`);
-    return;
-  } else if (command === "client" && positionals[0] === "select" && values.snapshot) {
-    await selectClient(values.snapshot);
-    console.log(`selected-client-snapshot-id: ${values.snapshot}`);
-    return;
+  if (option === "source" && argument === undefined)
+    throw new Error("Missing --source path; use --help");
+  if (option && option !== "source" && option !== "snapshot" && argument === undefined)
+    throw new Error(`Missing --${option} ID; use --help`);
+  if (argument !== undefined && option === "snapshot") assertIdentity(argument, option);
+
+  switch (command) {
+    case "client import": {
+      const snapshot = await importClient(
+        path.resolve(repoRoot, requireArgument(argument)),
+        profile.paths,
+      );
+      console.log(
+        `client-snapshot-id: ${snapshot.id}\nclient-snapshot-directory: ${snapshot.directory}`,
+      );
+      break;
+    }
+    case "init":
+      printStage("environment", await init(argument));
+      break;
+    case "extract":
+      printStage("extraction", await extract(requireArgument(argument)));
+      break;
+    case "package":
+      printStage("resource-package", await buildResourcePackage(requireArgument(argument)));
+      break;
+    case "refresh": {
+      const environment = await init(argument);
+      const extraction = await extract(environment.id);
+      const resourcePackage = await buildResourcePackage(extraction.id);
+      printStage("environment", environment);
+      printStage("extraction", extraction);
+      printStage("resource-package", resourcePackage);
+      break;
+    }
+    case "verify": {
+      const resourcePackage = resolveStage("resource-package", requireArgument(argument));
+      await verifyResourcePackage(resourcePackage);
+      printStage("verified-resource-package", resourcePackage);
+      break;
+    }
+    case "install-resources":
+      printStage(
+        "installed-resource-package",
+        await installLocalResources(requireArgument(argument)),
+      );
+      break;
+    default:
+      throw new Error("Missing command; use --help");
   }
-  if (command === "init") {
-    console.log(`environment-id: ${await init()}`);
-  } else if (command === "extract" && values.environment)
-    console.log(`extraction-id: ${await extract(values.environment)}`);
-  else if (command === "refresh") {
-    const environmentId = await init();
-    const extractionId = await extract(environmentId);
-    const deliveryId = await deliver(extractionId, { artifactOnly: true });
-    console.log(
-      `environment-id: ${environmentId}\nextraction-id: ${extractionId}\ndelivery-id: ${deliveryId}\nRun materialize --delivery ${deliveryId} to update resources/website/`,
-    );
-  } else if (command === "deliver" && values.extraction)
-    console.log(
-      `delivery-id: ${await deliver(values.extraction, {
-        artifactOnly: !values.website || values["artifact-only"],
-      })}`,
-    );
-  else if (command === "materialize" && values.delivery) {
-    await materialize(values.delivery);
-    console.log(`materialized-delivery-id: ${values.delivery}`);
-  } else if (command === "verify" && values.delivery) await verify(values.delivery);
-  else
-    throw new Error(
-      "Use init, extract --environment ID, deliver --extraction ID, refresh, or verify --delivery ID; --help for usage",
-    );
+}
+
+function printStage(label: string, { id, directory }: StageLocation): void {
+  console.log(`${label}-id: ${id}\n${label}-directory: ${directory}`);
+}
+
+function requireArgument(value: unknown): string {
+  if (typeof value !== "string") throw new Error("Missing command argument; use --help");
+  return value;
 }
 
 main().catch((error: Error) => {

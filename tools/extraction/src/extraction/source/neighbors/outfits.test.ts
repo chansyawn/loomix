@@ -119,10 +119,7 @@ test("extracts confirmed outfits, explicit counterparts, configured offers and c
     ),
   );
   verifyNeighbors(database, fixture.input);
-  verifyNeighborClothing(
-    { schemaVersion: 2, source: database.source, items: clothing },
-    fixture.input,
-  );
+  verifyNeighborClothing({ source: database.source, items: clothing }, fixture.input);
 });
 
 test("outfit serialization is stable across row order and equivalent duplicate displays", (context) => {
@@ -219,7 +216,6 @@ test("outfit validation and frozen-source verification reject incomplete or tamp
   context.onTestFinished(fixture.cleanup);
   const bundle = extractNeighborBundle(fixture.input);
   const clothingData = {
-    schemaVersion: 2 as const,
     source: bundle.database.source,
     items: bundle.clothing,
   };

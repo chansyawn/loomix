@@ -12,7 +12,7 @@ export const SHARED_IMAGE_PREFIX = "images/";
 export const SharedImageKeySchema = z
   .string()
   .regex(new RegExp(`^${SHARED_IMAGE_PREFIX}[a-f0-9]{64}\\.webp$`));
-export const DeliveredImageSchema = ImageRefSchema.extend({
+export const WebsiteImageFileSchema = ImageRefSchema.extend({
   file: ImageFileSchema,
   sha256: HashSchema,
   bytes: z.number().int().positive(),
@@ -22,11 +22,11 @@ export const DeliveredImageSchema = ImageRefSchema.extend({
   (image) => image.file === `assets/${image.sha256}.webp`,
   "Image file must match its hash",
 );
-export const AssetsSchema = z.strictObject({ images: DeliveredImageSchema.array() });
+export const ImageIndexSchema = z.strictObject({ images: WebsiteImageFileSchema.array() });
 export type ImageRef = z.infer<typeof ImageRefSchema>;
-export type DeliveredImage = z.infer<typeof DeliveredImageSchema>;
-export type Assets = z.infer<typeof AssetsSchema>;
-export const parseAssets = (input: unknown): Assets => AssetsSchema.parse(input);
+export type WebsiteImageFile = z.infer<typeof WebsiteImageFileSchema>;
+export type ImageIndex = z.infer<typeof ImageIndexSchema>;
+export const parseImageIndex = (input: unknown): ImageIndex => ImageIndexSchema.parse(input);
 export const imageKey = (image: ImageRef): string => `${image.assetId}:${image.variant}`;
 
 export function sharedImageKey(sha256: string): string {
@@ -38,7 +38,9 @@ export function sharedImagePath(file: string): string {
   return `/${sharedImageKey(hash)}`;
 }
 
-export function createImageResolver(assets: Assets): (image: ImageRef | null) => string | null {
-  const index = new Map(assets.images.map((image) => [imageKey(image), image.file]));
+export function createImageResolver(
+  imageIndex: ImageIndex,
+): (image: ImageRef | null) => string | null {
+  const index = new Map(imageIndex.images.map((image) => [imageKey(image), image.file]));
   return (image) => (image === null ? null : (index.get(imageKey(image)) ?? null));
 }

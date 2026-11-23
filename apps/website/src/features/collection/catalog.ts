@@ -1,4 +1,4 @@
-import { createImageResolver, type Assets } from "@loomix/schema/assets";
+import { createImageResolver, type ImageIndex } from "@loomix/schema/assets";
 import {
   createRecordTagResolver,
   isListedItem,
@@ -26,11 +26,11 @@ export type ListedEntry = Exclude<ListedItem, { kind: "creationCard" }> | Collec
 
 export function createCollectionCatalog(
   catalog: Catalog,
-  assets: Assets,
+  imageIndex: ImageIndex,
   gameplayTags: GameplayTags,
   options: { tagPolicy?: TagTreePolicy } = {},
 ) {
-  const image = createImageResolver(assets);
+  const image = createImageResolver(imageIndex);
   const tagIndex = createGameplayTagIndex(gameplayTags.tags);
   const tagsFor = createRecordTagResolver(tagIndex);
   const items = catalog.items.filter(isListedItem).filter((item) => item.kind !== "creationCard");
@@ -57,7 +57,7 @@ export function createCollectionCatalog(
     tags: createCollectionTagFilter(gameplayTags.tags, tagIndex, items, options.tagPolicy),
     rows,
     byId: new Map(rows.map((entry) => [entry.id, entry])),
-    view: toCollectionView(catalog, assets, tagIndex),
+    view: toCollectionView(catalog, imageIndex, tagIndex),
   };
 }
 export type CollectionCatalog = ReturnType<typeof createCollectionCatalog>;

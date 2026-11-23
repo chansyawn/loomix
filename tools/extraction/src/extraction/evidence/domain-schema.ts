@@ -49,10 +49,10 @@ export const FieldEvidenceSchema = z
         message: "Confirmed fields require concrete provenance",
       });
   });
-export const EvidenceSchema = ContextSchema.extend({
-  kind: z.literal("evidence"),
+export const FieldEvidenceReportSchema = ContextSchema.extend({
+  kind: z.literal("field-evidence"),
   fields: FieldEvidenceSchema.array(),
 });
 export type FieldEvidence = z.infer<typeof FieldEvidenceSchema>;
 export type EvidenceSource = z.infer<typeof EvidenceSourceSchema>;
-export type Evidence = z.infer<typeof EvidenceSchema>;
+export type FieldEvidenceReport = z.infer<typeof FieldEvidenceReportSchema>;

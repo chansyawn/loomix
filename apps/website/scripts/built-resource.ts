@@ -1,15 +1,34 @@
 import { readFile } from "node:fs/promises";
-import { verifyPublishedMarker } from "@loomix/resources/release";
-import { z } from "zod";
+import { verifyPublishedManifest } from "@loomix/resources/release";
+import { parseResourceAddressConfig } from "./resource-address-config.ts";
+import { requireRemoteResources, resolveResourceConfig } from "./resource-config.ts";
 
 export const builtResourceFile = "resource-version.json";
-const pointerSchema = z.strictObject({ resourceBaseUrl: z.string() });
 
-export async function verifyBuiltResource(request: typeof fetch = fetch): Promise<string> {
-  const file = new URL(`../dist/client/${builtResourceFile}`, import.meta.url);
-  const { resourceBaseUrl } = pointerSchema.parse(JSON.parse(await readFile(file, "utf8")));
-  await verifyPublishedMarker(resourceBaseUrl, request);
+export function verifyResourceBinding(input: unknown, expectedResourceBaseUrl: string): string {
+  const { resourceBaseUrl } = parseResourceAddressConfig(input);
+  if (resourceBaseUrl !== expectedResourceBaseUrl) {
+    throw new Error(
+      `Website resource URL mismatch: expected ${expectedResourceBaseUrl}, found ${resourceBaseUrl}`,
+    );
+  }
   return resourceBaseUrl;
 }
 
-if (import.meta.main) await verifyBuiltResource();
+export async function verifyBuiltResource(
+  request: typeof fetch = fetch,
+  file = new URL(`../dist/client/${builtResourceFile}`, import.meta.url),
+  expectedResourceBaseUrl = requireRemoteResources(resolveResourceConfig("production")),
+) {
+  const resourceBaseUrl = verifyResourceBinding(
+    JSON.parse(await readFile(file, "utf8")),
+    expectedResourceBaseUrl,
+  );
+  const { marker } = await verifyPublishedManifest(resourceBaseUrl, request);
+  return { resourceBaseUrl, marker };
+}
+
+if (import.meta.main) {
+  const { resourceBaseUrl, marker } = await verifyBuiltResource();
+  console.log(`Verified built resource binding: ${resourceBaseUrl} (${marker.manifestSha256})`);
+}

@@ -39,7 +39,7 @@ test("产量缺失或非一件时暂停收录", ({ onTestFinished }) => {
     );
   }
 });
-test("空材料保持未知，不完整、重复和不存在的材料拒绝交付", ({ onTestFinished }) => {
+test("空材料保持未知，并拒绝不完整、重复和不存在的材料", ({ onTestFinished }) => {
   const empty = rows();
   empty[568][0][12] = null;
   empty[568][0][13] = null;

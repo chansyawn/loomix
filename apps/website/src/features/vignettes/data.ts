@@ -1,5 +1,5 @@
 import { notFound } from "@tanstack/react-router";
-import { parseAssets } from "@loomix/schema/assets";
+import { parseImageIndex } from "@loomix/schema/assets";
 import { parseCatalog } from "@loomix/schema/catalog";
 import { parseGameplayTags } from "@loomix/schema/gameplay-tags";
 import { parseNeighbors } from "@loomix/schema/neighbors";
@@ -9,11 +9,11 @@ import { toVignetteDetail, toVignetteList } from "./view";
 
 export async function loadVignetteList(request: typeof fetch = fetch) {
   const read = createResourceReader(request);
-  const [vignettes, assets] = await Promise.all([
+  const [vignettes, imageIndex] = await Promise.all([
     read("vignettes", parseVignettes),
-    read("assets", parseAssets),
+    read("image-index", parseImageIndex),
   ]);
-  return toVignetteList(vignettes, assets);
+  return toVignetteList(vignettes, imageIndex);
 }
 
 export async function loadVignetteDetail(id: string, request: typeof fetch = fetch) {
@@ -21,16 +21,16 @@ export async function loadVignetteDetail(id: string, request: typeof fetch = fet
   if (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(templateId)) throw notFound();
 
   const read = createResourceReader(request);
-  const [vignettes, assets, catalog, gameplayTags, neighbors] = await Promise.all([
+  const [vignettes, imageIndex, catalog, gameplayTags, neighbors] = await Promise.all([
     read("vignettes", parseVignettes),
-    read("assets", parseAssets),
+    read("image-index", parseImageIndex),
     read("catalog", parseCatalog),
     read("gameplay-tags", parseGameplayTags),
     read("neighbors", parseNeighbors),
   ]);
   const detail = toVignetteDetail(templateId, {
     vignettes,
-    assets,
+    imageIndex,
     catalog,
     gameplayTags,
     neighbors,

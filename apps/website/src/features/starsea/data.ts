@@ -1,5 +1,5 @@
 import { notFound } from "@tanstack/react-router";
-import { parseAssets } from "@loomix/schema/assets";
+import { parseImageIndex } from "@loomix/schema/assets";
 import { parseCatalog } from "@loomix/schema/catalog";
 import { parseNeighbors } from "@loomix/schema/neighbors";
 import { parseStarsea } from "@loomix/schema/starsea";
@@ -8,11 +8,11 @@ import { toStarseaDetail, toStarseaList } from "./view";
 
 export async function loadStarseaList(request: typeof fetch = fetch) {
   const read = createResourceReader(request);
-  const [starsea, assets] = await Promise.all([
+  const [starsea, imageIndex] = await Promise.all([
     read("starsea", parseStarsea),
-    read("assets", parseAssets),
+    read("image-index", parseImageIndex),
   ]);
-  return toStarseaList(starsea, assets);
+  return toStarseaList(starsea, imageIndex);
 }
 
 export async function loadStarseaDetail(id: string, request: typeof fetch = fetch) {
@@ -20,13 +20,13 @@ export async function loadStarseaDetail(id: string, request: typeof fetch = fetc
   if (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(isletId)) throw notFound();
 
   const read = createResourceReader(request);
-  const [starsea, assets, catalog, neighbors] = await Promise.all([
+  const [starsea, imageIndex, catalog, neighbors] = await Promise.all([
     read("starsea", parseStarsea),
-    read("assets", parseAssets),
+    read("image-index", parseImageIndex),
     read("catalog", parseCatalog),
     read("neighbors", parseNeighbors),
   ]);
-  const detail = toStarseaDetail(isletId, starsea, assets, catalog, neighbors);
+  const detail = toStarseaDetail(isletId, starsea, imageIndex, catalog, neighbors);
   if (!detail) throw notFound();
   return detail;
 }

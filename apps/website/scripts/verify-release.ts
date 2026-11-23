@@ -6,8 +6,8 @@ export async function verifyWebsiteRelease(
   resourceBaseUrl = requireRemoteResources(resolveResourceConfig("production")),
   log?: (message: string) => void,
 ): Promise<string> {
-  const release = await downloadRelease(resourceBaseUrl);
-  await runReleaseChecks(release, releaseChecks, log);
+  const resources = await downloadRelease(resourceBaseUrl);
+  await runReleaseChecks(resources, releaseChecks, log);
   return resourceBaseUrl;
 }
 

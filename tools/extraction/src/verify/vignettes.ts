@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import type { Vignettes } from "@loomix/schema/vignettes";
 import type { Tables } from "../extraction/source/decode/tables.ts";
-import type { SourceObservations } from "../extraction/model.ts";
+import type { ClientReadRecords } from "../extraction/model.ts";
 import type { ImageBinding, OriginalImage } from "../extraction/images/model.ts";
 import { readVignetteAdmissions } from "../extraction/source/vignettes/admissions.ts";
 
@@ -9,7 +9,7 @@ export function verifyVignettes(
   source: string,
   tables: Tables,
   data: Vignettes,
-  observed: Extract<SourceObservations, { version: 2 }>["vignettes"],
+  observed: ClientReadRecords["vignettes"],
   bindings: readonly ImageBinding[],
   originals: readonly OriginalImage[],
 ): void {

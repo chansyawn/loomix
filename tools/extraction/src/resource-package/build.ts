@@ -1,0 +1,111 @@
+import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import { FORMAT_VERSION } from "@loomix/schema/common";
+import { cacheRoot } from "../paths.ts";
+import {
+  assertStageDestination,
+  publishManifest,
+  readManifest,
+  resolveStage,
+  STAGE_MANIFEST_VERSION,
+  stageInputs,
+  stageOutput,
+  verifyStageInputs,
+} from "../workflow/manifest.ts";
+import type { StageLocation, StageManifest } from "../workflow/manifest.ts";
+import { digest, inventory } from "../workflow/hashing.ts";
+import { implementationRevision, profileHash } from "../workflow/identity.ts";
+import { writeJson } from "../workflow/json.ts";
+import { withLock } from "../workflow/lock.ts";
+import { readVerifiedExtraction } from "../extraction/bundle.ts";
+import { renderImages } from "./images.ts";
+import {
+  assertPackageFileSet,
+  validatePackageWebsite,
+  verifySealedResourcePackage,
+} from "./verify.ts";
+import { VALIDATION_FILE } from "./files.ts";
+
+export async function buildResourcePackage(extractionReference: string): Promise<StageLocation> {
+  const { directory: extractionDirectory, id: extractionId } = resolveStage(
+    "extraction",
+    extractionReference,
+  );
+  const extraction = await readVerifiedExtraction(extractionDirectory, extractionId);
+  if (extraction.manifest.profileHash !== profileHash)
+    throw new Error("Extraction profile differs from the current profile; extract again");
+  const implementation = await implementationRevision();
+  const inputs = await stageInputs(extractionDirectory, extraction.manifest);
+  const resourcePackageId = digest({
+    stageManifestVersion: STAGE_MANIFEST_VERSION,
+    formatVersion: FORMAT_VERSION,
+    extractionId,
+    inputs: inputs.sha256,
+    implementation,
+    profileHash,
+  });
+  const destination = stageOutput("resource-package", resourcePackageId, extractionDirectory);
+  const { directory } = destination;
+  await withLock(`${directory}.lock`, async () => {
+    assertStageDestination("resource-package", destination);
+    if (fs.existsSync(directory)) {
+      try {
+        await verifySealedResourcePackage(
+          directory,
+          await readManifest(directory, "resource-package", resourcePackageId),
+          extraction,
+        );
+        console.error(`Reusing verified resource package ${resourcePackageId}`);
+        return;
+      } catch {
+        fs.renameSync(directory, `${directory}.corrupt-${crypto.randomUUID()}`);
+      }
+    }
+    const staging = fs.mkdtempSync(`${directory}.staging-`);
+    try {
+      await renderImages(staging, extraction);
+      const { validation, files } = await validatePackageWebsite(staging, extraction.dataset);
+      writeJson(path.join(staging, VALIDATION_FILE), validation);
+      assertPackageFileSet(staging, files);
+      const manifest: StageManifest<"resource-package"> = {
+        stageManifestVersion: STAGE_MANIFEST_VERSION,
+        kind: "resource-package",
+        id: resourcePackageId,
+        status: "verified",
+        createdAt: new Date().toISOString(),
+        inputs,
+        implementation,
+        profileHash,
+        tools: extraction.manifest.tools,
+        outputs: await inventory(staging, files),
+        result: { passed: true, validation: "passed", failures: [] },
+      };
+      await verifyStageInputs(
+        manifest,
+        extractionDirectory,
+        (await readVerifiedExtraction(extractionDirectory, extractionId)).manifest,
+      );
+      if ((await implementationRevision()) !== implementation)
+        throw new Error("Implementation changed during resource packaging; rerun package");
+      await publishManifest(staging, manifest);
+      fs.renameSync(staging, directory);
+    } catch (error) {
+      const failures = path.join(cacheRoot(), "failures");
+      fs.mkdirSync(failures, { recursive: true });
+      const diagnostic = path.join(failures, path.basename(staging));
+      const report = path.join(staging, "failure-report.json");
+      writeJson(report, { passed: false, extractionId, resourcePackageId, error: String(error) });
+      fs.renameSync(staging, diagnostic);
+      throw new Error(
+        `Resource packaging failed; see ${path.join(diagnostic, path.basename(report))}`,
+        {
+          cause: error,
+        },
+      );
+    } finally {
+      fs.rmSync(staging, { recursive: true, force: true });
+    }
+  });
+  return destination;
+}

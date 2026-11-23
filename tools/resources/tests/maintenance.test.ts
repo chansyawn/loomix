@@ -1,7 +1,13 @@
 import { expect, test, vi } from "vite-plus/test";
+import {
+  documentPath,
+  WEBSITE_RESOURCE_MANIFEST_FILE,
+  WebsiteResourceDocumentTypeSchema,
+} from "@loomix/schema/website-resources";
 import { applyCleanup, listReleases, planCleanup, runCleanup } from "../src/maintenance.ts";
 import { sha256 } from "../src/release.ts";
 import type { MaintenanceStore, StoredObject } from "../src/store.ts";
+import { context, source } from "./fixture.ts";
 
 const now = new Date("2026-11-20T00:00:00Z");
 const old = new Date("2026-10-01T00:00:00Z");
@@ -35,22 +41,38 @@ function fixture() {
   const release = (id: string, images: ReturnType<typeof image>[], legacy = false) => {
     const prefix = `releases/${id}/`;
     const index = Buffer.from(
-      JSON.stringify({ images: images.map(({ file, sha256 }) => ({ file, sha256 })) }),
-    );
-    put(`${prefix}assets.json`, index);
-    const manifest = Buffer.from(
       JSON.stringify({
-        formatVersion: "来自不同的领域契约",
-        files: [
-          { kind: "assets", path: "assets.json", sha256: sha256(index), bytes: index.length },
-        ],
+        images: images.map(({ file, sha256 }) => ({
+          file,
+          sha256,
+          assetId: sha256,
+          variant: "icon",
+          bytes: 1,
+          width: 1,
+          height: 1,
+        })),
       }),
     );
-    put(`${prefix}release.json`, manifest);
+    const indexFile = legacy ? "assets.json" : documentPath("image-index", context.locale);
+    put(`${prefix}${indexFile}`, index);
+    const manifest = Buffer.from(
+      JSON.stringify({
+        ...context,
+        formatVersion: legacy ? context.formatVersion - 1 : context.formatVersion,
+        source,
+        files: WebsiteResourceDocumentTypeSchema.options.map((kind) => ({
+          kind: legacy && kind === "image-index" ? "assets" : kind,
+          path: kind === "image-index" ? indexFile : documentPath(kind, context.locale),
+          sha256: sha256(index),
+          bytes: index.length,
+        })),
+      }),
+    );
+    put(`${prefix}${legacy ? "release.json" : WEBSITE_RESOURCE_MANIFEST_FILE}`, manifest);
     json(`${prefix}_complete.json`, {
       release: id,
       manifestSha256: sha256(manifest),
-      ...(legacy ? {} : { storageLayout: "shared-images-v1" }),
+      storageLayout: "shared-images-v1",
     });
     json(`${prefix}_upload.json`, {});
   };
@@ -66,13 +88,12 @@ test("清理指定版本和超龄孤儿，保留跨版本图片、占号和较�
   release("live", [shared]);
   release("selected", [shared, orphan]);
   release("retained", [retained]);
-  release("legacy", [], true);
   json("releases/selected/_retired.json", { release: "selected" });
   json("releases/retained/_retired.json", { release: "retained" });
   json("releases/abandoned/_upload.json", {});
-  json("releases/abandoned/release.json", {});
+  json("releases/abandoned/resource-manifest.json", {});
   json("releases/unfinished/_upload.json", {});
-  json("releases/unfinished/release.json", {}, recent);
+  json("releases/unfinished/resource-manifest.json", {}, recent);
   json("images/other.json", {});
   json(orphan.file, {});
 
@@ -87,8 +108,7 @@ test("清理指定版本和超龄孤儿，保留跨版本图片、占号和较�
 
   expect(objects.has("releases/selected/_upload.json")).toBe(true);
   expect(objects.has("releases/selected/_retired.json")).toBe(false);
-  expect(objects.has("releases/legacy/_complete.json")).toBe(true);
-  expect(objects.has("releases/unfinished/release.json")).toBe(true);
+  expect(objects.has("releases/unfinished/resource-manifest.json")).toBe(true);
   expect(objects.has("images/other.json")).toBe(true);
   expect(objects.has(orphan.file)).toBe(true);
   expect(objects.has(retained.key)).toBe(true);
@@ -98,11 +118,29 @@ test("清理指定版本和超龄孤儿，保留跨版本图片、占号和较�
   expect((await planCleanup(store, ["selected"], now)).objectCount).toBe(0);
 });
 
-test("保留版本任何哈希链环节失效时拒绝生成清理计划", async () => {
+test("保留旧资源版本时拒绝清理，选中退役后保留新版共用的图片和旧版占号", async () => {
+  const { store, objects, release, image } = fixture();
+  const shared = image("shared");
+  const orphan = image("orphan");
+  release("current", [shared]);
+  release("legacy", [shared, orphan], true);
+  await expect(planCleanup(store, [], now)).rejects.toThrow(
+    "releases/legacy/resource-manifest.json",
+  );
+  const plan = await planCleanup(store, ["legacy"], now);
+  expect(plan.orphanImages).toEqual([orphan.key]);
+  await applyCleanup(store, plan);
+  expect(objects.has("releases/legacy/_upload.json")).toBe(true);
+  expect(objects.has("releases/legacy/_complete.json")).toBe(false);
+  expect(objects.has(shared.key)).toBe(true);
+  expect(objects.has(orphan.key)).toBe(false);
+});
+
+test("保留版本图片索引的哈希链失效时拒绝生成清理计划", async () => {
   const { store, json, release } = fixture();
   release("live", []);
   release("retained", []);
-  json("releases/retained/assets.json", { images: ["损坏"] });
+  json("releases/retained/image-index.json", { images: ["损坏"] });
   await expect(planCleanup(store, [], now)).rejects.toThrow("图片索引大小或哈希不符");
   await expect(planCleanup(store, ["unlisted"], now)).rejects.toThrow("找不到要清理的资源版本");
 });
@@ -114,14 +152,14 @@ test("未指定版本时仅清理超龄的未完成上传和孤儿图片", async
   release("live", [live]);
   json("releases/live/_retired.json", { release: "live" });
   json("releases/abandoned/_upload.json", {});
-  json("releases/abandoned/release.json", {});
+  json("releases/abandoned/resource-manifest.json", {});
   expect(await listReleases(store)).toEqual([
-    { release: "abandoned", completedAt: undefined },
-    { release: "live", completedAt: old },
+    { releaseId: "abandoned", completedAt: undefined },
+    { releaseId: "live", completedAt: old },
   ]);
   expect(await planCleanup(store, [], now)).toMatchObject({
     completionMarkers: [],
-    releaseFiles: ["releases/abandoned/release.json"],
+    releaseFiles: ["releases/abandoned/resource-manifest.json"],
     orphanImages: [orphan.key],
   });
 });
@@ -134,7 +172,7 @@ test("删除版本文档中断后可重跑，共享图片最后删除", async ()
   json("releases/selected/_upload.json", {}, recent);
   const remove = store.remove.bind(store);
   const removeSpy = vi.spyOn(store, "remove").mockImplementation(async (keys) => {
-    if (keys.includes("releases/selected/assets.json")) throw new Error("删除中断");
+    if (keys.includes("releases/selected/image-index.json")) throw new Error("删除中断");
     await remove(keys);
   });
   const plan = await planCleanup(store, ["selected"], now);
@@ -143,7 +181,7 @@ test("删除版本文档中断后可重跑，共享图片最后删除", async ()
   expect(objects.has(orphan.key)).toBe(true);
   removeSpy.mockRestore();
   await applyCleanup(store, await planCleanup(store, ["selected"], now));
-  expect(objects.has("releases/selected/assets.json")).toBe(false);
+  expect(objects.has("releases/selected/image-index.json")).toBe(false);
   expect(objects.has(orphan.key)).toBe(false);
 });
 

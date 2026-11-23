@@ -12,7 +12,7 @@ import { profile } from "../../../profile.ts";
 import { repoRoot } from "../../../paths.ts";
 import { hashTextKey, readUIntVector, Tables } from "../decode/tables.ts";
 import { validateModel, expandTags, furnitureSize, creatureSizeRange } from "./model.ts";
-import { safeOutput } from "../../../delivery/output.ts";
+import { safeOutput } from "../../../resource-package/output.ts";
 import { removeWithin } from "../../../workflow/fs.ts";
 
 const fixtures: {

@@ -1,7 +1,7 @@
 import path from "node:path";
 import { parseArgs, type ParseArgsOptionsConfig } from "node:util";
 import { ReleaseIdSchema } from "@loomix/schema/release";
-import { validateContent } from "@loomix/resources/delivery";
+import { validateWebsiteResources } from "@loomix/resources/website-resources";
 import { listResourceReleases, runResourceCleanup } from "@loomix/resources/maintenance";
 import {
   defaultBucket,
@@ -11,7 +11,7 @@ import {
   withUploadProgress,
 } from "@loomix/resources/release";
 import { releaseChecks, runReleaseChecks } from "./release-checks/index.ts";
-import { defaultDeliveryPath, repoRoot } from "./resource-config.ts";
+import { defaultLocalResourcesPath, repoRoot } from "./resource-config.ts";
 import { publicationDependencies, publishWebsiteResources } from "./resource-publication.ts";
 import { verifyWebsiteRelease } from "./verify-release.ts";
 
@@ -22,9 +22,9 @@ const usage = `资源命令：
   vp run resources gc [--bucket <桶>] [--release <发布 ID>]... [--apply <计划 ID>]
   vp run resources upload [--content <目录>] [--bucket <桶>] [--dry-run]
 
-发布和上传的 --dry-run 离线校验交付，返回未占号的候选 ID。
+发布和上传的 --dry-run 离线校验网站资源，返回未占号的候选 ID。
 gc 默认预演。准备执行前，确认指定版本已退出使用。
-upload 校验和上传资源。publish 还执行网站检查并更新本地资源指针。`;
+upload 校验和上传网站资源。publish 还执行网站检查并更新网站资源地址配置。`;
 
 function parseOptions<Options extends ParseArgsOptionsConfig>(args: string[], options: Options) {
   const { values } = parseArgs({
@@ -68,9 +68,9 @@ async function main([command, ...args]: string[]): Promise<void> {
       if (!values) return;
       if (values.local && values.url !== undefined) throw new Error("--local 和 --url 互斥");
       if (values.local) {
-        const directory = path.join(repoRoot, defaultDeliveryPath);
-        const content = await validateContent(directory);
-        await runReleaseChecks(content.release, releaseChecks, console.error);
+        const directory = path.join(repoRoot, defaultLocalResourcesPath);
+        const content = await validateWebsiteResources(directory);
+        await runReleaseChecks(content.websiteResources, releaseChecks, console.error);
         printResult({ source: "local", directory, manifestSha256: content.manifestSha256 });
       } else {
         const url = values.url === undefined ? undefined : parseReleaseBase(values.url).href;
@@ -105,8 +105,8 @@ async function main([command, ...args]: string[]): Promise<void> {
         "dry-run": { type: "boolean" },
       } as const);
       if (!values) return;
-      const content = await validateContent(
-        path.resolve(repoRoot, values.content ?? defaultDeliveryPath),
+      const content = await validateWebsiteResources(
+        path.resolve(repoRoot, values.content ?? defaultLocalResourcesPath),
       );
       if (values["dry-run"]) {
         printResult(describePublication(content));
@@ -115,7 +115,8 @@ async function main([command, ...args]: string[]): Promise<void> {
         const marker = await withUploadProgress((onProgress) =>
           publishRelease(content, { bucket, onProgress }),
         );
-        printResult({ bucket, ...marker });
+        const { release: releaseId, ...details } = marker;
+        printResult({ bucket, releaseId, ...details });
       }
       return;
     }

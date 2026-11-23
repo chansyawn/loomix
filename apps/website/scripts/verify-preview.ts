@@ -1,12 +1,15 @@
 import { setTimeout as delay } from "node:timers/promises";
 import { downloadRelease } from "@loomix/resources/release";
+import type { ReleaseMarker } from "@loomix/schema/release";
+import { builtResourceFile, verifyResourceBinding } from "./built-resource.ts";
 import { requireRemoteResources, resolveResourceConfig } from "./resource-config.ts";
 import { isPreviewHostname } from "../src/infrastructure/preview-domain.ts";
 
 export async function verifyPreview(
   value: string,
-  resourceBase: string,
+  expectedResourceBaseUrl: string,
   request: typeof fetch = fetch,
+  expectedMarker?: ReleaseMarker,
 ): Promise<void> {
   const preview = new URL(value);
   if (preview.protocol !== "https:" || preview.username || preview.password) {
@@ -15,25 +18,37 @@ export async function verifyPreview(
   if (!isPreviewHostname(preview.hostname)) {
     throw new Error("Preview URL must use the preview.loomix.fun domain");
   }
+  let verifiedResourceBaseUrl = expectedResourceBaseUrl;
   for (const [pathname, contentType] of [
     ["/", "text/html"],
     ["/logo.png", "image/png"],
+    [`/${builtResourceFile}`, "application/json"],
   ]) {
     const response = await request(new URL(pathname, preview), {
       signal: AbortSignal.timeout(30_000),
       redirect: "error",
+      cache: "no-store",
     });
-    await response.body?.cancel();
-    if (!response.ok) throw new Error(`Preview ${pathname} returned HTTP ${response.status}`);
-    if (response.headers.get("content-type")?.split(";")[0].trim() !== contentType) {
-      throw new Error(`Preview ${pathname} must return ${contentType}`);
-    }
-    const directives = response.headers.get("x-robots-tag")?.split(",");
-    if (!directives?.some((value) => value.trim().toLowerCase() === "noindex")) {
-      throw new Error(`Preview ${pathname} is missing noindex`);
+    try {
+      if (!response.ok) throw new Error(`Preview ${pathname} returned HTTP ${response.status}`);
+      if (response.headers.get("content-type")?.split(";")[0].trim() !== contentType) {
+        throw new Error(`Preview ${pathname} must return ${contentType}`);
+      }
+      const directives = response.headers.get("x-robots-tag")?.split(",");
+      if (!directives?.some((value) => value.trim().toLowerCase() === "noindex")) {
+        throw new Error(`Preview ${pathname} is missing noindex`);
+      }
+      if (pathname === `/${builtResourceFile}`) {
+        verifiedResourceBaseUrl = verifyResourceBinding(
+          await response.json(),
+          expectedResourceBaseUrl,
+        );
+      }
+    } finally {
+      if (!response.bodyUsed) await response.body?.cancel();
     }
   }
-  await downloadRelease(resourceBase, request, preview.origin);
+  await downloadRelease(verifiedResourceBaseUrl, request, preview.origin, expectedMarker);
 }
 
 export async function retryPreview(check: () => Promise<void>): Promise<void> {
@@ -53,5 +68,5 @@ if (import.meta.main) {
   if (!url) throw new Error("Preview URL is required");
   const resourceBase = requireRemoteResources(resolveResourceConfig("production"));
   await retryPreview(() => verifyPreview(url, resourceBase));
-  console.log(`Verified Preview HTTP and resource CORS: ${url}`);
+  console.log(`Verified Preview HTTP, resource binding and CORS: ${url}`);
 }

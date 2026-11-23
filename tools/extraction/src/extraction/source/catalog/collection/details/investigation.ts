@@ -5,7 +5,6 @@ import { treeInvestigation } from "./tree-investigation.ts";
 import { catalogSource } from "../../../../../profile.ts";
 
 export const detailInvestigationSchema = z.strictObject({
-  schemaVersion: z.literal(1),
   source: z.strictObject({
     gameVersion: z.string(),
     dataRevision: z.number(),
@@ -158,5 +157,5 @@ export function detailInvestigation(context: ContentContext) {
       ],
     });
   }
-  return detailInvestigationSchema.parse({ schemaVersion: 1, source: catalogSource, records });
+  return detailInvestigationSchema.parse({ source: catalogSource, records });
 }

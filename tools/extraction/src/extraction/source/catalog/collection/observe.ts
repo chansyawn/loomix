@@ -32,7 +32,6 @@ export function extendCollection(base: Catalog, context: ContentContext) {
   });
   const catalog: CollectionObservations = CollectionObservationsSchema.parse({
     ...base,
-    schemaVersion: 2,
     items,
     seeds: plants.seeds,
     growths: plants.growths,

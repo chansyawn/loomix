@@ -1,7 +1,8 @@
-import { ReleaseIdSchema, type ReleaseManifest } from "@loomix/schema/release";
+import { ReleaseIdSchema } from "@loomix/schema/release";
+import type { WebsiteResourceManifest } from "@loomix/schema/website-resources";
 
 export function createReleaseId(
-  manifest: Pick<ReleaseManifest, "source" | "formatVersion">,
+  manifest: Pick<WebsiteResourceManifest, "source" | "formatVersion">,
   sequence = 1,
   date = new Date(),
 ): string {

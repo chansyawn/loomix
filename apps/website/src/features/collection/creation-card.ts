@@ -1,4 +1,4 @@
-import type { Assets } from "@loomix/schema/assets";
+import type { ImageIndex } from "@loomix/schema/assets";
 import { imageKey } from "@loomix/schema/assets";
 import type { Catalog, ItemAmount } from "@loomix/schema/catalog";
 import { isListedItem } from "@loomix/schema/catalog";
@@ -19,8 +19,8 @@ export type CreationCardView = {
 
 export type CreationCardReference = { face: CreationCardFaceData; productId: number };
 
-export function indexCreationCards(catalog: Catalog, assets: Assets) {
-  const images = new Map(assets.images.map((entry) => [imageKey(entry), entry]));
+export function indexCreationCards(catalog: Catalog, imageIndex: ImageIndex) {
+  const images = new Map(imageIndex.images.map((entry) => [imageKey(entry), entry]));
   const items = new Map(catalog.items.filter(isListedItem).map((item) => [item.id, item]));
   const names = new Map(catalog.creationCardSets.map((set) => [set.id, set.name]));
   const byId = new Map<number, CreationCardReference>();

@@ -73,7 +73,6 @@ export function createCollectionObservationsSchema(
   const growthSchema = createObservedGrowthSchema(image);
   return z
     .strictObject({
-      schemaVersion: z.literal(2),
       source: CatalogSourceSchema,
       ingredientCategories: IngredientCategorySchema.array(),
       items: createObservedRecordSchema(image).array(),

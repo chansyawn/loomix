@@ -5,7 +5,12 @@ import path from "node:path";
 import type { TestContext } from "vite-plus/test";
 import { test } from "vite-plus/test";
 import type { AssetMapAsset } from "./asset-map.ts";
-import { assertAssetMapCoverage, inspectAssetMap, readAssetMap } from "./asset-map.ts";
+import {
+  assertAssetMapCoverage,
+  buildAssetIndex,
+  inspectAssetMap,
+  readAssetMap,
+} from "./asset-map.ts";
 
 function fixture(t: TestContext, xml: string): string {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-map-"));
@@ -52,6 +57,21 @@ test("Asset Map preserves text across stream chunk boundaries", async (t) => {
   );
   const records = await collect(file);
   assert.equal(records[0].Name, name);
+});
+
+test("indexed bundle paths are relative to the snapshot on both platforms", async (t) => {
+  const base = asset("/snapshot/PetitPlanet_Data/StreamingAssets/base.blk");
+  const overlay = asset("C:\\snapshot\\PetitPlanet_Data\\Persistent\\overlay.blk");
+  const { entries } = await buildAssetIndex(fixture(t, `<Assets>${base}${overlay}</Assets>`));
+  assert.deepEqual(
+    entries.map((entry) => entry.Source),
+    ["PetitPlanet_Data/StreamingAssets/base.blk", "PetitPlanet_Data/Persistent/overlay.blk"],
+  );
+  const escaping = asset("/snapshot/PetitPlanet_Data/Persistent/../../outside.blk");
+  await assert.rejects(
+    buildAssetIndex(fixture(t, `<Assets>${base}${escaping}</Assets>`)),
+    /Invalid Asset Map source/,
+  );
 });
 
 test("malformed, incomplete and ambiguous Asset Maps are rejected", async (t) => {

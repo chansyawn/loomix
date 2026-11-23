@@ -1,6 +1,6 @@
 import path from "node:path";
-import type { Release } from "@loomix/schema/release";
-import { validateContent } from "@loomix/resources/delivery";
+import type { WebsiteResources } from "@loomix/schema/website-resources";
+import { validateWebsiteResources } from "@loomix/resources/website-resources";
 import {
   describePublication,
   downloadRelease,
@@ -9,12 +9,12 @@ import {
   type UploadProgress,
 } from "@loomix/resources/release";
 import { releaseChecks, runReleaseChecks } from "./release-checks/index.ts";
-import { defaultDeliveryPath } from "./resource-config.ts";
-import { withResourcePointer } from "./resource-pointer.ts";
+import { defaultLocalResourcesPath } from "./resource-config.ts";
+import { withResourceAddressConfig } from "./resource-address-config.ts";
 
 export interface PublicationDependencies {
   publish: typeof publishRelease;
-  check: (release: Release) => Promise<void>;
+  check: (resources: WebsiteResources) => Promise<void>;
   request: typeof fetch;
   now: () => Date;
   onProgress?: (progress: UploadProgress) => void;
@@ -23,7 +23,7 @@ export interface PublicationDependencies {
 
 const defaults: PublicationDependencies = {
   publish: publishRelease,
-  check: (release) => runReleaseChecks(release, releaseChecks, console.error),
+  check: (resources) => runReleaseChecks(resources, releaseChecks, console.error),
   request: (...args) => fetch(...args),
   now: () => new Date(),
 };
@@ -38,28 +38,28 @@ export async function publishWebsiteResources(
   dependencies: PublicationDependencies = defaults,
 ) {
   const prepare = async () => {
-    // 发布输入固定为当前工作树的本地交付，不受网站环境覆盖值影响。
-    const content = await validateContent(path.join(root, defaultDeliveryPath));
-    await dependencies.check(content.release);
+    // 发布只读取当前工作区安装的网站资源，不受网站环境覆盖值影响。
+    const content = await validateWebsiteResources(path.join(root, defaultLocalResourcesPath));
+    await dependencies.check(content.websiteResources);
     return content;
   };
   if (dryRun) {
     const content = await prepare();
     return {
       ...describePublication(content, dependencies.now()),
-      pointerUpdated: false,
+      resourceAddressUpdated: false,
     } as const;
   }
-  return withResourcePointer(
+  return withResourceAddressConfig(
     root,
-    async (pointer) => {
+    async (address) => {
       const content = await prepare();
       const marker = await dependencies
         .publish(content, { onProgress: dependencies.onProgress, now: dependencies.now() })
         .catch((cause: unknown) => {
           if (cause instanceof PublicationError)
             throw new Error(
-              `${cause.message}\n资源地址：${resourceUrl(cause.release)}\n资源指针未更新。`,
+              `${cause.message}\n资源地址：${resourceUrl(cause.release)}\n网站资源地址配置未更新。`,
               { cause },
             );
           throw cause;
@@ -73,14 +73,21 @@ export async function publishWebsiteResources(
           marker,
         );
         await dependencies.check(remote);
-        await pointer.commit(resourceBaseUrl);
+        await address.commit(resourceBaseUrl);
       } catch (cause) {
         throw new Error(
-          `资源已上传，但本次未更新指针：${resourceBaseUrl}\nmanifestSha256=${marker.manifestSha256}\n${cause instanceof Error ? cause.message : String(cause)}\n修复后可校验此已有版本，再通过 PR 更新指针，无需重新上传：\nvp run resources verify --url ${resourceBaseUrl}`,
+          `资源已上传，网站资源地址配置未更新：${resourceBaseUrl}\nmanifestSha256=${marker.manifestSha256}\n${cause instanceof Error ? cause.message : String(cause)}\n修复后可校验此已有版本，再通过 PR 更新网站资源地址配置：\nvp run resources verify --url ${resourceBaseUrl}`,
           { cause },
         );
       }
-      return { ...marker, resourceBaseUrl, dryRun: false, pointerUpdated: true } as const;
+      const { release: releaseId, ...details } = marker;
+      return {
+        releaseId,
+        ...details,
+        resourceBaseUrl,
+        dryRun: false,
+        resourceAddressUpdated: true,
+      } as const;
     },
     dependencies.warn,
   );

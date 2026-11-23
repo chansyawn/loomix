@@ -3,7 +3,7 @@ import path from "node:path";
 import { test, expect } from "vite-plus/test";
 import { PNG } from "pngjs";
 import { createFixture } from "../extraction/source/neighbors/fixtures/tables.ts";
-import { observationFixture } from "../extraction/fixtures/observations.ts";
+import { clientReadRecordsFixture } from "../extraction/fixtures/client-read-records.ts";
 import { writeJson } from "../workflow/json.ts";
 import { digest } from "../workflow/hashing.ts";
 import { objectIdentity } from "../extraction/images/model.ts";
@@ -20,7 +20,7 @@ test("删除候选或篡改绑定及其生产审计仍被独立配置和尺寸�
   fs.mkdirSync(path.join(source, "prepared"), { recursive: true });
   fs.mkdirSync(path.join(directory, "originals"));
   const packageSha256 = "a".repeat(64),
-    packageSource = "resources/game-client/PetitPlanet_Data/StreamingAssets/test.blk";
+    packageSource = "PetitPlanet_Data/StreamingAssets/test.blk";
   const objects: ImageObject[] = ["1", "2"].map((pathId, index) => ({
     key: objectIdentity(packageSha256, "Texture2D", pathId),
     packageSha256,
@@ -42,7 +42,7 @@ test("删除候选或篡改绑定及其生产审计仍被独立配置和尺寸�
   );
   writeJson(path.join(source, "packages.json"), [{ source: packageSource, sha256: packageSha256 }]);
   writeJson(path.join(source, "client-files.json"), [
-    { path: packageSource.replace(/^resources\/game-client\//, ""), sha256: packageSha256 },
+    { path: packageSource, sha256: packageSha256 },
   ]);
   writeJson(path.join(source, "bindata-manifest.json"), []);
   writeJson(path.join(directory, "source-audit.json"), {
@@ -50,7 +50,7 @@ test("删除候选或篡改绑定及其生产审计仍被独立配置和尺寸�
     records: [{ source: packageSource, matchesManifest: true }],
     configChecks: [],
   });
-  const observations = observationFixture();
+  const observations = clientReadRecordsFixture();
   observations.imageObjects = objects;
   observations.imageNeeds = [
     {
@@ -122,7 +122,7 @@ test("从源表核对友邻服饰的云朵占位图与缺图原因", ({ onTestFi
     configChecks: [],
   });
 
-  const observations = observationFixture();
+  const observations = clientReadRecordsFixture();
   observations.imageNeeds = [
     {
       id: "neighborClothing:1:image",

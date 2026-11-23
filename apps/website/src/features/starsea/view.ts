@@ -1,4 +1,4 @@
-import { createImageResolver, type Assets } from "@loomix/schema/assets";
+import { createImageResolver, type ImageIndex } from "@loomix/schema/assets";
 import { createCatalogIndex, isListedItem, type Catalog } from "@loomix/schema/catalog";
 import type { Neighbors } from "@loomix/schema/neighbors";
 import type { Starsea } from "@loomix/schema/starsea";
@@ -69,10 +69,10 @@ function indexStarsea(starsea: Starsea, image: ReturnType<typeof createImageReso
   return { regions, islandById, membershipsByIsland, summarize };
 }
 
-export function toStarseaList(starsea: Starsea, assets: Assets) {
+export function toStarseaList(starsea: Starsea, imageIndex: ImageIndex) {
   const { regions, islandById, membershipsByIsland, summarize } = indexStarsea(
     starsea,
-    createImageResolver(assets),
+    createImageResolver(imageIndex),
   );
   return {
     regions,
@@ -88,11 +88,11 @@ export type StarseaIslet = StarseaList["islets"][number];
 export function toStarseaDetail(
   isletId: number,
   starsea: Starsea,
-  assets: Assets,
+  imageIndex: ImageIndex,
   catalog: Catalog,
   neighbors: Neighbors,
 ) {
-  const image = createImageResolver(assets);
+  const image = createImageResolver(imageIndex);
   const { islandById, membershipsByIsland, summarize } = indexStarsea(starsea, image);
   const memberships = membershipsByIsland.get(isletId);
   if (!memberships) return null;

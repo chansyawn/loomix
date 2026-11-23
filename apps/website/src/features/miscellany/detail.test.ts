@@ -1,7 +1,7 @@
 import { createGameplayTagIndex } from "@loomix/schema/gameplay-tags";
 import { isNotFound } from "@tanstack/react-router";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import { assetsFixture, catalogFixture, fixtureRequest } from "../collection-fixture.ts";
+import { imageIndexFixture, catalogFixture, fixtureRequest } from "../collection-fixture.ts";
 import { toCollectionView } from "../collection-view.ts";
 import type { FurnitureItem, MiscellaneousItem } from "../collection-view.ts";
 import type { CreationCardView } from "../collection/creation-card.ts";
@@ -143,7 +143,7 @@ describe("miscellany details", () => {
     const { catalog, gameplayTags } = relatedCatalog();
     const collection = toCollectionView(
       catalog,
-      assetsFixture(catalog),
+      imageIndexFixture(catalog),
       createGameplayTagIndex(gameplayTags.tags),
     );
     const detail = buildMiscellanyDetail(collection, item.id);
@@ -159,7 +159,7 @@ describe("miscellany details", () => {
     const { catalog, gameplayTags } = relatedCatalog();
     const collection = toCollectionView(
       catalog,
-      assetsFixture(catalog),
+      imageIndexFixture(catalog),
       createGameplayTagIndex(gameplayTags.tags),
     );
     const detail = buildMiscellanyDetail(collection, item.id);

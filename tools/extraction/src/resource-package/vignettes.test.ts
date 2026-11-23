@@ -4,25 +4,27 @@ import path from "node:path";
 import sharp from "sharp";
 import { expect, test } from "vite-plus/test";
 import { vignette } from "../../../../packages/schema/tests/fixture.ts";
-import { loadReleaseDirectory } from "@loomix/resources/delivery";
+import { loadWebsiteResources } from "@loomix/resources/website-resources";
 import { assemble } from "../extraction/assemble/index.ts";
 import { readCandidate, writeAssembly } from "../extraction/bundle.ts";
-import { observationFixture } from "../extraction/fixtures/observations.ts";
+import { clientReadRecordsFixture } from "../extraction/fixtures/client-read-records.ts";
+import { CLIENT_READ_RECORDS_FILE } from "../extraction/files.ts";
 import { objectIdentity } from "../extraction/images/model.ts";
-import { digest } from "../workflow/hashing.ts";
+import { digest, inventory } from "../workflow/hashing.ts";
 import { writeJson } from "../workflow/json.ts";
 import { renderImages } from "./images.ts";
-import { verifyDelivery } from "./verify.ts";
-import { publish } from "./publish.ts";
+import { validatePackageWebsite } from "./verify.ts";
+import { replaceLocalResources } from "./replace.ts";
+import { WEBSITE_RESOURCE_DIRECTORY } from "./files.ts";
 
-test("小栖地及其配图可从提取快照交付、验证并落地", async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-vignette-delivery-"));
+test("小栖地及其配图可从提取结果打包、验证并安装", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-vignette-package-"));
   try {
     const directory = path.join(root, "extraction");
-    const work = path.join(root, "delivery");
+    const work = path.join(root, "resource-package");
     const output = path.join(root, "website");
     fs.mkdirSync(path.join(directory, "originals"), { recursive: true });
-    const observations = observationFixture();
+    const observations = clientReadRecordsFixture();
     const template = vignette();
     const use = `vignette:${template.id}:illustration`;
     const packageSha256 = "a".repeat(64);
@@ -55,23 +57,28 @@ test("小栖地及其配图可从提取快照交付、验证并落地", async ()
       references: ["vignette/flowerbed"],
       candidates: [{ object, reference: "vignette/flowerbed", rank: 0 }],
     });
-    writeJson(path.join(directory, "observations.json"), observations);
+    writeJson(path.join(directory, CLIENT_READ_RECORDS_FILE), observations);
     writeJson(path.join(directory, "originals.json"), originals);
     writeAssembly(directory, assemble(observations, originals));
     const bundle = readCandidate(directory);
     expect(bundle.imageJobs).toMatchObject([{ assetId: object, variant: "illustration" }]);
 
-    await renderImages({ work }, bundle);
-    await verifyDelivery(work, directory);
-    await publish({ work, output });
-    const release = await loadReleaseDirectory(output);
-    expect(release.dataset).toEqual(bundle.dataset);
-    expect(release.manifest.files).toContainEqual(
+    await renderImages(work, bundle);
+    await validatePackageWebsite(work, bundle.dataset);
+    const website = path.join(work, WEBSITE_RESOURCE_DIRECTORY);
+    await replaceLocalResources(website, output, await inventory(website));
+    const resources = await loadWebsiteResources(output);
+    expect(resources.dataset).toEqual(bundle.dataset);
+    expect(resources.manifest.files).toContainEqual(
       expect.objectContaining({ kind: "vignettes", path: "zh-CN/vignettes.json" }),
     );
-    expect(release.assets.images).toMatchObject([
+    expect(resources.imageIndex.images).toMatchObject([
       { assetId: object, variant: "illustration", width: 12, height: 6 },
     ]);
+    fs.appendFileSync(path.join(website, resources.imageIndex.images[0].file), "changed");
+    await expect(validatePackageWebsite(work, bundle.dataset)).rejects.toThrow(
+      "Image SHA-256 or size mismatch",
+    );
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

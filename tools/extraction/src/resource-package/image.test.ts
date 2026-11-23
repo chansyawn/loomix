@@ -10,7 +10,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import sharp from "sharp";
-import { parseAssets } from "@loomix/schema/assets";
+import { parseImageIndex } from "@loomix/schema/assets";
+import { documentPath } from "@loomix/schema/website-resources";
 import { imageKey, type ImageRef } from "@loomix/schema/assets";
 import { readJson } from "../workflow/json.ts";
 import { parseDataset } from "@loomix/schema/dataset";
@@ -18,6 +19,7 @@ import type { ImageJob } from "../extraction/images/model.ts";
 import { digest } from "../workflow/hashing.ts";
 import { processImage, processNeighborImage, decodeWebp } from "./image.ts";
 import { renderImages } from "./images.ts";
+import { IMAGE_PROCESSING_REPORT_FILE, WEBSITE_RESOURCE_DIRECTORY } from "./files.ts";
 
 for (const size of [256, 512]) {
   test(`converts ${size}px icons to 256px WebP and preserves alpha`, async () => {
@@ -105,7 +107,7 @@ test("corrupt inputs and truncated WebP fail decoding", async () => {
   await assert.rejects(decodeWebp(output.bytes.subarray(0, output.bytes.length / 2)));
 });
 
-test("asset delivery deduplicates identical outputs and separates target dimensions", async () => {
+test("website image files deduplicate identical outputs and separate target dimensions", async () => {
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-webp-"));
   try {
     const dataset = datasetFixture();
@@ -139,24 +141,22 @@ test("asset delivery deduplicates identical outputs and separates target dimensi
     dataset.catalog.collections.push({ ...collection(3, "furniture", null), image: banner });
     fs.writeFileSync(path.join(work, "dataset.json"), JSON.stringify(dataset));
     fs.writeFileSync(path.join(work, "image-jobs.json"), JSON.stringify([...jobs.values()]));
-    await renderImages(
-      { work },
-      {
-        directory: work,
-        dataset: parseDataset(readJson(path.join(work, "dataset.json"))),
-        imageJobs: readJson<ImageJob[]>(path.join(work, "image-jobs.json")),
-      },
+    await renderImages(work, {
+      directory: work,
+      dataset: parseDataset(readJson(path.join(work, "dataset.json"))),
+      imageJobs: readJson<ImageJob[]>(path.join(work, "image-jobs.json")),
+    });
+    const report: (ImageJob & { websiteImageFile: { file: string; width: number } })[] = JSON.parse(
+      fs.readFileSync(path.join(work, IMAGE_PROCESSING_REPORT_FILE), "utf8"),
     );
-    const manifest: (ImageJob & { delivered: { file: string; width: number } })[] = JSON.parse(
-      fs.readFileSync(path.join(work, "image-manifest.json"), "utf8"),
-    );
-    assert.equal(manifest.length, 3);
-    assert.equal(manifest[0].delivered.file, manifest[1].delivered.file);
-    assert.notEqual(manifest[0].delivered.file, manifest[2].delivered.file);
-    assert.equal(manifest[2].delivered.width, 1024);
-    assert.equal(fs.readdirSync(path.join(work, "staging/assets")).length, 2);
+    assert.equal(report.length, 3);
+    assert.equal(report[0].websiteImageFile.file, report[1].websiteImageFile.file);
+    assert.notEqual(report[0].websiteImageFile.file, report[2].websiteImageFile.file);
+    assert.equal(report[2].websiteImageFile.width, 1024);
+    const website = path.join(work, WEBSITE_RESOURCE_DIRECTORY);
+    assert.equal(fs.readdirSync(path.join(website, "assets")).length, 2);
     assert.deepEqual(
-      JSON.parse(fs.readFileSync(path.join(work, "staging/zh-CN/catalog.json"), "utf8")),
+      readJson(path.join(website, documentPath("catalog", dataset.context.locale))),
       dataset.catalog,
     );
   } finally {
@@ -164,20 +164,17 @@ test("asset delivery deduplicates identical outputs and separates target dimensi
   }
 });
 
-test("delivery rejects invalid domain data before converting images", async () => {
+test("resource packaging rejects an invalid dataset before converting images", async () => {
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-invalid-dataset-"));
   try {
     fs.writeFileSync(path.join(work, "dataset.json"), "{}");
     await assert.rejects(
       async () =>
-        renderImages(
-          { work },
-          {
-            directory: work,
-            dataset: parseDataset(readJson(path.join(work, "dataset.json"))),
-            imageJobs: [],
-          },
-        ),
+        renderImages(work, {
+          directory: work,
+          dataset: parseDataset(readJson(path.join(work, "dataset.json"))),
+          imageJobs: [],
+        }),
       { name: "ZodError" },
     );
   } finally {
@@ -204,7 +201,7 @@ test("neighbor images retain full framing and alpha, never upscale and fit withi
   }
 });
 
-test("neighbor illustrations are delivered with full references, original size and alpha", async () => {
+test("website neighbor illustrations retain references, original size and alpha", async () => {
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-neighbor-images-"));
   try {
     const dataset = datasetFixture();
@@ -255,29 +252,29 @@ test("neighbor illustrations are delivered with full references, original size a
     }
     fs.writeFileSync(path.join(work, "dataset.json"), JSON.stringify(dataset));
     fs.writeFileSync(path.join(work, "image-jobs.json"), JSON.stringify([...jobs.values()]));
-    await renderImages(
-      { work },
-      {
-        directory: work,
-        dataset: parseDataset(readJson(path.join(work, "dataset.json"))),
-        imageJobs: readJson<ImageJob[]>(path.join(work, "image-jobs.json")),
-      },
+    await renderImages(work, {
+      directory: work,
+      dataset: parseDataset(readJson(path.join(work, "dataset.json"))),
+      imageJobs: readJson<ImageJob[]>(path.join(work, "image-jobs.json")),
+    });
+    const website = path.join(work, WEBSITE_RESOURCE_DIRECTORY);
+    const imageIndex = parseImageIndex(
+      readJson(path.join(website, documentPath("image-index", dataset.context.locale))),
     );
-    const assets = parseAssets(
-      JSON.parse(fs.readFileSync(path.join(work, "staging/assets.json"), "utf8")),
-    );
-    assert.equal(assets.images.length, sizes.length);
+    assert.equal(imageIndex.images.length, sizes.length);
     assert.deepEqual(
-      JSON.parse(fs.readFileSync(path.join(work, "staging/zh-CN/neighbors.json"), "utf8")),
+      readJson(path.join(website, documentPath("neighbors", dataset.context.locale))),
       dataset.neighbors,
     );
     for (const [category, width, height] of sizes) {
       const reference = images.get(category)!;
-      const delivered = assets.images.find((image) => image.assetId === reference.assetId)!;
-      assert.equal(delivered.variant, "illustration");
-      assert.equal(delivered.width, width);
-      assert.equal(delivered.height, height);
-      const pixels = await sharp(path.join(work, "staging", delivered.file))
+      const websiteImageFile = imageIndex.images.find(
+        (image) => image.assetId === reference.assetId,
+      )!;
+      assert.equal(websiteImageFile.variant, "illustration");
+      assert.equal(websiteImageFile.width, width);
+      assert.equal(websiteImageFile.height, height);
+      const pixels = await sharp(path.join(website, websiteImageFile.file))
         .ensureAlpha()
         .raw()
         .toBuffer();

@@ -4,7 +4,7 @@ import { tagLabel } from "@loomix/schema/gameplay-tags";
 import type { GameplayTagIndex } from "@loomix/schema/gameplay-tags";
 import { acquisitionLabels } from "../collection/acquisition";
 import { createImageResolver } from "@loomix/schema/assets";
-import type { Assets } from "@loomix/schema/assets";
+import type { ImageIndex } from "@loomix/schema/assets";
 import type { IngredientItem } from "../collection-view";
 import type { CreationCardReference } from "../collection/creation-card";
 import type { PlantItem, PlantSeed, PlantSummary, PlantsData, PlantGrowth } from "./model";
@@ -45,12 +45,12 @@ export function plantSeriesImage(name: string, members: PlantItem[]): string | n
 
 export function buildPlantsData(
   catalog: Catalog,
-  assets: Assets,
+  imageIndex: ImageIndex,
   itemRefs: ReadonlyMap<number, IngredientItem>,
   tagIndex: GameplayTagIndex,
   cardsById: ReadonlyMap<number, CreationCardReference>,
 ): PlantsData {
-  const image = createImageResolver(assets);
+  const image = createImageResolver(imageIndex);
   const tagsFor = createRecordTagResolver(tagIndex);
   const seeds: PlantSeed[] = catalog.items
     .filter((item): item is ItemOf<"seed"> => item.kind === "seed")

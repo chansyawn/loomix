@@ -57,7 +57,7 @@ test("目标与承载物独立匹配，标签条件相交且包含子标签", ()
     { id: 30, internalName: "点心", displayName: null, parentId: null },
     { id: 40, internalName: "置物桌", displayName: "桌子", parentId: null },
   ];
-  const detail = toVignetteDetail(template.id, { ...dataset, assets });
+  const detail = toVignetteDetail(template.id, { ...dataset, imageIndex: assets });
   expect(detail?.requirements[0]).toMatchObject({
     target: { kind: "tags", labels: ["食物", "点心"], matches: [{ id: 1 }, { id: 4 }] },
     support: { kind: "tags", labels: ["桌子"], matches: [{ id: 5 }] },
@@ -78,11 +78,11 @@ test("空的标签匹配保留条件，指定物品可使用补名", () => {
   dataset.gameplayTags.tags = [
     { id: 8, internalName: "置物桌", displayName: "桌子", parentId: null },
   ];
-  const detail = toVignetteDetail(template.id, { ...dataset, assets });
+  const detail = toVignetteDetail(template.id, { ...dataset, imageIndex: assets });
   expect(detail?.requirements[0]).toMatchObject({
     target: { kind: "item", item: { name: "花株", browsable: false } },
     support: { kind: "tags", labels: ["桌子"], matches: [] },
   });
   expect(detail?.neighbors).toMatchObject([{ id: 3, name: "蛮蛮" }]);
-  expect(toVignetteDetail(9999, { ...dataset, assets })).toBeNull();
+  expect(toVignetteDetail(9999, { ...dataset, imageIndex: assets })).toBeNull();
 });

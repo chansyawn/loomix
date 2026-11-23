@@ -9,15 +9,19 @@ import {
   type CollectionMemberKind,
   type Item,
 } from "@loomix/schema/catalog";
-import type { Assets, ImageRef } from "@loomix/schema/assets";
+import type { ImageIndex, ImageRef } from "@loomix/schema/assets";
 import { emptyDataset } from "@loomix/schema/dataset";
-import { DocumentKindSchema, documentPath } from "@loomix/schema/release";
+import {
+  documentPath,
+  WEBSITE_RESOURCE_MANIFEST_FILE,
+  WebsiteResourceDocumentTypeSchema,
+} from "@loomix/schema/website-resources";
 import { referencedImages } from "@loomix/schema/dataset/images";
 import type { CatalogEntrySummary, CollectionView } from "./collection-view.ts";
 
 export const fixtureContext = {
   formatVersion: FORMAT_VERSION,
-  snapshotId: "a".repeat(64),
+  datasetId: "a".repeat(64),
   locale: "zh-CN",
 } as const;
 export const fixtureSource = {
@@ -47,7 +51,7 @@ export type FixtureIngredientCategory = {
   itemIds: number[];
 };
 
-// 从网站视图形态反向构造发布目录，文本属性按需转为标签。
+// 从网站视图形态反向构造物品目录，文本属性按需转为标签。
 export function catalogFixture(
   view: Partial<CollectionView> & {
     ingredientCategories?: readonly FixtureIngredientCategory[];
@@ -182,7 +186,7 @@ export function catalogFixture(
     }
   return { catalog: CatalogSchema.parse(catalog), gameplayTags };
 }
-export function assetsFixture(catalog: Catalog): Assets {
+export function imageIndexFixture(catalog: Catalog): ImageIndex {
   const dataset = emptyDataset(fixtureContext, fixtureSource);
   dataset.catalog = catalog;
   return {
@@ -209,9 +213,9 @@ export function fixtureRequest({
     neighbors: { neighbors: [] },
     starsea: { regions: [], islands: [], iconStyles: [] },
     vignettes: { templates: [], fallbackItems: [] },
-    assets: assetsFixture(catalog),
+    "image-index": imageIndexFixture(catalog),
   };
-  const files = DocumentKindSchema.options.map((kind) => {
+  const files = WebsiteResourceDocumentTypeSchema.options.map((kind) => {
     const bytes = JSON.stringify(documents[kind]);
     return {
       kind,
@@ -222,7 +226,7 @@ export function fixtureRequest({
   });
   const responses = new Map(files.map((file) => [file.path, JSON.stringify(documents[file.kind])]));
   responses.set(
-    "release.json",
+    WEBSITE_RESOURCE_MANIFEST_FILE,
     JSON.stringify({ ...fixtureContext, source: fixtureSource, files }),
   );
   return (input) => {

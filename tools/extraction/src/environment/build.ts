@@ -1,49 +1,61 @@
 import fs from "node:fs";
 import path from "node:path";
+import { FORMAT_VERSION } from "@loomix/schema/common";
 import { buildAssetIndex } from "../client/asset-map.ts";
 import { buildAssetMap, ensureAnimeStudio } from "../client/anime-studio/index.ts";
-import {
-  clientRoot,
-  selectedSnapshotId,
-  snapshotClient,
-  resolveClientPath,
-} from "../client/snapshot.ts";
-import { identityDirectory } from "../paths.ts";
+import { resolveClientSnapshot } from "../client/snapshot.ts";
 import { profile } from "../profile.ts";
 import { digest, inventory } from "../workflow/hashing.ts";
 import { implementationRevision, profileHash, toolIdentity } from "../workflow/identity.ts";
 import { writeJson } from "../workflow/json.ts";
 import { withLock } from "../workflow/lock.ts";
-import { publishManifest, readManifest } from "../workflow/manifest.ts";
-import type { Manifest } from "../workflow/manifest.ts";
+import {
+  assertStageDestination,
+  publishManifest,
+  stageOutput,
+  STAGE_MANIFEST_VERSION,
+} from "../workflow/manifest.ts";
+import type { Manifest, StageLocation } from "../workflow/manifest.ts";
 import { swapDirectory } from "../workflow/swap.ts";
 import { selectConfigSource } from "./config-source.ts";
 import { validateResourceManifests } from "./resource-audit.ts";
+import { ENVIRONMENT_OUTPUT_FILES } from "./files.ts";
+import { readVerifiedEnvironment } from "./verify.ts";
 
-export async function init(): Promise<string> {
-  const clientSnapshotId = selectedSnapshotId();
-  const selectedClientRoot = clientRoot(clientSnapshotId);
-  if (!fs.existsSync(selectedClientRoot))
-    throw new Error(`Missing client snapshot: ${selectedClientRoot}`);
-  console.log("Hashing client snapshot");
-  const snapshot = await snapshotClient(selectedClientRoot);
+export async function init(snapshotId?: string): Promise<StageLocation> {
+  const { snapshot, diagnostics } = resolveClientSnapshot(profile, snapshotId);
+  const clientSnapshotId = snapshot.id;
+  for (const diagnostic of diagnostics) console.error(`Skipping client snapshot ${diagnostic}`);
+  console.error(
+    `Verifying client ${profile.gameVersion} snapshot ${clientSnapshotId} (${snapshot.directory})`,
+  );
+  await snapshot.verify();
   const animeStudio = await ensureAnimeStudio();
   const tool = toolIdentity();
   const implementation = await implementationRevision();
-  const identity = { client: snapshot.sha256, profileHash, tool: animeStudio, implementation };
+  const identity = {
+    stageManifestVersion: STAGE_MANIFEST_VERSION,
+    formatVersion: FORMAT_VERSION,
+    clientSnapshotId,
+    profileHash,
+    tool: animeStudio,
+    implementation,
+  };
   const id = digest(identity);
-  const directory = identityDirectory("environments", id);
+  const destination = stageOutput("environment", id, snapshot.directory);
+  const { directory } = destination;
 
   await withLock(`${directory}.lock`, async () => {
+    assertStageDestination("environment", destination);
     try {
-      const existing = await readManifest(directory, "environment");
+      const existing = await readVerifiedEnvironment(directory, id);
       if (
-        existing.id !== id ||
+        existing.clientSnapshotId !== clientSnapshotId ||
         existing.implementation !== implementation ||
         existing.profileHash !== profileHash
       )
         throw new Error("Changed environment identity");
-      console.log(`Reusing verified environment ${id}`);
+      console.error(`Reusing verified environment ${id}`);
       return;
     } catch {
       /* 不完整或已变更的环境一律不可复用。 */
@@ -52,16 +64,15 @@ export async function init(): Promise<string> {
     fs.rmSync(staging, { recursive: true, force: true });
     fs.mkdirSync(staging, { recursive: true });
     try {
-      const gameRoot = resolveClientPath(profile.paths.gameRoot, clientSnapshotId);
+      const gameRoot = snapshot.resolvePath(profile.paths.gameRoot);
       const configSource = selectConfigSource(
         gameRoot,
-        resolveClientPath(profile.paths.clientIni, clientSnapshotId),
+        snapshot.resolvePath(profile.paths.clientIni),
       );
       writeJson(path.join(staging, "config-source.json"), configSource);
 
       const resourceAudit = await validateResourceManifests(gameRoot, profile.manifestId);
       writeJson(path.join(staging, "resource-manifest-audit.json"), {
-        schemaVersion: 1,
         passed: true,
         manifests: resourceAudit,
       });
@@ -72,32 +83,23 @@ export async function init(): Promise<string> {
         game: profile.animeGame,
         logFile: path.join(staging, "logs/asset-map.log"),
       });
-      const { entries, audit } = await buildAssetIndex(map, gameRoot, {
+      const { entries, audit } = await buildAssetIndex(map, {
         binDataNames: new Set(Object.values(profile.binData)),
       });
       writeJson(path.join(staging, "asset-index.json"), entries);
-      writeJson(path.join(staging, "asset-map-audit.json"), {
-        schemaVersion: 1,
-        ...audit,
-      });
+      writeJson(path.join(staging, "asset-map-audit.json"), audit);
       fs.rmSync(map, { force: true });
 
-      if (digest((await snapshotClient(selectedClientRoot)).files) !== identity.client)
-        throw new Error("Client changed during initialization");
-      const outputs = await inventory(staging, [
-        "config-source.json",
-        "asset-index.json",
-        "asset-map-audit.json",
-        "resource-manifest-audit.json",
-      ]);
+      await snapshot.verify();
+      const outputs = await inventory(staging, [...ENVIRONMENT_OUTPUT_FILES]);
       const manifest: Manifest = {
-        schemaVersion: 1,
+        stageManifestVersion: STAGE_MANIFEST_VERSION,
         kind: "environment",
         id,
         clientSnapshotId,
         status: "verified",
         createdAt: new Date().toISOString(),
-        inputs: { id: profile.gameVersion, sha256: identity.client, files: snapshot.files },
+        inputs: { id: clientSnapshotId, sha256: clientSnapshotId, files: [...snapshot.files] },
         implementation,
         profileHash,
         tools: {
@@ -126,5 +128,5 @@ export async function init(): Promise<string> {
       );
     }
   });
-  return id;
+  return destination;
 }

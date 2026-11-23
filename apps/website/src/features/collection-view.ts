@@ -13,7 +13,7 @@ import type {
   UnlockCondition,
   CookingRecipe,
 } from "@loomix/schema/catalog";
-import type { Assets } from "@loomix/schema/assets";
+import type { ImageIndex } from "@loomix/schema/assets";
 import { createImageResolver } from "@loomix/schema/assets";
 import { acquisitionText } from "./collection/acquisition";
 import { tagLabel } from "@loomix/schema/gameplay-tags";
@@ -154,11 +154,11 @@ const sizeRange = (size: ItemOf<"creature">["size"]): string | null =>
 
 export function toCollectionView(
   catalog: Catalog,
-  assets: Assets,
+  imageIndex: ImageIndex,
   tagIndex: GameplayTagIndex,
 ): CollectionView {
-  const image = createImageResolver(assets);
-  const cards = indexCreationCards(catalog, assets);
+  const image = createImageResolver(imageIndex);
+  const cards = indexCreationCards(catalog, imageIndex);
   const resolveTags = createRecordTagResolver(tagIndex);
   const tagsFor = (
     record: { tagIds: readonly number[] },
@@ -318,6 +318,12 @@ export function toCollectionView(
       view.furnitureUsesByMaterialId.set(itemId, entries);
     }
   }
-  view.plants = buildPlantsData(catalog, assets, view.ingredientItemsById, tagIndex, cards.byId);
+  view.plants = buildPlantsData(
+    catalog,
+    imageIndex,
+    view.ingredientItemsById,
+    tagIndex,
+    cards.byId,
+  );
   return view;
 }

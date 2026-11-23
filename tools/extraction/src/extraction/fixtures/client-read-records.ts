@@ -1,19 +1,17 @@
 import { datasetFixture } from "../../../../../packages/schema/tests/fixture.ts";
 import { emptyCatalog } from "../schema.ts";
-import type { SourceObservations } from "../model.ts";
+import type { ClientReadRecords } from "../model.ts";
 
-export function observationFixture(snapshotId = "c".repeat(64)): SourceObservations {
+export function clientReadRecordsFixture(datasetId = "c".repeat(64)): ClientReadRecords {
   const dataset = datasetFixture();
   return {
-    version: 2,
     vignettes: { templates: [], candidates: [], proofs: [], rows: [] },
-    context: { ...dataset.context, snapshotId },
+    context: { ...dataset.context, datasetId },
     source: dataset.source,
     gameplayTags: dataset.gameplayTags,
     catalog: { items: [], collections: [], creationCardSets: [] },
     ingredientItemIds: [],
     neighbors: {
-      schemaVersion: 4,
       source: dataset.source,
       neighbors: [],
       stars: [],
@@ -44,7 +42,6 @@ export function observationFixture(snapshotId = "c".repeat(64)): SourceObservati
       collection: {
         ...emptyCatalog(dataset.source),
         items: [],
-        schemaVersion: 2,
         seeds: [],
         growths: [],
         details: [],

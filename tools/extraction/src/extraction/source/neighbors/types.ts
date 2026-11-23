@@ -20,7 +20,6 @@ export interface NeighborExtractionInput {
 }
 
 export interface NeighborExtractionAudit {
-  schemaVersion: 2;
   source: NeighborSource;
   counts: {
     neighbors: number;
@@ -61,7 +60,7 @@ export interface NeighborEvidence {
   fieldPath?: string;
   status?: "confirmed" | "absent" | "unresolved";
   reasonCode?: string | null;
-  collection: keyof Omit<NeighborDatabase, "source" | "schemaVersion"> | "outfits";
+  collection: keyof Omit<NeighborDatabase, "source"> | "outfits";
   key: string;
   source: NeighborEvidenceSource;
 }

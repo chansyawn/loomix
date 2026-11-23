@@ -1,11 +1,17 @@
 import { lstat, readdir } from "node:fs/promises";
 import path from "node:path";
-import { assembleRelease, parseReleaseManifest } from "@loomix/schema/release";
-import type { DocumentKind, Release, ReleaseManifest } from "@loomix/schema/release";
-import { readRegularFile } from "./files.ts";
+import {
+  assembleWebsiteResources,
+  WEBSITE_RESOURCE_MANIFEST_FILE,
+  WebsiteResourceManifestSchema,
+  type WebsiteResourceDocumentType,
+  type WebsiteResourceManifest,
+  type WebsiteResources,
+} from "@loomix/schema/website-resources";
+import { isMissingFile, readRegularFile } from "./files.ts";
 import { sha256 } from "./release.ts";
 
-export interface AssetFile {
+export interface LocalImageFile {
   key: string;
   path: string;
   sha256: string;
@@ -16,11 +22,11 @@ export interface DocumentFile {
   bytes: Buffer;
   sha256: string;
 }
-export interface ValidatedContent {
-  release: Release;
+export interface ValidatedWebsiteResources {
+  websiteResources: WebsiteResources;
   manifestSha256: string;
   documents: DocumentFile[];
-  assets: AssetFile[];
+  imageFiles: LocalImageFile[];
 }
 
 async function filesWithin(directory: string): Promise<string[]> {
@@ -43,20 +49,28 @@ async function filesWithin(directory: string): Promise<string[]> {
   return files.filter((file) => file !== ".gitkeep").sort();
 }
 
-export async function validateContent(directory: string): Promise<ValidatedContent> {
+export async function validateWebsiteResources(
+  directory: string,
+): Promise<ValidatedWebsiteResources> {
   const actual = await filesWithin(directory);
-  const manifestBytes = await readRegularFile(path.join(directory, "release.json"));
-  let manifest: ReleaseManifest;
+  const manifestPath = path.join(directory, WEBSITE_RESOURCE_MANIFEST_FILE);
+  const manifestBytes = await readRegularFile(manifestPath).catch((cause: unknown) => {
+    if (isMissingFile(cause)) {
+      throw new Error(`未找到本地网站资源清单：${manifestPath}。请先安装本地资源。`, { cause });
+    }
+    throw cause;
+  });
+  let manifest: WebsiteResourceManifest;
   try {
-    manifest = parseReleaseManifest(JSON.parse(manifestBytes.toString("utf8")));
+    manifest = WebsiteResourceManifestSchema.parse(JSON.parse(manifestBytes.toString("utf8")));
   } catch (cause) {
     throw new Error(
-      `本地资源清单不符合当前契约；请重新提取、验证并 materialize，不能只修改 formatVersion。${cause instanceof Error ? cause.message : String(cause)}`,
+      `本地网站资源清单不符合当前契约。请重新提取、打包、验证并安装本地资源。${cause instanceof Error ? cause.message : String(cause)}`,
       { cause },
     );
   }
   const documents: DocumentFile[] = [];
-  const parsed = new Map<DocumentKind, unknown>();
+  const parsed = new Map<WebsiteResourceDocumentType, unknown>();
   for (const file of manifest.files) {
     const bytes = await readRegularFile(path.join(directory, file.path));
     if (bytes.length !== file.bytes || sha256(bytes) !== file.sha256)
@@ -64,16 +78,20 @@ export async function validateContent(directory: string): Promise<ValidatedConte
     parsed.set(file.kind, JSON.parse(bytes.toString("utf8")));
     documents.push({ key: file.path, bytes, sha256: file.sha256 });
   }
-  const release = assembleRelease(manifest, parsed);
-  const expectedImages = new Map(release.assets.images.map((image) => [image.file, image]));
+  const websiteResources = assembleWebsiteResources(manifest, parsed);
+  const expectedImages = new Map(
+    websiteResources.imageIndex.images.map((image) => [image.file, image]),
+  );
   const expected = [
-    "release.json",
+    WEBSITE_RESOURCE_MANIFEST_FILE,
     ...manifest.files.map((file) => file.path),
     ...expectedImages.keys(),
   ].sort();
   if (JSON.stringify(actual) !== JSON.stringify(expected))
-    throw new Error("Release directory must contain exactly the declared documents and images");
-  const assets: AssetFile[] = [];
+    throw new Error(
+      "Website resource directory must contain exactly the declared documents and images",
+    );
+  const imageFiles: LocalImageFile[] = [];
   for (const [key, image] of expectedImages) {
     const file = path.join(directory, key);
     const bytes = await readRegularFile(file);
@@ -101,9 +119,13 @@ export async function validateContent(directory: string): Promise<ValidatedConte
     } catch (cause) {
       throw new Error(`Invalid complete WebP image: ${key}`, { cause });
     }
-    assets.push({ key, path: file, sha256: image.sha256, size: bytes.length });
+    imageFiles.push({ key, path: file, sha256: image.sha256, size: bytes.length });
   }
   const manifestSha256 = sha256(manifestBytes);
-  documents.push({ key: "release.json", bytes: manifestBytes, sha256: manifestSha256 });
-  return { release, manifestSha256, documents, assets };
+  documents.push({
+    key: WEBSITE_RESOURCE_MANIFEST_FILE,
+    bytes: manifestBytes,
+    sha256: manifestSha256,
+  });
+  return { websiteResources, manifestSha256, documents, imageFiles };
 }

@@ -26,7 +26,6 @@ export function baseObservations(catalog: {
   cookingRecipes: Catalog["cookingRecipes"];
 }): Catalog {
   return {
-    schemaVersion: 2,
     source: catalog.source,
     ingredientCategories: catalog.ingredientCategories,
     items: catalog.items.map(baseRecord),
