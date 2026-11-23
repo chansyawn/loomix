@@ -47,7 +47,7 @@ export function CollectionPage<V extends string>({
             className={cn(
               "mb-1",
               tabs.length > 2 && "w-fit max-w-full",
-              tabs.length > 3 && "@max-[28rem]:grid @max-[28rem]:h-auto! @max-[28rem]:grid-cols-2",
+              tabs.length > 3 && "@max-md:grid @max-md:h-auto! @max-md:grid-cols-2",
             )}
           >
             {tabs.map((tab) => (
@@ -56,9 +56,8 @@ export function CollectionPage<V extends string>({
                 value={tab.value}
                 disabled={loading}
                 className={cn(
-                  tabs.length > 2 &&
-                    "min-w-0 flex-initial [&_svg]:hidden @min-[28rem]:[&_svg]:block",
-                  tabs.length > 3 && "@max-[28rem]:h-auto",
+                  tabs.length > 2 && "min-w-0 flex-initial [&_svg]:hidden @md:[&_svg]:block",
+                  tabs.length > 3 && "@max-md:h-auto",
                 )}
               >
                 {tab.icon}
