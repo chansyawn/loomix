@@ -6,7 +6,6 @@ import { readReferences } from "./references.ts";
 import { localizedSources, tableSource } from "./collection/evidence.ts";
 import type {
   Acquisition,
-  Collection,
   CollectionMemberKind,
   Growth,
   Item,
@@ -158,7 +157,7 @@ export function readCatalog({
     return record.value.tagIds;
   };
   const items: WithImageUses<Item>[] = [];
-  const collections: WithImageUses<Collection>[] = [];
+  const collections: CatalogObservation["collections"] = [];
   const details = new Map(observations.details.map((detail) => [detail.id, detail]));
   const categories = new Map<number, { itemIds: number[] }>();
   for (const { categoryId, itemId } of context.ingredientCategoryBuild.associations) {
@@ -191,7 +190,9 @@ export function readCatalog({
     return value;
   };
 
-  const toItem = (record: ObservedItem): WithImageUses<Item | Collection> => {
+  const toItem = (
+    record: ObservedItem,
+  ): WithImageUses<Item> | CatalogObservation["collections"][number] => {
     const base = {
       id: record.id,
       name: record.name,

@@ -10,6 +10,9 @@ test("缓存验证完整文件集和字节，输入、工具或实现变化均�
   const build = async (directory: string) => {
     builds++;
     fs.writeFileSync(path.join(directory, "value"), "decoded");
+    fs.mkdirSync(path.join(directory, "bindata"));
+    fs.writeFileSync(path.join(directory, "bindata", "data.json"), "{}");
+    fs.writeFileSync(path.join(directory, "bindata-manifest.json"), "{}");
   };
   try {
     const input = { input: "source", tool: "tool-bytes", implementation: "source-revision" };

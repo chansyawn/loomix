@@ -8,6 +8,10 @@
 
 种子通过可连接正式植物的确定性种植关系准入，入口为[种植读取](../src/extraction/source/catalog/plants/read.ts)；友邻及其服饰通过对应准入规则筛选，入口为[友邻准入名单](../src/extraction/source/neighbors/allowlist.ts)与[友邻服饰](../src/extraction/source/neighbors/outfits.ts)。
 
+## 花卉杂交
+
+首批配方按用户提供的四张社区攻略图转录。客户端 `0.95.2`、数据修订 `1449213` 提供正式花朵身份、系列归属及获取来源标签。两株亲本到产物的关系来自攻略，成功率和攻略原适用版本未知。该客户端已有矮牵牛杂交花色，首批攻略未给出亲本组合。[人工维护 JSON](../data/external/flower-hybridization.json)
+
 ## 客户端显示用语
 
 `0.95.2`（数据修订 `1449213`）活动配置 `ed.obb` 的中英 TextMap 将万象收藏称为 `Omnidex`（`2111100511`），杂物称为 `Miscellaneous`（`2110969575`），烹饪分类称为 `Dishes`（`3935948819`）。服饰套装使用 `Outfits`（`3935948846`），家具套组使用 `Sets`（`578165405`）。

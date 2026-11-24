@@ -17,6 +17,9 @@ import { verifyEvidence } from "../verify/evidence.ts";
 import { verifyNeighborDetails } from "./source/neighbors/verify-details.ts";
 import { verifyStarseaSources } from "../verify/starsea.ts";
 import { verifyVignettes } from "../verify/vignettes.ts";
+import { verifyFlowerHybridization } from "../verify/flower-hybridization.ts";
+import { verifyHairDyeing } from "../verify/hair-dyeing.ts";
+import type { IndexedAsset } from "./types.ts";
 
 export async function verifyCandidate(directory: string, writeReport = true): Promise<void> {
   const bundle = readCandidate(directory);
@@ -47,6 +50,13 @@ export async function verifyCandidate(directory: string, writeReport = true): Pr
     originals,
   );
   verifyCatalogSources(dataset, observations, tables, source);
+  verifyHairDyeing(
+    dataset,
+    tables,
+    source,
+    readJson<IndexedAsset[]>(path.join(source, "prepared/asset-index.json")),
+  );
+  verifyFlowerHybridization(dataset.catalog, fieldEvidence.fields, bundle.flowerHybridization);
   verifyCollectionFields(observations.diagnostics.collection, tables);
   for (const proof of observations.detailProofs) verifyProofSources(proof, tables);
   verifyPlantings(observations.diagnostics.collection, source);

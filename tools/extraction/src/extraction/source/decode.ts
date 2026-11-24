@@ -13,6 +13,7 @@ import { ObbReader } from "./decode/obb.ts";
 import { decodeTextMap } from "./decode/textmap.ts";
 import { indexTables, Tables } from "./decode/tables.ts";
 import type { BinDataAsset, ConfigFile, ConfigSource, IndexedAsset } from "../types.ts";
+import { extractDyeingInputs } from "./hair-dyeing/inputs.ts";
 
 interface DecodeOptions {
   work: string;
@@ -118,6 +119,12 @@ export async function prepareSource({
   writeJson(path.join(prepared, "sprites.json"), sprites);
 
   await exportBinData(assets, work, resolvePath);
+  await extractDyeingInputs(
+    work,
+    new ObbReader(path.join(prepared, "cs.obb")),
+    assets,
+    resolvePath,
+  );
 }
 
 export function openSource(work: string): Tables {

@@ -22,6 +22,7 @@ import { FORMAT_VERSION } from "@loomix/schema/common";
 import { readStarsea, starseaItemIds } from "./starsea/read.ts";
 import { readVignetteAdmissions } from "./vignettes/admissions.ts";
 import { readVignettes } from "./vignettes/read.ts";
+import { dyeMaterialIds, readHairDyeing } from "./hair-dyeing/read.ts";
 export interface FrozenPackage {
   source: string;
   sha256: string;
@@ -178,6 +179,25 @@ export function readClientRecords(source: string, datasetId: string): ClientRead
     new Set(neighbors.database.neighbors.map((neighbor) => neighbor.id)),
     images,
   );
+  const hairDyeing = readHairDyeing(
+    source,
+    context.tables,
+    index,
+    images,
+    new Set(
+      collection.catalog.items
+        .filter((record) => record.kind === "appearance" && record.subcategory === "发型")
+        .map(({ id }) => id),
+    ),
+    new Set(
+      collection.catalog.items
+        .filter(
+          (record) =>
+            record.kind === "item" && record.category === "plants" && record.subcategory === "花",
+        )
+        .map(({ id }) => id),
+    ),
+  );
   const catalog = readCatalog({
     observations: collection.catalog,
     context,
@@ -186,6 +206,7 @@ export function readClientRecords(source: string, datasetId: string): ClientRead
     referencedItemIds: [
       ...neighbors.database.giftPreferences.flatMap((entry) => entry.itemIds),
       ...starseaItemIds(starsea.data.islets),
+      ...dyeMaterialIds(hairDyeing.data),
     ],
     neighborOutfits: neighbors.clothing,
     outfitSourcesById: neighbors.clothingSources,
@@ -224,6 +245,7 @@ export function readClientRecords(source: string, datasetId: string): ClientRead
     reasonCode: null,
   }));
   return {
+    hairDyeing,
     vignettes: readVignettes(
       context.tables,
       context.gameplayTags.index,

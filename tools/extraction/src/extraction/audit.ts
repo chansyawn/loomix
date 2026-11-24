@@ -12,6 +12,7 @@ import { profile } from "../profile.ts";
 import type { ClientSnapshot } from "../client/snapshot.ts";
 import { readJson, writeJson } from "../workflow/json.ts";
 import { manifestEntry, readManifestMaps } from "../client/versions.ts";
+import { dyeingSourceFiles } from "./source/hair-dyeing/inputs.ts";
 
 export async function audit(
   work: string,
@@ -25,6 +26,7 @@ export async function audit(
   const sourceFiles = new Set([
     ...images.map((image) => image.source),
     ...bindata.map((asset) => asset.Source),
+    ...dyeingSourceFiles(sourceRoot),
   ]);
   const records: SourceCheck[] = [];
   const configChecks: SourceAudit["configChecks"] = [];

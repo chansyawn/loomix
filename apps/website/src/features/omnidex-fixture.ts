@@ -11,6 +11,7 @@ import {
 } from "@loomix/schema/catalog";
 import type { ImageIndex, ImageRef } from "@loomix/schema/assets";
 import { emptyDataset } from "@loomix/schema/dataset";
+import { emptyHairDyeing } from "@loomix/schema/hair-dyeing";
 import {
   documentPath,
   WEBSITE_RESOURCE_MANIFEST_FILE,
@@ -72,7 +73,13 @@ export function catalogFixture(
     memberKind: CollectionMemberKind,
     memberIds: number[] | null,
   ) =>
-    catalog.collections.push({ ...catalogBase(record), memberKind, memberIds, acquisition: null });
+    catalog.collections.push({
+      ...catalogBase(record),
+      memberKind,
+      memberIds,
+      acquisition: null,
+      flowerHybridization: null,
+    });
   for (const record of view.furniture?.items ?? []) {
     const [width, depth] = record.size?.split("x").map(Number) ?? [];
     add({
@@ -213,6 +220,7 @@ export function fixtureRequest({
     neighbors: { neighbors: [] },
     starsea: { regions: [], islets: [], iconStyles: [] },
     vignettes: { templates: [], fallbackItems: [] },
+    "hair-dyeing": emptyHairDyeing(),
     "image-index": imageIndexFixture(catalog),
   };
   const files = WebsiteResourceDocumentTypeSchema.options.map((kind) => {
@@ -314,6 +322,7 @@ export function addFixtureRecords(
         quality: null,
         acquisition: null,
         memberIds: null,
+        flowerHybridization: null,
         ...raw,
       } as Collection);
       continue;

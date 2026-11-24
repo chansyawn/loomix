@@ -83,6 +83,26 @@ export function validateCatalog(catalog: Catalog): ValidationIssue[] {
         ["collections", index, "memberIds"],
         [collection.memberKind],
       );
+    if (collection.flowerHybridization === null) return;
+    const path = ["collections", index, "flowerHybridization"];
+    if (collection.memberKind !== "plant")
+      issue(path, "Flower hybridization requires a plant collection");
+    const members = new Set(collection.memberIds ?? []);
+    unique(
+      collection.flowerHybridization,
+      ({ parentItemIds, productItemId }) => {
+        const [first, second] = parentItemIds;
+        return `${Math.min(first, second)}:${Math.max(first, second)}:${productItemId}`;
+      },
+      path,
+    );
+    collection.flowerHybridization.forEach(({ parentItemIds, productItemId }, recipeIndex) => {
+      if (parentItemIds[0] > parentItemIds[1])
+        issue([...path, recipeIndex, "parentItemIds"], "Flower parents must be in ID order");
+      for (const id of [...parentItemIds, productItemId])
+        if (!members.has(id) || items.get(id)?.kind !== "plant")
+          issue([...path, recipeIndex], `Unknown plant collection member ${id}`);
+    });
   });
   catalog.inspoBoxes.forEach((entry, index) => {
     if (!usedInspoBoxs.has(entry.id))
