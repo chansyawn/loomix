@@ -1,22 +1,18 @@
-import { ListPage } from "../omnidex/page";
-import { ListToolbar } from "../omnidex/toolbar";
-import { ListResultsSummary } from "../omnidex/results-summary";
+import { ListPage } from "../list-page/page";
+import { ListToolbar } from "../list-page/toolbar";
+import { ListResultsSummary } from "../list-page/results-summary";
 import { listFilterChips } from "../omnidex/filter-chips";
 import { FilterPanel } from "../omnidex/filter-panel";
-import { ListTable } from "../omnidex/table";
-import { listSort, tableSorting } from "../omnidex/sort";
-import { useListLayout, saveListLayout } from "../omnidex/use-list-layout";
+import { ListResults } from "../list-page/results";
+import { recordTableSorting } from "../omnidex/sort";
+import { useListLayout } from "../list-page/use-list-layout";
 import type { OmnidexCatalog } from "../omnidex/catalog";
-import { CatalogCard, catalogColumns } from "./presentation";
-import { VirtualGrid } from "../omnidex/virtual-grid";
-import { compactGrid } from "../omnidex/grid-layout";
-import { ListEmpty } from "../omnidex/states";
+import { CatalogCard, catalogColumns, catalogListPresentation } from "./presentation";
+import { ListEmpty } from "../list-page/states";
 import { filterGroups, queryCatalog } from "./query";
 import { emptyQuery, sortOptions } from "./search";
 import type { CatalogSearch, CatalogQuery } from "./search";
 import { ToggleGroup, ToggleGroupItem } from "@/ui/components/toggle-group";
-const title = "全部";
-const grid = compactGrid(164);
 
 type SearchUpdate = CatalogSearch | ((previous: CatalogSearch) => CatalogSearch);
 
@@ -34,7 +30,13 @@ export function CatalogPage({
     selectedTags.length === search.items.tags.length
       ? search.items
       : { ...search.items, tags: selectedTags };
-  const layout = useListLayout(search.layout);
+  const layoutState = useListLayout(
+    search.layout,
+    (layout) => void onSearchChange((previous) => ({ ...previous, layout })),
+  );
+  const { layout } = layoutState;
+  const { grid, toolbar } = catalogListPresentation;
+  const { title } = toolbar;
   const result = queryCatalog(data, query);
   const groups = filterGroups(data, query.tags);
   const resultKey = JSON.stringify([layout, query]);
@@ -52,19 +54,11 @@ export function CatalogPage({
   return (
     <ListPage title={title}>
       <ListToolbar
-        title={title}
-        searchLabel="搜索物品名称"
-        placeholder="搜索物品名称或拼音…"
+        {...toolbar}
         query={query.q}
         onQueryChange={(q, replace) => update({ q }, replace)}
-        sort={query.sort}
-        sortOptions={sortOptions}
-        onSortChange={(sort) => update({ sort })}
-        layout={layout}
-        onLayoutChange={(next) => {
-          saveListLayout(next);
-          void onSearchChange((previous) => ({ ...previous, layout: next }));
-        }}
+        sort={{ value: query.sort, options: sortOptions, onChange: (sort) => update({ sort }) }}
+        {...layoutState}
         filters={
           <FilterPanel
             title={`筛选${title}`}
@@ -92,33 +86,19 @@ export function CatalogPage({
         }
       />
       <ListResultsSummary total={result.total} unit="条记录" chips={chips} onClear={clear} />
-      {result.total > 0 ? (
-        layout === "table" ? (
-          <ListTable
-            resultKey={resultKey}
-            rows={result.rows}
-            columns={columns}
-            getRowId={(row) => String(row.id)}
-            label={`${title}表格`}
-            sorting={tableSorting(query.sort)}
-            onSortingChange={(updater) => {
-              const previous = tableSorting(query.sort);
-              update({
-                sort: listSort(typeof updater === "function" ? updater(previous) : updater),
-              });
-            }}
-          />
-        ) : (
-          <VirtualGrid
-            rows={result.rows}
-            getKey={(record) => record.id}
-            renderCard={(record) => <CatalogCard record={record} />}
-            layout={grid}
-          />
-        )
-      ) : (
-        <ListEmpty title="物品" onClear={clear} />
-      )}
+      <ListResults
+        layout={layout}
+        resultKey={resultKey}
+        rows={result.rows}
+        columns={columns}
+        getRowId={(row) => String(row.id)}
+        label={`${title}表格`}
+        sorting={recordTableSorting(query.sort, (sort) => update({ sort }))}
+        grid={grid}
+        virtual
+        renderCard={(record) => <CatalogCard record={record} />}
+        empty={<ListEmpty title={"物品"} onClear={data.rows.length ? clear : undefined} />}
+      />
     </ListPage>
   );
 }

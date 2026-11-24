@@ -3,7 +3,7 @@ import { loadOmnidexCatalog } from "@/features/omnidex-loader";
 import { parseCatalogEntryId, catalogEntryDetail } from "@/features/omnidex/catalog-entry-detail";
 import { CatalogEntryPage } from "@/features/omnidex/catalog-entry-page";
 import { DetailPageLoading } from "@/features/detail-page/detail-page";
-import { ListLoadError } from "@/features/omnidex/states";
+import { ListLoadError } from "@/features/list-page/states";
 import { OmnidexReturnLink } from "@/features/omnidex/navigation";
 import { createResourceReader } from "@/infrastructure/resources";
 import { parseNeighbors } from "@loomix/schema/neighbors";
@@ -61,5 +61,5 @@ function DetailRoute() {
 }
 function DetailError() {
   const router = useRouter();
-  return <ListLoadError title="物品详情" onRetry={() => void router.invalidate()} />;
+  return <ListLoadError title="物品详情暂时无法加载" onRetry={() => void router.invalidate()} />;
 }

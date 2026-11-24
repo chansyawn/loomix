@@ -5,13 +5,9 @@ import { CatalogItemLink } from "@/features/omnidex/item-link";
 import type { PlantItem, PlantSeries } from "../omnidex-view";
 import type { PlantsData } from "./data";
 import type { PlantSeed } from "./model";
-import {
-  recordColumns,
-  textColumn,
-  tableLinkClassName,
-  MembershipCell,
-} from "../omnidex/table-columns";
-import type { ListColumn } from "../omnidex/table-columns";
+import { recordColumns, MembershipCell } from "../omnidex/table-columns";
+import { textColumn, tableLinkClassName } from "../list-page/table-columns";
+import type { ListColumn } from "../list-page/table-columns";
 import { useOmnidexOrigin } from "@/features/omnidex/navigation";
 import { acquisitionLabels } from "../omnidex/acquisition";
 import { indexMembership } from "../omnidex/membership";

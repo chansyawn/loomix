@@ -2,7 +2,11 @@ import { XIcon } from "lucide-react";
 import { Badge } from "@/ui/components/badge";
 import { Button } from "@/ui/components/button";
 import { FilterSummary } from "./filter-summary";
-import type { FilterChip } from "./filter-chips";
+export interface FilterChip {
+  key: string;
+  label: string;
+  remove: () => void;
+}
 
 export function ListResultsSummary({
   total,

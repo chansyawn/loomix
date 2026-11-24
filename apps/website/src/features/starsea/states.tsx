@@ -1,26 +1,33 @@
-import { useRouter } from "@tanstack/react-router";
+import { useRouter, useRouterState } from "@tanstack/react-router";
 import { DetailPageLoading } from "@/features/detail-page/detail-page";
-import { ListPage } from "@/features/omnidex/page";
-import { wideGrid } from "@/features/omnidex/grid-layout";
-import { ListLoadError } from "@/features/omnidex/states";
+import { ListLoading } from "@/features/list-page/loading";
+import { useListLayout } from "@/features/list-page/use-list-layout";
+import { ListLoadError } from "@/features/list-page/states";
 import { Button } from "@/ui/components/button";
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/ui/components/empty";
 import { Skeleton } from "@/ui/components/skeleton";
 import { StarseaReturnLink } from "./navigation";
+import { isletColumns, starseaListPresentation } from "./list-presentation";
+import { starseaSearchSchema } from "./search";
 
 export function StarseaListLoading() {
+  const search = starseaSearchSchema.parse(
+    useRouterState({ select: (state) => state.location.search }),
+  );
+  const { layout } = useListLayout(search.layout);
+  const { toolbar, grid, card } = starseaListPresentation;
   return (
-    <ListPage title="星海" loading>
-      <div className="flex flex-col gap-4 pb-8">
-        <Skeleton className="h-9 w-full max-w-96" />
-        <Skeleton className="h-9 w-full max-w-96" />
-        <div className={wideGrid(80).className}>
-          {[1, 2, 3, 4].map((placeholder) => (
-            <Skeleton key={placeholder} className="aspect-4/3" />
-          ))}
-        </div>
-      </div>
-    </ListPage>
+    <ListLoading
+      grid={grid}
+      card={card}
+      columns={isletColumns()}
+      toolbar={{
+        ...toolbar,
+        layout,
+        query: search.q,
+        filters: <Skeleton aria-hidden="true" className="h-8 w-36" />,
+      }}
+    />
   );
 }
 
@@ -30,7 +37,7 @@ export function StarseaDetailLoading() {
 
 export function StarseaError() {
   const router = useRouter();
-  return <ListLoadError title="星海" onRetry={() => void router.invalidate()} />;
+  return <ListLoadError title="星海资料暂时无法加载" onRetry={() => void router.invalidate()} />;
 }
 
 export function StarseaNotFound() {

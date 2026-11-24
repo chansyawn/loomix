@@ -2,6 +2,7 @@ import { createImageResolver, type ImageIndex } from "@loomix/schema/assets";
 import { createCatalogIndex, isListedItem, type Catalog } from "@loomix/schema/catalog";
 import type { Neighbors } from "@loomix/schema/neighbors";
 import type { Starsea } from "@loomix/schema/starsea";
+import { resolveNeighborPortrait } from "../neighbors/portrait";
 
 type Islet = Starsea["islets"][number];
 type Region = Starsea["regions"][number];
@@ -120,7 +121,7 @@ export function toStarseaDetail(
       return {
         id,
         name: neighbor.name,
-        image: image(neighbor.images.role) ?? image(neighbor.images.favour),
+        image: resolveNeighborPortrait(neighbor.images, image)?.image ?? null,
       };
     }),
   };

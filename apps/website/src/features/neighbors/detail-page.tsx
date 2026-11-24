@@ -11,8 +11,6 @@ import { NeighborAbilitiesSection } from "./abilities-section";
 import { NeighborHouseSection } from "./house-section";
 
 export function NeighborDetailPage({ neighbor }: { neighbor: NeighborDetail }) {
-  const heroImage = neighbor.favourImage ?? neighbor.roleImage;
-  const heroLabel = neighbor.favourImage ? "好感插画" : "角色立绘";
   const fields: DetailField[] = [
     ["昵称", neighbor.profile.nickname ?? "资料暂未收录"],
     ["英文名", neighbor.profile.englishName ?? "资料暂未收录"],
@@ -64,8 +62,8 @@ export function NeighborDetailPage({ neighbor }: { neighbor: NeighborDetail }) {
       title={neighbor.name}
       image={
         <NeighborImage
-          image={heroImage}
-          name={`${neighbor.name}的${heroLabel}`}
+          image={neighbor.portrait?.image ?? null}
+          name={`${neighbor.name}的${neighbor.portrait?.label ?? "肖像"}`}
           eager
           className="aspect-square p-4 sm:p-6"
         />

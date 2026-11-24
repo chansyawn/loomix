@@ -1,44 +1,56 @@
 import { Link } from "@tanstack/react-router";
-import { Card, CardDescription, CardHeader, CardMedia, CardTitle } from "@/ui/components/card";
+import { ListCard } from "../list-page/list-card";
 import type { NeighborDetail } from "./data";
 import { NeighborImage } from "./image";
 import { useNeighborsOrigin } from "./navigation";
 
-export function NeighborCard({ neighbor }: { neighbor: NeighborDetail }) {
+export function NeighborLink({
+  neighbor,
+  className,
+}: {
+  neighbor: NeighborDetail;
+  className?: string;
+}) {
   const origin = useNeighborsOrigin();
   return (
-    <Card role="article" className="relative min-w-0">
-      <CardMedia className="mx-2">
+    <Link
+      to="/neighbors/$id"
+      params={{ id: String(neighbor.id) }}
+      state={{ neighborsOrigin: origin }}
+      className={className}
+    >
+      {neighbor.name}
+    </Link>
+  );
+}
+
+export function NeighborStars({ stars }: { stars: NeighborDetail["stars"] }) {
+  if (!stars.length) return <p className="text-xs text-muted-foreground">星球与星系资料暂未收录</p>;
+  return (
+    <ul className="space-y-1 text-sm whitespace-normal text-muted-foreground">
+      {stars.map(({ name, galaxy }) => (
+        <li key={`${name}-${galaxy}`}>
+          {name} <span className="text-xs">· {galaxy ? `${galaxy}星系` : "星系资料暂未收录"}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export function NeighborCard({ neighbor }: { neighbor: NeighborDetail }) {
+  return (
+    <ListCard
+      name={neighbor.name}
+      image={
         <NeighborImage
-          image={neighbor.image}
-          name={`${neighbor.name}的星湾插画`}
-          className="aspect-156/41 rounded-md bg-muted/50"
+          image={neighbor.portrait?.image ?? null}
+          name={`${neighbor.name}的${neighbor.portrait?.label ?? "肖像"}`}
+          className="aspect-square bg-muted p-4"
         />
-      </CardMedia>
-      <CardHeader>
-        <CardTitle className="min-w-0">
-          <h2
-            className="truncate [&>a]:outline-none [&>a]:after:absolute [&>a]:after:inset-0 [&>a]:after:rounded-xl"
-            title={neighbor.name}
-          >
-            <Link
-              to="/neighbors/$id"
-              params={{ id: String(neighbor.id) }}
-              state={{ neighborsOrigin: origin }}
-            >
-              {neighbor.name}
-            </Link>
-          </h2>
-        </CardTitle>
-        {neighbor.stars.map((star) => (
-          <CardDescription key={star.name}>
-            {star.name}
-            <span className="mt-1 block text-xs">
-              {star.galaxy ? `${star.galaxy}星系` : "星系资料暂未收录"}
-            </span>
-          </CardDescription>
-        ))}
-      </CardHeader>
-    </Card>
+      }
+      titleLink={<NeighborLink neighbor={neighbor} />}
+    >
+      <NeighborStars stars={neighbor.stars} />
+    </ListCard>
   );
 }

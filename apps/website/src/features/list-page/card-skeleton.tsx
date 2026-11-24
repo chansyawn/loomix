@@ -1,14 +1,17 @@
 import { Card, CardHeader, CardMedia, CardTitle } from "@/ui/components/card";
 import { Skeleton } from "@/ui/components/skeleton";
+import type { ReactNode } from "react";
 
 export function ListCardSkeleton({
   imageClassName = "aspect-square",
   description = false,
   tags = false,
+  children,
 }: {
   imageClassName?: string;
   description?: boolean;
   tags?: boolean;
+  children?: ReactNode;
 }) {
   return (
     <Card className="min-w-0" aria-hidden="true">
@@ -26,6 +29,7 @@ export function ListCardSkeleton({
           </div>
         ) : null}
         {tags ? <Skeleton className="h-4 w-1/2" /> : null}
+        {children}
       </CardHeader>
     </Card>
   );

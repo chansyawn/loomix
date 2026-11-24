@@ -1,11 +1,7 @@
 import { filterSelectionValues, flattenFilterOptions, toggleFilterSelection } from "./filter-types";
 import type { FilterGroup } from "./filter-types";
 
-export interface FilterChip {
-  key: string;
-  label: string;
-  remove: () => void;
-}
+import type { FilterChip } from "../list-page/results-summary";
 
 export function listFilterChips<K extends string>(
   groups: FilterGroup<K>[],

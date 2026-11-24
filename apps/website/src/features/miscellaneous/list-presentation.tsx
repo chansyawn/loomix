@@ -1,5 +1,5 @@
-import { ListCardSkeleton } from "../omnidex/card-skeleton";
-import { compactGrid } from "../omnidex/grid-layout";
+import { ListCardSkeleton } from "../list-page/card-skeleton";
+import { compactGrid } from "../list-page/grid-layout";
 
 export const title = "杂物";
 export function listPresentation() {

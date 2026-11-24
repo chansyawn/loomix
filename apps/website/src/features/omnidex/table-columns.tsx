@@ -2,35 +2,7 @@ import type { ReactNode } from "react";
 import { Skeleton } from "@/ui/components/skeleton";
 import { QualityBadge } from "./quality";
 import { RecordImage } from "./record-image";
-
-export interface ListColumn<T> {
-  id: string;
-  header: string;
-  width: number;
-  sortable?: boolean;
-  value?: (record: T) => string | number | null;
-  cell: (record: T) => ReactNode;
-  skeleton?: ReactNode;
-}
-
-export function TextCell({ value }: { value: string | number | null | undefined }) {
-  return value !== null && value !== undefined && value !== "" ? (
-    <span className="block truncate" title={String(value)}>
-      {value}
-    </span>
-  ) : (
-    <span className="text-muted-foreground">未提供</span>
-  );
-}
-
-export function textColumn<T>(
-  id: string,
-  header: string,
-  width: number,
-  value: (record: T) => string | number | null | undefined,
-): ListColumn<T> {
-  return { id, header, width, cell: (record) => <TextCell value={value(record)} /> };
-}
+import { TextCell, type ListColumn } from "../list-page/table-columns";
 
 export function recordColumns<
   T extends { name: string; image: string | null; quality: number | null },
@@ -73,9 +45,6 @@ export function recordColumns<
     },
   ];
 }
-
-export const tableLinkClassName =
-  "truncate font-medium underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 export function membershipStatus(hasMemberships: boolean, complete: boolean, noun: string) {
   return hasMemberships ? undefined : complete ? `未归入${noun}` : "成员信息未提供";

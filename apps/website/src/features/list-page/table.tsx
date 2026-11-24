@@ -35,15 +35,13 @@ export function ListTable<T extends object>({
   getRowId,
   label,
   sorting,
-  onSortingChange,
 }: {
   resultKey: string;
   rows: T[];
   columns: ListColumn<T>[];
   getRowId: (record: T) => string;
   label: string;
-  sorting: SortingState;
-  onSortingChange: OnChangeFn<SortingState>;
+  sorting?: { value: SortingState; onChange: OnChangeFn<SortingState> };
 }) {
   const helper = createColumnHelper<typeof listTableFeatures, T>();
   const columns = helper.columns(
@@ -51,7 +49,7 @@ export function ListTable<T extends object>({
       helper.accessor((record) => column.value?.(record), {
         id: column.id,
         header: column.header,
-        enableSorting: column.sortable ?? false,
+        enableSorting: Boolean(sorting && column.sortable),
         cell: ({ row }) => column.cell(row.original),
       }),
     ),
@@ -66,14 +64,14 @@ export function ListTable<T extends object>({
     manualSorting: true,
     enableMultiSort: false,
     sortDescFirst: false,
-    state: { sorting },
-    onSortingChange,
+    state: { sorting: sorting?.value ?? [] },
+    onSortingChange: sorting?.onChange,
   });
   const leafColumns = table.getAllLeafColumns();
   const width = leafColumns.reduce((total, column) => total + widths[column.id]!, 0);
 
   return (
-    <div className="mb-8 overflow-hidden rounded-xl border">
+    <div className="overflow-hidden rounded-xl border">
       <Table
         aria-label={label}
         aria-rowcount={rows.length + 1}
@@ -89,7 +87,7 @@ export function ListTable<T extends object>({
           {table.getHeaderGroups().map((group) => (
             <TableRow key={group.id} aria-rowindex={1}>
               {group.headers.map((header) => {
-                const direction = sorting.find((entry) => entry.id === header.column.id);
+                const direction = sorting?.value.find((entry) => entry.id === header.column.id);
                 const Icon = direction
                   ? direction.desc
                     ? ArrowDownIcon

@@ -12,61 +12,46 @@ import {
 } from "@/ui/components/table";
 import { ListPage } from "./page";
 import type { ListTab } from "./page";
-import { ListToolbar } from "./toolbar";
+import { ListToolbar, type ListToolbarProps } from "./toolbar";
 import { FilterSummary } from "./filter-summary";
 import type { GridLayout } from "./grid-layout";
-import type { ListColumn } from "./table-columns";
-import type { ListLayout } from "./layout";
+import type { ListColumnMetadata } from "./table-columns";
 
-export function ListLoading<V extends string, T>({
+export function ListLoading<V extends string, S extends string>({
   title,
   tabs,
   view,
-  layout,
   grid,
   card,
   columns,
-  searchLabel,
-  placeholder,
-  query,
-  sort,
-  sortOptions,
+  toolbar,
 }: {
-  title: string;
+  title?: string;
   tabs?: ListTab<V>[];
   view?: V;
-  layout: ListLayout;
   grid: GridLayout;
   card: ReactNode;
-  columns: ListColumn<T>[];
-  searchLabel: string;
-  placeholder: string;
-  query: string;
-  sort: string;
-  sortOptions: Partial<Record<string, string>>;
+  columns: readonly ListColumnMetadata[];
+  toolbar: ListToolbarProps<S>;
 }) {
   return (
-    <ListPage title={title} tabs={tabs} view={view} loading>
+    <ListPage title={title ?? toolbar.title} tabs={tabs} view={view} loading>
       <ListToolbar
-        title={title}
-        searchLabel={searchLabel}
-        placeholder={placeholder}
-        query={query}
-        sort={sort}
-        sortOptions={sortOptions}
-        layout={layout}
+        {...toolbar}
         disabled
         filters={
-          <Button variant="outline" disabled>
-            <SlidersHorizontalIcon />
-            筛选
-          </Button>
+          toolbar.filters ?? (
+            <Button variant="outline" disabled>
+              <SlidersHorizontalIcon />
+              筛选
+            </Button>
+          )
         }
       />
       <FilterSummary status={<Skeleton className="h-4 w-24" />} chips={[]} onClear={() => {}} />
       <div aria-hidden="true">
-        {layout === "table" ? (
-          <div className="mb-8 overflow-hidden rounded-xl border">
+        {toolbar.layout === "table" ? (
+          <div className="overflow-hidden rounded-xl border">
             <Table
               className="table-fixed"
               style={{ minWidth: columns.reduce((total, column) => total + column.width, 0) }}
@@ -103,7 +88,7 @@ export function ListLoading<V extends string, T>({
             </Table>
           </div>
         ) : (
-          <div className={`${grid.className} pb-8`}>
+          <div className={grid.className}>
             {Array.from({ length: 12 }, (_, index) => (
               <div key={index} className="min-w-0 [&>div]:h-full">
                 {card}

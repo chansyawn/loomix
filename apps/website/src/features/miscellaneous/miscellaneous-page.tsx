@@ -1,17 +1,17 @@
-import { ListPage } from "../omnidex/page";
-import { ListToolbar } from "../omnidex/toolbar";
-import { ListResultsSummary } from "../omnidex/results-summary";
+import { ListPage } from "../list-page/page";
+import { ListToolbar } from "../list-page/toolbar";
+import { ListResultsSummary } from "../list-page/results-summary";
 import { listFilterChips } from "../omnidex/filter-chips";
 import { FilterPanel } from "../omnidex/filter-panel";
-import { ListTable } from "../omnidex/table";
-import { listSort, tableSorting } from "../omnidex/sort";
-import { useListLayout, saveListLayout } from "../omnidex/use-list-layout";
+import { ListResults } from "../list-page/results";
+import { recordTableSorting } from "../omnidex/sort";
+import { useListLayout } from "../list-page/use-list-layout";
 import type { MiscellaneousData } from "./data";
 import { MiscellaneousCard } from "./miscellaneous-card";
 import { filterGroups, queryMiscellaneous } from "./query";
 import { emptyQuery, sortOptions } from "./search";
 import type { MiscellaneousSearch, MiscellaneousQuery } from "./search";
-import { MiscellaneousEmpty } from "./states";
+import { ListEmpty } from "../list-page/states";
 import { miscellaneousTableColumns } from "./table-columns";
 import { title, listPresentation } from "./list-presentation";
 
@@ -27,7 +27,11 @@ export function MiscellaneousPage({
   onSearchChange: (update: SearchUpdate, replace?: boolean) => Promise<void>;
 }) {
   const query = search.items;
-  const layout = useListLayout(search.layout);
+  const layoutState = useListLayout(
+    search.layout,
+    (layout) => void onSearchChange((previous) => ({ ...previous, layout })),
+  );
+  const { layout } = layoutState;
   const presentation = listPresentation();
   const result = queryMiscellaneous(data, query);
   const groups = filterGroups(data);
@@ -51,14 +55,8 @@ export function MiscellaneousPage({
         placeholder={presentation.placeholder}
         query={query.q}
         onQueryChange={(q, replace) => update({ q }, replace)}
-        sort={query.sort}
-        sortOptions={sortOptions}
-        onSortChange={(sort) => update({ sort })}
-        layout={layout}
-        onLayoutChange={(next) => {
-          saveListLayout(next);
-          void onSearchChange((previous) => ({ ...previous, layout: next }));
-        }}
+        sort={{ value: query.sort, options: sortOptions, onChange: (sort) => update({ sort }) }}
+        {...layoutState}
         filters={
           <FilterPanel
             title={`筛选${title}`}
@@ -76,32 +74,18 @@ export function MiscellaneousPage({
         chips={chips}
         onClear={clear}
       />
-      {result.total > 0 ? (
-        layout === "table" ? (
-          <ListTable
-            resultKey={resultKey}
-            rows={result.rows}
-            columns={columns}
-            getRowId={(row) => String(row.id)}
-            label={`${title}表格`}
-            sorting={tableSorting(query.sort)}
-            onSortingChange={(updater) => {
-              const previous = tableSorting(query.sort);
-              update({
-                sort: listSort(typeof updater === "function" ? updater(previous) : updater),
-              });
-            }}
-          />
-        ) : (
-          <div className={`${presentation.grid.className} pb-8`}>
-            {result.rows.map((row) => (
-              <MiscellaneousCard key={row.id} item={row} />
-            ))}
-          </div>
-        )
-      ) : (
-        <MiscellaneousEmpty onClear={clear} />
-      )}
+      <ListResults
+        layout={layout}
+        resultKey={resultKey}
+        rows={result.rows}
+        columns={columns}
+        getRowId={(row) => String(row.id)}
+        label={`${title}表格`}
+        sorting={recordTableSorting(query.sort, (sort) => update({ sort }))}
+        grid={presentation.grid}
+        renderCard={(row) => <MiscellaneousCard item={row} />}
+        empty={<ListEmpty title={title} onClear={data.length ? clear : undefined} />}
+      />
     </ListPage>
   );
 }

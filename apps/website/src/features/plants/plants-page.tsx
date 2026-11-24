@@ -1,20 +1,17 @@
-import { ListPage } from "../omnidex/page";
-import { ListToolbar } from "../omnidex/toolbar";
-import { ListResultsSummary } from "../omnidex/results-summary";
+import { ListPage } from "../list-page/page";
+import { ListToolbar } from "../list-page/toolbar";
+import { ListResultsSummary } from "../list-page/results-summary";
 import { listFilterChips } from "../omnidex/filter-chips";
 import { FilterPanel } from "../omnidex/filter-panel";
-import { VirtualGrid } from "../omnidex/virtual-grid";
-import { ListTable } from "../omnidex/table";
-import { listSort, tableSorting } from "../omnidex/sort";
-import { useListLayout, saveListLayout } from "../omnidex/use-list-layout";
-import type { PlantItem, PlantSeries } from "../omnidex-view";
-import type { PlantSeed } from "./model";
+import { ListResults } from "../list-page/results";
+import { recordTableSorting } from "../omnidex/sort";
+import { useListLayout } from "../list-page/use-list-layout";
 import type { PlantsData } from "./data";
 import { PlantsCard, PlantSeriesCard, SeedCard } from "./plants-card";
 import { filterGroups, queryPlants } from "./query";
 import { emptyQuery, seedSortOptions, sortOptions, updateViewQuery } from "./search";
 import type { PlantsSearch, ViewQuery } from "./search";
-import { PlantsEmpty } from "./states";
+import { ListEmpty } from "../list-page/states";
 import { plantsTableColumns } from "./table-columns";
 import { title, tabs, listPresentation } from "./list-presentation";
 
@@ -30,8 +27,14 @@ export function PlantsPage({
   onSearchChange: (update: SearchUpdate, replace?: boolean) => Promise<void>;
 }) {
   const query = search[search.view];
-  const layout = useListLayout(search.layout);
+  const layoutState = useListLayout(
+    search.layout,
+    (layout) => void onSearchChange((previous) => ({ ...previous, layout })),
+  );
+  const { layout } = layoutState;
   const presentation = listPresentation(search.view);
+  const viewLabel =
+    search.view === "items" ? title : search.view === "series" ? `${title}系列` : `${title}种子`;
   const result = queryPlants(data, search.view, query);
   const groups = filterGroups(data, search.view);
   const resultKey = JSON.stringify([search.view, layout, query]);
@@ -61,14 +64,12 @@ export function PlantsPage({
         placeholder={presentation.placeholder}
         query={query.q}
         onQueryChange={(q, replace) => update({ q }, replace)}
-        sort={query.sort}
-        sortOptions={search.view === "seeds" ? seedSortOptions : sortOptions}
-        onSortChange={(sort) => update({ sort })}
-        layout={layout}
-        onLayoutChange={(next) => {
-          saveListLayout(next);
-          void onSearchChange((previous) => ({ ...previous, layout: next }));
+        sort={{
+          value: query.sort,
+          options: search.view === "seeds" ? seedSortOptions : sortOptions,
+          onChange: (sort) => update({ sort }),
         }}
+        {...layoutState}
         filters={
           <FilterPanel
             title={`筛选${title}`}
@@ -86,41 +87,24 @@ export function PlantsPage({
         chips={chips}
         onClear={clear}
       />
-      {result.total > 0 ? (
-        layout === "table" ? (
-          <ListTable
-            resultKey={resultKey}
-            rows={result.rows}
-            columns={columns}
-            getRowId={(row) => String(row.id)}
-            label={`${title}表格`}
-            sorting={tableSorting(query.sort)}
-            onSortingChange={(updater) => {
-              const previous = tableSorting(query.sort);
-              update({
-                sort: listSort(typeof updater === "function" ? updater(previous) : updater),
-              });
-            }}
-          />
-        ) : (
-          <VirtualGrid<PlantItem | PlantSeries | PlantSeed>
-            key={resultKey}
-            rows={result.rows}
-            layout={presentation.grid}
-            getKey={(row) => row.id}
-            renderCard={(row) => {
-              if ("growth" in row) return <SeedCard seed={row} />;
-              return "category" in row ? (
-                <PlantsCard item={row} />
-              ) : (
-                <PlantSeriesCard series={row} />
-              );
-            }}
-          />
-        )
-      ) : (
-        <PlantsEmpty onClear={clear} view={search.view} />
-      )}
+      <ListResults
+        layout={layout}
+        resultKey={resultKey}
+        rows={result.rows}
+        columns={columns}
+        getRowId={(row) => String(row.id)}
+        label={`${title}表格`}
+        sorting={recordTableSorting(query.sort, (sort) => update({ sort }))}
+        grid={presentation.grid}
+        virtual
+        renderCard={(row) => {
+          if ("growth" in row) return <SeedCard seed={row} />;
+          return "category" in row ? <PlantsCard item={row} /> : <PlantSeriesCard series={row} />;
+        }}
+        empty={
+          <ListEmpty title={viewLabel} onClear={data[search.view].length ? clear : undefined} />
+        }
+      />
     </ListPage>
   );
 }

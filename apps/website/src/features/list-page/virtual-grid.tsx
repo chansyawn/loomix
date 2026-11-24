@@ -16,7 +16,7 @@ interface GridProps<T> {
 export function VirtualGrid<T>(props: GridProps<T>) {
   const { container, geometry } = useScrollGeometry<HTMLDivElement>();
   return (
-    <div ref={container} className="mb-8">
+    <div ref={container}>
       {geometry && geometry.width > 0 && <VirtualRows {...props} geometry={geometry} />}
     </div>
   );

@@ -1,6 +1,6 @@
 import type { SearchMiddleware } from "@tanstack/react-router";
 import { z } from "zod";
-import { listLayoutSchema } from "../omnidex/layout";
+import { listLayoutSchema } from "../list-page/layout";
 
 export const missing = "__missing";
 export const sortOptions = {

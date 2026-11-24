@@ -1,27 +1,25 @@
 import { useRouterState } from "@tanstack/react-router";
-import { ListLoading } from "../omnidex/loading";
-import { ListCardSkeleton } from "../omnidex/card-skeleton";
-import { compactGrid } from "../omnidex/grid-layout";
-import { useListLayout } from "../omnidex/use-list-layout";
+import { ListLoading } from "../list-page/loading";
+import { useListLayout } from "../list-page/use-list-layout";
 import { catalogSearchSchema, sortOptions } from "./search";
-import { catalogColumns } from "./presentation";
+import { catalogColumns, catalogListPresentation } from "./presentation";
 
 export function CatalogLoading() {
   const raw = useRouterState({ select: (state) => state.location.search }),
     search = catalogSearchSchema.parse(raw),
-    layout = useListLayout(search.layout);
+    { layout } = useListLayout(search.layout);
+  const { grid, card, toolbar } = catalogListPresentation;
   return (
     <ListLoading
-      title="全部"
-      layout={layout}
-      grid={compactGrid(164)}
-      card={<ListCardSkeleton description tags />}
+      grid={grid}
+      card={card}
       columns={catalogColumns()}
-      searchLabel="搜索物品名称"
-      placeholder="搜索物品名称或拼音…"
-      query={search.items.q}
-      sort={search.items.sort}
-      sortOptions={sortOptions}
+      toolbar={{
+        ...toolbar,
+        layout,
+        query: search.items.q,
+        sort: { value: search.items.sort, options: sortOptions },
+      }}
     />
   );
 }

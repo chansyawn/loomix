@@ -1,10 +1,19 @@
 import { Link } from "@tanstack/react-router";
-import { ListCard } from "../omnidex/list-card";
+import { ListCardSkeleton } from "../list-page/card-skeleton";
+import { compactGrid } from "../list-page/grid-layout";
+import { RecordListCard } from "../omnidex/record-list-card";
 import { RecordImage } from "../omnidex/record-image";
-import { recordColumns, textColumn, tableLinkClassName } from "../omnidex/table-columns";
+import { recordColumns } from "../omnidex/table-columns";
+import { textColumn, tableLinkClassName } from "../list-page/table-columns";
 import { useOmnidexOrigin } from "../omnidex/navigation";
 import { categoryNames, type CatalogEntryRow } from "../omnidex/catalog";
 import { catalogEntryLocation } from "../omnidex/entry-location";
+
+export const catalogListPresentation = {
+  toolbar: { title: "全部", searchLabel: "搜索物品名称", placeholder: "搜索物品名称或拼音…" },
+  grid: compactGrid(164),
+  card: <ListCardSkeleton description tags />,
+};
 
 export function RecordNameLink({ record }: { record: CatalogEntryRow }) {
   const origin = useOmnidexOrigin();
@@ -20,7 +29,7 @@ export function RecordNameLink({ record }: { record: CatalogEntryRow }) {
 }
 export function CatalogCard({ record }: { record: CatalogEntryRow }) {
   return (
-    <ListCard
+    <RecordListCard
       name={record.name}
       image={<RecordImage image={record.image} name={record.name} />}
       quality={record.quality}

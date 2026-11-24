@@ -1,7 +1,7 @@
 import { ShirtIcon, LayersIcon, SparklesIcon, UsersIcon } from "lucide-react";
-import { ListCardSkeleton } from "../omnidex/card-skeleton";
-import { compactGrid } from "../omnidex/grid-layout";
-import type { ListTab } from "../omnidex/page";
+import { ListCardSkeleton } from "../list-page/card-skeleton";
+import { compactGrid } from "../list-page/grid-layout";
+import type { ListTab } from "../list-page/page";
 import type { View } from "./search";
 
 export const title = "服饰";

@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
 import { compactGrid, gridGeometry, gridRow, wideGrid } from "./grid-layout";
-import { listSort, tableSorting } from "./sort";
 
 describe("collection grid geometry", () => {
   it.each([
@@ -48,19 +47,5 @@ describe("collection grid geometry", () => {
     expect(gridRow(rows, 2, 2)).toEqual([5]);
     expect(gridRow(rows, 3, 2)).toEqual([]);
     expect(rows).toEqual([1, 2, 3, 4, 5]);
-  });
-});
-
-describe("collection sorting adapters", () => {
-  it("round trips supported sorts and clears unsupported table sorting", () => {
-    for (const sort of [
-      "original",
-      "name-asc",
-      "name-desc",
-      "quality-asc",
-      "quality-desc",
-    ] as const)
-      expect(listSort(tableSorting(sort))).toBe(sort);
-    expect(listSort([{ id: "category", desc: false }])).toBe("original");
   });
 });

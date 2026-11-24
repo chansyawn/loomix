@@ -14,3 +14,12 @@ export function listSort(sorting: SortingState): ListSort {
     ? `${sort.id}-${sort.desc ? "desc" : "asc"}`
     : "original";
 }
+
+export function recordTableSorting(sort: ListSort, onChange: (sort: ListSort) => void) {
+  const value = tableSorting(sort);
+  return {
+    value,
+    onChange: (update: SortingState | ((previous: SortingState) => SortingState)) =>
+      onChange(listSort(typeof update === "function" ? update(value) : update)),
+  };
+}

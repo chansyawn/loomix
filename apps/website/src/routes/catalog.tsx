@@ -3,7 +3,7 @@ import { loadCatalogOverview } from "@/features/omnidex-loader";
 import { CatalogPage } from "@/features/catalog/page";
 import { catalogSearchSchema, compactCatalogSearchMiddleware } from "@/features/catalog/search";
 import { CatalogLoading } from "@/features/catalog/states";
-import { ListLoadError } from "@/features/omnidex/states";
+import { ListLoadError } from "@/features/list-page/states";
 export const Route = createFileRoute("/catalog")({
   ssr: false,
   validateSearch: catalogSearchSchema,
@@ -29,5 +29,5 @@ function CatalogRoute() {
 }
 function CatalogError() {
   const router = useRouter();
-  return <ListLoadError title="全部" onRetry={() => void router.invalidate()} />;
+  return <ListLoadError title="全部图鉴暂时无法加载" onRetry={() => void router.invalidate()} />;
 }

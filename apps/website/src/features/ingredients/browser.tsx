@@ -1,31 +1,30 @@
-import type { ListLayout } from "../omnidex/layout";
-import { ListToolbar } from "../omnidex/toolbar";
-import { ListResultsSummary } from "../omnidex/results-summary";
+import type { useListLayout } from "../list-page/use-list-layout";
+import { ListToolbar } from "../list-page/toolbar";
+import { ListResultsSummary } from "../list-page/results-summary";
 import { listFilterChips } from "../omnidex/filter-chips";
 import { FilterPanel } from "../omnidex/filter-panel";
-import { ListEmpty } from "../omnidex/states";
-import { ListTable } from "../omnidex/table";
-import { listSort, tableSorting } from "../omnidex/sort";
+import { ListEmpty } from "../list-page/states";
+import { ListResults } from "../list-page/results";
+import { recordTableSorting } from "../omnidex/sort";
 import type { IngredientsData } from "./model";
 import { ingredientFilterGroups, ingredientSelection, queryIngredients } from "./query";
 import { emptyIngredientsQuery, ingredientSortOptions } from "./search";
 import type { IngredientsQuery } from "./search";
 import type { IngredientTagGroupKey } from "./tag-filter-policy";
-import { IngredientItems } from "./cards";
+import { IngredientCard } from "./cards";
+import { ingredientListPresentation } from "./list-presentation";
 import { ingredientTableColumns } from "./table-columns";
 
 export function IngredientsBrowser({
   data,
   query,
-  layout,
+  layoutState,
   onQueryChange,
-  onLayoutChange,
 }: {
   data: IngredientsData;
   query: IngredientsQuery;
-  layout: ListLayout;
+  layoutState: ReturnType<typeof useListLayout>;
   onQueryChange: (patch: Partial<IngredientsQuery>, replace?: boolean) => void;
-  onLayoutChange: (layout: ListLayout) => void;
 }) {
   const normalizedQuery = { ...query, ...ingredientSelection(data, query) };
   const result = queryIngredients(data, normalizedQuery);
@@ -40,16 +39,15 @@ export function IngredientsBrowser({
   return (
     <>
       <ListToolbar
-        title="食材"
-        searchLabel="搜索食材名称"
-        placeholder="搜索食材名称或拼音…"
+        {...ingredientListPresentation.toolbar}
         query={query.q}
         onQueryChange={(q, replace) => onQueryChange({ q }, replace)}
-        sort={query.sort}
-        sortOptions={ingredientSortOptions}
-        onSortChange={(sort) => onQueryChange({ sort })}
-        layout={layout}
-        onLayoutChange={onLayoutChange}
+        sort={{
+          value: query.sort,
+          options: ingredientSortOptions,
+          onChange: (sort) => onQueryChange({ sort }),
+        }}
+        {...layoutState}
         filters={
           <FilterPanel
             title="筛选食材"
@@ -62,32 +60,24 @@ export function IngredientsBrowser({
         }
       />
       <ListResultsSummary total={result.items.length} unit="种食材" chips={chips} onClear={clear} />
-      {result.items.length > 0 && (
-        <section aria-label="食材结果" className="pb-8">
-          {layout === "table" ? (
-            <ListTable
-              resultKey={JSON.stringify([layout, normalizedQuery])}
-              rows={result.items}
-              columns={ingredientTableColumns(data)}
-              getRowId={(item) => String(item.id)}
-              label="食材列表"
-              sorting={tableSorting(query.sort === "recipes-desc" ? "original" : query.sort)}
-              onSortingChange={(updater) => {
-                const previous = tableSorting(
-                  query.sort === "recipes-desc" ? "original" : query.sort,
-                );
-                const sort = listSort(typeof updater === "function" ? updater(previous) : updater);
-                onQueryChange({
-                  sort: sort === "name-asc" || sort === "name-desc" ? sort : "original",
-                });
-              }}
-            />
-          ) : (
-            <IngredientItems items={result.items} data={data} />
-          )}
-        </section>
-      )}
-      {result.items.length === 0 && <ListEmpty title="食材" onClear={clear} />}
+      <ListResults
+        layout={layoutState.layout}
+        resultKey={JSON.stringify(normalizedQuery)}
+        rows={result.items}
+        columns={ingredientTableColumns(data)}
+        getRowId={(item) => String(item.id)}
+        label="食材表格"
+        sorting={recordTableSorting(
+          query.sort === "recipes-desc" ? "original" : query.sort,
+          (sort) =>
+            onQueryChange({
+              sort: sort === "name-asc" || sort === "name-desc" ? sort : "original",
+            }),
+        )}
+        grid={ingredientListPresentation.grid}
+        renderCard={(item) => <IngredientCard item={item} data={data} />}
+        empty={<ListEmpty title="食材" onClear={data.itemsById.size ? clear : undefined} />}
+      />
     </>
   );
 }

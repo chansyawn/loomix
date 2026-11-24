@@ -1,24 +1,25 @@
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "cn";
 import { Card, CardDescription, CardHeader, CardMedia, CardTitle } from "@/ui/components/card";
-import { QualityBar } from "./quality";
 
 type ListCardProps = Pick<ComponentProps<"div">, "className" | "ref"> & {
   name: string;
   image: ReactNode;
-  quality: number | null;
+  imageOverlay?: ReactNode;
   titleLink: ReactNode;
   description?: string | null;
   tags?: string | null;
+  children?: ReactNode;
 };
 
 export function ListCard({
   name,
   image,
-  quality,
+  imageOverlay,
   titleLink,
   description,
   tags,
+  children,
   className,
   ref,
 }: ListCardProps) {
@@ -26,12 +27,12 @@ export function ListCard({
     <Card ref={ref} role="article" className={cn("relative min-w-0", className)}>
       <CardMedia>
         {image}
-        <QualityBar quality={quality} />
+        {imageOverlay}
       </CardMedia>
       <CardHeader>
         <CardTitle className="min-w-0">
           <h2
-            className="truncate [&>a]:outline-none [&>a]:after:absolute [&>a]:after:inset-0 [&>a]:after:rounded-xl"
+            className="truncate [&>a]:outline-none [&>a]:after:absolute [&>a]:after:inset-0 [&>a]:after:rounded-xl [&>a:focus-visible]:after:z-20 [&>a:focus-visible]:after:inset-ring-2 [&>a:focus-visible]:after:inset-ring-ring"
             title={name}
           >
             {titleLink}
@@ -51,6 +52,7 @@ export function ListCard({
             {tags}
           </p>
         ) : null}
+        {children}
       </CardHeader>
     </Card>
   );

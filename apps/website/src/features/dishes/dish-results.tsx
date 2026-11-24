@@ -1,18 +1,16 @@
-import { ListToolbar } from "../omnidex/toolbar";
-import { ListResultsSummary } from "../omnidex/results-summary";
+import { ListToolbar } from "../list-page/toolbar";
+import { ListResultsSummary } from "../list-page/results-summary";
 import { listFilterChips } from "../omnidex/filter-chips";
 import { FilterPanel } from "../omnidex/filter-panel";
-import { VirtualGrid } from "../omnidex/virtual-grid";
-import { ListTable } from "../omnidex/table";
-import { listSort, tableSorting } from "../omnidex/sort";
-import { useListLayout, saveListLayout } from "../omnidex/use-list-layout";
-import type { DishItem, DishSeries } from "../omnidex-view";
+import { ListResults } from "../list-page/results";
+import { recordTableSorting } from "../omnidex/sort";
+import type { useListLayout } from "../list-page/use-list-layout";
 import type { DishesBrowserData } from "./data";
 import { DishesCard, DishSeriesCard } from "./dishes-card";
 import { filterGroups, queryDishes } from "./query";
 import { emptyQuery, sortOptions, updateViewQuery } from "./search";
 import type { DishesSearch, DishView, FilterKey, ViewQuery } from "./search";
-import { DishesEmpty } from "./states";
+import { ListEmpty } from "../list-page/states";
 import { dishesTableColumns } from "./table-columns";
 import { title, listPresentation } from "./list-presentation";
 import { normalizeIngredientSelection } from "../ingredients/tag-filter";
@@ -22,10 +20,12 @@ type SearchUpdate = DishesSearch | ((previous: DishesSearch) => DishesSearch);
 export function DishResults({
   data,
   search,
+  layoutState,
   onSearchChange,
 }: {
   data: DishesBrowserData;
   search: DishesSearch & { view: DishView };
+  layoutState: ReturnType<typeof useListLayout>;
   onSearchChange: (update: SearchUpdate, replace?: boolean) => Promise<void>;
 }) {
   const viewQuery = search[search.view];
@@ -37,7 +37,7 @@ export function DishResults({
       ingredientQualities: viewQuery.ingredientQualities,
     }),
   };
-  const layout = useListLayout(search.layout);
+  const { layout } = layoutState;
   const presentation = listPresentation(search.view);
   const result = queryDishes(data, search.view, query);
   const groups = filterGroups(data, search.view, result.ingredientTagCounts);
@@ -60,14 +60,8 @@ export function DishResults({
         placeholder={presentation.placeholder}
         query={query.q}
         onQueryChange={(q, replace) => update({ q }, replace)}
-        sort={query.sort}
-        sortOptions={sortOptions}
-        onSortChange={(sort) => update({ sort })}
-        layout={layout}
-        onLayoutChange={(next) => {
-          saveListLayout(next);
-          void onSearchChange((previous) => ({ ...previous, layout: next }));
-        }}
+        sort={{ value: query.sort, options: sortOptions, onChange: (sort) => update({ sort }) }}
+        {...layoutState}
         filters={
           <FilterPanel
             title={`筛选${title}`}
@@ -85,40 +79,30 @@ export function DishResults({
         chips={chips}
         onClear={clear}
       />
-      {result.total > 0 ? (
-        layout === "table" ? (
-          <ListTable
-            resultKey={resultKey}
-            rows={result.rows}
-            columns={columns}
-            getRowId={(row) => String(row.id)}
-            label={`${title}表格`}
-            sorting={tableSorting(query.sort)}
-            onSortingChange={(updater) => {
-              const previous = tableSorting(query.sort);
-              update({
-                sort: listSort(typeof updater === "function" ? updater(previous) : updater),
-              });
-            }}
+      <ListResults
+        layout={layout}
+        resultKey={resultKey}
+        rows={result.rows}
+        columns={columns}
+        getRowId={(row) => String(row.id)}
+        label={`${title}表格`}
+        sorting={recordTableSorting(query.sort, (sort) => update({ sort }))}
+        grid={presentation.grid}
+        virtual
+        renderCard={(row) =>
+          "difficulty" in row ? (
+            <DishesCard item={row} />
+          ) : (
+            <DishSeriesCard series={row} items={data.items} />
+          )
+        }
+        empty={
+          <ListEmpty
+            title={search.view === "items" ? "菜肴" : "菜肴系列"}
+            onClear={data[search.view].length ? clear : undefined}
           />
-        ) : (
-          <VirtualGrid<DishItem | DishSeries>
-            key={resultKey}
-            rows={result.rows}
-            layout={presentation.grid}
-            getKey={(row) => row.id}
-            renderCard={(row) =>
-              "difficulty" in row ? (
-                <DishesCard item={row} />
-              ) : (
-                <DishSeriesCard series={row} items={data.items} />
-              )
-            }
-          />
-        )
-      ) : (
-        <DishesEmpty onClear={clear} view={search.view} />
-      )}
+        }
+      />
     </>
   );
 }

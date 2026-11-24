@@ -2,7 +2,7 @@ import { catalogEntryLocation } from "@/features/omnidex/entry-location";
 import { Link } from "@tanstack/react-router";
 import type { DishItem, DishSeries } from "../omnidex-view.ts";
 import { RecordImage } from "@/features/omnidex/record-image";
-import { ListCard } from "@/features/omnidex/list-card";
+import { RecordListCard } from "@/features/omnidex/record-list-card";
 import { SeriesImage } from "../omnidex/series-image";
 import { useOmnidexOrigin } from "@/features/omnidex/navigation";
 import { formatTastes } from "./presentation";
@@ -13,7 +13,7 @@ export function DishesCard({ item }: { item: DishItem }) {
     .filter(Boolean)
     .join(" · ");
   return (
-    <ListCard
+    <RecordListCard
       name={item.name}
       quality={item.quality}
       image={<RecordImage key={item.image} image={item.image} name={item.name} />}
@@ -30,7 +30,7 @@ export function DishesCard({ item }: { item: DishItem }) {
 export function DishSeriesCard({ series, items }: { series: DishSeries; items: DishItem[] }) {
   const origin = useOmnidexOrigin();
   return (
-    <ListCard
+    <RecordListCard
       name={series.name}
       quality={series.quality}
       image={

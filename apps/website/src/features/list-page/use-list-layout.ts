@@ -14,13 +14,22 @@ const layoutStore = createLayoutStore({
   },
 });
 
-export function useListLayout(explicit: ListLayout | undefined) {
+export function useListLayout(
+  explicit: ListLayout | undefined,
+  writeLayout?: (layout: ListLayout) => void,
+) {
   const preference = useSyncExternalStore(
     layoutStore.subscribe,
     layoutStore.getSnapshot,
     () => undefined,
   );
-  return resolveLayout(explicit, preference);
+  return {
+    layout: resolveLayout(explicit, preference),
+    onLayoutChange: writeLayout
+      ? (layout: ListLayout) => {
+          layoutStore.setLayout(layout);
+          writeLayout(layout);
+        }
+      : undefined,
+  };
 }
-
-export const saveListLayout = layoutStore.setLayout;

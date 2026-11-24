@@ -1,6 +1,6 @@
 import type { SearchMiddleware } from "@tanstack/react-router";
 import { z } from "zod";
-import { listLayoutSchema } from "../omnidex/layout";
+import { listLayoutSchema } from "../list-page/layout";
 
 export const categories = ["起居", "装饰物", "功能家具", "硬装", "绿植", "户外布设", "其他"];
 export const missing = "__missing";

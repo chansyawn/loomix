@@ -10,6 +10,7 @@ import {
 } from "../../../../../packages/schema/tests/fixture";
 import { findVignetteUses } from "./requirement-matching";
 import { toVignetteDetail, toVignetteList } from "./view";
+import { neighborFixture } from "../neighbors/fixture";
 
 const entry = vignette();
 const assets = {
@@ -24,6 +25,25 @@ const assets = {
     },
   ],
 };
+
+test("关联友邻和友邻详情优先使用同一张好感插画", () => {
+  const dataset = datasetFixture();
+  const { database, mapping } = neighborFixture();
+  const template = vignette();
+  template.requirements = [];
+  template.neighborIds = [1, 2, 4];
+  dataset.vignettes.templates.push(template);
+  const detail = toVignetteDetail(template.id, {
+    ...dataset,
+    neighbors: database,
+    imageIndex: { images: [...assets.images, ...mapping.images] },
+  });
+  expect(detail?.neighbors.map(({ image }) => image)).toEqual([
+    `assets/${"b".repeat(64)}.webp`,
+    `assets/${"c".repeat(64)}.webp`,
+    null,
+  ]);
+});
 
 test("列表按模板 ID 排序并解析地形和配图", () => {
   const vignettes = { templates: [vignette(2001), entry], fallbackItems: [] };
