@@ -31,6 +31,8 @@ const ImageOwnerKindSchema = z.enum([
   "starseaIslet",
   "starseaIconStyle",
   "vignette",
+  "hairColorGroup",
+  "hairColorBlock",
 ]);
 export interface ImageOwner {
   kind: z.infer<typeof ImageOwnerKindSchema>;

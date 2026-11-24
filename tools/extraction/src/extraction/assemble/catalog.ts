@@ -47,6 +47,7 @@ export function assembleCatalog(
   const collections = observed.collections.map((entry) => ({
     ...entry,
     image: image(entry.image?.use ?? null, "catalog.collections", entry.id, "image"),
+    flowerHybridization: null,
   }));
   const inspoBoxes = observed.inspoBoxes.map((entry): InspoBox => {
     const art = image(entry.image?.use ?? null, "catalog.inspoBoxes", entry.id, "image");

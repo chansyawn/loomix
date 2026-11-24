@@ -353,6 +353,12 @@ export function verifyCatalogSources(
     }
   const formal = new Set(expectedFormal);
   const references = new Set<number>();
+  for (const row of tables.rows(111)) {
+    for (const field of tables.uint(row, 4) === 2 ? [3, 5] : [3]) {
+      const cost = tables.string(row, field)?.trim();
+      if (cost) references.add(Number(cost.split("_")[0]));
+    }
+  }
   for (const islet of dataset.starsea.islets) {
     for (const id of islet.displayedCreatureIds ?? []) references.add(id);
     for (const id of islet.displayedSpecialtyIds ?? []) references.add(id);

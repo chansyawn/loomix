@@ -13,6 +13,12 @@ import {
   stageOutput,
 } from "../workflow/manifest.ts";
 import { clientReadRecordsFixture } from "../extraction/fixtures/client-read-records.ts";
+import {
+  extractionIdentityFixture,
+  freezeAdmissionsFixture,
+  freezeFlowerFixture,
+} from "../extraction/fixtures/flower-hybridization.ts";
+import { extractionId as computeExtractionId } from "../workflow/extraction-identity.ts";
 import { CLIENT_READ_RECORDS_FILE } from "../extraction/files.ts";
 import { assemble } from "../extraction/assemble/index.ts";
 import { writeAssembly } from "../extraction/bundle.ts";
@@ -43,7 +49,7 @@ vi.mock("../paths.ts", async (original) => ({
   artifactsRoot: () => workspace.root,
 }));
 
-const extractionId = "c".repeat(64);
+let extractionId: string;
 const environmentId = "d".repeat(64);
 const clientSnapshotId = digest([]);
 const snapshotName = `0.95.2-d1449213-r1391927-m5662883--${clientSnapshotId.slice(0, 12)}`;
@@ -53,7 +59,7 @@ const stage = {
   createdAt: "2026-10-26T00:00:00.000Z",
   implementation: "b".repeat(64),
   profileHash: "a".repeat(64),
-  tools: {},
+  tools: { animeStudio: digest("tool") },
   result: { passed: true, validation: "passed", failures: [] },
 } as const;
 
@@ -74,19 +80,27 @@ beforeEach(async () => {
     inputs: { id: clientSnapshotId, files: [], sha256: clientSnapshotId },
     outputs: await inventory(environment),
   });
+  const inputs = await stageInputs(environment, await readManifest(environment, "environment"));
+  const records = clientReadRecordsFixture();
+  const flower = freezeFlowerFixture(workspace.root, records.source);
+  const identityInputs = extractionIdentityFixture(inputs, stage, flower.sha256);
+  extractionId = computeExtractionId(identityInputs);
+  records.context.datasetId = extractionId;
   const { directory: bundle } = stageOutput("extraction", extractionId, environment);
   fs.mkdirSync(bundle, { recursive: true });
-  const records = clientReadRecordsFixture(extractionId);
+  fs.renameSync(path.join(workspace.root, "source"), path.join(bundle, "source"));
+  freezeAdmissionsFixture(bundle);
   writeJson(path.join(bundle, CLIENT_READ_RECORDS_FILE), records);
   writeJson(path.join(bundle, "originals.json"), []);
   writeJson(path.join(bundle, "validation.json"), { passed: true, datasetId: extractionId });
-  writeAssembly(bundle, assemble(records, []));
+  writeAssembly(bundle, assemble(records, [], flower));
   await publishManifest(bundle, {
     ...stage,
     result: { ...stage.result, failures: [] },
     kind: "extraction",
     id: extractionId,
-    inputs: await stageInputs(environment, await readManifest(environment, "environment")),
+    inputs,
+    identityInputs,
     outputs: await inventory(bundle),
   });
 });
@@ -104,6 +118,9 @@ test("同一提取结果重复打包时复验并复用封存，安装后的资�
   expect(await inventory(directory)).toEqual(sealed);
   expect(await inventory(installed)).toEqual(before);
   const manifest = await verifyResourcePackage(resourcePackage);
+  expect(manifest.outputs.map((file) => file.path)).toContain(
+    `${WEBSITE_RESOURCE_DIRECTORY}/zh-CN/hair-dyeing.json`,
+  );
   expect(manifest.inputs.files.map((file) => file.path)).toContain(CLIENT_READ_RECORDS_FILE);
   expect(manifest.outputs.map((file) => file.path)).toContain(IMAGE_PROCESSING_REPORT_FILE);
   expect(await installLocalResources(path.basename(directory))).toEqual(resourcePackage);
@@ -142,7 +159,7 @@ test("打包、验收和安装遇到旧阶段格式时提示重新生成", async
   const resourcePackage = await buildResourcePackage(extractionId);
   const { directory: bundle } = resolveStage("extraction", extractionId);
   const extraction = await readManifest(bundle, "extraction");
-  for (const stageManifestVersion of [3, 4, 5]) {
+  for (const stageManifestVersion of [3, 4, 5, 6]) {
     writeJson(path.join(bundle, stageManifestFile("extraction")), {
       ...extraction,
       stageManifestVersion,

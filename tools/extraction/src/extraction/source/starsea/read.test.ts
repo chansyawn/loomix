@@ -3,6 +3,7 @@ import { reference } from "../../../../../../packages/schema/tests/fixture.ts";
 import { validateDataset } from "@loomix/schema/dataset";
 import { assemble } from "../../assemble/index.ts";
 import { clientReadRecordsFixture } from "../../fixtures/client-read-records.ts";
+import { emptyFlowerHybridization } from "../../fixtures/flower-hybridization.ts";
 import { verifyStarseaSources } from "../../../verify/starsea.ts";
 import { imageCollector } from "../images.ts";
 import { createFixture } from "../neighbors/fixtures/tables.ts";
@@ -65,7 +66,7 @@ test("区域关系可反查，未知候选与空候选独立，星屿物品引�
       house: null,
     }));
     observations.catalog.items = [reference(20), reference(21)];
-    const { dataset } = assemble(observations, []);
+    const { dataset } = assemble(observations, [], emptyFlowerHybridization(observations.source));
     const { starsea } = dataset;
     expect(starsea.regions.map((region) => region.encounters)).toEqual([
       [

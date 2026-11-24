@@ -42,6 +42,8 @@ vp run @loomix/extraction#install-resources --resource-package <resource-package
 
 `refresh` 依次准备提取环境、提取数据及原图、生成资源包。`verify` 核对实际客户端及整条产物链。`install-resources` 校验资源包后替换当前 worktree 的 `resources/website/`。已有共享资源包时，配置共享数据目录后可直接安装。
 
+花卉杂交配方在[人工维护 JSON](data/external/flower-hybridization.json)中更新。换版时核对目标版本、系列归属、花朵 ID 及配方适用性。复核期间可使用绑定目标版本且配方数组为空的输入。更新后运行 `refresh` 和 `verify`，再安装资源。版本不匹配、缺少文件或无效配方会中止提取。
+
 需要分阶段运行时，从帮助查看入口与参数：
 
 ```sh

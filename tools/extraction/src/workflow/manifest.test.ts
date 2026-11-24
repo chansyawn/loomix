@@ -56,7 +56,7 @@ test("manifests reject corrupt outputs, unsupported schema and unsafe paths", as
     await assert.rejects(readManifest(directory, "environment"));
   }
   for (const altered of [
-    ...[3, 4, 5].map((stageManifestVersion) => ({ ...manifest, stageManifestVersion })),
+    ...[3, 4, 5, 6].map((stageManifestVersion) => ({ ...manifest, stageManifestVersion })),
     { ...manifest, stageManifestVersion: undefined, schemaVersion: 2 },
   ]) {
     atomicJson(file, altered);
@@ -84,7 +84,8 @@ test("阶段引用使用完整 ID 或准确目录名，并检查短哈希冲突"
   const id = "a".repeat(64);
   const otherId = "a".repeat(12) + "b".repeat(52);
   const upstream = "0.95.2-d1449213-r1391927-m5662883--cccccccccccc";
-  const stage = stageOutput("extraction", id, upstream);
+  const kind = "environment";
+  const stage = stageOutput(kind, id, upstream);
   const name = path.basename(stage.directory);
   assert.equal(name, "0.95.2-d1449213-r1391927-m5662883--aaaaaaaaaaaa");
 
@@ -94,11 +95,12 @@ test("阶段引用使用完整 ID 或准确目录名，并检查短哈希冲突"
   fs.writeFileSync(path.join(legacy, "output.json"), "{}");
   const manifest: Manifest = {
     stageManifestVersion: STAGE_MANIFEST_VERSION,
-    kind: "extraction",
+    kind,
     id,
+    clientSnapshotId: digest([]),
     status: "verified",
     createdAt: new Date().toISOString(),
-    inputs: { id: digest("environment"), files: [], sha256: digest([]) },
+    inputs: { id: digest([]), files: [], sha256: digest([]) },
     implementation: digest("implementation"),
     profileHash: digest("profile"),
     tools: {},
@@ -106,32 +108,32 @@ test("阶段引用使用完整 ID 或准确目录名，并检查短哈希冲突"
     result: { passed: true, validation: "passed", failures: [] },
   };
   await publishManifest(legacy, manifest);
-  assert.throws(() => resolveStage("extraction", id), /Missing extraction/);
-  await assert.rejects(readManifest(legacy, "extraction"), /identity mismatch/);
+  assert.throws(() => resolveStage(kind, id), /Missing environment/);
+  await assert.rejects(readManifest(legacy, kind), /identity mismatch/);
   fs.mkdirSync(stage.directory);
-  assert.throws(() => resolveStage("extraction", name), /ENOENT/);
+  assert.throws(() => resolveStage(kind, name), /ENOENT/);
   fs.rmdirSync(stage.directory);
   fs.renameSync(legacy, stage.directory);
-  assert.deepEqual(resolveStage("extraction", id), stage);
-  assert.deepEqual(resolveStage("extraction", name), stage);
-  assert.throws(() => resolveStage("extraction", name.slice(-12)), /Invalid extraction identity/);
-  assert.throws(() => resolveStage("extraction", `../${name}`), /Invalid extraction identity/);
+  assert.deepEqual(resolveStage(kind, id), stage);
+  assert.deepEqual(resolveStage(kind, name), stage);
+  assert.throws(() => resolveStage(kind, name.slice(-12)), /Invalid environment identity/);
+  assert.throws(() => resolveStage(kind, `../${name}`), /Invalid environment identity/);
   assert.throws(() => resolveStage("resource-package", name), /Invalid resource-package identity/);
-  assert.doesNotThrow(() => assertStageDestination("extraction", stage));
+  assert.doesNotThrow(() => assertStageDestination(kind, stage));
   assert.throws(
-    () => assertStageDestination("extraction", { ...stage, id: otherId }),
+    () => assertStageDestination(kind, { ...stage, id: otherId }),
     /Stage directory collision/,
   );
 
-  const other = stageOutput("extraction", otherId, "0.95.2--cccccccccccc");
+  const other = stageOutput(kind, otherId, "0.95.2--cccccccccccc");
   fs.symlinkSync(stage.directory, other.directory);
-  assert.throws(() => resolveStage("extraction", path.basename(other.directory)), /symbolic link/);
+  assert.throws(() => resolveStage(kind, path.basename(other.directory)), /symbolic link/);
   fs.unlinkSync(other.directory);
   fs.cpSync(stage.directory, other.directory, { recursive: true });
   await publishManifest(other.directory, { ...manifest, id: otherId });
-  assert.deepEqual(resolveStage("extraction", id), stage);
-  assert.deepEqual(resolveStage("extraction", otherId), other);
-  await assert.rejects(readManifest(stage.directory, "extraction", otherId), /identity mismatch/);
+  assert.deepEqual(resolveStage(kind, id), stage);
+  assert.deepEqual(resolveStage(kind, otherId), other);
+  await assert.rejects(readManifest(stage.directory, kind, otherId), /identity mismatch/);
   await publishManifest(other.directory, manifest);
-  assert.throws(() => resolveStage("extraction", id), /Duplicate extraction ID/);
+  assert.throws(() => resolveStage(kind, id), /Duplicate environment ID/);
 });

@@ -101,5 +101,5 @@ export const collection = (
   memberIds: number[] | null,
 ): Collection => {
   const { kind: _kind, tagIds: _tagIds, ...base } = material(id);
-  return { ...base, memberKind, memberIds };
+  return { ...base, memberKind, memberIds, flowerHybridization: null };
 };

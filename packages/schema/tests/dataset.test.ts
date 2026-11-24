@@ -25,6 +25,22 @@ import {
 const messages = (dataset: ReturnType<typeof datasetFixture>) =>
   validateDataset(dataset).map((issue) => issue.message);
 
+test("杂交配方仅引用同一集合的正式植物并允许相同亲本", () => {
+  const dataset = datasetFixture();
+  dataset.catalog.items.push(plant(1), plant(2), plant(3));
+  const group = collection(10, "plant", [1, 2]);
+  const recipe = { parentItemIds: [1, 1] as [number, number], productItemId: 2 };
+  group.flowerHybridization = [recipe];
+  dataset.catalog.collections.push(group);
+  expect(parseDataset(dataset)).toEqual(dataset);
+  group.flowerHybridization.push(recipe);
+  expect(messages(dataset)).toContain("Duplicate identity 1:1:2");
+  group.flowerHybridization = [{ ...recipe, productItemId: 3 }];
+  expect(messages(dataset)).toContain("Unknown plant collection member 3");
+  group.flowerHybridization = [];
+  expect(() => parseDataset(dataset)).toThrow("flowerHybridization");
+});
+
 test("小栖地的引用须由同一数据集覆盖", () => {
   const dataset = datasetFixture();
   const entry = vignette();

@@ -9,6 +9,7 @@
     "./neighbors": "./src/neighbors/index.ts",
     "./starsea": "./src/starsea/index.ts",
     "./vignettes": "./src/vignettes/index.ts",
+    "./hair-dyeing": "./src/hair-dyeing/index.ts",
     "./assets": "./src/assets/index.ts",
     "./dataset": "./src/dataset/index.ts",
     "./release": "./src/release/index.ts",

@@ -101,10 +101,15 @@ export const CollectionMemberKindSchema = z.enum([
   "plant",
   "dish",
 ]);
+export const FlowerHybridizationRecipeSchema = z.strictObject({
+  parentItemIds: z.tuple([IdSchema, IdSchema]),
+  productItemId: IdSchema,
+});
 export const CollectionSchema = z.strictObject({
   ...listed,
   memberKind: CollectionMemberKindSchema,
   memberIds: IdSchema.array().nullable(),
+  flowerHybridization: FlowerHybridizationRecipeSchema.array().min(1).nullable(),
 });
 
 export type Quality = z.infer<typeof QualitySchema>;
@@ -117,6 +122,7 @@ export type ItemKind = Item["kind"];
 export type ItemOf<K extends ItemKind> = Extract<Item, { kind: K }>;
 export type ListedItem = Exclude<Item, { kind: "reference" }>;
 export type Collection = z.infer<typeof CollectionSchema>;
+export type FlowerHybridizationRecipe = z.infer<typeof FlowerHybridizationRecipeSchema>;
 export type CollectionMemberKind = z.infer<typeof CollectionMemberKindSchema>;
 
 export const isListedItem = (item: Item): item is ListedItem => item.kind !== "reference";

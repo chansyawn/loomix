@@ -10,18 +10,21 @@ import type { NeighborEvidence } from "./source/neighbors/types.ts";
 import type { CollectionObservations } from "./schema.ts";
 import type { readStarsea } from "./source/starsea/read.ts";
 import type { readVignettes } from "./source/vignettes/read.ts";
+import type { DyeingObservation } from "./source/hair-dyeing/read.ts";
 
 export interface ImageUse {
   use: string;
 }
 export type WithImageUses<T> = T extends ImageRef
   ? ImageUse
-  : T extends readonly (infer Entry)[]
-    ? WithImageUses<Entry>[]
-    : T extends object
-      ? { [Key in keyof T]: WithImageUses<T[Key]> }
-      : T;
-export type CatalogObservation = WithImageUses<Catalog>;
+  : T extends object
+    ? { [Key in keyof T]: WithImageUses<T[Key]> }
+    : T;
+export type CatalogObservation = WithImageUses<
+  Omit<Catalog, "collections"> & {
+    collections: Omit<Catalog["collections"][number], "flowerHybridization">[];
+  }
+>;
 
 export interface SourceProof extends Omit<FieldEvidence, "entity" | "fieldPath"> {
   owner: "item" | "collection" | "inspoBox" | "tag";
@@ -31,6 +34,7 @@ export interface SourceProof extends Omit<FieldEvidence, "entity" | "fieldPath">
 
 export interface ClientReadRecords {
   vignettes: ReturnType<typeof readVignettes>;
+  hairDyeing: DyeingObservation;
   context: Dataset["context"];
   source: Dataset["source"];
   gameplayTags: Dataset["gameplayTags"];

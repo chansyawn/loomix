@@ -15,6 +15,14 @@ export const profile = {
   wordMask: 0x53020253,
   shortMask: 0x5555,
   assetPrefix: "assets/moleres/rel/sres/",
+  hairDyeing: {
+    configPackage: "PetitPlanet_Data/Persistent/AssetBundle/blocks/00/00000002.blk",
+    spritePackage: "PetitPlanet_Data/Persistent/AssetBundle/blocks/00/00000003.blk",
+    spriteAtlas:
+      "assets/moleres/rel/sres/uisprite/load/appearance/suits/20014_sashuitongskin01_appearance.png",
+    groupsName: "cdf350c7",
+    blocksName: "2cd2a87d",
+  },
   starsea: {
     iconStyles: 628,
     galaxies: 650,

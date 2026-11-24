@@ -32,8 +32,11 @@ export async function cachedDirectory(
       if (receipt.key !== key) throw new Error("Cache identity mismatch");
       await verifyFiles(directory, receipt.files);
       if (
-        digest(filesWithin(directory).filter((file) => file !== "receipt.json")) !==
-        digest(receipt.files.map((file) => file.path))
+        digest(
+          filesWithin(directory)
+            .filter((file) => file !== "receipt.json")
+            .sort(),
+        ) !== digest(receipt.files.map((file) => file.path))
       )
         throw new Error("Cache file set changed");
       return directory;
