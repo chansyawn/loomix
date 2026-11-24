@@ -3,12 +3,12 @@ import { Link } from "@tanstack/react-router";
 import { RecordImage as FurnitureImage } from "@/features/omnidex/record-image";
 import { useOmnidexOrigin } from "@/features/omnidex/navigation";
 import type { FurnitureItem, FurnitureSet } from "../omnidex-view.ts";
-import { ListCard } from "@/features/omnidex/list-card";
+import { RecordListCard } from "@/features/omnidex/record-list-card";
 
 export function FurnitureCard({ item }: { item: FurnitureItem }) {
   const origin = useOmnidexOrigin();
   return (
-    <ListCard
+    <RecordListCard
       name={item.name}
       quality={item.quality}
       image={<FurnitureImage key={item.image} image={item.image} name={item.name} />}
@@ -25,7 +25,7 @@ export function FurnitureCard({ item }: { item: FurnitureItem }) {
 export function FurnitureSetCard({ set }: { set: FurnitureSet }) {
   const origin = useOmnidexOrigin();
   return (
-    <ListCard
+    <RecordListCard
       name={set.name}
       quality={set.quality}
       image={
@@ -43,7 +43,6 @@ export function FurnitureSetCard({ set }: { set: FurnitureSet }) {
           {set.name}
         </Link>
       }
-      description={set.description}
       tags={set.componentIds === null ? null : `${set.componentIds.length} 件家具`}
     />
   );

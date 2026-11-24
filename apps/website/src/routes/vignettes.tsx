@@ -1,13 +1,13 @@
-import { createFileRoute, stripSearchParams, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, useRouterState } from "@tanstack/react-router";
 import { loadVignetteList } from "@/features/vignettes/data";
 import { VignetteListPage } from "@/features/vignettes/list-page";
-import { vignetteSearchDefaults, vignetteSearchSchema } from "@/features/vignettes/search";
+import { vignetteSearchMiddleware, vignetteSearchSchema } from "@/features/vignettes/search";
 import { VignetteError, VignetteListLoading } from "@/features/vignettes/states";
 
 export const Route = createFileRoute("/vignettes")({
   ssr: false,
   validateSearch: vignetteSearchSchema,
-  search: { middlewares: [stripSearchParams(vignetteSearchDefaults)] },
+  search: { middlewares: [vignetteSearchMiddleware] },
   loader: () => loadVignetteList(),
   pendingComponent: VignetteListLoading,
   errorComponent: VignetteError,

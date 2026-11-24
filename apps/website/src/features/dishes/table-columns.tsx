@@ -1,13 +1,9 @@
 import { catalogEntryLocation } from "@/features/omnidex/entry-location";
 import { Link } from "@tanstack/react-router";
 import type { DishItem, DishSeries } from "../omnidex-view";
-import {
-  recordColumns,
-  textColumn,
-  tableLinkClassName,
-  MembershipCell,
-} from "../omnidex/table-columns";
-import type { ListColumn } from "../omnidex/table-columns";
+import { recordColumns, MembershipCell } from "../omnidex/table-columns";
+import { textColumn, tableLinkClassName } from "../list-page/table-columns";
+import type { ListColumn } from "../list-page/table-columns";
 import { useOmnidexOrigin } from "@/features/omnidex/navigation";
 import { indexMembership } from "../omnidex/membership";
 import { unlockConditionLabel, effectSummary, formatTastes } from "./presentation";

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { SearchMiddleware } from "@tanstack/react-router";
-import { listLayoutSchema } from "../omnidex/layout";
+import { listLayoutSchema } from "../list-page/layout";
 export { sortOptions } from "../furniture/search";
 export const filterKeys = ["tags", "categories", "qualities", "acquisition"] as const;
 export type FilterKey = (typeof filterKeys)[number];

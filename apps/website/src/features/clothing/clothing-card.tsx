@@ -1,14 +1,14 @@
 import { catalogEntryLocation } from "@/features/omnidex/entry-location";
 import type { ClothingRow } from "./data";
 import { Link } from "@tanstack/react-router";
-import { ListCard } from "@/features/omnidex/list-card";
+import { RecordListCard } from "@/features/omnidex/record-list-card";
 import { RecordImage } from "@/features/omnidex/record-image";
 import { useOmnidexOrigin } from "@/features/omnidex/navigation";
 
 export function ClothingCard({ record }: { record: ClothingRow }) {
   const origin = useOmnidexOrigin();
   return (
-    <ListCard
+    <RecordListCard
       name={record.name}
       quality={record.quality}
       image={<RecordImage key={record.image} image={record.image} name={record.name} />}
@@ -17,7 +17,6 @@ export function ClothingCard({ record }: { record: ClothingRow }) {
           {record.name}
         </Link>
       }
-      description={"componentIds" in record ? record.description : null}
       tags={
         "componentIds" in record
           ? record.componentIds === null

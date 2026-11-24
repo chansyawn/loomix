@@ -1,11 +1,18 @@
 import { Link } from "@tanstack/react-router";
 import { Card } from "@/ui/components/card";
-import { catalogItem, omnidexNavigation, neighborsItem, starseaItem } from "../layout/navigation";
+import {
+  catalogItem,
+  omnidexNavigation,
+  neighborsItem,
+  starseaItem,
+  vignettesItem,
+} from "../layout/navigation";
 
 const categories = [
   ...omnidexNavigation.items.filter((item) => item.to !== catalogItem.to),
   neighborsItem,
   starseaItem,
+  vignettesItem,
 ];
 
 export function OmnidexShortcuts() {
@@ -14,9 +21,9 @@ export function OmnidexShortcuts() {
       <h2 id="home-categories" className="mb-4 font-heading text-lg font-semibold">
         探索图鉴
       </h2>
-      <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 xl:grid-cols-8">
+      <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 xl:grid-cols-9">
         {categories.map(({ title, to, icon: Icon }) => (
-          <Card key={to} padding="none" interactive>
+          <Card key={to}>
             <Link
               to={to}
               search={{}}

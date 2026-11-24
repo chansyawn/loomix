@@ -1,5 +1,5 @@
-import { ListPage } from "../omnidex/page";
-import { saveListLayout, useListLayout } from "../omnidex/use-list-layout";
+import { ListPage } from "../list-page/page";
+import { useListLayout } from "../list-page/use-list-layout";
 import { IngredientsBrowser } from "../ingredients/browser";
 import type { DishesBrowserData } from "./data";
 import type { DishesSearch } from "./search";
@@ -17,7 +17,10 @@ export function DishesPage({
   search: DishesSearch;
   onSearchChange: (update: SearchUpdate, replace?: boolean) => Promise<void>;
 }) {
-  const layout = useListLayout(search.layout);
+  const layoutState = useListLayout(
+    search.layout,
+    (layout) => void onSearchChange((previous) => ({ ...previous, layout })),
+  );
   return (
     <ListPage
       title={title}
@@ -33,22 +36,19 @@ export function DishesPage({
         <IngredientsBrowser
           data={data.ingredients}
           query={search.ingredients}
-          layout={layout}
+          layoutState={layoutState}
           onQueryChange={(patch, replace) =>
             void onSearchChange(
               (previous) => ({ ...previous, ingredients: { ...previous.ingredients, ...patch } }),
               replace,
             )
           }
-          onLayoutChange={(next) => {
-            saveListLayout(next);
-            void onSearchChange((previous) => ({ ...previous, layout: next }));
-          }}
         />
       ) : (
         <DishResults
           data={data}
           search={{ ...search, view: search.view }}
+          layoutState={layoutState}
           onSearchChange={onSearchChange}
         />
       )}

@@ -27,9 +27,9 @@ export function ListPage<V extends string>({
 }) {
   return (
     <section
-      className="@container"
+      className="@container pb-8"
       aria-busy={loading || undefined}
-      aria-label={loading ? `正在加载${title}图鉴` : undefined}
+      aria-label={loading ? `正在加载${title}` : undefined}
     >
       <div className="mb-4">
         <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>

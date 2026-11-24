@@ -5,13 +5,9 @@ import {
   formatNeighborOutfitBodyTypes,
   formatNeighborOutfitPrice,
 } from "../neighbor-outfit/presentation";
-import {
-  recordColumns,
-  textColumn,
-  tableLinkClassName,
-  MembershipCell,
-} from "../omnidex/table-columns";
-import type { ListColumn } from "../omnidex/table-columns";
+import { recordColumns, MembershipCell } from "../omnidex/table-columns";
+import { textColumn, tableLinkClassName } from "../list-page/table-columns";
+import type { ListColumn } from "../list-page/table-columns";
 import { useOmnidexOrigin } from "@/features/omnidex/navigation";
 import { indexMembership } from "../omnidex/membership";
 import type { View } from "./search";

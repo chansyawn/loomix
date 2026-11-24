@@ -1,25 +1,35 @@
-import { useRouter } from "@tanstack/react-router";
+import { useRouter, useRouterState } from "@tanstack/react-router";
 import { DetailPageLoading } from "@/features/detail-page/detail-page";
-import { wideGrid } from "@/features/omnidex/grid-layout";
-import { ListPage } from "@/features/omnidex/page";
-import { ListLoadError } from "@/features/omnidex/states";
+import { ListLoading } from "@/features/list-page/loading";
+import { ListChoiceFilter } from "@/features/list-page/choice-filter";
+import { useListLayout } from "@/features/list-page/use-list-layout";
+import { ListLoadError } from "@/features/list-page/states";
 import { Button } from "@/ui/components/button";
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/ui/components/empty";
-import { Skeleton } from "@/ui/components/skeleton";
 import { VignetteReturnLink } from "./navigation";
+import { vignetteColumns, vignetteListPresentation } from "./list-presentation";
+import { vignetteSearchSchema } from "./search";
 
 export function VignetteListLoading() {
+  const search = vignetteSearchSchema.parse(
+    useRouterState({ select: (state) => state.location.search }),
+  );
+  const { layout } = useListLayout(search.layout);
+  const { toolbar, choice, options, grid, card } = vignetteListPresentation;
   return (
-    <ListPage title="小栖地" loading>
-      <div className="space-y-4">
-        <Skeleton className="h-9 w-full max-w-96" />
-        <div className={wideGrid(80).className}>
-          {[1, 2, 3, 4].map((placeholder) => (
-            <Skeleton key={placeholder} className="aspect-4/3" />
-          ))}
-        </div>
-      </div>
-    </ListPage>
+    <ListLoading
+      grid={grid}
+      card={card}
+      columns={vignetteColumns()}
+      toolbar={{
+        ...toolbar,
+        layout,
+        query: search.q,
+        filters: (
+          <ListChoiceFilter {...choice} value={search.site ?? ""} options={options} disabled />
+        ),
+      }}
+    />
   );
 }
 
@@ -29,7 +39,7 @@ export function VignetteDetailLoading() {
 
 export function VignetteError() {
   const router = useRouter();
-  return <ListLoadError title="小栖地" onRetry={() => void router.invalidate()} />;
+  return <ListLoadError title="小栖地资料暂时无法加载" onRetry={() => void router.invalidate()} />;
 }
 
 export function VignetteNotFound() {

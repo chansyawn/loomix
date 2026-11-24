@@ -1,9 +1,9 @@
-import { createFileRoute, stripSearchParams, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, useRouterState } from "@tanstack/react-router";
 import { loadStarseaList } from "@/features/starsea/data";
 import { StarseaListPage } from "@/features/starsea/list-page";
 import {
   resolveStarseaSearch,
-  starseaSearchDefaults,
+  starseaSearchMiddleware,
   starseaSearchSchema,
 } from "@/features/starsea/search";
 import { StarseaError, StarseaListLoading } from "@/features/starsea/states";
@@ -11,7 +11,7 @@ import { StarseaError, StarseaListLoading } from "@/features/starsea/states";
 export const Route = createFileRoute("/starsea")({
   ssr: false,
   validateSearch: starseaSearchSchema,
-  search: { middlewares: [stripSearchParams(starseaSearchDefaults)] },
+  search: { middlewares: [starseaSearchMiddleware] },
   loader: () => loadStarseaList(),
   pendingComponent: StarseaListLoading,
   errorComponent: StarseaError,

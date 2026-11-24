@@ -3,14 +3,14 @@ import { Link } from "@tanstack/react-router";
 import type { PlantItem, PlantSeries } from "../omnidex-view.ts";
 import type { PlantSeed } from "./model";
 import { RecordImage } from "@/features/omnidex/record-image";
-import { ListCard } from "@/features/omnidex/list-card";
+import { RecordListCard } from "@/features/omnidex/record-list-card";
 import { useOmnidexOrigin } from "@/features/omnidex/navigation";
 import { catalogEntryLocation } from "../omnidex/entry-location";
 
 export function PlantsCard({ item }: { item: PlantItem }) {
   const origin = useOmnidexOrigin();
   return (
-    <ListCard
+    <RecordListCard
       name={item.name}
       quality={item.quality}
       image={<RecordImage key={item.image} image={item.image} name={item.name} />}
@@ -27,7 +27,7 @@ export function PlantsCard({ item }: { item: PlantItem }) {
 export function PlantSeriesCard({ series }: { series: PlantSeries }) {
   const origin = useOmnidexOrigin();
   return (
-    <ListCard
+    <RecordListCard
       name={series.name}
       quality={series.quality}
       image={<RecordImage key={series.image} image={series.image} name={series.name} />}
@@ -36,7 +36,6 @@ export function PlantSeriesCard({ series }: { series: PlantSeries }) {
           {series.name}
         </Link>
       }
-      description={series.description}
       tags={series.plantIds === null ? null : `${series.plantIds.length} 种植物`}
     />
   );
@@ -44,12 +43,11 @@ export function PlantSeriesCard({ series }: { series: PlantSeries }) {
 
 export function SeedCard({ seed }: { seed: PlantSeed }) {
   return (
-    <ListCard
+    <RecordListCard
       name={seed.name}
       quality={seed.quality}
       image={<RecordImage key={seed.image} image={seed.image} name={seed.name} />}
       titleLink={<SeedNameLink seed={seed} />}
-      description={seed.description}
     />
   );
 }

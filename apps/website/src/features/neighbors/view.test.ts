@@ -16,21 +16,28 @@ test("derives neighbor relationships from their owning entities", () => {
   expect(view.neighbors[0].stories.map((story) => story.chapter)).toEqual([1, 2]);
 });
 
-test("uses only the current neighbor's favour illustration without changing the list image", () => {
+test("derives deduplicated galaxies for card tags, tables and filters", () => {
+  const { view } = fixture();
+  expect(view.neighbors.map(({ galaxies }) => galaxies)).toEqual([
+    ["禾夏"],
+    ["禾夏"],
+    ["帕沙"],
+    ["帕沙"],
+  ]);
+  expect(view.galaxies).toEqual(["禾夏", "帕沙"]);
+});
+
+test("selects the same portrait for cards and detail, with a role illustration fallback", () => {
   const { database, mapping, catalog, gameplayTags, view } = fixture();
-  const updated = toNeighborsView(database, mapping, catalog, gameplayTags);
-  expect(updated.neighbors[0].image).toBe(`assets/${"a".repeat(64)}.webp`);
-  expect(updated.neighbors[0].favourImage).toBe(`assets/${"b".repeat(64)}.webp`);
-  expect(updated.neighbors[1].favourImage).toBeNull();
-  expect(updated.neighbors[3].favourImage).toBeNull();
-  expect(view.neighbors[1].roleImage).toBe(`assets/${"c".repeat(64)}.webp`);
+  const favour = { image: `assets/${"b".repeat(64)}.webp`, label: "好感插画" };
+  const role = { image: `assets/${"c".repeat(64)}.webp`, label: "角色立绘" };
+  expect(view.neighbors.map(({ portrait }) => portrait)).toEqual([favour, role, favour, null]);
   const missingAssets = {
     ...mapping,
     images: mapping.images.filter((entry) => entry.assetId !== "favour"),
   };
   const missingView = toNeighborsView(database, missingAssets, catalog, gameplayTags);
-  expect(missingView.neighbors[0].favourImage).toBeNull();
-  expect(missingView.neighbors[0].image).toBe(updated.neighbors[0].image);
+  expect(missingView.neighbors.map(({ portrait }) => portrait)).toEqual([role, role, null, null]);
 });
 
 test("formats profile fields for display", () => {
@@ -124,13 +131,11 @@ test("rejects unknown tags and names unknown preference items", () => {
   });
 });
 
-test("resolves image references through the common asset directory", () => {
+test("missing portrait assets do not fall back to a star illustration", () => {
   const { database, mapping, catalog, gameplayTags } = neighborFixture();
-  expect(toNeighborsView(database, mapping, catalog, gameplayTags).neighbors[0].image).toBe(
-    `assets/${"a".repeat(64)}.webp`,
-  );
+  const starOnly = { images: mapping.images.filter((entry) => entry.assetId === "star") };
   expect(
-    toNeighborsView(database, { ...mapping, images: [] }, catalog, gameplayTags).neighbors[0].image,
+    toNeighborsView(database, starOnly, catalog, gameplayTags).neighbors[0].portrait,
   ).toBeNull();
 });
 

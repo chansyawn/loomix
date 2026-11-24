@@ -2,7 +2,7 @@ import { createNameMatcher } from "@/infrastructure/name-search";
 import type { NeighborsData } from "./data";
 import type { NeighborsSearch } from "./search";
 
-export function queryNeighbors(data: NeighborsData, search: NeighborsSearch) {
+export function queryNeighbors(data: NeighborsData, search: Pick<NeighborsSearch, "q" | "galaxy">) {
   const matchesName = createNameMatcher(search.q);
   return data.neighbors.filter(
     (neighbor) =>

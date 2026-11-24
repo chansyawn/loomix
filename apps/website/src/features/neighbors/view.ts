@@ -5,6 +5,7 @@ import type { CatalogIndex } from "@loomix/schema/catalog";
 import { createGameplayTagIndex, tagLabel } from "@loomix/schema/gameplay-tags";
 import type { GameplayTagIndex, GameplayTags } from "@loomix/schema/gameplay-tags";
 import type { Neighbor, Neighbors } from "@loomix/schema/neighbors";
+import { resolveNeighborPortrait } from "./portrait";
 
 type ImageResolver = ReturnType<typeof createImageResolver>;
 
@@ -49,20 +50,16 @@ export function toNeighborsView(
   const index = createCatalogIndex(catalog);
   const tags = createGameplayTagIndex(gameplayTags.tags);
   const neighbors = database.neighbors.map((neighbor) => {
-    const stars = neighbor.stars.map((star) => ({
-      name: star.name,
-      galaxy: star.galaxy,
-      image: image(star.image),
-    }));
+    const stars = neighbor.stars.map(({ name, galaxy }) => ({ name, galaxy }));
+    const galaxies = [...new Set(stars.flatMap((star) => (star.galaxy ? [star.galaxy] : [])))];
     const { birthday } = neighbor.profile;
     return {
       id: neighbor.id,
       name: neighbor.name,
       bodyType: neighbor.bodyType ? bodyTypes[neighbor.bodyType] : null,
       stars,
-      image: stars[0]?.image ?? null,
-      favourImage: image(neighbor.images.favour),
-      roleImage: image(neighbor.images.role),
+      galaxies,
+      portrait: resolveNeighborPortrait(neighbor.images, image),
       profile: {
         englishName: neighbor.profile.englishName,
         nickname: neighbor.profile.nickname,
@@ -92,13 +89,7 @@ export function toNeighborsView(
   });
   return {
     neighbors,
-    galaxies: [
-      ...new Set(
-        neighbors.flatMap((neighbor) =>
-          neighbor.stars.flatMap((star) => (star.galaxy ? [star.galaxy] : [])),
-        ),
-      ),
-    ],
+    galaxies: [...new Set(neighbors.flatMap((neighbor) => neighbor.galaxies))],
   };
 }
 

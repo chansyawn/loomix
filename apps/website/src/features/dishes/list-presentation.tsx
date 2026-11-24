@@ -1,7 +1,7 @@
 import { CarrotIcon, CookingPotIcon, LayersIcon } from "lucide-react";
-import { ListCardSkeleton } from "../omnidex/card-skeleton";
-import { compactGrid, wideGrid } from "../omnidex/grid-layout";
-import type { ListTab } from "../omnidex/page";
+import { ListCardSkeleton } from "../list-page/card-skeleton";
+import { compactGrid, wideGrid } from "../list-page/grid-layout";
+import type { ListTab } from "../list-page/page";
 import type { DishView, View } from "./search";
 
 export const title = "烹饪";
@@ -19,11 +19,7 @@ export function listPresentation(view: DishView) {
     ...entry,
     grid: view === "items" ? compactGrid(78) : wideGrid(124),
     card: (
-      <ListCardSkeleton
-        imageClassName={view === "series" ? "aspect-2/1" : "aspect-square"}
-        description={view === "series"}
-        tags
-      />
+      <ListCardSkeleton imageClassName={view === "series" ? "aspect-2/1" : "aspect-square"} tags />
     ),
   };
 }

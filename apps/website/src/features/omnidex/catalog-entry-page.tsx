@@ -118,7 +118,7 @@ function catalogDetailPresentation(model: CatalogEntryDetail): CatalogDetailPres
 
 function CatalogDetailEmpty() {
   return (
-    <Empty variant="muted" className="min-h-44">
+    <Empty className="min-h-44">
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <InfoIcon />

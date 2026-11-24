@@ -9,7 +9,7 @@ import {
   EmptyTitle,
 } from "@/ui/components/empty";
 
-export function ListEmpty({ title, onClear }: { title: string; onClear: () => void }) {
+export function ListEmpty({ title, onClear }: { title: string; onClear?: () => void }) {
   return (
     <Empty className="min-h-80">
       <EmptyHeader>
@@ -17,28 +17,30 @@ export function ListEmpty({ title, onClear }: { title: string; onClear: () => vo
           <SearchXIcon />
         </EmptyMedia>
         <EmptyTitle>
-          <h2>没有找到匹配的{title}</h2>
+          <h2>{onClear ? `没有找到匹配的${title}` : `暂无${title}资料`}</h2>
         </EmptyTitle>
-        <EmptyDescription>试试其他关键词，或减少一些筛选条件。</EmptyDescription>
+        {onClear && <EmptyDescription>试试其他关键词，或减少一些筛选条件。</EmptyDescription>}
       </EmptyHeader>
-      <EmptyContent>
-        <Button variant="outline" onClick={onClear}>
-          清空筛选
-        </Button>
-      </EmptyContent>
+      {onClear && (
+        <EmptyContent>
+          <Button variant="outline" onClick={onClear}>
+            清空筛选
+          </Button>
+        </EmptyContent>
+      )}
     </Empty>
   );
 }
 
 export function ListLoadError({ title, onRetry }: { title: string; onRetry: () => void }) {
   return (
-    <Empty className="min-h-80">
+    <Empty role="alert" className="min-h-80">
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <WifiOffIcon />
         </EmptyMedia>
         <EmptyTitle>
-          <h1>{title}图鉴暂时无法加载</h1>
+          <h1>{title}</h1>
         </EmptyTitle>
         <EmptyDescription>请检查网络连接，然后再试一次。</EmptyDescription>
       </EmptyHeader>
