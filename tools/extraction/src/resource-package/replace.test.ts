@@ -64,16 +64,24 @@ test("切换目录失败时恢复全部原有资源", async ({ onTestFinished })
   assert.deepEqual(fs.readdirSync(root).sort(), ["installed", "package-website"]);
 });
 
-test("安装拒绝旧清单、非资源文件和符号链接", async ({ onTestFinished }) => {
+test("安装直接替换旧目录中的额外文件", async ({ onTestFinished }) => {
+  const { source, output, expected } = await fixture(onTestFinished);
+  for (const name of [".DS_Store", "release.json", "unrelated.json"]) {
+    fs.writeFileSync(path.join(output, name), "{}");
+  }
+  await replaceLocalResources(source, output, expected);
+  assert.deepEqual(
+    (await inventory(output)).filter((file) => file.path !== ".gitkeep"),
+    expected,
+  );
+  assert.equal(fs.readFileSync(path.join(output, ".gitkeep"), "utf8"), "keep");
+});
+
+test("安装拒绝新资源中的非资源文件和符号链接", async ({ onTestFinished }) => {
   const { root, source, output, expected, previous } = await fixture(onTestFinished);
   const alias = path.join(root, "alias");
   fs.symlinkSync(output, alias, "junction");
   assert.throws(() => safeOutput(path.join(alias, "new")), /link/);
-  for (const name of ["release.json", "unrelated.json"]) {
-    fs.writeFileSync(path.join(output, name), "{}");
-    await assert.rejects(replaceLocalResources(source, output, expected), /unrelated/);
-    fs.unlinkSync(path.join(output, name));
-  }
   fs.symlinkSync("missing.json", path.join(source, "alias.json"));
   await assert.rejects(replaceLocalResources(source, output, expected), /link/);
   fs.unlinkSync(path.join(source, "alias.json"));
