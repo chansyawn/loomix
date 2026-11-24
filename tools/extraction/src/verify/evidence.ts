@@ -21,6 +21,7 @@ export function verifyEvidence(
   const assetLocators = new Set(assets.map((asset) => `${asset.Source}:${asset.PathID}`));
   const textRows = new Set(Object.values(tables.textmap).map((entry) => entry.rowOffset));
   const rowOffsets = new Map<number, Set<number>>();
+  const jsonFiles = new Map<string, { sha256: string; value: unknown }>();
   const covered = new Set<string>();
   for (const proof of evidence.fields) {
     const entity = evidenceEntity(dataset, proof.entity.collection, proof.entity.id);
@@ -36,10 +37,20 @@ export function verifyEvidence(
           assetLocators.has(`${source.file}:${source.pathId}`),
           "Exact evidence asset locator",
         );
-      } else if (source.kind === "manual") {
-        const bytes = fs.readFileSync(within(directory, source.file));
-        assert.equal(digest(bytes), source.sha256, "Frozen manual provenance bytes");
-        let value: unknown = JSON.parse(bytes.toString());
+      } else if (source.kind === "manual" || source.kind === "assetJson") {
+        if (source.kind === "assetJson")
+          assert.ok(
+            assetLocators.has(`${source.source}:${source.pathId}`),
+            "Exact JSON asset locator",
+          );
+        let file = jsonFiles.get(source.file);
+        if (!file) {
+          const bytes = fs.readFileSync(within(directory, source.file));
+          file = { sha256: digest(bytes), value: JSON.parse(bytes.toString()) };
+          jsonFiles.set(source.file, file);
+        }
+        assert.equal(file.sha256, source.sha256, "Frozen JSON provenance bytes");
+        let value = file.value;
         for (const key of source.pointer.split("/").slice(1)) {
           assert.ok(value && typeof value === "object" && key in value);
           value = Reflect.get(value, key);
@@ -120,4 +131,17 @@ export function verifyEvidence(
           `Required vignette provenance ${collection}:${entry.id}:${field}`,
         );
       }
+  for (const [collection, entries] of Object.entries(dataset.hairDyeing))
+    for (const entry of entries as Array<{ id: number } | { itemId: number }>) {
+      const id = "id" in entry ? entry.id : entry.itemId;
+      const fields =
+        collection === "flowerRules"
+          ? ["$"]
+          : Object.keys(entry).filter((field) => field !== "id" && field !== "itemId");
+      for (const field of fields)
+        assert.ok(
+          covered.has(`hairDyeing.${collection}:${id}:${field}`),
+          `Required dyeing provenance ${collection}:${id}:${field}`,
+        );
+    }
 }

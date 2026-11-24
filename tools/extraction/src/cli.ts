@@ -106,7 +106,7 @@ async function main(): Promise<void> {
     }
     case "verify": {
       const resourcePackage = resolveStage("resource-package", requireArgument(argument));
-      await verifyResourcePackage(resourcePackage);
+      await verifyResourcePackage(resourcePackage, { reexportDyeing: true });
       printStage("verified-resource-package", resourcePackage);
       break;
     }

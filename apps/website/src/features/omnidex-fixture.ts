@@ -11,6 +11,7 @@ import {
 } from "@loomix/schema/catalog";
 import type { ImageIndex, ImageRef } from "@loomix/schema/assets";
 import { emptyDataset } from "@loomix/schema/dataset";
+import { emptyHairDyeing } from "@loomix/schema/hair-dyeing";
 import {
   documentPath,
   WEBSITE_RESOURCE_MANIFEST_FILE,
@@ -219,6 +220,7 @@ export function fixtureRequest({
     neighbors: { neighbors: [] },
     starsea: { regions: [], islets: [], iconStyles: [] },
     vignettes: { templates: [], fallbackItems: [] },
+    "hair-dyeing": emptyHairDyeing(),
     "image-index": imageIndexFixture(catalog),
   };
   const files = WebsiteResourceDocumentTypeSchema.options.map((kind) => {

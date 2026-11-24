@@ -14,6 +14,8 @@ import type {
 } from "../extraction/images/model.ts";
 import type { IndexedAsset, SourceAudit, BinDataAsset } from "../extraction/types.ts";
 import type { Tables } from "../extraction/source/decode/tables.ts";
+import { dyeingSourceFiles, readDyeingInputs } from "../extraction/source/hair-dyeing/inputs.ts";
+import { resolveDyeingIcon } from "../extraction/source/hair-dyeing/icons.ts";
 
 const normalize = (value: string) =>
   value
@@ -32,8 +34,18 @@ function configuredReferences(
   observations: ClientReadRecords,
   tables: Tables,
   source: string,
+  dyeingIcons: ReadonlyMap<string, string | null>,
 ): string[] {
   const { owner } = need;
+  if (owner.kind === "hairColorGroup" || owner.kind === "hairColorBlock") {
+    const key = `${owner.kind}:${owner.id}`;
+    assert.ok(
+      dyeingIcons.has(key) && owner.field === "icon",
+      `Independent dyeing image owner ${need.id}`,
+    );
+    const reference = dyeingIcons.get(key);
+    return reference ? [reference] : [];
+  }
   if (owner.kind === "vignette") {
     const row = tables.byId(291).get(owner.id);
     assert.ok(row && owner.field === "illustration", `Independent vignette image owner ${need.id}`);
@@ -115,6 +127,15 @@ export function verifyImages(
 ): void {
   const source = path.join(directory, "source");
   const index = readJson<IndexedAsset[]>(path.join(source, "prepared/asset-index.json"));
+  const sourceFiles = dyeingSourceFiles(source);
+  const dyeingIcons = new Map<string, string | null>();
+  if (sourceFiles.length) {
+    const { groups, blocks } = readDyeingInputs(source, index);
+    for (const { id, iconPath } of groups.value.colorGroups)
+      dyeingIcons.set(`hairColorGroup:${id}`, iconPath);
+    for (const { id, iconPath } of blocks.value.colorBlocks)
+      dyeingIcons.set(`hairColorBlock:${id}`, iconPath);
+  }
   const packages = new Map(
     readJson<{ source: string; sha256: string }[]>(path.join(source, "packages.json")).map(
       (entry) => [entry.source, entry.sha256],
@@ -137,6 +158,7 @@ export function verifyImages(
     ...new Set([
       ...observations.imageObjects.map((object) => object.source),
       ...bindata.map((asset) => asset.Source),
+      ...sourceFiles,
     ]),
   ].sort();
   assert.deepEqual(
@@ -247,7 +269,10 @@ export function verifyImages(
             ? "banner"
             : "icon";
     assert.equal(need.variant, variant, `Independent image variant ${need.id}`);
-    let references = configuredReferences(need, observations, tables, source);
+    let references = configuredReferences(need, observations, tables, source, dyeingIcons);
+    const dyeing = need.owner.kind === "hairColorGroup" || need.owner.kind === "hairColorBlock";
+    if (dyeing)
+      assert.equal(need.required, references.length > 0, `Required dyeing icon ${need.id}`);
     if (
       need.owner.kind === "item" &&
       need.owner.field === "image" &&
@@ -284,6 +309,20 @@ export function verifyImages(
     const additional = need.owner.kind === "neighbor" && need.owner.field.startsWith("images.");
     const candidates = references.flatMap((reference, rank) => {
       if (placeholderOnly) return [];
+      if (dyeing) {
+        const asset = resolveDyeingIcon(index, reference);
+        return [
+          {
+            reference,
+            rank,
+            object: identity({
+              ...asset,
+              assetType: "Sprite",
+              packageSha256: packages.get(asset.source)!,
+            }),
+          },
+        ];
+      }
       if (additional) {
         const selections = readJson<
           {

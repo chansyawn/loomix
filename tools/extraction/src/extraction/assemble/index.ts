@@ -15,6 +15,7 @@ import { plantingDomainEvidence } from "./planting-evidence.ts";
 import { starseaItemIds } from "../source/starsea/read.ts";
 import { assembleFlowerHybridization } from "../external/flower-hybridization.ts";
 import type { FrozenFlowerHybridization } from "../external/flower-hybridization.ts";
+import { dyeMaterialIds } from "../source/hair-dyeing/read.ts";
 
 export function assemble(
   observations: ClientReadRecords,
@@ -44,6 +45,8 @@ export function assemble(
     else if (collection === "starsea.islets") ownerKind = "starseaIslet";
     else if (collection === "starsea.iconStyles") ownerKind = "starseaIconStyle";
     else if (collection === "vignettes.templates") ownerKind = "vignette";
+    else if (collection === "hairDyeing.colorGroups") ownerKind = "hairColorGroup";
+    else if (collection === "hairDyeing.colorBlocks") ownerKind = "hairColorBlock";
     else {
       const item = observations.catalog.items.find((item) => item.id === id);
       if (!item) throw new Error(`Missing image owner ${id}`);
@@ -84,6 +87,7 @@ export function assemble(
     [
       ...observations.neighbors.giftPreferences.flatMap((entry) => entry.itemIds),
       ...starseaItemIds(observations.starsea.data.islets),
+      ...dyeMaterialIds(observations.hairDyeing.data),
     ],
   );
   const { catalog, fields: flowerProofs } = assembleFlowerHybridization(
@@ -151,6 +155,17 @@ export function assemble(
       })),
     },
     vignettes,
+    hairDyeing: {
+      ...observations.hairDyeing.data,
+      colorGroups: observations.hairDyeing.data.colorGroups.map((entry) => ({
+        ...entry,
+        icon: image(entry.icon?.use ?? null, "hairDyeing.colorGroups", entry.id, "icon"),
+      })),
+      colorBlocks: observations.hairDyeing.data.colorBlocks.map((entry) => ({
+        ...entry,
+        icon: image(entry.icon?.use ?? null, "hairDyeing.colorBlocks", entry.id, "icon"),
+      })),
+    },
   });
   const fields = [
     ...flowerProofs,
@@ -162,6 +177,7 @@ export function assemble(
     ),
     ...plantingDomainEvidence(observations.plantProofs, dataset),
     ...observations.starsea.proofs,
+    ...observations.hairDyeing.proofs,
     ...observations.vignettes.proofs.filter(
       (proof) =>
         proof.entity.collection !== "vignettes.fallbackItems" ||

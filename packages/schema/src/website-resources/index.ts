@@ -10,6 +10,7 @@ import { referencedImages } from "../dataset/images.ts";
 import { NeighborsSchema } from "../neighbors/index.ts";
 import { StarseaSchema } from "../starsea/index.ts";
 import { VignettesSchema } from "../vignettes/index.ts";
+import { HairDyeingSchema } from "../hair-dyeing/index.ts";
 
 export const WEBSITE_RESOURCE_MANIFEST_FILE = "resource-manifest.json";
 
@@ -19,6 +20,7 @@ export const documentSchemas = {
   neighbors: NeighborsSchema,
   starsea: StarseaSchema,
   vignettes: VignettesSchema,
+  "hair-dyeing": HairDyeingSchema,
   "image-index": ImageIndexSchema,
 };
 export const WebsiteResourceDocumentTypeSchema = z.enum([
@@ -27,6 +29,7 @@ export const WebsiteResourceDocumentTypeSchema = z.enum([
   "neighbors",
   "starsea",
   "vignettes",
+  "hair-dyeing",
   "image-index",
 ]);
 export type WebsiteResourceDocumentType = z.infer<typeof WebsiteResourceDocumentTypeSchema>;
@@ -129,6 +132,7 @@ export function assembleWebsiteResources(
       neighbors: documents.get("neighbors"),
       starsea: documents.get("starsea"),
       vignettes: documents.get("vignettes"),
+      hairDyeing: documents.get("hair-dyeing"),
     },
     imageIndex: documents.get("image-index"),
   });

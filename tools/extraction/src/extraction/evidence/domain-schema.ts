@@ -15,6 +15,14 @@ export const EvidenceSourceSchema = z.discriminatedUnion("kind", [
   }),
   z.strictObject({ kind: z.literal("asset"), file: z.string().min(1), pathId: z.string().min(1) }),
   z.strictObject({
+    kind: z.literal("assetJson"),
+    file: z.string().min(1),
+    source: z.string().min(1),
+    pathId: z.string().min(1),
+    pointer: z.string().refine((value) => value === "" || value.startsWith("/")),
+    sha256: HashSchema,
+  }),
+  z.strictObject({
     kind: z.literal("tableScan"),
     file: z.string().min(1),
     table: z.number().int().nonnegative(),

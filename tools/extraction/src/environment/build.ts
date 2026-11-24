@@ -3,6 +3,7 @@ import path from "node:path";
 import { FORMAT_VERSION } from "@loomix/schema/common";
 import { buildAssetIndex } from "../client/asset-map.ts";
 import { buildAssetMap, ensureAnimeStudio } from "../client/anime-studio/index.ts";
+import { isHairDyeingConfigCandidate } from "../extraction/source/hair-dyeing/inputs.ts";
 import { resolveClientSnapshot } from "../client/snapshot.ts";
 import { profile } from "../profile.ts";
 import { digest, inventory } from "../workflow/hashing.ts";
@@ -85,6 +86,7 @@ export async function init(snapshotId?: string): Promise<StageLocation> {
       });
       const { entries, audit } = await buildAssetIndex(map, {
         binDataNames: new Set(Object.values(profile.binData)),
+        additionalTextAsset: isHairDyeingConfigCandidate,
       });
       writeJson(path.join(staging, "asset-index.json"), entries);
       writeJson(path.join(staging, "asset-map-audit.json"), audit);

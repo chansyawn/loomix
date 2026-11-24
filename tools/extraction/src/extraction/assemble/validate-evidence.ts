@@ -13,6 +13,11 @@ export const evidenceCollections = {
   "starsea.iconStyles": (dataset: Dataset) => dataset.starsea.iconStyles,
   "vignettes.templates": (dataset: Dataset) => dataset.vignettes.templates,
   "vignettes.fallbackItems": (dataset: Dataset) => dataset.vignettes.fallbackItems,
+  "hairDyeing.hairstyleConfigs": (dataset: Dataset) => dataset.hairDyeing.hairstyleConfigs,
+  "hairDyeing.flowerInputs": (dataset: Dataset) => dataset.hairDyeing.flowerInputs,
+  "hairDyeing.flowerRules": (dataset: Dataset) => dataset.hairDyeing.flowerRules,
+  "hairDyeing.colorGroups": (dataset: Dataset) => dataset.hairDyeing.colorGroups,
+  "hairDyeing.colorBlocks": (dataset: Dataset) => dataset.hairDyeing.colorBlocks,
 } as const;
 export type EvidenceCollection = keyof typeof evidenceCollections;
 
@@ -22,9 +27,11 @@ export function evidenceEntity(
   id: string | number,
 ): object | undefined {
   const entries = Reflect.get(evidenceCollections, collection) as
-    | ((dataset: Dataset) => readonly { id: number }[])
+    | ((dataset: Dataset) => readonly ({ id: number } | { itemId: number })[])
     | undefined;
-  return entries?.(dataset).find((entry) => String(entry.id) === String(id));
+  return entries?.(dataset).find(
+    (entry) => String("id" in entry ? entry.id : entry.itemId) === String(id),
+  );
 }
 
 export function evidenceField(

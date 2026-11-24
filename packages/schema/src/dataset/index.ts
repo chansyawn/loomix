@@ -4,6 +4,7 @@ import { CatalogSchema } from "../catalog/index.ts";
 import { NeighborsSchema } from "../neighbors/index.ts";
 import { StarseaSchema } from "../starsea/index.ts";
 import { VignettesSchema } from "../vignettes/index.ts";
+import { HairDyeingSchema, emptyHairDyeing } from "../hair-dyeing/index.ts";
 import { ContextSchema, SourceSchema, assertValid } from "../common/identity.ts";
 import { validateDataset } from "./validate.ts";
 
@@ -16,6 +17,7 @@ export const DatasetSchema = z.strictObject({
   neighbors: NeighborsSchema,
   starsea: StarseaSchema,
   vignettes: VignettesSchema,
+  hairDyeing: HairDyeingSchema,
 });
 export type Dataset = z.infer<typeof DatasetSchema>;
 export function emptyDataset(context: Dataset["context"], source: Dataset["source"]): Dataset {
@@ -27,6 +29,7 @@ export function emptyDataset(context: Dataset["context"], source: Dataset["sourc
     neighbors: { neighbors: [] },
     starsea: { regions: [], islets: [], iconStyles: [] },
     vignettes: { templates: [], fallbackItems: [] },
+    hairDyeing: emptyHairDyeing(),
   };
 }
 export const parseDataset = (input: unknown): Dataset => {

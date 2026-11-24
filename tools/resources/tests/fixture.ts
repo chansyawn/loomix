@@ -28,6 +28,7 @@ export async function writeDocuments(directory: string, dataset: Dataset, imageI
     neighbors: dataset.neighbors,
     starsea: dataset.starsea,
     vignettes: dataset.vignettes,
+    "hair-dyeing": dataset.hairDyeing,
     "image-index": imageIndex,
   };
   const files = [];

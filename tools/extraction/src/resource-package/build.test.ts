@@ -118,6 +118,9 @@ test("同一提取结果重复打包时复验并复用封存，安装后的资�
   expect(await inventory(directory)).toEqual(sealed);
   expect(await inventory(installed)).toEqual(before);
   const manifest = await verifyResourcePackage(resourcePackage);
+  expect(manifest.outputs.map((file) => file.path)).toContain(
+    `${WEBSITE_RESOURCE_DIRECTORY}/zh-CN/hair-dyeing.json`,
+  );
   expect(manifest.inputs.files.map((file) => file.path)).toContain(CLIENT_READ_RECORDS_FILE);
   expect(manifest.outputs.map((file) => file.path)).toContain(IMAGE_PROCESSING_REPORT_FILE);
   expect(await installLocalResources(path.basename(directory))).toEqual(resourcePackage);

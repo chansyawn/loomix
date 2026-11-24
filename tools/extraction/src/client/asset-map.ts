@@ -121,6 +121,7 @@ const INDEXED_TYPES = new Set(["Texture2D", "Sprite", "MiHoYoBinData"]);
 
 export interface AssetIndexOptions {
   binDataNames?: Set<string>;
+  additionalTextAsset?: (asset: AssetMapAsset) => boolean;
 }
 
 export async function buildAssetIndex(
@@ -141,7 +142,8 @@ export async function buildAssetIndex(
     if (
       asset.Type === "MiHoYoBinData" &&
       options.binDataNames &&
-      (!asset.Name || !options.binDataNames.has(asset.Name))
+      (!asset.Name || !options.binDataNames.has(asset.Name)) &&
+      !options.additionalTextAsset?.({ ...asset, Source: snapshotAssetSource(asset.Source) })
     )
       continue;
     entries.push({ ...asset, Source: snapshotAssetSource(asset.Source) });
