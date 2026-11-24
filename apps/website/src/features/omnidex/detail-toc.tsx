@@ -1,19 +1,38 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { CheckIcon, ListIcon } from "lucide-react";
-import type { MouseEvent } from "react";
-import { Button } from "@/ui/components/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/ui/components/dropdown-menu";
-import { ScrollFade } from "@/ui/components/scroll-fade";
+import { createLink, useRouterState } from "@tanstack/react-router";
+import { ListIcon } from "lucide-react";
+import type { ComponentProps, MouseEvent, RefObject } from "react";
 import type { DetailSection } from "./detail-layout";
+import { DetailNavGroup } from "./detail-nav-group";
+import { useReadingSection } from "./use-reading-section";
 
-export function CatalogDetailToc({ sections }: { sections: readonly DetailSection[] }) {
+export const detailOverviewId = "detail-overview";
+
+const SectionLink = createLink(function SectionAnchor({
+  currentSection,
+  ...props
+}: ComponentProps<"a"> & { currentSection: boolean }) {
+  return (
+    <a
+      {...props}
+      aria-current={currentSection ? "location" : undefined}
+      data-current={currentSection ? "" : undefined}
+    />
+  );
+});
+
+export function CatalogDetailToc({
+  sections,
+  contentRef,
+}: {
+  sections: readonly DetailSection[];
+  contentRef: RefObject<HTMLDivElement | null>;
+}) {
   const currentHash = useRouterState({ select: (state) => state.location.hash });
+  const readingSection = useReadingSection(contentRef, detailOverviewId, sections);
+  const targets = [{ id: detailOverviewId, title: "概览" }, ...sections];
+  const current =
+    readingSection ??
+    (targets.some(({ id }) => id === currentHash) ? currentHash : detailOverviewId);
   function revisitSection(event: MouseEvent<HTMLAnchorElement>, id: string) {
     if (
       id !== currentHash ||
@@ -27,66 +46,31 @@ export function CatalogDetailToc({ sections }: { sections: readonly DetailSectio
     event.preventDefault();
     document.getElementById(id)?.scrollIntoView();
   }
-  const targets = [{ id: "detail-overview", title: "概览" }, ...sections];
-  const links = targets.map(({ id, title }) => {
-    const current = id === currentHash || (!currentHash && id === "detail-overview");
-    return {
-      id,
-      title,
-      current,
-      props: {
-        to: "." as const,
-        hash: id,
-        search: true as const,
-        state: true as const,
-        resetScroll: false,
-        preload: false as const,
-        onClick: (event: MouseEvent<HTMLAnchorElement>) => revisitSection(event, id),
-        "aria-current": current ? ("location" as const) : undefined,
-      },
-    };
-  });
+  const items = targets.map(({ id, title }) => ({
+    key: id,
+    label: title,
+    link: (
+      <SectionLink
+        to="."
+        hash={id}
+        search={true}
+        state={true}
+        resetScroll={false}
+        preload={false}
+        onClick={(event) => revisitSection(event, id)}
+        currentSection={id === current}
+      >
+        {title}
+      </SectionLink>
+    ),
+  }));
 
   return (
-    <nav aria-label="页面目录" className="py-1.5">
-      <div className="@min-[40rem]/catalog-detail:hidden">
-        <DropdownMenu modal={false}>
-          <DropdownMenuTrigger render={<Button variant="ghost" className="h-11" />}>
-            <ListIcon data-icon="inline-start" />
-            目录
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuGroup>
-              {links.map(({ id, title, current, props }) => (
-                <DropdownMenuItem
-                  key={id}
-                  render={<Link {...props} />}
-                  className="min-h-11 justify-between"
-                >
-                  {title}
-                  {current && <CheckIcon aria-hidden="true" />}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <div className="hidden @min-[40rem]/catalog-detail:flex @min-[40rem]/catalog-detail:items-center @min-[40rem]/catalog-detail:gap-3">
-        <span className="shrink-0 text-xs font-medium text-muted-foreground">目录</span>
-        <ScrollFade label="章节链接">
-          <div className="flex items-center gap-1 py-1">
-            {links.map(({ id, title, props }) => (
-              <Link
-                key={id}
-                {...props}
-                className="shrink-0 rounded-lg px-3 py-1.5 text-sm whitespace-nowrap text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset aria-[current=location]:bg-muted aria-[current=location]:font-medium aria-[current=location]:text-foreground"
-              >
-                {title}
-              </Link>
-            ))}
-          </div>
-        </ScrollFade>
-      </div>
-    </nav>
+    <DetailNavGroup
+      title="目录"
+      label="页面目录"
+      icon={ListIcon}
+      lists={[{ key: "sections", items }]}
+    />
   );
 }

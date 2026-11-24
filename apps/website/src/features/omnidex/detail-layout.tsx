@@ -3,7 +3,7 @@ import { useContext, useLayoutEffect, useRef, type ReactNode } from "react";
 import { InfoIcon } from "lucide-react";
 import { QualityMarker } from "./quality";
 import { Skeleton } from "@/ui/components/skeleton";
-import { CatalogDetailToc } from "./detail-toc";
+import { CatalogDetailToc, detailOverviewId } from "./detail-toc";
 import {
   Empty,
   EmptyDescription,
@@ -21,7 +21,11 @@ export type DetailSection = {
 
 const catalogFrame = "@container/catalog-detail mx-auto w-full max-w-288";
 const catalogGrid =
-  "grid items-start gap-6 @min-[48rem]/catalog-detail:grid-cols-[clamp(14rem,29%,20rem)_minmax(0,1fr)] @min-[48rem]/catalog-detail:gap-10";
+  "grid items-start gap-6 pb-10 @min-[48rem]/catalog-detail:grid-cols-[clamp(14rem,25%,18rem)_minmax(0,1fr)] @min-[48rem]/catalog-detail:gap-10 @min-[48rem]/catalog-detail:pt-6";
+const catalogRail =
+  "contents @min-[48rem]/catalog-detail:flex @min-[48rem]/catalog-detail:flex-col @min-[48rem]/catalog-detail:self-stretch";
+const catalogImage =
+  "mx-auto w-full max-w-72 overflow-hidden rounded-3xl @min-[48rem]/catalog-detail:mb-4";
 
 export function DetailLayout({
   image,
@@ -50,7 +54,7 @@ export function DetailLayout({
   const entry = useContext(CatalogEntryContext);
   const overview = (
     <div
-      id={entry ? "detail-overview" : undefined}
+      id={entry ? detailOverviewId : undefined}
       className="@container/detail-fields min-w-0 space-y-4"
     >
       <div className="space-y-3">
@@ -124,6 +128,7 @@ function CatalogDetailLayout({
 }) {
   const frame = useRef<HTMLElement>(null);
   const header = useRef<HTMLDivElement>(null);
+  const content = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const container = frame.current;
     const bar = header.current;
@@ -138,15 +143,25 @@ function CatalogDetailLayout({
 
   return (
     <article ref={frame} className={catalogFrame}>
-      <div ref={header} className="sticky top-0 z-20 min-w-0 border-b bg-background">
-        {navigation}
-        <CatalogDetailToc sections={sections} />
-      </div>
-      <div className={`${catalogGrid} pt-5 pb-10 @min-[48rem]/catalog-detail:pt-8`}>
-        <div className="mx-auto w-full max-w-72 overflow-hidden rounded-3xl border bg-muted/30 @min-[48rem]/catalog-detail:top-[calc(var(--catalog-detail-nav-height,0px)+1rem)] @min-[48rem]/catalog-detail:max-w-none @min-[48rem]/catalog-detail:[@media(min-height:42rem)]:sticky">
-          {image}
+      <div className={catalogGrid}>
+        <div className={catalogRail}>
+          <div
+            ref={header}
+            className="sticky top-0 z-20 flex min-w-0 items-center justify-between gap-1 border-b bg-background py-1 @min-[48rem]/catalog-detail:top-4 @min-[48rem]/catalog-detail:block @min-[48rem]/catalog-detail:max-h-[calc(100svh-6rem)] @min-[48rem]/catalog-detail:shrink-0 @min-[48rem]/catalog-detail:space-y-2 @min-[48rem]/catalog-detail:overflow-y-auto @min-[48rem]/catalog-detail:rounded-2xl @min-[48rem]/catalog-detail:border @min-[48rem]/catalog-detail:p-2.5"
+          >
+            <CatalogDetailToc sections={sections} contentRef={content} />
+            {navigation}
+          </div>
+          <div
+            className={`${catalogImage} border bg-muted/30 @min-[48rem]/catalog-detail:order-first`}
+          >
+            {image}
+          </div>
         </div>
-        <div className="mx-auto flex w-full max-w-3xl min-w-0 flex-col gap-7 sm:gap-8 **:[[id]]:scroll-mt-[calc(var(--catalog-detail-nav-height,0px)+1rem)]">
+        <div
+          ref={content}
+          className="mx-auto flex w-full max-w-3xl min-w-0 flex-col gap-7 [--catalog-detail-anchor-offset:calc(var(--catalog-detail-nav-height,0px)+1rem)] sm:gap-8 @min-[48rem]/catalog-detail:[--catalog-detail-anchor-offset:1rem] **:[[id]]:scroll-mt-(--catalog-detail-anchor-offset)"
+        >
           {children}
         </div>
       </div>
@@ -198,12 +213,16 @@ export function DetailLoading({ label }: { label: string }) {
 export function CatalogDetailLoading() {
   return (
     <section aria-label="正在加载物品详情" aria-busy="true" className={catalogFrame}>
-      <div className="border-b py-2">
-        <Skeleton className="h-9 w-24" />
-      </div>
-      <div className={`${catalogGrid} pt-5 pb-10 @min-[48rem]/catalog-detail:pt-8`}>
-        <div className="mx-auto w-full max-w-72 overflow-hidden rounded-3xl @min-[48rem]/catalog-detail:max-w-none">
-          <Skeleton className="aspect-square w-full" />
+      <div className={catalogGrid}>
+        <div className={catalogRail}>
+          <div className="space-y-2 border-b py-2 @min-[48rem]/catalog-detail:rounded-2xl @min-[48rem]/catalog-detail:border @min-[48rem]/catalog-detail:p-3">
+            <Skeleton className="h-9 w-24 @min-[48rem]/catalog-detail:h-4" />
+            <Skeleton className="hidden h-8 w-full @min-[48rem]/catalog-detail:block" />
+            <Skeleton className="hidden h-8 w-full @min-[48rem]/catalog-detail:block" />
+          </div>
+          <div className={`${catalogImage} @min-[48rem]/catalog-detail:order-first`}>
+            <Skeleton className="aspect-square w-full" />
+          </div>
         </div>
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
           <Skeleton className="h-10 w-2/3" />
