@@ -14,7 +14,6 @@ export async function replaceLocalResources(
   expected: readonly FileHash[],
   rename = fs.renameSync,
 ): Promise<void> {
-  safeOutput(output);
   const parent = path.dirname(output);
   fs.mkdirSync(parent, { recursive: true });
   const token = crypto.randomUUID();
@@ -34,7 +33,6 @@ export async function replaceLocalResources(
       expected,
       "Website resource bytes changed during installation",
     );
-    safeOutput(output);
     if (fs.existsSync(output)) {
       rename(output, previous);
       moved = true;
