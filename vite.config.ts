@@ -27,7 +27,6 @@ export default defineConfig({
       "vite-plus/prefer-vite-plus-imports": "error",
       "shadcn/no-restyle": ["error", { allow: ["layout"] }],
       "shadcn/no-raw-colors": "warn",
-      "shadcn/no-unknown-classes": "warn",
     },
     overrides: [
       {
