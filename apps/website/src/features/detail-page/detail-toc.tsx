@@ -1,11 +1,8 @@
 import { createLink, useRouterState } from "@tanstack/react-router";
 import { ListIcon } from "lucide-react";
-import type { ComponentProps, MouseEvent, RefObject } from "react";
-import type { DetailSection } from "./detail-layout";
+import { useState, type ComponentProps, type MouseEvent, type RefObject } from "react";
 import { DetailNavGroup } from "./detail-nav-group";
 import { useReadingSection } from "./use-reading-section";
-
-export const detailOverviewId = "detail-overview";
 
 const SectionLink = createLink(function SectionAnchor({
   currentSection,
@@ -20,22 +17,35 @@ const SectionLink = createLink(function SectionAnchor({
   );
 });
 
-export function CatalogDetailToc({
-  sections,
+export function DetailToc({
+  targets,
   contentRef,
+  navigationRef,
 }: {
-  sections: readonly DetailSection[];
+  targets: readonly { id: string; title: string }[];
   contentRef: RefObject<HTMLDivElement | null>;
+  navigationRef: RefObject<HTMLDivElement | null>;
 }) {
-  const currentHash = useRouterState({ select: (state) => state.location.hash });
-  const readingSection = useReadingSection(contentRef, detailOverviewId, sections);
-  const targets = [{ id: detailOverviewId, title: "概览" }, ...sections];
+  const { hash, historyKey } = useRouterState({
+    select: ({ location }) => ({ hash: location.hash, historyKey: location.state.__TSR_key }),
+    structuralSharing: true,
+  });
+  const [revisit, setRevisit] = useState(0);
+  const sectionsKey = targets.map(({ id }) => id).join(" ");
+  const readingSection = useReadingSection({
+    contentRef,
+    navigationRef,
+    sectionsKey,
+    hash,
+    historyKey,
+    revisit,
+  });
   const current =
-    readingSection ??
-    (targets.some(({ id }) => id === currentHash) ? currentHash : detailOverviewId);
+    (targets.some(({ id }) => id === readingSection) ? readingSection : undefined) ??
+    (targets.some(({ id }) => id === hash) ? hash : targets[0]?.id);
   function revisitSection(event: MouseEvent<HTMLAnchorElement>, id: string) {
     if (
-      id !== currentHash ||
+      id !== hash ||
       event.button !== 0 ||
       event.altKey ||
       event.ctrlKey ||
@@ -44,7 +54,8 @@ export function CatalogDetailToc({
     )
       return;
     event.preventDefault();
-    document.getElementById(id)?.scrollIntoView();
+    contentRef.current?.querySelector(`#${CSS.escape(id)}`)?.scrollIntoView();
+    setRevisit((previous) => previous + 1);
   }
   const items = targets.map(({ id, title }) => ({
     key: id,

@@ -17,5 +17,6 @@ export const Route = createFileRoute("/vignettes_/$id")({
 });
 
 function VignetteRoute() {
-  return <VignetteDetailPage entry={Route.useLoaderData()} />;
+  const entry = Route.useLoaderData();
+  return <VignetteDetailPage key={entry.id} entry={entry} />;
 }

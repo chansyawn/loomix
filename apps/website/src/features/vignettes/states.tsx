@@ -1,5 +1,5 @@
 import { useRouter } from "@tanstack/react-router";
-import { DetailLoading } from "@/features/omnidex/detail-layout";
+import { DetailPageLoading } from "@/features/detail-page/detail-page";
 import { wideGrid } from "@/features/omnidex/grid-layout";
 import { ListPage } from "@/features/omnidex/page";
 import { ListLoadError } from "@/features/omnidex/states";
@@ -24,7 +24,7 @@ export function VignetteListLoading() {
 }
 
 export function VignetteDetailLoading() {
-  return <DetailLoading label="正在加载小栖地资料" />;
+  return <DetailPageLoading label="正在加载小栖地资料" imageAspect="aspect-2/1" />;
 }
 
 export function VignetteError() {

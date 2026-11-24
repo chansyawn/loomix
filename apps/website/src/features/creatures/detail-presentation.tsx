@@ -1,15 +1,12 @@
 import { RecordImage } from "@/features/omnidex/record-image";
-import {
-  DetailLayout,
-  DetailRelatedGrid,
-  type DetailSection,
-} from "@/features/omnidex/detail-layout";
+import { DetailRelatedGrid, type DetailSection } from "@/features/detail-page/detail-page";
+import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presentation";
 import { CreaturesCard, CreatureSeriesCard } from "./creatures-card";
 import { SeriesImage } from "../omnidex/series-image";
 import type { CreaturesDetail } from "./detail";
 import { ItemIngredientTags } from "../ingredients/item-usage";
 
-export function CreaturesDetailPage({ detail }: { detail: CreaturesDetail }) {
+export function creaturesDetailPresentation(detail: CreaturesDetail): CatalogDetailPresentation {
   const { record } = detail;
   const fields: [string, string | null][] =
     detail.kind === "item"
@@ -30,35 +27,28 @@ export function CreaturesDetailPage({ detail }: { detail: CreaturesDetail }) {
           ["系列", detail.record.seriesName],
           ["成员数量", detail.items === null ? null : `${detail.items.length} 种生物`],
         ];
-  return (
-    <DetailLayout
-      image={
-        detail.kind === "item" ? (
-          <RecordImage key={record.image} image={record.image} name={record.name} eager />
-        ) : (
-          <SeriesImage
-            name={record.name}
-            image={record.image}
-            memberIds={detail.record.creatureIds}
-            items={detail.items ?? []}
-            eager
-          />
-        )
-      }
-      title={record.name}
-      quality={record.quality}
-      description={
-        (detail.kind === "item" || record.description) && (
-          <p className="text-sm/7 whitespace-pre-line text-muted-foreground">
-            {record.description || "描述未提供"}
-          </p>
-        )
-      }
-      fields={fields}
-      sections={creatureDetailSections(detail)}
-      showEmptyExtras
-    />
-  );
+  return {
+    image:
+      detail.kind === "item" ? (
+        <RecordImage key={record.image} image={record.image} name={record.name} eager />
+      ) : (
+        <SeriesImage
+          name={record.name}
+          image={record.image}
+          memberIds={detail.record.creatureIds}
+          items={detail.items ?? []}
+          eager
+        />
+      ),
+    description: (detail.kind === "item" || record.description) && (
+      <p className="text-sm/7 whitespace-pre-line text-muted-foreground">
+        {record.description || "描述未提供"}
+      </p>
+    ),
+    fields,
+    sections: creatureDetailSections(detail),
+    showEmptyExtras: true,
+  };
 }
 
 function creatureDetailSections(detail: CreaturesDetail): DetailSection[] {

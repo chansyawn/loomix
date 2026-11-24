@@ -2,7 +2,7 @@ import { createFileRoute, notFound, useRouter } from "@tanstack/react-router";
 import { loadOmnidexCatalog } from "@/features/omnidex-loader";
 import { parseCatalogEntryId, catalogEntryDetail } from "@/features/omnidex/catalog-entry-detail";
 import { CatalogEntryPage } from "@/features/omnidex/catalog-entry-page";
-import { CatalogDetailLoading } from "@/features/omnidex/detail-layout";
+import { DetailPageLoading } from "@/features/detail-page/detail-page";
 import { ListLoadError } from "@/features/omnidex/states";
 import { OmnidexReturnLink } from "@/features/omnidex/navigation";
 import { createResourceReader } from "@/infrastructure/resources";
@@ -37,7 +37,7 @@ export const Route = createFileRoute("/catalog_/$id")({
         vignetteGameplayUses(data, record, await readVignetteTemplates(load)),
     };
   },
-  pendingComponent: CatalogDetailLoading,
+  pendingComponent: () => <DetailPageLoading label="正在加载物品详情" />,
   errorComponent: DetailError,
   notFoundComponent: () => (
     <section className="space-y-4">

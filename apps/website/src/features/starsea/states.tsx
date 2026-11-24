@@ -1,5 +1,5 @@
 import { useRouter } from "@tanstack/react-router";
-import { DetailLoading } from "@/features/omnidex/detail-layout";
+import { DetailPageLoading } from "@/features/detail-page/detail-page";
 import { ListPage } from "@/features/omnidex/page";
 import { wideGrid } from "@/features/omnidex/grid-layout";
 import { ListLoadError } from "@/features/omnidex/states";
@@ -25,7 +25,7 @@ export function StarseaListLoading() {
 }
 
 export function StarseaDetailLoading() {
-  return <DetailLoading label="正在加载星屿资料" />;
+  return <DetailPageLoading label="正在加载星屿资料" imageAspect="aspect-video" />;
 }
 
 export function StarseaError() {

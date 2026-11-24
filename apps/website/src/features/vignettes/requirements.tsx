@@ -92,10 +92,7 @@ export function VignetteRequirements({
     requirements.map((_, index) => index + 1),
   );
   return (
-    <section aria-labelledby="vignette-requirements" className="min-w-0 space-y-3">
-      <h2 id="vignette-requirements" className="text-xl font-semibold">
-        布景要求
-      </h2>
+    <>
       <p className="text-sm text-muted-foreground">
         物品按图鉴标签匹配，布景完成还取决于游戏内条件。
       </p>
@@ -103,7 +100,7 @@ export function VignetteRequirements({
         {requirements.map((row, index) => {
           const anchor = gameplayAnchor("requirement", index + 1);
           return (
-            <AccordionItem key={anchor} id={anchor} value={anchor} className="scroll-mt-4">
+            <AccordionItem key={anchor} id={anchor} value={anchor}>
               <AccordionTrigger className="items-start text-left">
                 <RequirementSummary row={row} />
               </AccordionTrigger>
@@ -126,6 +123,6 @@ export function VignetteRequirements({
           );
         })}
       </Accordion>
-    </section>
+    </>
   );
 }

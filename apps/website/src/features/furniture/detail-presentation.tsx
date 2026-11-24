@@ -1,12 +1,12 @@
 import { FurnitureCard } from "./furniture-card";
-import { DetailLayout, type DetailSection } from "@/features/omnidex/detail-layout";
+import type { DetailSection } from "@/features/detail-page/detail-page";
+import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presentation";
 import { RecordImage as FurnitureImage } from "@/features/omnidex/record-image";
 import type { FurnitureItem } from "../omnidex-view";
 import type { FurnitureDetail } from "./detail";
-import { CatalogEntryNavigation } from "../omnidex/detail-navigation";
 import { FurnitureRecipes } from "./recipes";
 
-export function FurnitureDetailPage({ detail }: { detail: FurnitureDetail }) {
+export function furnitureDetailPresentation(detail: FurnitureDetail): CatalogDetailPresentation {
   const { record } = detail;
   const fields: [string, string | null][] =
     detail.kind === "item"
@@ -22,31 +22,27 @@ export function FurnitureDetailPage({ detail }: { detail: FurnitureDetail }) {
           ["系列", detail.record.seriesName],
           ["成员数量", detail.items === null ? null : `${detail.items.length} 件家具`],
         ];
-  return (
-    <DetailLayout
-      image={
-        <FurnitureImage
-          key={record.image}
-          image={record.image}
-          name={record.name}
-          fit={detail.kind === "set" ? "cover" : "contain"}
-          inset={detail.kind === "set" ? "none" : "lg"}
-          className={detail.kind === "set" ? "aspect-2/1" : undefined}
-          eager
-        />
-      }
-      title={record.name}
-      quality={record.quality}
-      description={
-        <p className="text-sm/7 whitespace-pre-line text-muted-foreground">
-          {record.description || "描述未提供"}
-        </p>
-      }
-      fields={fields}
-      navigation={<CatalogEntryNavigation model={detail.navigation} currentId={record.id} />}
-      sections={furnitureDetailSections(detail)}
-    />
-  );
+  return {
+    image: (
+      <FurnitureImage
+        key={record.image}
+        image={record.image}
+        name={record.name}
+        fit={detail.kind === "set" ? "cover" : "contain"}
+        inset={detail.kind === "set" ? "none" : "lg"}
+        className={detail.kind === "set" ? "aspect-2/1" : undefined}
+        eager
+      />
+    ),
+    description: (
+      <p className="text-sm/7 whitespace-pre-line text-muted-foreground">
+        {record.description || "描述未提供"}
+      </p>
+    ),
+    fields,
+    navigation: detail.navigation,
+    sections: furnitureDetailSections(detail),
+  };
 }
 
 function furnitureDetailSections(detail: FurnitureDetail): DetailSection[] {

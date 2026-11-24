@@ -1,31 +1,27 @@
 import { ClothingCard } from "./clothing-card";
 import { ClothingCounterpartSwitch } from "./counterpart-switch";
-import { DetailLayout, type DetailSection } from "@/features/omnidex/detail-layout";
+import type { DetailSection } from "@/features/detail-page/detail-page";
+import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presentation";
 import { RecordImage } from "@/features/omnidex/record-image";
 import type { ClothingPageDetail } from "./detail";
-import { CatalogEntryNavigation } from "../omnidex/detail-navigation";
 import { formatNeighborOutfitPrice } from "../neighbor-outfit/presentation";
 
-export function ClothingDetailPage({ detail }: { detail: ClothingPageDetail }) {
+export function clothingDetailPresentation(detail: ClothingPageDetail): CatalogDetailPresentation {
   const { record, navigation, counterpart } = detail;
-  return (
-    <DetailLayout
-      image={<RecordImage key={record.image} image={record.image} name={record.name} eager />}
-      title={record.name}
-      titleActions={
-        counterpart && <ClothingCounterpartSwitch counterpart={counterpart} currentId={record.id} />
-      }
-      quality={record.quality}
-      description={
-        <p className="text-sm/7 whitespace-pre-line text-muted-foreground">
-          {record.description || "描述未提供"}
-        </p>
-      }
-      fields={clothingDetailFields(detail)}
-      navigation={navigation && <CatalogEntryNavigation model={navigation} currentId={record.id} />}
-      sections={clothingDetailSections(detail)}
-    />
-  );
+  return {
+    image: <RecordImage key={record.image} image={record.image} name={record.name} eager />,
+    titleActions: counterpart && (
+      <ClothingCounterpartSwitch counterpart={counterpart} currentId={record.id} />
+    ),
+    description: (
+      <p className="text-sm/7 whitespace-pre-line text-muted-foreground">
+        {record.description || "描述未提供"}
+      </p>
+    ),
+    fields: clothingDetailFields(detail),
+    navigation: navigation ?? undefined,
+    sections: clothingDetailSections(detail),
+  };
 }
 
 function clothingDetailFields(detail: ClothingPageDetail): [string, string | null][] {

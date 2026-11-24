@@ -1,5 +1,6 @@
 import { useRouterState } from "@tanstack/react-router";
 import { useLayoutEffect, useState } from "react";
+import { wikiScrollSelector } from "@/infrastructure/wiki-scroll";
 
 export type GameplayAnchorKind = "recipe" | "slot" | "requirement";
 
@@ -19,8 +20,7 @@ export function useGameplayAccordion(kind: GameplayAnchorKind, ids: readonly num
     setExpansion({ hash, value });
   }
   useLayoutEffect(() => {
-    if (invalidAnchor)
-      document.querySelector('[data-scroll-restoration-id="wiki-content"]')?.scrollTo(0, 0);
+    if (invalidAnchor) document.querySelector(wikiScrollSelector)?.scrollTo(0, 0);
   }, [hash, invalidAnchor]);
   return {
     value: expansion.value,

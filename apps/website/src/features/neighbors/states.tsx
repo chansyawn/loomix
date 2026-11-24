@@ -11,17 +11,12 @@ import {
   EmptyTitle,
 } from "@/ui/components/empty";
 import { Skeleton } from "@/ui/components/skeleton";
-import { DetailLoading } from "@/features/omnidex/detail-layout";
+import { DetailPageLoading } from "@/features/detail-page/detail-page";
 import { NeighborsGrid, NeighborsListLayout } from "./list-layout";
 import { NeighborsReturnLink } from "./navigation";
 
 export function NeighborDetailLoading() {
-  return (
-    <div className="space-y-6">
-      <Skeleton className="h-5 w-28" />
-      <DetailLoading label="正在加载友邻详情" />
-    </div>
-  );
+  return <DetailPageLoading label="正在加载友邻详情" />;
 }
 
 export function NeighborsLoading() {

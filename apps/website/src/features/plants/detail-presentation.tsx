@@ -1,5 +1,5 @@
-import { DetailLayout, type DetailSection } from "@/features/omnidex/detail-layout";
-import type { ReactNode } from "react";
+import type { DetailSection } from "@/features/detail-page/detail-page";
+import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presentation";
 import { RecordImage } from "@/features/omnidex/record-image";
 import { CatalogItemCard } from "../omnidex/catalog-item-card";
 import { PlantsCard } from "./plants-card";
@@ -7,35 +7,23 @@ import type { PlantsDetail } from "./detail";
 import { PlantDropsInfo, PlantRelatedItems } from "./related-items";
 import { ItemIngredientTags } from "../ingredients/item-usage";
 import { plantSeriesFields } from "./series-fields";
-import { SeedDetailPage } from "./seed-detail-page";
-import { CatalogEntryNavigation } from "../omnidex/detail-navigation";
+import { seedDetailPresentation } from "./seed-detail-presentation";
 
 type PlantOrSeriesDetail = Exclude<PlantsDetail, { kind: "seed" }>;
 
-export function PlantsDetailPage({ detail }: { detail: PlantsDetail }) {
-  const navigation = (
-    <CatalogEntryNavigation
-      model={{
-        groups: detail.navigation.groups,
-        notice: detail.navigation.hasUnconfirmedMembership ? "其他系列的成员关系未确认" : undefined,
-      }}
-      currentId={detail.record.id}
-    />
-  );
-  return detail.kind === "seed" ? (
-    <SeedDetailPage detail={detail} navigation={navigation} />
-  ) : (
-    <PlantOrSeriesDetailPage detail={detail} navigation={navigation} />
-  );
+export function plantsDetailPresentation(detail: PlantsDetail): CatalogDetailPresentation {
+  return {
+    ...(detail.kind === "seed"
+      ? seedDetailPresentation(detail)
+      : plantOrSeriesPresentation(detail)),
+    navigation: {
+      groups: detail.navigation.groups,
+      notice: detail.navigation.hasUnconfirmedMembership ? "其他系列的成员关系未确认" : undefined,
+    },
+  };
 }
 
-function PlantOrSeriesDetailPage({
-  detail,
-  navigation,
-}: {
-  detail: PlantOrSeriesDetail;
-  navigation: ReactNode;
-}) {
+function plantOrSeriesPresentation(detail: PlantOrSeriesDetail): CatalogDetailPresentation {
   const { record } = detail;
   const summary = record.summary;
   const fields: [string, string | null][] =
@@ -54,23 +42,16 @@ function PlantOrSeriesDetailPage({
   if (detail.kind === "item" && summary.flowerColors.length)
     fields.push(["花色", summary.flowerColors.join("、")]);
 
-  return (
-    <DetailLayout
-      image={<RecordImage image={record.image} name={record.name} eager />}
-      title={record.name}
-      quality={record.quality}
-      description={
-        (detail.kind === "item" || record.description) && (
-          <p className="text-sm/7 whitespace-pre-line text-muted-foreground">
-            {record.description || "描述未提供"}
-          </p>
-        )
-      }
-      fields={fields}
-      navigation={navigation}
-      sections={plantDetailSections(detail)}
-    />
-  );
+  return {
+    image: <RecordImage image={record.image} name={record.name} eager />,
+    description: (detail.kind === "item" || record.description) && (
+      <p className="text-sm/7 whitespace-pre-line text-muted-foreground">
+        {record.description || "描述未提供"}
+      </p>
+    ),
+    fields,
+    sections: plantDetailSections(detail),
+  };
 }
 
 function plantDetailSections(detail: PlantOrSeriesDetail): DetailSection[] {

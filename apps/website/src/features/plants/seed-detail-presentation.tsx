@@ -1,17 +1,13 @@
-import type { ReactNode } from "react";
-import { DetailLayout, type DetailSection } from "../omnidex/detail-layout";
+import type { DetailSection } from "@/features/detail-page/detail-page";
+import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presentation";
 import { RecordImage } from "../omnidex/record-image";
 import type { PlantsDetail } from "./detail";
 import { PlantsCard } from "./plants-card";
 import { SeedGrowthStages } from "./seed-growth";
 
-export function SeedDetailPage({
-  detail,
-  navigation,
-}: {
-  detail: Extract<PlantsDetail, { kind: "seed" }>;
-  navigation: ReactNode;
-}) {
+export function seedDetailPresentation(
+  detail: Extract<PlantsDetail, { kind: "seed" }>,
+): CatalogDetailPresentation {
   const { record } = detail;
   const { growth } = record;
   const fields: [string, string | null][] = [
@@ -35,19 +31,14 @@ export function SeedDetailPage({
         </div>
       ),
     });
-  return (
-    <DetailLayout
-      image={<RecordImage image={record.image} name={record.name} eager />}
-      title={record.name}
-      quality={record.quality}
-      description={
-        <p className="text-sm/7 whitespace-pre-line text-muted-foreground">
-          {record.description || "描述未提供"}
-        </p>
-      }
-      fields={fields}
-      navigation={navigation}
-      sections={sections}
-    />
-  );
+  return {
+    image: <RecordImage image={record.image} name={record.name} eager />,
+    description: (
+      <p className="text-sm/7 whitespace-pre-line text-muted-foreground">
+        {record.description || "描述未提供"}
+      </p>
+    ),
+    fields,
+    sections,
+  };
 }

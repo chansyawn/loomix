@@ -1,4 +1,8 @@
-import { Fragment } from "react";
+import {
+  DetailPage,
+  type DetailField,
+  type DetailSection,
+} from "@/features/detail-page/detail-page";
 import type { NeighborDetail } from "./data";
 import { NeighborImage } from "./image";
 import { NeighborPreferences } from "./preferences";
@@ -6,79 +10,68 @@ import { NeighborStories } from "./reading";
 import { NeighborAbilitiesSection } from "./abilities-section";
 import { NeighborHouseSection } from "./house-section";
 
-const fieldClassName = "min-w-0 space-y-1.5 rounded-xl bg-muted/40 p-3 sm:p-4";
-
 export function NeighborDetailPage({ neighbor }: { neighbor: NeighborDetail }) {
   const heroImage = neighbor.favourImage ?? neighbor.roleImage;
   const heroLabel = neighbor.favourImage ? "好感插画" : "角色立绘";
-  const profileFields = [
-    ["昵称", neighbor.profile.nickname],
-    ["英文名", neighbor.profile.englishName],
-    ["生日", neighbor.profile.birthday],
-  ] as const;
+  const fields: DetailField[] = [
+    ["昵称", neighbor.profile.nickname ?? "资料暂未收录"],
+    ["英文名", neighbor.profile.englishName ?? "资料暂未收录"],
+    ["生日", neighbor.profile.birthday ?? "资料暂未收录"],
+    ["体型", neighbor.bodyType ? `${neighbor.bodyType}体型` : "体型资料暂未收录"],
+  ];
+  if (neighbor.stars.length) {
+    for (const star of neighbor.stars) {
+      fields.push(
+        ["所属星球", star.name],
+        ["所属星系", star.galaxy ? `${star.galaxy}星系` : "星系资料暂未收录"],
+      );
+    }
+  } else {
+    fields.push(["所属星球与星系", "星球与星系资料暂未收录"]);
+  }
+  const sections: DetailSection[] = [
+    {
+      id: "preferences",
+      headingId: "preferences-heading",
+      title: "喜好信息",
+      content: <NeighborPreferences preferences={neighbor.preferences} />,
+    },
+    {
+      id: "abilities",
+      headingId: "abilities-heading",
+      title: "能力与亲密度",
+      content: <NeighborAbilitiesSection abilities={neighbor.abilities} />,
+    },
+  ];
+  if (neighbor.house) {
+    sections.push({
+      id: "house",
+      headingId: "house-heading",
+      title: "房屋",
+      content: <NeighborHouseSection stages={neighbor.house.stages} />,
+    });
+  }
+  sections.push({
+    id: "stories",
+    headingId: "stories-heading",
+    title: "友邻故事",
+    content: <NeighborStories neighbor={neighbor} />,
+  });
   return (
-    <div className="pb-8">
-      <section
-        id="overview"
-        aria-labelledby="neighbor-heading"
-        className="grid items-start gap-8 lg:grid-cols-[minmax(18rem,26rem)_minmax(0,1fr)] lg:gap-12"
-      >
-        <div className="mx-auto w-full max-w-104 overflow-hidden rounded-4xl border bg-muted/30 lg:sticky lg:top-6 lg:mx-0">
-          <NeighborImage
-            image={heroImage}
-            name={`${neighbor.name}的${heroLabel}`}
-            eager
-            className="aspect-square p-4 sm:p-6"
-          />
-        </div>
-        <div className="min-w-0 space-y-4">
-          <h1
-            id="neighbor-heading"
-            className="text-3xl/tight font-semibold tracking-tight wrap-break-word sm:text-4xl"
-          >
-            {neighbor.name}
-          </h1>
-          <dl className="grid grid-cols-1 gap-3 text-sm/6 sm:grid-cols-2 sm:gap-4">
-            {profileFields.map(([label, value]) => (
-              <div key={label} className={fieldClassName}>
-                <dt className="text-xs text-muted-foreground">{label}</dt>
-                <dd className="wrap-break-word">{value ?? "资料暂未收录"}</dd>
-              </div>
-            ))}
-            <div className={fieldClassName}>
-              <dt className="text-xs text-muted-foreground">体型</dt>
-              <dd>{neighbor.bodyType ? `${neighbor.bodyType}体型` : "体型资料暂未收录"}</dd>
-            </div>
-            {neighbor.stars.length ? (
-              neighbor.stars.map((star) => (
-                <Fragment key={star.name}>
-                  <div className={fieldClassName}>
-                    <dt className="text-xs text-muted-foreground">所属星球</dt>
-                    <dd className="wrap-break-word">{star.name}</dd>
-                  </div>
-                  <div className={fieldClassName}>
-                    <dt className="text-xs text-muted-foreground">所属星系</dt>
-                    <dd className="wrap-break-word">
-                      {star.galaxy ? `${star.galaxy}星系` : "星系资料暂未收录"}
-                    </dd>
-                  </div>
-                </Fragment>
-              ))
-            ) : (
-              <div className={`${fieldClassName} sm:col-span-2`}>
-                <dt className="text-xs text-muted-foreground">所属星球与星系</dt>
-                <dd>星球与星系资料暂未收录</dd>
-              </div>
-            )}
-          </dl>
-        </div>
-      </section>
-      <div className="mt-10 space-y-10 border-t-3 border-dotted pt-8">
-        <NeighborPreferences preferences={neighbor.preferences} />
-        <NeighborAbilitiesSection neighbor={neighbor} />
-        <NeighborHouseSection neighbor={neighbor} />
-        <NeighborStories neighbor={neighbor} />
-      </div>
-    </div>
+    <DetailPage
+      overviewId="overview"
+      titleId="neighbor-heading"
+      title={neighbor.name}
+      image={
+        <NeighborImage
+          image={heroImage}
+          name={`${neighbor.name}的${heroLabel}`}
+          eager
+          className="aspect-square p-4 sm:p-6"
+        />
+      }
+      fields={fields}
+      sections={sections}
+    />
   );
 }

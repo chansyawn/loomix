@@ -1,17 +1,14 @@
 import { RecordImage } from "@/features/omnidex/record-image";
 import { SeriesImage } from "../omnidex/series-image";
-import {
-  DetailLayout,
-  DetailRelatedGrid,
-  type DetailSection,
-} from "@/features/omnidex/detail-layout";
+import { DetailRelatedGrid, type DetailSection } from "@/features/detail-page/detail-page";
+import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presentation";
 import { DishesCard, DishSeriesCard } from "./dishes-card";
 import type { DishesDetail } from "./detail";
 import { DishRecipe } from "./recipe";
 import { DishEffects } from "./effects";
 import { formatTastes, strengthText, unlockConditionLabel } from "./presentation";
 
-export function DishesDetailPage({ detail }: { detail: DishesDetail }) {
+export function dishesDetailPresentation(detail: DishesDetail): CatalogDetailPresentation {
   const { record } = detail;
   const fields: [string, string | null][] =
     detail.kind === "item"
@@ -29,35 +26,28 @@ export function DishesDetailPage({ detail }: { detail: DishesDetail }) {
           ["成员数量", detail.items === null ? null : `${detail.items.length} 道菜肴`],
         ];
 
-  return (
-    <DetailLayout
-      image={
-        detail.kind === "item" ? (
-          <RecordImage key={record.image} image={record.image} name={record.name} eager />
-        ) : (
-          <SeriesImage
-            name={record.name}
-            image={record.image}
-            memberIds={detail.record.dishIds}
-            items={detail.items ?? []}
-            eager
-          />
-        )
-      }
-      title={record.name}
-      quality={record.quality}
-      description={
-        (detail.kind === "item" || record.description) && (
-          <p className="text-sm/7 whitespace-pre-line text-muted-foreground">
-            {record.description || "描述未提供"}
-          </p>
-        )
-      }
-      fields={fields}
-      sections={dishDetailSections(detail)}
-      showEmptyExtras
-    />
-  );
+  return {
+    image:
+      detail.kind === "item" ? (
+        <RecordImage key={record.image} image={record.image} name={record.name} eager />
+      ) : (
+        <SeriesImage
+          name={record.name}
+          image={record.image}
+          memberIds={detail.record.dishIds}
+          items={detail.items ?? []}
+          eager
+        />
+      ),
+    description: (detail.kind === "item" || record.description) && (
+      <p className="text-sm/7 whitespace-pre-line text-muted-foreground">
+        {record.description || "描述未提供"}
+      </p>
+    ),
+    fields,
+    sections: dishDetailSections(detail),
+    showEmptyExtras: true,
+  };
 }
 
 function dishDetailSections(detail: DishesDetail): DetailSection[] {
