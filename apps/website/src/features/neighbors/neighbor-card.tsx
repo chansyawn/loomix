@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/ui/components/card";
+import { Card, CardDescription, CardHeader, CardMedia, CardTitle } from "@/ui/components/card";
 import type { NeighborDetail } from "./data";
 import { NeighborImage } from "./image";
 import { useNeighborsOrigin } from "./navigation";
@@ -8,13 +8,13 @@ export function NeighborCard({ neighbor }: { neighbor: NeighborDetail }) {
   const origin = useNeighborsOrigin();
   return (
     <Card role="article" className="relative min-w-0">
-      <div className="mx-2 mt-2 shrink-0 overflow-hidden rounded-md">
+      <CardMedia className="mx-2">
         <NeighborImage
           image={neighbor.image}
           name={`${neighbor.name}的星湾插画`}
-          className="aspect-156/41 bg-muted/50"
+          className="aspect-156/41 rounded-md bg-muted/50"
         />
-      </div>
+      </CardMedia>
       <CardHeader>
         <CardTitle className="min-w-0">
           <h2

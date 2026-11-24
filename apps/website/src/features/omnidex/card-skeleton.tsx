@@ -1,4 +1,4 @@
-import { Card, CardHeader, CardTitle } from "@/ui/components/card";
+import { Card, CardHeader, CardMedia, CardTitle } from "@/ui/components/card";
 import { Skeleton } from "@/ui/components/skeleton";
 
 export function ListCardSkeleton({
@@ -12,7 +12,9 @@ export function ListCardSkeleton({
 }) {
   return (
     <Card className="min-w-0" aria-hidden="true">
-      <Skeleton className={`${imageClassName} shrink-0`} />
+      <CardMedia>
+        <Skeleton className={imageClassName} />
+      </CardMedia>
       <CardHeader>
         <CardTitle>
           <Skeleton className="my-1 h-4 w-2/3" />

@@ -25,12 +25,12 @@ export function GameplayRelationItem({
   const quantityLabel = quantity === undefined ? undefined : `×${quantity}`;
   return (
     <Item
-      size="xs"
+      size={compact ? "xs" : "sm"}
       variant={compact ? "default" : "muted"}
       render={destination ? <Link {...destination} state={{ omnidexOrigin: origin }} /> : undefined}
-      className={cn("min-w-0 flex-nowrap", !compact && "min-h-11")}
+      className={cn("min-w-0 flex-nowrap")}
     >
-      <ItemMedia aria-hidden="true" className={compact ? "size-7" : "size-8"}>
+      <ItemMedia aria-hidden="true" className={compact ? "size-5" : "size-8"}>
         <RecordImage image={image} name="" inset="none" background="none" fallback="icon" />
       </ItemMedia>
       <span className="min-w-0 flex-1 truncate" title={note ? `${name} ${note}` : name}>

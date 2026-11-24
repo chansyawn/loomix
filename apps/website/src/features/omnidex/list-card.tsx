@@ -1,6 +1,6 @@
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "cn";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/ui/components/card";
+import { Card, CardDescription, CardHeader, CardMedia, CardTitle } from "@/ui/components/card";
 import { QualityBar } from "./quality";
 
 type ListCardProps = Pick<ComponentProps<"div">, "className" | "ref"> & {
@@ -24,10 +24,10 @@ export function ListCard({
 }: ListCardProps) {
   return (
     <Card ref={ref} role="article" className={cn("relative min-w-0", className)}>
-      <div className="relative shrink-0">
+      <CardMedia>
         {image}
         <QualityBar quality={quality} />
-      </div>
+      </CardMedia>
       <CardHeader>
         <CardTitle className="min-w-0">
           <h2
