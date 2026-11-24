@@ -1,4 +1,5 @@
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
+import { cn } from "cn";
 import { ArrowRightIcon } from "lucide-react";
 import { useEffect, useEffectEvent, useState } from "react";
 import { Badge } from "@/ui/components/badge";
@@ -87,7 +88,7 @@ export function GameplayUses({
             className="max-w-full flex-wrap justify-start group-data-horizontal/tabs:h-auto"
           >
             {categories.map((category) => (
-              <TabsTrigger key={category} value={category} className="min-h-10 flex-none">
+              <TabsTrigger key={category} value={category}>
                 {gameplayUseLabels[category]}
                 <Badge variant="secondary">{uses[category].length}</Badge>
               </TabsTrigger>
@@ -95,7 +96,14 @@ export function GameplayUses({
           </TabsList>
         </div>
         {categories.map((category) => (
-          <TabsContent key={category} value={category} className="min-w-0">
+          <TabsContent
+            key={category}
+            value={category}
+            className={cn(
+              "max-h-[min(60svh,32rem)] min-w-0 overflow-y-auto",
+              categories.length > 1 && "h-112 scrollbar-gutter-stable",
+            )}
+          >
             <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,19rem),1fr))] gap-3 p-3 sm:p-4">
               {uses[category].map((use) => (
                 <GameplayUseCard key={use.id} use={use} />
