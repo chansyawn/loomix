@@ -8,6 +8,7 @@ import * as React from "react";
 import { Link } from "@tanstack/react-router";
 import GithubIcon from "@/assets/icons/github.svg?react";
 import { site } from "@/site";
+import { SiteNoticePopover } from "./site-notice";
 import {
   omnidexNavigation,
   homeItem,
@@ -143,6 +144,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           >
             <GithubIcon aria-hidden="true" className="size-4" />
           </Button>
+          <SiteNoticePopover />
         </div>
       </SidebarFooter>
     </Sidebar>
