@@ -28,9 +28,9 @@ export function catalogGameplayUses(data: OmnidexCatalog, id: number) {
       name: furniture.name,
       image: furniture.image,
       destination: catalogEntryLocation(furniture),
-      conditions: recipes.map(({ id: recipeId, position, quantity }) => ({
+      conditions: recipes.map(({ id: recipeId, name, quantity }) => ({
         hash: gameplayAnchor("recipe", recipeId),
-        label: `配方 ${position}`,
+        label: furniture.inspoCards.length === 1 ? "制作配方" : name,
         reason: `指定材料 ×${quantity}`,
       })),
     }),
