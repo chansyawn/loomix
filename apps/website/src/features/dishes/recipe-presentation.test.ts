@@ -72,6 +72,7 @@ describe("dish recipe presentation", () => {
     );
 
     expect(view?.candidates.map((item) => item.id)).toEqual([3, 1]);
+    expect(view?.references.map((item) => item.id)).toEqual([2]);
     expect(conditionText(view!.conditionTokens)).toBe("蔬菜");
   });
 

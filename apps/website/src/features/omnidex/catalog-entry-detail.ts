@@ -8,7 +8,7 @@ import { creaturesDetail } from "../creatures/detail";
 import { plantsDetail } from "../plants/detail";
 import { dishesDetail } from "../dishes/detail";
 import { buildMiscellaneousDetail } from "../miscellaneous/detail";
-import { buildIngredientsData, ingredientUsage } from "../ingredients/model";
+import { ingredientUsage } from "../ingredients/model";
 import { neighborOutfitDetail } from "../neighbor-outfit/detail";
 import { setDetailNavigation } from "./detail-navigation-model";
 
@@ -85,7 +85,7 @@ export function catalogEntryDetail(data: OmnidexCatalog, id: number, neighborNam
           view.creatures,
           collection ? "series" : "items",
           id,
-          collection ? null : ingredientUsage(buildIngredientsData(view), id),
+          collection ? null : ingredientUsage(data.ingredients, id),
         ),
       };
     case "plant":
@@ -96,7 +96,7 @@ export function catalogEntryDetail(data: OmnidexCatalog, id: number, neighborNam
           view.plants,
           collection ? "series" : kind === "seed" ? "seeds" : "items",
           id,
-          kind === "plant" && !collection ? buildIngredientsData(view) : null,
+          kind === "plant" && !collection ? data.ingredients : null,
         ),
       };
     case "dish":
@@ -113,7 +113,10 @@ export function catalogEntryDetail(data: OmnidexCatalog, id: number, neighborNam
         ),
       };
     case "material":
-      return { category: "miscellaneous" as const, detail: buildMiscellaneousDetail(view, id) };
+      return {
+        category: "miscellaneous" as const,
+        detail: buildMiscellaneousDetail(view, id, data.ingredients),
+      };
   }
 }
 export type CatalogEntryDetail = ReturnType<typeof catalogEntryDetail>;

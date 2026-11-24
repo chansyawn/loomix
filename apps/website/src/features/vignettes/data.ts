@@ -3,9 +3,15 @@ import { parseImageIndex } from "@loomix/schema/assets";
 import { parseCatalog } from "@loomix/schema/catalog";
 import { parseGameplayTags } from "@loomix/schema/gameplay-tags";
 import { parseNeighbors } from "@loomix/schema/neighbors";
-import { parseVignettes } from "@loomix/schema/vignettes";
+import { parseVignettes, type Vignettes } from "@loomix/schema/vignettes";
 import { createResourceReader } from "@/infrastructure/resources";
 import { toVignetteDetail, toVignetteList } from "./view";
+
+const templateCache = new Map<string, Promise<Vignettes>>();
+
+export function readVignetteTemplates(read: ReturnType<typeof createResourceReader>) {
+  return read("vignettes", parseVignettes, templateCache);
+}
 
 export async function loadVignetteList(request: typeof fetch = fetch) {
   const read = createResourceReader(request);

@@ -1,20 +1,12 @@
 import type { IngredientUsage } from "./model";
 import { IngredientTagLink } from "./tag-link";
-import { RelatedRecipes } from "./related-recipes";
 
-export function ItemCookingUsage({ usage }: { usage: IngredientUsage | null }) {
-  if (!usage) return null;
+export function ItemIngredientTags({ tags }: { tags: IngredientUsage["tags"] }) {
   return (
-    <section aria-labelledby="item-cooking-usage" className="space-y-4">
-      <h2 id="item-cooking-usage" className="text-lg font-semibold">
-        烹饪用途
-      </h2>
-      <div className="flex flex-wrap gap-2" aria-label="食材标签">
-        {usage.tags.map((category) => (
-          <IngredientTagLink key={category.id} category={category} />
-        ))}
-      </div>
-      {usage.dishes.length > 0 && <RelatedRecipes matches={usage.dishes} />}
-    </section>
+    <div className="flex flex-wrap gap-2">
+      {tags.map((category) => (
+        <IngredientTagLink key={category.id} category={category} />
+      ))}
+    </div>
   );
 }

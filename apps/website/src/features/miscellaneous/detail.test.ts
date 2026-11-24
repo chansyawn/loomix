@@ -5,6 +5,8 @@ import { imageIndexFixture, catalogFixture, fixtureRequest } from "../omnidex-fi
 import { toOmnidexView } from "../omnidex-view.ts";
 import type { FurnitureItem, MiscellaneousItem } from "../omnidex-view.ts";
 import type { InspoCardView } from "../omnidex/inspo-card.ts";
+import { createOmnidexCatalog } from "../omnidex/catalog";
+import { catalogGameplayUses } from "../omnidex/gameplay-uses-model";
 import { plantItemFixture, plantsDataFixture } from "../plants/fixture";
 import { categoryExpression, recipeFixture, recipeSlot } from "../ingredients/fixture";
 import {
@@ -155,7 +157,7 @@ describe("miscellaneous details", () => {
     expect(buildMiscellaneousDetail(collection, 30032).sourceTrees).toEqual([]);
   });
 
-  it("lists only direct furniture uses once and preserves every matching recipe's position and quantity", () => {
+  it("lists only direct furniture uses once and preserves every matching recipe's identity and quantity", () => {
     const { catalog, gameplayTags } = relatedCatalog();
     const collection = toOmnidexView(
       catalog,
@@ -169,15 +171,15 @@ describe("miscellaneous details", () => {
       {
         id: 100,
         recipes: [
-          { position: 2, quantity: 3 },
-          { position: 3, quantity: 5 },
+          { id: 12, name: "创想卡 12", quantity: 3 },
+          { id: 13, name: "创想卡 13", quantity: 5 },
         ],
       },
       {
         id: 101,
         recipes: [
-          { position: 1, quantity: 2 },
-          { position: 2, quantity: 2 },
+          { id: 14, name: "创想卡 14", quantity: 2 },
+          { id: 15, name: "创想卡 15", quantity: 2 },
         ],
       },
     ]);
@@ -192,6 +194,18 @@ describe("miscellaneous details", () => {
     } catch (error) {
       expect(isNotFound(error)).toBe(true);
     }
+  });
+
+  it("labels crafting links without recipe numbers and keeps their recipe anchors", () => {
+    const { catalog, gameplayTags } = relatedCatalog();
+    const data = createOmnidexCatalog(catalog, imageIndexFixture(catalog), gameplayTags);
+    expect(catalogGameplayUses(data, 100).crafting[0]?.conditions).toEqual([
+      { hash: "recipe-17", label: "制作配方", reason: "指定材料 ×1" },
+    ]);
+    expect(catalogGameplayUses(data, item.id).crafting[0]?.conditions).toEqual([
+      { hash: "recipe-12", label: "创想卡 12", reason: "指定材料 ×3" },
+      { hash: "recipe-13", label: "创想卡 13", reason: "指定材料 ×5" },
+    ]);
   });
 
   it("loads tree sources, furniture uses and cooking uses together from the existing resources", async () => {

@@ -13,5 +13,6 @@ export const Route = createFileRoute("/starsea_/islets/$id")({
 });
 
 function StarseaRoute() {
-  return <StarseaDetailPage islet={Route.useLoaderData()} />;
+  const islet = Route.useLoaderData();
+  return <StarseaDetailPage key={islet.id} islet={islet} />;
 }

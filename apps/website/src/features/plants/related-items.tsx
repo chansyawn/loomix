@@ -5,50 +5,34 @@ import { catalogEntryLocation } from "../omnidex/entry-location";
 import { useOmnidexOrigin } from "@/features/omnidex/navigation";
 import type { PlantDrop, PlantDrops } from "./model";
 
-export function PlantRelatedItems({
-  title,
-  items,
-  unlistedCount = 0,
-}: {
-  title: string;
-  items: IngredientItem[];
-  unlistedCount?: number;
-}) {
+export function PlantRelatedItems({ items }: { items: IngredientItem[] }) {
   const origin = useOmnidexOrigin();
-  if (!items.length && !unlistedCount) return null;
   return (
-    <section aria-label={title} className="space-y-4">
-      <h2 className="text-lg font-semibold">{title}</h2>
-      <ul className="flex flex-wrap gap-3">
-        {items.map((item) => (
-          <li key={item.id} className="max-w-full min-w-0">
-            <CatalogItemCard
-              item={item}
-              itemId={item.id}
-              link={
-                item.browsable === false
-                  ? undefined
-                  : {
-                      ...catalogEntryLocation(item),
-                      state: { omnidexOrigin: origin },
-                    }
-              }
-            />
-          </li>
-        ))}
-      </ul>
-      {unlistedCount > 0 && (
-        <p className="text-sm text-muted-foreground">另有 {unlistedCount} 种掉落物尚未收录。</p>
-      )}
-    </section>
+    <ul className="flex flex-wrap gap-3">
+      {items.map((item) => (
+        <li key={item.id} className="max-w-full min-w-0">
+          <CatalogItemCard
+            item={item}
+            itemId={item.id}
+            link={
+              item.browsable === false
+                ? undefined
+                : {
+                    ...catalogEntryLocation(item),
+                    state: { omnidexOrigin: origin },
+                  }
+            }
+          />
+        </li>
+      ))}
+    </ul>
   );
 }
 
 export function PlantDropsInfo({ drops }: { drops: PlantDrops }) {
   if (!drops.groups.length) return null;
   return (
-    <section aria-label="产物与掉落" className="space-y-4">
-      <h2 className="text-lg font-semibold">产物与掉落</h2>
+    <div className="flex flex-col gap-4">
       {drops.groups.map((group) => (
         <div key={group.treeId} className="space-y-4">
           {drops.groups.length > 1 && <h3 className="text-sm font-medium">{group.treeName}</h3>}
@@ -78,7 +62,7 @@ export function PlantDropsInfo({ drops }: { drops: PlantDrops }) {
           )}
         </div>
       ))}
-    </section>
+    </div>
   );
 }
 

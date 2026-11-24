@@ -1,7 +1,6 @@
-import { Link } from "@tanstack/react-router";
-import { RecordImage } from "../omnidex/record-image";
 import { catalogEntryLocation } from "../omnidex/entry-location";
-import type { IngredientItem } from "../omnidex-view";
+import { gameplayAnchor, useGameplayAccordion } from "../omnidex/gameplay-anchors";
+import { GameplayRelationItem } from "../omnidex/gameplay-relation-item";
 import {
   Accordion,
   AccordionContent,
@@ -9,36 +8,12 @@ import {
   AccordionTrigger,
 } from "@/ui/components/accordion";
 import { Badge } from "@/ui/components/badge";
-import { Item, ItemContent } from "@/ui/components/item";
 import type { DishesDetail } from "./detail";
-import { useOmnidexOrigin } from "@/features/omnidex/navigation";
 import {
   buildDishRecipeSlots,
   type DishRecipeSlotView,
   type RecipeConditionToken,
 } from "./recipe-presentation";
-
-function IngredientCard({ item }: { item: IngredientItem }) {
-  const origin = useOmnidexOrigin();
-  return (
-    <Link
-      {...catalogEntryLocation(item)}
-      state={{ omnidexOrigin: origin }}
-      className="group/recipe-item block min-w-0 rounded-xl no-underline outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-    >
-      <Item variant="muted" size="sm" className="h-full">
-        <div className="relative size-10 shrink-0 overflow-hidden rounded-lg border bg-muted/30">
-          <RecordImage image={item.image} name={item.name} inset="sm" fallback="icon" />
-        </div>
-        <ItemContent className="min-w-0">
-          <span className="line-clamp-2 min-w-0 wrap-anywhere whitespace-normal" title={item.name}>
-            {item.name}
-          </span>
-        </ItemContent>
-      </Item>
-    </Link>
-  );
-}
 
 function ConditionToken({ token }: { token: RecipeConditionToken }) {
   if (token.kind === "tag")
@@ -70,13 +45,10 @@ function ConditionSummary({ slot }: { slot: DishRecipeSlotView }) {
   );
 }
 
-function candidateCountLabel(slot: DishRecipeSlotView): string {
-  return String(slot.candidates.length);
-}
-
 function CandidateItems({ slot, index }: { slot: DishRecipeSlotView; index: number }) {
-  if (!slot.candidates.length)
-    return <p className="py-4 text-sm text-muted-foreground">暂无可浏览的收录食材</p>;
+  const matches = [...slot.candidates, ...slot.references];
+  if (!matches.length)
+    return <p className="py-4 text-sm text-muted-foreground">暂无已收录的匹配食材</p>;
 
   return (
     <ul
@@ -84,9 +56,14 @@ function CandidateItems({ slot, index }: { slot: DishRecipeSlotView; index: numb
       className="grid max-h-80 grid-cols-[repeat(auto-fill,minmax(min(100%,11rem),1fr))] gap-2 overflow-y-auto overscroll-contain rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
       tabIndex={0}
     >
-      {slot.candidates.map((item) => (
+      {matches.map((item) => (
         <li key={item.id} className="min-w-0">
-          <IngredientCard item={item} />
+          <GameplayRelationItem
+            name={item.name}
+            image={item.image}
+            note={item.browsable === false ? "无图鉴详情" : undefined}
+            destination={item.browsable === false ? undefined : catalogEntryLocation(item)}
+          />
         </li>
       ))}
     </ul>
@@ -99,29 +76,33 @@ export function DishRecipe({ detail }: { detail: Extract<DishesDetail, { kind: "
     detail.ingredientTagSource.byId,
     detail.ingredientItemsById,
   );
+  const expansion = useGameplayAccordion(
+    "slot",
+    slots.map((_, index) => index + 1),
+  );
   if (slots.length === 0) return null;
 
   return (
-    <section aria-labelledby="dish-recipe" className="min-w-0 space-y-4">
-      <h2 id="dish-recipe" className="text-lg font-semibold">
-        配方
-      </h2>
-      <Accordion multiple>
-        {slots.map((slot, index) => (
-          <AccordionItem key={index} value={String(index)}>
+    <Accordion multiple {...expansion}>
+      {slots.map((slot, index) => {
+        const anchor = gameplayAnchor("slot", index + 1);
+        return (
+          <AccordionItem key={anchor} id={anchor} value={anchor}>
             <AccordionTrigger className="items-start">
               <span className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                 <span className="shrink-0 whitespace-nowrap">食材 {index + 1}：</span>
                 <ConditionSummary slot={slot} />
-                <Badge variant="outline">{candidateCountLabel(slot)}</Badge>
+                <Badge variant="outline">
+                  {slot.candidates.length + slot.references.length} 项候选
+                </Badge>
               </span>
             </AccordionTrigger>
             <AccordionContent>
               <CandidateItems slot={slot} index={index} />
             </AccordionContent>
           </AccordionItem>
-        ))}
-      </Accordion>
-    </section>
+        );
+      })}
+    </Accordion>
   );
 }

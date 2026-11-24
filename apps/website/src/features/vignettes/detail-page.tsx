@@ -1,9 +1,14 @@
 import type { LinkProps } from "@tanstack/react-router";
-import { DetailLayout, DetailRelatedGrid } from "@/features/omnidex/detail-layout";
+import {
+  DetailPage,
+  DetailRelatedGrid,
+  type DetailSection,
+} from "@/features/detail-page/detail-page";
 import { CatalogItemCard } from "@/features/omnidex/catalog-item-card";
 import { catalogEntryLocation } from "@/features/omnidex/entry-location";
 import { RecordImage } from "@/features/omnidex/record-image";
 import { VignetteRequirements } from "./requirements";
+import { VignettePlacementRules } from "./placement-reference";
 import type { VignetteDetail } from "./view";
 
 type RelatedEntry = VignetteDetail["neighbors"][number];
@@ -17,25 +22,50 @@ function RelatedEntries({
   entries: RelatedEntry[];
   itemLink: (entry: RelatedEntry) => LinkProps;
 }) {
-  return (
-    <section className="space-y-2">
-      <h2 className="text-xl font-semibold">关联{title}</h2>
-      {entries.length ? (
-        <DetailRelatedGrid>
-          {entries.map((entry) => (
-            <CatalogItemCard key={entry.id} item={entry} itemId={entry.id} link={itemLink(entry)} />
-          ))}
-        </DetailRelatedGrid>
-      ) : (
-        <p className="text-sm text-muted-foreground">暂无关联{title}</p>
-      )}
-    </section>
+  return entries.length ? (
+    <DetailRelatedGrid>
+      {entries.map((entry) => (
+        <CatalogItemCard key={entry.id} item={entry} itemId={entry.id} link={itemLink(entry)} />
+      ))}
+    </DetailRelatedGrid>
+  ) : (
+    <p className="text-sm text-muted-foreground">暂无关联{title}</p>
   );
 }
 
 export function VignetteDetailPage({ entry }: { entry: VignetteDetail }) {
+  const sections: DetailSection[] = [
+    {
+      id: "vignette-requirements",
+      title: "布景要求",
+      content: (
+        <>
+          <VignettePlacementRules rules={entry.placementRules} />
+          <VignetteRequirements requirements={entry.requirements} />
+        </>
+      ),
+    },
+    {
+      id: "related-neighbors",
+      title: "关联友邻",
+      content: (
+        <RelatedEntries
+          title="友邻"
+          entries={entry.neighbors}
+          itemLink={({ id }) => ({ to: "/neighbors/$id", params: { id: String(id) } })}
+        />
+      ),
+    },
+    {
+      id: "related-creatures",
+      title: "关联生物",
+      content: (
+        <RelatedEntries title="生物" entries={entry.creatures} itemLink={catalogEntryLocation} />
+      ),
+    },
+  ];
   return (
-    <DetailLayout
+    <DetailPage
       image={
         <RecordImage
           key={entry.image}
@@ -52,14 +82,7 @@ export function VignetteDetailPage({ entry }: { entry: VignetteDetail }) {
         ["星级", entry.stars],
         ["地形", entry.terrain],
       ]}
-    >
-      <RelatedEntries
-        title="友邻"
-        entries={entry.neighbors}
-        itemLink={({ id }) => ({ to: "/neighbors/$id", params: { id: String(id) } })}
-      />
-      <RelatedEntries title="生物" entries={entry.creatures} itemLink={catalogEntryLocation} />
-      <VignetteRequirements requirements={entry.requirements} />
-    </DetailLayout>
+      sections={sections}
+    />
   );
 }

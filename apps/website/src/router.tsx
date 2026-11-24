@@ -1,11 +1,12 @@
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
+import { wikiScrollSelector } from "@/infrastructure/wiki-scroll";
 import { routeTree } from "./routeTree.gen";
 
 export function getRouter() {
   const router = createTanStackRouter({
     routeTree,
     scrollRestoration: true,
-    scrollToTopSelectors: ['[data-scroll-restoration-id="wiki-content"]'],
+    scrollToTopSelectors: [wikiScrollSelector],
     defaultPreload: "intent",
     defaultPreloadStaleTime: 0,
   });

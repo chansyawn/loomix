@@ -2,11 +2,13 @@ import { createFileRoute, notFound, useRouter } from "@tanstack/react-router";
 import { loadOmnidexCatalog } from "@/features/omnidex-loader";
 import { parseCatalogEntryId, catalogEntryDetail } from "@/features/omnidex/catalog-entry-detail";
 import { CatalogEntryPage } from "@/features/omnidex/catalog-entry-page";
-import { DetailLoading } from "@/features/omnidex/detail-layout";
+import { DetailPageLoading } from "@/features/detail-page/detail-page";
 import { ListLoadError } from "@/features/omnidex/states";
 import { OmnidexReturnLink } from "@/features/omnidex/navigation";
 import { createResourceReader } from "@/infrastructure/resources";
 import { parseNeighbors } from "@loomix/schema/neighbors";
+import { catalogGameplayUses, vignetteGameplayUses } from "@/features/omnidex/gameplay-uses-model";
+import { readVignetteTemplates } from "@/features/vignettes/data";
 export const Route = createFileRoute("/catalog_/$id")({
   ssr: false,
   loader: async ({ params }) => {
@@ -25,9 +27,17 @@ export const Route = createFileRoute("/catalog_/$id")({
             (neighbor) => neighbor.id === neighborId,
           )?.name
         : undefined;
-    return { data, record: row, model: catalogEntryDetail(data, id, neighborName) };
+    const model = catalogEntryDetail(data, id, neighborName);
+    if (!("kind" in record)) return { record: row, model };
+    return {
+      record: row,
+      model,
+      uses: catalogGameplayUses(data, id),
+      readVignetteUses: async () =>
+        vignetteGameplayUses(data, record, await readVignetteTemplates(load)),
+    };
   },
-  pendingComponent: () => <DetailLoading label="正在加载物品详情" />,
+  pendingComponent: () => <DetailPageLoading label="正在加载物品详情" />,
   errorComponent: DetailError,
   notFoundComponent: () => (
     <section className="space-y-4">
@@ -38,8 +48,16 @@ export const Route = createFileRoute("/catalog_/$id")({
   component: DetailRoute,
 });
 function DetailRoute() {
-  const { data, record, model } = Route.useLoaderData();
-  return <CatalogEntryPage data={data} id={record.id} model={model} />;
+  const { record, model, uses, readVignetteUses } = Route.useLoaderData();
+  return (
+    <CatalogEntryPage
+      key={record.id}
+      record={record}
+      model={model}
+      uses={uses}
+      readVignetteUses={readVignetteUses}
+    />
+  );
 }
 function DetailError() {
   const router = useRouter();

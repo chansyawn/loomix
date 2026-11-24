@@ -1,7 +1,8 @@
 import { isNotFound } from "@tanstack/react-router";
 import { expect, test, vi } from "vite-plus/test";
 import { catalogFixture, fixtureRequest } from "../omnidex-fixture";
-import { loadVignetteDetail, loadVignetteList } from "./data";
+import { createResourceReader } from "@/infrastructure/resources";
+import { loadVignetteDetail, loadVignetteList, readVignetteTemplates } from "./data";
 
 const requestUrl = (input: Parameters<typeof fetch>[0]) =>
   input instanceof Request ? input.url : input.toString();
@@ -40,4 +41,28 @@ test("小栖地文档字节与清单不符时拒绝加载", async () => {
       ? Promise.resolve(new Response("{}"))
       : original(input, init);
   await expect(loadVignetteList(request)).rejects.toThrow("Resource integrity mismatch: vignettes");
+});
+
+test("后台读取共享模板请求，失败后可重试并复用已验证结果", async () => {
+  const original = fixtureRequest(catalogFixture());
+  let fail = true;
+  const request = vi.fn<typeof fetch>(async (input, init) =>
+    fail && requestUrl(input).endsWith("vignettes.json")
+      ? new Response(null, { status: 503 })
+      : original(input, init),
+  );
+  const firstReader = createResourceReader(request);
+  const secondReader = createResourceReader(request);
+  const failed = await Promise.allSettled([
+    readVignetteTemplates(firstReader),
+    readVignetteTemplates(firstReader),
+  ]);
+  expect(failed.map(({ status }) => status)).toEqual(["rejected", "rejected"]);
+  fail = false;
+  const templates = await readVignetteTemplates(secondReader);
+  expect(templates.templates).toEqual([]);
+  await expect(readVignetteTemplates(firstReader)).resolves.toBe(templates);
+  expect(
+    request.mock.calls.filter(([input]) => requestUrl(input).endsWith("vignettes.json")),
+  ).toHaveLength(2);
 });
