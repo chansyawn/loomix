@@ -12,17 +12,19 @@ import { catalogEntryLocation } from "../omnidex/entry-location";
 export const catalogListPresentation = {
   toolbar: { title: "全部", searchLabel: "搜索物品名称", placeholder: "搜索物品名称或拼音…" },
   grid: compactGrid(164),
-  card: <ListCardSkeleton description tags />,
+  card: <ListCardSkeleton tags />,
 };
 
-export function RecordNameLink({ record }: { record: CatalogEntryRow }) {
+export function RecordNameLink({
+  record,
+  className,
+}: {
+  record: CatalogEntryRow;
+  className?: string;
+}) {
   const origin = useOmnidexOrigin();
   return (
-    <Link
-      {...catalogEntryLocation(record)}
-      state={{ omnidexOrigin: origin }}
-      className={tableLinkClassName}
-    >
+    <Link {...catalogEntryLocation(record)} state={{ omnidexOrigin: origin }} className={className}>
       {record.name}
     </Link>
   );
@@ -33,7 +35,6 @@ export function CatalogCard({ record }: { record: CatalogEntryRow }) {
       name={record.name}
       image={<RecordImage image={record.image} name={record.name} />}
       quality={record.quality}
-      description={record.description}
       tags={categoryNames[record.category]}
       titleLink={<RecordNameLink record={record} />}
     />
@@ -41,7 +42,9 @@ export function CatalogCard({ record }: { record: CatalogEntryRow }) {
 }
 export function catalogColumns() {
   return [
-    ...recordColumns<CatalogEntryRow>((record) => <RecordNameLink record={record} />),
+    ...recordColumns<CatalogEntryRow>((record) => (
+      <RecordNameLink record={record} className={tableLinkClassName} />
+    )),
     textColumn<CatalogEntryRow>("id", "编号", 112, (record) => record.id),
     textColumn<CatalogEntryRow>(
       "category",

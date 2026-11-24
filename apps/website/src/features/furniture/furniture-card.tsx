@@ -43,7 +43,6 @@ export function FurnitureSetCard({ set }: { set: FurnitureSet }) {
           {set.name}
         </Link>
       }
-      description={set.description}
       tags={set.componentIds === null ? null : `${set.componentIds.length} 件家具`}
     />
   );

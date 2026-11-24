@@ -6,18 +6,18 @@ export interface GridLayout {
 
 export function compactGrid(extraHeight: number): GridLayout {
   return {
-    breakpoints: [368, 560, 752, 944, 1136],
+    breakpoints: [320, 488, 656, 824, 992, 1160],
     className:
-      "grid grid-cols-1 gap-4 @min-[368px]:grid-cols-2 @min-[560px]:grid-cols-3 @min-[752px]:grid-cols-4 @min-[944px]:grid-cols-5 @min-[1136px]:grid-cols-6",
+      "grid grid-cols-1 gap-4 @min-[320px]:grid-cols-2 @min-[488px]:grid-cols-3 @min-[656px]:grid-cols-4 @min-[824px]:grid-cols-5 @min-[992px]:grid-cols-6 @min-[1160px]:grid-cols-7",
     estimateHeight: (width) => width + extraHeight,
   };
 }
 
 export function wideGrid(extraHeight: number): GridLayout {
   return {
-    breakpoints: [592, 896, 1200],
+    breakpoints: [464, 704, 944, 1184],
     className:
-      "grid grid-cols-1 gap-4 @min-[592px]:grid-cols-2 @min-[896px]:grid-cols-3 @min-[1200px]:grid-cols-4",
+      "grid grid-cols-1 gap-4 @min-[464px]:grid-cols-2 @min-[704px]:grid-cols-3 @min-[944px]:grid-cols-4 @min-[1184px]:grid-cols-5",
     estimateHeight: (width) => width / 2 + extraHeight,
   };
 }

@@ -36,7 +36,6 @@ export function PlantSeriesCard({ series }: { series: PlantSeries }) {
           {series.name}
         </Link>
       }
-      description={series.description}
       tags={series.plantIds === null ? null : `${series.plantIds.length} 种植物`}
     />
   );
@@ -49,7 +48,6 @@ export function SeedCard({ seed }: { seed: PlantSeed }) {
       quality={seed.quality}
       image={<RecordImage key={seed.image} image={seed.image} name={seed.name} />}
       titleLink={<SeedNameLink seed={seed} />}
-      description={seed.description}
     />
   );
 }

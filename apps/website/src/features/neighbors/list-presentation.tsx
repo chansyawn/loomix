@@ -1,9 +1,9 @@
 import { Skeleton } from "@/ui/components/skeleton";
 import { ListCardSkeleton } from "../list-page/card-skeleton";
 import { compactGrid } from "../list-page/grid-layout";
-import { tableLinkClassName, type ListColumn } from "../list-page/table-columns";
+import { tableLinkClassName, textColumn, type ListColumn } from "../list-page/table-columns";
 import { RecordImage } from "../omnidex/record-image";
-import { NeighborLink, NeighborStars } from "./neighbor-card";
+import { galaxyNames, NeighborLink } from "./neighbor-card";
 import { galaxies } from "./search";
 import type { NeighborDetail } from "./view";
 
@@ -12,11 +12,7 @@ export const neighborsListPresentation = {
   choice: { label: "星系筛选", allLabel: "全部星系" },
   options: galaxies.map((galaxy) => ({ value: galaxy, label: galaxy })),
   grid: compactGrid(78),
-  card: (
-    <ListCardSkeleton>
-      <Skeleton className="h-5 w-3/4" />
-    </ListCardSkeleton>
-  ),
+  card: <ListCardSkeleton tags />,
 };
 
 export const neighborColumns: ListColumn<NeighborDetail>[] = [
@@ -43,10 +39,5 @@ export const neighborColumns: ListColumn<NeighborDetail>[] = [
       </div>
     ),
   },
-  {
-    id: "stars",
-    header: "所属星球与星系",
-    width: 264,
-    cell: (neighbor) => <NeighborStars stars={neighbor.stars} />,
-  },
+  textColumn("galaxies", "星系", 192, galaxyNames),
 ];

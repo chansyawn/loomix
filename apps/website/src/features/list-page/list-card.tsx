@@ -1,15 +1,13 @@
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "cn";
-import { Card, CardDescription, CardHeader, CardMedia, CardTitle } from "@/ui/components/card";
+import { Card, CardHeader, CardMedia, CardTitle } from "@/ui/components/card";
 
 type ListCardProps = Pick<ComponentProps<"div">, "className" | "ref"> & {
   name: string;
   image: ReactNode;
   imageOverlay?: ReactNode;
   titleLink: ReactNode;
-  description?: string | null;
   tags?: string | null;
-  children?: ReactNode;
 };
 
 export function ListCard({
@@ -17,9 +15,7 @@ export function ListCard({
   image,
   imageOverlay,
   titleLink,
-  description,
   tags,
-  children,
   className,
   ref,
 }: ListCardProps) {
@@ -38,21 +34,11 @@ export function ListCard({
             {titleLink}
           </h2>
         </CardTitle>
-        {description?.trim() ? (
-          <CardDescription
-            // oxlint-disable-next-line shadcn/no-restyle -- 图鉴卡片的描述固定预留两行空间。
-            className="line-clamp-2 min-h-10 leading-5"
-            title={description}
-          >
-            {description}
-          </CardDescription>
-        ) : null}
         {tags?.trim() ? (
           <p className="truncate text-xs text-muted-foreground" title={tags}>
             {tags}
           </p>
         ) : null}
-        {children}
       </CardHeader>
     </Card>
   );

@@ -18,11 +18,7 @@ export function listPresentation(view: View) {
     ...entry,
     grid: view === "items" ? compactGrid(78) : wideGrid(124),
     card: (
-      <ListCardSkeleton
-        imageClassName={view === "series" ? "aspect-2/1" : "aspect-square"}
-        description={view === "series"}
-        tags
-      />
+      <ListCardSkeleton imageClassName={view === "series" ? "aspect-2/1" : "aspect-square"} tags />
     ),
   };
 }

@@ -46,7 +46,6 @@ export function DishSeriesCard({ series, items }: { series: DishSeries; items: D
           {series.name}
         </Link>
       }
-      description={series.description}
       tags={series.dishIds === null ? null : `${series.dishIds.length} 道菜肴`}
     />
   );

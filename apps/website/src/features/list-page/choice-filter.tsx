@@ -34,8 +34,6 @@ export function ListChoiceFilter({
       aria-label={label}
       className="max-w-full flex-wrap"
       variant="outline"
-      size="sm"
-      spacing={2}
       value={[value]}
       disabled={disabled}
       onValueChange={([next]) => {

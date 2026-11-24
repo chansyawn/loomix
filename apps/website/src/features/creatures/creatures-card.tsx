@@ -48,7 +48,6 @@ export function CreatureSeriesCard({
           {series.name}
         </Link>
       }
-      description={series.description}
       tags={series.creatureIds === null ? null : `${series.creatureIds.length} 种生物`}
     />
   );

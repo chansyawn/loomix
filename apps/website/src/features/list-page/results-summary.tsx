@@ -1,6 +1,5 @@
 import { XIcon } from "lucide-react";
 import { Badge } from "@/ui/components/badge";
-import { Button } from "@/ui/components/button";
 import { FilterSummary } from "./filter-summary";
 export interface FilterChip {
   key: string;
@@ -27,16 +26,16 @@ export function ListResultsSummary({
         </p>
       }
       chips={chips.map((chip) => (
-        <Badge key={chip.key} variant="secondary" className="h-auto max-w-full shrink-0">
+        <Badge key={chip.key} variant="secondary" className="max-w-full shrink-0">
           <span className="truncate">{chip.label}</span>
-          <Button
-            size="icon-xs"
-            variant="ghost"
+          <button
+            type="button"
+            data-icon="inline-end"
             aria-label={`移除${chip.label}`}
             onClick={chip.remove}
           >
-            <XIcon />
-          </Button>
+            <XIcon className="size-3" />
+          </button>
         </Badge>
       ))}
       onClear={onClear}

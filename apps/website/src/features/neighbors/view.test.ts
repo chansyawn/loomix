@@ -16,6 +16,17 @@ test("derives neighbor relationships from their owning entities", () => {
   expect(view.neighbors[0].stories.map((story) => story.chapter)).toEqual([1, 2]);
 });
 
+test("derives deduplicated galaxies for card tags, tables and filters", () => {
+  const { view } = fixture();
+  expect(view.neighbors.map(({ galaxies }) => galaxies)).toEqual([
+    ["禾夏"],
+    ["禾夏"],
+    ["帕沙"],
+    ["帕沙"],
+  ]);
+  expect(view.galaxies).toEqual(["禾夏", "帕沙"]);
+});
+
 test("selects the same portrait for cards and detail, with a role illustration fallback", () => {
   const { database, mapping, catalog, gameplayTags, view } = fixture();
   const favour = { image: `assets/${"b".repeat(64)}.webp`, label: "好感插画" };

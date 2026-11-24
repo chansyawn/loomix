@@ -19,6 +19,6 @@ export function listPresentation(view: View) {
   return {
     ...entry,
     grid: compactGrid(view === "items" ? 78 : 124),
-    card: <ListCardSkeleton description={view !== "items"} tags />,
+    card: <ListCardSkeleton tags />,
   };
 }

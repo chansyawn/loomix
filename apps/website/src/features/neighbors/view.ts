@@ -51,12 +51,14 @@ export function toNeighborsView(
   const tags = createGameplayTagIndex(gameplayTags.tags);
   const neighbors = database.neighbors.map((neighbor) => {
     const stars = neighbor.stars.map(({ name, galaxy }) => ({ name, galaxy }));
+    const galaxies = [...new Set(stars.flatMap((star) => (star.galaxy ? [star.galaxy] : [])))];
     const { birthday } = neighbor.profile;
     return {
       id: neighbor.id,
       name: neighbor.name,
       bodyType: neighbor.bodyType ? bodyTypes[neighbor.bodyType] : null,
       stars,
+      galaxies,
       portrait: resolveNeighborPortrait(neighbor.images, image),
       profile: {
         englishName: neighbor.profile.englishName,
@@ -87,13 +89,7 @@ export function toNeighborsView(
   });
   return {
     neighbors,
-    galaxies: [
-      ...new Set(
-        neighbors.flatMap((neighbor) =>
-          neighbor.stars.flatMap((star) => (star.galaxy ? [star.galaxy] : [])),
-        ),
-      ),
-    ],
+    galaxies: [...new Set(neighbors.flatMap((neighbor) => neighbor.galaxies))],
   };
 }
 

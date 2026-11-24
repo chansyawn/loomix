@@ -21,7 +21,7 @@ export function listPresentation(view: View) {
       view === "items" ? (
         <ListCardSkeleton tags />
       ) : (
-        <ListCardSkeleton imageClassName="aspect-2/1" description tags />
+        <ListCardSkeleton imageClassName="aspect-2/1" tags />
       ),
   };
 }

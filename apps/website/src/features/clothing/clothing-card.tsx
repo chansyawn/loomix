@@ -17,7 +17,6 @@ export function ClothingCard({ record }: { record: ClothingRow }) {
           {record.name}
         </Link>
       }
-      description={"componentIds" in record ? record.description : null}
       tags={
         "componentIds" in record
           ? record.componentIds === null

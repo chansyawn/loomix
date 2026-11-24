@@ -24,17 +24,8 @@ export function NeighborLink({
   );
 }
 
-export function NeighborStars({ stars }: { stars: NeighborDetail["stars"] }) {
-  if (!stars.length) return <p className="text-xs text-muted-foreground">星球与星系资料暂未收录</p>;
-  return (
-    <ul className="space-y-1 text-sm whitespace-normal text-muted-foreground">
-      {stars.map(({ name, galaxy }) => (
-        <li key={`${name}-${galaxy}`}>
-          {name} <span className="text-xs">· {galaxy ? `${galaxy}星系` : "星系资料暂未收录"}</span>
-        </li>
-      ))}
-    </ul>
-  );
+export function galaxyNames(neighbor: NeighborDetail) {
+  return neighbor.galaxies.join("、");
 }
 
 export function NeighborCard({ neighbor }: { neighbor: NeighborDetail }) {
@@ -49,8 +40,7 @@ export function NeighborCard({ neighbor }: { neighbor: NeighborDetail }) {
         />
       }
       titleLink={<NeighborLink neighbor={neighbor} />}
-    >
-      <NeighborStars stars={neighbor.stars} />
-    </ListCard>
+      tags={galaxyNames(neighbor)}
+    />
   );
 }
