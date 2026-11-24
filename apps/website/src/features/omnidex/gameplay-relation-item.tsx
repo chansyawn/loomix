@@ -1,4 +1,5 @@
 import { Link, type LinkProps } from "@tanstack/react-router";
+import { cn } from "cn";
 import { ArrowUpRightIcon } from "lucide-react";
 import { Item, ItemMedia } from "@/ui/components/item";
 import { useOmnidexOrigin } from "./navigation";
@@ -10,12 +11,14 @@ export function GameplayRelationItem({
   quantity,
   note,
   destination,
+  singleLine = false,
 }: {
   name: string;
   image: string | null;
   quantity?: number;
   note?: string;
   destination?: LinkProps;
+  singleLine?: boolean;
 }) {
   const origin = useOmnidexOrigin();
   return (
@@ -28,7 +31,10 @@ export function GameplayRelationItem({
       <ItemMedia aria-hidden="true" className="size-8">
         <RecordImage image={image} name="" inset="none" background="none" fallback="icon" />
       </ItemMedia>
-      <span className="min-w-0 text-sm wrap-anywhere">
+      <span
+        className={cn("min-w-0 text-sm", singleLine ? "truncate" : "wrap-anywhere")}
+        title={singleLine ? name : undefined}
+      >
         {name}
         {note && <span className="block text-xs text-muted-foreground">{note}</span>}
       </span>

@@ -4,6 +4,18 @@ import type { Vignette } from "@loomix/schema/vignettes";
 
 type Requirement = Vignette["requirements"][number];
 export type RequirementTarget = Requirement["target"];
+export type RequirementSize = { label: string; tagId: number | undefined };
+
+export function resolveRequirementSize(
+  area: Requirement["area"],
+  tagIndex: GameplayTagIndex,
+): RequirementSize | undefined {
+  if (!area) return;
+  const width = area.width / 2;
+  const height = area.height / 2;
+  const tagName = `尺寸_${width}_${height}`.replaceAll(".", "a");
+  return { label: `${width} × ${height}`, tagId: tagIndex.findByName(tagName)?.id };
+}
 
 export function createRequirementMatcher(tagIndex: GameplayTagIndex) {
   const ancestryByTag = new Map<number, readonly number[]>();
@@ -27,9 +39,15 @@ export function createRequirementMatcher(tagIndex: GameplayTagIndex) {
     return tags;
   }
 
-  return (item: Item, target: RequirementTarget) => {
+  return (item: Item, target: RequirementTarget, size?: RequirementSize) => {
     if ("itemId" in target) return item.id === target.itemId;
     if (!isListedItem(item)) return false;
+    if (
+      size &&
+      (item.kind !== "furniture" || size.tagId === undefined || !item.tagIds.includes(size.tagId))
+    ) {
+      return false;
+    }
     const tags = itemTags(item);
     return target.allTagIds.every((tagId) => tags.has(tagId));
   };
@@ -46,11 +64,15 @@ export function findVignetteUses(
     const conditions = template.requirements.flatMap((requirement, index) => {
       const position = index + 1;
       const roles = [
-        { role: "摆放物", target: requirement.target },
+        {
+          role: "摆放物",
+          target: requirement.target,
+          size: resolveRequirementSize(requirement.area, tagIndex),
+        },
         { role: "承载物", target: requirement.support },
       ];
-      return roles.flatMap(({ role, target }) =>
-        target && matches(item, target)
+      return roles.flatMap(({ role, target, size }) =>
+        target && matches(item, target, size)
           ? [
               {
                 position,

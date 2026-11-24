@@ -2,7 +2,7 @@ import { useRouterState } from "@tanstack/react-router";
 import { useLayoutEffect, useState } from "react";
 import { wikiScrollSelector } from "@/infrastructure/wiki-scroll";
 
-export type GameplayAnchorKind = "recipe" | "slot" | "requirement";
+export type GameplayAnchorKind = "recipe" | "slot" | "requirement" | "vignette-support";
 
 export function gameplayAnchor(kind: GameplayAnchorKind, id: number) {
   return `${kind}-${id}`;

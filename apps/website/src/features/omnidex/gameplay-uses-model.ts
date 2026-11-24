@@ -62,7 +62,7 @@ export function vignetteGameplayUses(
     image: data.image(template.illustration),
     destination: vignetteLocation(template.id),
     conditions: conditions.map(({ position, role, target, label, quantity }) => ({
-      hash: gameplayAnchor("requirement", position),
+      hash: gameplayAnchor(role === "承载物" ? "vignette-support" : "requirement", position),
       label: `要求 ${position} · ${label}`,
       reason: [
         role === "摆放物" ? `${role} ×${quantity.displayed}` : role,

@@ -8,7 +8,7 @@ import { CatalogItemCard } from "@/features/omnidex/catalog-item-card";
 import { catalogEntryLocation } from "@/features/omnidex/entry-location";
 import { RecordImage } from "@/features/omnidex/record-image";
 import { VignetteRequirements } from "./requirements";
-import { VignettePlacementRules, VignetteReferenceItems } from "./placement-reference";
+import { VignettePlacementRules } from "./placement-reference";
 import type { VignetteDetail } from "./view";
 
 type RelatedEntry = VignetteDetail["neighbors"][number];
@@ -38,24 +38,13 @@ export function VignetteDetailPage({ entry }: { entry: VignetteDetail }) {
     {
       id: "vignette-requirements",
       title: "布景要求",
-      content: <VignetteRequirements requirements={entry.requirements} />,
+      content: (
+        <>
+          <VignettePlacementRules rules={entry.placementRules} />
+          <VignetteRequirements requirements={entry.requirements} />
+        </>
+      ),
     },
-  ];
-  if (entry.placementRules.length) {
-    sections.push({
-      id: "vignette-rules",
-      title: "摆放规则",
-      content: <VignettePlacementRules rules={entry.placementRules} />,
-    });
-  }
-  if (entry.referenceItems.length) {
-    sections.push({
-      id: "reference-items",
-      title: "参考物品",
-      content: <VignetteReferenceItems entry={entry} />,
-    });
-  }
-  sections.push(
     {
       id: "related-neighbors",
       title: "关联友邻",
@@ -74,7 +63,7 @@ export function VignetteDetailPage({ entry }: { entry: VignetteDetail }) {
         <RelatedEntries title="生物" entries={entry.creatures} itemLink={catalogEntryLocation} />
       ),
     },
-  );
+  ];
   return (
     <DetailPage
       image={
