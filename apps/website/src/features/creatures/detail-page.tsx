@@ -2,7 +2,6 @@ import { RecordImage } from "@/features/omnidex/record-image";
 import {
   DetailLayout,
   DetailRelatedGrid,
-  DetailExtras,
   type DetailSection,
 } from "@/features/omnidex/detail-layout";
 import { CreaturesCard, CreatureSeriesCard } from "./creatures-card";
@@ -56,46 +55,44 @@ export function CreaturesDetailPage({ detail }: { detail: CreaturesDetail }) {
         )
       }
       fields={fields}
-    >
-      <CreaturesExtras detail={detail} />
-    </DetailLayout>
+      sections={creatureDetailSections(detail)}
+      showEmptyExtras
+    />
   );
 }
 
-function CreaturesExtras({ detail }: { detail: CreaturesDetail }) {
+function creatureDetailSections(detail: CreaturesDetail): DetailSection[] {
   const sections: DetailSection[] = [];
   if (detail.kind === "item" && detail.cooking)
     sections.push({
-      key: "creature-cooking",
+      id: "item-ingredient-tags",
+      title: "食材标签",
       content: <ItemIngredientTags tags={detail.cooking.tags} />,
     });
   if (
     (detail.kind === "item" && detail.series.length > 0) ||
     (detail.kind === "series" && detail.items?.length)
   )
-    sections.push({ key: "related-creatures", content: <CreaturesRelated detail={detail} /> });
-  return <DetailExtras sections={sections} />;
+    sections.push({
+      id: "related-creatures",
+      title: detail.kind === "item" ? "所属系列" : "系列成员",
+      content: <CreaturesRelated detail={detail} />,
+    });
+  return sections;
 }
 
 function CreaturesRelated({ detail }: { detail: CreaturesDetail }) {
-  return (
-    <section aria-labelledby="related-creatures" className="space-y-4">
-      <h2 id="related-creatures" className="text-lg font-semibold">
-        {detail.kind === "item" ? "所属系列" : "系列成员"}
-      </h2>
-      {detail.kind === "item" ? (
-        <DetailRelatedGrid>
-          {detail.series.map((series) => (
-            <CreatureSeriesCard key={series.id} series={series} items={detail.catalogItems} />
-          ))}
-        </DetailRelatedGrid>
-      ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-3">
-          {detail.items?.map((item) => (
-            <CreaturesCard key={item.id} item={item} />
-          ))}
-        </div>
-      )}
-    </section>
+  return detail.kind === "item" ? (
+    <DetailRelatedGrid>
+      {detail.series.map((series) => (
+        <CreatureSeriesCard key={series.id} series={series} items={detail.catalogItems} />
+      ))}
+    </DetailRelatedGrid>
+  ) : (
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-3">
+      {detail.items?.map((item) => (
+        <CreaturesCard key={item.id} item={item} />
+      ))}
+    </div>
   );
 }

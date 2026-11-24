@@ -3,7 +3,6 @@ import { SeriesImage } from "../omnidex/series-image";
 import {
   DetailLayout,
   DetailRelatedGrid,
-  DetailExtras,
   type DetailSection,
 } from "@/features/omnidex/detail-layout";
 import { DishesCard, DishSeriesCard } from "./dishes-card";
@@ -55,55 +54,53 @@ export function DishesDetailPage({ detail }: { detail: DishesDetail }) {
         )
       }
       fields={fields}
-    >
-      <DishesExtras detail={detail} />
-    </DetailLayout>
+      sections={dishDetailSections(detail)}
+      showEmptyExtras
+    />
   );
 }
 
-function DishesExtras({ detail }: { detail: DishesDetail }) {
+function dishDetailSections(detail: DishesDetail): DetailSection[] {
   const sections: DetailSection[] = [];
   if (detail.kind === "item") {
     if (detail.record.effects?.length)
       sections.push({
-        key: "dish-effects",
+        id: "dish-effects",
+        title: "特殊效果",
         content: <DishEffects effects={detail.record.effects} />,
       });
     if (detail.record.slots.length)
-      sections.push({ key: "dish-recipe", content: <DishRecipe detail={detail} /> });
+      sections.push({ id: "dish-recipe", title: "配方", content: <DishRecipe detail={detail} /> });
   }
   if (
     (detail.kind === "item" && detail.series.length > 0) ||
     (detail.kind === "series" && detail.items?.length)
   )
-    sections.push({ key: "related-dishes", content: <DishesRelated detail={detail} /> });
-  return <DetailExtras sections={sections} />;
+    sections.push({
+      id: "related-dishes",
+      title: detail.kind === "item" ? "所属系列" : "系列成员",
+      content: <DishesRelated detail={detail} />,
+    });
+  return sections;
 }
 
 function DishesRelated({ detail }: { detail: DishesDetail }) {
-  return (
-    <section aria-labelledby="related-dishes" className="space-y-4">
-      <h2 id="related-dishes" className="text-lg font-semibold">
-        {detail.kind === "item" ? "所属系列" : "系列成员"}
-      </h2>
-      {detail.kind === "item" ? (
-        <>
-          <DetailRelatedGrid>
-            {detail.series.map((series) => (
-              <DishSeriesCard key={series.id} series={series} items={detail.catalogItems} />
-            ))}
-          </DetailRelatedGrid>
-          {detail.hasUnconfirmedSeriesMembership && (
-            <p className="text-sm text-muted-foreground">其他系列的成员关系未确认</p>
-          )}
-        </>
-      ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-3">
-          {detail.items?.map((item) => (
-            <DishesCard key={item.id} item={item} />
-          ))}
-        </div>
+  return detail.kind === "item" ? (
+    <>
+      <DetailRelatedGrid>
+        {detail.series.map((series) => (
+          <DishSeriesCard key={series.id} series={series} items={detail.catalogItems} />
+        ))}
+      </DetailRelatedGrid>
+      {detail.hasUnconfirmedSeriesMembership && (
+        <p className="text-sm text-muted-foreground">其他系列的成员关系未确认</p>
       )}
-    </section>
+    </>
+  ) : (
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-3">
+      {detail.items?.map((item) => (
+        <DishesCard key={item.id} item={item} />
+      ))}
+    </div>
   );
 }

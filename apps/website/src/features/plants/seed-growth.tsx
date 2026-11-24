@@ -6,10 +6,7 @@ import type { PlantSeed } from "./model";
 export function SeedGrowthStages({ seed }: { seed: PlantSeed }) {
   const stages = new Map(seed.growth.stages.map((stage) => [stage.id, stage]));
   return (
-    <section aria-labelledby="plant-growth-heading" className="space-y-6">
-      <h2 id="plant-growth-heading" className="text-lg font-semibold">
-        生长阶段
-      </h2>
+    <div className="flex flex-col gap-6">
       {growthStageGroups(seed.growth).map((group) => (
         <div key={group.label} className="space-y-3">
           {seed.growth.kind === "crop" && <h3 className="text-sm font-medium">{group.label}</h3>}
@@ -35,6 +32,6 @@ export function SeedGrowthStages({ seed }: { seed: PlantSeed }) {
           </div>
         </div>
       ))}
-    </section>
+    </div>
   );
 }

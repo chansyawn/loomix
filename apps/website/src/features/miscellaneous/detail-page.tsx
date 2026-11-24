@@ -1,4 +1,4 @@
-import { DetailExtras, DetailLayout, type DetailSection } from "@/features/omnidex/detail-layout";
+import { DetailLayout, type DetailSection } from "@/features/omnidex/detail-layout";
 import { RecordImage } from "@/features/omnidex/record-image";
 import { ItemIngredientTags } from "../ingredients/item-usage";
 import type { MiscellaneousDetail } from "./detail";
@@ -17,23 +17,25 @@ export function MiscellaneousDetailPage({ detail }: { detail: MiscellaneousDetai
         </p>
       }
       fields={[["获取来源", item.acquisition]]}
-    >
-      <MiscellaneousExtras key={item.id} detail={detail} />
-    </DetailLayout>
+      sections={miscellaneousDetailSections(detail)}
+      showEmptyExtras
+    />
   );
 }
 
-function MiscellaneousExtras({ detail }: { detail: MiscellaneousDetail }) {
+function miscellaneousDetailSections(detail: MiscellaneousDetail): DetailSection[] {
   const sections: DetailSection[] = [];
   if (detail.sourceTrees.length > 0)
     sections.push({
-      key: "miscellaneous-source-trees",
+      id: "miscellaneous-source-trees",
+      title: "来源树木",
       content: <MiscellaneousSourceTrees items={detail.sourceTrees} />,
     });
   if (detail.cooking)
     sections.push({
-      key: "miscellaneous-cooking",
+      id: "item-ingredient-tags",
+      title: "食材标签",
       content: <ItemIngredientTags tags={detail.cooking.tags} />,
     });
-  return <DetailExtras sections={sections} />;
+  return sections;
 }

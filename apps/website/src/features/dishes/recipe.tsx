@@ -83,31 +83,26 @@ export function DishRecipe({ detail }: { detail: Extract<DishesDetail, { kind: "
   if (slots.length === 0) return null;
 
   return (
-    <section aria-labelledby="dish-recipe" className="min-w-0 space-y-4">
-      <h2 id="dish-recipe" className="text-lg font-semibold">
-        配方
-      </h2>
-      <Accordion multiple {...expansion}>
-        {slots.map((slot, index) => {
-          const anchor = gameplayAnchor("slot", index + 1);
-          return (
-            <AccordionItem key={anchor} id={anchor} value={anchor} className="scroll-mt-4">
-              <AccordionTrigger className="items-start">
-                <span className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-                  <span className="shrink-0 whitespace-nowrap">食材 {index + 1}：</span>
-                  <ConditionSummary slot={slot} />
-                  <Badge variant="outline">
-                    {slot.candidates.length + slot.references.length} 项候选
-                  </Badge>
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                <CandidateItems slot={slot} index={index} />
-              </AccordionContent>
-            </AccordionItem>
-          );
-        })}
-      </Accordion>
-    </section>
+    <Accordion multiple {...expansion}>
+      {slots.map((slot, index) => {
+        const anchor = gameplayAnchor("slot", index + 1);
+        return (
+          <AccordionItem key={anchor} id={anchor} value={anchor}>
+            <AccordionTrigger className="items-start">
+              <span className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                <span className="shrink-0 whitespace-nowrap">食材 {index + 1}：</span>
+                <ConditionSummary slot={slot} />
+                <Badge variant="outline">
+                  {slot.candidates.length + slot.references.length} 项候选
+                </Badge>
+              </span>
+            </AccordionTrigger>
+            <AccordionContent>
+              <CandidateItems slot={slot} index={index} />
+            </AccordionContent>
+          </AccordionItem>
+        );
+      })}
+    </Accordion>
   );
 }

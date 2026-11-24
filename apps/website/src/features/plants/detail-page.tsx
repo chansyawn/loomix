@@ -1,4 +1,5 @@
-import { DetailLayout, DetailExtras, type DetailSection } from "@/features/omnidex/detail-layout";
+import { DetailLayout, type DetailSection } from "@/features/omnidex/detail-layout";
+import type { ReactNode } from "react";
 import { RecordImage } from "@/features/omnidex/record-image";
 import { CatalogItemCard } from "../omnidex/catalog-item-card";
 import { PlantsCard } from "./plants-card";
@@ -12,29 +13,30 @@ import { CatalogEntryNavigation } from "../omnidex/detail-navigation";
 type PlantOrSeriesDetail = Exclude<PlantsDetail, { kind: "seed" }>;
 
 export function PlantsDetailPage({ detail }: { detail: PlantsDetail }) {
-  return (
-    <div className="min-w-0 space-y-6">
-      <CatalogEntryNavigation
-        model={{
-          groups: detail.navigation.groups,
-          notice: detail.navigation.hasUnconfirmedMembership
-            ? "其他系列的成员关系未确认"
-            : undefined,
-        }}
-        currentId={detail.record.id}
-      />
-      {detail.kind === "seed" ? (
-        <SeedDetailPage key={detail.record.id} detail={detail} />
-      ) : (
-        <PlantOrSeriesDetailPage key={detail.record.id} detail={detail} />
-      )}
-    </div>
+  const navigation = (
+    <CatalogEntryNavigation
+      model={{
+        groups: detail.navigation.groups,
+        notice: detail.navigation.hasUnconfirmedMembership ? "其他系列的成员关系未确认" : undefined,
+      }}
+      currentId={detail.record.id}
+    />
+  );
+  return detail.kind === "seed" ? (
+    <SeedDetailPage detail={detail} navigation={navigation} />
+  ) : (
+    <PlantOrSeriesDetailPage detail={detail} navigation={navigation} />
   );
 }
 
-function PlantOrSeriesDetailPage({ detail }: { detail: PlantOrSeriesDetail }) {
+function PlantOrSeriesDetailPage({
+  detail,
+  navigation,
+}: {
+  detail: PlantOrSeriesDetail;
+  navigation: ReactNode;
+}) {
   const { record } = detail;
-  const sections = plantDetailSections(detail);
   const summary = record.summary;
   const fields: [string, string | null][] =
     detail.kind === "item"
@@ -65,9 +67,9 @@ function PlantOrSeriesDetailPage({ detail }: { detail: PlantOrSeriesDetail }) {
         )
       }
       fields={fields}
-    >
-      {sections.length > 0 && <DetailExtras sections={sections} />}
-    </DetailLayout>
+      navigation={navigation}
+      sections={plantDetailSections(detail)}
+    />
   );
 }
 
@@ -75,42 +77,43 @@ function plantDetailSections(detail: PlantOrSeriesDetail): DetailSection[] {
   const sections: DetailSection[] = [];
   if (detail.kind === "item") {
     if (detail.matureForms.length > 0)
-      sections.push({ key: "plant-mature", content: <PlantMatureForms detail={detail} /> });
+      sections.push({
+        id: "plant-mature",
+        title: "成熟形态",
+        content: <PlantMatureForms detail={detail} />,
+      });
     if (detail.record.summary.drops.groups.length > 0)
       sections.push({
-        key: "plant-drops",
+        id: "plant-drops",
+        title: "产物与掉落",
         content: <PlantDropsInfo drops={detail.record.summary.drops} />,
       });
     if (detail.sourceTrees.length > 0)
       sections.push({
-        key: "plant-source-trees",
-        content: <PlantRelatedItems title="来源树木" items={detail.sourceTrees} />,
+        id: "plant-source-trees",
+        title: "来源树木",
+        content: <PlantRelatedItems items={detail.sourceTrees} />,
       });
     if (detail.cooking)
       sections.push({
-        key: "plant-cooking",
+        id: "item-ingredient-tags",
+        title: "食材标签",
         content: <ItemIngredientTags tags={detail.cooking.tags} />,
       });
   } else {
     sections.push({
-      key: "plant-members",
-      content: (
-        <section aria-labelledby="plant-members" className="space-y-4">
-          <h2 id="plant-members" className="text-lg font-semibold">
-            系列成员
-          </h2>
-          {detail.items?.length ? (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-3">
-              {detail.items.map((item) => (
-                <PlantsCard key={item.id} item={item} />
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {detail.items === null ? "系列成员尚未确认" : "该系列暂无成员"}
-            </p>
-          )}
-        </section>
+      id: "plant-members",
+      title: "系列成员",
+      content: detail.items?.length ? (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-3">
+          {detail.items.map((item) => (
+            <PlantsCard key={item.id} item={item} />
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          {detail.items === null ? "系列成员尚未确认" : "该系列暂无成员"}
+        </p>
       ),
     });
   }
@@ -119,10 +122,7 @@ function plantDetailSections(detail: PlantOrSeriesDetail): DetailSection[] {
 
 function PlantMatureForms({ detail }: { detail: Extract<PlantsDetail, { kind: "item" }> }) {
   return (
-    <section aria-labelledby="plant-mature" className="space-y-4">
-      <h2 id="plant-mature" className="text-lg font-semibold">
-        成熟形态
-      </h2>
+    <div className="flex flex-col gap-4">
       {detail.matureForms.map(({ seed, stages }) => (
         <div key={seed.id} className="space-y-3">
           {detail.matureForms.length > 1 && <h3 className="text-sm font-medium">{seed.name}</h3>}
@@ -140,6 +140,6 @@ function PlantMatureForms({ detail }: { detail: Extract<PlantsDetail, { kind: "i
           </div>
         </div>
       ))}
-    </section>
+    </div>
   );
 }

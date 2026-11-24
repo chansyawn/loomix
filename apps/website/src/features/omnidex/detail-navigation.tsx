@@ -16,9 +16,13 @@ export function CatalogEntryNavigation({
   if (model.groups.length === 0 && !model.notice) return null;
   const highlightedId = model.highlightedId ?? currentId;
   return (
-    <div className="sticky top-0 z-20 min-w-0 space-y-3 border-b bg-background py-2">
+    <div className="flex max-h-[max(3.5rem,25svh)] min-w-0 flex-col gap-2 overflow-y-auto border-b py-1.5">
       {model.groups.map((group) => (
-        <nav key={group.key} aria-label={`${group.label}关联物品`} className="min-w-0 space-y-2">
+        <nav
+          key={group.key}
+          aria-label={`${group.label}关联物品`}
+          className="min-w-0 shrink-0 space-y-1"
+        >
           {model.groups.length > 1 && (
             <p className="text-xs text-muted-foreground">{group.label}</p>
           )}
@@ -32,7 +36,7 @@ export function CatalogEntryNavigation({
                   resetScroll={false}
                   aria-current={entry.id === currentId ? "page" : entry.id === highlightedId}
                   data-highlighted={entry.id === highlightedId ? "" : undefined}
-                  className="flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring data-highlighted:bg-muted data-highlighted:text-foreground"
+                  className="flex min-h-10 shrink-0 items-center gap-2 rounded-lg px-3 py-1 text-sm font-medium whitespace-nowrap text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-highlighted:bg-muted data-highlighted:text-foreground"
                   onClick={(event) => {
                     if (
                       entry.id === currentId &&

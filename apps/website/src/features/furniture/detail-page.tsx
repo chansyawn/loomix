@@ -1,5 +1,5 @@
 import { FurnitureCard } from "./furniture-card";
-import { DetailLayout, DetailExtras, type DetailSection } from "@/features/omnidex/detail-layout";
+import { DetailLayout, type DetailSection } from "@/features/omnidex/detail-layout";
 import { RecordImage as FurnitureImage } from "@/features/omnidex/record-image";
 import type { FurnitureItem } from "../omnidex-view";
 import type { FurnitureDetail } from "./detail";
@@ -7,17 +7,7 @@ import { CatalogEntryNavigation } from "../omnidex/detail-navigation";
 import { FurnitureRecipes } from "./recipes";
 
 export function FurnitureDetailPage({ detail }: { detail: FurnitureDetail }) {
-  return (
-    <div className="min-w-0 space-y-6">
-      <CatalogEntryNavigation model={detail.navigation} currentId={detail.record.id} />
-      <FurnitureDetailContent key={detail.record.id} detail={detail} />
-    </div>
-  );
-}
-
-function FurnitureDetailContent({ detail }: { detail: FurnitureDetail }) {
   const { record } = detail;
-  const sections = furnitureDetailSections(detail);
   const fields: [string, string | null][] =
     detail.kind === "item"
       ? [
@@ -53,9 +43,9 @@ function FurnitureDetailContent({ detail }: { detail: FurnitureDetail }) {
         </p>
       }
       fields={fields}
-    >
-      {sections.length > 0 && <DetailExtras sections={sections} />}
-    </DetailLayout>
+      navigation={<CatalogEntryNavigation model={detail.navigation} currentId={record.id} />}
+      sections={furnitureDetailSections(detail)}
+    />
   );
 }
 
@@ -64,27 +54,18 @@ function furnitureDetailSections(detail: FurnitureDetail): DetailSection[] {
   if (detail.kind === "item") {
     if (detail.recipes?.length)
       sections.push({
-        key: "furniture-recipes",
+        id: "furniture-recipes",
+        title: "制作配方",
         content: <FurnitureRecipes recipes={detail.recipes} productName={detail.record.name} />,
       });
   } else if (detail.items?.length) {
     sections.push({
-      key: "furniture-set-members",
-      content: <FurnitureSetMembers items={detail.items} />,
+      id: "related-furniture",
+      title: "套组成员",
+      content: <FurnitureItemGrid items={detail.items} />,
     });
   }
   return sections;
-}
-
-function FurnitureSetMembers({ items }: { items: FurnitureItem[] }) {
-  return (
-    <section aria-labelledby="related-furniture" className="space-y-4">
-      <h2 id="related-furniture" className="text-lg font-semibold">
-        套组成员
-      </h2>
-      <FurnitureItemGrid items={items} />
-    </section>
-  );
 }
 
 function FurnitureItemGrid({ items }: { items: FurnitureItem[] }) {

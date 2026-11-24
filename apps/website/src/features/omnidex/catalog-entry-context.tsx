@@ -1,10 +1,11 @@
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext } from "react";
 import type { CatalogEntryRow } from "./catalog";
 import { recordFields } from "./catalog";
+import type { DetailSection } from "./detail-layout";
 
 export const CatalogEntryContext = createContext<{
   record: CatalogEntryRow;
-  detailFooter?: ReactNode;
+  usesSection?: DetailSection;
 } | null>(null);
 export function useRecordCommonFields(fields: readonly (readonly [string, string | null])[]) {
   const context = useContext(CatalogEntryContext);

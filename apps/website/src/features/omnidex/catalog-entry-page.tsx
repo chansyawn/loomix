@@ -9,6 +9,10 @@ import { DishesDetailPage } from "../dishes/detail-page";
 import { MiscellaneousDetailPage } from "../miscellaneous/detail-page";
 import { GameplayUses, useVignetteGameplayUses } from "./gameplay-uses";
 import type { catalogGameplayUses, GameplayUse } from "./gameplay-uses-model";
+import { useElementScrollRestoration, useRouterState } from "@tanstack/react-router";
+import { useLayoutEffect, useRef } from "react";
+
+const usesSectionId = "gameplay-uses";
 
 export function CatalogEntryPage({
   record,
@@ -23,8 +27,11 @@ export function CatalogEntryPage({
 }) {
   const content = useRef<HTMLDivElement>(null);
   const restore = useElementScrollRestoration({ id: "wiki-content" });
+  const hash = useRouterState({ select: (state) => state.location.hash });
   const pendingScroll = useRef<{ element: HTMLElement; from: number; to: number } | null>(null);
+  const pendingUsesAnchor = useRef(false);
   const vignette = useVignetteGameplayUses(readVignetteUses, () => {
+    pendingUsesAnchor.current = hash === usesSectionId && !document.getElementById(usesSectionId);
     const element = content.current?.closest<HTMLElement>(
       '[data-scroll-restoration-id="wiki-content"]',
     );
@@ -34,17 +41,24 @@ export function CatalogEntryPage({
       pendingScroll.current = { element, from: maxScroll, to: restore.scrollY };
   });
   useLayoutEffect(() => {
+    const scrollToUses = pendingUsesAnchor.current;
+    pendingUsesAnchor.current = false;
     const scroll = pendingScroll.current;
-    if (!scroll) return;
     pendingScroll.current = null;
-    if (scroll.element.scrollTop === scroll.from) scroll.element.scrollTop = scroll.to;
-  }, [vignette]);
-  const detailFooter =
-    uses && (uses.crafting.length || uses.cooking.length || vignette.length) ? (
-      <GameplayUses itemId={record.id} uses={{ ...uses, vignette }} />
-    ) : null;
+    if (scroll && scroll.element.scrollTop === scroll.from) scroll.element.scrollTop = scroll.to;
+    else if (scrollToUses && hash === usesSectionId)
+      document.getElementById(usesSectionId)?.scrollIntoView();
+  }, [hash, vignette]);
+  const usesSection =
+    uses && (uses.crafting.length || uses.cooking.length || vignette.length)
+      ? {
+          id: usesSectionId,
+          title: "用途",
+          content: <GameplayUses itemId={record.id} uses={{ ...uses, vignette }} />,
+        }
+      : undefined;
   return (
-    <CatalogEntryContext value={{ record, detailFooter }}>
+    <CatalogEntryContext value={{ record, usesSection }}>
       <div ref={content}>
         <DetailContent model={model} />
       </div>
@@ -67,5 +81,3 @@ function DetailContent({ model }: { model: CatalogEntryDetail }) {
       return <MiscellaneousDetailPage detail={model.detail} />;
   }
 }
-import { useElementScrollRestoration } from "@tanstack/react-router";
-import { useLayoutEffect, useRef } from "react";
