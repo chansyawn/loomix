@@ -16,7 +16,7 @@ export function OmnidexShortcuts() {
       </h2>
       <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 xl:grid-cols-8">
         {categories.map(({ title, to, icon: Icon }) => (
-          <Card key={to} padding="none" interactive>
+          <Card key={to}>
             <Link
               to={to}
               search={{}}

@@ -25,7 +25,7 @@ export function GameplayRelationItem({
   const quantityLabel = quantity === undefined ? undefined : `×${quantity}`;
   return (
     <Item
-      size={compact ? "compact" : "xs"}
+      size="xs"
       variant={compact ? "default" : "muted"}
       render={destination ? <Link {...destination} state={{ omnidexOrigin: origin }} /> : undefined}
       className={cn("min-w-0 flex-nowrap", !compact && "min-h-11")}

@@ -55,7 +55,7 @@ export function CatalogItemCard({
   );
 
   return (
-    <Card size="sm" interactive={Boolean(link)} className="relative h-full max-w-full min-w-50">
+    <Card size="sm" className="relative h-full max-w-full min-w-50">
       <CardContent>
         {link ? (
           <Link

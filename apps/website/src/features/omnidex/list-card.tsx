@@ -23,13 +23,7 @@ export function ListCard({
   ref,
 }: ListCardProps) {
   return (
-    <Card
-      ref={ref}
-      padding="flush"
-      interactive
-      role="article"
-      className={cn("relative min-w-0", className)}
-    >
+    <Card ref={ref} role="article" className={cn("relative min-w-0", className)}>
       <div className="relative shrink-0">
         {image}
         <QualityBar quality={quality} />

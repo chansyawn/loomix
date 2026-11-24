@@ -190,7 +190,7 @@ export function DetailPageLoading({
   return (
     <DetailFrame
       loadingLabel={label}
-      image={<Skeleton shape="square" className={cn("w-full", imageAspect)} />}
+      image={<Skeleton className={cn("w-full", imageAspect)} />}
       navigation={
         <>
           <Skeleton className="h-11 w-24 @min-[48rem]/detail-page:h-4" />

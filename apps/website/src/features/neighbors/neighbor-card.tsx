@@ -7,7 +7,7 @@ import { useNeighborsOrigin } from "./navigation";
 export function NeighborCard({ neighbor }: { neighbor: NeighborDetail }) {
   const origin = useNeighborsOrigin();
   return (
-    <Card padding="flush" interactive role="article" className="relative min-w-0">
+    <Card role="article" className="relative min-w-0">
       <div className="mx-2 mt-2 shrink-0 overflow-hidden rounded-md">
         <NeighborImage
           image={neighbor.image}

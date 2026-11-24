@@ -25,9 +25,9 @@ export function NeighborsLoading() {
       <div aria-hidden="true">
         <NeighborsGrid>
           {Array.from({ length: 8 }, (_, index) => (
-            <Card key={index} padding="flush" className="min-w-0">
+            <Card key={index} className="min-w-0">
               <div className="mx-2 mt-2 shrink-0 overflow-hidden rounded-md">
-                <Skeleton shape="square" className="aspect-156/41" />
+                <Skeleton className="aspect-156/41" />
               </div>
               <CardHeader>
                 <CardTitle>
