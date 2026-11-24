@@ -11,41 +11,52 @@ export function GameplayRelationItem({
   quantity,
   note,
   destination,
-  singleLine = false,
+  variant = "default",
 }: {
   name: string;
   image: string | null;
   quantity?: number;
   note?: string;
   destination?: LinkProps;
-  singleLine?: boolean;
+  variant?: "default" | "compact";
 }) {
   const origin = useOmnidexOrigin();
+  const compact = variant === "compact";
+  const quantityLabel = quantity === undefined ? undefined : `×${quantity}`;
   return (
     <Item
-      size="xs"
-      variant="muted"
+      size={compact ? "compact" : "xs"}
+      variant={compact ? "default" : "muted"}
       render={destination ? <Link {...destination} state={{ omnidexOrigin: origin }} /> : undefined}
-      className="grid min-h-11 grid-cols-[2rem_minmax(0,1fr)_auto]"
+      className={cn("min-w-0 flex-nowrap", !compact && "min-h-11")}
     >
-      <ItemMedia aria-hidden="true" className="size-8">
+      <ItemMedia aria-hidden="true" className={compact ? "size-7" : "size-8"}>
         <RecordImage image={image} name="" inset="none" background="none" fallback="icon" />
       </ItemMedia>
-      <span
-        className={cn("min-w-0 text-sm", singleLine ? "truncate" : "wrap-anywhere")}
-        title={singleLine ? name : undefined}
-      >
+      <span className="min-w-0 flex-1 truncate" title={note ? `${name} ${note}` : name}>
         {name}
-        {note && <span className="block text-xs text-muted-foreground">{note}</span>}
-      </span>
-      <span className="flex items-center gap-1.5">
-        {quantity !== undefined && (
-          <span className="text-xs font-medium tabular-nums">×{quantity}</span>
-        )}
-        {destination && (
-          <ArrowUpRightIcon aria-hidden="true" className="size-3.5 text-muted-foreground" />
+        {note && (
+          <>
+            {" "}
+            <span className="text-xs text-muted-foreground">{note}</span>
+          </>
         )}
       </span>
+      {(quantityLabel || destination) && (
+        <span className="flex max-w-1/2 min-w-0 shrink-0 items-center gap-1.5">
+          {quantityLabel && (
+            <span className="truncate text-xs font-medium tabular-nums" title={quantityLabel}>
+              {quantityLabel}
+            </span>
+          )}
+          {destination && (
+            <ArrowUpRightIcon
+              aria-hidden="true"
+              className="size-3.5 shrink-0 text-muted-foreground"
+            />
+          )}
+        </span>
+      )}
     </Item>
   );
 }

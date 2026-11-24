@@ -44,6 +44,7 @@ const itemVariants = cva(
         default: "gap-3.5 px-4 py-3.5",
         sm: "gap-3.5 px-3.5 py-3",
         xs: "gap-2.5 px-3 py-2.5 in-data-[slot=dropdown-menu-content]:p-0",
+        compact: "gap-1.5 rounded-md px-1.5 py-0.5",
       },
     },
     defaultVariants: {

@@ -143,7 +143,7 @@ export function VignetteRequirements({ requirements }: { requirements: Requireme
                                 name={item.name}
                                 image={item.image}
                                 quantity={exampleQuantity}
-                                singleLine
+                                variant="compact"
                                 destination={
                                   item.browsable ? catalogEntryLocation(item) : undefined
                                 }
