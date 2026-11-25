@@ -17,9 +17,9 @@ type Requirement = VignetteDetail["requirements"][number];
 type DisplayItem = Extract<Requirement["target"], { kind: "tags" }>["matches"][number];
 
 const columns = [
-  { label: "物品", className: "w-[40%]" },
+  { label: "物品", className: "w-1/3" },
   { label: "数量", className: "w-12 text-center" },
-  { label: "示例", className: "w-[32%]" },
+  { label: "示例", className: "w-44" },
   { label: "摆放规则" },
 ];
 
@@ -107,7 +107,7 @@ function RequirementRows({
                     name={item.name}
                     image={item.image}
                     quantity={exampleQuantity}
-                    variant="compact"
+                    variant="inline"
                     destination={item.browsable ? catalogEntryLocation(item) : undefined}
                   />
                 </li>
