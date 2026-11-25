@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { buttonVariants } from "@/ui/components/button";
+import { Button, buttonVariants } from "@/ui/components/button";
 import { catalogEntryLocation } from "../omnidex/entry-location";
 import { useOmnidexOrigin } from "../omnidex/navigation";
 import type { ClothingCounterpart } from "./counterpart";
@@ -14,14 +14,20 @@ export function ClothingCounterpartSwitch({
   const origin = useOmnidexOrigin();
   if (counterpart.kind === "player-link")
     return (
-      <Link
-        {...catalogEntryLocation({ id: counterpart.playerId })}
-        state={{ omnidexOrigin: origin }}
-        resetScroll={false}
-        className={buttonVariants({ variant: "outline", size: "sm" })}
+      <Button
+        variant="outline"
+        size="sm"
+        nativeButton={false}
+        render={
+          <Link
+            {...catalogEntryLocation({ id: counterpart.playerId })}
+            state={{ omnidexOrigin: origin }}
+            resetScroll={false}
+          />
+        }
       >
         查看对应玩家款
-      </Link>
+      </Button>
     );
 
   const options = [
@@ -29,30 +35,32 @@ export function ClothingCounterpartSwitch({
     { id: counterpart.neighborId, label: "友邻款" },
   ];
   return (
-    <nav aria-label="服饰款式" className="inline-flex items-center gap-1 rounded-full border p-1">
+    <nav aria-label="服饰款式" className="inline-flex flex-wrap items-center gap-1">
       {options.map(({ id, label }) =>
         id === currentId ? (
           <span
             key={id}
             aria-current="page"
-            className={buttonVariants({
-              variant: "secondary",
-              size: "sm",
-              className: "pointer-events-none",
-            })}
+            className={buttonVariants({ variant: "secondary", size: "sm" })}
           >
             {label}
           </span>
         ) : (
-          <Link
+          <Button
             key={id}
-            {...catalogEntryLocation({ id })}
-            state={{ omnidexOrigin: origin }}
-            resetScroll={false}
-            className={buttonVariants({ variant: "ghost", size: "sm" })}
+            variant="ghost"
+            size="sm"
+            nativeButton={false}
+            render={
+              <Link
+                {...catalogEntryLocation({ id })}
+                state={{ omnidexOrigin: origin }}
+                resetScroll={false}
+              />
+            }
           >
             {label}
-          </Link>
+          </Button>
         ),
       )}
     </nav>

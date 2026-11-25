@@ -35,7 +35,7 @@ export function StoryParagraph({
           ? "grid items-start gap-5 @3xl:grid-cols-[minmax(0,18fr)_minmax(0,29fr)]"
           : layout === "image-right"
             ? "grid items-start gap-5 @3xl:grid-cols-[minmax(0,29fr)_minmax(0,18fr)]"
-            : "space-y-5"
+            : "flex flex-col gap-5"
       }
     >
       {layout === "image-left" ? illustration : content}

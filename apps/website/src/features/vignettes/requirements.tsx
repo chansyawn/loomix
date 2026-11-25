@@ -1,4 +1,5 @@
 import { ChevronDownIcon } from "lucide-react";
+import { TableFrame } from "@/features/list-page/table-frame";
 import { catalogEntryLocation } from "@/features/omnidex/entry-location";
 import { gameplayAnchor, useGameplayAccordion } from "@/features/omnidex/gameplay-anchors";
 import { GameplayRelationItem } from "@/features/omnidex/gameplay-relation-item";
@@ -151,7 +152,7 @@ export function VignetteRequirements({ requirements }: { requirements: Requireme
   );
 
   return (
-    <div className="@container min-w-0 overflow-hidden rounded-2xl border">
+    <TableFrame className="@container">
       <Table aria-label="布景要求" className="min-w-md table-fixed">
         <TableHeader>
           <TableRow>
@@ -186,6 +187,6 @@ export function VignetteRequirements({ requirements }: { requirements: Requireme
           })}
         </TableBody>
       </Table>
-    </div>
+    </TableFrame>
   );
 }

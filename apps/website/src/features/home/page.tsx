@@ -5,7 +5,7 @@ import { OmnidexShortcuts } from "./shortcuts";
 
 export function HomePage() {
   return (
-    <div className="space-y-8 pb-6">
+    <div className="grid gap-8 pb-6">
       <IntroSearch />
       <OmnidexShortcuts />
       <EventCountdownList />

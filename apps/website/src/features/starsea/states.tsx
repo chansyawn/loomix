@@ -1,10 +1,10 @@
 import { useRouter, useRouterState } from "@tanstack/react-router";
 import { DetailPageLoading } from "@/features/detail-page/detail-page";
+import { PageNotFound } from "@/features/layout/page-not-found";
 import { ListLoading } from "@/features/list-page/loading";
 import { useListLayout } from "@/features/list-page/use-list-layout";
 import { ListLoadError } from "@/features/list-page/states";
 import { Button } from "@/ui/components/button";
-import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/ui/components/empty";
 import { Skeleton } from "@/ui/components/skeleton";
 import { StarseaReturnLink } from "./navigation";
 import { isletColumns, starseaListPresentation } from "./list-presentation";
@@ -42,17 +42,13 @@ export function StarseaError() {
 
 export function StarseaNotFound() {
   return (
-    <Empty className="min-h-80">
-      <EmptyHeader>
-        <EmptyTitle>
-          <h1>未找到星屿</h1>
-        </EmptyTitle>
-      </EmptyHeader>
-      <EmptyContent>
+    <PageNotFound
+      title="未找到星屿"
+      action={
         <Button variant="outline" nativeButton={false} render={<StarseaReturnLink />}>
           返回星海列表
         </Button>
-      </EmptyContent>
-    </Empty>
+      }
+    />
   );
 }

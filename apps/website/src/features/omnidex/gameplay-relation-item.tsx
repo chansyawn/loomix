@@ -1,6 +1,7 @@
 import { Link, type LinkProps } from "@tanstack/react-router";
 import { ArrowUpRightIcon } from "lucide-react";
-import { Item, ItemMedia } from "@/ui/components/item";
+import { Item, ItemActions, ItemContent, ItemMedia } from "@/ui/components/item";
+import { cn } from "@/ui/lib/utils";
 import { useOmnidexOrigin } from "./navigation";
 import { RecordImage } from "./record-image";
 
@@ -57,7 +58,10 @@ export function GameplayRelationItem({
     return link ? (
       <Link
         {...link}
-        className={`${className} group/relation-link outline-none focus-visible:ring-2 focus-visible:ring-ring`}
+        className={cn(
+          className,
+          "group/relation-link outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        )}
       >
         {content}
       </Link>
@@ -73,12 +77,19 @@ export function GameplayRelationItem({
       render={link ? <Link {...link} /> : undefined}
       className="min-w-0 flex-nowrap"
     >
-      <ItemMedia aria-hidden="true" className="size-8">
-        <RecordImage image={image} name="" inset="none" background="none" fallback="icon" />
+      <ItemMedia aria-hidden="true" variant="image">
+        <RecordImage
+          image={image}
+          name=""
+          inset="none"
+          background="none"
+          fallback="icon"
+          className="size-full"
+        />
       </ItemMedia>
-      {label}
+      <ItemContent className="min-w-0">{label}</ItemContent>
       {(quantityLabel || destination) && (
-        <span className="flex max-w-1/2 min-w-0 shrink-0 items-center gap-1.5">
+        <ItemActions className="max-w-1/2 min-w-0 shrink-0">
           {quantityLabel && (
             <span className="truncate text-xs font-medium tabular-nums" title={quantityLabel}>
               {quantityLabel}
@@ -90,7 +101,7 @@ export function GameplayRelationItem({
               className="size-3.5 shrink-0 text-muted-foreground"
             />
           )}
-        </span>
+        </ItemActions>
       )}
     </Item>
   );

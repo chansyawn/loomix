@@ -10,8 +10,15 @@ import {
 import { Badge } from "@/ui/components/badge";
 import { Button } from "@/ui/components/button";
 import { Checkbox } from "@/ui/components/checkbox";
-import { Input } from "@/ui/components/input";
-import { Label } from "@/ui/components/label";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@/ui/components/field";
+import { SearchInput } from "@/ui/components/search-input";
 import {
   Sheet,
   SheetContent,
@@ -20,6 +27,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/ui/components/sheet";
+import { cn } from "@/ui/lib/utils";
 import {
   filterSelectionValues,
   filterTree,
@@ -75,7 +83,7 @@ function FilterOptions<K extends string>({
     <AccordionItem value={group.key}>
       <div className="relative flex items-center">
         <AccordionTrigger className="min-w-0 flex-1 items-center">
-          <span className={`flex min-w-0 items-center gap-2 ${selectedCount > 0 ? "pr-16" : ""}`}>
+          <span className={cn("flex min-w-0 items-center gap-2", selectedCount > 0 && "pr-16")}>
             <span>{group.label}</span>
             {selectedCount > 0 && <Badge variant="secondary">已选 {selectedCount}</Badge>}
           </span>
@@ -94,22 +102,20 @@ function FilterOptions<K extends string>({
         )}
       </div>
       <AccordionContent>
-        <fieldset className="space-y-3">
-          <legend className="sr-only">{group.label}</legend>
+        <FieldSet>
+          <FieldLegend className="sr-only">{group.label}</FieldLegend>
           {controls}
           {selectableCount > 10 && (
-            <Input
-              aria-label={`搜索${group.label}`}
+            <SearchInput
+              ariaLabel={`搜索${group.label}`}
               placeholder={`搜索${group.label}名称或拼音…`}
               value={term}
-              onChange={(event) => setTerm(event.target.value)}
+              onValueChange={setTerm}
             />
           )}
-          {group.description && (
-            <p className="text-xs/5 text-muted-foreground">{group.description}</p>
-          )}
+          {group.description && <FieldDescription>{group.description}</FieldDescription>}
           {group.tree ? (
-            <ul className="space-y-0.5 py-1">
+            <ul className="flex flex-col gap-0.5 py-1">
               {options.map((option) => (
                 <FilterTreeOption
                   key={option.value}
@@ -127,11 +133,12 @@ function FilterOptions<K extends string>({
               ))}
             </ul>
           ) : (
-            <div className="grid grid-cols-2 gap-3 py-1">
+            <FieldGroup data-slot="checkbox-group" className="grid grid-cols-2">
               {options.map((option) => (
-                <div
+                <Field
                   key={option.value}
-                  className={`flex items-center gap-2 ${group.fullWidth ? "col-span-2" : ""}`}
+                  orientation="horizontal"
+                  className={cn("min-w-0", group.fullWidth && "col-span-2")}
                 >
                   <Checkbox
                     id={`${id}-${option.value}`}
@@ -142,15 +149,18 @@ function FilterOptions<K extends string>({
                       )
                     }
                   />
-                  <Label htmlFor={`${id}-${option.value}`} className="cursor-pointer">
+                  <FieldLabel
+                    htmlFor={`${id}-${option.value}`}
+                    className="min-w-0 cursor-pointer wrap-anywhere"
+                  >
                     {option.label}
-                  </Label>
-                </div>
+                  </FieldLabel>
+                </Field>
               ))}
-            </div>
+            </FieldGroup>
           )}
           {options.length === 0 && <p className="text-xs text-muted-foreground">没有匹配的选项</p>}
-        </fieldset>
+        </FieldSet>
       </AccordionContent>
     </AccordionItem>
   );
@@ -181,7 +191,7 @@ export function FilterPanel<K extends string>({
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger render={<Button variant="outline" />}>
-        <SlidersHorizontalIcon />
+        <SlidersHorizontalIcon data-icon="inline-start" />
         筛选
         {count > 0 && <Badge>{count}</Badge>}
       </SheetTrigger>
@@ -189,7 +199,7 @@ export function FilterPanel<K extends string>({
         <SheetHeader>
           <SheetTitle>{title}</SheetTitle>
         </SheetHeader>
-        <div className="min-h-0 flex-1 overflow-y-auto px-6">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4">
           <Accordion
             defaultValue={groups[0] ? [groups[0].key] : []}
             multiple

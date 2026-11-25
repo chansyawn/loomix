@@ -59,7 +59,7 @@ export function IntroSearch() {
         />
         <Button type="submit">
           搜索
-          <ArrowRightIcon className="hidden sm:block" />
+          <ArrowRightIcon data-icon="inline-end" className="hidden sm:block" />
         </Button>
       </form>
     </section>

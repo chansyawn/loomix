@@ -26,16 +26,14 @@ export function ListResultsSummary({
         </p>
       }
       chips={chips.map((chip) => (
-        <Badge key={chip.key} variant="secondary" className="max-w-full shrink-0">
+        <Badge
+          key={chip.key}
+          variant="secondary"
+          className="min-h-6 max-w-full shrink-0"
+          render={<button type="button" aria-label={`移除${chip.label}`} onClick={chip.remove} />}
+        >
           <span className="truncate">{chip.label}</span>
-          <button
-            type="button"
-            data-icon="inline-end"
-            aria-label={`移除${chip.label}`}
-            onClick={chip.remove}
-          >
-            <XIcon className="size-3" />
-          </button>
+          <XIcon data-icon="inline-end" aria-hidden="true" />
         </Badge>
       ))}
       onClear={onClear}

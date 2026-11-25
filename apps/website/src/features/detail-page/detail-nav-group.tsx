@@ -9,7 +9,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/ui/components/dropdown-menu";
-import { cn } from "@/ui/lib/utils";
 
 type DetailNavList = {
   key: string;
@@ -24,6 +23,8 @@ type DetailNavList = {
 const headingClass = "px-2.5 py-1.5 text-xs font-medium wrap-break-word text-muted-foreground";
 const linkClass =
   "flex min-h-9 min-w-0 items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm wrap-break-word text-muted-foreground outline-none hover:bg-muted/60 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-current:bg-muted data-current:text-foreground";
+const menuLinkClass =
+  "flex min-h-11 min-w-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-sm wrap-break-word outline-hidden select-none data-current:bg-muted data-highlighted:bg-accent data-highlighted:text-accent-foreground";
 
 export type DetailNavigation = {
   title: string;
@@ -68,7 +69,7 @@ export function DetailNavGroup({
                         label={label}
                         render={link}
                         closeOnClick
-                        className={cn(linkClass, "min-h-11 data-highlighted:bg-muted/60")}
+                        className={menuLinkClass}
                       />
                     ))}
                   </div>

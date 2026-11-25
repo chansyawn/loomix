@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { LinkProps } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { Card, CardContent } from "@/ui/components/card";
+import { cn } from "@/ui/lib/utils";
 import type { CatalogEntrySummary } from "../omnidex-view";
 import { RecordImage } from "./record-image";
 import { useOmnidexOrigin } from "./navigation";
@@ -34,10 +35,8 @@ export function CatalogItemCard({
           <RecordImage image={item?.image ?? null} name={name} inset="sm" fallback="icon" />
         )}
       </div>
-      <div className="min-w-0 flex-1 space-y-1">
-        <span
-          className={`block text-base font-semibold ${link ? "group-hover/card:underline" : ""}`}
-        >
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <span className={cn("text-base font-semibold", link && "group-hover/card:underline")}>
           {name}
         </span>
         {quantity !== undefined && (
@@ -45,7 +44,10 @@ export function CatalogItemCard({
         )}
         {description && (
           <span
-            className={`block text-xs/5 whitespace-pre-line text-muted-foreground ${fullDescription ? "" : "line-clamp-2"}`}
+            className={cn(
+              "text-xs/5 whitespace-pre-line text-muted-foreground",
+              !fullDescription && "line-clamp-2",
+            )}
           >
             {description}
           </span>
@@ -61,7 +63,7 @@ export function CatalogItemCard({
           <Link
             {...link}
             state={link.state ?? { omnidexOrigin: origin }}
-            className="flex items-center gap-3 outline-none after:absolute after:inset-0 after:rounded-xl"
+            className="block outline-none after:absolute after:inset-0 after:rounded-xl focus-visible:after:inset-ring-2 focus-visible:after:inset-ring-ring"
           >
             {content}
           </Link>
