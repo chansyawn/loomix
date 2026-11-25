@@ -132,8 +132,8 @@ function GameplayUseCard({ use }: { use: GameplayUse }) {
         </CardHeader>
         <CardContent>
           <ul className="flex flex-col gap-1">
-            {use.conditions.map(({ hash, label, reason }) => (
-              <li key={`${hash}:${reason}`}>
+            {use.conditions.map(({ hash, summary, linkLabel }) => (
+              <li key={`${hash}:${summary}:${linkLabel}`}>
                 <Item
                   size="xs"
                   className="flex-nowrap"
@@ -142,8 +142,8 @@ function GameplayUseCard({ use }: { use: GameplayUse }) {
                   }
                 >
                   <ItemContent className="min-w-0">
-                    <span className="font-medium wrap-anywhere">{label}</span>
-                    <span className="text-xs wrap-anywhere text-muted-foreground">{reason}</span>
+                    <span className="font-medium wrap-anywhere">{summary}</span>
+                    <span className="text-xs wrap-anywhere text-muted-foreground">{linkLabel}</span>
                   </ItemContent>
                   <ItemActions>
                     <ArrowRightIcon
