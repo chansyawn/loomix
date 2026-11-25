@@ -10,7 +10,6 @@ export function plantSeriesFields(record: PlantSeries): [string, string | null][
   ];
   if (summary.harvestCounts.length)
     fields.push(["收获茬数", `${summary.harvestCounts.join(" / ")} 茬`]);
-  if (summary.acquisition.length) fields.push(["获取来源", summary.acquisition.join("、")]);
   if (summary.flowerColors.length) fields.push(["花色", summary.flowerColors.join("、")]);
   return fields;
 }

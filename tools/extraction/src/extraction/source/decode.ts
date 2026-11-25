@@ -14,6 +14,7 @@ import { decodeTextMap } from "./decode/textmap.ts";
 import { indexTables, Tables } from "./decode/tables.ts";
 import type { BinDataAsset, ConfigFile, ConfigSource, IndexedAsset } from "../types.ts";
 import { extractDyeingInputs } from "./hair-dyeing/inputs.ts";
+import { extractVignetteDiscovery } from "./vignettes/inputs.ts";
 
 interface DecodeOptions {
   work: string;
@@ -125,6 +126,7 @@ export async function prepareSource({
     assets,
     resolvePath,
   );
+  await extractVignetteDiscovery(work, assets, resolvePath);
 }
 
 export function openSource(work: string): Tables {

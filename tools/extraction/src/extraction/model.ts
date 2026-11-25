@@ -11,6 +11,7 @@ import type { CollectionObservations } from "./schema.ts";
 import type { readStarsea } from "./source/starsea/read.ts";
 import type { readVignettes } from "./source/vignettes/read.ts";
 import type { DyeingObservation } from "./source/hair-dyeing/read.ts";
+import type { AcquisitionHints } from "./source/catalog/acquisition-hints.ts";
 
 export interface ImageUse {
   use: string;
@@ -54,7 +55,11 @@ export interface ClientReadRecords {
     collection: CollectionObservations;
     admissions: import("./source/catalog/admissions.ts").RecordEvidence[];
     exclusions: unknown;
-    investigation: unknown;
+    investigation: {
+      plants: unknown;
+      details: unknown;
+      acquisitionHints: AcquisitionHints;
+    };
     outsideMembers: unknown;
     cooking: unknown;
     crafting: unknown;

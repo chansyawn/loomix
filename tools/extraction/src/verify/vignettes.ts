@@ -3,44 +3,42 @@ import type { Vignettes } from "@loomix/schema/vignettes";
 import type { Tables } from "../extraction/source/decode/tables.ts";
 import type { ClientReadRecords } from "../extraction/model.ts";
 import type { ImageBinding, OriginalImage } from "../extraction/images/model.ts";
-import { readVignetteAdmissions } from "../extraction/source/vignettes/admissions.ts";
+import { admitted, readVignetteAdmissionRows } from "../extraction/source/vignettes/admissions.ts";
+import { readVignetteDiscovery } from "../extraction/source/vignettes/inputs.ts";
+import type { IndexedAsset } from "../extraction/types.ts";
 
 export function verifyVignettes(
   source: string,
   tables: Tables,
+  index: IndexedAsset[],
   data: Vignettes,
   observed: ClientReadRecords["vignettes"],
   bindings: readonly ImageBinding[],
   originals: readonly OriginalImage[],
 ): void {
-  const { data: admissions } = readVignetteAdmissions(source);
+  const admissions = readVignetteAdmissionRows(tables, readVignetteDiscovery(source, index));
   const templates = new Map(data.templates.map((entry) => [entry.id, entry]));
-  const display = tables.byId(291);
-  const gameplay = tables.byId(288);
+  const recordedRows = new Map(observed.rows.map((entry) => [entry.id, entry]));
   const imageBindings = new Map(bindings.map(({ use, object }) => [use, object]));
   const originalIds = new Set(originals.map(({ object }) => object));
-  assert.equal(observed.rows.length, 42, "Vignette observation coverage");
-  assert.equal(templates.size, 31, "Vignette template coverage");
-  assert.equal(display.size, admissions.entries.length, "Vignette display universe");
-  assert.equal(gameplay.size, admissions.entries.length, "Vignette gameplay universe");
-  for (const [id, name, order, key, evidence] of admissions.entries) {
-    const row = display.get(id);
-    const play = gameplay.get(id);
-    assert.ok(row && play, `Vignette source row ${id}`);
+  assert.deepEqual(
+    [...templates.keys()].sort((left, right) => left - right),
+    admissions
+      .filter(({ decision }) => admitted(decision))
+      .map(({ id }) => id)
+      .sort((left, right) => left - right),
+    "Vignette admission coverage",
+  );
+  assert.equal(observed.rows.length, admissions.length, "Vignette observation coverage");
+  for (const { id, shown: row, play, order, discoveryKey, decision, sources } of admissions) {
     const expected = tables.textmap[tables.uint(row, 1, 0)];
-    const recorded = observed.rows.find((candidate) => candidate.id === id);
+    const recorded = recordedRows.get(id);
     assert.ok(recorded, `Missing vignette observation ${id}`);
-    assert.deepEqual(recorded.decision, evidence, `Vignette admission decision ${id}`);
-    assert.equal(tables.text(play, 1), name, `Vignette gameplay name ${id}`);
-    assert.equal(expected?.nameZh, name, `Vignette source name ${id}`);
-    assert.equal(tables.uint(row, 4), order, `Vignette source order ${id}`);
-    assert.equal(tables.uint(play, 2), key, `Vignette source discovery key ${id}`);
+    assert.deepEqual(recorded.decision, decision, `Vignette admission decision ${id}`);
+    assert.deepEqual(recorded.discoverySources, sources, `Vignette admission sources ${id}`);
+    assert.equal(recorded.order, order, `Vignette source order ${id}`);
+    assert.equal(recorded.discoveryKey, discoveryKey, `Vignette source discovery key ${id}`);
     const template = templates.get(id);
-    assert.equal(
-      Boolean(template),
-      order >= 1 && order <= 31,
-      `Vignette first-batch membership ${id}`,
-    );
     if (!template) continue;
     assert.deepEqual(
       template.name,
@@ -77,14 +75,4 @@ export function verifyVignettes(
     );
     assert.ok(originalIds.has(template.illustration.assetId), `Vignette image original ${id}`);
   }
-  assert.equal(
-    data.templates.flatMap(({ creatureItemIds }) => creatureItemIds).length,
-    6,
-    "Vignette creature coverage",
-  );
-  assert.equal(
-    data.templates.flatMap(({ neighborIds }) => neighborIds).length,
-    10,
-    "Vignette neighbor coverage",
-  );
 }

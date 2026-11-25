@@ -26,34 +26,6 @@ export function detailInvestigation(context: ContentContext) {
   const { tables, scope } = context;
   const records: z.infer<typeof detailInvestigationSchema>["records"] = [];
   for (const [id, group] of scope.groups) {
-    const display = context.ui.get(id);
-    const sourceIds = tables.vector(display, 2) ?? [];
-    if (sourceIds.length)
-      records.push({
-        id,
-        field: "detail.acquisitionConditions",
-        status: "unconfirmed",
-        reason: "source_labels_do_not_describe_exact_unlock_or_spawn_conditions",
-        candidates: {
-          sources: sourceIds.map((sourceId) => {
-            const source = tables.byId(618).get(sourceId);
-            return {
-              sourceId,
-              label: tables.text(source, 1),
-              nativeConditionText: tables.string(source, 2),
-              nativeParameters: tables.vector(source, 2),
-              nativeType: tables.uint(source, 3),
-            };
-          }),
-        },
-        sources: [
-          ...(display ? [tableSource(tables, display, [0, 2])] : []),
-          ...sourceIds.flatMap((sourceId) => {
-            const source = tables.byId(618).get(sourceId);
-            return source ? [tableSource(tables, source, [0, 1, 2, 3])] : [];
-          }),
-        ],
-      });
     if (group === "creatures.item") {
       const scale = tables.byId(132).get(id);
       const ui = context.ui.get(id);

@@ -54,12 +54,6 @@ export function filterGroups(data: ClothingData, view: View): FilterGroup<Filter
         label,
         options: options(data.items.flatMap((row) => splitValues(row[key]))),
       });
-    groups.push({
-      key: "acquisition",
-      label: "获取途径",
-      fullWidth: true,
-      options: options(data.items.map((row) => row.acquisition)),
-    });
   }
   return groups;
 }
@@ -86,8 +80,7 @@ export function queryClothing(data: ClothingData, view: View, query: ViewQuery) 
       ) &&
       matches(query.colors, splitValues(row.colors)) &&
       matches(query.materials, splitValues(row.materials)) &&
-      matches(query.styles, splitValues(row.styles)) &&
-      matches(query.acquisition, [row.acquisition ?? missing])
+      matches(query.styles, splitValues(row.styles))
     );
   });
   if (query.sort !== "original")

@@ -75,9 +75,6 @@ export function furnitureTableColumns(
     textColumn("materials", "材质", 144, (record) =>
       "category" in record ? record.materials : null,
     ),
-    textColumn("acquisition", "获取途径", 240, (record) =>
-      "category" in record ? record.acquisition : null,
-    ),
     {
       id: "sets",
       header: "所属套组",

@@ -1,7 +1,7 @@
 import { expect, test } from "vite-plus/test";
 import type { ContentContext } from "../../context.ts";
 import type { TableRow } from "../../../../types.ts";
-import { acquisition, creatureSize, trade } from "./client.ts";
+import { creatureSize, trade } from "./client.ts";
 
 import { treeDrops } from "./tree-drops.ts";
 import { treeInvestigation } from "./tree-investigation.ts";
@@ -54,9 +54,6 @@ function context(rows: FakeRow[]) {
     tables,
     main: { has: (id: number) => main.has(id) },
     vocabulary: {
-      sources: new Map(
-        rows.filter((entry) => entry.root === 618).map((entry) => [entry.values[0], entry]),
-      ),
       scales: new Map(
         rows.filter((entry) => entry.root === 132).map((entry) => [entry.values[0], entry]),
       ),
@@ -142,13 +139,6 @@ test("shop offers retain exact IDs and conditions but do not mislabel native fie
     ],
   });
   expect(result.reason).toBe("commerce_price_stock_refresh_mapping_unconfirmed");
-});
-
-test("conflicting duplicate source vectors fail rather than merging unconfirmed acquisition mappings", () => {
-  const first = row(325, 30108, { 2: [103] });
-  const second = row(325, 30108, { 2: [104] });
-
-  expect(() => acquisition(context([first, second]), 30108)).toThrow(/Conflicting source vectors/);
 });
 
 function weightedTree(weights: number[], mode = 2) {

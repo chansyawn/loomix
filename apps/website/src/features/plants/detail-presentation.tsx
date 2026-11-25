@@ -37,8 +37,6 @@ function plantOrSeriesPresentation(detail: PlantOrSeriesDetail): CatalogDetailPr
           ],
         ]
       : plantSeriesFields(detail.record);
-  if (detail.kind === "item" && summary.acquisition.length)
-    fields.push(["获取来源", summary.acquisition.join("、")]);
   if (detail.kind === "item" && summary.flowerColors.length)
     fields.push(["花色", summary.flowerColors.join("、")]);
 

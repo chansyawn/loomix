@@ -14,7 +14,6 @@ const first: ClothingItem = {
   styles: null,
   colors: null,
   materials: null,
-  acquisition: null,
 };
 const second: ClothingItem = { ...first, id: 2, name: "木桌" };
 const set: ClothingOutfit = {

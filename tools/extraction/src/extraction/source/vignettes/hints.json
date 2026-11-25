@@ -1,0 +1,26 @@
+{
+  "source": {
+    "gameVersion": "0.95.2",
+    "dataRevision": 1449213,
+    "resourceRevision": 1391927,
+    "manifestId": "5662883"
+  },
+  "hints": [
+    [1002, "acquisition", 89917880],
+    [1003, "acquisition", 633885588],
+    [1004, "acquisition", 2550400290],
+    [1006, "acquisition", 3635366774],
+    [
+      1007,
+      "acquisition",
+      1690000795,
+      {
+        "zh": "这是我为此准备的观星露营小栖地",
+        "en": "I've prepared a Stargazing Campsite Vignette for just that"
+      }
+    ],
+    [1007, "task-placement", 424893348],
+    [1008, "acquisition", 3730178562],
+    [3004, "acquisition", 2924315156]
+  ]
+}

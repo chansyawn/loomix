@@ -44,7 +44,7 @@ vp run dev
 ```text
 apps/website/              # 网站页面、路由、样式与网站专属文档
 packages/schema/           # 共享领域模型、资源与发布契约
-tools/extraction/          # 客户端资源提取工具及原理说明
+tools/extraction/          # 客户端资源提取工具及要求与维护说明
 tools/resources/  # 资源校验、发布与清理
 resources/website/         # 当前 worktree 的本地网站资源
 ```
@@ -53,17 +53,18 @@ resources/website/         # 当前 worktree 的本地网站资源
 
 ## 文档
 
-| 文档                                                              | 读者                 | 内容                                           |
-| ----------------------------------------------------------------- | -------------------- | ---------------------------------------------- |
-| [贡献指南](CONTRIBUTING.md)                                       | 贡献者               | 提交规范、PR 流程与合并限制                    |
-| [Agent 协作约定](AGENTS.md)                                       | AI Agent、维护者     | 注释语言、lint、文档、领域术语、测试与 UI 约定 |
-| [领域术语表](GLOSSARY.md)                                         | 各包开发者、AI Agent | 收录、图鉴、游戏关系、提取与资源发布的统一定义 |
-| [CI/CD 与部署](DEPLOYMENT.md)                                     | 维护者               | 预览、正式发布、资源与 CORS 配置               |
-| [网站应用](apps/website/README.md)                                | 网站开发者           | 开发入口、代码结构、数据加载与常用检查         |
-| [发布契约检查](apps/website/docs/release-checks.md)               | 网站开发者           | 职责边界、扩展指引与失败处理                   |
-| [标签筛选策略](apps/website/docs/tag-filter-policy.md)            | 网站开发者           | 筛选语义、可见性边界与维护指引                 |
-| [客户端资源提取](tools/extraction/README.md)                      | 提取工具使用者       | 首次配置、日常操作、排障与清理                 |
-| [提取原理](tools/extraction/docs/extraction-method.md)            | 提取工具维护者       | 跨业务原则、流水线取舍、版本更新与实现入口     |
-| [业务确认与调查](tools/extraction/docs/business-investigation.md) | 提取工具维护者       | 业务收录依据、确认结论与待调查事项             |
-| [网站资源管理](tools/resources/README.md)                         | 资源维护者           | R2 凭证、校验、发布与清理                      |
-| [共享数据契约](packages/schema/README.md)                         | 各包开发者           | 跨包约束、身份、图片与版本边界                 |
+| 文档                                                               | 读者                 | 内容                                           |
+| ------------------------------------------------------------------ | -------------------- | ---------------------------------------------- |
+| [贡献指南](CONTRIBUTING.md)                                        | 贡献者               | 提交规范、PR 流程与合并限制                    |
+| [Agent 协作约定](AGENTS.md)                                        | AI Agent、维护者     | 注释语言、lint、文档、领域术语、测试与 UI 约定 |
+| [领域术语表](GLOSSARY.md)                                          | 各包开发者、AI Agent | 收录、图鉴、游戏关系、提取与资源发布的统一定义 |
+| [CI/CD 与部署](DEPLOYMENT.md)                                      | 维护者               | 预览、正式发布、资源与 CORS 配置               |
+| [网站应用](apps/website/README.md)                                 | 网站开发者           | 开发入口、代码结构、数据加载与常用检查         |
+| [发布契约检查](apps/website/docs/release-checks.md)                | 网站开发者           | 职责边界、扩展指引与失败处理                   |
+| [标签筛选策略](apps/website/docs/tag-filter-policy.md)             | 网站开发者           | 筛选语义、可见性边界与维护指引                 |
+| [客户端资源提取](tools/extraction/README.md)                       | 提取工具使用者       | 首次配置、日常操作、排障与清理                 |
+| [提取要求与规范](tools/extraction/docs/extraction-requirements.md) | 提取工具维护者       | 解释原则、收录准入、客户端用语与流水线要求     |
+| [提取维护](tools/extraction/docs/extraction-maintenance.md)        | 提取工具维护者       | 待首次版本更新实操后补充                       |
+| [业务确认与调查](tools/extraction/docs/business-investigation.md)  | 提取工具维护者       | 业务收录依据、确认结论与待调查事项             |
+| [网站资源管理](tools/resources/README.md)                          | 资源维护者           | R2 凭证、校验、发布与清理                      |
+| [共享数据契约](packages/schema/README.md)                          | 各包开发者           | 跨包约束、身份、图片与版本边界                 |

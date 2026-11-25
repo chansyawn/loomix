@@ -1,6 +1,5 @@
 import { z } from "zod";
 import {
-  ObservedAcquisitionSchema as acquisition,
   ObservedCookingRecipeSchema as CookingRecipeSchema,
   ObservedDropSchema as drop,
   ObservedTradeSchema as trade,
@@ -46,7 +45,6 @@ function createCollectionDetailSchema() {
       )
       .nullable(),
     trade: trade.nullable(),
-    acquisitionConditions: z.array(acquisition).nullable(),
     dishEffects: z
       .array(
         z.strictObject({
@@ -132,7 +130,6 @@ export function emptyCollectionDetail(id: number): CollectionDetail {
     creatureSize: null,
     creatureGrades: null,
     trade: null,
-    acquisitionConditions: null,
     dishEffects: null,
   };
 }

@@ -61,7 +61,6 @@ export function catalogColumns() {
     ).map(([key, label]) =>
       textColumn<CatalogEntryRow>(key, label, 160, (record) => record[key].join("，")),
     ),
-    textColumn<CatalogEntryRow>("acquisition", "获取来源", 280, (record) => record.acquisitionText),
     textColumn<CatalogEntryRow>("description", "介绍", 320, (record) => record.description),
   ];
 }

@@ -47,7 +47,6 @@ const listed = {
   description: null,
   image: null,
   quality: null,
-  acquisition: null,
   tagIds: [] as number[],
 };
 

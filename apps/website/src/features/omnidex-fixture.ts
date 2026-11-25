@@ -3,7 +3,6 @@ import { FORMAT_VERSION } from "@loomix/schema/common";
 import type { GameplayTags } from "@loomix/schema/gameplay-tags";
 import {
   CatalogSchema,
-  type Acquisition,
   type Catalog,
   type Collection,
   type CollectionMemberKind,
@@ -32,8 +31,6 @@ export const fixtureSource = {
   manifestId: "5662883",
 };
 const values = (value: string | null): string[] | null => value?.split("，") ?? null;
-const acquisition = (value: string | null): Acquisition[] | null =>
-  value === null ? null : value.split("，").map((label, index) => ({ sourceId: index + 1, label }));
 
 export function catalogBase(record: CatalogEntrySummary) {
   return {
@@ -77,7 +74,6 @@ export function catalogFixture(
       ...catalogBase(record),
       memberKind,
       memberIds,
-      acquisition: null,
       flowerHybridization: null,
     });
   for (const record of view.furniture?.items ?? []) {
@@ -90,7 +86,6 @@ export function catalogFixture(
       size: width && depth ? { width, depth } : null,
       colors: values(record.colors),
       materials: values(record.materials),
-      acquisition: acquisition(record.acquisition),
     });
     for (const card of record.inspoCards) {
       const background = card.face.background;
@@ -120,7 +115,6 @@ export function catalogFixture(
       activeTimes: values(record.activeTimes),
       activeWeather: values(record.activeWeather),
       scientificName: record.scientificName,
-      acquisition: acquisition(record.acquisition),
       size: range ? { min: Number(range[1]), max: Number(range[2]), unit: range[3] } : null,
     });
   }
@@ -131,7 +125,6 @@ export function catalogFixture(
       kind: "plant",
       category: record.category,
       origins: values(record.originGalaxy),
-      acquisition: acquisition(record.acquisition),
       flowerColors: record.flowerColors,
       drops: record.treeDrops,
     });
@@ -139,7 +132,6 @@ export function catalogFixture(
     add({
       ...catalogBase(record),
       kind: "seed",
-      acquisition: record.acquisition,
       growth: {
         ...record.growth,
         stages: record.growth.stages.map((stage) => ({
@@ -156,7 +148,6 @@ export function catalogFixture(
       origins: values(record.galaxyFlavor),
       strength: record.strength,
       effects: record.effects,
-      acquisition: acquisition(record.acquisition),
       cooking: {
         difficulty: record.difficulty,
         unlockCondition: record.unlockCondition,
@@ -174,7 +165,6 @@ export function catalogFixture(
       colors: values(record.colors),
       materials: values(record.materials),
       styles: values(record.styles),
-      acquisition: acquisition(record.acquisition),
     });
   for (const record of view.clothing?.outfits ?? []) group(record, "clothing", record.componentIds);
   for (const record of view.clothing?.appearances ?? [])
@@ -183,7 +173,6 @@ export function catalogFixture(
     add({
       ...catalogBase(record),
       kind: "material",
-      acquisition: acquisition(record.acquisition),
     });
   for (const category of view.ingredientCategories ?? [])
     for (const itemId of category.itemIds) {
@@ -320,7 +309,6 @@ export function addFixtureRecords(
         description: null,
         image: null,
         quality: null,
-        acquisition: null,
         memberIds: null,
         flowerHybridization: null,
         ...raw,
@@ -343,7 +331,6 @@ export function addFixtureRecords(
       description: null,
       image: null,
       quality: null,
-      acquisition: null,
       ...kindDefaults[String(raw.kind)],
       ...raw,
       tagIds: [...tagIds],

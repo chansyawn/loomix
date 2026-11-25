@@ -31,8 +31,8 @@ import { exportOriginals } from "./images/originals.ts";
 import { audit } from "./audit.ts";
 import { verifyExtraction, verifyCandidate } from "./verify.ts";
 import { writeAssembly, sealExtraction } from "./bundle.ts";
-import { parseVignetteAdmissions } from "./source/vignettes/admissions.ts";
-import { vignetteAdmissionsFile } from "./source/vignettes/profile.ts";
+import { parseVignetteHints } from "./source/vignettes/hints.ts";
+import { vignetteHintsFile } from "./source/vignettes/profile.ts";
 import {
   flowerHybridizationFile,
   parseFlowerHybridization,
@@ -60,10 +60,8 @@ export async function extract(environmentReference: string): Promise<StageLocati
     new URL("./source/catalog/supplemental-admissions.json", import.meta.url),
   );
   const admissions = parseAdmissions(admissionsBytes);
-  const vignetteBytes = fs.readFileSync(
-    new URL("./source/vignettes/admissions.json", import.meta.url),
-  );
-  const vignetteAdmissions = parseVignetteAdmissions(vignetteBytes);
+  const vignetteBytes = fs.readFileSync(new URL("./source/vignettes/hints.json", import.meta.url));
+  const vignetteHints = parseVignetteHints(vignetteBytes);
   const flowerBytes = fs.readFileSync(
     new URL(`../../data/${flowerHybridizationFile}`, import.meta.url),
   );
@@ -77,7 +75,7 @@ export async function extract(environmentReference: string): Promise<StageLocati
     implementation,
     tool,
     admissions: admissions.sha256,
-    vignetteAdmissions: vignetteAdmissions.sha256,
+    vignetteHints: vignetteHints.sha256,
     external: [{ path: `source/${flowerHybridizationFile}`, sha256: flowerHybridization.sha256 }],
   };
   const id = extractionId(identityInputs);
@@ -105,7 +103,7 @@ export async function extract(environmentReference: string): Promise<StageLocati
       const source = path.join(staging, "source");
       copyCachedDirectory(decoded, source);
       fs.writeFileSync(path.join(source, admissionsFile), admissionsBytes);
-      fs.writeFileSync(path.join(source, vignetteAdmissionsFile), vignetteBytes);
+      fs.writeFileSync(path.join(source, vignetteHintsFile), vignetteBytes);
       const flowerFile = path.join(source, flowerHybridizationFile);
       fs.mkdirSync(path.dirname(flowerFile), { recursive: true });
       fs.writeFileSync(flowerFile, flowerBytes);

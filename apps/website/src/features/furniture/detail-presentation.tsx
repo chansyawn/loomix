@@ -16,7 +16,6 @@ export function furnitureDetailPresentation(detail: FurnitureDetail): CatalogDet
           ["尺寸", detail.record.size],
           ["颜色", detail.record.colors],
           ["材质", detail.record.materials],
-          ["获取途径", detail.record.acquisition],
         ]
       : [
           ["系列", detail.record.seriesName],

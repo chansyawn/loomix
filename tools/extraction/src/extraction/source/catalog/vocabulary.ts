@@ -19,7 +19,6 @@ export interface Vocabulary {
   subgroups: Subgroup[];
   groupNames: Record<number, RecordType>;
   setTags: Record<string, RecordType>;
-  sources: Map<number | null, TableRow>;
   furnitureTypes: TableRow[];
   cookware: TableRow[];
   scales: Map<number | null, TableRow>;
@@ -112,7 +111,6 @@ export function createVocabulary(
     subgroups,
     groupNames: GROUP_NAMES,
     setTags: SET_TAGS,
-    sources: tables.byId(profile.roots.sources),
     furnitureTypes: tables.rows(profile.roots.furnitureTypes),
     cookware: tables.rows(profile.roots.cookware),
     scales: tables.byId(profile.roots.creatureScale),

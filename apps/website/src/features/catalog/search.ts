@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { SearchMiddleware } from "@tanstack/react-router";
 import { listLayoutSchema } from "../list-page/layout";
 export { sortOptions } from "../furniture/search";
-export const filterKeys = ["tags", "categories", "qualities", "acquisition"] as const;
+export const filterKeys = ["tags", "categories", "qualities"] as const;
 export type FilterKey = (typeof filterKeys)[number];
 const list = z
   .array(z.string())
@@ -27,7 +27,6 @@ const querySchema = z.object({
     )
     .default([]),
   tagMode: z.enum(["and", "or"]).catch("and").default("and"),
-  acquisition: list,
 });
 export const emptyQuery = () => querySchema.parse({});
 export const catalogSearchSchema = z.object({

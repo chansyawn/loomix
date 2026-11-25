@@ -24,7 +24,6 @@ const dish: DishItem = {
   ],
   tastes: ["甜", "咸"],
   unlockCondition: null,
-  acquisition: "烹饪",
   slots: [],
 };
 

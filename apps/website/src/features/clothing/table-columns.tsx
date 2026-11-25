@@ -95,9 +95,6 @@ export function clothingTableColumns(
       "styles" in record ? record.materials : null,
     ),
     textColumn("styles", "风格", 144, (record) => ("styles" in record ? record.styles : null)),
-    textColumn("acquisition", "获取途径", 240, (record) =>
-      "styles" in record ? record.acquisition : null,
-    ),
     {
       id: "outfits",
       header: "所属套装",

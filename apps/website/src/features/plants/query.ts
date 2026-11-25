@@ -1,4 +1,3 @@
-import { acquisitionLabels } from "../omnidex/acquisition";
 import { indexMembership } from "../omnidex/membership";
 import type { PlantItem, PlantSeries } from "../omnidex-view.ts";
 import type { PlantsData } from "./data";
@@ -40,12 +39,6 @@ export function filterGroups(data: PlantsData, view: View = "items"): FilterGrou
     const complete = data.series.every((group) => group.plantIds !== null);
     return [
       {
-        key: "acquisition",
-        label: "获取来源",
-        options: options(data.seeds.flatMap((seed) => acquisitionLabels(seed.acquisition))),
-        fullWidth: true,
-      },
-      {
         key: "harvestCounts",
         label: "收获茬数",
         options: options(
@@ -68,16 +61,6 @@ export function filterGroups(data: PlantsData, view: View = "items"): FilterGrou
     ];
   }
   const groups: FilterGroup[] = [
-    {
-      key: "acquisition",
-      label: "获取来源",
-      options: options(
-        data.items.flatMap((row) =>
-          row.summary.acquisition.length ? row.summary.acquisition : [null],
-        ),
-      ),
-      fullWidth: true,
-    },
     {
       key: "flowerColors",
       label: "花色",
@@ -126,7 +109,7 @@ export function filterGroups(data: PlantsData, view: View = "items"): FilterGrou
   ];
   return view === "items"
     ? groups
-    : groups.filter((group) => ["qualities", "acquisition", "flowerColors"].includes(group.key));
+    : groups.filter((group) => ["qualities", "flowerColors"].includes(group.key));
 }
 
 function matches(selected: string[], values: string[]): boolean {
@@ -140,11 +123,9 @@ export function queryPlants(data: PlantsData, view: View, query: ViewQuery) {
     const series = seedSeriesIndex(data);
     const seriesComplete = data.series.every((group) => group.plantIds !== null);
     const filtered = data.seeds.filter((seed) => {
-      const acquisition = acquisitionLabels(seed.acquisition);
       const membershipsForSeed = series.get(seed.id) ?? [];
       return (
         matchesName(seed.name) &&
-        matches(query.acquisition, acquisition.length > 0 ? acquisition : [missing]) &&
         matches(query.harvestCounts, [
           (seed.growth.kind === "crop" ? seed.growth.harvestCount : null) === null
             ? missing
@@ -173,10 +154,6 @@ export function queryPlants(data: PlantsData, view: View, query: ViewQuery) {
     if (
       !matchesName(row.name) ||
       !matches(query.qualities, [row.quality === null ? missing : String(row.quality)]) ||
-      !matches(
-        query.acquisition,
-        row.summary.acquisition.length ? row.summary.acquisition : [missing],
-      ) ||
       !matches(
         query.flowerColors,
         row.summary.flowerColors.length ? row.summary.flowerColors : [missing],

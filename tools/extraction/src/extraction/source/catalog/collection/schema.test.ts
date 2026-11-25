@@ -37,7 +37,6 @@ function fixture() {
         quality: null,
         growthId: 20,
         trade: null,
-        acquisition: null,
       },
     ],
     growths: [

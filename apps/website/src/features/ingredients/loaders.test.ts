@@ -18,7 +18,6 @@ function setupResources() {
     quality: null,
     category: null,
     scientificName: null,
-    acquisition: null,
     region: null,
     habitat: null,
     activeSeasons: null,
@@ -32,7 +31,6 @@ function setupResources() {
     image: null,
     description: null,
     quality: null,
-    acquisition: null,
   };
   const { catalog, gameplayTags } = catalogFixture({
     ingredientCategories: [

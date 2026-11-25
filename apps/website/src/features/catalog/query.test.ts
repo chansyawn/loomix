@@ -18,7 +18,6 @@ function groupRecords(memberIds: number[] | null) {
       quality: null,
       memberKind,
       memberIds,
-      acquisition: [{ sourceId: 99, label: "集合专属来源" }],
     }),
   );
 }
@@ -49,7 +48,6 @@ function data(...records: object[]) {
       image: null,
       kind: "material",
       category: null,
-      acquisition: [{ sourceId: 5, label: "采集" }],
       tagIds: [11, 12, 13],
     },
     {
@@ -60,7 +58,6 @@ function data(...records: object[]) {
       description: null,
       kind: "material",
       category: null,
-      acquisition: null,
     },
   );
   addFixtureRecords(catalog, gameplayTags, ...records);
@@ -82,7 +79,7 @@ test("原始标签名称、枚举及显示名不参与文本搜索", () => {
     expect(queryCatalog(source, { ...emptyQuery(), q }).total).toBe(0);
   }
 });
-test("标签与文本、类别、品阶及获取来源取交集", () => {
+test("标签与文本、类别、品阶取交集", () => {
   const source = data();
   expect(
     queryCatalog(source, {
@@ -91,18 +88,16 @@ test("标签与文本、类别、品阶及获取来源取交集", () => {
       q: "huacai",
       categories: ["miscellaneous"],
       qualities: ["2"],
-      acquisition: ["5"],
     }).rows.map((row) => row.id),
   ).toEqual([1]);
   expect(queryCatalog(source, { ...emptyQuery(), tags: ["11"], qualities: ["1"] }).total).toBe(0);
-  for (const patch of [{ q: "不存在" }, { categories: ["clothing"] }, { acquisition: ["999"] }]) {
+  for (const patch of [{ q: "不存在" }, { categories: ["clothing"] }]) {
     expect(queryCatalog(source, { ...emptyQuery(), tags: ["11"], ...patch }).total).toBe(0);
   }
   expect(filterGroups(source).map((group) => group.key)).toEqual([
     "tags",
     "categories",
     "qualities",
-    "acquisition",
   ]);
 });
 test("未知品阶在升降序都排后，查询URL可往返并压缩默认值", () => {
@@ -145,7 +140,6 @@ test("只有集合时结果为空，动态筛选排除集合属性及空品阶",
   const source = createOmnidexCatalog(catalog, imageIndexFixture(catalog), gameplayTags);
   expect(queryCatalog(source, emptyQuery())).toEqual({ rows: [], total: 0 });
   const groups = filterGroups(source);
-  expect(groups.find((group) => group.key === "acquisition")?.options).toEqual([]);
   expect(groups.find((group) => group.key === "qualities")?.options).not.toContainEqual({
     value: "__missing",
     label: "未提供",
@@ -168,7 +162,6 @@ test("集合黑名单允许外观和种子参与搜索与类别筛选", () => {
     image: null,
     kind: "appearance",
     category: "发型",
-    acquisition: null,
   });
   const source = createOmnidexCatalog(catalog, imageIndexFixture(catalog), gameplayTags);
   expect(queryCatalog(source, emptyQuery()).rows.map((row) => row.id)).toEqual([10, 20, 30]);
@@ -192,7 +185,6 @@ test("友邻服饰进入全部页搜索和独立类别筛选", () => {
     image: null,
     kind: "neighborOutfit",
     category: "手套",
-    acquisition: null,
     neighborId: 1010,
     playerItemId: null,
     modelPaths: { small: null, medium: "NpcOutfits/Medium/40", big: null },
@@ -227,7 +219,6 @@ test("白名单策略隐藏白名单外根与未引用分支，并静默丢弃�
       image: null,
       kind: "material",
       category: null,
-      acquisition: null,
       tagIds: [2, 5],
     },
     {
@@ -238,7 +229,6 @@ test("白名单策略隐藏白名单外根与未引用分支，并静默丢弃�
       image: null,
       kind: "material",
       category: null,
-      acquisition: null,
       tagIds: [],
     },
   );

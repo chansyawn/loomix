@@ -7,6 +7,7 @@ import { ContextSchema } from "@loomix/schema/common";
 import { parseDataset } from "@loomix/schema/dataset";
 import { FieldEvidenceReportSchema } from "./evidence/domain-schema.ts";
 import type { ClientReadRecords } from "./model.ts";
+import { acquisitionHintsSchema } from "./source/catalog/acquisition-hints.ts";
 import { CLIENT_READ_RECORDS_FILE, DATASET_FILE, FIELD_EVIDENCE_FILE } from "./files.ts";
 import {
   originalImageSchema,
@@ -30,7 +31,7 @@ import {
   parseFlowerHybridization,
 } from "./external/flower-hybridization.ts";
 import { admissionsFile } from "./source/catalog/admissions.ts";
-import { vignetteAdmissionsFile } from "./source/vignettes/profile.ts";
+import { vignetteHintsFile } from "./source/vignettes/profile.ts";
 
 export function writeAssembly(directory: string, assembly: Assembly): void {
   writeJson(path.join(directory, DATASET_FILE), assembly.dataset);
@@ -47,6 +48,7 @@ export function readCandidate(directory: string) {
     throw new Error("封存的提取结果与当前契约不符，请重新提取。");
   if (!clientReadRecords.vignettes) throw new Error("Missing vignette client read records");
   if (!clientReadRecords.hairDyeing) throw new Error("Missing hair dyeing client read records");
+  acquisitionHintsSchema.parse(clientReadRecords.diagnostics?.investigation?.acquisitionHints);
   clientReadRecords.imageNeeds = imageNeedSchema.array().parse(clientReadRecords.imageNeeds);
   clientReadRecords.imageObjects = imageObjectSchema.array().parse(clientReadRecords.imageObjects);
   uniqueObjects(clientReadRecords.imageObjects);
@@ -87,13 +89,13 @@ export async function readVerifiedExtraction(directory: string, expectedId?: str
     "Sealed extraction file set",
   );
   const bundle = readCandidate(directory);
-  const { admissions, vignetteAdmissions, external } = manifest.identityInputs;
+  const { admissions, vignetteHints, external } = manifest.identityInputs;
   const hashes = new Map(manifest.outputs.map((file) => [file.path, file.sha256]));
   assert.equal(hashes.get(`source/${admissionsFile}`), admissions, "Frozen admissions identity");
   assert.equal(
-    hashes.get(`source/${vignetteAdmissionsFile}`),
-    vignetteAdmissions,
-    "Frozen vignette admissions identity",
+    hashes.get(`source/${vignetteHintsFile}`),
+    vignetteHints,
+    "Frozen vignette hints identity",
   );
   assert.deepEqual(
     external,

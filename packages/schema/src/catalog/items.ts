@@ -8,7 +8,6 @@ const texts = z.string().min(1).array().nullable();
 
 export const QualitySchema = z.number().int().min(0).max(4);
 export const BodyTypeSchema = z.enum(["small", "medium", "big"]);
-export const AcquisitionSchema = z.strictObject({ sourceId: IdSchema, label: z.string().min(1) });
 export const DropSchema = z.strictObject({
   itemId: IdSchema,
   source: z.enum(["fruit", "felling"]),
@@ -28,7 +27,6 @@ const listed = {
   description: NullableTextSchema,
   image: ImageRefSchema.nullable(),
   quality: QualitySchema.nullable(),
-  acquisition: AcquisitionSchema.array().min(1).nullable(),
 };
 const item = z.strictObject({ ...listed, tagIds: IdSchema.array() });
 const categorized = item.extend({ category: NullableTextSchema });
@@ -114,7 +112,6 @@ export const CollectionSchema = z.strictObject({
 
 export type Quality = z.infer<typeof QualitySchema>;
 export type BodyType = z.infer<typeof BodyTypeSchema>;
-export type Acquisition = z.infer<typeof AcquisitionSchema>;
 export type Drop = z.infer<typeof DropSchema>;
 export type DishEffect = z.infer<typeof DishEffectSchema>;
 export type Item = z.infer<typeof ItemSchema>;

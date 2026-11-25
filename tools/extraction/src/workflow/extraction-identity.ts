@@ -11,7 +11,7 @@ export const ExtractionIdentitySchema = z.strictObject({
   implementation: HashSchema,
   tool: HashSchema,
   admissions: HashSchema,
-  vignetteAdmissions: HashSchema,
+  vignetteHints: HashSchema,
   external: z.array(z.strictObject({ path: z.string().min(1), sha256: HashSchema })),
 });
 

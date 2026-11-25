@@ -60,7 +60,6 @@ test("共享目录为植物、种子和系列保留独立详情及公共字段",
     expect(recordFields(row)).toEqual([
       ["编号", String(row.id)],
       ["类别", "植物"],
-      ["获取来源", null],
     ]);
   }
 });

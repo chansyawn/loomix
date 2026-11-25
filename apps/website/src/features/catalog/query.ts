@@ -17,11 +17,7 @@ export function queryCatalog(data: OmnidexCatalog, query: CatalogQuery) {
       matchesName(row.name) &&
       intersects(query.categories, [row.category]) &&
       intersects(query.qualities, [row.quality === null ? "__missing" : String(row.quality)]) &&
-      data.tags.matches(row.id, query.tags, query.tagMode) &&
-      intersects(
-        query.acquisition,
-        row.acquisition?.map((source) => String(source.sourceId)) ?? [],
-      ),
+      data.tags.matches(row.id, query.tags, query.tagMode),
   );
   if (query.sort !== "original")
     rows.sort((a, b) => {
@@ -42,11 +38,6 @@ export function filterGroups(
   const rows = allRecords(data);
   const options = (values: Record<string, string>) =>
     Object.entries(values).map(([value, label]) => ({ value, label }));
-  const sources = new Map(
-    rows
-      .flatMap((row) => row.acquisition ?? [])
-      .map((source) => [String(source.sourceId), source.label]),
-  );
   return [
     {
       key: "tags",
@@ -66,11 +57,6 @@ export function filterGroups(
           ? [{ value: "__missing", label: "未提供" }]
           : []),
       ],
-    },
-    {
-      key: "acquisition",
-      label: "获取来源",
-      options: [...sources].map(([value, label]) => ({ value, label })),
     },
   ];
 }

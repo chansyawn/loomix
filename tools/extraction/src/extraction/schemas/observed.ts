@@ -23,11 +23,6 @@ export const ObservedCookingRecipeSchema = z.strictObject({
   tastes: TastesSchema.nullable(),
   slots: ObservedRecipeSlotSchema.array().nullable(),
 });
-export const ObservedAcquisitionSchema = z.strictObject({
-  sourceId: IdSchema,
-  label: z.string().min(1),
-  condition: NullableTextSchema,
-});
 export const ObservedTradeSchema = z.strictObject({
   sellPrice: z.number().nonnegative().nullable(),
   offers: z
@@ -89,13 +84,11 @@ export function createObservedSeedSchema<I extends z.ZodType>(image: I) {
     quality: QualitySchema.nullable(),
     growthId: IdSchema,
     trade: ObservedTradeSchema.nullable(),
-    acquisition: ObservedAcquisitionSchema.array().nullable(),
   });
 }
 
 export type ObservedRecipeSlot = z.infer<typeof ObservedRecipeSlotSchema>;
 export type ObservedCookingRecipe = z.infer<typeof ObservedCookingRecipeSchema>;
-export type ObservedAcquisition = z.infer<typeof ObservedAcquisitionSchema>;
 export type ObservedDrop = z.infer<typeof ObservedDropSchema>;
 
 type PlantingGrowth = {

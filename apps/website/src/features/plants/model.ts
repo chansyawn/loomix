@@ -33,7 +33,6 @@ export interface PlantGrowthGroup {
 export interface PlantSummary {
   categories: string[];
   galaxies: string[];
-  acquisition: string[];
   flowerColors: string[];
   harvestCounts: number[];
   seeds: PlantSeed[];
@@ -44,7 +43,6 @@ export type PlantItem = CatalogEntrySummary & {
   category: string | null;
   originGalaxy: string | null;
   harvestCount: number | null;
-  acquisition: string | null;
   flowerColors: PlantRecord["flowerColors"];
   treeDrops: PlantRecord["drops"];
   summary: PlantSummary;

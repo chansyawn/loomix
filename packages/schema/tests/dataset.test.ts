@@ -25,6 +25,19 @@ import {
 const messages = (dataset: ReturnType<typeof datasetFixture>) =>
   validateDataset(dataset).map((issue) => issue.message);
 
+test("物品和集合的正式契约拒绝旧获取字段", () => {
+  const item = plant(1);
+  const group = collection(10, "plant", [1]);
+  const catalog = { items: [item], collections: [group], inspoBoxes: [] };
+  expect(CatalogSchema.parse(catalog)).toEqual(catalog);
+  expect(() =>
+    CatalogSchema.parse({ ...catalog, items: [{ ...item, acquisition: null }] }),
+  ).toThrow("acquisition");
+  expect(() =>
+    CatalogSchema.parse({ ...catalog, collections: [{ ...group, acquisition: null }] }),
+  ).toThrow("acquisition");
+});
+
 test("杂交配方仅引用同一集合的正式植物并允许相同亲本", () => {
   const dataset = datasetFixture();
   dataset.catalog.items.push(plant(1), plant(2), plant(3));

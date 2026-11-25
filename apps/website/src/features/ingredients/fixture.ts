@@ -37,7 +37,6 @@ export function recipeFixture(id: number, slots: DishItem["slots"]): DishItem {
     effects: null,
     tastes: null,
     unlockCondition: null,
-    acquisition: null,
     slots,
   };
 }

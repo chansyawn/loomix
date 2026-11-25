@@ -22,9 +22,7 @@ const use: GameplayUse = {
 
 test("烹饪用途标明候选食材位，并保留食材条件和对应锚点", () => {
   const { catalog, gameplayTags } = catalogFixture({
-    miscellaneous: [
-      { id: 2, name: "虾", image: null, description: null, quality: null, acquisition: null },
-    ],
+    miscellaneous: [{ id: 2, name: "虾", image: null, description: null, quality: null }],
     ingredientCategories: [
       { id: 10, name: "食材", tagName: "食材", parentId: null, itemIds: [] },
       { id: 11, name: "荤菜", tagName: "食材_荤菜", parentId: 10, itemIds: [] },

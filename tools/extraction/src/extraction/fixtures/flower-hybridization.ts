@@ -6,7 +6,7 @@ import {
   parseFlowerHybridization,
 } from "../external/flower-hybridization.ts";
 import { admissionsFile } from "../source/catalog/admissions.ts";
-import { vignetteAdmissionsFile } from "../source/vignettes/profile.ts";
+import { vignetteHintsFile } from "../source/vignettes/profile.ts";
 import { digest } from "../../workflow/hashing.ts";
 import type { ExtractionIdentity } from "../../workflow/extraction-identity.ts";
 import { writeJson } from "../../workflow/json.ts";
@@ -50,12 +50,12 @@ export function extractionIdentityFixture(
     implementation,
     tool: tools.animeStudio!,
     admissions: digest("{}\n"),
-    vignetteAdmissions: digest("{}\n"),
+    vignetteHints: digest("{}\n"),
     external: [{ path: `source/${flowerHybridizationFile}`, sha256 }],
   };
 }
 
 export function freezeAdmissionsFixture(directory: string): void {
-  for (const file of [admissionsFile, vignetteAdmissionsFile])
+  for (const file of [admissionsFile, vignetteHintsFile])
     writeJson(path.join(directory, "source", file), {});
 }

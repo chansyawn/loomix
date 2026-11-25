@@ -3,6 +3,7 @@ import { createContentContext } from "./catalog/context.ts";
 import { readContent } from "./catalog/content.ts";
 import { extendCollection } from "./catalog/collection/observe.ts";
 import { detailInvestigation } from "./catalog/collection/details/investigation.ts";
+import { readAcquisitionHints } from "./catalog/acquisition-hints.ts";
 import { extractNeighborBundle } from "./neighbors/extract.ts";
 import { collectNeighborOutfitImage } from "./neighbors/outfit-image.ts";
 import {
@@ -20,7 +21,8 @@ import { readCraftingRecipes } from "./catalog/crafting/read.ts";
 import { isPlaceholderIcon } from "./catalog/crafting/cards.ts";
 import { FORMAT_VERSION } from "@loomix/schema/common";
 import { readStarsea, starseaItemIds } from "./starsea/read.ts";
-import { readVignetteAdmissions } from "./vignettes/admissions.ts";
+import { readVignetteHints } from "./vignettes/hints.ts";
+import { readVignetteDiscovery } from "./vignettes/inputs.ts";
 import { readVignettes } from "./vignettes/read.ts";
 import { dyeMaterialIds, readHairDyeing } from "./hair-dyeing/read.ts";
 export interface FrozenPackage {
@@ -249,7 +251,8 @@ export function readClientRecords(source: string, datasetId: string): ClientRead
     vignettes: readVignettes(
       context.tables,
       context.gameplayTags.index,
-      readVignetteAdmissions(source),
+      readVignetteDiscovery(source, index),
+      readVignetteHints(source),
       images,
     ),
     context: { formatVersion: FORMAT_VERSION, datasetId, locale: "zh-CN" },
@@ -276,6 +279,7 @@ export function readClientRecords(source: string, datasetId: string): ClientRead
       investigation: {
         plants: collection.plants.investigation,
         details: detailInvestigation(context),
+        acquisitionHints: readAcquisitionHints(context.tables),
       },
       outsideMembers: context.scope.outsideMembers,
       cooking: content.cookingAudit,

@@ -23,6 +23,10 @@ export const profile = {
     groupsName: "cdf350c7",
     blocksName: "2cd2a87d",
   },
+  vignettes: {
+    configPackage: "PetitPlanet_Data/Persistent/AssetBundle/blocks/00/00000002.blk",
+    trackerName: "4f3420ed",
+  },
   starsea: {
     iconStyles: 628,
     galaxies: 650,
@@ -53,7 +57,6 @@ export const profile = {
     furniture: 262,
     furnitureTypes: 265,
     clothing: 519,
-    sources: 618,
     craftingRecipes: 568,
     neighborsNpc: 41,
     neighborStars: 630,
@@ -94,7 +97,6 @@ export const profile = {
       smallIcon: 4,
       largeIcon: 5,
       description: 27,
-      sources: 2,
       quality: 15,
       habitat: 30,
       region: 31,

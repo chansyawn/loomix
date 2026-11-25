@@ -14,7 +14,6 @@ const first: ClothingItem = {
   colors: "白色，蓝色",
   materials: "布艺，毛线",
   styles: "青春，古典",
-  acquisition: "商店",
 };
 const second: ClothingItem = {
   ...first,
@@ -25,7 +24,6 @@ const second: ClothingItem = {
   colors: "黑色",
   materials: "橡胶",
   styles: "运动",
-  acquisition: "活动",
 };
 const third: ClothingItem = {
   ...first,
@@ -36,7 +34,6 @@ const third: ClothingItem = {
   colors: null,
   materials: null,
   styles: null,
-  acquisition: null,
 };
 const data: ClothingData = {
   items: [first, second, third],
@@ -87,7 +84,6 @@ describe("clothing queries", () => {
         colors: ["白色"],
         materials: ["毛线"],
         styles: ["古典"],
-        acquisition: ["商店"],
         qualities: ["1"],
         outfits: ["4"],
       }),
@@ -104,7 +100,6 @@ describe("clothing queries", () => {
         colors: [missing],
         materials: [missing],
         styles: [missing],
-        acquisition: [missing],
       }),
     ).toEqual([3]);
     expect(query({ outfits: [ungrouped] })).toEqual([2, 3]);

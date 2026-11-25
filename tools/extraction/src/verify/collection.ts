@@ -33,10 +33,6 @@ export function verifyProofSources(proof: CollectionEvidence, tables: Tables): v
         }),
       );
       add(70, (row) => effectIds.has(tables.id(row)), [0, 1, 4, 10, 19]);
-    } else if (proof.field.startsWith("detail.acquisitionConditions")) {
-      add(325, (row) => tables.id(row) === proof.id, [0, 2]);
-      const codes = new Set(rows.flatMap(({ row }) => tables.vector(row, 2) ?? []));
-      add(618, (row) => codes.has(tables.id(row)), [0, 1]);
     } else if (proof.field.startsWith("detail.trade")) {
       add(
         659,

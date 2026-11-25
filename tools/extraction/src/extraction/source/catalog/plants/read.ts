@@ -3,7 +3,7 @@ import type { ObservedGrowth, ObservedSeed } from "./schema.ts";
 import type { PlantingContext } from "./growth.ts";
 import { plantingItemName, readCropGrowth, readStagedGrowth } from "./growth.ts";
 import { plainText } from "../model.ts";
-import { acquisition, trade } from "../collection/details/client.ts";
+import { trade } from "../collection/details/client.ts";
 import {
   CollectionEvidenceBuilder,
   localizedSources,
@@ -25,13 +25,11 @@ function seedObservation(context: PlantingContext, id: number) {
       (row) => ({
         numbers: [15, 27].map((field) => tables.uint(row, field)),
         icons: [4, 5].map((field) => tables.string(row, field)),
-        sources: tables.vector(row, 2),
       }),
       new Set([id]),
     )
     .get(id);
-  const commerce = trade(context, id),
-    origin = acquisition(context, id);
+  const commerce = trade(context, id);
   const seed: ObservedSeed = {
     id,
     name: plantingItemName(context, id),
@@ -40,9 +38,8 @@ function seedObservation(context: PlantingContext, id: number) {
     image: null,
     growthId: id,
     trade: commerce.value,
-    acquisition: origin.value,
   };
-  return { seed, display, commerce, origin };
+  return { seed, display, commerce };
 }
 
 function recordEvidence(
@@ -53,7 +50,7 @@ function recordEvidence(
   sources: CollectionSource[],
 ) {
   const { tables, main } = context;
-  const { seed, display, commerce, origin } = observation;
+  const { seed, display, commerce } = observation;
   const put = (
     owner: "seed" | "growth",
     field: string,
@@ -88,7 +85,6 @@ function recordEvidence(
       "seed_display_configuration_missing",
     );
   put("seed", "trade", seed.trade, commerce.sources, "commerce_runtime_semantics_unconfirmed");
-  put("seed", "acquisition", seed.acquisition, origin.sources, "source_configuration_missing");
   for (const [field, value] of Object.entries(growth))
     if (field !== "stages") put("growth", field, value, sources, "elapsed_days_not_confirmed");
   growth.stages.forEach((stage) => {
