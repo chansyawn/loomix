@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "@/ui/components/table";
 import type { ListColumn } from "./table-columns";
+import { TableFrame } from "./table-frame";
 import { useScrollGeometry } from "./use-scroll-geometry";
 
 const listTableFeatures = tableFeatures({ rowSortingFeature });
@@ -71,7 +72,7 @@ export function ListTable<T extends object>({
   const width = leafColumns.reduce((total, column) => total + widths[column.id]!, 0);
 
   return (
-    <div className="overflow-hidden rounded-xl border">
+    <TableFrame>
       <Table
         aria-label={label}
         aria-rowcount={rows.length + 1}
@@ -115,7 +116,7 @@ export function ListTable<T extends object>({
                         onClick={header.column.getToggleSortingHandler()}
                       >
                         <table.FlexRender header={header} />
-                        <Icon className="size-3.5" />
+                        <Icon data-icon="inline-end" />
                       </Button>
                     ) : (
                       <table.FlexRender header={header} />
@@ -128,7 +129,7 @@ export function ListTable<T extends object>({
         </TableHeader>
         <ListTableBody key={resultKey} table={table} rows={table.getRowModel().rows} />
       </Table>
-    </div>
+    </TableFrame>
   );
 }
 

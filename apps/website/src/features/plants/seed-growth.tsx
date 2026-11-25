@@ -8,7 +8,7 @@ export function SeedGrowthStages({ seed }: { seed: PlantSeed }) {
   return (
     <div className="flex flex-col gap-6">
       {growthStageGroups(seed.growth).map((group) => (
-        <div key={group.label} className="space-y-3">
+        <div key={group.label} className="flex flex-col gap-3">
           {seed.growth.kind === "crop" && <h3 className="text-sm font-medium">{group.label}</h3>}
           <div className="flex flex-wrap items-stretch gap-3">
             {group.ids.map((id, index) => {

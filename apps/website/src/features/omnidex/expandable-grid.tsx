@@ -47,10 +47,10 @@ export function ExpandableGrid<T>({
 
   return (
     <Collapsible open={expanded} onOpenChange={setExpanded}>
-      <div className="space-y-2">
+      <div className="flex flex-col items-start gap-2">
         <div
           ref={gridRef}
-          className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,16rem),1fr))] gap-4"
+          className="grid w-full grid-cols-[repeat(auto-fill,minmax(min(100%,16rem),1fr))] gap-4"
           role="list"
         >
           {renderItems(items.slice(0, visibleCount))}
@@ -61,11 +61,11 @@ export function ExpandableGrid<T>({
           )}
         </div>
         {hasMore && (
-          <CollapsibleTrigger className="mt-2" render={<Button variant="ghost" size="lg" />}>
+          <CollapsibleTrigger render={<Button variant="ghost" size="lg" />}>
             {expanded ? (
-              <ChevronUpIcon aria-hidden="true" className="size-5" />
+              <ChevronUpIcon data-icon="inline-start" aria-hidden="true" />
             ) : (
-              <ChevronDownIcon aria-hidden="true" className="size-5" />
+              <ChevronDownIcon data-icon="inline-start" aria-hidden="true" />
             )}
             {expanded ? `收起${label}` : `展开全部${label}`} · 共 {items.length} {unit}
           </CollapsibleTrigger>

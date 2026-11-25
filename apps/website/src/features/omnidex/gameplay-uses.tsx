@@ -3,6 +3,9 @@ import { cn } from "cn";
 import { ArrowRightIcon } from "lucide-react";
 import { useEffect, useEffectEvent, useState } from "react";
 import { Badge } from "@/ui/components/badge";
+import { Card, CardContent, CardHeader } from "@/ui/components/card";
+import { Item, ItemActions, ItemContent } from "@/ui/components/item";
+import { Separator } from "@/ui/components/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/components/tabs";
 import { GameplayRelationItem } from "./gameplay-relation-item";
 import {
@@ -65,7 +68,7 @@ export function GameplayUses({
   if (!activeCategory) return null;
 
   return (
-    <div className="rounded-2xl border bg-muted/30">
+    <div className="overflow-hidden rounded-xl border">
       <Tabs
         value={activeCategory}
         onValueChange={(category: GameplayUseCategory) => {
@@ -82,18 +85,21 @@ export function GameplayUses({
         }}
         className="grid"
       >
-        <div className="min-w-0 border-b p-2">
-          <TabsList
-            aria-label="用途分类"
-            className="max-w-full flex-wrap justify-start group-data-horizontal/tabs:h-auto"
-          >
-            {categories.map((category) => (
-              <TabsTrigger key={category} value={category}>
-                {gameplayUseLabels[category]}
-                <Badge variant="secondary">{uses[category].length}</Badge>
-              </TabsTrigger>
-            ))}
-          </TabsList>
+        <div className="min-w-0">
+          <div className="p-3">
+            <TabsList
+              aria-label="用途分类"
+              className="max-w-full flex-wrap justify-start group-data-horizontal/tabs:h-auto"
+            >
+              {categories.map((category) => (
+                <TabsTrigger key={category} value={category}>
+                  {gameplayUseLabels[category]}
+                  <Badge variant="secondary">{uses[category].length}</Badge>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+          <Separator />
         </div>
         {categories.map((category) => (
           <TabsContent
@@ -104,7 +110,7 @@ export function GameplayUses({
               categories.length > 1 && "h-112 scrollbar-gutter-stable",
             )}
           >
-            <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,19rem),1fr))] gap-3 p-3 sm:p-4">
+            <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,19rem),1fr))] gap-3 p-3 pt-1">
               {uses[category].map((use) => (
                 <GameplayUseCard key={use.id} use={use} />
               ))}
@@ -119,29 +125,38 @@ export function GameplayUses({
 function GameplayUseCard({ use }: { use: GameplayUse }) {
   const origin = useOmnidexOrigin();
   return (
-    <li className="min-w-0 rounded-xl border bg-background p-2">
-      <GameplayRelationItem name={use.name} image={use.image} destination={use.destination} />
-      <ul className="mt-1 flex flex-col">
-        {use.conditions.map(({ hash, label, reason }) => (
-          <li key={`${hash}:${reason}`}>
-            <Link
-              {...use.destination}
-              hash={hash}
-              state={{ omnidexOrigin: origin }}
-              className="group flex min-h-11 items-start justify-between gap-2 rounded-lg p-2 outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <span className="min-w-0 wrap-anywhere">
-                <span className="block font-medium group-hover:underline">{label}</span>
-                <span className="block text-xs text-muted-foreground">{reason}</span>
-              </span>
-              <ArrowRightIcon
-                aria-hidden="true"
-                className="mt-0.5 size-3.5 shrink-0 text-muted-foreground"
-              />
-            </Link>
-          </li>
-        ))}
-      </ul>
+    <li className="min-w-0">
+      <Card size="sm" className="h-full">
+        <CardHeader>
+          <GameplayRelationItem name={use.name} image={use.image} destination={use.destination} />
+        </CardHeader>
+        <CardContent>
+          <ul className="flex flex-col gap-1">
+            {use.conditions.map(({ hash, summary, linkLabel }) => (
+              <li key={`${hash}:${summary}:${linkLabel}`}>
+                <Item
+                  size="xs"
+                  className="flex-nowrap"
+                  render={
+                    <Link {...use.destination} hash={hash} state={{ omnidexOrigin: origin }} />
+                  }
+                >
+                  <ItemContent className="min-w-0">
+                    <span className="font-medium wrap-anywhere">{summary}</span>
+                    <span className="text-xs wrap-anywhere text-muted-foreground">{linkLabel}</span>
+                  </ItemContent>
+                  <ItemActions>
+                    <ArrowRightIcon
+                      aria-hidden="true"
+                      className="size-4 shrink-0 text-muted-foreground"
+                    />
+                  </ItemActions>
+                </Item>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
     </li>
   );
 }
