@@ -1,6 +1,6 @@
 # 客户端资源提取
 
-本工具从客户端快照提取资料、打包并安装网站资源。概念定义见[领域术语表](../../GLOSSARY.md#提取打包与本地安装)，维护决策及版本调查见[提取原理](docs/extraction-method.md)。
+本工具从客户端快照提取资料、打包并安装网站资源。概念定义见[领域术语表](../../GLOSSARY.md#提取打包与本地安装)，提取要求见[提取要求与规范](docs/extraction-requirements.md)，换版与调查见[提取维护](docs/extraction-maintenance.md)（待首次版本更新实操后补充）。
 
 ## 首次配置
 
@@ -12,7 +12,7 @@
 vp run @loomix/extraction#client -- import --source /path/to/client
 ```
 
-导入会校验并冻结客户端，打印完整快照 ID 和可读的版本目录。`init` 和 `refresh` 默认使用唯一符合当前版本配置的快照。无匹配时导入所需版本。有多个匹配时向该次命令传入 `--snapshot <完整 ID>`，显式指定的版本也必须匹配。客户端更新时先确认版本适配，再导入新客户端。参见[提取原理](docs/extraction-method.md#客户端更新与调查)。
+导入会校验并冻结客户端，打印完整快照 ID 和可读的版本目录。`init` 和 `refresh` 默认使用唯一符合当前版本配置的快照。无匹配时导入所需版本。有多个匹配时向该次命令传入 `--snapshot <完整 ID>`，显式指定的版本也必须匹配。客户端更新时先确认版本适配，再导入新客户端。参见[提取维护](docs/extraction-maintenance.md)（待首次版本更新实操后补充）。
 
 ## 提取、打包与本地安装
 
@@ -66,7 +66,7 @@ vp run @loomix/extraction#refresh -- --help
 
 `artifacts/` 下按阶段分目录。提取环境与提取结果沿用客户端快照的版本标签，加上各自的短哈希，例如 `0.95.2-d1449213-r1391927-m5662883--2336736f9d09`。网站资源包在版本标签末尾加网站资源格式号，如 `-f16`。完整 SHA-256 保存在阶段清单中，用于验证和关联上游。
 
-具体输出以各阶段清单的 `outputs` 为准。调查时从 `client-read-records.json` 查读取记录、排除项与候选，从 `field-evidence.json` 查最终字段依据。[提取原理](docs/extraction-method.md#按任务定位实现)
+具体输出以各阶段清单的 `outputs` 为准。调查时从 `client-read-records.json` 查读取记录、排除项与候选，从 `field-evidence.json` 查最终字段依据。
 
 每个代码版本仅接受对应的提取阶段格式。遇到阶段清单版本不受支持时，使用匹配客户端快照运行 `refresh`，再使用新的阶段 ID 打包、验收或安装。客户端资源包的来源路径相对于该客户端快照根目录。
 

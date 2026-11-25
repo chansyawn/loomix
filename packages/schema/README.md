@@ -48,6 +48,6 @@
 
 ## 与其他层的边界
 
-共享契约包含消费方需要的结构化资料。客户端原始字段、准入依据、图鉴标记、未确认候选与解析诊断保存在客户端读取记录和字段依据中。[提取原理](../../tools/extraction/docs/extraction-method.md)
+共享契约包含消费方需要的结构化资料。客户端原始字段、准入依据、图鉴标记、未确认候选与解析诊断保存在客户端读取记录和字段依据中。[提取要求与规范](../../tools/extraction/docs/extraction-requirements.md)
 
 本包负责消费者中立的结构、引用和资源覆盖规则；网站可见性、分组与命名等假设由[发布契约检查](../../apps/website/docs/release-checks.md)负责。资源目录、文件字节与上传完整性由[网站资源管理](../../tools/resources/README.md)负责。
