@@ -1,9 +1,8 @@
-import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
-import { Fragment } from "react";
+import { ChevronDownIcon } from "lucide-react";
+import { TableFrame } from "@/features/list-page/table-frame";
 import { catalogEntryLocation } from "@/features/omnidex/entry-location";
 import { gameplayAnchor, useGameplayAccordion } from "@/features/omnidex/gameplay-anchors";
 import { GameplayRelationItem } from "@/features/omnidex/gameplay-relation-item";
-import { Badge } from "@/ui/components/badge";
 import { Button } from "@/ui/components/button";
 import {
   Table,
@@ -16,7 +15,14 @@ import {
 import type { VignetteDetail } from "./view";
 
 type Requirement = VignetteDetail["requirements"][number];
-type DisplayItem = Requirement["examples"][number]["item"];
+type DisplayItem = Extract<Requirement["target"], { kind: "tags" }>["matches"][number];
+
+const columns = [
+  { label: "物品", className: "w-1/3" },
+  { label: "数量", className: "w-12 text-center" },
+  { label: "示例", className: "w-44" },
+  { label: "摆放规则" },
+];
 
 function MatchingItems({ id, label, items }: { id: string; label: string; items: DisplayItem[] }) {
   return (
@@ -24,7 +30,7 @@ function MatchingItems({ id, label, items }: { id: string; label: string; items:
       id={id}
       aria-label={`${label}的匹配物品`}
       tabIndex={0}
-      className="grid max-h-80 max-w-[calc(100cqw-1.5rem)] grid-cols-[repeat(auto-fill,minmax(min(100%,15rem),1fr))] gap-2 overflow-y-auto overscroll-contain focus-visible:outline-ring"
+      className="sticky inset-s-0 grid max-h-80 w-[100cqi] scrollbar-gutter-both grid-cols-[repeat(auto-fill,minmax(min(100%,15rem),1fr))] gap-2 overflow-y-auto overscroll-y-contain py-2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
     >
       {items.map((item) => (
         <li key={item.id} className="min-w-0">
@@ -40,6 +46,105 @@ function MatchingItems({ id, label, items }: { id: string; label: string; items:
   );
 }
 
+function RequirementRows({
+  requirement: { label, target, support, sizeLabel, quantity, examples, instructions },
+  position,
+  anchor,
+  open,
+  onToggle,
+}: {
+  requirement: Requirement;
+  position: number;
+  anchor: string;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  const panel = `${anchor}-matches`;
+  const name = target.kind === "item" ? target.item.name : label;
+  const matches = target.kind === "tags" ? target.matches : [];
+  const matchCount = matches.length;
+  const expanded = matchCount > 0 && open;
+
+  return (
+    <>
+      <TableRow id={anchor}>
+        <TableHead scope="row" className="h-auto wrap-anywhere whitespace-normal">
+          <div className="flex items-center gap-1">
+            <span className="min-w-0 font-semibold">{name}</span>
+            {matchCount > 0 ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                aria-label={`${expanded ? "收起" : "展开"}${name}的 ${matchCount} 个匹配物品`}
+                aria-expanded={expanded}
+                aria-controls={expanded ? panel : undefined}
+                onClick={onToggle}
+              >
+                <span className="tabular-nums">{matchCount}</span>
+                <ChevronDownIcon
+                  data-icon="inline-end"
+                  aria-hidden="true"
+                  className="group-aria-expanded/button:rotate-180"
+                />
+              </Button>
+            ) : target.kind === "tags" ? (
+              <span className="text-xs text-muted-foreground tabular-nums">
+                <span className="sr-only">匹配数量：</span>
+                {matchCount}
+              </span>
+            ) : null}
+          </div>
+        </TableHead>
+        <TableCell className="text-center">
+          <span className="font-semibold tabular-nums">×{quantity}</span>
+        </TableCell>
+        <TableCell>
+          {examples.length ? (
+            <ul className="flex flex-col gap-1.5">
+              {examples.map(({ item, quantity: exampleQuantity }, exampleIndex) => (
+                <li key={`${item.id}-${exampleIndex}`}>
+                  <GameplayRelationItem
+                    name={item.name}
+                    image={item.image}
+                    quantity={exampleQuantity}
+                    variant="inline"
+                    destination={item.browsable ? catalogEntryLocation(item) : undefined}
+                  />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </TableCell>
+        <TableCell className="wrap-anywhere whitespace-normal">
+          {sizeLabel || support || instructions.length ? (
+            <ul className="flex flex-col gap-1">
+              {sizeLabel && <li>尺寸 {sizeLabel}</li>}
+              {support && (
+                <li id={gameplayAnchor("vignette-support", position)}>放在{support}上</li>
+              )}
+              {instructions.map((instruction) => (
+                <li key={instruction}>{instruction}</li>
+              ))}
+            </ul>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </TableCell>
+      </TableRow>
+      {expanded && (
+        <TableRow>
+          <td colSpan={columns.length}>
+            <MatchingItems id={panel} label={name} items={matches} />
+          </td>
+        </TableRow>
+      )}
+    </>
+  );
+}
+
 export function VignetteRequirements({ requirements }: { requirements: Requirement[] }) {
   const expansion = useGameplayAccordion(
     "requirement",
@@ -47,144 +152,41 @@ export function VignetteRequirements({ requirements }: { requirements: Requireme
   );
 
   return (
-    <div className="@container min-w-0 rounded-2xl border">
-      <Table aria-label="布景要求" className="min-w-3xl table-fixed">
+    <TableFrame className="@container">
+      <Table aria-label="布景要求" className="min-w-md table-fixed">
         <TableHeader>
           <TableRow>
-            <TableHead scope="col" className="w-12">
-              <span className="sr-only">展开匹配物品</span>
-            </TableHead>
-            <TableHead scope="col" className="w-[14%]">
-              物品
-            </TableHead>
-            <TableHead scope="col" className="w-16 text-center">
-              数量
-            </TableHead>
-            <TableHead scope="col" className="w-24 text-center">
-              匹配数量
-            </TableHead>
-            <TableHead scope="col" className="w-[12%]">
-              标签
-            </TableHead>
-            <TableHead scope="col" className="w-[34%]">
-              示例
-            </TableHead>
-            <TableHead scope="col">摆放规则</TableHead>
+            {columns.map(({ label, className }) => (
+              <TableHead key={label} scope="col" className={className}>
+                {label}
+              </TableHead>
+            ))}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {requirements.map(
-            ({ label, target, support, sizeLabel, quantity, examples, instructions }, index) => {
-              const anchor = gameplayAnchor("requirement", index + 1);
-              const panel = `${anchor}-matches`;
-              const name = target.kind === "item" ? target.item.name : label;
-              const matches = target.kind === "tags" ? target.matches : [];
-              const tags = target.kind === "tags" ? target.labels : [];
-              const expanded = matches.length > 0 && expansion.value.includes(anchor);
-              return (
-                <Fragment key={anchor}>
-                  <TableRow id={anchor}>
-                    <TableCell className="text-center">
-                      {matches.length > 0 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-xs"
-                          aria-label={`${expanded ? "收起" : "展开"}${name}的匹配物品`}
-                          aria-expanded={expanded}
-                          aria-controls={expanded ? panel : undefined}
-                          onClick={() =>
-                            expansion.onValueChange(
-                              expanded
-                                ? expansion.value.filter((id) => id !== anchor)
-                                : [...expansion.value, anchor],
-                            )
-                          }
-                        >
-                          {expanded ? (
-                            <ChevronDownIcon aria-hidden="true" />
-                          ) : (
-                            <ChevronRightIcon aria-hidden="true" />
-                          )}
-                        </Button>
-                      )}
-                    </TableCell>
-                    <TableHead scope="row" className="h-auto whitespace-normal">
-                      <span className="font-semibold">{name}</span>
-                    </TableHead>
-                    <TableCell className="text-center">
-                      <span className="font-semibold tabular-nums">×{quantity}</span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span className="tabular-nums">
-                        {target.kind === "item" ? 1 : matches.length}
-                      </span>
-                    </TableCell>
-                    <TableCell className="whitespace-normal">
-                      {tags.length || sizeLabel ? (
-                        <div className="flex flex-wrap gap-1">
-                          {tags.map((tag) => (
-                            <Badge key={tag} variant="secondary">
-                              {tag}
-                            </Badge>
-                          ))}
-                          {sizeLabel && <Badge variant="secondary">尺寸 {sizeLabel}</Badge>}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {examples.length ? (
-                        <ul className="space-y-1.5">
-                          {examples.map(({ item, quantity: exampleQuantity }, exampleIndex) => (
-                            <li key={`${item.id}-${exampleIndex}`}>
-                              <GameplayRelationItem
-                                name={item.name}
-                                image={item.image}
-                                quantity={exampleQuantity}
-                                variant="compact"
-                                destination={
-                                  item.browsable ? catalogEntryLocation(item) : undefined
-                                }
-                              />
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="whitespace-normal">
-                      {support || instructions.length ? (
-                        <ul className="space-y-1">
-                          {support && (
-                            <li id={gameplayAnchor("vignette-support", index + 1)}>
-                              放在{support}上
-                            </li>
-                          )}
-                          {instructions.map((instruction) => (
-                            <li key={instruction}>{instruction}</li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                  {expanded && (
-                    <TableRow>
-                      <TableCell colSpan={7} className="whitespace-normal">
-                        <MatchingItems id={panel} label={name} items={matches} />
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </Fragment>
-              );
-            },
-          )}
+          {requirements.map((requirement, index) => {
+            const position = index + 1;
+            const anchor = gameplayAnchor("requirement", position);
+            const open = expansion.value.includes(anchor);
+            return (
+              <RequirementRows
+                key={anchor}
+                requirement={requirement}
+                position={position}
+                anchor={anchor}
+                open={open}
+                onToggle={() =>
+                  expansion.onValueChange(
+                    open
+                      ? expansion.value.filter((id) => id !== anchor)
+                      : [...expansion.value, anchor],
+                  )
+                }
+              />
+            );
+          })}
         </TableBody>
       </Table>
-    </div>
+    </TableFrame>
   );
 }

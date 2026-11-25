@@ -1,5 +1,7 @@
 import { useRouter, useRouterState } from "@tanstack/react-router";
 import { DetailPageLoading } from "@/features/detail-page/detail-page";
+import { Button } from "@/ui/components/button";
+import { PageNotFound } from "../layout/page-not-found";
 import { ListChoiceFilter } from "../list-page/choice-filter";
 import { ListLoading } from "../list-page/loading";
 import { ListLoadError } from "../list-page/states";
@@ -39,11 +41,13 @@ export function NeighborsError() {
 }
 export function NeighborNotFound() {
   return (
-    <section className="space-y-4 py-20 text-center">
-      <h1 className="text-2xl font-semibold">没有找到这位友邻</h1>
-      <NeighborsReturnLink className="underline underline-offset-4">
-        返回友邻列表
-      </NeighborsReturnLink>
-    </section>
+    <PageNotFound
+      title="没有找到这位友邻"
+      action={
+        <Button variant="outline" nativeButton={false} render={<NeighborsReturnLink />}>
+          返回友邻列表
+        </Button>
+      }
+    />
   );
 }

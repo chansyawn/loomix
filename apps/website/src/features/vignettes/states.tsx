@@ -1,11 +1,11 @@
 import { useRouter, useRouterState } from "@tanstack/react-router";
 import { DetailPageLoading } from "@/features/detail-page/detail-page";
+import { PageNotFound } from "@/features/layout/page-not-found";
 import { ListLoading } from "@/features/list-page/loading";
 import { ListChoiceFilter } from "@/features/list-page/choice-filter";
 import { useListLayout } from "@/features/list-page/use-list-layout";
 import { ListLoadError } from "@/features/list-page/states";
 import { Button } from "@/ui/components/button";
-import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/ui/components/empty";
 import { VignetteReturnLink } from "./navigation";
 import { vignetteColumns, vignetteListPresentation } from "./list-presentation";
 import { vignetteSearchSchema } from "./search";
@@ -44,17 +44,13 @@ export function VignetteError() {
 
 export function VignetteNotFound() {
   return (
-    <Empty className="min-h-80">
-      <EmptyHeader>
-        <EmptyTitle>
-          <h1>未找到小栖地</h1>
-        </EmptyTitle>
-      </EmptyHeader>
-      <EmptyContent>
+    <PageNotFound
+      title="未找到小栖地"
+      action={
         <Button variant="outline" nativeButton={false} render={<VignetteReturnLink />}>
           返回小栖地列表
         </Button>
-      </EmptyContent>
-    </Empty>
+      }
+    />
   );
 }

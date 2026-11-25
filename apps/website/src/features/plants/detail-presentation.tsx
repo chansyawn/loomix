@@ -103,7 +103,7 @@ function PlantMatureForms({ detail }: { detail: Extract<PlantsDetail, { kind: "i
   return (
     <div className="flex flex-col gap-4">
       {detail.matureForms.map(({ seed, stages }) => (
-        <div key={seed.id} className="space-y-3">
+        <div key={seed.id} className="flex flex-col gap-3">
           {detail.matureForms.length > 1 && <h3 className="text-sm font-medium">{seed.name}</h3>}
           <div className="flex flex-wrap gap-3">
             {stages.map((stage) => (

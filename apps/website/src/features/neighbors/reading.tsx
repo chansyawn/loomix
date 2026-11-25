@@ -4,6 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/ui/components/accordion";
+import { Empty, EmptyDescription, EmptyHeader } from "@/ui/components/empty";
 import type { NeighborDetail } from "./data";
 import { StoryParagraph } from "./story-paragraph";
 
@@ -17,7 +18,7 @@ export function NeighborStories({ neighbor }: { neighbor: NeighborDetail }) {
           </AccordionTrigger>
           <AccordionContent>
             <div className="@container mx-auto max-w-240 px-3 md:px-6">
-              <div className="space-y-6 text-base [&_p]:mb-0!">
+              <div className="flex flex-col gap-6 text-base [&_p]:mb-0!">
                 {story.paragraphs.map((paragraph, index) => (
                   <StoryParagraph
                     key={index}
@@ -33,6 +34,10 @@ export function NeighborStories({ neighbor }: { neighbor: NeighborDetail }) {
       ))}
     </Accordion>
   ) : (
-    <p className="rounded-2xl border p-6 text-muted-foreground">当前资料暂未收录友邻故事</p>
+    <Empty>
+      <EmptyHeader>
+        <EmptyDescription>当前资料暂未收录友邻故事</EmptyDescription>
+      </EmptyHeader>
+    </Empty>
   );
 }

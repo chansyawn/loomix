@@ -16,6 +16,7 @@ import { ListToolbar, type ListToolbarProps } from "./toolbar";
 import { FilterSummary } from "./filter-summary";
 import type { GridLayout } from "./grid-layout";
 import type { ListColumnMetadata } from "./table-columns";
+import { TableFrame } from "./table-frame";
 
 export function ListLoading<V extends string, S extends string>({
   title,
@@ -42,7 +43,7 @@ export function ListLoading<V extends string, S extends string>({
         filters={
           toolbar.filters ?? (
             <Button variant="outline" disabled>
-              <SlidersHorizontalIcon />
+              <SlidersHorizontalIcon data-icon="inline-start" />
               筛选
             </Button>
           )
@@ -51,7 +52,7 @@ export function ListLoading<V extends string, S extends string>({
       <FilterSummary status={<Skeleton className="h-4 w-24" />} chips={[]} onClear={() => {}} />
       <div aria-hidden="true">
         {toolbar.layout === "table" ? (
-          <div className="overflow-hidden rounded-xl border">
+          <TableFrame>
             <Table
               className="table-fixed"
               style={{ minWidth: columns.reduce((total, column) => total + column.width, 0) }}
@@ -86,7 +87,7 @@ export function ListLoading<V extends string, S extends string>({
                 ))}
               </TableBody>
             </Table>
-          </div>
+          </TableFrame>
         ) : (
           <div className={grid.className}>
             {Array.from({ length: 12 }, (_, index) => (

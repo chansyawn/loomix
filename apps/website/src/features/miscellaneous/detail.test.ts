@@ -194,15 +194,15 @@ describe("miscellaneous details", () => {
     }
   });
 
-  it("labels crafting links without recipe numbers and keeps their recipe anchors", () => {
+  it("describes the current material and keeps each recipe link and anchor distinct", () => {
     const { catalog, gameplayTags } = relatedCatalog();
     const data = createOmnidexCatalog(catalog, imageIndexFixture(catalog), gameplayTags);
     expect(catalogGameplayUses(data, 100).crafting[0]?.conditions).toEqual([
-      { hash: "recipe-17", label: "制作配方", reason: "指定材料 ×1" },
+      { hash: "recipe-17", summary: "需要家具100 ×1", linkLabel: "查看制作配方" },
     ]);
     expect(catalogGameplayUses(data, item.id).crafting[0]?.conditions).toEqual([
-      { hash: "recipe-12", label: "创想卡 12", reason: "指定材料 ×3" },
-      { hash: "recipe-13", label: "创想卡 13", reason: "指定材料 ×5" },
+      { hash: "recipe-12", summary: "需要树胶 ×3", linkLabel: "查看配方 · 创想卡 12" },
+      { hash: "recipe-13", summary: "需要树胶 ×5", linkLabel: "查看配方 · 创想卡 13" },
     ]);
   });
 

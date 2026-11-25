@@ -95,7 +95,7 @@ export function DetailPage({
           id={headingId ? id : undefined}
           data-detail-section={id}
           aria-labelledby={headingId ?? id}
-          className="flex min-w-0 flex-col gap-4 border-t pt-6 sm:pt-8"
+          className="flex min-w-0 flex-col gap-4"
         >
           <h2 id={headingId ?? id} className="text-lg font-semibold">
             {title}

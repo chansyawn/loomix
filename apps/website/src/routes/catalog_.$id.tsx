@@ -3,12 +3,14 @@ import { loadOmnidexCatalog } from "@/features/omnidex-loader";
 import { parseCatalogEntryId, catalogEntryDetail } from "@/features/omnidex/catalog-entry-detail";
 import { CatalogEntryPage } from "@/features/omnidex/catalog-entry-page";
 import { DetailPageLoading } from "@/features/detail-page/detail-page";
+import { PageNotFound } from "@/features/layout/page-not-found";
 import { ListLoadError } from "@/features/list-page/states";
 import { OmnidexReturnLink } from "@/features/omnidex/navigation";
 import { createResourceReader } from "@/infrastructure/resources";
 import { parseNeighbors } from "@loomix/schema/neighbors";
 import { catalogGameplayUses, vignetteGameplayUses } from "@/features/omnidex/gameplay-uses-model";
 import { readVignetteTemplates } from "@/features/vignettes/data";
+import { Button } from "@/ui/components/button";
 export const Route = createFileRoute("/catalog_/$id")({
   ssr: false,
   loader: async ({ params }) => {
@@ -40,10 +42,14 @@ export const Route = createFileRoute("/catalog_/$id")({
   pendingComponent: () => <DetailPageLoading label="正在加载物品详情" />,
   errorComponent: DetailError,
   notFoundComponent: () => (
-    <section className="space-y-4">
-      <h1 className="text-2xl font-semibold">未找到已收录物品</h1>
-      <OmnidexReturnLink>返回图鉴列表</OmnidexReturnLink>
-    </section>
+    <PageNotFound
+      title="未找到已收录物品"
+      action={
+        <Button variant="outline" nativeButton={false} render={<OmnidexReturnLink />}>
+          返回图鉴列表
+        </Button>
+      }
+    />
   ),
   component: DetailRoute,
 });

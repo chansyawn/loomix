@@ -34,7 +34,7 @@ export function PlantDropsInfo({ drops }: { drops: PlantDrops }) {
   return (
     <div className="flex flex-col gap-4">
       {drops.groups.map((group) => (
-        <div key={group.treeId} className="space-y-4">
+        <div key={group.treeId} className="flex flex-col gap-4">
           {drops.groups.length > 1 && <h3 className="text-sm font-medium">{group.treeName}</h3>}
           {[
             {
@@ -48,7 +48,7 @@ export function PlantDropsInfo({ drops }: { drops: PlantDrops }) {
           ].map(
             ({ title, entries }) =>
               entries.length > 0 && (
-                <div key={title} className="space-y-3">
+                <div key={title} className="flex flex-col gap-3">
                   <h4 className="text-sm text-muted-foreground">{title}</h4>
                   <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))] gap-3">
                     {entries.map((entry) => (
