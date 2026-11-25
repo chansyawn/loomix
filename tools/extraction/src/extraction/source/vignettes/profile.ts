@@ -1,5 +1,10 @@
-export const vignetteTables = { gameplay: 288, rules: 290, display: 291 } as const;
-export const vignetteAdmissionsFile = "vignette-admissions.json";
+export const vignetteTables = {
+  gameplay: 288,
+  architectLevels: 289,
+  rules: 290,
+  display: 291,
+} as const;
+export const vignetteHintsFile = "vignette-hints.json";
 
 export const vignetteFields = {
   gameplay: {

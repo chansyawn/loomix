@@ -6,15 +6,16 @@ import type { FieldEvidence, EvidenceSource } from "../../evidence/domain-schema
 import type { TableRow } from "../../types.ts";
 import type { Tables } from "../decode/tables.ts";
 import type { imageCollector } from "../images.ts";
-import { admitted } from "./admissions.ts";
-import type { VignetteAdmissions } from "./admissions.ts";
+import { admitted, readVignetteAdmissionRows } from "./admissions.ts";
+import type { readVignetteHints } from "./hints.ts";
+import type { DiscoveryEvidence } from "./inputs.ts";
 import {
   positiveInteger,
   readPlacementRules,
   readRequirements,
   targetReader,
 } from "./conditions.ts";
-import { vignetteAdmissionsFile, vignetteFields, vignetteTables } from "./profile.ts";
+import { vignetteHintsFile, vignetteFields, vignetteTables } from "./profile.ts";
 
 const { gameplay, display } = vignetteFields;
 const file = "prepared/ed.obb";
@@ -67,11 +68,11 @@ function proof(
 export function readVignettes(
   tables: Tables,
   tags: GameplayTagIndex,
-  admissions: VignetteAdmissions,
+  discovery: DiscoveryEvidence,
+  vignetteHints: ReturnType<typeof readVignetteHints>,
   images: Pick<ReturnType<typeof imageCollector>, "configured">,
 ) {
-  const plays = tables.byId(vignetteTables.gameplay);
-  const displays = tables.byId(vignetteTables.display);
+  const admissionRows = readVignetteAdmissionRows(tables, discovery);
   const rules = tables.byId(vignetteTables.rules);
   const items = tables.byId(318);
   const creatures = new Set(tables.rows(186).map((row) => tables.id(row)));
@@ -81,32 +82,13 @@ export function readVignettes(
   const templates: (Omit<Vignette, "illustration"> & { illustration: { use: string } })[] = [];
   const candidates = new Map<number, Vignettes["fallbackItems"][number]>();
   const proofs: FieldEvidence[] = [];
-  assert.equal(
-    displays.size,
-    admissions.data.entries.length,
-    "Vignette display admission coverage",
-  );
-  assert.equal(plays.size, admissions.data.entries.length, "Vignette gameplay admission coverage");
-  const observe = admissions.data.entries.map(
-    ([id, expectedName, order, discoveryKey, decision], index) => {
-      const play = plays.get(id);
-      const shown = displays.get(id);
-      assert.ok(play && shown, `Missing vignette source rows ${id}`);
+  const knownIds = new Set(admissionRows.map(({ id }) => id));
+  const { hints: hintEntries, sha256: hintHash } = vignetteHints;
+  for (const [id] of hintEntries) assert.ok(knownIds.has(id), `Unknown vignette hint ${id}`);
+  const observe = admissionRows.map(
+    ({ id, play, shown, order, discoveryKey, decision, sources: discoverySources }) => {
       const playName = localized(tables, tables.uint(play, gameplay.name));
       const shownName = localized(tables, tables.uint(shown, display.name));
-      assert.equal(playName.text.zh, expectedName, `Vignette gameplay name ${id}`);
-      assert.equal(shownName.text.zh, expectedName, `Vignette display name ${id}`);
-      assert.equal(tables.uint(shown, display.order), order, `Vignette display order ${id}`);
-      assert.equal(
-        tables.uint(play, gameplay.discoveryKey),
-        discoveryKey,
-        `Vignette discovery key ${id}`,
-      );
-      assert.equal(
-        expectedName.includes("(test)"),
-        decision.kind === "test",
-        `Vignette test marker ${id}`,
-      );
       const neighborId = tables.uint(play, gameplay.neighbor);
       const ecology = tables.string(play, gameplay.creature);
       const preview = tables.string(play, gameplay.preview);
@@ -117,6 +99,7 @@ export function readVignettes(
         order,
         discoveryKey,
         decision,
+        discoverySources,
         gameplayName: playName.text,
         displayName: shownName.text,
         ecology,
@@ -125,26 +108,10 @@ export function readVignettes(
       };
       if (!admitted(decision)) return observation;
 
-      const admissionSource: EvidenceSource = {
-        kind: "manual",
-        file: vignetteAdmissionsFile,
-        pointer: `/entries/${index}`,
-        sha256: admissions.sha256,
-      };
       const admissionSources: EvidenceSource[] = [
-        admissionSource,
-        table(shown, display.name, display.order),
+        table(play, gameplay.name, ...(discoveryKey === null ? [] : [gameplay.discoveryKey])),
+        ...discoverySources,
       ];
-      if ("textId" in decision) {
-        const named = localized(tables, decision.textId);
-        const normalized = named.text.zh.replace(/<[^>]+>/g, "").replaceAll("小栖地", "地");
-        assert.ok(normalized.includes(expectedName), `Vignette admission text does not name ${id}`);
-        admissionSources.push(named.source);
-      }
-      if (decision.kind === "neighbor") {
-        assert.equal(neighborId, decision.neighborId, `Vignette admission neighbor ${id}`);
-        admissionSources.push(table(play, gameplay.neighbor));
-      }
 
       const footprint = tables.vector(play, gameplay.footprint);
       assert.ok(
@@ -206,11 +173,10 @@ export function readVignettes(
       if (neighborId !== null)
         assert.ok(neighbors.has(neighborId), `Unknown vignette neighbor ${neighborId}`);
       const hints: Vignette["hints"] = [];
-      const hintSources: EvidenceSource[] = [];
-      for (const [
-        hintIndex,
-        [templateId, kind, hash, excerpt],
-      ] of admissions.data.hints.entries()) {
+      const hintSources: EvidenceSource[] = [
+        { kind: "manual", file: vignetteHintsFile, pointer: "/hints", sha256: hintHash },
+      ];
+      for (const [hintIndex, [templateId, kind, hash, excerpt]] of hintEntries.entries()) {
         if (templateId !== id) continue;
         const entry = localized(tables, hash);
         const cleaned = cleanText(entry.text);
@@ -220,7 +186,12 @@ export function readVignettes(
             `Vignette hint excerpt ${id}:${hash}`,
           );
         hints.push({ kind, text: excerpt ?? cleaned });
-        hintSources.push(entry.source, { ...admissionSource, pointer: `/hints/${hintIndex}` });
+        hintSources.push(entry.source, {
+          kind: "manual",
+          file: vignetteHintsFile,
+          pointer: `/hints/${hintIndex}`,
+          sha256: hintHash,
+        });
       }
       for (const itemId of vignetteObjectIds({ requirements, placementRules })) {
         if (candidates.has(itemId)) continue;
@@ -270,7 +241,7 @@ export function readVignettes(
         ],
         creatureItemIds: [table(play, gameplay.creature)],
         neighborIds: [table(play, gameplay.neighbor)],
-        hints: [admissionSource, ...hintSources],
+        hints: hintSources,
       };
       for (const [field, sources] of Object.entries(sourcesByField))
         proofs.push(proof("vignettes.templates", id, field, sources));

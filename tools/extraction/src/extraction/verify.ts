@@ -41,23 +41,20 @@ export async function verifyCandidate(directory: string, writeReport = true): Pr
   const textmap = readJson<{ byHash: unknown }>(path.join(source, "prepared/textmap-zh-en.json"));
   assert.deepEqual(textmap.byHash, decodeTextMap(reader).byHash, "Frozen TextMap decodes from OBB");
   const tables = new Tables(path.join(source, "prepared"));
+  const index = readJson<IndexedAsset[]>(path.join(source, "prepared/asset-index.json"));
   verifyAcquisitionHints(observations.diagnostics.investigation.acquisitionHints, tables);
   verifyStarseaSources(dataset, observations.starsea.diagnostics, tables);
   verifyVignettes(
     source,
     tables,
+    index,
     dataset.vignettes,
     observations.vignettes,
     imageBindings,
     originals,
   );
   verifyCatalogSources(dataset, observations, tables, source);
-  verifyHairDyeing(
-    dataset,
-    tables,
-    source,
-    readJson<IndexedAsset[]>(path.join(source, "prepared/asset-index.json")),
-  );
+  verifyHairDyeing(dataset, tables, source, index);
   verifyFlowerHybridization(dataset.catalog, fieldEvidence.fields, bundle.flowerHybridization);
   verifyCollectionFields(observations.diagnostics.collection, tables);
   for (const proof of observations.detailProofs) verifyProofSources(proof, tables);

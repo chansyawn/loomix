@@ -21,7 +21,8 @@ import { readCraftingRecipes } from "./catalog/crafting/read.ts";
 import { isPlaceholderIcon } from "./catalog/crafting/cards.ts";
 import { FORMAT_VERSION } from "@loomix/schema/common";
 import { readStarsea, starseaItemIds } from "./starsea/read.ts";
-import { readVignetteAdmissions } from "./vignettes/admissions.ts";
+import { readVignetteHints } from "./vignettes/hints.ts";
+import { readVignetteDiscovery } from "./vignettes/inputs.ts";
 import { readVignettes } from "./vignettes/read.ts";
 import { dyeMaterialIds, readHairDyeing } from "./hair-dyeing/read.ts";
 export interface FrozenPackage {
@@ -250,7 +251,8 @@ export function readClientRecords(source: string, datasetId: string): ClientRead
     vignettes: readVignettes(
       context.tables,
       context.gameplayTags.index,
-      readVignetteAdmissions(source),
+      readVignetteDiscovery(source, index),
+      readVignetteHints(source),
       images,
     ),
     context: { formatVersion: FORMAT_VERSION, datasetId, locale: "zh-CN" },

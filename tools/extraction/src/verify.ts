@@ -8,13 +8,14 @@ import path from "node:path";
 import { openClientSnapshot } from "./client/snapshot.ts";
 import { profile } from "./profile.ts";
 import { verifyDyeingExport } from "./extraction/source/hair-dyeing/inputs.ts";
+import { verifyVignetteDiscoveryExport } from "./extraction/source/vignettes/inputs.ts";
 import { readJson } from "./workflow/json.ts";
 import type { ConfigSource } from "./environment/config-source.ts";
 import type { IndexedAsset } from "./extraction/types.ts";
 
 export async function verifyResourcePackage(
   { directory, id }: StageLocation,
-  { reexportDyeing = false } = {},
+  { reexportClientSources = false } = {},
 ): Promise<StageManifest<"resource-package">> {
   const manifest = await readManifest(directory, "resource-package", id);
   const extractionStage = resolveStage("extraction", manifest.inputs.id);
@@ -22,7 +23,7 @@ export async function verifyResourcePackage(
   const environmentStage = resolveStage("environment", extraction.manifest.inputs.id);
   const environment = await verifyEnvironment(environmentStage.directory, environmentStage.id);
   await verifyStageInputs(extraction.manifest, environmentStage.directory, environment);
-  if (reexportDyeing) {
+  if (reexportClientSources) {
     const snapshot = openClientSnapshot(environment.clientSnapshotId);
     const config = readJson<ConfigSource>(
       path.join(environmentStage.directory, "config-source.json"),
@@ -32,12 +33,17 @@ export async function verifyResourcePackage(
       assert.ok(file, `Missing active ${name}`);
       return snapshot.resolvePath(`${profile.paths.gameRoot}/${file.path}`);
     };
+    const source = path.join(extractionStage.directory, "source");
+    const index = readJson<IndexedAsset[]>(
+      path.join(environmentStage.directory, "asset-index.json"),
+    );
     await verifyDyeingExport(
-      path.join(extractionStage.directory, "source"),
+      source,
       { cs: active("cs.obb"), ed: active("ed.obb") },
-      readJson<IndexedAsset[]>(path.join(environmentStage.directory, "asset-index.json")),
+      index,
       snapshot.resolvePath,
     );
+    await verifyVignetteDiscoveryExport(source, index, snapshot.resolvePath);
   }
   await verifySealedResourcePackage(directory, manifest, extraction);
   return manifest;

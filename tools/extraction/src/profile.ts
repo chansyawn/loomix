@@ -23,6 +23,10 @@ export const profile = {
     groupsName: "cdf350c7",
     blocksName: "2cd2a87d",
   },
+  vignettes: {
+    configPackage: "PetitPlanet_Data/Persistent/AssetBundle/blocks/00/00000002.blk",
+    trackerName: "4f3420ed",
+  },
   starsea: {
     iconStyles: 628,
     galaxies: 650,

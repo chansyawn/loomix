@@ -31,7 +31,7 @@ import {
   parseFlowerHybridization,
 } from "./external/flower-hybridization.ts";
 import { admissionsFile } from "./source/catalog/admissions.ts";
-import { vignetteAdmissionsFile } from "./source/vignettes/profile.ts";
+import { vignetteHintsFile } from "./source/vignettes/profile.ts";
 
 export function writeAssembly(directory: string, assembly: Assembly): void {
   writeJson(path.join(directory, DATASET_FILE), assembly.dataset);
@@ -89,13 +89,13 @@ export async function readVerifiedExtraction(directory: string, expectedId?: str
     "Sealed extraction file set",
   );
   const bundle = readCandidate(directory);
-  const { admissions, vignetteAdmissions, external } = manifest.identityInputs;
+  const { admissions, vignetteHints, external } = manifest.identityInputs;
   const hashes = new Map(manifest.outputs.map((file) => [file.path, file.sha256]));
   assert.equal(hashes.get(`source/${admissionsFile}`), admissions, "Frozen admissions identity");
   assert.equal(
-    hashes.get(`source/${vignetteAdmissionsFile}`),
-    vignetteAdmissions,
-    "Frozen vignette admissions identity",
+    hashes.get(`source/${vignetteHintsFile}`),
+    vignetteHints,
+    "Frozen vignette hints identity",
   );
   assert.deepEqual(
     external,
