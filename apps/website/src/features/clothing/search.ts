@@ -18,7 +18,6 @@ export const filterKeys = [
   "colors",
   "materials",
   "styles",
-  "acquisition",
 ] as const;
 export type FilterKey = (typeof filterKeys)[number];
 const stringList = z
@@ -45,7 +44,6 @@ const viewQuerySchema = base.extend({
   colors: stringList.default([]),
   materials: stringList.default([]),
   styles: stringList.default([]),
-  acquisition: stringList.default([]),
 });
 export type ViewQuery = z.output<typeof viewQuerySchema>;
 export function emptyQuery(): ViewQuery {

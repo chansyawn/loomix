@@ -9,7 +9,6 @@ import { recordColumns, MembershipCell } from "../omnidex/table-columns";
 import { textColumn, tableLinkClassName } from "../list-page/table-columns";
 import type { ListColumn } from "../list-page/table-columns";
 import { useOmnidexOrigin } from "@/features/omnidex/navigation";
-import { acquisitionLabels } from "../omnidex/acquisition";
 import { indexMembership } from "../omnidex/membership";
 import { seedSeries } from "./model";
 import type { View } from "./search";
@@ -117,22 +116,6 @@ function seedTableColumns(data?: Pick<PlantsData, "series" | "itemRefs">): ListC
           <MemberLinks groups={seedSeries(record, groups)} complete={complete} />
         ) : null,
     },
-    {
-      id: "acquisition",
-      header: "获取来源",
-      width: 224,
-      cell: (record) => {
-        if (!isSeedRow(record)) return null;
-        const acquisition = acquisitionLabels(record.acquisition);
-        return acquisition.length > 0 ? (
-          <span className="block truncate" title={acquisition.join("、")}>
-            {acquisition.join("、")}
-          </span>
-        ) : (
-          <span className="text-muted-foreground">未提供</span>
-        );
-      },
-    },
     textColumn("harvestCount", "收获茬数", 112, (record) =>
       isSeedRow(record) &&
       (record.growth.kind === "crop" ? record.growth.harvestCount : null) !== null
@@ -159,9 +142,6 @@ export function plantsTableColumns(
   const common = recordColumns<PlantsRow>((record) => <NameLink record={record} />);
   const memberships = indexMembership(groups, (group) => group.plantIds);
   const facts: ListColumn<PlantsRow>[] = [
-    textColumn("acquisition", "获取来源", 224, (record) =>
-      isSeedRow(record) ? null : record.summary.acquisition.join("、") || null,
-    ),
     textColumn("flowerColors", "花色", 168, (record) =>
       isSeedRow(record) ? null : record.summary.flowerColors.join("、") || null,
     ),

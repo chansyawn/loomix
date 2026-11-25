@@ -22,7 +22,6 @@ const item: MiscellaneousItem = {
   image: null,
   description: "良好的黏合剂。",
   quality: 1,
-  acquisition: "沙滩拾取",
 };
 const data = [item];
 
@@ -41,7 +40,6 @@ function furnitureFixture(
     size: null,
     colors: null,
     materials: item.name,
-    acquisition: null,
     inspoCards: recipes.map((recipe) => ({
       ...recipe,
       name: `创想卡 ${recipe.id}`,

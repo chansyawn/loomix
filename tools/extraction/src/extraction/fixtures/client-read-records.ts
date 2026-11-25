@@ -50,7 +50,11 @@ export function clientReadRecordsFixture(datasetId = "c".repeat(64)): ClientRead
       },
       admissions: [],
       exclusions: [],
-      investigation: [],
+      investigation: {
+        plants: [],
+        details: [],
+        acquisitionHints: { displayRows: [], hintRows: [] },
+      },
       outsideMembers: [],
       cooking: [],
       crafting: [],

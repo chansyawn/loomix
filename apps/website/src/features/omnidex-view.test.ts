@@ -20,10 +20,6 @@ test("catalog entries control listing while reference entities remain available 
       id: 1,
       kind: "material",
       category: null,
-      acquisition: [
-        { sourceId: 1, label: "来源甲" },
-        { sourceId: 2, label: "来源乙" },
-      ],
     },
     { ...base, id: 2, kind: "reference" },
   );
@@ -33,7 +29,6 @@ test("catalog entries control listing while reference entities remain available 
     createGameplayTagIndex(gameplayTags.tags),
   );
   expect(view.miscellaneous.map((item) => item.id)).toEqual([1]);
-  expect(view.miscellaneous[0]?.acquisition).toBe("来源甲，来源乙");
   expect(view.ingredientItemsById.get(2)).toMatchObject({ browsable: false });
 });
 
@@ -41,7 +36,6 @@ test("external appearance records retain their identity without entering item li
   const { catalog, gameplayTags } = emptyDataset(fixtureContext, fixtureSource);
   addFixtureRecords(catalog, gameplayTags, {
     kind: "appearance",
-    acquisition: null,
     id: 8,
     name: "发型",
     category: "发型",
@@ -106,7 +100,7 @@ test("有图和缺图的友邻服饰均进入专属列表", () => {
   });
 });
 
-test("creature details retain scientific names and localized acquisition labels", () => {
+test("creature details retain scientific names", () => {
   const { catalog, gameplayTags } = emptyDataset(fixtureContext, fixtureSource);
   addFixtureRecords(catalog, gameplayTags, {
     id: 1,
@@ -123,10 +117,6 @@ test("creature details retain scientific names and localized acquisition labels"
     activeWeather: null,
     sizeRange: null,
     scientificName: "Cyprinus carpio",
-    acquisition: [
-      { sourceId: 104, label: "钓鱼" },
-      { sourceId: 108, label: "河域钓取" },
-    ],
     size: null,
     grades: null,
   });
@@ -136,11 +126,10 @@ test("creature details retain scientific names and localized acquisition labels"
       .creatures.items[0],
   ).toMatchObject({
     scientificName: "Cyprinus carpio",
-    acquisition: "钓鱼，河域钓取",
   });
 });
 
-test("dish details retain tastes, structured effects, unlock requirements and acquisition", () => {
+test("dish details retain tastes, structured effects and unlock requirements", () => {
   const { catalog, gameplayTags } = emptyDataset(fixtureContext, fixtureSource);
   addFixtureRecords(catalog, gameplayTags, {
     id: 1,
@@ -150,7 +139,6 @@ test("dish details retain tastes, structured effects, unlock requirements and ac
     image: null,
     description: null,
     quality: 2,
-    acquisition: [{ sourceId: 1, label: "烹饪" }],
     galaxyFlavor: "禾夏风味",
     strength: 40,
     effects: [
@@ -181,42 +169,5 @@ test("dish details retain tastes, structured effects, unlock requirements and ac
     tastes: ["甜", "咸"],
     cookware: "烤箱",
     unlockCondition: { kind: "chefLevelGreaterOrEqual", level: 5 },
-    acquisition: "烹饪",
   });
-});
-
-test("furniture, clothing and materials display structured acquisition conditions", () => {
-  const { catalog, gameplayTags } = emptyDataset(fixtureContext, fixtureSource);
-  const common = {
-    id: 1,
-    name: "物品",
-    image: null,
-    quality: null,
-    description: null,
-    category: null,
-    acquisition: [{ sourceId: 1, label: "星屿探索" }],
-  };
-  addFixtureRecords(
-    catalog,
-    gameplayTags,
-    {
-      ...common,
-      kind: "furniture",
-      furnitureCategory: null,
-      size: null,
-      colors: null,
-      materials: null,
-    },
-    { ...common, id: 2, kind: "clothing", colors: null, materials: null, styles: null },
-    { ...common, id: 3, kind: "material" },
-  );
-  const view = toOmnidexView(
-    catalog,
-    imageIndexFixture(catalog),
-    createGameplayTagIndex(gameplayTags.tags),
-  );
-  for (const item of [view.furniture.items[0], view.clothing.items[0], view.miscellaneous[0]]) {
-    expect(item.acquisition).toBe("星屿探索");
-    expect(item).not.toHaveProperty("sources");
-  }
 });

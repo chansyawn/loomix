@@ -14,36 +14,6 @@ export interface DetailResult<T> {
   reason: string;
 }
 
-export function acquisition(
-  context: {
-    tables: ContentContext["tables"];
-    vocabulary: Pick<ContentContext["vocabulary"], "sources">;
-  },
-  id: number,
-) {
-  const { tables, vocabulary } = context;
-  const rows = tables.rows(325).filter((row) => tables.id(row) === id);
-  const signatures = rows.map((row) => JSON.stringify(tables.vector(row, 2)));
-  if (new Set(signatures).size > 1) throw new Error(`Conflicting source vectors ${id}`);
-  const row = rows[0];
-  const codes = tables.vector(row, 2);
-  const sources = row ? [tableSource(tables, row, [0, 2])] : [];
-  const value = codes?.length
-    ? codes.map((sourceId) => {
-        const source = vocabulary.sources.get(sourceId);
-        sources.push(...localizedSources(tables, source, [0, 1]));
-        const label = plainText(tables.text(source, 1));
-        if (!label || sourceId <= 0) return null;
-        return { sourceId, label, condition: null };
-      })
-    : null;
-  return {
-    value: value?.every((entry) => entry !== null) ? value : null,
-    sources,
-    reason: "source_condition_configuration_unconfirmed",
-  };
-}
-
 export function creatureSize(
   context: ContentContext,
   id: number,
@@ -173,9 +143,6 @@ export function buildItemDetail(
 ) {
   const detail = emptyCollectionDetail(record.id);
   if (record.kind === "item") {
-    const source = acquisition(context, record.id);
-    detail.acquisitionConditions = source.value;
-    recordDetail(proofs, "item", record.id, "detail.acquisitionConditions", source);
     const commerce = trade(context, record.id);
     detail.trade = commerce.value;
     recordDetail(proofs, "item", record.id, "detail.trade", commerce);

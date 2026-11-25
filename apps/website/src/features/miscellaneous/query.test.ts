@@ -10,7 +10,6 @@ const first: MiscellaneousItem = {
   image: null,
   description: "可以用于打造家具。",
   quality: 1,
-  acquisition: "伐木",
 };
 const second: MiscellaneousItem = {
   ...first,

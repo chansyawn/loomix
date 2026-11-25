@@ -15,7 +15,6 @@ import type {
 } from "@loomix/schema/catalog";
 import type { ImageIndex } from "@loomix/schema/assets";
 import { createImageResolver } from "@loomix/schema/assets";
-import { acquisitionText } from "./omnidex/acquisition";
 import { tagLabel } from "@loomix/schema/gameplay-tags";
 import type { GameplayTagIndex } from "@loomix/schema/gameplay-tags";
 import { createIngredientTagSource } from "./ingredients/tag-source";
@@ -39,7 +38,6 @@ export type FurnitureItem = CategorizedRecord & {
   size: string | null;
   colors: string | null;
   materials: string | null;
-  acquisition: string | null;
   inspoCards: InspoCardView[];
 };
 export type FurnitureMaterialUse = {
@@ -48,7 +46,6 @@ export type FurnitureMaterialUse = {
 };
 export type CreatureItem = CategorizedRecord & {
   scientificName: string | null;
-  acquisition: string | null;
   region: string | null;
   habitat: string | null;
   activeSeasons: string | null;
@@ -64,21 +61,17 @@ export type DishItem = CatalogEntrySummary & {
   effects: DishEffect[] | null;
   tastes: CookingRecipe["tastes"];
   unlockCondition: UnlockCondition | null;
-  acquisition: string | null;
   slots: RecipeSlot[];
 };
 export type ClothingItem = CategorizedRecord & {
   colors: string | null;
   materials: string | null;
   styles: string | null;
-  acquisition: string | null;
 };
 export type ClothingAppearance = CategorizedRecord;
 export type NeighborOutfitItem = CategorizedRecord &
   Pick<ItemOf<"neighborOutfit">, "bodyTypes" | "price">;
-export type MiscellaneousItem = CatalogEntrySummary & {
-  acquisition: string | null;
-};
+export type MiscellaneousItem = CatalogEntrySummary;
 export type FurnitureSet = CatalogEntrySummary & {
   seriesName: string | null;
   componentIds: number[] | null;
@@ -206,7 +199,6 @@ export function toOmnidexView(
   }
   for (const item of listed) {
     const common = base(item);
-    const acquisition = acquisitionText(item.acquisition);
     switch (item.kind) {
       case "furniture":
         view.furniture.items.push({
@@ -216,7 +208,6 @@ export function toOmnidexView(
           size: item.size && formatFurnitureSize(item.size),
           colors: tagsFor(item, "colors"),
           materials: tagsFor(item, "materials"),
-          acquisition,
           inspoCards: cards.byProduct.get(item.id) ?? [],
         });
         break;
@@ -227,7 +218,6 @@ export function toOmnidexView(
           colors: tagsFor(item, "colors"),
           materials: tagsFor(item, "materials"),
           styles: tagsFor(item, "styles"),
-          acquisition,
         });
         break;
       case "appearance":
@@ -246,7 +236,6 @@ export function toOmnidexView(
           ...common,
           category: item.category,
           scientificName: item.scientificName,
-          acquisition,
           region: displayValues(item.region),
           habitat: displayValues(item.habitat),
           activeSeasons: displayValues(item.activeSeasons),
@@ -265,12 +254,11 @@ export function toOmnidexView(
           effects: item.effects,
           tastes: item.cooking?.tastes ?? null,
           unlockCondition: item.cooking?.unlockCondition ?? null,
-          acquisition,
           slots: item.cooking?.slots ?? [],
         });
         break;
       case "material":
-        view.miscellaneous.push({ ...common, acquisition });
+        view.miscellaneous.push(common);
         break;
     }
   }

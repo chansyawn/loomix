@@ -2,7 +2,6 @@ import { growthPlantIds, createRecordTagResolver } from "@loomix/schema/catalog"
 import type { Catalog, ItemOf } from "@loomix/schema/catalog";
 import { tagLabel } from "@loomix/schema/gameplay-tags";
 import type { GameplayTagIndex } from "@loomix/schema/gameplay-tags";
-import { acquisitionLabels } from "../omnidex/acquisition";
 import { createImageResolver } from "@loomix/schema/assets";
 import type { ImageIndex } from "@loomix/schema/assets";
 import type { IngredientItem } from "../omnidex-view";
@@ -71,8 +70,6 @@ export function buildPlantsData(
       .filter((item): item is ItemOf<"plant"> => item.kind === "plant")
       .map((item) => [item.id, item]),
   );
-  const itemAcquisitionLabels = (id: number): string[] =>
-    acquisitionLabels(records.get(id)?.acquisition ?? null);
   const summarize = (items: Omit<PlantItem, "summary">[]): PlantSummary => {
     const ids = new Set(items.map((item) => item.id));
     const relatedSeeds = [
@@ -94,7 +91,6 @@ export function buildPlantsData(
           records.has(item.id) ? tagsFor(records.get(item.id)!, "origins").map(tagLabel) : [],
         ),
       ),
-      acquisition: unique(items.flatMap((item) => itemAcquisitionLabels(item.id))),
       flowerColors: unique(items.flatMap((item) => item.flowerColors ?? [])),
       harvestCounts: unique(
         [...configurations.values()].flatMap(({ growth }) =>
@@ -147,7 +143,6 @@ export function buildPlantsData(
       category: record.category,
       originGalaxy: tagsFor(record, "origins").map(tagLabel).join("，") || null,
       harvestCount: harvestCounts.length === 1 ? harvestCounts[0] : null,
-      acquisition: itemAcquisitionLabels(record.id).join("，") || null,
       flowerColors: record.flowerColors,
       treeDrops: record.drops,
     };

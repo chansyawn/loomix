@@ -53,12 +53,10 @@ describe("compact plant URLs", () => {
         q: "春系列",
         qualities: ["__missing", "2"],
         sort: "name-asc",
-        acquisition: ["采集"],
         flowerColors: ["白色"],
       },
       seeds: {
         q: "种子",
-        acquisition: ["星屿探索"],
         series: ["95000", "__ungrouped"],
         harvestCounts: ["3", "__missing"],
         sort: "name-desc",
@@ -76,7 +74,6 @@ describe("compact plant URLs", () => {
       view: "seeds",
       seeds: {
         q: "番茄",
-        acquisition: ["格连商店购买"],
         series: ["95000"],
         harvestCounts: ["3"],
       },
@@ -86,7 +83,6 @@ describe("compact plant URLs", () => {
       view: "seeds",
       seeds: {
         q: "番茄",
-        acquisition: ["格连商店购买"],
         series: ["95000"],
         harvestCounts: ["3"],
       },
@@ -98,7 +94,7 @@ describe("compact plant URLs", () => {
       `/plants${defaultStringifySearch({
         lang: "zh",
         items: { categories: ["作物"], page: 4 },
-        seeds: { categories: ["作物"], acquisition: ["星屿探索"], page: 4 },
+        seeds: { categories: ["作物"], series: ["95000"], acquisition: ["星屿探索"], page: 4 },
       })}`,
     );
     await router.load();
@@ -110,7 +106,7 @@ describe("compact plant URLs", () => {
     expect(defaultParseSearch(location.searchStr)).toEqual({
       lang: "zh",
       items: { categories: ["作物"] },
-      seeds: { acquisition: ["星屿探索"] },
+      seeds: { series: ["95000"] },
     });
   });
 });

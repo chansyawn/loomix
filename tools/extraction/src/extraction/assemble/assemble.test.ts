@@ -76,6 +76,18 @@ test("同一源对象跨用途共享原图，组装同时投影图片引用和�
       }),
     ]),
   );
+  observations.diagnostics.investigation.acquisitionHints.displayRows = [
+    {
+      id: 1,
+      sourceIds: [156],
+      source: { file: "prepared/ed.obb", table: 325, row: 1, rowOffset: 2, fields: [0, 2] },
+    },
+    {
+      id: 1,
+      sourceIds: [999],
+      source: { file: "prepared/ed.obb", table: 325, row: 1, rowOffset: 3, fields: [0, 2] },
+    },
+  ];
   expect(JSON.stringify(assemble(observations, [original], input))).toBe(JSON.stringify(result));
 });
 

@@ -32,7 +32,6 @@ function clothingDetailFields(detail: ClothingPageDetail): [string, string | nul
         ["风格", detail.record.styles],
         ["颜色", detail.record.colors],
         ["材质", detail.record.materials],
-        ["获取途径", detail.record.acquisition],
       ];
     case "appearance":
       return [["分类", detail.record.category]];

@@ -5,7 +5,6 @@ import { readOutfits } from "./outfits.ts";
 import { readReferences } from "./references.ts";
 import { localizedSources, tableSource } from "./collection/evidence.ts";
 import type {
-  Acquisition,
   CollectionMemberKind,
   Growth,
   Item,
@@ -13,7 +12,6 @@ import type {
   RecipeSlot,
 } from "@loomix/schema/catalog";
 import { catalogAdmissionIds } from "./catalog-admissions.ts";
-import { acquisition } from "./collection/details/client.ts";
 import type { CollectionObservations } from "../../schema.ts";
 import type { ContentContext } from "./context.ts";
 import { splitTags } from "./model.ts";
@@ -23,7 +21,7 @@ import { readInspoCards } from "./crafting/cards.ts";
 import type { imageCollector } from "../images.ts";
 import { readCatalogMetadata } from "./metadata/read.ts";
 import type { NeighborOutfit } from "../neighbors/types.ts";
-import type { ObservedAcquisition, ObservedRecipeSlot } from "../../schemas/observed.ts";
+import type { ObservedRecipeSlot } from "../../schemas/observed.ts";
 import { profile } from "../../../profile.ts";
 
 type ObservedItem = CollectionObservations["items"][number];
@@ -36,9 +34,6 @@ const memberKinds: Record<string, CollectionMemberKind> = {
   plants: "plant",
   dishes: "dish",
 };
-
-const toAcquisition = (values: readonly ObservedAcquisition[] | null): Acquisition[] | null =>
-  values?.map(({ sourceId, label }) => ({ sourceId, label })) ?? null;
 
 // 观察层尺寸已规范为“宽x深”，发布层只保留数值。
 function furnitureSize(value: string | null): ItemOf<"furniture">["size"] {
@@ -131,18 +126,6 @@ export function readCatalog({
   const assets = {
     image: (use: string | null): ImageUse | null => (use === null ? null : { use }),
   };
-  const origin = (id: number, owner: SourceProof["owner"]) => {
-    const result = acquisition(context, id);
-    proof(
-      id,
-      "acquisition",
-      result.value,
-      source(result.sources),
-      result.reason ?? "acquisition_unresolved",
-      owner,
-    );
-    return toAcquisition(result.value);
-  };
   const metadata = readCatalogMetadata(tables, context.gameplayTags.index);
   const tagIds = (id: number) => {
     const record = metadata.record(id);
@@ -203,10 +186,6 @@ export function readCatalog({
       return {
         ...base,
         image: assets.image(record.image),
-        acquisition: origin(
-          record.id,
-          record.kind === "set" || record.kind === "series" ? "collection" : "item",
-        ),
         memberKind: memberKinds[record.category]!,
         memberIds: record.memberIds,
       };
@@ -216,26 +195,24 @@ export function readCatalog({
         ...listed,
         kind: "appearance",
         category: record.subcategory,
-        acquisition: origin(record.id, "item"),
       };
     const detail = details.get(record.id);
     if (!detail) throw new Error(`Missing observed detail ${record.id}`);
-    const item = { ...listed, acquisition: toAcquisition(detail.acquisitionConditions) };
     const category = record.subcategory;
     switch (record.category) {
       case "furniture":
         return {
-          ...item,
+          ...listed,
           kind: "furniture",
           category,
           furnitureCategory: record.attributes.type,
           size: furnitureSize(record.attributes.size),
         };
       case "clothing":
-        return { ...item, kind: "clothing", category };
+        return { ...listed, kind: "clothing", category };
       case "creatures":
         return {
-          ...item,
+          ...listed,
           kind: "creature",
           category,
           scientificName: record.attributes.scientificName,
@@ -258,7 +235,7 @@ export function readCatalog({
         };
       case "plants":
         return {
-          ...item,
+          ...listed,
           kind: "plant",
           category,
           flowerColors: detail.flowerColors,
@@ -282,7 +259,7 @@ export function readCatalog({
           "no_cooking_recipe",
         );
         return {
-          ...item,
+          ...listed,
           kind: "dish",
           // 力气值与观察层效果文本同源，文本未确认时不单独发布数值。
           strength:
@@ -300,7 +277,7 @@ export function readCatalog({
         };
       }
       case "miscellaneous":
-        return { ...item, kind: "material" };
+        return { ...listed, kind: "material" };
     }
   };
   for (const record of observations.items) {
@@ -319,7 +296,6 @@ export function readCatalog({
       description: seed.description,
       quality: seed.quality,
       image: assets.image(seed.image),
-      acquisition: toAcquisition(seed.acquisition),
       tagIds: tagIds(seed.id),
       growth: toGrowth(growth, assets),
     });
@@ -331,7 +307,7 @@ export function readCatalog({
     cards,
     sets,
     proofs: cardProofs,
-  } = readInspoCards(context, crafting.recipes, images, (id) => origin(id, "item"), tagIds);
+  } = readInspoCards(context, crafting.recipes, images, tagIds);
   for (const card of cards) {
     if (admitted.has(card.id)) throw new Error(`Conflicting creation card identity ${card.id}`);
     admitted.add(card.id);

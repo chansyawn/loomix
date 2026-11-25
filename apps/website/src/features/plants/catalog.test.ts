@@ -8,8 +8,6 @@ import {
   plantSeriesFixture,
   plantsDataFixture,
 } from "./fixture";
-import { filterGroups, queryPlants } from "./query";
-import { emptyQuery } from "./search";
 
 test("植物视图保留种子和单品关联，共享食材使用物品自身身份", () => {
   const { catalog, gameplayTags } = catalogFixture({
@@ -57,21 +55,12 @@ test("summarizes structured origins without parsing punctuation in localized lab
     { id: 1002, internalName: "帕沙", displayName: "帕沙", parentId: rootId },
   );
   plant.tagIds = [1001, 1002];
-  plant.acquisition = [{ sourceId: 1, label: "采集，限时活动" }];
   const data = toOmnidexView(
     catalog,
     imageIndexFixture(catalog),
     createGameplayTagIndex(gameplayTags.tags),
   ).plants;
   expect(data.series[0].summary.galaxies).toEqual(["禾夏，星系", "帕沙"]);
-  expect(data.series[0].summary.acquisition).toEqual(["采集，限时活动"]);
-  expect(filterGroups(data).find((group) => group.key === "acquisition")?.options).toEqual([
-    { value: "采集，限时活动", label: "采集，限时活动" },
-  ]);
-  expect(
-    queryPlants(data, "items", { ...emptyQuery(), acquisition: ["采集，限时活动"] }).total,
-  ).toBe(1);
-  expect(queryPlants(data, "items", { ...emptyQuery(), acquisition: ["采集"] }).total).toBe(0);
 });
 test("derives every seed for a plant from stage references without duplicate product fields", () => {
   const { catalog, gameplayTags } = catalogFixture({

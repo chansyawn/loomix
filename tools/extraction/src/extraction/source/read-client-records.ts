@@ -3,6 +3,7 @@ import { createContentContext } from "./catalog/context.ts";
 import { readContent } from "./catalog/content.ts";
 import { extendCollection } from "./catalog/collection/observe.ts";
 import { detailInvestigation } from "./catalog/collection/details/investigation.ts";
+import { readAcquisitionHints } from "./catalog/acquisition-hints.ts";
 import { extractNeighborBundle } from "./neighbors/extract.ts";
 import { collectNeighborOutfitImage } from "./neighbors/outfit-image.ts";
 import {
@@ -276,6 +277,7 @@ export function readClientRecords(source: string, datasetId: string): ClientRead
       investigation: {
         plants: collection.plants.investigation,
         details: detailInvestigation(context),
+        acquisitionHints: readAcquisitionHints(context.tables),
       },
       outsideMembers: context.scope.outsideMembers,
       cooking: content.cookingAudit,

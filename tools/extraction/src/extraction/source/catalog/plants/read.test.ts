@@ -31,7 +31,6 @@ function context(rows: FakeRow[], formalIds: number[]) {
     tables,
     main: tables.byId(318),
     scope: { groups: new Map(formalIds.map((id) => [id, "plants.item"])) },
-    vocabulary: { sources: new Map() },
     resolveIcon: () => null,
   } as unknown as ContentContext;
 }

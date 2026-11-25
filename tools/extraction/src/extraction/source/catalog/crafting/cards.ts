@@ -1,4 +1,4 @@
-import type { Acquisition, InspoBox, ItemOf, Quality } from "@loomix/schema/catalog";
+import type { InspoBox, ItemOf, Quality } from "@loomix/schema/catalog";
 import type { TableRow } from "../../../types.ts";
 import type { SourceProof, WithImageUses } from "../../../model.ts";
 import type { EvidenceSource } from "../../../evidence/domain-schema.ts";
@@ -17,7 +17,6 @@ export function readInspoCards(
   context: ContentContext,
   recipes: ReturnType<typeof readCraftingRecipes>["recipes"],
   images: ReturnType<typeof imageCollector>,
-  origin: (id: number) => Acquisition[] | null,
   tagIds: (id: number) => number[],
 ) {
   const { tables, main } = context;
@@ -141,7 +140,6 @@ export function readInspoCards(
         name,
         description,
         quality: quality as Quality | null,
-        acquisition: origin(id),
         tagIds: tagIds(id),
         image: { use: icon },
         front: { background: { use: background } },

@@ -19,6 +19,7 @@ import { verifyStarseaSources } from "../verify/starsea.ts";
 import { verifyVignettes } from "../verify/vignettes.ts";
 import { verifyFlowerHybridization } from "../verify/flower-hybridization.ts";
 import { verifyHairDyeing } from "../verify/hair-dyeing.ts";
+import { verifyAcquisitionHints } from "../verify/acquisition-hints.ts";
 import type { IndexedAsset } from "./types.ts";
 
 export async function verifyCandidate(directory: string, writeReport = true): Promise<void> {
@@ -40,6 +41,7 @@ export async function verifyCandidate(directory: string, writeReport = true): Pr
   const textmap = readJson<{ byHash: unknown }>(path.join(source, "prepared/textmap-zh-en.json"));
   assert.deepEqual(textmap.byHash, decodeTextMap(reader).byHash, "Frozen TextMap decodes from OBB");
   const tables = new Tables(path.join(source, "prepared"));
+  verifyAcquisitionHints(observations.diagnostics.investigation.acquisitionHints, tables);
   verifyStarseaSources(dataset, observations.starsea.diagnostics, tables);
   verifyVignettes(
     source,

@@ -10,7 +10,6 @@ import {
 import { createGameplayTagIndex, tagLabel } from "@loomix/schema/gameplay-tags";
 import type { GameplayTags } from "@loomix/schema/gameplay-tags";
 import { catalogCategory, toOmnidexView } from "../omnidex-view";
-import { acquisitionText } from "../omnidex/acquisition";
 import { createOmnidexTagFilter, type TagTreePolicy } from "./tags";
 import { buildIngredientsData, type IngredientsData } from "../ingredients/model";
 
@@ -54,8 +53,6 @@ export function createOmnidexCatalog(
       colors: tagsFor(tagIds, "colors").map(tagLabel),
       materials: tagsFor(tagIds, "materials").map(tagLabel),
       styles: tagsFor(tagIds, "styles").map(tagLabel),
-      acquisition: record.acquisition,
-      acquisitionText: acquisitionText(record.acquisition),
       record,
     };
   };
@@ -90,6 +87,5 @@ export function recordFields(row: CatalogEntryRow): [string, string | null][] {
     )
       .filter(([, values]) => values.length)
       .map(([label, values]): [string, string] => [label, values.join("，")]),
-    ["获取来源", row.acquisitionText],
   ];
 }

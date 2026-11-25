@@ -36,7 +36,6 @@ export function uiSignature(tables: Tables) {
     numbers: [0, 8, 9, fields.quality, fields.description, fields.series].map((field) =>
       tables.uint(row, field, 0),
     ),
-    sources: tables.vector(row, fields.sources),
     strings: [
       fields.smallIcon,
       fields.largeIcon,

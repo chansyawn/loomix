@@ -5,7 +5,6 @@ export function plantSummaryFixture(fields: Partial<PlantSummary> = {}): PlantSu
   return {
     categories: [],
     galaxies: [],
-    acquisition: [],
     flowerColors: [],
     harvestCounts: [],
     seeds: [],
@@ -25,7 +24,6 @@ export function plantItemFixture(fields: Partial<PlantItem> = {}): PlantItem {
     category: null,
     originGalaxy: null,
     harvestCount: null,
-    acquisition: null,
     flowerColors: null,
     treeDrops: null,
     ...fields,
@@ -34,7 +32,6 @@ export function plantItemFixture(fields: Partial<PlantItem> = {}): PlantItem {
       plantSummaryFixture({
         categories: fields.category ? [fields.category] : [],
         galaxies: splitPlantValues(fields.originGalaxy ?? null),
-        acquisition: splitPlantValues(fields.acquisition ?? null),
         flowerColors: fields.flowerColors ?? [],
         harvestCounts:
           fields.harvestCount === null || fields.harvestCount === undefined
@@ -68,7 +65,6 @@ export function plantSeedFixture(fields: Partial<PlantSeed> = {}): PlantSeed {
     description: null,
     quality: null,
     plantIds,
-    acquisition: null,
     growth: {
       kind: "staged",
       stages: plantIds.map((plantId) => ({

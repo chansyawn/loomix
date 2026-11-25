@@ -27,7 +27,6 @@ export function miscellaneousTableColumns(): ListColumn<MiscellaneousRow>[] {
   return [
     ...common,
     textColumn("id", "编号", 112, (record) => record.id),
-    textColumn("acquisition", "获取途径", 320, (record) => record.acquisition),
     textColumn("description", "描述", 320, (record) => record.description),
   ];
 }

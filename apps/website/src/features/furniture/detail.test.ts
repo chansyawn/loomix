@@ -15,7 +15,6 @@ const first: FurnitureItem = {
   size: null,
   colors: null,
   materials: null,
-  acquisition: null,
   inspoCards: [],
 };
 const second: FurnitureItem = { ...first, id: 2, name: "木桌" };

@@ -14,7 +14,6 @@ const fields: Record<string, string> = {
   "detail.treeDrops": "drops",
   "detail.creatureSize": "size",
   "detail.dishEffects": "effects",
-  "detail.acquisitionConditions": "acquisition",
   "detail.flowerColors": "flowerColors",
 };
 const itemKinds: Record<string, string> = {
@@ -160,8 +159,6 @@ export function buildDomainEvidence(
     };
     const kind = requiredKind[proof.field];
     if (kind && Reflect.get(entity, "kind") !== kind) continue;
-    // 外观的获取来源由元数据证据覆盖，详情观察不适用于外观。
-    if (fieldPath === "acquisition" && Reflect.get(entity, "kind") === "appearance") continue;
     add({
       entity: { collection: "catalog.items", id: proof.id },
       fieldPath,

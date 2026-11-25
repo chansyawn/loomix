@@ -30,7 +30,6 @@ function item(id: number, fields: Partial<DishItem> = {}): DishItem {
     effects: null,
     tastes: null,
     unlockCondition: null,
-    acquisition: null,
     slots: [],
     ...fields,
   };
@@ -56,7 +55,6 @@ const items = [
     ],
     tastes: ["甜"],
     unlockCondition: { kind: "chefLevelGreaterOrEqual", level: 5 },
-    acquisition: "烹饪",
   }),
   item(2, {
     name: "星露蒸鱼",
@@ -65,7 +63,6 @@ const items = [
     galaxyFlavor: "禾夏",
     cookware: "蒸锅",
     tastes: ["甜", "咸"],
-    acquisition: "烹饪",
   }),
   item(3),
   item(4, { name: "Alpha", quality: 2, difficulty: "中等", cookware: "烤架" }),

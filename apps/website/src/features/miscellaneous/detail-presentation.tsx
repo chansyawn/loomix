@@ -16,7 +16,7 @@ export function miscellaneousDetailPresentation(
         {item.description || "描述未提供"}
       </p>
     ),
-    fields: [["获取来源", item.acquisition]],
+    fields: [],
     sections: miscellaneousDetailSections(detail),
     showEmptyExtras: true,
   };

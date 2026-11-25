@@ -19,7 +19,6 @@ export function dishesDetailPresentation(detail: DishesDetail): CatalogDetailPre
           ["星系风味", detail.record.galaxyFlavor],
           ["炊具", detail.record.cookware],
           ["基础效果", strengthText(detail.record.strength)],
-          ["获取方式", detail.record.acquisition],
         ]
       : [
           ["系列", detail.record.seriesName],
