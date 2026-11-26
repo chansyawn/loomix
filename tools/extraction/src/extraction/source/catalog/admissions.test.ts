@@ -42,7 +42,15 @@ function fixture() {
     names,
     rows,
     admissions,
-    run: () => classify(tables, vocabulary, main, admissions()),
+    run: () =>
+      classify(
+        tables,
+        vocabulary,
+        main,
+        admissions(),
+        new Map(rows.map((row) => [tables.id(row), row])),
+        { admitted: new Map(), investigation: [] },
+      ),
   };
 }
 test("admission is encyclopedia union confirmed IDs, never all named main items", () => {

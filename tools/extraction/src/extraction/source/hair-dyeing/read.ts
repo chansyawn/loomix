@@ -1,23 +1,64 @@
 import assert from "node:assert/strict";
+import { z } from "zod";
+import { IdSchema } from "@loomix/schema/common";
 import type { HairDyeing } from "@loomix/schema/hair-dyeing";
 import type { EvidenceSource, FieldEvidence } from "../../evidence/domain-schema.ts";
+import { AssetJsonSourceSchema, TableFieldSourceSchema } from "../../evidence/domain-schema.ts";
 import type { WithImageUses } from "../../model.ts";
 import type { IndexedAsset, Row, TableRow } from "../../types.ts";
 import type { Tables } from "../decode/tables.ts";
 import type { imageCollector } from "../images.ts";
-import type { FrozenDyeingJson } from "./inputs.ts";
+import type { DyeingInputs, FrozenDyeingJson } from "./inputs.ts";
 import { readDyeingInputs } from "./inputs.ts";
 import { resolveDyeingIcon } from "./icons.ts";
+import { materialProperties, resolveDyeingRegion } from "./regions.ts";
+
+export const dyeingDiagnosticsSchema = z.strictObject({
+  hairstyles: z
+    .strictObject({
+      itemId: IdSchema,
+      asset: AssetJsonSourceSchema,
+      regions: z
+        .strictObject({
+          id: IdSchema,
+          internalName: z.string(),
+          materialProperties: z.string().array(),
+          colorGroupIds: IdSchema.array().nullable(),
+          defaultColorBlockId: IdSchema.nullable(),
+          textHash: z.number().int().positive().nullable(),
+        })
+        .array(),
+    })
+    .array(),
+  colorGroups: z
+    .strictObject({
+      id: IdSchema,
+      asset: AssetJsonSourceSchema,
+      internalName: z.string(),
+      colorBlockIds: IdSchema.array(),
+      unlock: TableFieldSourceSchema.nullable(),
+      nameRows: z
+        .strictObject({
+          row: TableFieldSourceSchema,
+          hash: z.number().int().nonnegative().nullable(),
+          name: z.string().nullable(),
+          textSource: TableFieldSourceSchema.nullable(),
+        })
+        .array(),
+    })
+    .array(),
+});
 
 export interface DyeingObservation {
   data: WithImageUses<HairDyeing>;
   proofs: FieldEvidence[];
+  diagnostics: z.infer<typeof dyeingDiagnosticsSchema>;
 }
 
 const ruleTable = 110;
 const unlockTable = 111;
 const itemTable = 318;
-const modes = new Map([
+const modes = new Map<number, HairDyeing["colorGroups"][number]["unlock"]["mode"]>([
   [1, "full"],
   [2, "partial"],
   [3, "colorful"],
@@ -39,24 +80,23 @@ const rgba = ({
   b: number;
   a: number;
 }): [number, number, number, number] => [r, g, b, a];
-const table = (row: TableRow, ...fields: number[]): EvidenceSource => ({
-  kind: "table",
-  file: "prepared/ed.obb",
-  table: row.root,
-  rowOffset: row.rowOffset,
-  fields,
-});
-const assetJson = <T>(
-  { file, source, pathId, sha256 }: FrozenDyeingJson<T>,
-  pointer: string,
-): EvidenceSource => ({
-  kind: "assetJson",
-  file,
-  source,
-  pathId,
-  sha256,
-  pointer,
-});
+const table = (row: TableRow, ...fields: number[]) =>
+  ({
+    kind: "table",
+    file: "prepared/ed.obb",
+    table: row.root,
+    rowOffset: row.rowOffset,
+    fields,
+  }) as const satisfies z.infer<typeof TableFieldSourceSchema>;
+const assetJson = <T>({ file, source, pathId, sha256 }: FrozenDyeingJson<T>, pointer: string) =>
+  ({
+    kind: "assetJson",
+    file,
+    source,
+    pathId,
+    sha256,
+    pointer,
+  }) as const satisfies z.infer<typeof AssetJsonSourceSchema>;
 const token = (tables: Tables, row: Row, field: number) =>
   tables.string(row, field)?.trim() || null;
 
@@ -74,7 +114,7 @@ export function dyeMaterialIds(data: {
   return sortedIds(
     new Set(
       data.colorGroups.flatMap(({ unlock }) =>
-        [unlock?.unlockCost, unlock?.dyeCost].flatMap((cost) => (cost ? [cost.itemId] : [])),
+        [unlock.unlockCost, unlock.dyeCost].flatMap((cost) => (cost ? [cost.itemId] : [])),
       ),
     ),
   );
@@ -88,9 +128,69 @@ export function readHairDyeing(
   hairstyleIds: ReadonlySet<number>,
   flowerIds: ReadonlySet<number>,
 ): DyeingObservation {
-  const inputs = readDyeingInputs(source, index);
+  return observeHairDyeing(
+    readDyeingInputs(source, index),
+    tables,
+    index,
+    images,
+    hairstyleIds,
+    flowerIds,
+  );
+}
+
+export function observeHairDyeing(
+  inputs: DyeingInputs,
+  tables: Tables,
+  index: IndexedAsset[],
+  images: ReturnType<typeof imageCollector>,
+  hairstyleIds: ReadonlySet<number>,
+  flowerIds: ReadonlySet<number>,
+): DyeingObservation {
   const groupsById = byId(inputs.groups.value.colorGroups);
   const blocksById = byId(inputs.blocks.value.colorBlocks);
+  const diagnostics: DyeingObservation["diagnostics"] = { hairstyles: [], colorGroups: [] };
+  const unlocks = new Map(
+    tables.rows(unlockTable).map((row) => {
+      const id = tables.id(row);
+      const mode = modes.get(tables.uint(row, 4, 0));
+      assert.ok(mode && groupsById.has(id), `Invalid dyeing unlock ${id}`);
+      const match = tables.uint(row, 2, 0);
+      assert.ok(match === 0 || match === 1, `Invalid flower match setting ${id}`);
+      return [
+        id,
+        {
+          data: {
+            mode,
+            sort: tables.uint(row, 1, 0),
+            flowerMatchEnabled: match === 1,
+            unlockCost: amount(tables, row, 3),
+            dyeCost: mode === "partial" ? amount(tables, row, 5) : null,
+          },
+          source: table(row, 0, 1, 2, 3, 4, ...(mode === "partial" ? [5] : [])),
+          flowerMatchSource: table(row, 0, 2),
+          modeSource: table(row, 0, 4),
+        },
+      ] as const;
+    }),
+  );
+  assert.equal(unlocks.size, tables.rows(unlockTable).length, "Duplicate dyeing unlock ID");
+  const textMap = (hash: number | null) => {
+    const text = hash === null ? undefined : tables.textmap[hash];
+    const name = text?.nameZh?.trim() || null;
+    return {
+      name,
+      textSource:
+        text && name
+          ? {
+              kind: "table" as const,
+              file: "prepared/ed.obb",
+              table: 1,
+              rowOffset: text.rowOffset,
+              fields: [1],
+            }
+          : null,
+    };
+  };
   const proofs: FieldEvidence[] = [];
   const prove = (
     collection: keyof HairDyeing,
@@ -98,14 +198,16 @@ export function readHairDyeing(
     fieldPath: string,
     value: unknown,
     sources: EvidenceSource[],
+    reason = "configuration_not_present",
   ) => {
     proofs.push({
       entity: { collection: `hairDyeing.${collection}`, id },
       fieldPath,
       sources,
-      status: value === null ? "absent" : "confirmed",
+      status:
+        value !== null ? "confirmed" : reason === "textmap_unresolved" ? "unresolved" : "absent",
       ruleId: `client.hairDyeing.${collection}`,
-      reasonCode: value === null ? "configuration_not_present" : null,
+      reasonCode: value === null ? reason : null,
     });
   };
   const icon = (
@@ -124,26 +226,89 @@ export function readHairDyeing(
     ),
   });
 
-  const groupIds = new Set<number>();
   const blockIds = new Set<number>();
   const hairstyleConfigs = inputs.hairstyles
-    .filter(({ value }) => hairstyleIds.has(value.configId))
-    .map((input) => {
+    .flatMap((input) => {
       const {
         configId: itemId,
         regions,
         regionToColorGroups,
         regionIdToDefaultColor,
       } = input.value;
-      const data = regions.map(({ regionId: id, regionName: name }) => {
-        const colorGroupIds = regionToColorGroups?.[id] ?? null;
+      const published = hairstyleIds.has(itemId);
+      const observed: DyeingObservation["diagnostics"]["hairstyles"][number]["regions"] = [];
+      const data = regions.flatMap((region, regionIndex) => {
+        const { regionId: id, regionName: internalName } = region;
+        const originalIds = regionToColorGroups?.[id] ?? null;
         const defaultColorBlockId = regionIdToDefaultColor?.[id] ?? null;
-        for (const groupId of colorGroupIds ?? []) groupIds.add(groupId);
+        const properties = materialProperties(region);
+        const eligibleGroups = (originalIds ?? []).flatMap((groupId) => {
+          assert.ok(groupsById.has(groupId), `Unknown dyeing group ${itemId}:${id}:${groupId}`);
+          const unlock = unlocks.get(groupId);
+          return unlock ? [{ groupId, unlock }] : [];
+        });
+        const purpose = published
+          ? resolveDyeingRegion(
+              itemId,
+              id,
+              properties,
+              regions.length,
+              eligibleGroups.map(({ unlock }) => unlock.data.mode),
+            )
+          : null;
+        observed.push({
+          id,
+          internalName,
+          materialProperties: properties.map(({ propertyName }) => propertyName),
+          colorGroupIds: originalIds,
+          defaultColorBlockId,
+          textHash: purpose?.hash ?? null,
+        });
+        if (!purpose) return [];
+        const colorGroupIds =
+          originalIds === null ? null : eligibleGroups.map(({ groupId }) => groupId);
+        const { name, textSource } = textMap(purpose.hash);
+        assert.ok(name && textSource, `Missing dyeing region text ${itemId}:${id}:${purpose.hash}`);
+
+        const field = `regions.${regionIndex}`;
+        const regionAsset = assetJson(input, `/regions/${regionIndex}`);
+        prove("hairstyleConfigs", itemId, `${field}.name`, name, [
+          ...purpose.properties.map(({ pointer }) =>
+            assetJson(input, `/regions/${regionIndex}${pointer}`),
+          ),
+          ...(purpose.legacy
+            ? [
+                assetJson(input, "/regions"),
+                ...eligibleGroups.map(({ unlock }) => unlock.modeSource),
+              ]
+            : []),
+          textSource,
+        ]);
+        prove(
+          "hairstyleConfigs",
+          itemId,
+          `${field}.colorGroupIds`,
+          colorGroupIds,
+          originalIds === null
+            ? [regionAsset]
+            : [
+                assetJson(input, `/regionToColorGroups/${id}`),
+                { kind: "tableScan", file: "prepared/ed.obb", table: unlockTable },
+                ...eligibleGroups.map(({ unlock }) => ({ ...unlock.source, fields: [0] })),
+              ],
+        );
+        prove("hairstyleConfigs", itemId, `${field}.defaultColorBlockId`, defaultColorBlockId, [
+          defaultColorBlockId === null
+            ? regionAsset
+            : assetJson(input, `/regionIdToDefaultColor/${id}`),
+        ]);
         if (defaultColorBlockId !== null) blockIds.add(defaultColorBlockId);
-        return { id, name, colorGroupIds, defaultColorBlockId };
+        return [{ id, name, colorGroupIds, defaultColorBlockId }];
       });
-      prove("hairstyleConfigs", itemId, "regions", data, [assetJson(input, "")]);
-      return { itemId, regions: data };
+      diagnostics.hairstyles.push({ itemId, asset: assetJson(input, ""), regions: observed });
+      if (!published) return [];
+      prove("hairstyleConfigs", itemId, "regions", data, [assetJson(input, "/regions")]);
+      return [{ itemId, regions: data }];
     })
     .sort((left, right) => left.itemId - right.itemId);
 
@@ -166,20 +331,17 @@ export function readHairDyeing(
     })
     .sort((left, right) => left.itemId - right.itemId);
 
-  const unlocks = tables.byId(unlockTable);
-  for (const groupId of unlocks.keys()) if (groupId !== null) groupIds.add(groupId);
   const names = new Map<number, TableRow[]>();
   const flowerRules: HairDyeing["flowerRules"] = [];
   for (const row of tables.rows(ruleTable)) {
     const id = tables.id(row);
     const groupId = tables.uint(row, 2);
     assert.ok(groupId);
-    groupIds.add(groupId);
     const rows = names.get(groupId) ?? [];
     rows.push(row);
     names.set(groupId, rows);
     const unlock = unlocks.get(groupId);
-    if (!unlock || tables.uint(unlock, 2, 0) !== 1) continue;
+    if (!unlock?.data.flowerMatchEnabled) continue;
     const singleTag = token(tables, row, 4);
     const first = token(tables, row, 5);
     const second = token(tables, row, 6);
@@ -188,15 +350,30 @@ export function readHairDyeing(
     const pairTags: [string, string] | null =
       first && second ? (first <= second ? [first, second] : [second, first]) : null;
     flowerRules.push({ id, groupId, outputTag: token(tables, row, 3), singleTag, pairTags });
-    prove("flowerRules", id, "$", true, [table(row, 0, 2, 3, 4, 5, 6), table(unlock, 0, 2)]);
+    prove("flowerRules", id, "$", true, [table(row, 0, 2, 3, 4, 5, 6), unlock.flowerMatchSource]);
   }
   flowerRules.sort((left, right) => left.id - right.id);
 
-  const colorGroups = sortedIds(groupIds).map((id) => {
-    const group = groupsById.get(id);
-    assert.ok(group, `Unknown dyeing color group ${id}`);
+  const colorGroups = sortedIds(groupsById.keys()).flatMap((id) => {
+    const group = groupsById.get(id)!;
     const pointer = `/colorGroups/${group.index}`;
     const { colorBlockIds, iconPath } = group.entry;
+    const unlock = unlocks.get(id);
+    const nameRows = (names.get(id) ?? []).map((row) => {
+      const hash = tables.uint(row, 1);
+      return { row: table(row, 0, 1, 2), hash, ...textMap(hash) };
+    });
+    diagnostics.colorGroups.push({
+      id,
+      asset: assetJson(inputs.groups, pointer),
+      internalName: group.entry.name,
+      colorBlockIds,
+      unlock: unlock?.source ?? null,
+      nameRows,
+    });
+    const labels = new Set(nameRows.flatMap(({ name }) => (name === null ? [] : [name])));
+    assert.ok(labels.size <= 1, `Conflicting dyeing group names for ${id}`);
+    if (!unlock) return [];
     for (const blockId of colorBlockIds) blockIds.add(blockId);
     const displaySources = [assetJson(inputs.groups, `${pointer}/displayColor`)];
     let displayColor = rgba(group.entry.displayColor);
@@ -209,62 +386,35 @@ export function readHairDyeing(
         assetJson(inputs.blocks, `/colorBlocks/${block.index}/displayColor`),
       );
     }
-    const rows = names.get(id) ?? [];
-    const labels = new Set(rows.map((row) => tables.text(row, 1)));
-    assert.ok(labels.size <= 1, `Conflicting dyeing group names for ${id}`);
     const name = [...labels][0] ?? null;
-    const labelSources = rows.flatMap((row) => {
-      const hash = tables.uint(row, 1);
-      const text = hash === null ? undefined : tables.textmap[hash];
-      return [
-        table(row, 0, 1, 2),
-        ...(text?.nameZh
-          ? [
-              {
-                kind: "table" as const,
-                file: "prepared/ed.obb",
-                table: 1,
-                rowOffset: text.rowOffset,
-                fields: [1],
-              },
-            ]
-          : []),
-      ];
-    });
-    const row = unlocks.get(id);
-    const modeId = row ? tables.uint(row, 4) : null;
-    const mode = modeId === 1 || modeId === 2 || modeId === 3 ? modes.get(modeId) : null;
-    if (row) assert.ok(mode, `Unknown dyeing mode for ${id}`);
-    const unlock =
-      row && mode
-        ? {
-            mode,
-            sort: tables.uint(row, 1, 0),
-            flowerMatchEnabled: tables.uint(row, 2, 0) === 1,
-            unlockCost: amount(tables, row, 3),
-            dyeCost: mode === "partial" ? amount(tables, row, 5) : null,
-          }
-        : null;
-    prove("colorGroups", id, "name", name, labelSources);
+    const labelSources = nameRows.flatMap(({ row, textSource }) =>
+      textSource ? [row, textSource] : [row],
+    );
+    prove(
+      "colorGroups",
+      id,
+      "name",
+      name,
+      nameRows.length
+        ? labelSources
+        : [{ kind: "tableScan", file: "prepared/ed.obb", table: ruleTable }],
+      nameRows.length ? "textmap_unresolved" : "configuration_not_present",
+    );
     prove("colorGroups", id, "colorBlockIds", colorBlockIds, [
       assetJson(inputs.groups, `${pointer}/colorBlockIds`),
     ]);
     prove("colorGroups", id, "displayColor", displayColor, displaySources);
-    prove(
-      "colorGroups",
-      id,
-      "unlock",
-      unlock,
-      row ? [table(row, 0, 1, 2, 3, 4, ...(mode === "partial" ? [5] : []))] : [],
-    );
-    return {
-      id,
-      name,
-      colorBlockIds,
-      displayColor,
-      unlock,
-      icon: icon("hairColorGroup", id, iconPath, assetJson(inputs.groups, `${pointer}/iconPath`)),
-    };
+    prove("colorGroups", id, "unlock", unlock.data, [unlock.source]);
+    return [
+      {
+        id,
+        name,
+        colorBlockIds,
+        displayColor,
+        unlock: unlock.data,
+        icon: icon("hairColorGroup", id, iconPath, assetJson(inputs.groups, `${pointer}/iconPath`)),
+      },
+    ];
   });
   const colorBlocks = sortedIds(blockIds).map((id) => {
     const block = blocksById.get(id);
@@ -296,5 +446,6 @@ export function readHairDyeing(
   return {
     data: { hairstyleConfigs, flowerInputs, flowerRules, colorGroups, colorBlocks },
     proofs,
+    diagnostics,
   };
 }

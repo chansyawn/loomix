@@ -3,9 +3,11 @@ import path from "node:path";
 import crypto from "node:crypto";
 import assert from "node:assert/strict";
 import { z } from "zod";
+import { HashSchema } from "@loomix/schema/common";
 import { CategorySchema, CatalogSourceSchema, ItemIdSchema } from "../../schema.ts";
 import type { CatalogSource } from "../../schema.ts";
 import { catalogSource } from "../../../profile.ts";
+import { TableFieldSourceSchema } from "../../evidence/domain-schema.ts";
 
 export const admissionsFile = "supplemental-admissions.json";
 export const supplementalAdmissionsSchema = z
@@ -40,17 +42,53 @@ export interface FrozenAdmissions {
   sha256: string;
   file: string;
 }
-export type AdmissionSource =
-  | { kind: "encyclopedia"; file: string; table: 93; rowOffset: number }
-  | { kind: "manual"; file: string; pointer: string; sha256: string };
-export type EncyclopediaEvidence =
-  | { state: "present"; file: string; table: 93; rowOffset: number; listed: boolean }
-  | { state: "absent"; file: string; table: 93 };
-export interface RecordEvidence {
-  id: number;
-  admissionSources: AdmissionSource[];
-  encyclopedia: EncyclopediaEvidence;
-}
+const encyclopediaLocator = {
+  file: z.literal("prepared/ed.obb"),
+  table: z.literal(93),
+};
+const encyclopediaEvidenceSchema = z.discriminatedUnion("state", [
+  z.strictObject({
+    ...encyclopediaLocator,
+    state: z.literal("present"),
+    rowOffset: z.number().int().nonnegative(),
+    listed: z.boolean(),
+  }),
+  z.strictObject({ ...encyclopediaLocator, state: z.literal("absent") }),
+]);
+const appearanceSourceSchema = z.strictObject({
+  kind: z.enum(["initial", "televisionShop", "gacha", "gift"]),
+  rows: TableFieldSourceSchema.array().min(1),
+});
+const admissionSourceSchema = z.union([
+  z.strictObject({
+    ...encyclopediaLocator,
+    kind: z.literal("encyclopedia"),
+    rowOffset: z.number().int().nonnegative(),
+  }),
+  z.strictObject({
+    kind: z.literal("manual"),
+    file: z.string().min(1),
+    pointer: z.string().min(1),
+    sha256: HashSchema,
+  }),
+  appearanceSourceSchema,
+]);
+export const recordEvidenceSchema = z.strictObject({
+  id: ItemIdSchema,
+  admissionSources: admissionSourceSchema.array().min(1),
+  encyclopedia: encyclopediaEvidenceSchema,
+});
+export const appearanceInvestigationSchema = z.strictObject({
+  id: ItemIdSchema,
+  tag: z.enum(["发型", "眼睛", "眉毛", "肤色", "面饰"]),
+  reason: z.enum(["no_confirmed_acquisition", "unconfirmed_shop_group"]),
+  encyclopedia: encyclopediaEvidenceSchema,
+  rows: TableFieldSourceSchema.array(),
+});
+export type AppearanceSource = z.infer<typeof appearanceSourceSchema>;
+export type AppearanceInvestigation = z.infer<typeof appearanceInvestigationSchema>;
+export type RecordEvidence = z.infer<typeof recordEvidenceSchema>;
+export type EncyclopediaEvidence = z.infer<typeof encyclopediaEvidenceSchema>;
 export function parseAdmissions(
   bytes: Buffer,
   expected: CatalogSource = catalogSource,

@@ -38,7 +38,7 @@ export function validateHairDyeing(data: HairDyeing, items: ReadonlyMap<number, 
   }
   for (const [index, rule] of data.flowerRules.entries()) {
     const path = ["hairDyeing", "flowerRules", index];
-    if (!groups.get(rule.groupId)?.unlock?.flowerMatchEnabled)
+    if (!groups.get(rule.groupId)?.unlock.flowerMatchEnabled)
       issue([...path, "groupId"], `Color group does not support flower matching ${rule.groupId}`);
   }
   for (const [index, group] of data.colorGroups.entries()) {
@@ -47,7 +47,7 @@ export function validateHairDyeing(data: HairDyeing, items: ReadonlyMap<number, 
     for (const id of group.colorBlockIds)
       if (!blocks.has(id)) issue([...path, "colorBlockIds"], `Unknown color block ${id}`);
     for (const field of ["unlockCost", "dyeCost"] as const) {
-      const cost = group.unlock?.[field];
+      const cost = group.unlock[field];
       if (cost && !items.has(cost.itemId))
         issue([...path, "unlock", field], `Unknown dye material ${cost.itemId}`);
     }

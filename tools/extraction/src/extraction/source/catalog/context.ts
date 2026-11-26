@@ -10,6 +10,7 @@ import { createIconResolver } from "../../images/resolve.ts";
 import { createVocabulary } from "./vocabulary.ts";
 import type { Vocabulary } from "./vocabulary.ts";
 import { readAdmissions } from "./admissions.ts";
+import { readAppearanceAdmissions } from "./appearance.ts";
 import { classify, resolveMemberships } from "./scope.ts";
 import type { Scope } from "./scope.ts";
 import { buildIngredientCategories } from "./recipes.ts";
@@ -60,7 +61,17 @@ export function createContentContext(work: string): ContentContext {
   const vocabulary = createVocabulary(tables, gameplayTags.index, display);
   const main = tables.byId(profile.roots.items);
   const creatures = tables.byId(profile.roots.creatures);
-  const classification = classify(tables, vocabulary, main, readAdmissions(work));
+  const contentRows = tables.rows(profile.roots.content);
+  const encyclopedia = new Map(contentRows.map((row) => [tables.id(row), row]));
+  if (encyclopedia.size !== contentRows.length) throw new Error("Duplicate root 93 IDs");
+  const classification = classify(
+    tables,
+    vocabulary,
+    main,
+    readAdmissions(work),
+    encyclopedia,
+    readAppearanceAdmissions(tables, main, encyclopedia, vocabulary),
+  );
   const ui = tables.byId(profile.roots.ui, uiSignature(tables), classification.ids);
   const scope = resolveMemberships(tables, classification);
 

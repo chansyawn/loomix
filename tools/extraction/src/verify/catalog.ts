@@ -3,10 +3,13 @@ import path from "node:path";
 import type { Dataset } from "@loomix/schema/dataset";
 import type { ClientReadRecords } from "../extraction/model.ts";
 import type { Tables } from "../extraction/source/decode/tables.ts";
+import { hashTextKey } from "../extraction/source/decode/tables.ts";
+import type { EvidenceSource, FieldEvidence } from "../extraction/evidence/domain-schema.ts";
 import type { BinDataAsset } from "../extraction/types.ts";
 import { parseTagBinData } from "../extraction/source/decode/bindata.ts";
 import { readJson } from "../workflow/json.ts";
 import type { SupplementalAdmissions } from "../extraction/source/catalog/admissions.ts";
+import { verifyAppearanceAdmissions } from "./appearance.ts";
 
 const text = (value: string | null) =>
   value
@@ -27,7 +30,8 @@ export function verifyCatalogSources(
   observations: ClientReadRecords,
   tables: Tables,
   source: string,
-): void {
+  fieldEvidence: readonly FieldEvidence[] = [],
+): ReadonlySet<number> {
   const manifest = readJson<BinDataAsset[]>(path.join(source, "bindata-manifest.json"));
   const raw = (name: string) => {
     const entry = manifest.find((entry) => entry.Name === name);
@@ -71,9 +75,37 @@ export function verifyCatalogSources(
   const manual = readJson<SupplementalAdmissions>(
     path.join(source, "supplemental-admissions.json"),
   );
+  const appearance = verifyAppearanceAdmissions(
+    tables,
+    observations.diagnostics,
+    fieldEvidence,
+    (row) => ancestors(tokens(tables.string(row, 6)).filter((tag) => byName.has(tag))),
+    (tag) => {
+      const sources: EvidenceSource[] = [tagAsset, displayAsset].map((entry) => ({
+        kind: "asset",
+        file: entry.Source,
+        pathId: String(entry.PathID),
+      }));
+      const key = tagDisplay[byName.get(tag)!.TagId]?.nameInGame?.textId;
+      const label = key ? tables.textmap[hashTextKey(key)] : undefined;
+      if (label?.nameZh)
+        sources.push({
+          kind: "table",
+          file: "prepared/ed.obb",
+          table: 1,
+          rowOffset: label.rowOffset,
+          fields: [1],
+        });
+      return sources;
+    },
+  );
   const expectedBase = new Set([
-    ...tables.rows(93).map((row) => tables.id(row)),
+    ...tables
+      .rows(93)
+      .filter((row) => tables.byte(row, 1, 0) !== 1)
+      .map((row) => tables.id(row)),
     ...manual.entries.map((entry) => entry.id),
+    ...appearance.keys(),
   ]);
   assert.deepEqual(
     sorted(observations.diagnostics.collection.items.map((entry) => entry.id)),
@@ -127,16 +159,14 @@ export function verifyCatalogSources(
     const encyclopedia = tables.rows(93).find((row) => tables.id(row) === id);
     let kind: string;
     let category: string | null = null;
-    if (override && !encyclopedia) {
+    const appearanceTag = appearance.get(id);
+    if (appearanceTag) {
+      kind = "appearance";
+      const tag = byName.get(appearanceTag)!;
+      category = tables.key(tagDisplay[tag.TagId]?.nameInGame?.textId) ?? appearanceTag;
+    } else if (override && !encyclopedia) {
       kind = memberKinds[override.category]!;
       category = override.subcategory;
-    } else if (tables.byte(encyclopedia, 1, 0) === 1) {
-      kind = "appearance";
-      const names = ancestors(tokens(tables.string(row, 6)));
-      const appearance = ["发型", "眼睛", "眉毛", "面饰", "肤色"].filter((name) => names.has(name));
-      assert.equal(appearance.length, 1);
-      const tag = byName.get(appearance[0]!)!;
-      category = tables.key(tagDisplay[tag.TagId]?.nameInGame?.textId) ?? appearance[0]!;
     } else if ([500, 501].includes(tables.uint(row, 2, 0))) {
       const categories = tokens(tables.string(row, 6)).flatMap((name) =>
         collectionKinds[name] ? [collectionKinds[name]!] : [],
@@ -393,4 +423,5 @@ export function verifyCatalogSources(
     sorted([...references].filter((id) => !formal.has(id))),
     "Exact reference item closure",
   );
+  return new Set([...appearance].filter(([, tag]) => tag === "发型").map(([id]) => id));
 }
