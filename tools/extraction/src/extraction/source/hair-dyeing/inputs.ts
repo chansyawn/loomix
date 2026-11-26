@@ -29,7 +29,7 @@ const paletteEntry = z.object({
   iconPath: z.string().nullable(),
 });
 const groupsSchema = z.object({
-  colorGroups: paletteEntry.extend({ colorBlockIds: idList }).array(),
+  colorGroups: paletteEntry.extend({ name: z.string(), colorBlockIds: idList }).array(),
 });
 const blocksSchema = z.object({
   colorBlocks: paletteEntry
@@ -41,9 +41,19 @@ const blocksSchema = z.object({
 });
 const assetConfigKey = z.object({ configId: IdSchema, AssetType: z.number().int().nonnegative() });
 const idKey = z.string().regex(/^[1-9]\d*$/);
+const colorMaterial = z.object({
+  matProperties: z.object({ propertyName: z.string() }).array().nullish(),
+});
+const dyeingRegion = z.object({
+  regionId: IdSchema,
+  regionName: z.string().min(1),
+  colorMaterial: colorMaterial.nullish(),
+  colorMaterials: colorMaterial.array().nullish(),
+});
+export type DyeingRegion = z.infer<typeof dyeingRegion>;
 const hairstyleSchema = assetConfigKey.extend({
   AssetType: z.literal(0),
-  regions: z.object({ regionId: IdSchema, regionName: z.string().min(1) }).array(),
+  regions: dyeingRegion.array(),
   regionToColorGroups: z.record(idKey, idList).nullish(),
   regionIdToDefaultColor: z.record(idKey, IdSchema).nullish(),
 });
@@ -268,6 +278,8 @@ export function readDyeingInputs(work: string, index: IndexedAsset[]) {
     hairstyles,
   };
 }
+
+export type DyeingInputs = ReturnType<typeof readDyeingInputs>;
 
 export function dyeingSourceFiles(work: string): string[] {
   return fs.existsSync(path.join(work, manifestFile)) ? [configPackage] : [];

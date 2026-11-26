@@ -7,7 +7,11 @@ export function clientReadRecordsFixture(datasetId = "c".repeat(64)): ClientRead
   const dataset = datasetFixture();
   return {
     vignettes: { templates: [], candidates: [], proofs: [], rows: [] },
-    hairDyeing: { data: { ...emptyHairDyeing(), colorGroups: [], colorBlocks: [] }, proofs: [] },
+    hairDyeing: {
+      data: { ...emptyHairDyeing(), colorGroups: [], colorBlocks: [] },
+      proofs: [],
+      diagnostics: { hairstyles: [], colorGroups: [] },
+    },
     context: { ...dataset.context, datasetId },
     source: dataset.source,
     gameplayTags: dataset.gameplayTags,
@@ -51,6 +55,7 @@ export function clientReadRecordsFixture(datasetId = "c".repeat(64)): ClientRead
       admissions: [],
       exclusions: [],
       investigation: {
+        appearances: [],
         plants: [],
         details: [],
         acquisitionHints: { displayRows: [], hintRows: [] },

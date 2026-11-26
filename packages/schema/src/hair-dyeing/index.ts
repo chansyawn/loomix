@@ -41,15 +41,13 @@ export const HairDyeingSchema = z.strictObject({
       colorBlockIds: IdSchema.array(),
       displayColor: rgba,
       icon,
-      unlock: z
-        .strictObject({
-          mode: z.enum(["full", "partial", "colorful"]),
-          sort: z.number().int().nonnegative(),
-          flowerMatchEnabled: z.boolean(),
-          unlockCost: ItemAmountSchema.nullable(),
-          dyeCost: ItemAmountSchema.nullable(),
-        })
-        .nullable(),
+      unlock: z.strictObject({
+        mode: z.enum(["full", "partial", "colorful"]),
+        sort: z.number().int().nonnegative(),
+        flowerMatchEnabled: z.boolean(),
+        unlockCost: ItemAmountSchema.nullable(),
+        dyeCost: ItemAmountSchema.nullable(),
+      }),
     })
     .array(),
   colorBlocks: z

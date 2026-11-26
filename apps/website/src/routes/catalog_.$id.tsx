@@ -10,6 +10,7 @@ import { createResourceReader } from "@/infrastructure/resources";
 import { parseNeighbors } from "@loomix/schema/neighbors";
 import { catalogGameplayUses, vignetteGameplayUses } from "@/features/omnidex/gameplay-uses-model";
 import { readVignetteTemplates } from "@/features/vignettes/data";
+import { readHairstylePalette } from "@/features/clothing/hair-dyeing";
 import { Button } from "@/ui/components/button";
 export const Route = createFileRoute("/catalog_/$id")({
   ssr: false,
@@ -37,6 +38,10 @@ export const Route = createFileRoute("/catalog_/$id")({
       uses: catalogGameplayUses(data, id),
       readVignetteUses: async () =>
         vignetteGameplayUses(data, record, await readVignetteTemplates(load)),
+      readHairDyeing:
+        record.kind === "appearance" && record.category === "发型"
+          ? () => readHairstylePalette(load, id, data.image)
+          : undefined,
     };
   },
   pendingComponent: () => <DetailPageLoading label="正在加载物品详情" />,
@@ -54,7 +59,7 @@ export const Route = createFileRoute("/catalog_/$id")({
   component: DetailRoute,
 });
 function DetailRoute() {
-  const { record, model, uses, readVignetteUses } = Route.useLoaderData();
+  const { record, model, uses, readVignetteUses, readHairDyeing } = Route.useLoaderData();
   return (
     <CatalogEntryPage
       key={record.id}
@@ -62,6 +67,7 @@ function DetailRoute() {
       model={model}
       uses={uses}
       readVignetteUses={readVignetteUses}
+      readHairDyeing={readHairDyeing}
     />
   );
 }

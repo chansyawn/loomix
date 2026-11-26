@@ -15,7 +15,28 @@ export const profile = {
   wordMask: 0x53020253,
   shortMask: 0x5555,
   assetPrefix: "assets/moleres/rel/sres/",
+  appearance: {
+    tables: { cards: 113, goods: 659, pools: 267, rewards: 269, gifts: 153, giftItems: 154 },
+    fields: {
+      cardItem: 3,
+      initial: 4,
+      goodsGroup: 1,
+      goodsCard: 2,
+      rewardGroup: 7,
+      rewardCard: 4,
+      rewardItem: 13,
+      giftItem: 1,
+    },
+    shopGroups: [
+      { id: 10, tag: "发型" },
+      { id: 11, tag: "眼睛" },
+    ],
+    unconfirmedShopGroup: 82,
+    poolIds: [300001, 300002, 300004],
+    faceGift: { giftId: 160007, itemId: 60673 },
+  },
   hairDyeing: {
+    regionText: { base: 2263953776, partial: 2263953777 },
     configPackage: "PetitPlanet_Data/Persistent/AssetBundle/blocks/00/00000002.blk",
     spritePackage: "PetitPlanet_Data/Persistent/AssetBundle/blocks/00/00000003.blk",
     spriteAtlas:
@@ -182,4 +203,5 @@ export const expectedCatalog = {
   ...profile.expectedEncyclopedia,
   "plants.item": 208,
   "miscellaneous.item": 23,
+  "clothing.appearance": 59,
 };

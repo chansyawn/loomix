@@ -277,6 +277,7 @@ export function readClientRecords(source: string, datasetId: string): ClientRead
       admissions: context.scope.admissionEvidence,
       exclusions: collection.plants.exclusions,
       investigation: {
+        appearances: context.scope.appearances.investigation,
         plants: collection.plants.investigation,
         details: detailInvestigation(context),
         acquisitionHints: readAcquisitionHints(context.tables),

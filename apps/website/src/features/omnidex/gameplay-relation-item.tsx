@@ -1,4 +1,4 @@
-import { Link, type LinkProps } from "@tanstack/react-router";
+import { Link, type LinkComponentProps } from "@tanstack/react-router";
 import { ArrowUpRightIcon } from "lucide-react";
 import { Item, ItemActions, ItemContent, ItemMedia } from "@/ui/components/item";
 import { cn } from "@/ui/lib/utils";
@@ -17,7 +17,7 @@ export function GameplayRelationItem({
   image: string | null;
   quantity?: number;
   note?: string;
-  destination?: LinkProps;
+  destination?: LinkComponentProps<"a">;
   variant?: "default" | "inline";
 }) {
   const origin = useOmnidexOrigin();
@@ -36,7 +36,7 @@ export function GameplayRelationItem({
   );
 
   if (variant === "inline") {
-    const className =
+    const layoutClass =
       "inline-flex max-w-full min-w-0 items-center gap-1.5 text-sm/5 whitespace-nowrap";
     const content = (
       <>
@@ -59,14 +59,14 @@ export function GameplayRelationItem({
       <Link
         {...link}
         className={cn(
-          className,
+          layoutClass,
           "group/relation-link outline-none focus-visible:ring-2 focus-visible:ring-ring",
         )}
       >
         {content}
       </Link>
     ) : (
-      <div className={className}>{content}</div>
+      <div className={layoutClass}>{content}</div>
     );
   }
 

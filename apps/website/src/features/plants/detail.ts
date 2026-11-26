@@ -6,6 +6,24 @@ import type { IngredientsData } from "../ingredients/model";
 import { plantDetailNavigation } from "./detail-navigation-model";
 import { plantMatureForms } from "./growth";
 import type { View } from "./search";
+import type { FlowerHybridizationSeries, PlantItem, PlantSeries } from "./model";
+
+function flowerHybridizationSeries(
+  series: PlantSeries,
+  itemsById: ReadonlyMap<number, PlantItem>,
+): FlowerHybridizationSeries[] {
+  if (!series.flowerHybridization) return [];
+  const members = [...new Set(series.plantIds)].flatMap((id) => {
+    const item = itemsById.get(id);
+    return item?.category === "花" ? [{ id, name: item.name, image: item.image }] : [];
+  });
+  const memberIds = new Set(members.map(({ id }) => id));
+  const recipes = series.flowerHybridization.filter(
+    ({ parentItemIds, productItemId }) =>
+      memberIds.has(productItemId) && parentItemIds.every((id) => memberIds.has(id)),
+  );
+  return recipes.length ? [{ id: series.id, name: series.name, members, recipes }] : [];
+}
 
 export function parsePlantId(value: string): number {
   const id = Number(value);
@@ -34,6 +52,13 @@ export function plantsDetail(
       sourceTrees: (data.sourceTreesByItemId.get(id) ?? []).flatMap(
         (tree) => data.itemRefs.get(tree.id) ?? [],
       ),
+      hybridization:
+        record.category === "花"
+          ? data.series
+              .filter((series) => series.plantIds?.includes(id))
+              .sort((left, right) => left.id - right.id)
+              .flatMap((series) => flowerHybridizationSeries(series, itemsById))
+          : [],
     };
   }
   if (view === "seeds") {
@@ -53,6 +78,7 @@ export function plantsDetail(
     record,
     navigation,
     items: record.plantIds?.flatMap((plantId) => itemsById.get(plantId) ?? []) ?? null,
+    hybridization: flowerHybridizationSeries(record, itemsById),
   };
 }
 

@@ -7,6 +7,8 @@ import type { Tables } from "../decode/tables.ts";
 import { expandTags } from "./model.ts";
 import { profile } from "../../../profile.ts";
 import type { Vocabulary } from "./vocabulary.ts";
+import { encyclopediaEvidence } from "./appearance.ts";
+import type { readAppearanceAdmissions } from "./appearance.ts";
 
 export interface OutsideMember {
   id: number;
@@ -19,6 +21,7 @@ export interface Classification {
   rows: TableRow[];
   encyclopedia: Map<number, TableRow>;
   admissionEvidence: RecordEvidence[];
+  appearances: ReturnType<typeof readAppearanceAdmissions>;
   manual: Map<number, ManualEvidence>;
   ids: Set<number>;
   groups: Map<number, RecordType>;
@@ -40,27 +43,28 @@ export function classify(
   >,
   main: Map<number | null, TableRow>,
   admissions: FrozenAdmissions,
+  encyclopedia: Map<number, TableRow>,
+  appearances: ReturnType<typeof readAppearanceAdmissions>,
 ): Classification {
-  const rows = tables.rows(profile.roots.content);
-  const ids = new Set(rows.map((row) => tables.id(row)));
-  if (ids.size !== rows.length) throw new Error("Duplicate root 93 IDs");
+  const rows = [...encyclopedia.values()];
+  const ids = new Set<number>();
   const groups = new Map<number, RecordType>();
   const categories = new Map<number, string | null>();
   for (const row of rows) {
     const id = tables.id(row);
     const item = main.get(id);
     if (!item) throw new Error(`No main item ${id}`);
+    if (
+      tables.byte(row, profile.fields.content.appearanceFlag, 0) === 1 ||
+      appearances.admitted.has(id)
+    )
+      continue;
+    ids.add(id);
     const itemTags = vocabulary.tags(item, profile.fields.items.tagType);
     const type = tables.uint(item, profile.fields.items.type);
     let group: RecordType;
     let category: string | null = null;
-    if (tables.byte(row, profile.fields.content.appearanceFlag, 0) === 1) {
-      group = "clothing.appearance";
-      const expanded = expandTags(itemTags, vocabulary.tagIndex);
-      const matches = ["发型", "眼睛", "眉毛", "面饰", "肤色"].filter((name) => expanded.has(name));
-      if (matches.length !== 1) throw new Error(`Unclassified appearance ${id}`);
-      category = vocabulary.renderTags(matches) ?? matches[0];
-    } else if (type != null && [500, 501].includes(type)) {
+    if (type != null && [500, 501].includes(type)) {
       const matches = itemTags.filter((name) => vocabulary.setTags[name]);
       if (matches.length !== 1) throw new Error(`Unclassified set ${id}`);
       group = vocabulary.setTags[matches[0]];
@@ -83,20 +87,28 @@ export function classify(
     groups.set(id, group);
     categories.set(id, category);
   }
-  const encyclopedia = new Map(rows.map((row) => [tables.id(row), row]));
-  const admissionEvidence: RecordEvidence[] = rows.map((row) => ({
-    id: tables.id(row),
+  const admissionEvidence: RecordEvidence[] = [...ids].map((id) => ({
+    id,
     admissionSources: [
-      { kind: "encyclopedia", file: "prepared/ed.obb", table: 93, rowOffset: row.rowOffset },
+      {
+        kind: "encyclopedia",
+        file: "prepared/ed.obb",
+        table: 93,
+        rowOffset: encyclopedia.get(id)!.rowOffset,
+      },
     ],
-    encyclopedia: {
-      state: "present",
-      file: "prepared/ed.obb",
-      table: 93,
-      rowOffset: row.rowOffset,
-      listed: tables.byte(row, 1, 0) === 0,
-    },
+    encyclopedia: encyclopediaEvidence(tables, encyclopedia.get(id)),
   }));
+  for (const [id, appearance] of appearances.admitted) {
+    ids.add(id);
+    groups.set(id, "clothing.appearance");
+    categories.set(id, appearance.category);
+    admissionEvidence.push({
+      id,
+      admissionSources: [...appearance.sources],
+      encyclopedia: encyclopediaEvidence(tables, encyclopedia.get(id)),
+    });
+  }
   const manual = new Map<number, ManualEvidence>();
   for (const [index, entry] of admissions.data.entries.entries()) {
     const item = main.get(entry.id);
@@ -122,14 +134,14 @@ export function classify(
       admissionEvidence.push({
         id: entry.id,
         admissionSources: [source],
-        encyclopedia: { state: "absent", file: "prepared/ed.obb", table: 93 },
+        encyclopedia: encyclopediaEvidence(tables, encyclopedia.get(entry.id)),
       });
     ids.add(entry.id);
     groups.set(entry.id, group);
     categories.set(entry.id, entry.subcategory);
   }
   admissionEvidence.sort((a, b) => a.id - b.id);
-  return { rows, ids, groups, categories, encyclopedia, admissionEvidence, manual };
+  return { rows, ids, groups, categories, encyclopedia, admissionEvidence, manual, appearances };
 }
 
 export function resolveMemberships(tables: Tables, classification: Classification): Scope {

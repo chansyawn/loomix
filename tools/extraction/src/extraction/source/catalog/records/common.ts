@@ -133,6 +133,16 @@ export function buildCategory(
   context: ContentContext,
   record: RecordContext,
 ): void {
+  const appearance = context.scope.appearances.admitted.get(record.id);
+  if (appearance) {
+    const source = evidence(context, record.main, profile.fields.items.tagType);
+    const tag = context.vocabulary.tagIndex.findByName(appearance.tag);
+    builder.put("subcategory", appearance.category, {
+      ...source,
+      sources: [...(source.sources ?? []), ...(tag ? context.gameplayTags.sources(tag.id) : [])],
+    });
+    return;
+  }
   builder.put(
     "subcategory",
     context.scope.categories.get(record.id),

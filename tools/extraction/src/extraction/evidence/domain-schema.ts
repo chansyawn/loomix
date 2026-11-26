@@ -5,23 +5,26 @@ export const EntityRefSchema = z.strictObject({
   collection: z.string().min(1),
   id: z.union([IdSchema, z.string().min(1)]),
 });
+export const TableFieldSourceSchema = z.strictObject({
+  kind: z.literal("table"),
+  file: z.string().min(1),
+  table: z.number().int().nonnegative(),
+  rowOffset: z.number().int().nonnegative(),
+  fields: z.number().int().nonnegative().array().min(1),
+});
+export type TableFieldSource = z.infer<typeof TableFieldSourceSchema>;
+export const AssetJsonSourceSchema = z.strictObject({
+  kind: z.literal("assetJson"),
+  file: z.string().min(1),
+  source: z.string().min(1),
+  pathId: z.string().min(1),
+  pointer: z.string().refine((value) => value === "" || value.startsWith("/")),
+  sha256: HashSchema,
+});
 export const EvidenceSourceSchema = z.discriminatedUnion("kind", [
-  z.strictObject({
-    kind: z.literal("table"),
-    file: z.string().min(1),
-    table: z.number().int().nonnegative(),
-    rowOffset: z.number().int().nonnegative(),
-    fields: z.number().int().nonnegative().array().min(1),
-  }),
+  TableFieldSourceSchema,
   z.strictObject({ kind: z.literal("asset"), file: z.string().min(1), pathId: z.string().min(1) }),
-  z.strictObject({
-    kind: z.literal("assetJson"),
-    file: z.string().min(1),
-    source: z.string().min(1),
-    pathId: z.string().min(1),
-    pointer: z.string().refine((value) => value === "" || value.startsWith("/")),
-    sha256: HashSchema,
-  }),
+  AssetJsonSourceSchema,
   z.strictObject({
     kind: z.literal("tableScan"),
     file: z.string().min(1),

@@ -8,6 +8,7 @@ import { PlantDropsInfo, PlantRelatedItems } from "./related-items";
 import { ItemIngredientTags } from "../ingredients/item-usage";
 import { plantSeriesFields } from "./series-fields";
 import { seedDetailPresentation } from "./seed-detail-presentation";
+import { FlowerHybridization, flowerHybridizationSectionId } from "./flower-hybridization";
 
 type PlantOrSeriesDetail = Exclude<PlantsDetail, { kind: "seed" }>;
 
@@ -79,7 +80,19 @@ function plantDetailSections(detail: PlantOrSeriesDetail): DetailSection[] {
         title: "食材标签",
         content: <ItemIngredientTags tags={detail.cooking.tags} />,
       });
-  } else {
+  }
+  if (detail.hybridization.length)
+    sections.push({
+      id: flowerHybridizationSectionId,
+      title: "杂交配方",
+      content: (
+        <FlowerHybridization
+          series={detail.hybridization}
+          currentId={detail.kind === "item" ? detail.record.id : undefined}
+        />
+      ),
+    });
+  if (detail.kind === "series") {
     sections.push({
       id: "plant-members",
       title: "系列成员",

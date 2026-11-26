@@ -19,6 +19,7 @@ import { verifyStarseaSources } from "../verify/starsea.ts";
 import { verifyVignettes } from "../verify/vignettes.ts";
 import { verifyFlowerHybridization } from "../verify/flower-hybridization.ts";
 import { verifyHairDyeing } from "../verify/hair-dyeing.ts";
+import { readDyeingInputs } from "./source/hair-dyeing/inputs.ts";
 import { verifyAcquisitionHints } from "../verify/acquisition-hints.ts";
 import type { IndexedAsset } from "./types.ts";
 
@@ -53,8 +54,21 @@ export async function verifyCandidate(directory: string, writeReport = true): Pr
     imageBindings,
     originals,
   );
-  verifyCatalogSources(dataset, observations, tables, source);
-  verifyHairDyeing(dataset, tables, source, index);
+  const hairstyleIds = verifyCatalogSources(
+    dataset,
+    observations,
+    tables,
+    source,
+    fieldEvidence.fields,
+  );
+  verifyHairDyeing(
+    dataset,
+    tables,
+    readDyeingInputs(source, index),
+    hairstyleIds,
+    observations.hairDyeing.diagnostics,
+    fieldEvidence.fields,
+  );
   verifyFlowerHybridization(dataset.catalog, fieldEvidence.fields, bundle.flowerHybridization);
   verifyCollectionFields(observations.diagnostics.collection, tables);
   for (const proof of observations.detailProofs) verifyProofSources(proof, tables);

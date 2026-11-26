@@ -2,12 +2,51 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import type { Dataset } from "@loomix/schema/dataset";
-import type { FieldEvidenceReport } from "../extraction/evidence/domain-schema.ts";
+import type {
+  EvidenceSource,
+  FieldEvidence,
+  FieldEvidenceReport,
+} from "../extraction/evidence/domain-schema.ts";
 import type { Tables } from "../extraction/source/decode/tables.ts";
 import { digest } from "../workflow/hashing.ts";
 import { within } from "../paths.ts";
 import { readJson } from "../workflow/json.ts";
 import { evidenceEntity, evidenceField } from "../extraction/assemble/validate-evidence.ts";
+
+export function verifyFieldSources(
+  fields: readonly FieldEvidence[],
+  collection: string,
+  id: number,
+  fieldPath: string,
+  sources: EvidenceSource[],
+  status: FieldEvidence["status"] = "confirmed",
+  reasonCode: FieldEvidence["reasonCode"] = null,
+): void {
+  const proof = fields.find(
+    (entry) =>
+      entry.entity.collection === collection &&
+      entry.entity.id === id &&
+      entry.fieldPath === fieldPath,
+  );
+  const label = `${collection}:${id}.${fieldPath}`;
+  assert.ok(proof, `Missing independent field evidence ${label}`);
+  assert.equal(proof.status, status, `Independent field evidence status ${label}`);
+  assert.equal(proof.reasonCode, reasonCode, `Independent field evidence reason ${label}`);
+  const normalize = (source: EvidenceSource) => {
+    const { file, ...rest } = source;
+    return JSON.stringify(
+      Object.entries({
+        ...rest,
+        file: source.kind === "asset" ? file : file.replace(/^source\//, ""),
+      }).sort(([left], [right]) => left.localeCompare(right, "en")),
+    );
+  };
+  assert.deepEqual(
+    [...new Set(proof.sources.map(normalize))].sort(),
+    [...new Set(sources.map(normalize))].sort(),
+    `Independent field evidence sources ${label}`,
+  );
+}
 
 export function verifyEvidence(
   directory: string,

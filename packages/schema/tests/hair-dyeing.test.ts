@@ -63,9 +63,9 @@ test("校验染色跨文档引用并保留区域缺省、显式空和组外默�
       {
         itemId: 60688,
         regions: [
-          { id: 1, name: "底色", colorGroupIds: [262], defaultColorBlockId: 267 },
-          { id: 2, name: "挑染", colorGroupIds: null, defaultColorBlockId: null },
-          { id: 3, name: "发绳变色", colorGroupIds: [], defaultColorBlockId: null },
+          { id: 1, name: "整体发色", colorGroupIds: [262], defaultColorBlockId: 267 },
+          { id: 2, name: "挑染发色", colorGroupIds: null, defaultColorBlockId: null },
+          { id: 3, name: "挑染发色", colorGroupIds: [], defaultColorBlockId: null },
         ],
       },
     ],
@@ -97,6 +97,13 @@ test("校验染色跨文档引用并保留区域缺省、显式空和组外默�
   };
   expect(parseDataset(dataset).hairDyeing).toEqual(dataset.hairDyeing);
   expect(referencedImages(dataset)).toEqual([{ assetId: "default-hair-color", variant: "icon" }]);
+  const unlockedGroup = dataset.hairDyeing.colorGroups[0]!;
+  expect(() =>
+    parseDataset({
+      ...dataset,
+      hairDyeing: { ...dataset.hairDyeing, colorGroups: [{ ...unlockedGroup, unlock: null }] },
+    }),
+  ).toThrow(/unlock/);
   const missingReferences = parseDataset(dataset);
   missingReferences.hairDyeing.colorBlocks.pop();
   missingReferences.catalog.items.pop();

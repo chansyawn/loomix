@@ -15,6 +15,16 @@ export function buildRecord(context: ContentContext, record: RecordContext): Rec
   const builder = new RecordBuilder(record.group, record.id, listed);
   buildCommon(builder, context, record);
   const [category, kind] = record.group.split(".");
+  const appearance = context.scope.appearances.admitted.get(record.id);
+  if (appearance) {
+    const classification = appearance.sources.flatMap(({ rows }) =>
+      rows.map((source) => ({ table: source.table, field: source.fields, sources: [source] })),
+    );
+    builder.put("category", category, classification);
+    builder.put("kind", kind, classification);
+    buildCategory(builder, context, record);
+    return builder;
+  }
   const manual = context.scope.manual.get(record.id);
   const classification = manual ?? [
     evidence(context, record.main, [2, 6, 15]),

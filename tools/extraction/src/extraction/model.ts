@@ -56,6 +56,7 @@ export interface ClientReadRecords {
     admissions: import("./source/catalog/admissions.ts").RecordEvidence[];
     exclusions: unknown;
     investigation: {
+      appearances: import("./source/catalog/admissions.ts").AppearanceInvestigation[];
       plants: unknown;
       details: unknown;
       acquisitionHints: AcquisitionHints;

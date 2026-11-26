@@ -11,6 +11,7 @@
 | [neighbors](src/neighbors/index.ts)                 | 友邻及其内嵌资料                     |
 | [starsea](src/starsea/index.ts)                     | 星海区域、星屿与探索关系             |
 | [vignettes](src/vignettes/index.ts)                 | 小栖地模板、布景条件与关联资料       |
+| [hair-dyeing](src/hair-dyeing/index.ts)             | 发型染色、色组解锁与花卉匹配         |
 | [dataset](src/dataset/index.ts)                     | 游戏资料集与跨领域校验               |
 | [assets](src/assets/index.ts)                       | 图片引用、网站图片文件与图片索引     |
 | [website-resources](src/website-resources/index.ts) | 网站资源清单、文档组装与资源覆盖校验 |
@@ -30,6 +31,8 @@
 `category` 与 `furnitureCategory` 分别保存展示分类与家具分类。家具尺寸、生物体型范围和菜肴力气以数值保存，展示文案由网站拼接；页面 DTO 与展示层命名不进入共享契约。
 
 未知值在可空字段中显式表示为 `null`，与已确认的空数组不同。例如制作配方的 `materials: null` 表示材料未知，不表示免费制作。结构严格拒绝附加字段，恒为未知的候选字段不进入发布契约。
+
+染发区域名称使用游戏文案。发布色组带有解锁配置，区域只引用可选色组。默认色块由区域单独引用，也可来自可选组之外。收录依据见[业务确认与调查](../../tools/extraction/docs/business-investigation.md#外观与染发)。
 
 ## 资料集、图片与发布
 
