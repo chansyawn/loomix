@@ -75,7 +75,7 @@ function clothingDetailSections(
   if (hairDyeing && (hairDyeing.status !== "ready" || hairDyeing.regions.length > 0))
     sections.push({
       id: hairDyeingSectionId,
-      title: "染色调色盘",
+      title: "染发",
       content: <HairDyeingPalette state={hairDyeing} />,
     });
   return sections;
