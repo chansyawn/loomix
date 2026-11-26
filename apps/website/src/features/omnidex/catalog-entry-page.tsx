@@ -3,6 +3,8 @@ import type { CatalogEntryDetail } from "./catalog-entry-detail";
 import { DetailPage } from "@/features/detail-page/detail-page";
 import { findWikiScroll, wikiScrollId } from "@/infrastructure/wiki-scroll";
 import { clothingDetailPresentation } from "../clothing/detail-presentation";
+import type { ReadHairDyeing } from "../clothing/hair-dyeing";
+import { useHairDyeing, type HairDyeingState } from "../clothing/use-hair-dyeing";
 import { creaturesDetailPresentation } from "../creatures/detail-presentation";
 import { dishesDetailPresentation } from "../dishes/detail-presentation";
 import { furnitureDetailPresentation } from "../furniture/detail-presentation";
@@ -32,11 +34,13 @@ export function CatalogEntryPage({
   model,
   uses,
   readVignetteUses,
+  readHairDyeing,
 }: {
   record: CatalogEntryRow;
   model: CatalogEntryDetail;
   uses?: ReturnType<typeof catalogGameplayUses>;
   readVignetteUses?: () => Promise<GameplayUse[]>;
+  readHairDyeing?: ReadHairDyeing;
 }) {
   const content = useRef<HTMLDivElement>(null);
   const restore = useElementScrollRestoration({ id: wikiScrollId });
@@ -71,8 +75,9 @@ export function CatalogEntryPage({
           content: <GameplayUses itemId={record.id} uses={{ ...uses, vignette }} />,
         }
       : undefined;
+  const hairDyeing = useHairDyeing(readHairDyeing);
   const { image, description, fields, sections, titleActions, navigation, showEmptyExtras } =
-    catalogDetailPresentation(model);
+    catalogDetailPresentation(model, hairDyeing);
   return (
     <div ref={content}>
       <DetailPage
@@ -99,12 +104,15 @@ export function CatalogEntryPage({
   );
 }
 
-function catalogDetailPresentation(model: CatalogEntryDetail): CatalogDetailPresentation {
+function catalogDetailPresentation(
+  model: CatalogEntryDetail,
+  hairDyeing: HairDyeingState | undefined,
+): CatalogDetailPresentation {
   switch (model.category) {
     case "furniture":
       return furnitureDetailPresentation(model.detail);
     case "clothing":
-      return clothingDetailPresentation(model.detail);
+      return clothingDetailPresentation(model.detail, hairDyeing);
     case "creatures":
       return creaturesDetailPresentation(model.detail);
     case "plants":

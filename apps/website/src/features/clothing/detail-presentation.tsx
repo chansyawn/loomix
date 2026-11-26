@@ -5,8 +5,13 @@ import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presen
 import { RecordImage } from "@/features/omnidex/record-image";
 import type { ClothingPageDetail } from "./detail";
 import { formatNeighborOutfitPrice } from "../neighbor-outfit/presentation";
+import { HairDyeingPalette, hairDyeingSectionId } from "./hair-dyeing-palette";
+import type { HairDyeingState } from "./use-hair-dyeing";
 
-export function clothingDetailPresentation(detail: ClothingPageDetail): CatalogDetailPresentation {
+export function clothingDetailPresentation(
+  detail: ClothingPageDetail,
+  hairDyeing?: HairDyeingState,
+): CatalogDetailPresentation {
   const { record, navigation, counterpart } = detail;
   return {
     image: <RecordImage key={record.image} image={record.image} name={record.name} eager />,
@@ -20,7 +25,7 @@ export function clothingDetailPresentation(detail: ClothingPageDetail): CatalogD
     ),
     fields: clothingDetailFields(detail),
     navigation: navigation ?? undefined,
-    sections: clothingDetailSections(detail),
+    sections: clothingDetailSections(detail, hairDyeing),
   };
 }
 
@@ -50,7 +55,10 @@ function clothingDetailFields(detail: ClothingPageDetail): [string, string | nul
   }
 }
 
-function clothingDetailSections(detail: ClothingPageDetail): DetailSection[] {
+function clothingDetailSections(
+  detail: ClothingPageDetail,
+  hairDyeing: HairDyeingState | undefined,
+): DetailSection[] {
   const sections: DetailSection[] = [];
   if (detail.kind === "set" && detail.items?.length)
     sections.push({
@@ -63,6 +71,12 @@ function clothingDetailSections(detail: ClothingPageDetail): DetailSection[] {
           ))}
         </div>
       ),
+    });
+  if (hairDyeing && (hairDyeing.status !== "ready" || hairDyeing.regions.length > 0))
+    sections.push({
+      id: hairDyeingSectionId,
+      title: "染色调色盘",
+      content: <HairDyeingPalette state={hairDyeing} />,
     });
   return sections;
 }

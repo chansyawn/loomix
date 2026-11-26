@@ -50,6 +50,7 @@ export function plantSeriesFixture(fields: Partial<PlantSeries> = {}): PlantSeri
     quality: null,
     seriesName: null,
     plantIds: null,
+    flowerHybridization: null,
     summary: plantSummaryFixture(),
     ...fields,
   };

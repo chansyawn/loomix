@@ -161,6 +161,7 @@ export function buildPlantsData(
         quality: group.quality,
         seriesName: group.name,
         plantIds: group.memberIds,
+        flowerHybridization: group.flowerHybridization,
         summary: summarize(members),
       };
     });

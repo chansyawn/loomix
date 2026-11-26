@@ -10,7 +10,7 @@ import {
 } from "@loomix/schema/catalog";
 import type { ImageIndex, ImageRef } from "@loomix/schema/assets";
 import { emptyDataset } from "@loomix/schema/dataset";
-import { emptyHairDyeing } from "@loomix/schema/hair-dyeing";
+import { emptyHairDyeing, type HairDyeing } from "@loomix/schema/hair-dyeing";
 import {
   documentPath,
   WEBSITE_RESOURCE_MANIFEST_FILE,
@@ -69,12 +69,13 @@ export function catalogFixture(
     record: CatalogEntrySummary,
     memberKind: CollectionMemberKind,
     memberIds: number[] | null,
+    flowerHybridization: Collection["flowerHybridization"] = null,
   ) =>
     catalog.collections.push({
       ...catalogBase(record),
       memberKind,
       memberIds,
-      flowerHybridization: null,
+      flowerHybridization,
     });
   for (const record of view.furniture?.items ?? []) {
     const [width, depth] = record.size?.split("x").map(Number) ?? [];
@@ -140,7 +141,8 @@ export function catalogFixture(
         })),
       },
     });
-  for (const record of view.plants?.series ?? []) group(record, "plant", record.plantIds);
+  for (const record of view.plants?.series ?? [])
+    group(record, "plant", record.plantIds, record.flowerHybridization);
   for (const record of view.dishes?.items ?? [])
     add({
       ...catalogBase(record),
@@ -182,9 +184,10 @@ export function catalogFixture(
     }
   return { catalog: CatalogSchema.parse(catalog), gameplayTags };
 }
-export function imageIndexFixture(catalog: Catalog): ImageIndex {
+export function imageIndexFixture(catalog: Catalog, hairDyeing = emptyHairDyeing()): ImageIndex {
   const dataset = emptyDataset(fixtureContext, fixtureSource);
   dataset.catalog = catalog;
+  dataset.hairDyeing = hairDyeing;
   return {
     images: referencedImages(dataset).map((image: ImageRef) => ({
       ...image,
@@ -199,9 +202,11 @@ export function imageIndexFixture(catalog: Catalog): ImageIndex {
 export function fixtureRequest({
   catalog,
   gameplayTags,
+  hairDyeing = emptyHairDyeing(),
 }: {
   catalog: Catalog;
   gameplayTags: GameplayTags;
+  hairDyeing?: HairDyeing;
 }): typeof fetch {
   const documents = {
     "gameplay-tags": gameplayTags,
@@ -209,8 +214,8 @@ export function fixtureRequest({
     neighbors: { neighbors: [] },
     starsea: { regions: [], islets: [], iconStyles: [] },
     vignettes: { templates: [], fallbackItems: [] },
-    "hair-dyeing": emptyHairDyeing(),
-    "image-index": imageIndexFixture(catalog),
+    "hair-dyeing": hairDyeing,
+    "image-index": imageIndexFixture(catalog, hairDyeing),
   };
   const files = WebsiteResourceDocumentTypeSchema.options.map((kind) => {
     const bytes = JSON.stringify(documents[kind]);

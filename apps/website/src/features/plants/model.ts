@@ -1,4 +1,4 @@
-import type { Growth, ItemOf } from "@loomix/schema/catalog";
+import type { Collection, FlowerHybridizationRecipe, Growth, ItemOf } from "@loomix/schema/catalog";
 import type { CatalogEntrySummary, IngredientItem } from "../omnidex-view";
 import type { InspoCardFaceData } from "../omnidex/inspo-card";
 
@@ -50,7 +50,14 @@ export type PlantItem = CatalogEntrySummary & {
 export type PlantSeries = CatalogEntrySummary & {
   seriesName: string | null;
   plantIds: number[] | null;
+  flowerHybridization: Collection["flowerHybridization"];
   summary: PlantSummary;
+};
+export type FlowerHybridizationSeries = {
+  id: number;
+  name: string;
+  members: Pick<PlantItem, "id" | "name" | "image">[];
+  recipes: FlowerHybridizationRecipe[];
 };
 export interface PlantsData {
   items: PlantItem[];
