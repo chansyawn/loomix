@@ -2,12 +2,8 @@ import { useRouterState } from "@tanstack/react-router";
 import { NeighborsReturnLink } from "@/features/neighbors/navigation";
 import { StarseaReturnLink } from "@/features/starsea/navigation";
 import { VignetteReturnLink } from "@/features/vignettes/navigation";
-import { OmnidexReturnLink } from "@/features/omnidex/navigation";
-import {
-  catalogEntryRouteId,
-  omnidexOrigin,
-  omnidexReturnLocation,
-} from "@/features/omnidex/entry-location";
+import { OmnidexReturnLink, useOmnidexOrigin } from "@/features/omnidex/navigation";
+import { catalogEntryRouteId, omnidexReturnLocation } from "@/features/omnidex/entry-location";
 import {
   omnidexNavigation,
   homeItem,
@@ -27,7 +23,7 @@ import { Separator } from "@/ui/components/separator";
 import { SidebarTrigger } from "@/ui/components/sidebar";
 
 export function SiteHeader() {
-  const { pathname, detail, origin, detailTitle } = useRouterState({
+  const { pathname, detail, detailTitle } = useRouterState({
     select: (state) => {
       const data: unknown = state.matches.at(-1)?.loaderData;
       const record: unknown =
@@ -35,7 +31,6 @@ export function SiteHeader() {
       return {
         pathname: state.location.pathname,
         detail: state.matches.some((match) => match.routeId === catalogEntryRouteId),
-        origin: omnidexOrigin(state.location),
         detailTitle:
           record &&
           typeof record === "object" &&
@@ -46,6 +41,7 @@ export function SiteHeader() {
       };
     },
   });
+  const origin = useOmnidexOrigin();
   const neighborDetail = /^\/neighbors\/[^/]+\/?$/.test(pathname);
   const starseaDetail = /^\/starsea\/islets\/[^/]+\/?$/.test(pathname);
   const vignetteDetail = /^\/vignettes\/[^/]+\/?$/.test(pathname);

@@ -1,9 +1,6 @@
 import { useRouterState } from "@tanstack/react-router";
-import {
-  catalogEntryRouteId,
-  omnidexOrigin,
-  omnidexReturnLocation,
-} from "../omnidex/entry-location";
+import { catalogEntryRouteId, omnidexReturnLocation } from "../omnidex/entry-location";
+import { useOmnidexOrigin } from "../omnidex/navigation";
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
 import GithubIcon from "@/assets/icons/github.svg?react";
@@ -30,12 +27,14 @@ import {
 } from "@/ui/components/sidebar";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const activePath = useRouterState({
-    select: (state) =>
-      state.matches.some((match) => match.routeId === catalogEntryRouteId)
-        ? omnidexReturnLocation(omnidexOrigin(state.location)).to
-        : state.location.pathname,
+  const { detail, pathname } = useRouterState({
+    select: (state) => ({
+      detail: state.matches.some((match) => match.routeId === catalogEntryRouteId),
+      pathname: state.location.pathname,
+    }),
   });
+  const origin = useOmnidexOrigin();
+  const activePath = detail ? omnidexReturnLocation(origin).to : pathname;
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
