@@ -2,6 +2,10 @@
 
 络米星集的网站应用，提供图鉴浏览、筛选、详情及友邻资料查询。使用 React、TanStack Start / Router、Tailwind CSS 与 shadcn/ui，通过 Vite+ 开发和构建，部署到 Cloudflare Workers。依赖版本以 [package.json](package.json) 和[工作区配置](../../pnpm-workspace.yaml)为准。
 
+## 安装网页应用
+
+点击侧栏底部的「安装应用」，桌面端显示为带加号的网格图标。浏览器可以调用原生安装时会弹出确认框，其余情况会显示各平台的手动安装步骤。安装后从桌面或主屏幕图标打开，查询资料仍需联网。
+
 ## 本地开发
 
 依赖安装与资源准备见[根 README](../../README.md#本地开发)，环境文件规则也由根 README 维护。命令在仓库根目录执行：
