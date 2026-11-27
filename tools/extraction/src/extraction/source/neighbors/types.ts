@@ -32,8 +32,6 @@ export interface NeighborExtractionAudit {
     outfits: number;
     matchingOutfits: number;
     neighborSpecificOutfits: number;
-    tokenPricedOutfits: number;
-    tokenPricedOffers: number;
   };
   exclusions: NeighborExclusion[];
   records: NeighborEvidence[];

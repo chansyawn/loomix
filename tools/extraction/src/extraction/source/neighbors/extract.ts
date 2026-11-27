@@ -81,8 +81,6 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
       neighborSpecificOutfits: clothing.filter(
         (outfit) => outfit.relationship === "neighbor-specific",
       ).length,
-      tokenPricedOutfits: clothing.filter((outfit) => outfit.offers.length > 0).length,
-      tokenPricedOffers: clothing.reduce((sum, outfit) => sum + outfit.offers.length, 0),
     },
     exclusions: exclusions.sort((a, b) => compareText(a.kind, b.kind) || compareText(a.key, b.key)),
     records: records.sort(

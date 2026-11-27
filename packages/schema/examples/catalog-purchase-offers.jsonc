@@ -1,0 +1,262 @@
+// 格式 22 的完整 catalog 示例，节选自客户端 0.95.2、数据修订 1449213。
+// 正式发布时使用 JSON；这里使用 JSONC 以便解释字段。版本、语言与来源沿用外层资源清单。
+{
+  // 共 5 家商店。id 供报价引用；名称用于展示。
+  // shortfallPayment 表示主币种余额不足时，可用另一种货币等额补足差额。
+  // null 表示本资料集没有收录该店的补足规则。
+  "shops": [
+    { "id": "gelian", "name": "格连商店", "shortfallPayment": null },
+    { "id": "luomiTv", "name": "络米电视购", "shortfallPayment": null },
+    {
+      "id": "neighborWardrobe",
+      "name": "友邻衣橱",
+      "shortfallPayment": {
+        // oneToOne 按一比一抵扣差额。主币种和补足币种均引用下方 items。
+        "kind": "oneToOne",
+        "primaryCurrencyItemId": 200014,
+        "substituteCurrencyItemId": 200002,
+      },
+    },
+    { "id": "starryMarket", "name": "星空街市", "shortfallPayment": null },
+    { "id": "giftGallery", "name": "万礼馆", "shortfallPayment": null },
+  ],
+
+  // 每条报价有自己的身份。金额指配置的一次购买花费，是否上架取决于游戏进度与店铺状态。
+  "purchaseOffers": [
+    {
+      // 通用商品表使用「商店 + 商品 ID」。商品 305303 交付物品 1163。
+      "id": "gelian:305303",
+      "shopId": "gelian",
+      "deliveredItemId": 1163,
+      "currencyItemId": 200002,
+      "price": { "kind": "fixed", "amount": 290 },
+    },
+    {
+      // 格连的另一个商品也交付简约饮水器，报价为 360 碎钱。物品详情应列出两种金额。
+      "id": "gelian:311502",
+      "shopId": "gelian",
+      "deliveredItemId": 1163,
+      "currencyItemId": 200002,
+      "price": { "kind": "fixed", "amount": 360 },
+    },
+    {
+      "id": "luomiTv:2",
+      "shopId": "luomiTv",
+      "deliveredItemId": 30200,
+      "currencyItemId": 200003,
+      "price": {
+        // 当前商品按每日已购次数配置价格。purchasedToday = 0 对应今天第一次购买。
+        // 常规商品行另有 300 足迹，保留在提取记录。此处仅列有依据的三个次数。
+        "kind": "dailyPurchaseCount",
+        "entries": [
+          { "purchasedToday": 0, "amount": 100 },
+          { "purchasedToday": 1, "amount": 200 },
+          { "purchasedToday": 2, "amount": 200 },
+        ],
+      },
+    },
+    {
+      // 玩家款眠月睡袍，使用足迹。交付物 ID 与下方友邻款不同。
+      "id": "luomiTv:302",
+      "shopId": "luomiTv",
+      "deliveredItemId": 60515,
+      "currencyItemId": 200003,
+      "price": { "kind": "fixed", "amount": 1500 },
+    },
+    {
+      // 同一玩家款在电视购另有一条 1800 足迹的报价，两条都保留。
+      "id": "luomiTv:515",
+      "shopId": "luomiTv",
+      "deliveredItemId": 60515,
+      "currencyItemId": 200003,
+      "price": { "kind": "fixed", "amount": 1800 },
+    },
+    {
+      // 友邻款眠月睡袍，使用友邻服饰币。碎钱只出现在店铺的补足规则中。
+      "id": "neighborWardrobe:50001",
+      "shopId": "neighborWardrobe",
+      "deliveredItemId": 1160515,
+      "currencyItemId": 200014,
+      "price": { "kind": "fixed", "amount": 600 },
+    },
+    {
+      // 第二条真实商品记录。页面可合并相同报价，提取与验收保留两个商品身份。
+      "id": "neighborWardrobe:50601",
+      "shopId": "neighborWardrobe",
+      "deliveredItemId": 1160515,
+      "currencyItemId": 200014,
+      "price": { "kind": "fixed", "amount": 600 },
+    },
+    {
+      "id": "starryMarket:8101",
+      "shopId": "starryMarket",
+      "deliveredItemId": 200007,
+      "currencyItemId": 200006,
+      "price": {
+        "kind": "dailyPurchaseCount",
+        "entries": [
+          // 当日首次兑换礼帽魔术券明确花费 0 街乐果冻。金额缺失的商品不据此填零。
+          { "purchasedToday": 0, "amount": 0 },
+          { "purchasedToday": 1, "amount": 2 },
+          { "purchasedToday": 2, "amount": 2 },
+          { "purchasedToday": 3, "amount": 4 },
+          { "purchasedToday": 4, "amount": 4 },
+          { "purchasedToday": 5, "amount": 8 },
+        ],
+      },
+    },
+    {
+      // 万礼馆有独立礼品表。此处的 2 对应知秋杏花毯，和电视购商品 2 的次数价无关。
+      "id": "giftGallery:2:2255",
+      "shopId": "giftGallery",
+      "deliveredItemId": 2255,
+      "currencyItemId": 200005,
+      "price": { "kind": "fixed", "amount": 35 },
+    },
+    {
+      // 万礼馆使用「商店 + 礼品表首字段 + 交付物 ID」。多行共用首字段 9。
+      "id": "giftGallery:9:2190",
+      "shopId": "giftGallery",
+      "deliveredItemId": 2190,
+      "currencyItemId": 200005,
+      "price": { "kind": "fixed", "amount": 20 },
+    },
+    {
+      "id": "giftGallery:9:2191",
+      "shopId": "giftGallery",
+      "deliveredItemId": 2191,
+      "currencyItemId": 200005,
+      "price": { "kind": "fixed", "amount": 25 },
+    },
+  ],
+
+  // 物品沿用项目现有结构。样例包含上面引用的全部交付物和货币。
+  // 家具和服饰保留原资料。image、tagIds 仍按既有契约引用外部图片索引和玩法标签文档。
+  "items": [
+    {
+      "id": 1163,
+      "kind": "furniture",
+      "name": "简约饮水器",
+      "description": "冷热皆宜，但最好还是，“多喝热水。”",
+      "image": {
+        "assetId": "1d9e4636583ac0bc45f9a38cf52ea545ee5070b07bd5742ffabe7c903fd070a8",
+        "variant": "icon",
+      },
+      "quality": 0,
+      "tagIds": [
+        1444409490, 958474486, 30053, 20024, 2131241439, 20035, 59345809, 293888416, 30001,
+      ],
+      "category": "功能家具",
+      "furnitureCategory": "功能·厨房电器",
+      "size": { "width": 1, "depth": 1 },
+    },
+    {
+      "id": 2190,
+      "kind": "furniture",
+      "name": "鲀鲀茶杯",
+      "description": "斑腰单孔鲀造型的茶杯，\n比鲀更圆，比鲀更能装水。",
+      "image": {
+        "assetId": "662dbebb8381aee55aa826f3e0e2e6a9d18786a8258dd6a92734f3dfa4360c0d",
+        "variant": "icon",
+      },
+      "quality": 2,
+      "tagIds": [30054, 30075, 541035352, 242481332, 20031, 293888416, 30001],
+      "category": "装饰物",
+      "furnitureCategory": "装饰·摆件",
+      "size": null,
+    },
+    {
+      "id": 2191,
+      "kind": "furniture",
+      "name": "锦鲤存钱罐",
+      "description": "三色锦鲤造型的存钱罐，\n有锦鲤的好运加持……也不一定能增加里面的钱。",
+      "image": {
+        "assetId": "89cc92259cc7f52ead0a2beed02ea9ab7607fe319d67f21cd9a19b339ee844a7",
+        "variant": "icon",
+      },
+      "quality": 2,
+      "tagIds": [67678979, 30075, 30065, 20024, 20016, 20031, 293888416, 30001],
+      "category": "装饰物",
+      "furnitureCategory": "装饰·家居用品",
+      "size": null,
+    },
+    {
+      "id": 2255,
+      "kind": "furniture",
+      "name": "知秋杏花毯",
+      "description": "银杏叶拼接制成的花毯，\n叶落知秋，但花毯永不凋零。",
+      "image": {
+        "assetId": "cb22cf8c3b0cbfe43526c886803eb81541eaf492af8926aa65d79c2dad27b57f",
+        "variant": "icon",
+      },
+      "quality": 2,
+      "tagIds": [30004, 30075, 242481332, 20027, 293888416, 30001],
+      "category": "装饰物",
+      "furnitureCategory": "装饰·地毯",
+      "size": null,
+    },
+    {
+      // 星锚已有可发布的报价，仅供引用的身份足以用于显示商品名称。
+      "id": 30200,
+      "kind": "reference",
+      "name": "星锚",
+      "description": "用于星海旅行，是小船在星海中航行时停靠星屿所需要的特制船锚。（test）",
+    },
+    {
+      "id": 60515,
+      "kind": "clothing",
+      "name": "眠月睡袍",
+      "description": "以星月为灵感的睡袍，\n绵绵软软，一枕月夜。",
+      "image": {
+        "assetId": "291e81e15499b2a777b35b1c84a73e19d9278802d4882dae1a0540a929366e98",
+        "variant": "icon",
+      },
+      "quality": 1,
+      "tagIds": [784656847, 1661079091, 20024, 1896707410, 958023880],
+      "category": "连体装",
+    },
+    // 货币复用目录物品身份。客户端有多个同名「碎钱」，交易货币使用 200002。
+    { "id": 200002, "kind": "reference", "name": "碎钱", "description": null },
+    { "id": 200003, "kind": "reference", "name": "足迹", "description": null },
+    {
+      "id": 200005,
+      "kind": "reference",
+      "name": "万象礼券",
+      "description": "墨尔斯为感谢大家在万象馆建设\n方面的贡献所赠的礼券。\n可用于兑换万礼馆中的礼品。",
+    },
+    {
+      "id": 200006,
+      "kind": "reference",
+      "name": "街乐果冻",
+      "description": "街市中人人都爱的果冻，\n可以在街市的兑换处兑换礼品。",
+    },
+    {
+      "id": 200007,
+      "kind": "reference",
+      "name": "礼帽魔术券",
+      "description": "可以在礼帽魔术大转盘转转盘的礼券，在兑换处兑换。\n西薇用手印的，真的有手印。",
+    },
+    { "id": 200014, "kind": "reference", "name": "友邻服饰币", "description": null },
+    {
+      // playerItemId 保存玩家同款的关系。服饰自身不再重复维护数值 price。
+      "id": 1160515,
+      "kind": "neighborOutfit",
+      "name": "眠月睡袍",
+      "description": null,
+      "image": {
+        "assetId": "291e81e15499b2a777b35b1c84a73e19d9278802d4882dae1a0540a929366e98",
+        "variant": "icon",
+      },
+      "quality": 1,
+      "tagIds": [784656847, 1661079091, 20024, 1896707410, 958023880, 590454286],
+      "category": "连衣裙",
+      "neighborId": null,
+      "playerItemId": 60515,
+      "bodyTypes": ["small", "medium", "big"],
+    },
+  ],
+
+  // catalog 的另外两个既有字段。本例仅节选报价及其引用物品，集合与创想卡集各取空数组。
+  "collections": [],
+  "inspoBoxes": [],
+}

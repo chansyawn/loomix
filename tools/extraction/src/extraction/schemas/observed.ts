@@ -23,28 +23,6 @@ export const ObservedCookingRecipeSchema = z.strictObject({
   tastes: TastesSchema.nullable(),
   slots: ObservedRecipeSlotSchema.array().nullable(),
 });
-export const ObservedTradeSchema = z.strictObject({
-  sellPrice: z.number().nonnegative().nullable(),
-  offers: z
-    .strictObject({
-      id: IdSchema,
-      goodsGroupId: IdSchema,
-      buyPrice: z.number().nonnegative().nullable(),
-      currencyItemId: IdSchema.nullable(),
-      stock: z.number().nonnegative().nullable(),
-      refresh: NullableTextSchema,
-      conditions: z
-        .strictObject({
-          field: z.number().int().nonnegative(),
-          kind: z.string().min(1),
-          parameters: NullableTextSchema,
-        })
-        .array()
-        .nullable(),
-    })
-    .array()
-    .nullable(),
-});
 export const ObservedDropSchema = z.strictObject({
   itemId: IdSchema,
   dropGroupId: IdSchema.nullable(),
@@ -83,7 +61,6 @@ export function createObservedSeedSchema<I extends z.ZodType>(image: I) {
     description: NullableTextSchema,
     quality: QualitySchema.nullable(),
     growthId: IdSchema,
-    trade: ObservedTradeSchema.nullable(),
   });
 }
 

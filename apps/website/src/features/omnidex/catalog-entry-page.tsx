@@ -1,5 +1,6 @@
 import { recordFields, type CatalogEntryRow } from "./catalog";
 import type { CatalogEntryDetail } from "./catalog-entry-detail";
+import type { PurchaseQuote } from "./purchase-quotes";
 import { DetailPage } from "@/features/detail-page/detail-page";
 import { findWikiScroll, wikiScrollId } from "@/infrastructure/wiki-scroll";
 import { clothingDetailPresentation } from "../clothing/detail-presentation";
@@ -32,12 +33,14 @@ const usesSectionId = "gameplay-uses";
 export function CatalogEntryPage({
   record,
   model,
+  quotes,
   uses,
   readVignetteUses,
   readHairDyeing,
 }: {
   record: CatalogEntryRow;
   model: CatalogEntryDetail;
+  quotes?: PurchaseQuote[];
   uses?: ReturnType<typeof catalogGameplayUses>;
   readVignetteUses?: () => Promise<GameplayUse[]>;
   readHairDyeing?: ReadHairDyeing;
@@ -78,6 +81,24 @@ export function CatalogEntryPage({
   const hairDyeing = useHairDyeing(readHairDyeing);
   const { image, description, fields, sections, titleActions, navigation, showEmptyExtras } =
     catalogDetailPresentation(model, hairDyeing);
+  const detailSections = [...sections];
+  if (quotes?.length)
+    detailSections.push({
+      id: "purchase-offers",
+      title: "配置报价（每次购买）",
+      content: (
+        <dl className="grid gap-3">
+          {quotes.map(({ id, shopName, priceLabel, shortfall }) => (
+            <div key={id} className="grid gap-1">
+              <dt className="font-medium">{shopName}</dt>
+              <dd>{priceLabel}</dd>
+              {shortfall && <dd className="text-sm text-muted-foreground">{shortfall}</dd>}
+            </div>
+          ))}
+        </dl>
+      ),
+    });
+  if (usesSection) detailSections.push(usesSection);
   return (
     <div ref={content}>
       <DetailPage
@@ -96,7 +117,7 @@ export function CatalogEntryPage({
           )
         }
         fields={mergeDetailFields(fields, recordFields(record))}
-        sections={usesSection ? [...sections, usesSection] : sections}
+        sections={detailSections}
         relatedNavigation={catalogEntryNavigation(navigation, record.id, origin)}
         empty={showEmptyExtras && <CatalogDetailEmpty />}
       />

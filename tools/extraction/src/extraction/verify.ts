@@ -7,6 +7,7 @@ import { decodeTextMap } from "./source/decode/textmap.ts";
 import { ObbReader } from "./source/decode/obb.ts";
 import { readJson, writeJson } from "../workflow/json.ts";
 import { verifyCatalogSources } from "../verify/catalog.ts";
+import { verifyPurchaseOffers } from "../verify/purchases.ts";
 import { verifyCraftingRelations } from "../verify/crafting.ts";
 import { verifyCookingRecipes } from "../verify/cooking.ts";
 import { verifyCollectionFields } from "../verify/collection-fields.ts";
@@ -42,6 +43,13 @@ export async function verifyCandidate(directory: string, writeReport = true): Pr
   const textmap = readJson<{ byHash: unknown }>(path.join(source, "prepared/textmap-zh-en.json"));
   assert.deepEqual(textmap.byHash, decodeTextMap(reader).byHash, "Frozen TextMap decodes from OBB");
   const tables = new Tables(path.join(source, "prepared"));
+  verifyPurchaseOffers(
+    dataset.catalog,
+    fieldEvidence.fields,
+    tables,
+    observations.diagnostics.purchases,
+    dataset.source.dataRevision,
+  );
   const index = readJson<IndexedAsset[]>(path.join(source, "prepared/asset-index.json"));
   verifyAcquisitionHints(observations.diagnostics.investigation.acquisitionHints, tables);
   verifyStarseaSources(dataset, observations.starsea.diagnostics, tables);

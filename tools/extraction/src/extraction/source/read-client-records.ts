@@ -17,6 +17,7 @@ import type { EvidenceSource } from "../evidence/domain-schema.ts";
 import type { ClientReadRecords } from "../model.ts";
 import { imageCollector } from "./images.ts";
 import { readCatalog } from "./catalog/read.ts";
+import { readPurchaseOffers } from "./catalog/purchases/read.ts";
 import { readCraftingRecipes } from "./catalog/crafting/read.ts";
 import { isPlaceholderIcon } from "./catalog/crafting/cards.ts";
 import { FORMAT_VERSION } from "@loomix/schema/common";
@@ -200,7 +201,9 @@ export function readClientRecords(source: string, datasetId: string): ClientRead
         .map(({ id }) => id),
     ),
   );
+  const purchases = readPurchaseOffers(context.tables);
   const catalog = readCatalog({
+    purchases: purchases.data,
     observations: collection.catalog,
     context,
     crafting,
@@ -259,6 +262,7 @@ export function readClientRecords(source: string, datasetId: string): ClientRead
     source: { ...catalogSource, manifestId: profile.manifestId },
     gameplayTags: { tags: context.gameplayTags.tags.map(({ enumName: _enumName, ...tag }) => tag) },
     catalog: catalog.catalog,
+    purchaseProofs: purchases.proofs,
     ingredientItemIds: [
       ...new Set(context.ingredientCategoryBuild.associations.map((entry) => entry.itemId)),
     ].sort((a, b) => a - b),
@@ -273,6 +277,7 @@ export function readClientRecords(source: string, datasetId: string): ClientRead
     plantProofs: collection.plants.evidence,
     neighborProofs: neighbors.audit.records,
     diagnostics: {
+      purchases: purchases.diagnostics,
       collection: collection.catalog,
       admissions: context.scope.admissionEvidence,
       exclusions: collection.plants.exclusions,

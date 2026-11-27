@@ -86,7 +86,6 @@ export const profile = {
     neighborPreferenceCategories: 337,
     neighborOutfits: 474,
     neighborOutfitSlots: 416,
-    neighborOutfitGoods: 659,
   },
   fields: {
     items: {
@@ -175,8 +174,6 @@ export const profile = {
     total: 131,
     matching: 94,
     neighborSpecific: 37,
-    tokenPricedOutfits: 94,
-    tokenPricedOffers: 185,
   },
   expectedEncyclopedia: {
     "furniture.set": 42,

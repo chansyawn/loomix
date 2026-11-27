@@ -55,7 +55,13 @@ export function catalogFixture(
     ingredientCategories?: readonly FixtureIngredientCategory[];
   } = {},
 ) {
-  const catalog: Catalog = { items: [], collections: [], inspoBoxes: [] };
+  const catalog: Catalog = {
+    items: [],
+    collections: [],
+    inspoBoxes: [],
+    shops: [],
+    purchaseOffers: [],
+  };
   const gameplayTags = tagsFixture();
   for (const category of view.ingredientCategories ?? [])
     gameplayTags.tags.push({
@@ -289,7 +295,6 @@ const kindDefaults: Record<string, Record<string, unknown>> = {
     neighborId: null,
     playerItemId: null,
     bodyTypes: ["medium"],
-    price: null,
   },
 };
 

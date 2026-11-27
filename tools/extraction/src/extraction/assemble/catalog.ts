@@ -1,4 +1,5 @@
 import type { Catalog, InspoBox, Item } from "@loomix/schema/catalog";
+import { purchaseItemIds } from "@loomix/schema/catalog";
 import type { ImageRef } from "@loomix/schema/assets";
 import type { CatalogObservation } from "../model.ts";
 
@@ -58,7 +59,11 @@ export function assembleCatalog(
   const formal = new Set(
     [...items.filter((item) => item.kind !== "reference"), ...collections].map((entry) => entry.id),
   );
-  const references = new Set([...ingredientIds, ...referencedItemIds]);
+  const references = new Set([
+    ...ingredientIds,
+    ...referencedItemIds,
+    ...purchaseItemIds(observed),
+  ]);
   for (const item of items) {
     if (item.kind === "inspoCard")
       for (const material of item.recipe.materials ?? []) references.add(material.itemId);
@@ -70,6 +75,8 @@ export function assembleCatalog(
   for (const id of references)
     if (!available.has(id) && !formal.has(id)) throw new Error(`Missing reference identity ${id}`);
   return {
+    shops: observed.shops,
+    purchaseOffers: observed.purchaseOffers,
     items: items
       .filter(
         (item) => item.kind !== "reference" || (references.has(item.id) && !formal.has(item.id)),

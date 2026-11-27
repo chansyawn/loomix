@@ -3,6 +3,8 @@ import type { FieldEvidence } from "../evidence/domain-schema.ts";
 
 // 证据只能指向发布数据中实际存在的实体；友邻子数据均通过友邻实体的字段路径定位。
 export const evidenceCollections = {
+  "catalog.shops": (dataset: Dataset) => dataset.catalog.shops,
+  "catalog.purchaseOffers": (dataset: Dataset) => dataset.catalog.purchaseOffers,
   "catalog.items": (dataset: Dataset) => dataset.catalog.items,
   "catalog.collections": (dataset: Dataset) => dataset.catalog.collections,
   "catalog.inspoBoxes": (dataset: Dataset) => dataset.catalog.inspoBoxes,
@@ -27,7 +29,7 @@ export function evidenceEntity(
   id: string | number,
 ): object | undefined {
   const entries = Reflect.get(evidenceCollections, collection) as
-    | ((dataset: Dataset) => readonly ({ id: number } | { itemId: number })[])
+    | ((dataset: Dataset) => readonly ({ id: string | number } | { itemId: number })[])
     | undefined;
   return entries?.(dataset).find(
     (entry) => String("id" in entry ? entry.id : entry.itemId) === String(id),

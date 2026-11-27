@@ -3,7 +3,6 @@ import type { ObservedGrowth, ObservedSeed } from "./schema.ts";
 import type { PlantingContext } from "./growth.ts";
 import { plantingItemName, readCropGrowth, readStagedGrowth } from "./growth.ts";
 import { plainText } from "../model.ts";
-import { trade } from "../collection/details/client.ts";
 import {
   CollectionEvidenceBuilder,
   localizedSources,
@@ -29,7 +28,6 @@ function seedObservation(context: PlantingContext, id: number) {
       new Set([id]),
     )
     .get(id);
-  const commerce = trade(context, id);
   const seed: ObservedSeed = {
     id,
     name: plantingItemName(context, id),
@@ -37,9 +35,8 @@ function seedObservation(context: PlantingContext, id: number) {
     quality: display ? tables.uint(display, 15, 0) : null,
     image: null,
     growthId: id,
-    trade: commerce.value,
   };
-  return { seed, display, commerce };
+  return { seed, display };
 }
 
 function recordEvidence(
@@ -50,7 +47,7 @@ function recordEvidence(
   sources: CollectionSource[],
 ) {
   const { tables, main } = context;
-  const { seed, display, commerce } = observation;
+  const { seed, display } = observation;
   const put = (
     owner: "seed" | "growth",
     field: string,
@@ -84,7 +81,6 @@ function recordEvidence(
       localizedSources(tables, display, [0, 15, 27]),
       "seed_display_configuration_missing",
     );
-  put("seed", "trade", seed.trade, commerce.sources, "commerce_runtime_semantics_unconfirmed");
   for (const [field, value] of Object.entries(growth))
     if (field !== "stages") put("growth", field, value, sources, "elapsed_days_not_confirmed");
   growth.stages.forEach((stage) => {

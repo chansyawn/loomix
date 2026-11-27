@@ -33,12 +33,6 @@ export function verifyProofSources(proof: CollectionEvidence, tables: Tables): v
         }),
       );
       add(70, (row) => effectIds.has(tables.id(row)), [0, 1, 4, 10, 19]);
-    } else if (proof.field.startsWith("detail.trade")) {
-      add(
-        659,
-        (row) => tables.uint(row, 2) === proof.id,
-        [0, 1, 2, 9, 10, 12, 13, 17, 18, 22, 23, 24],
-      );
     } else if (proof.field.startsWith("detail.treeDrops")) {
       const tree = tables.rows(708).find((row) => tables.id(row) === proof.id);
       if (tree) {

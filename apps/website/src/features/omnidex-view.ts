@@ -22,6 +22,7 @@ import type { IngredientTagSource } from "./ingredients/tag-source";
 import { buildPlantsData } from "./plants/catalog";
 import type { PlantsData } from "./plants/model";
 import { indexInspoCards, type InspoCardView } from "./omnidex/inspo-card";
+import { indexPurchaseQuotes, purchasePriceSummary } from "./omnidex/purchase-quotes";
 export type { PlantItem, PlantSeries } from "./plants/model";
 export type { DishEffect } from "@loomix/schema/catalog";
 
@@ -70,7 +71,7 @@ export type ClothingItem = CategorizedRecord & {
 };
 export type ClothingAppearance = CategorizedRecord;
 export type NeighborOutfitItem = CategorizedRecord &
-  Pick<ItemOf<"neighborOutfit">, "bodyTypes" | "price">;
+  Pick<ItemOf<"neighborOutfit">, "bodyTypes"> & { priceLabel: string | null };
 export type MiscellaneousItem = CatalogEntrySummary;
 export type FurnitureSet = CatalogEntrySummary & {
   seriesName: string | null;
@@ -102,6 +103,7 @@ export type IngredientItem = CatalogEntrySummary & {
   browsable?: boolean;
 };
 export interface OmnidexView {
+  purchaseQuotes: ReturnType<typeof indexPurchaseQuotes>;
   ingredientTagSource: IngredientTagSource;
   ingredientItemsById: Map<number, IngredientItem>;
   furniture: { sets: FurnitureSet[]; items: FurnitureItem[] };
@@ -152,6 +154,7 @@ export function toOmnidexView(
 ): OmnidexView {
   const image = createImageResolver(imageIndex);
   const cards = indexInspoCards(catalog, imageIndex);
+  const purchaseQuotes = indexPurchaseQuotes(catalog);
   const resolveTags = createRecordTagResolver(tagIndex);
   const tagsFor = (
     record: { tagIds: readonly number[] },
@@ -168,6 +171,7 @@ export function toOmnidexView(
   });
   const listed = catalog.items.filter(isListedItem).filter((item) => item.kind !== "inspoCard");
   const view: OmnidexView = {
+    purchaseQuotes,
     ingredientTagSource: createIngredientTagSource(tagIndex, listed),
     ingredientItemsById: new Map(),
     furniture: { sets: [], items: [] },
@@ -228,7 +232,7 @@ export function toOmnidexView(
           ...common,
           category: item.category,
           bodyTypes: item.bodyTypes,
-          price: item.price,
+          priceLabel: purchasePriceSummary(purchaseQuotes.get(item.id)),
         });
         break;
       case "creature":

@@ -4,7 +4,9 @@ import { ImageRefSchema } from "../assets/index.ts";
 import { CollectionSchema, ItemSchema } from "./items.ts";
 import type { Collection, Item } from "./items.ts";
 import { validateCatalog } from "./validate.ts";
+import { ShopSchema, PurchaseOfferSchema } from "./purchase.ts";
 
+export * from "./purchase.ts";
 export * from "./items.ts";
 export * from "./recipes.ts";
 export * from "./growth.ts";
@@ -18,6 +20,8 @@ export const InspoBoxSchema = z.strictObject({
   image: ImageRefSchema.extend({ variant: z.literal("illustration") }).nullable(),
 });
 export const CatalogSchema = z.strictObject({
+  shops: ShopSchema.array(),
+  purchaseOffers: PurchaseOfferSchema.array(),
   items: ItemSchema.array(),
   collections: CollectionSchema.array(),
   inspoBoxes: InspoBoxSchema.array(),

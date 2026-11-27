@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import type { CatalogObservation, WithImageUses, ImageUse, SourceProof } from "../../model.ts";
 import type { EvidenceSource } from "../../evidence/domain-schema.ts";
 import { readOutfits } from "./outfits.ts";
+import { purchaseItemIds, type PurchaseCatalog } from "@loomix/schema/catalog";
 import { readReferences } from "./references.ts";
 import { localizedSources, tableSource } from "./collection/evidence.ts";
 import type {
@@ -77,6 +78,7 @@ function toSlots(
 }
 
 export function readCatalog({
+  purchases,
   observations,
   context,
   crafting,
@@ -86,6 +88,7 @@ export function readCatalog({
   neighborImage,
   outfitSourcesById,
 }: {
+  purchases: PurchaseCatalog;
   observations: CollectionObservations;
   context: ContentContext;
   crafting: ReturnType<typeof readCraftingRecipes>;
@@ -320,6 +323,7 @@ export function readCatalog({
   assert.deepEqual(formal, admitted, "Exact catalog admission union");
   verifyIngredientMemberships(context, items);
   const references = new Set<number>([
+    ...purchaseItemIds(purchases),
     ...referencedItemIds,
     ...context.ingredientCategoryBuild.associations.map((association) => association.itemId),
   ]);
@@ -339,7 +343,7 @@ export function readCatalog({
   items.sort((a, b) => a.id - b.id);
   collections.sort((a, b) => a.id - b.id);
   return {
-    catalog: { items, collections, inspoBoxes: sets } satisfies CatalogObservation,
+    catalog: { items, collections, inspoBoxes: sets, ...purchases } satisfies CatalogObservation,
     proofs,
     crafting: crafting.audit,
   };

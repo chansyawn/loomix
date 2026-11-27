@@ -26,10 +26,7 @@ export function normalizeNeighbors(database: NeighborDatabase): NeighborDatabase
   return database;
 }
 
-export function normalizeNeighborOutfit<T extends { id: number; offers: { id: number }[] }>(
-  clothing: T[],
-): T[] {
+export function normalizeNeighborOutfit<T extends { id: number }>(clothing: T[]): T[] {
   clothing.sort((a, b) => a.id - b.id);
-  for (const item of clothing) item.offers.sort((a, b) => a.id - b.id);
   return clothing;
 }
