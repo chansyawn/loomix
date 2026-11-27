@@ -1,8 +1,11 @@
-import { Link, useRouter, useRouterState } from "@tanstack/react-router";
+import { Link, useHydrated, useRouter, useRouterState } from "@tanstack/react-router";
 import type { ComponentProps } from "react";
 import { omnidexOrigin, omnidexReturnLocation } from "./entry-location";
 export function useOmnidexOrigin() {
-  return useRouterState({ select: (state) => omnidexOrigin(state.location) });
+  const hydrated = useHydrated();
+  return useRouterState({
+    select: (state) => (hydrated ? omnidexOrigin(state.location) : undefined),
+  });
 }
 export function OmnidexReturnLink({ children, ...props }: Omit<ComponentProps<"a">, "href">) {
   const router = useRouter();
