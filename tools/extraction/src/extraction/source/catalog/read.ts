@@ -337,6 +337,8 @@ export function readCatalog({
   const referenced = readReferences(
     context,
     [...references].filter((id) => !formal.has(id)).sort((a, b) => a - b),
+    new Set(purchases.purchaseOffers.map((offer) => offer.currencyItemId)),
+    images,
   );
   items.push(...referenced.items);
   proofs.push(...referenced.proofs);

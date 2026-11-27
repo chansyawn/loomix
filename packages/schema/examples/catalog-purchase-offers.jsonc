@@ -1,24 +1,18 @@
-// 格式 22 的完整 catalog 示例，节选自客户端 0.95.2、数据修订 1449213。
+// 格式 23 的完整 catalog 示例，节选自客户端 0.95.2、数据修订 1449213。
 // 正式发布时使用 JSON；这里使用 JSONC 以便解释字段。版本、语言与来源沿用外层资源清单。
 {
   // 共 5 家商店。id 供报价引用；名称用于展示。
-  // shortfallPayment 表示主币种余额不足时，可用另一种货币等额补足差额。
-  // null 表示本资料集没有收录该店的补足规则。
+  // 有额外支付说明时才提供 paymentNote，同店展示一次。
   "shops": [
-    { "id": "gelian", "name": "格连商店", "shortfallPayment": null },
-    { "id": "luomiTv", "name": "络米电视购", "shortfallPayment": null },
+    { "id": "gelian", "name": "格连商店" },
+    { "id": "luomiTv", "name": "络米电视购" },
     {
       "id": "neighborWardrobe",
       "name": "友邻衣橱",
-      "shortfallPayment": {
-        // oneToOne 按一比一抵扣差额。主币种和补足币种均引用下方 items。
-        "kind": "oneToOne",
-        "primaryCurrencyItemId": 200014,
-        "substituteCurrencyItemId": 200002,
-      },
+      "paymentNote": "使用友邻服饰币时，余额不足可用等额碎钱补足。",
     },
-    { "id": "starryMarket", "name": "星空街市", "shortfallPayment": null },
-    { "id": "giftGallery", "name": "万礼馆", "shortfallPayment": null },
+    { "id": "starryMarket", "name": "星空街市" },
+    { "id": "giftGallery", "name": "万礼馆" },
   ],
 
   // 每条报价有自己的身份。金额指配置的一次购买花费，是否上架取决于游戏进度与店铺状态。
@@ -38,6 +32,7 @@
       "deliveredItemId": 1163,
       "currencyItemId": 200002,
       "price": { "kind": "fixed", "amount": 360 },
+      "note": "任务/限时货架",
     },
     {
       "id": "luomiTv:2",
@@ -62,6 +57,7 @@
       "deliveredItemId": 60515,
       "currencyItemId": 200003,
       "price": { "kind": "fixed", "amount": 1500 },
+      "note": "任务/限时货架",
     },
     {
       // 同一玩家款在电视购另有一条 1800 足迹的报价，两条都保留。
@@ -200,6 +196,7 @@
       "id": 30200,
       "kind": "reference",
       "name": "星锚",
+      "image": null,
       "description": "用于星海旅行，是小船在星海中航行时停靠星屿所需要的特制船锚。（test）",
     },
     {
@@ -216,27 +213,63 @@
       "category": "连体装",
     },
     // 货币复用目录物品身份。客户端有多个同名「碎钱」，交易货币使用 200002。
-    { "id": 200002, "kind": "reference", "name": "碎钱", "description": null },
-    { "id": 200003, "kind": "reference", "name": "足迹", "description": null },
+    {
+      "id": 200002,
+      "kind": "reference",
+      "name": "碎钱",
+      "description": null,
+      "image": {
+        "assetId": "627fdc43981098bbccc00cf966f743ddd5a71c0e18ea5353320f8777a81e54ff",
+        "variant": "icon",
+      },
+    },
+    {
+      "id": 200003,
+      "kind": "reference",
+      "name": "足迹",
+      "description": null,
+      "image": {
+        "assetId": "33d023cb268f370e09f5e77672fa4337ae6bbc783086ef50eceb580e53aa7907",
+        "variant": "icon",
+      },
+    },
     {
       "id": 200005,
       "kind": "reference",
       "name": "万象礼券",
+      "image": {
+        "assetId": "b18ca1f20ae844b583e11af4d300bec7e1f05f29832a653129c2fd4e7bf4cad9",
+        "variant": "icon",
+      },
       "description": "墨尔斯为感谢大家在万象馆建设\n方面的贡献所赠的礼券。\n可用于兑换万礼馆中的礼品。",
     },
     {
       "id": 200006,
       "kind": "reference",
       "name": "街乐果冻",
+      "image": {
+        "assetId": "76df4a65dffb52d9c90635540b094bd7b2222f93d2dc8a245588229d7399a859",
+        "variant": "icon",
+      },
       "description": "街市中人人都爱的果冻，\n可以在街市的兑换处兑换礼品。",
     },
     {
       "id": 200007,
       "kind": "reference",
       "name": "礼帽魔术券",
+      "image": null,
       "description": "可以在礼帽魔术大转盘转转盘的礼券，在兑换处兑换。\n西薇用手印的，真的有手印。",
     },
-    { "id": 200014, "kind": "reference", "name": "友邻服饰币", "description": null },
+    {
+      "id": 200014,
+      "kind": "reference",
+      "name": "友邻服饰币",
+      "description": null,
+      "image": {
+        "assetId": "13666985decfa06f8d8e70b1771009133f3c02e47caf2f266ae4929bb44c1169",
+        "variant": "icon",
+      },
+    },
     {
       // playerItemId 保存玩家同款的关系。服饰自身不再重复维护数值 price。
       "id": 1160515,

@@ -103,7 +103,7 @@ test("掉落保留来源树种与果实，系列按成员分组", () => {
     }),
   });
   catalog.items = catalog.items.filter((item) => item.id !== 3);
-  catalog.items.push({ kind: "reference", id: 3, name: "树胶", description: null });
+  catalog.items.push({ kind: "reference", id: 3, name: "树胶", description: null, image: null });
   const data = toOmnidexView(
     catalog,
     imageIndexFixture(catalog),

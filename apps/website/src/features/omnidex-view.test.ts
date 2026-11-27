@@ -75,14 +75,19 @@ test("有图和缺图的友邻服饰均进入专属列表", () => {
       bodyTypes: ["small"],
     },
   );
-  catalog.items.push({ kind: "reference", id: 200014, name: "友邻服饰币", description: null });
-  catalog.shops.push({ id: "neighborWardrobe", name: "友邻衣橱", shortfallPayment: null });
+  addFixtureRecords(catalog, gameplayTags, { kind: "reference", id: 200014, name: "友邻服饰币" });
+  catalog.shops.push({
+    id: "neighborWardrobe",
+    name: "友邻衣橱",
+    paymentNote: "使用友邻服饰币时，余额不足可用等额碎钱补足。",
+  });
   const freeOffer: PurchaseOffer = {
     id: "neighborWardrobe:50",
     shopId: "neighborWardrobe",
     deliveredItemId: 10,
     currencyItemId: 200014,
     price: { kind: "fixed", amount: 0 },
+    note: "任务/限时货架",
   };
   catalog.purchaseOffers.push(
     freeOffer,

@@ -1,6 +1,7 @@
 import { recordFields, type CatalogEntryRow } from "./catalog";
 import type { CatalogEntryDetail } from "./catalog-entry-detail";
-import type { PurchaseQuote } from "./purchase-quotes";
+import type { ShopPurchaseQuotes } from "./purchase-quotes";
+import { RecordImage } from "./record-image";
 import { DetailPage } from "@/features/detail-page/detail-page";
 import { findWikiScroll, wikiScrollId } from "@/infrastructure/wiki-scroll";
 import { clothingDetailPresentation } from "../clothing/detail-presentation";
@@ -40,7 +41,7 @@ export function CatalogEntryPage({
 }: {
   record: CatalogEntryRow;
   model: CatalogEntryDetail;
-  quotes?: PurchaseQuote[];
+  quotes?: ShopPurchaseQuotes[];
   uses?: ReturnType<typeof catalogGameplayUses>;
   readVignetteUses?: () => Promise<GameplayUse[]>;
   readHairDyeing?: ReadHairDyeing;
@@ -88,11 +89,28 @@ export function CatalogEntryPage({
       title: "配置报价（每次购买）",
       content: (
         <dl className="grid gap-3">
-          {quotes.map(({ id, shopName, priceLabel, shortfall }) => (
+          {quotes.map(({ id, name, paymentNote, prices }) => (
             <div key={id} className="grid gap-1">
-              <dt className="font-medium">{shopName}</dt>
-              <dd>{priceLabel}</dd>
-              {shortfall && <dd className="text-sm text-muted-foreground">{shortfall}</dd>}
+              <dt className="font-medium">{name}</dt>
+              {prices.map(({ key, priceLabel, currencyImage, note }) => (
+                <dd key={key} className="flex items-start gap-1.5">
+                  {currencyImage && (
+                    <RecordImage
+                      image={currencyImage}
+                      name=""
+                      inset="none"
+                      background="none"
+                      fallback="icon"
+                      className="mt-0.5 size-5 shrink-0"
+                    />
+                  )}
+                  <span>
+                    {priceLabel}
+                    {note && <span className="text-muted-foreground">（{note}）</span>}
+                  </span>
+                </dd>
+              ))}
+              {paymentNote && <dd className="text-sm text-muted-foreground">{paymentNote}</dd>}
             </div>
           ))}
         </dl>

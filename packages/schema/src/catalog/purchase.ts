@@ -11,13 +11,7 @@ export const ShopIdSchema = z.enum([
 export const ShopSchema = z.strictObject({
   id: ShopIdSchema,
   name: z.string().min(1),
-  shortfallPayment: z
-    .strictObject({
-      kind: z.literal("oneToOne"),
-      primaryCurrencyItemId: IdSchema,
-      substituteCurrencyItemId: IdSchema,
-    })
-    .nullable(),
+  paymentNote: z.string().trim().min(1).optional(),
 });
 const amount = z.number().int().nonnegative();
 export const PurchasePriceSchema = z.discriminatedUnion("kind", [
@@ -44,20 +38,13 @@ export const PurchaseOfferSchema = z.strictObject({
   deliveredItemId: IdSchema,
   currencyItemId: IdSchema,
   price: PurchasePriceSchema,
+  note: z.string().trim().min(1).optional(),
 });
 export type Shop = z.infer<typeof ShopSchema>;
 export type PurchaseOffer = z.infer<typeof PurchaseOfferSchema>;
 export type PurchasePrice = z.infer<typeof PurchasePriceSchema>;
 export type PurchaseCatalog = { shops: Shop[]; purchaseOffers: PurchaseOffer[] };
 
-export function purchaseItemIds({ shops, purchaseOffers }: PurchaseCatalog): Set<number> {
-  const ids = new Set(
-    purchaseOffers.flatMap((offer) => [offer.deliveredItemId, offer.currencyItemId]),
-  );
-  for (const { shortfallPayment } of shops)
-    if (shortfallPayment) {
-      ids.add(shortfallPayment.primaryCurrencyItemId);
-      ids.add(shortfallPayment.substituteCurrencyItemId);
-    }
-  return ids;
+export function purchaseItemIds({ purchaseOffers }: PurchaseCatalog): Set<number> {
+  return new Set(purchaseOffers.flatMap((offer) => [offer.deliveredItemId, offer.currencyItemId]));
 }

@@ -10,7 +10,7 @@ export function assembleCatalog(
   referencedItemIds: readonly number[],
 ): Catalog {
   const items: Item[] = observed.items.map((item): Item => {
-    if (item.kind === "reference") return item;
+    if (item.kind === "reference" && !item.image) return { ...item, image: null };
     if (item.kind === "inspoCard") {
       const background = image(
         item.front.background.use,

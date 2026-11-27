@@ -10,7 +10,7 @@ const catalog: Catalog = {
     {
       id: "neighborWardrobe",
       name: "友邻衣橱",
-      shortfallPayment: { kind: "oneToOne", primaryCurrencyItemId: 2, substituteCurrencyItemId: 3 },
+      paymentNote: "使用友邻服饰币时，余额不足可用等额碎钱补足。",
     },
   ],
   purchaseOffers: [
@@ -31,10 +31,18 @@ test("购买报价的商品身份唯一，商店、交付物与货币须可解�
     "Duplicate identity",
   );
   expect(() => parseCatalog({ ...catalog, shops: [] })).toThrow("Unknown shop");
-  for (const id of [1, 2, 3])
+  for (const id of [1, 2])
     expect(() =>
       parseCatalog({ ...catalog, items: catalog.items.filter((item) => item.id !== id) }),
     ).toThrow();
+});
+
+test("报价和商店说明都可省略，写入时须有文字", () => {
+  const shop = { id: "neighborWardrobe", name: "友邻衣橱" };
+  const offer = catalog.purchaseOffers[0]!;
+  expect(parseCatalog({ ...catalog, shops: [shop] }).shops).toEqual([shop]);
+  expect(() => parseCatalog({ ...catalog, shops: [{ ...shop, paymentNote: " " }] })).toThrow();
+  expect(() => parseCatalog({ ...catalog, purchaseOffers: [{ ...offer, note: " " }] })).toThrow();
 });
 
 test("每日次数价保留明确的零，次数严格递增，金额和次数都是非负安全整数", () => {

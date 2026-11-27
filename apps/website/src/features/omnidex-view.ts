@@ -154,7 +154,7 @@ export function toOmnidexView(
 ): OmnidexView {
   const image = createImageResolver(imageIndex);
   const cards = indexInspoCards(catalog, imageIndex);
-  const purchaseQuotes = indexPurchaseQuotes(catalog);
+  const purchaseQuotes = indexPurchaseQuotes(catalog, image);
   const resolveTags = createRecordTagResolver(tagIndex);
   const tagsFor = (
     record: { tagIds: readonly number[] },
@@ -195,7 +195,7 @@ export function toOmnidexView(
       name: item.name,
       description: item.description,
       quality: item.kind === "reference" ? null : item.quality,
-      image: item.kind === "reference" ? null : image(item.image),
+      image: image(item.image),
       catalogCategory: catalogCategory(item),
       browsable:
         item.kind !== "reference" && item.kind !== "neighborOutfit" && item.kind !== "inspoCard",

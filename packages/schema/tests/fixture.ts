@@ -51,12 +51,14 @@ const listed = {
 };
 
 export const material = (id: number): ItemOf<"material"> => ({ ...listed, id, kind: "material" });
-export const reference = (id: number): ItemOf<"reference"> => ({
-  id,
-  kind: "reference",
-  name: "引用",
-  description: null,
-});
+export const reference = (id: number) =>
+  ({
+    id,
+    kind: "reference" as const,
+    name: "引用",
+    description: null,
+    image: null,
+  }) satisfies ItemOf<"reference">;
 export const plant = (id: number): ItemOf<"plant"> => ({
   ...listed,
   id,

@@ -61,7 +61,13 @@ function data(...records: object[]) {
     },
   );
   addFixtureRecords(catalog, gameplayTags, ...records);
-  catalog.items.push({ kind: "reference", id: 99, name: "隐藏材料", description: null });
+  catalog.items.push({
+    kind: "reference",
+    id: 99,
+    name: "隐藏材料",
+    description: null,
+    image: null,
+  });
   return createOmnidexCatalog(catalog, imageIndexFixture(catalog), gameplayTags);
 }
 test("搜索只匹配正式物品的显示名称及其拼音", () => {

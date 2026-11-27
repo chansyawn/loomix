@@ -37,18 +37,14 @@ const need = (
   reason: "unconfigured",
 });
 
-test("报价保留直接交付物、支付货币及只用于补足的物品", () => {
+test("报价保留直接交付物和支付货币，店铺说明不引入物品", () => {
   const observations = clientReadRecordsFixture();
   const { catalog } = observations;
   catalog.items = [1, 2, 3, 4].map((id) => reference(id));
   catalog.shops.push({
     id: "neighborWardrobe",
     name: "友邻衣橱",
-    shortfallPayment: {
-      kind: "oneToOne",
-      primaryCurrencyItemId: 2,
-      substituteCurrencyItemId: 3,
-    },
+    paymentNote: "余额不足可用碎钱补足。",
   });
   catalog.purchaseOffers.push({
     id: "neighborWardrobe:1",
@@ -58,9 +54,9 @@ test("报价保留直接交付物、支付货币及只用于补足的物品", ()
     price: { kind: "fixed", amount: 0 },
   });
   const build = () => assemble(observations, [], emptyFlowerHybridization(observations.source));
-  expect(build().dataset.catalog.items).toEqual(catalog.items.slice(0, 3));
-  catalog.items = catalog.items.filter(({ id }) => id !== 3);
-  expect(build).toThrow("Missing reference identity 3");
+  expect(build().dataset.catalog.items).toEqual(catalog.items.slice(0, 2));
+  catalog.items = catalog.items.filter(({ id }) => id !== 2);
+  expect(build).toThrow("Missing reference identity 2");
 });
 
 test("同一源对象跨用途共享原图，组装同时投影图片引用和具体来源", () => {

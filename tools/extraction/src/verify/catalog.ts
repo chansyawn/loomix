@@ -388,11 +388,6 @@ export function verifyCatalogSources(
       offer.currencyItemId,
     ]),
   );
-  for (const { shortfallPayment } of dataset.catalog.shops)
-    if (shortfallPayment) {
-      references.add(shortfallPayment.primaryCurrencyItemId);
-      references.add(shortfallPayment.substituteCurrencyItemId);
-    }
   for (const row of tables.rows(111)) {
     for (const field of tables.uint(row, 4) === 2 ? [3, 5] : [3]) {
       const cost = tables.string(row, field)?.trim();

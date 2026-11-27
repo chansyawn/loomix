@@ -71,15 +71,11 @@ function setup(
     { kind: "reference", id: 200014, name: "友邻服饰币" },
   );
   catalog.shops.push(
-    { id: "luomiTv", name: "络米电视购", shortfallPayment: null },
+    { id: "luomiTv", name: "络米电视购" },
     {
       id: "neighborWardrobe",
       name: "友邻衣橱",
-      shortfallPayment: {
-        kind: "oneToOne",
-        primaryCurrencyItemId: 200014,
-        substituteCurrencyItemId: 200002,
-      },
+      paymentNote: "使用友邻服饰币时，余额不足可用等额碎钱补足。",
     },
   );
   catalog.purchaseOffers.push(
@@ -89,6 +85,14 @@ function setup(
       deliveredItemId: 50,
       currencyItemId: 200003,
       price: { kind: "fixed", amount: 1500 },
+      note: "任务/限时货架",
+    },
+    {
+      id: "luomiTv:3",
+      shopId: "luomiTv",
+      deliveredItemId: 50,
+      currencyItemId: 200003,
+      price: { kind: "fixed", amount: 1800 },
     },
     {
       id: "neighborWardrobe:1",
@@ -161,17 +165,30 @@ function detailLoaderData(router: ReturnType<typeof setup>) {
 }
 
 test.each([
-  [50, "络米电视购", "1500 足迹", null],
-  [51, "友邻衣橱", "600 友邻服饰币", "友邻服饰币不足时，可用等额碎钱补足。"],
-] as const)(
-  "同名服饰详情 %i 只展示直接交付给该款的商店报价",
-  async (id, shopName, priceLabel, shortfall) => {
-    const router = setup(`/catalog/${id}#purchase-offers`);
-    await router.load();
-    expect(router.state.matches.at(-1)?.status).toBe("success");
-    expect(detailLoaderData(router)?.quotes).toMatchObject([{ shopName, priceLabel, shortfall }]);
-  },
-);
+  [
+    50,
+    {
+      name: "络米电视购",
+      prices: [
+        { priceLabel: "1500 足迹", note: "任务/限时货架" },
+        { priceLabel: "1800 足迹", note: null },
+      ],
+    },
+  ],
+  [
+    51,
+    {
+      name: "友邻衣橱",
+      paymentNote: "使用友邻服饰币时，余额不足可用等额碎钱补足。",
+      prices: [{ priceLabel: "600 友邻服饰币", note: null }],
+    },
+  ],
+] as const)("同名服饰详情 %i 只展示直接交付给该款的商店报价", async (id, shop) => {
+  const router = setup(`/catalog/${id}#purchase-offers`);
+  await router.load();
+  expect(router.state.matches.at(-1)?.status).toBe("success");
+  expect(detailLoaderData(router)?.quotes).toMatchObject([shop]);
+});
 
 test.each([40, 100])("外观和集合 %i 的详情不继承其他物品的报价", async (id) => {
   const router = setup(`/catalog/${id}`);

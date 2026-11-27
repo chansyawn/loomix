@@ -201,7 +201,8 @@ export function readClientRecords(source: string, datasetId: string): ClientRead
         .map(({ id }) => id),
     ),
   );
-  const purchases = readPurchaseOffers(context.tables);
+  const discovery = readVignetteDiscovery(source, index);
+  const purchases = readPurchaseOffers(context.tables, discovery, profile.dataRevision);
   const catalog = readCatalog({
     purchases: purchases.data,
     observations: collection.catalog,
@@ -254,7 +255,7 @@ export function readClientRecords(source: string, datasetId: string): ClientRead
     vignettes: readVignettes(
       context.tables,
       context.gameplayTags.index,
-      readVignetteDiscovery(source, index),
+      discovery,
       readVignetteHints(source),
       images,
     ),

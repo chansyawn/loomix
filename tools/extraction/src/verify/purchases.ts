@@ -1,9 +1,14 @@
 import assert from "node:assert/strict";
 import type { PurchaseCatalog, PurchaseOffer, PurchasePrice, Shop } from "@loomix/schema/catalog";
-import type { FieldEvidence, TableFieldSource } from "../extraction/evidence/domain-schema.ts";
+import type {
+  EvidenceSource,
+  FieldEvidence,
+  TableFieldSource,
+} from "../extraction/evidence/domain-schema.ts";
 import { fieldSource, textSource } from "../extraction/source/catalog/purchases/channels.ts";
 import type { readPurchaseOffers } from "../extraction/source/catalog/purchases/read.ts";
 import type { Tables } from "../extraction/source/decode/tables.ts";
+import type { DiscoveryEvidence } from "../extraction/source/vignettes/inputs.ts";
 import type { TableRow } from "../extraction/types.ts";
 import { verifyFieldSources } from "./evidence.ts";
 
@@ -173,8 +178,59 @@ function frozenPrice(
   return { kind: "dailyPurchaseCount", entries };
 }
 
+function snapshotShelfSamples() {
+  const samples: [Shop["id"], number, number, number, "task" | "window" | undefined, number[]][] = [
+    ["gelian", 1803, 200002, 460, undefined, [305146, 305247]],
+    ["gelian", 1803, 200002, 460, "task", [309924, 310024, 310124]],
+    ["gelian", 1803, 200002, 510, "task", [309305, 309405, 309505]],
+    ["gelian", 1155, 200002, 100, undefined, [305302, 305402, 305502]],
+    ["gelian", 1155, 200002, 150, "task", [309306, 309406, 309506]],
+    ["gelian", 1155, 200002, 150, "window", [311401]],
+    ["gelian", 1163, 200002, 290, undefined, [305303, 305404, 305504]],
+    ["gelian", 1163, 200002, 360, "window", [311502]],
+    ["gelian", 1557, 200002, 350, undefined, [305360, 305468, 305569]],
+    ["gelian", 1557, 200002, 420, "task", [309309, 309409, 309509]],
+    ["luomiTv", 60515, 200003, 1500, "task", [302]],
+    ["luomiTv", 60515, 200003, 1800, undefined, [515]],
+    ["neighborWardrobe", 1160515, 200014, 600, undefined, [50001, 50601]],
+  ];
+  return new Map(
+    samples.flatMap(([shopId, item, currency, amount, shelf, goods]) =>
+      goods.map(
+        (id) =>
+          [`${shopId}:${id}`, { item, currency, price: { kind: "fixed", amount }, shelf }] as const,
+      ),
+    ),
+  );
+}
+
+const samples1449213 = snapshotShelfSamples();
+
 function checkSnapshot1449213(catalog: PurchaseCatalog, diagnostics: Diagnostics) {
   assert.equal(catalog.purchaseOffers.length, 2724);
+  const items = new Set([...samples1449213.values()].map((sample) => sample.item));
+  assert.deepEqual(
+    new Map(
+      catalog.purchaseOffers
+        .filter((offer) => items.has(offer.deliveredItemId) || offer.note)
+        .map((offer) => [
+          offer.id,
+          {
+            item: offer.deliveredItemId,
+            currency: offer.currencyItemId,
+            price: offer.price,
+            note: offer.note,
+          },
+        ]),
+    ),
+    new Map(
+      [...samples1449213].map(([id, { shelf, ...sample }]) => [
+        id,
+        { ...sample, note: shelf ? "任务/限时货架" : undefined },
+      ]),
+    ),
+    "Frozen snapshot purchase contexts",
+  );
   const wardrobe = catalog.purchaseOffers.filter((offer) => offer.shopId === "neighborWardrobe");
   assert.equal(wardrobe.length, 182);
   assert.equal(new Set(wardrobe.map((offer) => offer.deliveredItemId)).size, 91);
@@ -196,12 +252,138 @@ function checkSnapshot1449213(catalog: PurchaseCatalog, diagnostics: Diagnostics
   assert.equal(diagnostics.giftRows.length, 14);
 }
 
+function frozenTaskSources(
+  tables: Tables,
+  row: TableRow,
+  discovery: Pick<DiscoveryEvidence, "tracker">,
+) {
+  const expectedTargets: Record<number, object> = {
+    3549: { thresh: 1, finishTaskCount: { taskIds: [2038004] } },
+    3554: { thresh: 1, finishTaskCount: { taskIds: [2038009] } },
+    3602: { thresh: 1, finishTaskCount: { taskIds: [2021078] } },
+    3603: { habitatRestored: { habitatId: 3009 } },
+    3551: { thresh: 1, finishTaskCount: { taskIds: [12002052] } },
+    3507: { thresh: 1, finishTaskCount: { taskIds: [12002018] } },
+    3582: { thresh: 1, finishTaskCount: { taskIds: [2051012] } },
+    3583: { thresh: 1, finishTaskCount: { taskIds: [2051014] } },
+    3509: { taskStage: { taskId: 4319 } },
+    3510: { taskStage: { taskId: 4323 } },
+  };
+  const taskTexts: Record<string, [number, string]> = {
+    "1803:3549:3554": [2825703257, "找格连购买，花叶拼布沙发椅"],
+    "1803:3602:3603": [3743521915, "绵朵莉与玩偶灵感"],
+    "1155:3551:3507": [216535044, "找格连购买，粉白陶瓷杯"],
+    "1557:3582:3583": [715774891, "找格连购买，温暖日光灯"],
+    "60515:3509:3510": [2452989747, "购买眠月睡袍，并为自己换装"],
+  };
+  const sources: EvidenceSource[] = [fieldSource(row, [17, 18, 23, 24])];
+  const keys = [17, 23].map((field) => {
+    assert.equal(tables.string(row, field), "SHOP_SALE_CONDITION_TRACKER_GOAL_DONE");
+    const match = /^(\d+),0$/.exec(tables.string(row, field + 1) ?? "");
+    assert.ok(match, `Frozen tracker parameters ${tables.id(row)}`);
+    const key = Number(match[1]);
+    const tracker = discovery.tracker(key);
+    assert.ok(
+      tracker && Object.hasOwn(expectedTargets, key),
+      `Missing frozen task shelf tracker ${key}`,
+    );
+    assert.deepEqual(tracker.condition, expectedTargets[key], `Frozen task shelf tracker ${key}`);
+    sources.push(tracker.source);
+    return key;
+  });
+  const text = taskTexts[[tables.uint(row, 2), ...keys].join(":")];
+  assert.ok(text, `Frozen task shelf identity ${tables.id(row)}`);
+  sources.push(textSource(tables, ...text));
+  return sources;
+}
+
+function verifyShelfNotes(
+  offers: PurchaseOffer[],
+  tables: Tables,
+  groups: ReturnType<typeof frozenEntrances>["groups"],
+  evidence: Map<string | number, FieldEvidence[]>,
+  dataRevision: number,
+  discovery: Pick<DiscoveryEvidence, "tracker">,
+) {
+  const groupKey = (offer: PurchaseOffer) =>
+    `${offer.shopId}:${offer.currencyItemId}:${offer.deliveredItemId}`;
+  const prices = new Map<string, Set<string>>();
+  for (const offer of offers) {
+    const key = groupKey(offer);
+    const rules = prices.get(key) ?? new Set<string>();
+    const price = offer.price;
+    rules.add(
+      price.kind === "fixed"
+        ? `fixed:${price.amount}`
+        : price.entries
+            .map(({ purchasedToday, amount }) => `${purchasedToday}:${amount}`)
+            .join(","),
+    );
+    prices.set(key, rules);
+  }
+  const goods = tables.byId(659);
+  const tiers = tables.byId(663);
+  const npcPages = tables.byId(665);
+  for (const offer of offers) {
+    const sources: EvidenceSource[] = [];
+    const shelfSources: EvidenceSource[] = [];
+    if (prices.get(groupKey(offer))!.size > 1 && offer.shopId !== "giftGallery") {
+      const goodsId = Number(offer.id.split(":")[1]);
+      const row = goods.get(goodsId)!;
+      const pages = groups.get(tables.uint(row, 1)!)!.get(offer.shopId)!;
+      const tier = tiers.get(goodsId);
+      sources.push(fieldSource(row, [0, 1, 2, 10, 11]), ...pages.flatMap((page) => page.sources));
+      if (tier) sources.push(fieldSource(tier, [0, 1, 2]));
+      if (
+        dataRevision === 1449213 &&
+        samples1449213.get(`${offer.shopId}:${goodsId}`)?.shelf === "task"
+      )
+        shelfSources.push(...frozenTaskSources(tables, row, discovery));
+      const starts = new Set(pages.map((page) => page.startsAt));
+      const ends = new Set(pages.map((page) => page.endsAt));
+      const [start] = starts;
+      const [end] = ends;
+      const date = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+      if (
+        starts.size === 1 &&
+        ends.size === 1 &&
+        start &&
+        end &&
+        date.test(start) &&
+        date.test(end) &&
+        start < end
+      ) {
+        shelfSources.push(
+          ...pages.map((page) => fieldSource(npcPages.get(page.pageId)!, [11, 12])),
+        );
+      }
+    }
+    const proofs = (evidence.get(offer.id) ?? []).filter((proof) => proof.fieldPath === "note");
+    assert.equal(
+      offer.note,
+      shelfSources.length ? "任务/限时货架" : undefined,
+      `Frozen shelf note ${offer.id}`,
+    );
+    assert.equal(
+      proofs.length,
+      shelfSources.length ? 1 : 0,
+      `Frozen shelf note evidence ${offer.id}`,
+    );
+    if (proofs.length)
+      verifyFieldSources(proofs, "catalog.purchaseOffers", offer.id, "note", [
+        ...sources,
+        ...shelfSources,
+      ]);
+  }
+}
+
 export function verifyPurchaseOffers(
   catalog: PurchaseCatalog,
   fields: FieldEvidence[],
   tables: Tables,
   diagnostics: Diagnostics,
   dataRevision: number,
+  discovery: Pick<DiscoveryEvidence, "tracker">,
 ) {
   const { groups, testGroups } = frozenEntrances(tables, diagnostics);
   const currencyIdentity = frozenCurrencies(tables);
@@ -229,35 +411,33 @@ export function verifyPurchaseOffers(
     const proofs = evidence.get(id) ?? [];
     assert.equal(shop.name, name);
     verifyFieldSources(proofs, "catalog.shops", id, "name", [textSource(tables, key, name)]);
-    const rule =
-      id === "neighborWardrobe"
-        ? { kind: "oneToOne", primaryCurrencyItemId: 200014, substituteCurrencyItemId: 200002 }
-        : null;
-    assert.deepEqual(shop.shortfallPayment, rule);
-    verifyFieldSources(
-      proofs,
-      "catalog.shops",
-      id,
-      "shortfallPayment",
-      rule
-        ? [
-            textSource(tables, 88034602, "当「友邻服饰币」不足时，也可以使用等量碎钱换购"),
-            ...currencyIdentity(200014)!,
-            ...currencyIdentity(200002)!,
-          ]
-        : [],
-      rule ? "confirmed" : "unresolved",
-      rule ? null : "no_confirmed_shortfall_rule",
+    const wardrobe = id === "neighborWardrobe";
+    assert.equal(
+      shop.paymentNote,
+      wardrobe ? "使用友邻服饰币时，余额不足可用等额碎钱补足。" : undefined,
     );
+    assert.equal(
+      proofs.filter((proof) => proof.fieldPath === "paymentNote").length,
+      wardrobe ? 1 : 0,
+    );
+    if (wardrobe)
+      verifyFieldSources(proofs, "catalog.shops", id, "paymentNote", [
+        textSource(tables, 88034602, "当「友邻服饰币」不足时，也可以使用等量碎钱换购"),
+        ...currencyIdentity(200014)!,
+        ...currencyIdentity(200002)!,
+      ]);
   }
 
   const remaining = new Map(catalog.purchaseOffers.map((offer) => [offer.id, offer]));
   assert.equal(remaining.size, catalog.purchaseOffers.length, "Duplicate published purchase offer");
   function check(
     expected: PurchaseOffer,
-    sources: Record<Exclude<keyof PurchaseOffer, "id">, TableFieldSource[]>,
+    sources: Record<Exclude<keyof PurchaseOffer, "id" | "note">, TableFieldSource[]>,
   ) {
-    assert.deepEqual(remaining.get(expected.id), expected, `Frozen purchase ${expected.id}`);
+    const actual = remaining.get(expected.id);
+    assert.ok(actual, `Frozen purchase ${expected.id}`);
+    const { note: _note, ...base } = actual;
+    assert.deepEqual(base, expected, `Frozen purchase ${expected.id}`);
     remaining.delete(expected.id);
     for (const [key, value] of Object.entries(sources))
       verifyFieldSources(
@@ -415,6 +595,7 @@ export function verifyPurchaseOffers(
     );
   }
   assert.equal(remaining.size, 0, "Unexpected purchase records");
+  verifyShelfNotes(catalog.purchaseOffers, tables, groups, evidence, dataRevision, discovery);
   assert.deepEqual(
     diagnostics.recycleCandidates,
     tables

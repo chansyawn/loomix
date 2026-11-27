@@ -5,10 +5,16 @@ import {
   type PurchasePrice,
   type Shop,
 } from "@loomix/schema/catalog";
-import type { FieldEvidence, TableFieldSource } from "../../../evidence/domain-schema.ts";
+import type {
+  EvidenceSource,
+  FieldEvidence,
+  TableFieldSource,
+} from "../../../evidence/domain-schema.ts";
 import type { Tables } from "../../decode/tables.ts";
+import type { DiscoveryEvidence } from "../../vignettes/inputs.ts";
 import { fieldSource, readEntrances, shopLabels, textSource } from "./channels.ts";
 import type { Entrance } from "./channels.ts";
+import { readShelfNotes, type ShelfOffer } from "./notes.ts";
 
 export function dailyPrice(raw: string | null): PurchasePrice {
   assert.ok(raw && /^\d+:\d+(?:,\d+:\d+)*$/.test(raw), `Invalid daily price ${raw}`);
@@ -42,51 +48,34 @@ function currencyEvidence(tables: Tables) {
   };
 }
 
-export function readPurchaseOffers(tables: Tables) {
+export function readPurchaseOffers(
+  tables: Tables,
+  discovery: Pick<DiscoveryEvidence, "tracker">,
+  dataRevision: number,
+) {
   const { entrances, tvPageLinks, missingTvPages, testGroups } = readEntrances(tables);
   const currencyIdentity = currencyEvidence(tables);
   const proofs: FieldEvidence[] = [];
-  function prove(
-    collection: string,
-    id: string,
-    fieldPath: string,
-    sources: TableFieldSource[],
-    absent = false,
-  ) {
+  function prove(collection: string, id: string, fieldPath: string, sources: EvidenceSource[]) {
     proofs.push({
       entity: { collection, id },
       fieldPath,
       sources,
-      status: absent ? "unresolved" : "confirmed",
+      status: "confirmed",
       ruleId: `client.${collection}.${fieldPath}`,
-      reasonCode: absent ? "no_confirmed_shortfall_rule" : null,
+      reasonCode: null,
     });
   }
   const shops = shopLabels.map(([id, name, key]): Shop => {
     const label = textSource(tables, key, name);
-    const shortfallPayment =
-      id === "neighborWardrobe"
-        ? {
-            kind: "oneToOne" as const,
-            primaryCurrencyItemId: 200014,
-            substituteCurrencyItemId: 200002,
-          }
-        : null;
     prove("catalog.shops", id, "name", [label]);
-    prove(
-      "catalog.shops",
-      id,
-      "shortfallPayment",
-      shortfallPayment
-        ? [
-            textSource(tables, 88034602, "当「友邻服饰币」不足时，也可以使用等量碎钱换购"),
-            ...currencyIdentity(200014)!,
-            ...currencyIdentity(200002)!,
-          ]
-        : [],
-      !shortfallPayment,
-    );
-    return { id, name, shortfallPayment };
+    if (id !== "neighborWardrobe") return { id, name };
+    prove("catalog.shops", id, "paymentNote", [
+      textSource(tables, 88034602, "当「友邻服饰币」不足时，也可以使用等量碎钱换购"),
+      ...currencyIdentity(200014)!,
+      ...currencyIdentity(200002)!,
+    ]);
+    return { id, name, paymentNote: "使用友邻服饰币时，余额不足可用等额碎钱补足。" };
   });
   const purchaseOffers: PurchaseOffer[] = [];
   const offerIds = new Set<string>();
@@ -104,6 +93,7 @@ export function readPurchaseOffers(tables: Tables) {
     prove("catalog.purchaseOffers", offer.id, "deliveredItemId", [item]);
     prove("catalog.purchaseOffers", offer.id, "currencyItemId", currency);
     prove("catalog.purchaseOffers", offer.id, "price", [price]);
+    return offer;
   }
   const tiers = tables.byId(663);
   const groups = new Map<number, Map<Shop["id"], Entrance[]>>();
@@ -115,6 +105,7 @@ export function readPurchaseOffers(tables: Tables) {
     groups.set(entry.groupId, shopsByGroup);
   }
   const goods = tables.byId(659);
+  const shelfOffers: ShelfOffer[] = [];
   const seenGroups = new Set<number>();
   for (const key of tiers.keys()) assert.ok(goods.has(key), `Unknown daily price goods ${key}`);
   const rows = [...goods.values()].map((row) => {
@@ -154,7 +145,7 @@ export function readPurchaseOffers(tables: Tables) {
         continue;
       }
       const shopSources = [fieldSource(row, [0, 1]), ...pages.flatMap((page) => page.sources)];
-      admit(
+      const offer = admit(
         {
           id: `${shopId}:${goodsId}`,
           shopId,
@@ -171,6 +162,7 @@ export function readPurchaseOffers(tables: Tables) {
         ],
         tier ? fieldSource(tier, [0, 1, 2]) : fieldSource(row, [0, 10]),
       );
+      shelfOffers.push({ offer, row, pages, tier });
       outcomes.push({ shopId, reason: "admitted" });
     }
     return {
@@ -196,6 +188,15 @@ export function readPurchaseOffers(tables: Tables) {
       source: fieldSource(row, [0, 1, 2, 6, 7, 8, 9, 10, 11, 12, 13, 17, 18, 21, 22, 23, 24]),
     };
   });
+  for (const { offer, note, sources } of readShelfNotes(
+    shelfOffers,
+    tables,
+    discovery,
+    dataRevision,
+  )) {
+    offer.note = note;
+    prove("catalog.purchaseOffers", offer.id, "note", sources);
+  }
   const giftIds = new Set<string>();
   const giftRows = tables.rows(672).map((row) => {
     const goodsId = tables.id(row);

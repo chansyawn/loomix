@@ -88,6 +88,7 @@ export const ItemSchema = z.discriminatedUnion("kind", [
     id: IdSchema,
     name: z.string().min(1),
     description: NullableTextSchema,
+    image: ImageRefSchema.nullable(),
   }),
 ]);
 

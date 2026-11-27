@@ -14,16 +14,6 @@ export function validateCatalog(catalog: Catalog): ValidationIssue[] {
   unique(catalog.shops, (shop) => shop.id, ["shops"]);
   unique(catalog.purchaseOffers, (offer) => offer.id, ["purchaseOffers"]);
   const shops = new Set(catalog.shops.map((shop) => shop.id));
-  for (const [index, shop] of catalog.shops.entries()) {
-    const rule = shop.shortfallPayment;
-    if (
-      rule &&
-      (!items.has(rule.primaryCurrencyItemId) ||
-        !items.has(rule.substituteCurrencyItemId) ||
-        rule.primaryCurrencyItemId === rule.substituteCurrencyItemId)
-    )
-      issue(["shops", index, "shortfallPayment"], "Invalid shortfall payment currencies");
-  }
   for (const [index, offer] of catalog.purchaseOffers.entries()) {
     if (!shops.has(offer.shopId)) issue(["purchaseOffers", index, "shopId"], "Unknown shop");
     for (const key of ["deliveredItemId", "currencyItemId"] as const)

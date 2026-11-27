@@ -2,6 +2,7 @@ import { expect, test } from "vite-plus/test";
 import { verifyPurchaseOffers } from "../../../../verify/purchases.ts";
 import type { TableRow } from "../../../types.ts";
 import { Tables } from "../../decode/tables.ts";
+import type { DiscoveryEvidence } from "../../vignettes/inputs.ts";
 import { fieldSource } from "./channels.ts";
 import { readPurchaseOffers } from "./read.ts";
 
@@ -31,6 +32,8 @@ function purchaseTables() {
     23: "每日上新",
     24: "test测试活动",
     25: "用碎钱购买",
+    216535044: "帮绵朵莉准备家具——找格连购买，粉白陶瓷杯",
+    2452989747: "在络米电视购中，购买眠月睡袍，并为自己换装",
   };
   const rows: FixtureRow[] = [];
   function add(root: number, cells: Cells) {
@@ -119,14 +122,37 @@ function purchaseTables() {
   function cells(root: number, id: number) {
     return rows.find((row) => row.root === root && row.cells[0] === id)!.cells;
   }
-  return { tables, cells, add };
+  const conditions = new Map<number, unknown>();
+  const discovery: Pick<DiscoveryEvidence, "tracker"> = {
+    tracker(key) {
+      if (conditions.has(key))
+        return {
+          condition: conditions.get(key),
+          source: {
+            kind: "assetJson",
+            file: "prepared/vignette-discovery/4f3420ed.json",
+            source: "game/quests",
+            pathId: "13",
+            pointer: `/${key}/conditionjson`,
+            sha256: "a".repeat(64),
+          },
+        };
+    },
+  };
+  return { tables, cells, add, conditions, discovery };
 }
 
-function extract() {
-  const fixture = purchaseTables();
-  const result = readPurchaseOffers(fixture.tables);
+function extract(fixture = purchaseTables(), revision = 0) {
+  const result = readPurchaseOffers(fixture.tables, fixture.discovery, revision);
   const verify = () =>
-    verifyPurchaseOffers(result.data, result.proofs, fixture.tables, result.diagnostics, 0);
+    verifyPurchaseOffers(
+      result.data,
+      result.proofs,
+      fixture.tables,
+      result.diagnostics,
+      revision,
+      fixture.discovery,
+    );
   function offerProof(id: string, field: string) {
     return result.proofs.find((proof) => proof.entity.id === id && proof.fieldPath === field)!;
   }
@@ -185,6 +211,127 @@ test("同一商品按店分别报价，同店合并入口并保留同价商品�
       ],
     },
   });
+});
+
+const startsAt = "2026-08-27 12:00:00";
+const endsAt = "2026-09-03 12:00:00";
+const shelfNote = "任务/限时货架";
+
+test("同店按直接交付物、币种和完整价格规则比较；零价、异序和未注明的入口分别保留", () => {
+  const fixture = purchaseTables();
+  const { add, cells } = fixture;
+  add(665, { 0: 70, 1: 1, 6: 3114, 11: startsAt, 12: endsAt });
+  add(659, { 0: 21, 1: 3114, 2: 800, 10: 0 });
+  add(659, { 0: 22, 1: 101, 2: 800, 10: 0 });
+  add(663, { 0: 21, 1: "SHOP_GOODS_PRICE_TYPE_DAILY_COUNT", 2: "0:0,1:2" });
+  add(663, { 0: 22, 1: "SHOP_GOODS_PRICE_TYPE_DAILY_COUNT", 2: "0:0,1:2" });
+  add(659, { 0: 23, 1: 3114, 2: 801, 10: 100 });
+  add(659, { 0: 24, 1: 3114, 2: 800, 10: 100, 11: 200014 });
+  const sameRule = extract(fixture);
+  expect(sameRule.data.purchaseOffers.every((offer) => !offer.note)).toBe(true);
+  expect(sameRule.verify).not.toThrow();
+  cells(663, 22)[2] = "0:0,1:3";
+  const mixed = extract(fixture);
+  const noted = mixed.data.purchaseOffers.filter((offer) => offer.note);
+  expect(noted.map(({ id, note }) => [id, note])).toEqual([["gelian:21", shelfNote]]);
+  expect(mixed.verify).not.toThrow();
+  mixed.data.purchaseOffers.reverse();
+  expect(mixed.verify).not.toThrow();
+  const proof = mixed.offerProof("gelian:21", "note");
+  const original = proof.sources;
+  proof.sources = proof.sources.filter((source) => source.kind !== "table" || source.table !== 663);
+  expect(mixed.verify).toThrow("Independent field evidence sources");
+  proof.sources = original;
+  noted[0]!.note = "常驻货架";
+  expect(mixed.verify).toThrow("Frozen shelf note gelian:21");
+  add(665, { 0: 71, 1: 1, 6: 3114 });
+  const mixedPages = extract(fixture);
+  expect(mixedPages.data.purchaseOffers.every((offer) => !offer.note)).toBe(true);
+  expect(mixedPages.verify).not.toThrow();
+});
+
+test("修订、商品行、追踪目标与任务文案共同证明短注，同价的任务和限时来源可以并存", () => {
+  const fixture = purchaseTables();
+  const { add, cells, conditions } = fixture;
+  add(665, { 0: 49, 1: 1, 6: 3093 });
+  add(665, { 0: 70, 1: 1, 6: 3114, 11: startsAt, 12: endsAt });
+  add(659, { 0: 305302, 1: 101, 2: 1155, 10: 100 });
+  add(659, { 0: 311401, 1: 3114, 2: 1155, 10: 150 });
+  const taskCells = {
+    0: 309306,
+    1: 3093,
+    2: 1155,
+    10: 150,
+    17: "SHOP_SALE_CONDITION_TRACKER_GOAL_DONE",
+    18: "3551,0",
+    23: "SHOP_SALE_CONDITION_TRACKER_GOAL_DONE",
+    24: "3507,0",
+  };
+  add(659, taskCells);
+  add(659, { ...taskCells, 0: 999 });
+  add(659, { ...taskCells, 0: 302, 1: 101, 2: 60515, 10: 1500, 18: "3509,0", 24: "3510,0" });
+  add(659, { 0: 515, 1: 101, 2: 60515, 10: 1800 });
+  conditions.set(3551, { thresh: 1, finishTaskCount: { taskIds: [12002052] } });
+  conditions.set(3507, { thresh: 1, finishTaskCount: { taskIds: [12002018] } });
+  conditions.set(3509, { taskStage: { taskId: 4319 } });
+  conditions.set(3510, { taskStage: { taskId: 4323 } });
+  const current = () => extract(fixture, 1449213);
+  const notes = () =>
+    current()
+      .data.purchaseOffers.filter((offer) => offer.note)
+      .map(({ id, note }) => [id, note]);
+  expect(notes()).toEqual([
+    ["gelian:309306", shelfNote],
+    ["gelian:311401", shelfNote],
+    ["luomiTv:302", shelfNote],
+  ]);
+  const result = current();
+  const proof = result.offerProof("gelian:309306", "note");
+  expect(
+    proof.sources.filter((source) => source.kind === "assetJson").map((source) => source.pointer),
+  ).toEqual(["/3551/conditionjson", "/3507/conditionjson"]);
+  proof.sources = proof.sources.filter((source) => source.kind !== "assetJson");
+  expect(result.verify).toThrow("Independent field evidence sources");
+  const taskPage = cells(665, 49);
+  Object.assign(taskPage, { 11: startsAt, 12: endsAt });
+  const overlap = current();
+  expect(overlap.data.purchaseOffers.find((offer) => offer.id === "gelian:309306")?.note).toBe(
+    shelfNote,
+  );
+  const overlapProof = overlap.offerProof("gelian:309306", "note");
+  expect(overlapProof.sources).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ kind: "assetJson", pointer: "/3551/conditionjson" }),
+      expect.objectContaining({ kind: "table", table: 665, fields: [11, 12] }),
+    ]),
+  );
+  delete taskPage[11];
+  delete taskPage[12];
+  expect(
+    extract(fixture, 1449214)
+      .data.purchaseOffers.filter((offer) => offer.note)
+      .map((offer) => offer.id),
+  ).toEqual(["gelian:311401"]);
+  cells(659, 305302)[10] = 150;
+  expect(notes()).toEqual([["luomiTv:302", shelfNote]]);
+  cells(659, 305302)[10] = 100;
+  conditions.set(3551, { thresh: 1, finishTaskCount: { taskIds: [4319] } });
+  conditions.delete(3510);
+  expect(notes()).toEqual([["gelian:311401", shelfNote]]);
+});
+
+test("衣橱说明点名两种货币，字段依据绑定教程与各自的物品身份", () => {
+  const { data, verify, offerProof } = extract();
+  expect(data.shops.filter((shop) => shop.paymentNote)).toEqual([
+    {
+      id: "neighborWardrobe",
+      name: "友邻衣橱",
+      paymentNote: "使用友邻服饰币时，余额不足可用等额碎钱补足。",
+    },
+  ]);
+  const proof = offerProof("neighborWardrobe", "paymentNote");
+  proof.sources = proof.sources.slice(0, 3);
+  expect(verify).toThrow("Independent field evidence sources");
 });
 
 test("万礼馆按复合 ID 保留礼品，缺价、缺币和同名假币保留原值与各自原因", () => {
@@ -303,14 +450,14 @@ test("独立验收从冻结表检查货币类型、名称和入口诊断", () =>
 test.each(["0:0,0:2", "1:2,0:0", "0:", "0:9007199254740992"])(
   "商品次数价 %s 解析失败时中止",
   (raw) => {
-    const { tables, cells } = purchaseTables();
+    const { tables, cells, discovery } = purchaseTables();
     cells(663, 2)[2] = raw;
-    expect(() => readPurchaseOffers(tables)).toThrow();
+    expect(() => readPurchaseOffers(tables, discovery, 0)).toThrow();
   },
 );
 
 test("相同万礼馆复合身份的冲突价格中止提取", () => {
-  const { tables, add } = purchaseTables();
+  const { tables, add, discovery } = purchaseTables();
   add(672, { 0: 1, 1: 2256, 4: 50, 5: 200005 });
-  expect(() => readPurchaseOffers(tables)).toThrow("Duplicate gift row");
+  expect(() => readPurchaseOffers(tables, discovery, 0)).toThrow("Duplicate gift row");
 });

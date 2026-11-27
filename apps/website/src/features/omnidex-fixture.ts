@@ -8,7 +8,7 @@ import {
   type CollectionMemberKind,
   type Item,
 } from "@loomix/schema/catalog";
-import type { ImageIndex, ImageRef } from "@loomix/schema/assets";
+import { ImageRefSchema, type ImageIndex, type ImageRef } from "@loomix/schema/assets";
 import { emptyDataset } from "@loomix/schema/dataset";
 import { emptyHairDyeing, type HairDyeing } from "@loomix/schema/hair-dyeing";
 import {
@@ -310,7 +310,8 @@ export function addFixtureRecords(
         kind: "reference",
         id: Number(raw.id),
         name: String(raw.name),
-        description: null,
+        description: typeof raw.description === "string" ? raw.description : null,
+        image: ImageRefSchema.nullable().parse(raw.image ?? null),
       });
       continue;
     }
