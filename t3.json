@@ -7,11 +7,11 @@
       "command": "sh scripts/t3-setup.sh",
       "icon": "configure",
       "runOnWorktreeCreate": true,
-      "async": false
+      "async": true
     },
     {
       "name": "启动网站",
-      "command": "sh scripts/t3-resources.sh && vp run website#dev",
+      "command": "vp run website#dev",
       "icon": "play",
       "stopOnSettle": true
     }

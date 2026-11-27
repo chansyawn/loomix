@@ -5,6 +5,7 @@ import * as React from "react";
 import { Link } from "@tanstack/react-router";
 import GithubIcon from "@/assets/icons/github.svg?react";
 import { site } from "@/site";
+import { InstallAppButton, useAppInstall } from "./install-app-button";
 import { SiteNoticePopover } from "./site-notice";
 import {
   omnidexNavigation,
@@ -34,6 +35,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }),
   });
   const origin = useOmnidexOrigin();
+  const appInstall = useAppInstall();
   const activePath = detail ? omnidexReturnLocation(origin).to : pathname;
   return (
     <Sidebar variant="inset" {...props}>
@@ -126,7 +128,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <div className="flex items-center gap-1 px-2">
+        <div className="flex flex-wrap items-center gap-1 px-2">
           <Button
             variant="ghost"
             size="icon"
@@ -144,6 +146,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <GithubIcon aria-hidden="true" className="size-4" />
           </Button>
           <SiteNoticePopover />
+          {appInstall && <InstallAppButton {...appInstall} />}
         </div>
       </SidebarFooter>
     </Sidebar>
