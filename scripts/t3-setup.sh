@@ -1,9 +1,10 @@
 #!/bin/sh
 set -eu
 
-vp install --frozen-lockfile --prefer-offline
-
-template="${T3CODE_PROJECT_ROOT:-.}/.env.worktree.local"
-if [ -f "$template" ] && [ ! -e .env ] && [ ! -L .env ]; then
-  cp -n "$template" .env
+source_env="${T3CODE_PROJECT_ROOT:-.}/.env"
+if [ -f "$source_env" ] && [ ! -e .env ] && [ ! -L .env ]; then
+  (umask 077; cp -n "$source_env" .env)
 fi
+
+vp install --frozen-lockfile --prefer-offline
+sh scripts/t3-resources.sh --prepare
