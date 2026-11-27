@@ -41,9 +41,11 @@ vp run dev
 
 ### T3 Worktree
 
-在 T3 的 **Settings → Projects → Actions** 导入 [t3.json](t3.json) 中的动作。在主 checkout 根目录创建 `.env.worktree.local`，填入本机的 `LOOMIX_DATA_ROOT`。模板只放 worktree 所需的配置，发布凭证留在主 checkout 的 `.env` 中。
+在 T3 的 **Settings → Projects → Actions** 导入 [t3.json](t3.json) 中的动作。在主 checkout 根目录创建 `.env`，配置本机的 `LOOMIX_DATA_ROOT`。需要从 worktree 发布资源时，也在该文件中配置发布凭证。
 
-「初始化 Worktree」会安装依赖，并在 worktree 缺少 `.env` 时复制模板。「启动网站」优先使用通过校验的本地网站资源，必要时复用或生成与当前 checkout 匹配的共享资源包并安装，再启动开发服务器。访问地址以终端输出为准。资源准备若提示客户端快照缺失或选择歧义，按[客户端资源提取](tools/extraction/README.md#首次配置)处理后重试。
+创建 worktree 时，T3 在后台运行「初始化 Worktree」，线程可以立即开始工作。初始化在 worktree 缺少 `.env` 时整份复制主 checkout 的 `.env`，然后安装依赖并准备网站资源。资源优先使用已通过校验的本地副本，必要时复用或生成共享资源包后安装。
+
+依赖安装完成后，可通过「启动网站」直接启动开发服务器，访问地址以终端输出为准。资源仍在准备时，页面可能暂时缺少数据。初始化结束后仍缺少资源或校验失败时，重跑「初始化 Worktree」。若初始化提示客户端快照缺失或选择歧义，按[客户端资源提取](tools/extraction/README.md#首次配置)处理后重试。
 
 ## 目录结构
 
