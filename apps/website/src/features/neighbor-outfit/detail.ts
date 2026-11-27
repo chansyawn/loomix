@@ -8,7 +8,6 @@ export type NeighborOutfitDetail = {
   neighborName: string | null;
   slotName: string | null;
   modelSizes: string;
-  price: number | null;
 };
 
 export function neighborOutfitDetail(
@@ -21,6 +20,5 @@ export function neighborOutfitDetail(
     neighborName: neighborName ?? null,
     slotName: row.record.category,
     modelSizes: formatNeighborOutfitBodyTypes(row.record.bodyTypes),
-    price: row.record.price,
   };
 }

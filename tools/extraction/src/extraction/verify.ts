@@ -2,11 +2,13 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import { readCandidate, readVerifiedExtraction } from "./bundle.ts";
 import { readClientRecords } from "./source/read-client-records.ts";
+import { readVignetteDiscovery } from "./source/vignettes/inputs.ts";
 import { Tables, indexTables } from "./source/decode/tables.ts";
 import { decodeTextMap } from "./source/decode/textmap.ts";
 import { ObbReader } from "./source/decode/obb.ts";
 import { readJson, writeJson } from "../workflow/json.ts";
 import { verifyCatalogSources } from "../verify/catalog.ts";
+import { verifyPurchaseOffers } from "../verify/purchases.ts";
 import { verifyCraftingRelations } from "../verify/crafting.ts";
 import { verifyCookingRecipes } from "../verify/cooking.ts";
 import { verifyCollectionFields } from "../verify/collection-fields.ts";
@@ -43,12 +45,20 @@ export async function verifyCandidate(directory: string, writeReport = true): Pr
   assert.deepEqual(textmap.byHash, decodeTextMap(reader).byHash, "Frozen TextMap decodes from OBB");
   const tables = new Tables(path.join(source, "prepared"));
   const index = readJson<IndexedAsset[]>(path.join(source, "prepared/asset-index.json"));
+  const discovery = readVignetteDiscovery(source, index);
+  verifyPurchaseOffers(
+    dataset.catalog,
+    fieldEvidence.fields,
+    tables,
+    observations.diagnostics.purchases,
+    dataset.source.dataRevision,
+    discovery,
+  );
   verifyAcquisitionHints(observations.diagnostics.investigation.acquisitionHints, tables);
   verifyStarseaSources(dataset, observations.starsea.diagnostics, tables);
   verifyVignettes(
-    source,
     tables,
-    index,
+    discovery,
     dataset.vignettes,
     observations.vignettes,
     imageBindings,

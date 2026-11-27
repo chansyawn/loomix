@@ -101,11 +101,6 @@ const giftPreference = z.strictObject({
   tagIds: z.number().int().positive().array(),
 });
 
-const outfitOffer = z.strictObject({
-  id: z.number().int().positive(),
-  configuredPrice: z.number().int().nonnegative(),
-});
-
 const outfit = z
   .strictObject({
     id: z.number().int().positive(),
@@ -117,7 +112,6 @@ const outfit = z
     playerItemId: z.number().int().positive().nullable(),
     imagePath: path,
     descriptionZh: z.string().nullable(),
-    offers: outfitOffer.array(),
   })
   .superRefine((value, ctx) => {
     if (value.relationship === "matching" && value.playerItemId === null)
@@ -132,9 +126,6 @@ const outfit = z
         path: ["neighborId"],
         message: "Neighbor-specific outfits need a neighbor",
       });
-    const offerIds = value.offers.map((offer) => offer.id);
-    if (new Set(offerIds).size !== offerIds.length)
-      ctx.addIssue({ code: "custom", path: ["offers"], message: "Duplicate outfit offer ID" });
   });
 
 export const NeighborOutfitDatabaseSchema = z

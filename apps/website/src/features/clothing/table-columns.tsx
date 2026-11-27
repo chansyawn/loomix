@@ -1,10 +1,7 @@
 import { catalogEntryLocation } from "@/features/omnidex/entry-location";
 import { Link } from "@tanstack/react-router";
 import type { ClothingOutfit } from "../omnidex-view";
-import {
-  formatNeighborOutfitBodyTypes,
-  formatNeighborOutfitPrice,
-} from "../neighbor-outfit/presentation";
+import { formatNeighborOutfitBodyTypes } from "../neighbor-outfit/presentation";
 import { recordColumns, MembershipCell } from "../omnidex/table-columns";
 import { textColumn, tableLinkClassName } from "../list-page/table-columns";
 import type { ListColumn } from "../list-page/table-columns";
@@ -82,7 +79,7 @@ export function clothingTableColumns(
         "bodyTypes" in record ? formatNeighborOutfitBodyTypes(record.bodyTypes) : null,
       ),
       textColumn("price", "配置价格", 176, (record) =>
-        "price" in record ? formatNeighborOutfitPrice(record.price) : null,
+        "priceLabel" in record ? record.priceLabel : null,
       ),
     ];
   const memberships = indexMembership(groups, (group) => group.componentIds);

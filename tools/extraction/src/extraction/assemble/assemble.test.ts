@@ -1,5 +1,5 @@
 import { expect, test } from "vite-plus/test";
-import { collection, material } from "../../../../../packages/schema/tests/fixture.ts";
+import { collection, material, reference } from "../../../../../packages/schema/tests/fixture.ts";
 import { clientReadRecordsFixture } from "../fixtures/client-read-records.ts";
 import { emptyFlowerHybridization } from "../fixtures/flower-hybridization.ts";
 import { assemble } from "./index.ts";
@@ -35,6 +35,28 @@ const need = (
   candidates: [{ object: object.key, reference: "UISprite/Fixture", rank: 0 }],
   sources: [{ kind: "table", file: "prepared/ed.obb", table: 325, rowOffset: 2, fields: [5] }],
   reason: "unconfigured",
+});
+
+test("报价保留直接交付物和支付货币，店铺说明不引入物品", () => {
+  const observations = clientReadRecordsFixture();
+  const { catalog } = observations;
+  catalog.items = [1, 2, 3, 4].map((id) => reference(id));
+  catalog.shops.push({
+    id: "neighborWardrobe",
+    name: "友邻衣橱",
+    paymentNote: "余额不足可用碎钱补足。",
+  });
+  catalog.purchaseOffers.push({
+    id: "neighborWardrobe:1",
+    shopId: "neighborWardrobe",
+    deliveredItemId: 1,
+    currencyItemId: 2,
+    price: { kind: "fixed", amount: 0 },
+  });
+  const build = () => assemble(observations, [], emptyFlowerHybridization(observations.source));
+  expect(build().dataset.catalog.items).toEqual(catalog.items.slice(0, 2));
+  catalog.items = catalog.items.filter(({ id }) => id !== 2);
+  expect(build).toThrow("Missing reference identity 2");
 });
 
 test("同一源对象跨用途共享原图，组装同时投影图片引用和具体来源", () => {

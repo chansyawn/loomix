@@ -250,6 +250,18 @@ export function verifyImages(
       item.kind === "inspoCard" ? [item.id, item.recipe.productId] : [],
     ),
   );
+  const paymentIds = new Set(
+    observations.catalog.purchaseOffers.map((offer) => offer.currencyItemId),
+  );
+  const currencyUses = new Set<string>();
+  for (const item of observations.catalog.items) {
+    if (item.kind !== "reference") continue;
+    const use = `item:${item.id}:image`;
+    if (paymentIds.has(item.id)) {
+      assert.deepEqual(item.image, { use }, `Currency image owner ${item.id}`);
+      currencyUses.add(use);
+    } else assert.equal(item.image, null, `Reference image scope ${item.id}`);
+  }
   for (const need of observations.imageNeeds) {
     const record = observations.diagnostics.collection.items.find(
       (entry) => entry.id === need.owner.id,
@@ -270,6 +282,29 @@ export function verifyImages(
             : "icon";
     assert.equal(need.variant, variant, `Independent image variant ${need.id}`);
     let references = configuredReferences(need, observations, tables, source, dyeingIcons);
+    const currency = currencyUses.delete(need.id);
+    if (currency) {
+      assert.deepEqual(need.owner, { kind: "item", id: need.owner.id, field: "image" });
+      const rows = tables.rows(325).filter((row) => tables.id(row) === need.owner.id);
+      const paths = (row: (typeof rows)[number] | undefined) => [
+        ...new Set([4, 5].flatMap((field) => tables.string(row, field) || [])),
+      ];
+      references = paths(rows[0]);
+      for (const row of rows) assert.deepEqual(paths(row), references, "Consistent currency icons");
+      assert.deepEqual(
+        need.sources,
+        rows.length
+          ? rows.map((row) => ({
+              kind: "table",
+              file: "prepared/ed.obb",
+              table: 325,
+              rowOffset: row.rowOffset,
+              fields: [0, 4, 5],
+            }))
+          : [{ kind: "tableScan", file: "prepared/ed.obb", table: 325 }],
+        `Currency image provenance ${need.id}`,
+      );
+    }
     const dyeing = need.owner.kind === "hairColorGroup" || need.owner.kind === "hairColorBlock";
     if (dyeing)
       assert.equal(need.required, references.length > 0, `Required dyeing icon ${need.id}`);
@@ -307,7 +342,14 @@ export function verifyImages(
     }
     assert.deepEqual(need.references, references, `Independent image configuration ${need.id}`);
     const additional = need.owner.kind === "neighbor" && need.owner.field.startsWith("images.");
-    const candidates = references.flatMap((reference, rank) => {
+    // 支付物品选首个可定位的配置，小图优先于大图。
+    const eligible = currency
+      ? references.slice(
+          0,
+          references.findIndex((ref) => ref.startsWith("UISprite/") && resolved(ref, true)) + 1,
+        )
+      : references;
+    const candidates = eligible.flatMap((reference, rank) => {
       if (placeholderOnly) return [];
       if (dyeing) {
         const asset = resolveDyeingIcon(index, reference);
@@ -343,7 +385,7 @@ export function verifyImages(
       if (!reference.startsWith("UISprite/")) return [];
       const asset = resolved(
         reference,
-        need.owner.kind.startsWith("starsea") || variant === "card-background",
+        currency || need.owner.kind.startsWith("starsea") || variant === "card-background",
       );
       return asset
         ? [
@@ -377,6 +419,7 @@ export function verifyImages(
       reason: ordered.length ? null : need.reason,
     });
   }
+  assert.equal(currencyUses.size, 0, "Every payment reference has an image lookup");
   assert.deepEqual(
     [...objects.keys()].sort(),
     [...candidateKeys].sort(),

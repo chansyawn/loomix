@@ -20,8 +20,6 @@ export function readOutfits(
     const qualities = rows.map((row) => tables.uint(row, 15, 0));
     if (new Set(qualities).size > 1)
       throw new Error(`Conflicting neighbor clothing qualities ${outfit.id}`);
-    const prices = new Set(outfit.offers.map((offer) => offer.configuredPrice));
-    if (prices.size > 1) throw new Error(`Conflicting neighbor clothing prices ${outfit.id}`);
     const use = image(outfit.imagePath, outfit.id);
     if (!use) throw new Error(`Missing neighbor clothing image ${outfit.id}`);
     const tags = metadata.record(outfit.id);
@@ -40,7 +38,6 @@ export function readOutfits(
           ? outfit.playerItemId
           : null,
       bodyTypes: outfit.bodyTypes,
-      price: [...prices][0] ?? null,
     };
     const sources = sourcesById.get(outfit.id) ?? [];
     for (const field of [
@@ -51,7 +48,6 @@ export function readOutfits(
       "category",
       "bodyTypes",
       "playerItemId",
-      "price",
     ] as const)
       proofs.push({
         owner: "item",

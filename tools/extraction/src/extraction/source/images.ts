@@ -88,14 +88,18 @@ export function imageCollector(index: IndexedAsset[], packages: ReadonlyMap<stri
   };
   const configured = (
     owner: ImageOwner,
-    reference: string | null,
+    reference: string | string[] | null,
     variant: ImageRef["variant"],
     sources: EvidenceSource[],
     required = false,
+    allowAtlasName = owner.kind.startsWith("starsea") || variant === "card-background",
   ): string => {
-    const match: IconMatch | null = reference
-      ? resolve(reference, owner.kind.startsWith("starsea") || variant === "card-background")
-      : null;
+    const references = Array.isArray(reference) ? reference : reference ? [reference] : [];
+    let match: IconMatch | null = null;
+    for (const path of references) {
+      match = resolve(path, allowAtlasName);
+      if (match?.matched) break;
+    }
     const candidates =
       match?.matched && match.source && match.pathId && match.container && match.resourceName
         ? [
@@ -113,9 +117,9 @@ export function imageCollector(index: IndexedAsset[], packages: ReadonlyMap<stri
       candidates,
       variant,
       sources,
-      reference ? "configured_resource_missing" : "image_not_configured",
+      references.length ? "configured_resource_missing" : "image_not_configured",
       required,
-      reference ? [reference] : [],
+      references,
     );
   };
   return { needs, objects, need, configured };

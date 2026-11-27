@@ -4,19 +4,17 @@ import type { Tables } from "../extraction/source/decode/tables.ts";
 import type { ClientReadRecords } from "../extraction/model.ts";
 import type { ImageBinding, OriginalImage } from "../extraction/images/model.ts";
 import { admitted, readVignetteAdmissionRows } from "../extraction/source/vignettes/admissions.ts";
-import { readVignetteDiscovery } from "../extraction/source/vignettes/inputs.ts";
-import type { IndexedAsset } from "../extraction/types.ts";
+import type { DiscoveryEvidence } from "../extraction/source/vignettes/inputs.ts";
 
 export function verifyVignettes(
-  source: string,
   tables: Tables,
-  index: IndexedAsset[],
+  discovery: DiscoveryEvidence,
   data: Vignettes,
   observed: ClientReadRecords["vignettes"],
   bindings: readonly ImageBinding[],
   originals: readonly OriginalImage[],
 ): void {
-  const admissions = readVignetteAdmissionRows(tables, readVignetteDiscovery(source, index));
+  const admissions = readVignetteAdmissionRows(tables, discovery);
   const templates = new Map(data.templates.map((entry) => [entry.id, entry]));
   const recordedRows = new Map(observed.rows.map((entry) => [entry.id, entry]));
   const imageBindings = new Map(bindings.map(({ use, object }) => [use, object]));

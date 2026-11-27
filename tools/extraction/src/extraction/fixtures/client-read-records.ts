@@ -15,7 +15,8 @@ export function clientReadRecordsFixture(datasetId = "c".repeat(64)): ClientRead
     context: { ...dataset.context, datasetId },
     source: dataset.source,
     gameplayTags: dataset.gameplayTags,
-    catalog: { items: [], collections: [], inspoBoxes: [] },
+    catalog: { items: [], collections: [], inspoBoxes: [], shops: [], purchaseOffers: [] },
+    purchaseProofs: [],
     ingredientItemIds: [],
     neighbors: {
       source: dataset.source,
@@ -45,6 +46,15 @@ export function clientReadRecordsFixture(datasetId = "c".repeat(64)): ClientRead
     plantProofs: [],
     neighborProofs: [],
     diagnostics: {
+      purchases: {
+        rows: [],
+        giftRows: [],
+        tvPageLinks: [],
+        entrances: [],
+        missingTvPages: [],
+        emptyGroups: [],
+        recycleCandidates: [],
+      },
       collection: {
         ...emptyCatalog(dataset.source),
         items: [],

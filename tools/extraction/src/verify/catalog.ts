@@ -382,7 +382,12 @@ export function verifyCatalogSources(
       );
     }
   const formal = new Set(expectedFormal);
-  const references = new Set<number>();
+  const references = new Set(
+    dataset.catalog.purchaseOffers.flatMap((offer) => [
+      offer.deliveredItemId,
+      offer.currencyItemId,
+    ]),
+  );
   for (const row of tables.rows(111)) {
     for (const field of tables.uint(row, 4) === 2 ? [3, 5] : [3]) {
       const cost = tables.string(row, field)?.trim();

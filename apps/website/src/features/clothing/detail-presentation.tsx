@@ -4,7 +4,6 @@ import type { DetailSection } from "@/features/detail-page/detail-page";
 import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presentation";
 import { RecordImage } from "@/features/omnidex/record-image";
 import type { ClothingPageDetail } from "./detail";
-import { formatNeighborOutfitPrice } from "../neighbor-outfit/presentation";
 import { HairDyeingPalette, hairDyeingSectionId } from "./hair-dyeing-palette";
 import type { HairDyeingState } from "./use-hair-dyeing";
 
@@ -50,7 +49,6 @@ function clothingDetailFields(detail: ClothingPageDetail): [string, string | nul
         ["部位", detail.slotName],
         ["友邻", detail.neighborName],
         ["可用体型", detail.modelSizes],
-        ["配置价格", formatNeighborOutfitPrice(detail.price)],
       ];
   }
 }

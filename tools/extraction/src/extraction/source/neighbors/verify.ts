@@ -122,8 +122,6 @@ export function verifyNeighborOutfit(value: unknown, input: NeighborExtractionIn
         matching: clothing.items.filter((item) => item.relationship === "matching").length,
         neighborSpecific: clothing.items.filter((item) => item.relationship === "neighbor-specific")
           .length,
-        tokenPricedOutfits: clothing.items.filter((item) => item.offers.length > 0).length,
-        tokenPricedOffers: clothing.items.reduce((sum, item) => sum + item.offers.length, 0),
       },
       profile.expectedNeighborOutfits,
       "Neighbor clothing counts changed; re-confirm the layout and profile",

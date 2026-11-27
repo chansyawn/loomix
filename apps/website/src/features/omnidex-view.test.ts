@@ -1,4 +1,5 @@
 import { createGameplayTagIndex } from "@loomix/schema/gameplay-tags";
+import type { PurchaseOffer } from "@loomix/schema/catalog";
 import { expect, test } from "vite-plus/test";
 import { emptyDataset } from "@loomix/schema/dataset";
 import {
@@ -72,8 +73,26 @@ test("有图和缺图的友邻服饰均进入专属列表", () => {
       category: "手套",
       image: { assetId: file, variant: "icon" },
       bodyTypes: ["small"],
-      price: 0,
     },
+  );
+  addFixtureRecords(catalog, gameplayTags, { kind: "reference", id: 200014, name: "友邻服饰币" });
+  catalog.shops.push({
+    id: "neighborWardrobe",
+    name: "友邻衣橱",
+    paymentNote: "使用友邻服饰币时，余额不足可用等额碎钱补足。",
+  });
+  const freeOffer: PurchaseOffer = {
+    id: "neighborWardrobe:50",
+    shopId: "neighborWardrobe",
+    deliveredItemId: 10,
+    currencyItemId: 200014,
+    price: { kind: "fixed", amount: 0 },
+    note: "任务/限时货架",
+  };
+  catalog.purchaseOffers.push(
+    freeOffer,
+    { ...freeOffer, id: "neighborWardrobe:51" },
+    { ...freeOffer, id: "neighborWardrobe:52", price: { kind: "fixed", amount: 20 } },
   );
   const view = toOmnidexView(
     catalog,
@@ -90,9 +109,16 @@ test("有图和缺图的友邻服饰均进入专属列表", () => {
       category: "连衣裙",
       quality: 1,
       bodyTypes: ["medium", "big"],
-      price: null,
+      priceLabel: null,
     },
-    { id: 10, name: "丰年手套", image: file, category: "手套", bodyTypes: ["small"], price: 0 },
+    {
+      id: 10,
+      name: "丰年手套",
+      image: file,
+      category: "手套",
+      bodyTypes: ["small"],
+      priceLabel: "0 友邻服饰币 / 20 友邻服饰币",
+    },
   ]);
   expect(view.ingredientItemsById.get(9)).toMatchObject({
     catalogCategory: "neighborOutfit",

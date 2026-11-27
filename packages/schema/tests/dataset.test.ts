@@ -28,7 +28,13 @@ const messages = (dataset: ReturnType<typeof datasetFixture>) =>
 test("物品和集合的正式契约拒绝旧获取字段", () => {
   const item = plant(1);
   const group = collection(10, "plant", [1]);
-  const catalog = { items: [item], collections: [group], inspoBoxes: [] };
+  const catalog = {
+    items: [item],
+    collections: [group],
+    inspoBoxes: [],
+    shops: [],
+    purchaseOffers: [],
+  };
   expect(CatalogSchema.parse(catalog)).toEqual(catalog);
   expect(() =>
     CatalogSchema.parse({ ...catalog, items: [{ ...item, acquisition: null }] }),
@@ -269,7 +275,6 @@ test("友邻服饰必须关联已知友邻或玩家服饰", () => {
     neighborId: 11,
     playerItemId: 60001,
     bodyTypes: ["small", "big"],
-    price: 120,
   };
   dataset.neighbors.neighbors.push(neighbor(11));
   dataset.catalog.items.push(reference(60001), outfit);

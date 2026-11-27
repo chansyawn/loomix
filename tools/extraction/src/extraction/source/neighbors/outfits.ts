@@ -1,10 +1,8 @@
 import { profile } from "../../../profile.ts";
 import type { Tables } from "../decode/tables.ts";
 import type { TableRow } from "../../types.ts";
-import { assertLayout, requiredId, requiredText } from "./fields.ts";
+import { assertLayout, requiredText } from "./fields.ts";
 import type { NeighborEvidence, NeighborExclusion, NeighborOutfit } from "./types.ts";
-
-const tokenItemId = 200014;
 
 type OutfitCandidate = Pick<
   NeighborOutfit,
@@ -13,13 +11,11 @@ type OutfitCandidate = Pick<
   row: TableRow;
 };
 type OutfitSlot = { name: string; row: TableRow };
-type ConfiguredOffer = { offer: NeighborOutfit["offers"][number]; row: TableRow };
 
 interface OutfitReferences {
   items: Map<number, TableRow>;
   displays: Map<number, TableRow>;
   slots: Map<number, OutfitSlot>;
-  offers: Map<number, ConfiguredOffer[]>;
 }
 
 function fieldSource(tables: Tables, row: TableRow, fields: number[]): NeighborEvidence["source"] {
@@ -165,45 +161,6 @@ function readSlots(tables: Tables): Map<number, OutfitSlot> {
   return slots;
 }
 
-function readOffers(
-  tables: Tables,
-  outfitIds: ReadonlySet<number>,
-): Map<number, ConfiguredOffer[]> {
-  const offersByItem = new Map<number, ConfiguredOffer[]>();
-  const seenIds = new Set<number>();
-  for (const row of tables.rows(profile.roots.neighborOutfitGoods)) {
-    const outfitId = tables.uint(row, 2);
-    if (outfitId === null || !outfitIds.has(outfitId)) continue;
-    assertLayout(
-      tables,
-      row,
-      {
-        id: [0, "uint"],
-        group: [1, "uint"],
-        item: [2, "uint"],
-        price: [10, "uint"],
-        currency: [11, "uint"],
-      },
-      27,
-    );
-    if (tables.uint(row, 11) !== tokenItemId) continue;
-    const configuredPrice = tables.uint(row, 10);
-    if (configuredPrice === null) throw new Error(`Missing neighbor outfit price ${outfitId}`);
-    const offer = { id: requiredId(tables, row, 0), configuredPrice };
-    if (seenIds.has(offer.id)) throw new Error(`Duplicate neighbor outfit offer ${offer.id}`);
-    seenIds.add(offer.id);
-    const offers = offersByItem.get(outfitId) ?? [];
-    offers.push({ offer, row });
-    offersByItem.set(outfitId, offers);
-  }
-  for (const [id, offers] of offersByItem) {
-    if (new Set(offers.map(({ offer }) => offer.configuredPrice)).size > 1)
-      throw new Error(`Conflicting configured neighbor outfit prices ${id}`);
-    offers.sort((a, b) => a.offer.id - b.offer.id);
-  }
-  return offersByItem;
-}
-
 function buildOutfit(
   tables: Tables,
   { row, id, neighborId, relationship, playerItemId }: OutfitCandidate,
@@ -236,9 +193,6 @@ function buildOutfit(
   const playerItem = playerItemId === null ? undefined : references.items.get(playerItemId);
   if (playerItem) addEvidence(records, id, tables, playerItem, [0, 1]);
 
-  const offers = references.offers.get(id) ?? [];
-  for (const { row: source } of offers) addEvidence(records, id, tables, source, [0, 1, 2, 10, 11]);
-
   return {
     id,
     nameZh,
@@ -249,7 +203,6 @@ function buildOutfit(
     playerItemId,
     imagePath,
     descriptionZh: tables.text(display, 27),
-    offers: offers.map(({ offer }) => offer),
   };
 }
 
@@ -272,7 +225,6 @@ export function readNeighborOutfits(
       displaySignature(tables, row),
     ),
     slots: readSlots(tables),
-    offers: readOffers(tables, outfitIds),
   };
 
   return candidates

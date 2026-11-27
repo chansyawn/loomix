@@ -35,6 +35,7 @@ export const Route = createFileRoute("/catalog_/$id")({
     return {
       record: row,
       model,
+      quotes: data.view.purchaseQuotes.get(id),
       uses: catalogGameplayUses(data, id),
       readVignetteUses: async () =>
         vignetteGameplayUses(data, record, await readVignetteTemplates(load)),
@@ -59,12 +60,13 @@ export const Route = createFileRoute("/catalog_/$id")({
   component: DetailRoute,
 });
 function DetailRoute() {
-  const { record, model, uses, readVignetteUses, readHairDyeing } = Route.useLoaderData();
+  const { record, model, uses, quotes, readVignetteUses, readHairDyeing } = Route.useLoaderData();
   return (
     <CatalogEntryPage
       key={record.id}
       record={record}
       model={model}
+      quotes={quotes}
       uses={uses}
       readVignetteUses={readVignetteUses}
       readHairDyeing={readHairDyeing}

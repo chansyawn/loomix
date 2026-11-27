@@ -103,31 +103,5 @@ export function detailInvestigation(context: ContentContext) {
     }
   }
   records.push(...treeInvestigation(tables));
-  const ids = new Set([...scope.ids, ...tables.rows(144).map((row) => tables.id(row))]);
-  for (const row of tables.rows(659)) {
-    const id = tables.uint(row, 2);
-    if (!id || !ids.has(id)) continue;
-    records.push({
-      id,
-      field: "detail.trade",
-      status: "unconfirmed",
-      reason: "price_currency_stock_reset_semantics_not_independently_verified",
-      candidates: {
-        offerId: tables.id(row),
-        goodsGroupId: tables.uint(row, 1),
-        numericCandidates: [6, 7, 8, 9, 10, 12, 13, 21, 22].map((field) => ({
-          field,
-          nativeValue: tables.uint(row, field),
-        })),
-        conditionCandidates: [17, 18, 23, 24].map((field) => ({
-          field,
-          nativeValue: tables.string(row, field),
-        })),
-      },
-      sources: [
-        tableSource(tables, row, [0, 1, 2, 6, 7, 8, 9, 10, 12, 13, 17, 18, 21, 22, 23, 24]),
-      ],
-    });
-  }
   return detailInvestigationSchema.parse({ source: catalogSource, records });
 }

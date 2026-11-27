@@ -21,7 +21,6 @@ export function verifyCollectionFields(catalog: CollectionObservations, tables: 
       "treeDrops",
       "creatureSize",
       "creatureGrades",
-      "trade",
       "dishEffects",
     ] as const) {
       if (record.kind === "item" && record.category === "creatures" && field === "creatureSize")

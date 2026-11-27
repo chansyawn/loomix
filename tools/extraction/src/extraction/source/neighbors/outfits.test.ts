@@ -56,15 +56,10 @@ function outfitRows(): FixtureRows {
     cells(12, { 0: 60004, 1: 1014, 2: 5001, 7: "NpcOutfits/Small/60004" }),
     cells(12, { 0: 60005, 2: 5001, 7: "NpcOutfits/Small/60005" }),
   );
-  for (const [id, group] of [
-    [50001, 500],
-    [50601, 506],
-  ] as const)
-    rows[659]!.push(cells(27, { 0: id, 1: group, 2: 1160001, 10: 120, 11: 200014 }));
   return rows;
 }
 
-test("extracts confirmed outfits, explicit counterparts, configured offers and complete table evidence", (context) => {
+test("提取已确认的友邻服饰、玩家同款关系与配置表依据", (context) => {
   const fixture = createFixture(outfitRows());
   context.onTestFinished(fixture.cleanup);
   const { database, clothing, audit } = extractNeighborBundle(fixture.input);
@@ -79,13 +74,8 @@ test("extracts confirmed outfits, explicit counterparts, configured offers and c
   assert.equal(matching.playerItemId, 60001);
   assert.equal(matching.slotNameZh, "头戴物");
   assert.deepEqual(matching.bodyTypes, ["small", "medium", "big"]);
-  assert.deepEqual(matching.offers, [
-    { id: 50001, configuredPrice: 120 },
-    { id: 50601, configuredPrice: 120 },
-  ]);
   const native = clothing[0]!;
   assert.equal(native.playerItemId, 60003);
-  assert.deepEqual(native.offers, []);
   assert.deepEqual(
     audit.exclusions
       .filter((entry) => entry.kind === "outfit")
@@ -99,19 +89,17 @@ test("extracts confirmed outfits, explicit counterparts, configured offers and c
   assert.equal(audit.counts.outfits, 2);
   assert.equal(audit.counts.matchingOutfits, 1);
   assert.equal(audit.counts.neighborSpecificOutfits, 1);
-  assert.equal(audit.counts.tokenPricedOutfits, 1);
-  assert.equal(audit.counts.tokenPricedOffers, 2);
   const proofs = audit.records.filter(
     (entry) => entry.collection === "outfits" && entry.key === "1160001",
   );
-  assert.equal(proofs.length, 7);
+  assert.equal(proofs.length, 5);
   assert.deepEqual(
     [
       ...new Set(
         proofs.flatMap((entry) => (entry.source.kind === "table" ? [entry.source.table] : [])),
       ),
     ].sort((a, b) => a - b),
-    [318, 325, 416, 474, 659],
+    [318, 325, 416, 474],
   );
   assert.ok(
     neighborImagePaths(database).every(
@@ -186,20 +174,6 @@ const invalidSources: { name: string; change: (rows: FixtureRows) => void; error
     },
     error: /byte width/,
   },
-  {
-    name: "duplicate offer ID",
-    change: (rows) => {
-      rows[659]!.push([...rows[659]![0]!]);
-    },
-    error: /Duplicate neighbor outfit offer/,
-  },
-  {
-    name: "conflicting prices",
-    change: (rows) => {
-      rows[659]![1]![10] = 150;
-    },
-    error: /Conflicting configured neighbor outfit prices/,
-  },
 ];
 
 for (const { name, change, error } of invalidSources)
@@ -235,9 +209,6 @@ test("outfit validation and frozen-source verification reject incomplete or tamp
     (value: typeof clothingData) => {
       value.items.push(value.items[0]!);
     },
-    (value: typeof clothingData) => {
-      value.items[1]!.offers.push(value.items[1]!.offers[0]!);
-    },
   ]) {
     const invalid = structuredClone(clothingData);
     change(invalid);
@@ -250,6 +221,6 @@ test("outfit validation and frozen-source verification reject incomplete or tamp
   missing.items.pop();
   assert.throws(() => verifyNeighborOutfit(missing, fixture.input), /frozen sources/);
   const changed = structuredClone(clothingData);
-  changed.items[1]!.offers[0]!.configuredPrice = 121;
+  changed.items[1]!.nameZh = "其他服饰";
   assert.throws(() => verifyNeighborOutfit(changed, fixture.input), /frozen sources/);
 });

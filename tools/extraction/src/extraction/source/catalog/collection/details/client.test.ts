@@ -1,7 +1,7 @@
 import { expect, test } from "vite-plus/test";
 import type { ContentContext } from "../../context.ts";
 import type { TableRow } from "../../../../types.ts";
-import { creatureSize, trade } from "./client.ts";
+import { creatureSize } from "./client.ts";
 
 import { treeDrops } from "./tree-drops.ts";
 import { treeInvestigation } from "./tree-investigation.ts";
@@ -107,38 +107,6 @@ test("tree drops join by configured group and leave unsupported quantity and cha
     },
   ]);
   expect(result.reason).toBe("drop_mode_or_positive_total_weight_unconfirmed");
-});
-
-test("shop offers retain exact IDs and conditions but do not mislabel native fields as prices", () => {
-  const offer = row(659, 9001, {
-    1: 700,
-    2: 30108,
-    17: "SHOP_SALE_CONDITION_LEVEL",
-    18: "5",
-    22: 12,
-    23: "SHOP_SALE_CONDITION_TIME",
-    24: "night",
-  });
-  const result = trade(context([offer]), 30108);
-
-  expect(result.value).toEqual({
-    sellPrice: null,
-    offers: [
-      {
-        id: 9001,
-        goodsGroupId: 700,
-        buyPrice: null,
-        currencyItemId: null,
-        stock: null,
-        refresh: null,
-        conditions: [
-          { field: 17, kind: "SHOP_SALE_CONDITION_LEVEL", parameters: "5" },
-          { field: 23, kind: "SHOP_SALE_CONDITION_TIME", parameters: "night" },
-        ],
-      },
-    ],
-  });
-  expect(result.reason).toBe("commerce_price_stock_refresh_mapping_unconfirmed");
 });
 
 function weightedTree(weights: number[], mode = 2) {

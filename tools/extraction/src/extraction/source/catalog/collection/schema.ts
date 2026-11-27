@@ -2,7 +2,6 @@ import { z } from "zod";
 import {
   ObservedCookingRecipeSchema as CookingRecipeSchema,
   ObservedDropSchema as drop,
-  ObservedTradeSchema as trade,
   createObservedGrowthSchema,
   createObservedSeedSchema,
 } from "../../../schemas/observed.ts";
@@ -44,7 +43,6 @@ function createCollectionDetailSchema() {
         }),
       )
       .nullable(),
-    trade: trade.nullable(),
     dishEffects: z
       .array(
         z.strictObject({
@@ -129,7 +127,6 @@ export function emptyCollectionDetail(id: number): CollectionDetail {
     treeDrops: null,
     creatureSize: null,
     creatureGrades: null,
-    trade: null,
     dishEffects: null,
   };
 }

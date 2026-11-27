@@ -16,7 +16,7 @@ import { evidenceEntity, evidenceField } from "../extraction/assemble/validate-e
 export function verifyFieldSources(
   fields: readonly FieldEvidence[],
   collection: string,
-  id: number,
+  id: string | number,
   fieldPath: string,
   sources: EvidenceSource[],
   status: FieldEvidence["status"] = "confirmed",

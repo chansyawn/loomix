@@ -25,7 +25,7 @@ export function emptyDataset(context: Dataset["context"], source: Dataset["sourc
     context: { ...context },
     source: { ...source },
     gameplayTags: { tags: [] },
-    catalog: { items: [], collections: [], inspoBoxes: [] },
+    catalog: { items: [], collections: [], inspoBoxes: [], shops: [], purchaseOffers: [] },
     neighbors: { neighbors: [] },
     starsea: { regions: [], islets: [], iconStyles: [] },
     vignettes: { templates: [], fallbackItems: [] },

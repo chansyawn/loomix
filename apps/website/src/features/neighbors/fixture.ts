@@ -99,7 +99,13 @@ export function neighborFixture() {
       asset("item", "icon", "5".repeat(64)),
     ],
   };
-  const catalog: Catalog = { items: [], collections: [], inspoBoxes: [] };
+  const catalog: Catalog = {
+    items: [],
+    collections: [],
+    inspoBoxes: [],
+    shops: [],
+    purchaseOffers: [],
+  };
   const gameplayTags: GameplayTags = {
     tags: [
       { id: 1, displayName: "树生水果", internalName: "水果", parentId: null },

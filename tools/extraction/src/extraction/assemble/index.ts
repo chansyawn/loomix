@@ -168,6 +168,7 @@ export function assemble(
     },
   });
   const fields = [
+    ...observations.purchaseProofs,
     ...flowerProofs,
     ...buildDomainEvidence(
       dataset,

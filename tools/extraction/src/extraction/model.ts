@@ -12,6 +12,7 @@ import type { readStarsea } from "./source/starsea/read.ts";
 import type { readVignettes } from "./source/vignettes/read.ts";
 import type { DyeingObservation } from "./source/hair-dyeing/read.ts";
 import type { AcquisitionHints } from "./source/catalog/acquisition-hints.ts";
+import type { readPurchaseOffers } from "./source/catalog/purchases/read.ts";
 
 export interface ImageUse {
   use: string;
@@ -47,11 +48,13 @@ export interface ClientReadRecords {
   imageNeeds: ImageNeed[];
   imageObjects: ImageObject[];
   proofs: SourceProof[];
+  purchaseProofs: FieldEvidence[];
   recordProofs: EvidenceRecord[];
   detailProofs: CollectionEvidence[];
   plantProofs: CollectionEvidence[];
   neighborProofs: NeighborEvidence[];
   diagnostics: {
+    purchases: ReturnType<typeof readPurchaseOffers>["diagnostics"];
     collection: CollectionObservations;
     admissions: import("./source/catalog/admissions.ts").RecordEvidence[];
     exclusions: unknown;

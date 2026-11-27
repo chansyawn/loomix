@@ -73,45 +73,6 @@ export function dishEffects(
   return { value, sources, reason: "effect_parameter_not_explicit_in_client_configuration" };
 }
 
-export function trade(
-  context: Pick<ContentContext, "tables">,
-  id: number,
-): DetailResult<CollectionDetail["trade"]> {
-  const { tables } = context;
-  const rows = tables.rows(659).filter((row) => tables.uint(row, 2) === id);
-  const sources: CollectionSource[] = [];
-  const offers = rows
-    .map((row) => {
-      sources.push(tableSource(tables, row, [0, 1, 2, 9, 10, 12, 13, 17, 18, 22, 23, 24]));
-      const goodsGroupId = tables.uint(row, 1);
-      if (!goodsGroupId) throw new Error(`Missing goods group ${tables.id(row)}`);
-      const conditions = [17, 23].flatMap((field) => {
-        const kind = tables.string(row, field);
-        if (!kind) return [];
-        if (!kind.startsWith("SHOP_SALE_CONDITION_"))
-          throw new Error(`Unknown shop condition ${kind}`);
-        return [{ field, kind, parameters: tables.string(row, field + 1) }];
-      });
-      return {
-        id: tables.id(row),
-        goodsGroupId,
-        buyPrice: null,
-        currencyItemId: null,
-        stock: null,
-        refresh: null,
-        conditions: conditions.length ? conditions : null,
-      };
-    })
-    .sort((a, b) => a.id - b.id);
-  if (new Set(offers.map((offer) => offer.id)).size !== offers.length)
-    throw new Error(`Duplicate shop offer IDs for ${id}`);
-  return {
-    value: offers.length ? { sellPrice: null, offers } : null,
-    sources,
-    reason: "commerce_price_stock_refresh_mapping_unconfirmed",
-  };
-}
-
 export function recordDetail<T>(
   proofs: CollectionEvidenceBuilder,
   owner: "item" | "seed",
@@ -143,9 +104,6 @@ export function buildItemDetail(
 ) {
   const detail = emptyCollectionDetail(record.id);
   if (record.kind === "item") {
-    const commerce = trade(context, record.id);
-    detail.trade = commerce.value;
-    recordDetail(proofs, "item", record.id, "detail.trade", commerce);
     if (record.category === "plants") {
       const main = context.main.get(record.id);
       if (record.subcategory === "花") {

@@ -60,7 +60,7 @@ const data: ClothingData = {
       quality: 1,
       category: "连衣裙",
       bodyTypes: ["medium", "big"],
-      price: null,
+      priceLabel: null,
     },
     {
       id: 7,
@@ -70,7 +70,7 @@ const data: ClothingData = {
       quality: 3,
       category: "手套",
       bodyTypes: ["small"],
-      price: 20,
+      priceLabel: "20 友邻服饰币",
     },
   ],
 };

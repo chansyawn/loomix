@@ -52,7 +52,6 @@ export const ItemSchema = z.discriminatedUnion("kind", [
     neighborId: IdSchema.nullable(),
     playerItemId: IdSchema.nullable(),
     bodyTypes: BodyTypeSchema.array().min(1),
-    price: z.number().nonnegative().nullable(),
   }),
   categorized.extend({
     kind: z.literal("creature"),
@@ -89,6 +88,7 @@ export const ItemSchema = z.discriminatedUnion("kind", [
     id: IdSchema,
     name: z.string().min(1),
     description: NullableTextSchema,
+    image: ImageRefSchema.nullable(),
   }),
 ]);
 

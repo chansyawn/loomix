@@ -8,7 +8,7 @@ import { afterEach, expect, test, vi } from "vite-plus/test";
 import { emptyHairDyeing } from "@loomix/schema/hair-dyeing";
 import { routeTree } from "../../routeTree.gen";
 import { Route as CatalogEntryRoute } from "../../routes/catalog_.$id";
-import { catalogFixture, fixtureRequest } from "../omnidex-fixture";
+import { addFixtureRecords, catalogFixture, fixtureRequest } from "../omnidex-fixture";
 import {
   plantItemFixture,
   plantSeedFixture,
@@ -59,7 +59,56 @@ function setup(
       ],
     }),
   });
-  resources.catalog.items.push({ kind: "reference", id: 99, name: "仅供引用", description: null });
+  const { catalog, gameplayTags } = resources;
+  addFixtureRecords(
+    catalog,
+    gameplayTags,
+    { kind: "clothing", id: 50, name: "眠月睡袍" },
+    { kind: "neighborOutfit", id: 51, name: "眠月睡袍", playerItemId: 50 },
+    { kind: "reference", id: 99, name: "发型" },
+    { kind: "reference", id: 200002, name: "碎钱" },
+    { kind: "reference", id: 200003, name: "足迹" },
+    { kind: "reference", id: 200014, name: "友邻服饰币" },
+  );
+  catalog.shops.push(
+    { id: "luomiTv", name: "络米电视购" },
+    {
+      id: "neighborWardrobe",
+      name: "友邻衣橱",
+      paymentNote: "使用友邻服饰币时，余额不足可用等额碎钱补足。",
+    },
+  );
+  catalog.purchaseOffers.push(
+    {
+      id: "luomiTv:1",
+      shopId: "luomiTv",
+      deliveredItemId: 50,
+      currencyItemId: 200003,
+      price: { kind: "fixed", amount: 1500 },
+      note: "任务/限时货架",
+    },
+    {
+      id: "luomiTv:3",
+      shopId: "luomiTv",
+      deliveredItemId: 50,
+      currencyItemId: 200003,
+      price: { kind: "fixed", amount: 1800 },
+    },
+    {
+      id: "neighborWardrobe:1",
+      shopId: "neighborWardrobe",
+      deliveredItemId: 51,
+      currencyItemId: 200014,
+      price: { kind: "fixed", amount: 600 },
+    },
+    {
+      id: "luomiTv:2",
+      shopId: "luomiTv",
+      deliveredItemId: 99,
+      currencyItemId: 200003,
+      price: { kind: "fixed", amount: 100 },
+    },
+  );
   const request = vi.fn(
     intercept(
       fixtureRequest({
@@ -114,6 +163,39 @@ function detailLoaderData(router: ReturnType<typeof setup>) {
   type LoaderData = typeof CatalogEntryRoute.types.loaderData;
   return router.state.matches.at(-1)?.loaderData as LoaderData | undefined;
 }
+
+test.each([
+  [
+    50,
+    {
+      name: "络米电视购",
+      prices: [
+        { priceLabel: "1500 足迹", note: "任务/限时货架" },
+        { priceLabel: "1800 足迹", note: null },
+      ],
+    },
+  ],
+  [
+    51,
+    {
+      name: "友邻衣橱",
+      paymentNote: "使用友邻服饰币时，余额不足可用等额碎钱补足。",
+      prices: [{ priceLabel: "600 友邻服饰币", note: null }],
+    },
+  ],
+] as const)("同名服饰详情 %i 只展示直接交付给该款的商店报价", async (id, shop) => {
+  const router = setup(`/catalog/${id}#purchase-offers`);
+  await router.load();
+  expect(router.state.matches.at(-1)?.status).toBe("success");
+  expect(detailLoaderData(router)?.quotes).toMatchObject([shop]);
+});
+
+test.each([40, 100])("外观和集合 %i 的详情不继承其他物品的报价", async (id) => {
+  const router = setup(`/catalog/${id}`);
+  await router.load();
+  expect(router.state.matches.at(-1)?.status).toBe("success");
+  expect(detailLoaderData(router)?.quotes).toBeUndefined();
+});
 
 test.each([
   ["/catalog/1", 1, "item"],
