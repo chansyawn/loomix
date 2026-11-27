@@ -1,8 +1,24 @@
+import { ChevronDownIcon } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import LayoutGridPlus from "@/assets/icons/layout-grid-plus.svg?react";
 import { Button } from "@/ui/components/button";
-import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/ui/components/popover";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/ui/components/collapsible";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/ui/components/dialog";
 import { useSidebar } from "@/ui/components/sidebar";
+import {
+  detectInstallGuidePlatform,
+  installGuides,
+  type InstallGuidePlatform,
+} from "./install-guide";
 
 interface InstallPromptEvent extends Event {
   prompt(): Promise<unknown>;
@@ -80,14 +96,21 @@ export function useAppInstall(): AppInstall | null {
 export function InstallAppButton({ prompting, promptInstall }: AppInstall) {
   const { isMobile } = useSidebar();
   const [guideOpen, setGuideOpen] = useState(false);
+  const [guidePlatform, setGuidePlatform] = useState<InstallGuidePlatform | null>(null);
 
   async function handleGuideOpenChange(open: boolean) {
-    if (!open || !(await promptInstall())) setGuideOpen(open);
+    if (!open) {
+      setGuideOpen(false);
+      return;
+    }
+    if (await promptInstall()) return;
+    setGuidePlatform(detectInstallGuidePlatform(window.navigator));
+    setGuideOpen(true);
   }
 
   return (
-    <Popover open={guideOpen} onOpenChange={handleGuideOpenChange}>
-      <PopoverTrigger
+    <Dialog open={guideOpen} onOpenChange={handleGuideOpenChange}>
+      <DialogTrigger
         aria-label="安装应用"
         title="安装应用"
         disabled={prompting}
@@ -95,36 +118,47 @@ export function InstallAppButton({ prompting, promptInstall }: AppInstall) {
       >
         <LayoutGridPlus aria-hidden="true" data-icon="inline-start" />
         {isMobile && <span>安装应用</span>}
-      </PopoverTrigger>
-      <PopoverContent
-        side="top"
-        align="start"
-        sideOffset={8}
-        className="max-h-(--available-height) w-[min(20rem,var(--available-width))] overflow-y-auto"
-      >
-        <PopoverTitle>安装络米星集</PopoverTitle>
-        <ul className="flex flex-col gap-2 text-muted-foreground">
-          <li>
-            <strong className="font-medium text-foreground">桌面 Chrome</strong>
-            <p>菜单 → 投放、保存和分享 → 将网页安装为应用。</p>
-          </li>
-          <li>
-            <strong className="font-medium text-foreground">Android Chrome</strong>
-            <p>菜单 → 添加到主屏幕 → 安装。</p>
-          </li>
-          <li>
-            <strong className="font-medium text-foreground">iPhone 和 iPad Safari</strong>
-            <p>分享 → 添加到主屏幕。如有「作为网页 App 打开」开关，请开启后添加。</p>
-          </li>
-          <li>
-            <strong className="font-medium text-foreground">Mac Safari</strong>
-            <p>文件 → 添加到程序坞。</p>
-          </li>
-        </ul>
-        <p className="text-muted-foreground">
-          菜单里找不到安装选项时，可用支持安装的浏览器打开链接。
-        </p>
-      </PopoverContent>
-    </Popover>
+      </DialogTrigger>
+      <DialogContent showCloseButton={false} className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>安装络米星集</DialogTitle>
+          <DialogDescription>通过浏览器菜单安装到桌面或主屏幕。</DialogDescription>
+        </DialogHeader>
+        {guidePlatform && <InstallGuideSteps guide={installGuides[guidePlatform]} />}
+        <Collapsible>
+          <CollapsibleTrigger render={<Button variant="outline" size="sm" />}>
+            {guidePlatform ? "其他平台" : "查看各平台安装步骤"}
+            <ChevronDownIcon
+              aria-hidden="true"
+              data-icon="inline-end"
+              className="group-aria-expanded/button:rotate-180"
+            />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <ul className="mt-2 flex flex-col gap-2">
+              {Object.entries(installGuides)
+                .filter(([platform]) => platform !== guidePlatform)
+                .map(([platform, guide]) => (
+                  <li key={platform}>
+                    <InstallGuideSteps guide={guide} />
+                  </li>
+                ))}
+            </ul>
+          </CollapsibleContent>
+        </Collapsible>
+        <DialogFooter>
+          <DialogClose render={<Button variant="outline" />}>关闭</DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function InstallGuideSteps({ guide }: { guide: (typeof installGuides)[InstallGuidePlatform] }) {
+  return (
+    <div className="text-muted-foreground">
+      <strong className="font-medium text-foreground">{guide.label}</strong>
+      <p>{guide.steps}</p>
+    </div>
   );
 }
