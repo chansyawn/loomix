@@ -39,6 +39,12 @@ vp run dev
 
 `VITE_RESOURCE_BASE_URL` 默认无需配置。开发和测试使用 `resources/website/`，生产读取 `apps/website/resource-address.json`。只有 `VITE_` 前缀变量可暴露给客户端，请勿为凭证使用该前缀。
 
+### T3 Worktree
+
+在 T3 的 **Settings → Projects → Actions** 导入 [t3.json](t3.json) 中的动作。在主 checkout 根目录创建 `.env.worktree.local`，填入本机的 `LOOMIX_DATA_ROOT`。模板只放 worktree 所需的配置，发布凭证留在主 checkout 的 `.env` 中。
+
+「初始化 Worktree」会安装依赖，并在 worktree 缺少 `.env` 时复制模板。「启动网站」优先使用通过校验的本地网站资源，必要时复用或生成与当前 checkout 匹配的共享资源包并安装，再启动开发服务器。访问地址以终端输出为准。资源准备若提示客户端快照缺失或选择歧义，按[客户端资源提取](tools/extraction/README.md#首次配置)处理后重试。
+
 ## 目录结构
 
 ```text

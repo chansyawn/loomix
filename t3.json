@@ -1,0 +1,19 @@
+{
+  "$schema": "https://t3.codes/schema/t3.json",
+  "defaultThreadEnvMode": "worktree",
+  "scripts": [
+    {
+      "name": "初始化 Worktree",
+      "command": "sh scripts/t3-setup.sh",
+      "icon": "configure",
+      "runOnWorktreeCreate": true,
+      "async": false
+    },
+    {
+      "name": "启动网站",
+      "command": "sh scripts/t3-resources.sh && vp run website#dev",
+      "icon": "play",
+      "stopOnSettle": true
+    }
+  ]
+}
