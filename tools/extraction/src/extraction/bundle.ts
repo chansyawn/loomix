@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { clientIconRecordsSchema } from "./client-icons/model.ts";
 import crypto from "node:crypto";
 import { withLock } from "../workflow/lock.ts";
 import assert from "node:assert/strict";
@@ -39,6 +40,7 @@ import {
 import { vignetteHintsFile } from "./source/vignettes/profile.ts";
 
 export function writeAssembly(directory: string, assembly: Assembly): void {
+  writeJson(path.join(directory, "client-icons.json"), assembly.clientIcons);
   writeJson(path.join(directory, DATASET_FILE), assembly.dataset);
   writeJson(path.join(directory, FIELD_EVIDENCE_FILE), assembly.fieldEvidence);
   writeJson(path.join(directory, "image-bindings.json"), assembly.imageBindings);
@@ -51,6 +53,9 @@ export function readCandidate(directory: string) {
   );
   if (!ContextSchema.safeParse(clientReadRecords.context).success)
     throw new Error("封存的提取结果与当前契约不符，请重新提取。");
+  if (!clientReadRecords.clientIcons || !fs.existsSync(path.join(directory, "client-icons.json")))
+    throw new Error("封存结果缺少客户端图标索引，请重新提取。");
+  clientReadRecords.clientIcons = clientIconRecordsSchema.parse(clientReadRecords.clientIcons);
   if (!clientReadRecords.vignettes) throw new Error("Missing vignette client read records");
   if (!clientReadRecords.hairDyeing) throw new Error("Missing hair dyeing client read records");
   dyeingDiagnosticsSchema.parse(clientReadRecords.hairDyeing.diagnostics);
@@ -70,6 +75,11 @@ export function readCandidate(directory: string) {
     clientReadRecords.source,
   );
   const rebuilt = assemble(clientReadRecords, originals, flowerHybridization);
+  assert.deepEqual(
+    readJson(path.join(directory, "client-icons.json")),
+    rebuilt.clientIcons,
+    "Client icon index matches frozen records",
+  );
   const dataset = parseDataset(readJson(path.join(directory, DATASET_FILE)));
   const fieldEvidence = FieldEvidenceReportSchema.parse(
     readJson(path.join(directory, FIELD_EVIDENCE_FILE)),

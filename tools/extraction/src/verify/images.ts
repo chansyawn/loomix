@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { clientIconSlots } from "../extraction/client-icons/model.ts";
+import { clientIconAtlas } from "../extraction/client-icons/resolve.ts";
 import fs from "node:fs";
 import path from "node:path";
 import { PNG } from "pngjs";
@@ -245,6 +247,45 @@ export function verifyImages(
   };
   const expectedBindings: ImageBinding[] = [];
   const candidateKeys = new Set<string>();
+  for (const { image } of clientIconSlots(observations.clientIcons)) {
+    if (!image) continue;
+    const key = normalize(`assets/moleres/rel/sres/${image.reference}`);
+    const name = key.split("/").at(-1);
+    const exact = (byContainer.get(`Sprite:${key}`) ?? []).filter(
+      (asset) => asset.Name?.toLowerCase() === name,
+    );
+    const siblings = bySpriteFolderAndName.get(key) ?? [];
+    const atlas = clientIconAtlas(image.reference);
+    const members = atlas
+      ? (byContainer.get(`Sprite:${normalize(atlas)}`) ?? []).filter(
+          (asset) => asset.Name?.toLowerCase() === name,
+        )
+      : [];
+    const matches = exact.length ? exact : siblings.length ? siblings : members;
+    assert.equal(
+      image.method,
+      exact.length
+        ? "exact_config_path"
+        : siblings.length
+          ? "unique_sprite_name"
+          : "configured_atlas_member",
+    );
+    const overlay = matches.filter((entry) => entry.Source.includes("/Persistent/"));
+    const active = overlay.length ? overlay : matches;
+    const entry = active[0];
+    assert.ok(
+      entry && new Set(active.map((asset) => `${asset.Source}:${asset.PathID}`)).size === 1,
+      `Unique client sprite ${image.reference}`,
+    );
+    const packageSha256 = packages.get(entry.Source);
+    assert.ok(packageSha256);
+    assert.equal(
+      image.object,
+      identity({ packageSha256, assetType: "Sprite", pathId: entry.PathID }),
+      image.reference,
+    );
+    candidateKeys.add(image.object);
+  }
   const craftingIconIds = new Set(
     observations.catalog.items.flatMap((item) =>
       item.kind === "inspoCard" ? [item.id, item.recipe.productId] : [],

@@ -51,6 +51,8 @@ vp run @loomix/extraction#refresh -- --help
 
 产物位置以阶段清单的 `outputs` 为准。调查时从 `client-read-records.json` 查读取记录、排除项和候选，从 `field-evidence.json` 查最终字段依据。客户端源文件路径以快照根目录为准。
 
+需要单独取得客户端图标时，运行 `vp run @loomix/extraction#init`，再将环境 ID 传给 `vp run @loomix/extraction#extract --environment <环境ID>`。提取目录的 `client-icons.json` 按业务 ID 收录食物效果、厨具小图、烹饪难度、生物习性、送礼偏好、图鉴页签、家具分类和服饰部位。查菜肴时先用 `dishes[].id` 找到其效果、厨具或难度 ID；查图鉴页签时同时使用 `groupId` 和 `id`。用图片槽位的 `image.object` 在同目录 `originals.json` 匹配 `object`，再按 `file` 打开 PNG。多个槽位可以引用同一张图，`image: null` 表示客户端未配置该图片。这份索引仅随提取产物封存；旧提取目录缺少该文件时需重新提取。
+
 ## 故障恢复与清理
 
 失败后先查看命令错误及日志：工具准备日志在 `cache/anime-studio/logs/`，提取诊断在 `cache/failures/`，批次诊断在 `cache/decode/failures/` 和 `cache/originals/failures/`。修复原因后重跑；已完成且通过复验的昂贵批次可复用，不必先清空缓存。工具版本或下载失效时检查 [AnimeStudio 配置](src/client/anime-studio/config.ts)，显式更新固定版本与摘要，不自动跟随最新构建。

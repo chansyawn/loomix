@@ -122,5 +122,5 @@ export function imageCollector(index: IndexedAsset[], packages: ReadonlyMap<stri
       references,
     );
   };
-  return { needs, objects, need, configured };
+  return { needs, objects, need, configured, locate };
 }

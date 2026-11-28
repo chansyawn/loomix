@@ -28,7 +28,9 @@ export function createIconResolver(textures: IndexedAsset[], sprites: IndexedAss
     const overlay = variants.filter((asset) => /[\\/]Persistent[\\/]/i.test(asset.Source));
     const active = overlay.length ? overlay : variants;
     if (new Set(active.map((asset) => `${asset.Source}:${asset.PathID}`)).size > 1)
-      throw new Error("Ambiguous authoritative image reference");
+      throw new Error(
+        `Ambiguous authoritative image reference: ${active.map((asset) => `${asset.Source}:${asset.PathID}`).join(", ")}`,
+      );
     return active[0];
   };
   return (reference: string, allowAtlasName = false): IconMatch | null => {

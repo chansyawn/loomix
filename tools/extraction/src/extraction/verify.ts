@@ -11,6 +11,7 @@ import { verifyCatalogSources } from "../verify/catalog.ts";
 import { verifyPurchaseOffers } from "../verify/purchases.ts";
 import { verifyCraftingRelations } from "../verify/crafting.ts";
 import { verifyCookingRecipes } from "../verify/cooking.ts";
+import { verifyClientIconSources } from "../verify/client-icons.ts";
 import { verifyCollectionFields } from "../verify/collection-fields.ts";
 import { verifyProofSources } from "../verify/collection.ts";
 import { verifyPlantings } from "../verify/plants.ts";
@@ -117,6 +118,7 @@ export async function verifyCandidate(directory: string, writeReport = true): Pr
   }
   verifyNeighborDetails(observations.neighbors, tables);
   verifyCookingRecipes(dataset.catalog, tables);
+  verifyClientIconSources(observations.clientIcons, dataset.catalog, tables);
   verifyCraftingRelations(dataset.catalog, tables, observations.diagnostics.crafting);
   verifyImages(directory, tables, observations, originals, imageBindings);
   verifyEvidence(directory, dataset, fieldEvidence, tables);
