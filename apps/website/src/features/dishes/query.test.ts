@@ -31,6 +31,7 @@ function item(id: number, fields: Partial<DishItem> = {}): DishItem {
     tastes: null,
     unlockCondition: null,
     slots: [],
+    recipeItems: [],
     ...fields,
   };
 }

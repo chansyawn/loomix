@@ -2,16 +2,13 @@ import type { InspoBox, ItemOf, Quality } from "@loomix/schema/catalog";
 import type { TableRow } from "../../../types.ts";
 import type { SourceProof, WithImageUses } from "../../../model.ts";
 import type { EvidenceSource } from "../../../evidence/domain-schema.ts";
-import type { imageCollector, LocatedImage } from "../../images.ts";
+import type { imageCollector } from "../../images.ts";
+import { cardIcon } from "../card-display.ts";
 import type { ContentContext } from "../context.ts";
 import { uiSignature } from "../context.ts";
 import { localizedSources } from "../collection/evidence.ts";
 import { plainText } from "../model.ts";
 import type { readCraftingRecipes } from "./read.ts";
-
-export function isPlaceholderIcon(reference: string): boolean {
-  return /^uisprite\/load\/item\/cloud(?:\.png)?$/i.test(reference.trim().replaceAll("\\", "/"));
-}
 
 export function readInspoCards(
   context: ContentContext,
@@ -88,38 +85,7 @@ export function readInspoCards(
       const quality = uiRow ? tables.uint(uiRow, 15, 0) : null;
       if (quality !== null && !context.vocabulary.qualityLabels.has(quality))
         throw new Error(`Unknown creation card quality ${id}:${quality}`);
-      const references = [5, 4].flatMap((field) => {
-        const reference = tables.string(uiRow, field);
-        return reference && !isPlaceholderIcon(reference) ? [reference] : [];
-      });
-      const candidates = references.flatMap((reference): LocatedImage[] => {
-        const match = context.resolveIcon(reference);
-        return match?.matched &&
-          match.source &&
-          match.pathId &&
-          match.container &&
-          match.resourceName
-          ? [
-              {
-                ...match,
-                reference,
-                source: match.source,
-                pathId: match.pathId,
-                container: match.container,
-                resourceName: match.resourceName,
-              },
-            ]
-          : [];
-      });
-      const icon = images.need(
-        { kind: "item", id, field: "image" },
-        candidates,
-        "icon",
-        tableFields(uiRow, 4, 5),
-        "image_not_configured_or_matched",
-        false,
-        references,
-      );
+      const icon = cardIcon(context, images, id, uiRow, tableFields(uiRow, 4, 5));
       const background = images.configured(
         { kind: "item", id, field: "front.background" },
         tables.string(row, 9),

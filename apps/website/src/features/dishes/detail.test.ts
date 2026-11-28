@@ -29,6 +29,7 @@ const first: DishItem = {
   tastes: ["甜"],
   unlockCondition: { kind: "chefLevelGreaterOrEqual", level: 5 },
   slots: [],
+  recipeItems: [],
 };
 const second: DishItem = { ...first, id: 2, name: "星露蒸鱼" };
 const group: DishSeries = {

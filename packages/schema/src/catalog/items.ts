@@ -30,6 +30,9 @@ const listed = {
 };
 const item = z.strictObject({ ...listed, tagIds: IdSchema.array() });
 const categorized = item.extend({ category: NullableTextSchema });
+const cardFront = z.strictObject({
+  background: ImageRefSchema.extend({ variant: z.literal("card-background") }),
+});
 
 export const ItemSchema = z.discriminatedUnion("kind", [
   categorized.extend({
@@ -41,9 +44,12 @@ export const ItemSchema = z.discriminatedUnion("kind", [
     kind: z.literal("inspoCard"),
     inspoBoxId: IdSchema.nullable(),
     recipe: CraftingRecipeSchema,
-    front: z.strictObject({
-      background: ImageRefSchema.extend({ variant: z.literal("card-background") }),
-    }),
+    front: cardFront,
+  }),
+  item.extend({
+    kind: z.literal("cookingRecipeItem"),
+    productId: IdSchema,
+    front: cardFront,
   }),
   categorized.extend({ kind: z.literal("clothing") }),
   categorized.extend({ kind: z.literal("appearance") }),

@@ -2,12 +2,14 @@ import { Link, type LinkComponentProps } from "@tanstack/react-router";
 import { ArrowUpRightIcon } from "lucide-react";
 import { Item, ItemActions, ItemContent, ItemMedia } from "@/ui/components/item";
 import { cn } from "@/ui/lib/utils";
+import { RecipeItemImage } from "../dishes/recipe-item-image";
 import { useOmnidexOrigin } from "./navigation";
 import { RecordImage } from "./record-image";
 
 export function GameplayRelationItem({
   name,
   image,
+  cardBackground,
   quantity,
   note,
   destination,
@@ -15,6 +17,7 @@ export function GameplayRelationItem({
 }: {
   name: string;
   image: string | null;
+  cardBackground?: string | null;
   quantity?: number;
   note?: string;
   destination?: LinkComponentProps<"a">;
@@ -24,7 +27,13 @@ export function GameplayRelationItem({
   const link = destination ? { ...destination, state: { omnidexOrigin: origin } } : undefined;
   const quantityLabel = quantity === undefined ? undefined : `×${quantity}`;
   const label = (
-    <span className="min-w-0 flex-1 truncate" title={note ? `${name} ${note}` : name}>
+    <span
+      className={cn(
+        "min-w-0 flex-1",
+        cardBackground ? "wrap-anywhere whitespace-normal" : "truncate",
+      )}
+      title={note ? `${name} ${note}` : name}
+    >
       <span className="group-hover/relation-link:underline">{name}</span>
       {note && (
         <>
@@ -35,6 +44,29 @@ export function GameplayRelationItem({
     </span>
   );
 
+  const thumbnail = cardBackground ? (
+    <RecipeItemImage
+      background={cardBackground}
+      image={image}
+      className={variant === "default" ? "size-full" : "size-8"}
+    />
+  ) : (
+    <RecordImage
+      image={image}
+      name=""
+      inset="none"
+      background="none"
+      fallback="icon"
+      className={cn(
+        "shrink-0",
+        variant === "default"
+          ? "size-full"
+          : variant === "overview"
+            ? "size-6 rounded-md"
+            : "size-7 rounded-md",
+      )}
+    />
+  );
   if (variant !== "default") {
     const layoutClass = cn(
       "inline-flex max-w-full min-w-0 items-center gap-1.5 whitespace-nowrap",
@@ -42,14 +74,7 @@ export function GameplayRelationItem({
     );
     const content = (
       <>
-        <RecordImage
-          image={image}
-          name=""
-          inset="none"
-          background="none"
-          fallback="icon"
-          className={cn("shrink-0 rounded-md", variant === "overview" ? "size-6" : "size-7")}
-        />
+        {thumbnail}
         {label}
         {quantityLabel && (
           <span className="shrink-0 text-xs font-medium tabular-nums">{quantityLabel}</span>
@@ -80,14 +105,7 @@ export function GameplayRelationItem({
       className="min-w-0 flex-nowrap"
     >
       <ItemMedia aria-hidden="true" variant="image">
-        <RecordImage
-          image={image}
-          name=""
-          inset="none"
-          background="none"
-          fallback="icon"
-          className="size-full"
-        />
+        {thumbnail}
       </ItemMedia>
       <ItemContent className="min-w-0">{label}</ItemContent>
       {(quantityLabel || destination) && (

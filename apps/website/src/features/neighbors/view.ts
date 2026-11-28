@@ -6,6 +6,7 @@ import type { GameplayTagIndex, GameplayTags } from "@loomix/schema/gameplay-tag
 import type { Neighbor, Neighbors } from "@loomix/schema/neighbors";
 import { neighborAvatar, resolveNeighborPortrait } from "./portrait";
 import { hasCatalogItemDetail } from "../omnidex/catalog";
+import { cookingItemView } from "../dishes/recipe-items";
 import { visibleTagIds } from "../omnidex/tags";
 import { CATALOG_TAG_FILTER_POLICY } from "../catalog/tag-filter-policy";
 
@@ -66,6 +67,7 @@ function preferencesOf(
           name: item?.name ?? `未收录物品（${id}）`,
           recordId: item && hasCatalogItemDetail(item) ? id : null,
           image: item && isListedItem(item) ? image(item.image) : null,
+          ...(item && cookingItemView(item, index.items, image)),
         };
       }),
       tags: neighbor.gifts[level].tagIds.map((id) => ({

@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { CollectionMemberKind } from "@loomix/schema/catalog";
 import type { DetailField, DetailSection } from "../detail-page/detail-page";
 import type { CatalogEntrySummary } from "../omnidex-view";
-import { catalogEntryLocation } from "./entry-location";
+import { catalogEntryLocation, relatedItemLocation } from "./entry-location";
 import { GameplayRelationItem } from "./gameplay-relation-item";
 import { RecordListCard } from "./record-list-card";
 import { RecordImage } from "./record-image";
@@ -70,6 +70,8 @@ export function collectionMembers<Member extends CatalogEntrySummary>(
 
 type RelatedEntry = Pick<CatalogEntrySummary, "id" | "name" | "image"> & {
   browsable?: boolean;
+  cardBackground?: string | null;
+  cookingProductId?: number;
   note?: string;
 };
 
@@ -82,8 +84,9 @@ export function CatalogRelations({ items }: { items: readonly RelatedEntry[] }) 
             variant="inline"
             name={item.name}
             image={item.image}
+            cardBackground={item.cardBackground}
             note={item.note}
-            destination={item.browsable === false ? undefined : catalogEntryLocation(item)}
+            destination={relatedItemLocation(item)}
           />
         </li>
       ))}
@@ -113,7 +116,8 @@ export function catalogRelationEntry(item: RelatedEntry): DetailEntry {
     key: item.id,
     name: item.name,
     image: item.image,
+    cardBackground: item.cardBackground,
     note: item.note,
-    destination: item.browsable === false ? undefined : catalogEntryLocation(item),
+    destination: relatedItemLocation(item),
   };
 }

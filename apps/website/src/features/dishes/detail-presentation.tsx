@@ -1,10 +1,11 @@
 import { RecordImage } from "@/features/omnidex/record-image";
 import { SeriesImage } from "../omnidex/series-image";
 import type { DetailSection } from "@/features/detail-page/detail-page";
-import { collectionMembers } from "../omnidex/detail-relations";
+import { catalogRelationEntry, collectionMembers } from "../omnidex/detail-relations";
 import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presentation";
 import type { DishesDetail } from "./detail";
 import { DishRecipe } from "./recipe";
+import { dishRecipeAnchor } from "../omnidex/entry-location";
 import { hintField, textField } from "../detail-page/field-model";
 import { catalogTagField, type OverviewTag } from "../omnidex/overview-tags";
 import { dishCardAttributes, strengthText, unlockConditionLabel } from "./presentation";
@@ -30,15 +31,16 @@ export function dishesDetailPresentation(
   }
   const { record } = detail;
   const sections: DetailSection[] = [];
-  if (record.slots.length)
+  if (record.slots.length || record.recipeItems.length)
     sections.push({
-      id: "dish-recipe",
+      id: dishRecipeAnchor,
       title: "烹饪配方",
       content: <DishRecipe detail={detail} />,
     });
   return {
     image: <RecordImage image={record.image} name={record.name} eager />,
     fields: [
+      { kind: "entries", label: "菜谱", value: record.recipeItems.map(catalogRelationEntry) },
       textField("难度", record.difficulty),
       hintField("解锁条件", unlockConditionLabel(record.unlockCondition)),
       textField("口味", record.tastes?.join("、")),

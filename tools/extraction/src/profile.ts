@@ -131,6 +131,15 @@ export const profile = {
   },
   binData: { tags: "633e15d6", tagDisplay: "b429c67e", creatureDisplay: "15896ba2" },
   expected: { textmap: 116673, tables: 724 },
+  cookingRecipeItems: {
+    type: 300,
+    background: {
+      reference: "UISprite/Load/Cooking/Bg_Cooking_Parket_Icon_Normal",
+      source: "PetitPlanet_Data/Persistent/AssetBundle/blocks/00/00000003.blk",
+      pathId: "9104971417108201751",
+    },
+    expected: { admitted: 113, outside: 5, missing: 53 },
+  },
   expectedCatalogMetadata: {
     records: 2550,
     clientTypes: 101,

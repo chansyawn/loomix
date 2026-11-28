@@ -71,6 +71,9 @@ export interface ClientReadRecords {
     };
     outsideMembers: unknown;
     cooking: unknown;
+    cookingItemExclusions: ReturnType<
+      typeof import("./source/catalog/cooking-items.ts").readCookingItems
+    >["exclusions"];
     crafting: unknown;
     neighbors: unknown;
   };

@@ -57,6 +57,16 @@ function configuredReferences(
     return [reference];
   }
   if (owner.kind === "inspoBox" || owner.field === "front.background") {
+    if (owner.kind === "item" && tables.uint(tables.byId(318).get(owner.id), 2) === 300) {
+      assert.deepEqual(need.sources, [
+        {
+          kind: "asset",
+          file: "PetitPlanet_Data/Persistent/AssetBundle/blocks/00/00000003.blk",
+          pathId: "9104971417108201751",
+        },
+      ]);
+      return ["UISprite/Load/Cooking/Bg_Cooking_Parket_Icon_Normal"];
+    }
     const [root, field] = owner.kind === "inspoBox" ? [180, 11] : [568, 9];
     const row = tables.rows(root).find((entry) => tables.id(entry) === owner.id);
     assert.ok(row, `Independent crafting image owner ${need.id}`);
@@ -291,7 +301,11 @@ export function verifyImages(
   }
   const craftingIconIds = new Set(
     observations.catalog.items.flatMap((item) =>
-      item.kind === "inspoCard" ? [item.id, item.recipe.productId] : [],
+      item.kind === "inspoCard"
+        ? [item.id, item.recipe.productId]
+        : item.kind === "cookingRecipeItem"
+          ? [item.id]
+          : [],
     ),
   );
   const paymentIds = new Set(
@@ -431,6 +445,12 @@ export function verifyImages(
         reference,
         currency || need.owner.kind.startsWith("starsea") || variant === "card-background",
       );
+      if (variant === "card-background" && need.sources[0]?.kind === "asset") {
+        assert.equal(asset?.Type, "Sprite");
+        assert.equal(asset.Name, "Bg_Cooking_Parket_Icon_Normal");
+        assert.equal(asset.Source, need.sources[0].file);
+        assert.equal(asset.PathID, need.sources[0].pathId);
+      }
       return asset
         ? [
             {

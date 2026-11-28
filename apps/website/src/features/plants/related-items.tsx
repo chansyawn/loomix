@@ -1,6 +1,6 @@
 import { CatalogItemCard } from "../omnidex/catalog-item-card";
 import { InspoCardFace } from "../omnidex/inspo-card-face";
-import { catalogEntryLocation } from "../omnidex/entry-location";
+import { relatedItemLocation } from "../omnidex/entry-location";
 import type { PlantDrop, PlantDrops } from "./model";
 
 export function PlantDropsInfo({ drops }: { drops: PlantDrops }) {
@@ -41,12 +41,12 @@ export function PlantDropsInfo({ drops }: { drops: PlantDrops }) {
 }
 
 function PlantDropCard({ drop: { item, itemId, inspoCard } }: { drop: PlantDrop }) {
-  const target = inspoCard?.product ?? (item?.browsable !== false ? item : null);
+  const target = inspoCard?.product ?? item;
   return (
     <CatalogItemCard
       item={item}
       itemId={itemId}
-      link={target ? catalogEntryLocation(target) : undefined}
+      link={target ? relatedItemLocation(target) : undefined}
       thumbnail={
         inspoCard ? (
           <div

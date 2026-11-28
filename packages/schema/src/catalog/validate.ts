@@ -37,6 +37,14 @@ export function validateCatalog(catalog: Catalog): ValidationIssue[] {
     if (item.kind === "reference") return;
     unique(item.tagIds, (id) => id, [...path, "tagIds"]);
     switch (item.kind) {
+      case "cookingRecipeItem": {
+        const product = items.get(item.productId);
+        if (product?.kind !== "dish" || !product.cooking)
+          issue([...path, "productId"], `Expected dish with cooking recipe ${item.productId}`);
+        if (!item.image && !product?.image)
+          issue([...path, "front"], `Missing usable foreground for cooking recipe item ${item.id}`);
+        break;
+      }
       case "inspoCard": {
         const product = items.get(item.recipe.productId);
         if (!product || product.kind === "reference" || product.id === item.id)

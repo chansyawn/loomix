@@ -80,7 +80,7 @@ export function DishRecipe({ detail }: { detail: Extract<DishesDetail, { kind: "
     "slot",
     slots.map((_, index) => index + 1),
   );
-  if (slots.length === 0) return null;
+  if (slots.length === 0) return <p className="text-sm text-muted-foreground">食材条件尚未确认</p>;
 
   return (
     <Accordion multiple {...expansion}>

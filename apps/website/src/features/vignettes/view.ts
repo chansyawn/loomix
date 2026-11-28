@@ -4,6 +4,7 @@ import { createGameplayTagIndex, tagLabel, type GameplayTags } from "@loomix/sch
 import type { Neighbors } from "@loomix/schema/neighbors";
 import type { Vignette, Vignettes } from "@loomix/schema/vignettes";
 import { hasCatalogItemDetail } from "../omnidex/catalog";
+import { cookingItemView } from "../dishes/recipe-items";
 import { neighborAvatar } from "../neighbors/portrait";
 import {
   createRequirementMatcher,
@@ -15,7 +16,14 @@ import {
 export const siteLabels = { land: "陆地", "water-edge": "水边", beach: "沙滩" } as const;
 
 type ImageResolver = ReturnType<typeof createImageResolver>;
-type DisplayItem = { id: number; name: string; image: string | null; browsable: boolean };
+type DisplayItem = {
+  id: number;
+  name: string;
+  image: string | null;
+  browsable: boolean;
+  cookingProductId?: number;
+  cardBackground?: string | null;
+};
 type Condition =
   | { kind: "item"; item: DisplayItem }
   | { kind: "tags"; labels: string[]; matches: DisplayItem[] };
@@ -150,6 +158,7 @@ export function toVignetteDetail(
           name: item.name,
           image: image(item.image),
           browsable: hasCatalogItemDetail(item),
+          ...cookingItemView(item, items, image),
         }
       : { id: item.id, name: item.name, image: null, browsable: false };
   }

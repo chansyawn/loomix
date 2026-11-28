@@ -11,6 +11,7 @@ import { readJson } from "../workflow/json.ts";
 import type { SupplementalAdmissions } from "../extraction/source/catalog/admissions.ts";
 import { verifyAppearanceAdmissions } from "./appearance.ts";
 import { verifyHarvestablePlants } from "./harvestable-plants.ts";
+import { verifyCookingItems } from "./cooking.ts";
 
 const text = (value: string | null) =>
   value
@@ -262,6 +263,7 @@ export function verifyCatalogSources(
     ),
     ...seedIds,
     ...cardIds,
+    ...verifyCookingItems(dataset.catalog, tables, observations.diagnostics.cookingItemExclusions),
     ...outfits.map((row) => tables.id(row)),
   ]);
   const actualFormal = [

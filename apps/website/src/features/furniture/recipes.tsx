@@ -1,5 +1,5 @@
 import { InspoCardFace } from "@/features/omnidex/inspo-card-face";
-import { catalogEntryLocation } from "@/features/omnidex/entry-location";
+import { catalogEntryLocation, relatedItemLocation } from "@/features/omnidex/entry-location";
 import { GameplayRelationItem } from "@/features/omnidex/gameplay-relation-item";
 import { gameplayAnchor } from "@/features/omnidex/gameplay-anchors";
 import type { FurnitureDetail } from "./detail";
@@ -69,10 +69,9 @@ export function FurnitureRecipes({
                       name={item?.name ?? `未知材料 #${itemId}`}
                       image={item?.image ?? null}
                       quantity={quantity}
-                      note={item && item.browsable === false ? "无图鉴详情" : undefined}
-                      destination={
-                        item && item.browsable !== false ? catalogEntryLocation(item) : undefined
-                      }
+                      cardBackground={item?.cardBackground}
+                      note={item && !relatedItemLocation(item) ? "无图鉴详情" : undefined}
+                      destination={item ? relatedItemLocation(item) : undefined}
                     />
                   </li>
                 ))}

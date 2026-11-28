@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/ui/components/card";
 import { cn } from "@/ui/lib/utils";
 import type { CatalogEntrySummary } from "../omnidex-view";
 import { RecordImage } from "./record-image";
+import { RecipeItemImage } from "../dishes/recipe-item-image";
 import { useOmnidexOrigin } from "./navigation";
 
 export function CatalogItemCard({
@@ -17,7 +18,7 @@ export function CatalogItemCard({
   fullDescription = false,
   fallbackName = "未知物品",
 }: {
-  item: Pick<CatalogEntrySummary, "name" | "image"> | null;
+  item: (Pick<CatalogEntrySummary, "name" | "image"> & { cardBackground?: string | null }) | null;
   itemId: number;
   thumbnail?: ReactNode;
   quantity?: number;
@@ -31,9 +32,16 @@ export function CatalogItemCard({
   const content = (
     <div className="flex items-center gap-3">
       <div className="size-20 shrink-0 overflow-hidden rounded-lg border bg-muted/30">
-        {thumbnail ?? (
-          <RecordImage image={item?.image ?? null} name={name} inset="sm" fallback="icon" />
-        )}
+        {thumbnail ??
+          (item?.cardBackground ? (
+            <RecipeItemImage
+              background={item.cardBackground}
+              image={item.image}
+              className="size-full"
+            />
+          ) : (
+            <RecordImage image={item?.image ?? null} name={name} inset="sm" fallback="icon" />
+          ))}
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <span className={cn("text-sm font-medium", link && "group-hover/card:underline")}>

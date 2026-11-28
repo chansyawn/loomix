@@ -150,7 +150,7 @@ export function catalogFixture(
     });
   for (const record of view.plants?.series ?? [])
     group(record, "plant", record.plantIds, record.flowerHybridization);
-  for (const record of view.dishes?.items ?? [])
+  for (const record of view.dishes?.items ?? []) {
     add({
       ...catalogBase(record),
       kind: "dish",
@@ -168,6 +168,18 @@ export function catalogFixture(
               slots: record.slots,
             },
     });
+    for (const card of record.recipeItems) {
+      if (!card.cardBackground) throw new Error(`Missing fixture recipe background ${card.id}`);
+      add({
+        id: card.id,
+        name: card.name,
+        kind: "cookingRecipeItem",
+        productId: record.id,
+        front: { background: { assetId: card.cardBackground, variant: "card-background" } },
+        image: card.image && { assetId: card.image, variant: "icon" },
+      });
+    }
+  }
   for (const record of view.dishes?.series ?? []) group(record, "dish", record.dishIds);
   for (const record of view.clothing?.items ?? [])
     add({

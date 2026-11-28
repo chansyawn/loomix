@@ -9,6 +9,7 @@ export type DetailEntry = {
   key: string | number;
   name: string;
   image: string | null;
+  cardBackground?: string | null;
   destination?: Destination;
   note?: string;
   links?: readonly { id: number; name: string; destination: Destination }[];
