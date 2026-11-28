@@ -7,6 +7,7 @@ import type { CollectionEvidenceBuilder, CollectionSource } from "../evidence.ts
 import { localizedSources, tableSource } from "../evidence.ts";
 
 import { treeDrops } from "./tree-drops.ts";
+import { recipeEffectIds } from "../../effect-ids.ts";
 
 export interface DetailResult<T> {
   value: T;
@@ -40,13 +41,11 @@ export function dishEffects(
   const { tables } = context;
   const recipe = context.recipesByProduct.get(id);
   const sources = recipe ? [tableSource(tables, recipe, [0, 4, 6, 7, 8])] : [];
-  const raw = tables.string(recipe, 6);
-  if (!raw) return { value: null, sources, reason: "special_effect_not_configured_in_recipe" };
-  if (!/^\d+(?:[,;]\d+)*$/.test(raw))
-    throw new Error(`Unsupported recipe effect list ${id}: ${raw}`);
+  const ids = recipeEffectIds(tables.string(recipe, 6), id);
+  if (!ids.length)
+    return { value: null, sources, reason: "special_effect_not_configured_in_recipe" };
   const buffs = tables.byId(70);
-  const value = raw.split(/[,;]/).map((code) => {
-    const effectId = Number(code);
+  const value = ids.map((effectId) => {
     const buff = buffs.get(effectId);
     if (!buff) throw new Error(`Unknown recipe effect ${id}:${effectId}`);
     sources.push(...localizedSources(tables, buff, [0, 1, 4, 10, 19]));

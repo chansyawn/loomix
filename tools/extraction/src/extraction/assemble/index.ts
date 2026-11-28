@@ -1,4 +1,5 @@
 import type { ImageRef } from "@loomix/schema/assets";
+import { assembleClientIcons } from "../client-icons/model.ts";
 import { imageKey } from "@loomix/schema/assets";
 import { referencedImages } from "@loomix/schema/dataset/images";
 import { parseDataset } from "@loomix/schema/dataset";
@@ -211,6 +212,16 @@ export function assemble(
   const jobs = bound.jobs.filter((job) => used.has(imageKey(job)));
   if (jobs.length !== used.size)
     throw new Error("Image jobs do not cover the dataset reference graph");
-  return { dataset, fieldEvidence, imageBindings: bound.bindings, imageJobs: jobs };
+  return {
+    dataset,
+    fieldEvidence,
+    imageBindings: bound.bindings,
+    imageJobs: jobs,
+    clientIcons: assembleClientIcons(
+      dataset.context.datasetId,
+      observations.clientIcons,
+      originals,
+    ),
+  };
 }
 export type Assembly = ReturnType<typeof assemble>;

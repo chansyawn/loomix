@@ -130,6 +130,22 @@ test("封存要求统一的小栖地数据，且旧格式须重新提取", () =>
   }
 });
 
+test("读取封存时拒绝被改写的图标索引，并为缺少索引的旧产物提示重新提取", ({ onTestFinished }) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-client-icons-"));
+  onTestFinished(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const observations = clientReadRecordsFixture();
+  writeJson(path.join(directory, CLIENT_READ_RECORDS_FILE), observations);
+  writeJson(path.join(directory, "originals.json"), []);
+  const flower = freezeFlowerFixture(directory, observations.source);
+  const assembly = assemble(observations, [], flower);
+  writeAssembly(directory, assembly);
+  const index = path.join(directory, "client-icons.json");
+  writeJson(index, { ...assembly.clientIcons, version: 2 });
+  expect(() => readCandidate(directory)).toThrow("Client icon index");
+  fs.unlinkSync(index);
+  expect(() => readCandidate(directory)).toThrow("请重新提取");
+});
+
 test("重写外部 JSON 和输出清单不能沿用原提取身份", async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "loomix-seal-external-"));
   const id = extractionId(identityInputs);
