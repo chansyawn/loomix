@@ -4,7 +4,8 @@ import type { ItemRelationReaders } from "./item-relations";
 import { Button } from "@/ui/components/button";
 import { RelationPreview } from "./relation-preview";
 import { CatalogItemCard } from "./catalog-item-card";
-import { GameplayRelationItem } from "./gameplay-relation-item";
+import type { DetailField } from "../detail-page/field-model";
+import type { readOutfitNeighbor } from "../neighbor-outfit/detail";
 
 type RelationState<Key extends keyof ItemRelationReaders> =
   | DetailResourceState<Awaited<ReturnType<NonNullable<ItemRelationReaders[Key]>>>>
@@ -21,29 +22,34 @@ export function RelationLoadError({ label, retry }: { label: string; retry: () =
   );
 }
 
-export function giftPreferenceValue(state: RelationState<"gifts">) {
-  if (state?.status === "error") return <RelationLoadError label="送礼偏好" retry={state.retry} />;
-  if (state?.status !== "ready" || !state.value.length) return null;
-  return (
-    <ul className="flex flex-wrap gap-x-4 gap-y-1">
-      {state.value.flatMap(({ level, name, neighbors }) =>
-        neighbors.map((neighbor) => (
-          <li key={`${level}-${neighbor.id}`}>
-            <GameplayRelationItem
-              {...neighbor}
-              variant="inline"
-              note={name}
-              destination={{
-                to: "/neighbors/$id",
-                params: { id: String(neighbor.id) },
-                hash: `preference-${level}`,
-              }}
-            />
-          </li>
-        )),
-      )}
-    </ul>
-  );
+function loadErrorField(label: string, retry: () => void): DetailField {
+  return { kind: "hint", label, value: "暂时无法加载", retry };
+}
+
+export function outfitOwnerFields(
+  state: DetailResourceState<Awaited<ReturnType<typeof readOutfitNeighbor>>> | undefined,
+): DetailField[] {
+  if (!state) return [];
+  const label = "所属友邻";
+  if (state.status === "error") return [loadErrorField(label, state.retry)];
+  if (state.status === "loading")
+    return [{ kind: "hint", label, value: "正在加载友邻", live: true }];
+  return state.value
+    ? [{ kind: "neighbors", label, value: [state.value] }]
+    : [{ kind: "hint", label, value: "友邻资料暂未收录" }];
+}
+
+export function giftPreferenceFields(state: RelationState<"gifts">): DetailField[] {
+  if (state?.status === "error") return [loadErrorField("送礼偏好", state.retry)];
+  if (state?.status !== "ready") return [];
+  return state.value.map(({ level, name, neighbors }) => ({
+    kind: "neighbors",
+    label: name,
+    value: neighbors,
+    fullWidth: true,
+    anchor: `gift-${level}`,
+    hash: `preference-${level}`,
+  }));
 }
 
 export function explorationSection(state: RelationState<"islets">): DetailSection | undefined {
@@ -98,25 +104,24 @@ export function explorationSection(state: RelationState<"islets">): DetailSectio
   };
 }
 
-export function relatedVignettesValue(state: RelationState<"vignettes">) {
-  if (state?.status === "error")
-    return <RelationLoadError label="关联小栖地" retry={state.retry} />;
-  if (state?.status !== "ready" || !state.value.related.length) return null;
-  return (
-    <ul className="flex flex-wrap gap-x-4 gap-y-1">
-      {state.value.related.map((template) => (
-        <li key={template.id}>
-          <GameplayRelationItem
-            {...template}
-            variant="inline"
-            destination={{
-              to: "/vignettes/$id",
-              params: { id: String(template.id) },
-              hash: "related-creatures",
-            }}
-          />
-        </li>
-      ))}
-    </ul>
-  );
+export function relatedVignetteFields(state: RelationState<"vignettes">): DetailField[] {
+  const label = "关联小栖地";
+  if (state?.status === "error") return [loadErrorField(label, state.retry)];
+  if (state?.status !== "ready") return [];
+  return [
+    {
+      kind: "entries",
+      label,
+      value: state.value.related.map((template) => ({
+        key: template.id,
+        name: template.name,
+        image: template.image,
+        destination: {
+          to: "/vignettes/$id",
+          params: { id: String(template.id) },
+          hash: "related-creatures",
+        },
+      })),
+    },
+  ];
 }

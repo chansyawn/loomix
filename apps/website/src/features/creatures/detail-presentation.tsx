@@ -3,6 +3,7 @@ import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presen
 import { collectionMembers } from "../omnidex/detail-relations";
 import { SeriesImage } from "../omnidex/series-image";
 import { creatureEncounterFields, type CreaturesDetail } from "./detail";
+import { quantityField, textField } from "../detail-page/field-model";
 
 export function creaturesDetailPresentation(detail: CreaturesDetail): CatalogDetailPresentation {
   if (detail.kind === "series") {
@@ -24,11 +25,11 @@ export function creaturesDetailPresentation(detail: CreaturesDetail): CatalogDet
   return {
     image: <RecordImage image={record.image} name={record.name} eager />,
     classification: record.category,
-    fields: [
-      ["学名", record.scientificName],
-      ["尺寸范围", record.sizeRange],
-    ],
-    typeSpecificGroup: { title: "出没", fields: creatureEncounterFields(record) },
+    fields: [textField("学名", record.scientificName), quantityField("尺寸范围", record.sizeRange)],
+    typeSpecificGroup: {
+      title: "出没",
+      fields: creatureEncounterFields(record).map(([label, value]) => textField(label, value)),
+    },
     sections: [],
   };
 }

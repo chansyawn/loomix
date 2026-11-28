@@ -139,7 +139,12 @@ test("详情按星屿关联物资与友邻，区分空配置和空条目", () =>
   ]);
   expect(detail?.specialties).toEqual([]);
   expect(detail?.encounterNeighbors).toEqual([
-    { id: 1, name: "蛮蛮", image: `assets/${"b".repeat(64)}.webp` },
+    {
+      id: 1,
+      name: "蛮蛮",
+      image: `assets/${"b".repeat(64)}.webp`,
+      avatar: `assets/${"c".repeat(64)}.webp`,
+    },
   ]);
   const missingRole = { images: relatedImages.images.filter((image) => image.assetId !== "role") };
   const candidate = toStarseaDetail(79, starsea, missingRole, catalog, database);

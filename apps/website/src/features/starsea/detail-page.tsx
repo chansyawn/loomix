@@ -1,5 +1,5 @@
 import { DetailPage, type DetailSection } from "@/features/detail-page/detail-page";
-import { GameplayRelationItem } from "../omnidex/gameplay-relation-item";
+import { textField } from "../detail-page/field-model";
 import { DetailTitleMetadata, type DetailField } from "@/features/detail-page/detail-fields";
 import { CatalogItemCard } from "@/features/omnidex/catalog-item-card";
 import { catalogEntryLocation } from "@/features/omnidex/entry-location";
@@ -51,16 +51,23 @@ export function StarseaDetailPage({ islet }: { islet: StarseaDetail }) {
   const explorationFields: DetailField[] = [];
   const sections: DetailSection[] = [];
   const status: string[] = [];
-  explorationFields.push([
-    "探索方式",
-    islet.encounterOnly
-      ? "邂逅候选"
-      : islet.encounterNeighbors.length
-        ? "常规探索、邂逅候选"
-        : "常规探索",
-  ]);
+  explorationFields.push(
+    textField(
+      "探索方式",
+      islet.encounterOnly
+        ? "邂逅候选"
+        : islet.encounterNeighbors.length
+          ? "常规探索、邂逅候选"
+          : "常规探索",
+    ),
+  );
   if (unlockTips.length)
-    explorationFields.push(["区域解锁提示", unlockTips.join("\n"), { fullWidth: true }]);
+    explorationFields.push({
+      kind: "hint",
+      label: "区域解锁提示",
+      value: unlockTips.join("\n"),
+      fullWidth: true,
+    });
   for (const [id, label, items] of [
     ["creatures", "生物", islet.creatures],
     ["specialties", "特产", islet.specialties],
@@ -72,17 +79,12 @@ export function StarseaDetailPage({ islet }: { islet: StarseaDetail }) {
   const hasExplorationItems = sections.length > 0;
   const [neighbor] = islet.encounterNeighbors;
   if (!hasExplorationItems && islet.encounterNeighbors.length === 1) {
-    explorationFields.push([
-      "候选友邻",
-      <div className="grid gap-1">
-        <GameplayRelationItem
-          {...neighbor}
-          variant="inline"
-          destination={{ to: "/neighbors/$id", params: { id: String(neighbor.id) } }}
-        />
-        <span className="text-muted-foreground">实际出场受探索和季遇状态影响。</span>
-      </div>,
-    ]);
+    explorationFields.push({
+      kind: "neighbors",
+      label: "候选友邻",
+      value: [neighbor],
+      note: "实际出场受探索和季遇状态影响。",
+    });
   } else if (neighbor) {
     sections.push({
       id: "encounters",
@@ -90,7 +92,13 @@ export function StarseaDetailPage({ islet }: { islet: StarseaDetail }) {
       content: <EncounterSection neighbors={islet.encounterNeighbors} />,
     });
   } else status.push("暂无已确认的邂逅友邻");
-  if (status.length) explorationFields.push(["资料状态", status.join("，"), { fullWidth: true }]);
+  if (status.length)
+    explorationFields.push({
+      kind: "hint",
+      label: "资料状态",
+      value: status.join("，"),
+      fullWidth: true,
+    });
   return (
     <DetailPage
       image={
@@ -122,7 +130,7 @@ export function StarseaDetailPage({ islet }: { islet: StarseaDetail }) {
       fieldGroups={[
         {
           title: "地理归属",
-          fields: [["所属星海", islet.regions.map(({ name }) => name).join("、")]],
+          fields: [textField("所属星海", islet.regions.map(({ name }) => name).join("、"))],
         },
         { title: "探索条件", fields: explorationFields },
       ]}

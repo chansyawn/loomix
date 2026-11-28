@@ -42,7 +42,7 @@ test("关联小栖地只查询生物名单，摆放物、示例和同号友邻�
   expect(creatureVignettes(data, 2, image)).toEqual([]);
 });
 
-test("关联友邻和友邻详情优先使用同一张好感插画", () => {
+test("关联友邻取头部小像，缺图时保留友邻身份", () => {
   const dataset = datasetFixture();
   const { database, mapping } = neighborFixture();
   const template = vignette();
@@ -54,8 +54,8 @@ test("关联友邻和友邻详情优先使用同一张好感插画", () => {
     neighbors: database,
     imageIndex: { images: [...assets.images, ...mapping.images] },
   });
-  expect(detail?.neighbors.map(({ image }) => image)).toEqual([
-    `assets/${"b".repeat(64)}.webp`,
+  expect(detail?.neighbors.map(({ avatar }) => avatar)).toEqual([
+    `assets/${"c".repeat(64)}.webp`,
     `assets/${"c".repeat(64)}.webp`,
     null,
   ]);

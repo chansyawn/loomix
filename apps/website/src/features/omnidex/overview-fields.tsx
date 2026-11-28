@@ -1,14 +1,12 @@
-import { Link } from "@tanstack/react-router";
-import { Badge } from "@/ui/components/badge";
 import { catalogSearchForTag } from "../catalog/search";
 import {
   DetailTitleMetadata,
   type DetailField,
   type DetailFieldGroup,
 } from "../detail-page/detail-fields";
-import { ItemIngredientTags } from "../ingredients/item-usage";
+import { ingredientFiltersForTag } from "../ingredients/search";
 import { categoryNames, type CatalogEntryRow } from "./catalog";
-import { CatalogRelations, collectionLabels } from "./detail-relations";
+import { catalogRelationEntry, collectionLabels } from "./detail-relations";
 import type { EntryOverview } from "./entry-overview";
 import type { CatalogDetailPresentation } from "./catalog-detail-presentation";
 import { qualityNames } from "./quality";
@@ -50,61 +48,49 @@ export function overviewFieldGroups(
 ): DetailFieldGroup[] {
   const fields: DetailField[] = [];
   for (const { label, tags } of overview.tagGroups)
-    fields.push([
+    fields.push({
+      kind: "tags",
       label,
-      <div className="flex flex-wrap gap-2">
-        {tags.map((tag) =>
-          tag.filterable && tag.id !== null ? (
-            <Badge
-              key={tag.id}
-              variant="secondary"
-              render={<Link to="/catalog" search={catalogSearchForTag(tag.id)} />}
-            >
-              {tag.name}
-            </Badge>
-          ) : (
-            <Badge key={tag.id ?? tag.name} variant="secondary">
-              {tag.name}
-            </Badge>
-          ),
-        )}
-      </div>,
-      { fullWidth: tags.length > 1 },
-    ]);
+      fullWidth: tags.length > 1,
+      value: tags.map((tag) => ({
+        key: tag.id ?? tag.name,
+        name: tag.name,
+        destination:
+          tag.filterable && tag.id !== null
+            ? { to: "/catalog", search: catalogSearchForTag(tag.id) }
+            : undefined,
+      })),
+    });
   if (overview.ingredientTags.length)
-    fields.push([
-      "食材标签",
-      <ItemIngredientTags tags={overview.ingredientTags} />,
-      { anchor: "item-ingredient-tags", fullWidth: true },
-    ]);
+    fields.push({
+      kind: "tags",
+      label: "食材标签",
+      anchor: "item-ingredient-tags",
+      fullWidth: true,
+      value: overview.ingredientTags.map((tag) => ({
+        key: tag.id,
+        name: tag.name,
+        destination: {
+          to: "/dishes",
+          search: { view: "ingredients", ingredients: ingredientFiltersForTag(tag) },
+        },
+      })),
+    });
   const first = overview.memberships[0];
   if (first) {
     const { group, anchor } = collectionLabels[first.kind];
-    const [primary, ...others] = overview.memberships;
-    fields.push([
-      `所属${group}`,
-      <>
-        <CatalogRelations items={[primary]} />
-        {others.length > 0 && (
-          <details>
-            <summary className="cursor-pointer text-sm">
-              其他{group}（{others.length}）
-            </summary>
-            <CatalogRelations items={others} />
-          </details>
-        )}
-        {overview.hasUnconfirmedMembership && (
-          <span className="text-xs text-muted-foreground">其他{group}的成员关系未确认</span>
-        )}
-      </>,
-      { anchor, fullWidth: others.length > 0 || overview.hasUnconfirmedMembership },
-    ]);
+    fields.push({
+      kind: "entries",
+      label: `所属${group}`,
+      anchor,
+      moreLabel: `其他${group}`,
+      value: overview.memberships.map(catalogRelationEntry),
+      note: overview.hasUnconfirmedMembership ? `其他${group}的成员关系未确认` : undefined,
+      fullWidth: overview.memberships.length > 1 || overview.hasUnconfirmedMembership,
+    });
   }
   fields.push(...(presentation.fields ?? []), ...extraFields);
   const groups: DetailFieldGroup[] = [{ fields }];
   if (presentation.typeSpecificGroup) groups.push(presentation.typeSpecificGroup);
-  return groups.map((group) => ({
-    ...group,
-    fields: group.fields.filter(([, value]) => value != null && value !== ""),
-  }));
+  return groups;
 }

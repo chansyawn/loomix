@@ -5,11 +5,11 @@ export function PurchasePrices({ shops }: { shops: readonly ShopPurchaseQuotes[]
   return (
     <dl className="grid gap-2">
       {shops.map(({ id, name, paymentNote, prices }) => (
-        <div key={id} className="flex flex-wrap items-baseline gap-x-2">
-          <dt>{name}</dt>
-          <dd className="grid min-w-0 gap-1">
+        <div key={id} className="flex flex-wrap items-start gap-x-2">
+          <dt className="py-1 font-medium">{name}</dt>
+          <dd className="grid min-w-0">
             {prices.map(({ key, priceLabel, currencyImage, note }) => (
-              <div key={key} className="flex items-start gap-1">
+              <div key={key} className="flex items-start gap-1 py-1 tabular-nums">
                 {currencyImage && (
                   <RecordImage
                     image={currencyImage}

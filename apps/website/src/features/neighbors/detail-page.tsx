@@ -4,6 +4,7 @@ import {
   type DetailSection,
 } from "@/features/detail-page/detail-page";
 import { DetailTitleMetadata } from "@/features/detail-page/detail-fields";
+import { textField, hintField } from "../detail-page/field-model";
 import type { NeighborDetail } from "./data";
 import { NeighborImage } from "./image";
 import { NeighborPreferences } from "./preferences";
@@ -13,12 +14,12 @@ import { NeighborHouseSection } from "./house-section";
 
 export function NeighborDetailPage({ neighbor }: { neighbor: NeighborDetail }) {
   const homeFields: DetailField[] = [
-    [
+    textField(
       "所属星球与星系",
       neighbor.stars
         .map((star) => `${star.name} · ${star.galaxy ? `${star.galaxy}星系` : "星系暂未收录"}`)
         .join("\n") || "暂未收录",
-    ],
+    ),
   ];
   const sections: DetailSection[] = [];
   const missing: string[] = [];
@@ -72,10 +73,10 @@ export function NeighborDetailPage({ neighbor }: { neighbor: NeighborDetail }) {
         {
           title: "友邻资料",
           fields: [
-            ["昵称", neighbor.profile.nickname ?? "资料暂未收录"],
-            ["英文名", neighbor.profile.englishName ?? "资料暂未收录"],
-            ["生日", neighbor.profile.birthday ?? "资料暂未收录"],
-            ...(missing.length ? [["暂未收录", missing.join("、")] as const] : []),
+            textField("昵称", neighbor.profile.nickname ?? "资料暂未收录"),
+            textField("英文名", neighbor.profile.englishName ?? "资料暂未收录"),
+            textField("生日", neighbor.profile.birthday ?? "资料暂未收录"),
+            hintField("暂未收录", missing.join("、")),
           ],
         },
         { title: "星球归属", fields: homeFields },

@@ -9,9 +9,9 @@ test("具体礼物按物品 ID 和偏好等级反查友邻，忽略同号标签�
   database.neighbors[3]!.gifts.love = { itemIds: [], tagIds: [107] };
   const image = createImageResolver(mapping);
   expect(namedGiftPreferences(database, 107, image)).toMatchObject([
-    { level: "love", neighbors: [{ id: 3 }] },
-    { level: "favor", neighbors: [{ id: 2 }] },
-    { level: "dislike", neighbors: [{ id: 1 }] },
+    { level: "love", neighbors: [{ id: 3, avatar: null }] },
+    { level: "favor", neighbors: [{ id: 2, avatar: `assets/${"c".repeat(64)}.webp` }] },
+    { level: "dislike", neighbors: [{ id: 1, avatar: `assets/${"c".repeat(64)}.webp` }] },
   ]);
   expect(namedGiftPreferences(database, 1, image)).toEqual([]);
 });
@@ -44,7 +44,7 @@ test("derives deduplicated galaxies for card tags, tables and filters", () => {
 test("selects the same portrait for cards and detail, with a role illustration fallback", () => {
   const { database, mapping, catalog, gameplayTags, view } = fixture();
   const favour = { image: `assets/${"b".repeat(64)}.webp`, label: "好感插画" };
-  const role = { image: `assets/${"c".repeat(64)}.webp`, label: "角色立绘" };
+  const role = { image: `assets/${"c".repeat(64)}.webp`, label: "头像" };
   expect(view.neighbors.map(({ portrait }) => portrait)).toEqual([favour, role, favour, null]);
   const missingAssets = {
     ...mapping,

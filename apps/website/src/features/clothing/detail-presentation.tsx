@@ -7,6 +7,7 @@ import type { ClothingPageDetail } from "./detail";
 import { HairDyeingPalette, hairDyeingSectionId } from "./hair-dyeing-palette";
 import type { DetailResourceState } from "../detail-page/use-detail-resource";
 import type { HairDyeingRegion } from "./hair-dyeing";
+import { textField } from "../detail-page/field-model";
 
 export function clothingDetailPresentation(
   detail: ClothingPageDetail,
@@ -20,7 +21,7 @@ export function clothingDetailPresentation(
     fields.push(...members.fields);
     sections.push(...members.sections);
   } else if (detail.kind === "neighborOutfit") {
-    fields.push(["部位", detail.slotName], ["可用体型", detail.modelSizes]);
+    fields.push(textField("部位", detail.slotName), textField("可用体型", detail.modelSizes));
   }
   if (hairDyeing && (hairDyeing.status !== "ready" || hairDyeing.value.length > 0))
     sections.push({

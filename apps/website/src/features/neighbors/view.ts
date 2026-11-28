@@ -5,7 +5,7 @@ import type { CatalogIndex } from "@loomix/schema/catalog";
 import { createGameplayTagIndex, tagLabel } from "@loomix/schema/gameplay-tags";
 import type { GameplayTagIndex, GameplayTags } from "@loomix/schema/gameplay-tags";
 import type { Neighbor, Neighbors } from "@loomix/schema/neighbors";
-import { resolveNeighborPortrait } from "./portrait";
+import { neighborAvatar, resolveNeighborPortrait } from "./portrait";
 
 type ImageResolver = ReturnType<typeof createImageResolver>;
 
@@ -24,11 +24,7 @@ export function namedGiftPreferences(
   return giftLevels.flatMap(([level, name]) => {
     const matches = neighbors
       .filter(({ gifts }) => gifts[level].itemIds.includes(itemId))
-      .map((neighbor) => ({
-        id: neighbor.id,
-        name: neighbor.name,
-        image: resolveNeighborPortrait(neighbor.images, image)?.image ?? null,
-      }));
+      .map((neighbor) => neighborAvatar(neighbor, image));
     return matches.length ? [{ level, name, neighbors: matches }] : [];
   });
 }

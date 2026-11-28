@@ -5,13 +5,8 @@ import { collectionMembers } from "../omnidex/detail-relations";
 import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presentation";
 import type { DishesDetail } from "./detail";
 import { DishRecipe } from "./recipe";
-import { DishEffects } from "./effects";
-import {
-  dishCardAttributes,
-  formatTastes,
-  strengthText,
-  unlockConditionLabel,
-} from "./presentation";
+import { hintField, textField } from "../detail-page/field-model";
+import { dishCardAttributes, strengthText, unlockConditionLabel } from "./presentation";
 
 export function dishesDetailPresentation(detail: DishesDetail): CatalogDetailPresentation {
   if (detail.kind === "series") {
@@ -40,21 +35,17 @@ export function dishesDetailPresentation(detail: DishesDetail): CatalogDetailPre
   return {
     image: <RecordImage image={record.image} name={record.name} eager />,
     fields: [
-      ["难度", record.difficulty],
-      ["解锁条件", unlockConditionLabel(record.unlockCondition)],
-      ["口味", formatTastes(record.tastes)],
-      ["星系风味", record.galaxyFlavor],
-      ["炊具", record.cookware],
+      textField("难度", record.difficulty),
+      hintField("解锁条件", unlockConditionLabel(record.unlockCondition)),
+      textField("口味", record.tastes?.join("、")),
+      textField("星系风味", record.galaxyFlavor),
+      textField("炊具", record.cookware),
     ],
     typeSpecificGroup: {
       title: "食用效果",
       fields: [
-        ["基础效果", strengthText(record.strength)],
-        [
-          "特殊效果",
-          record.effects?.length ? <DishEffects effects={record.effects} /> : null,
-          { fullWidth: true },
-        ],
+        textField("基础效果", strengthText(record.strength)),
+        { kind: "effects", label: "特殊效果", value: record.effects ?? [] },
       ],
     },
     sections,

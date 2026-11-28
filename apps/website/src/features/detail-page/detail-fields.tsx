@@ -1,13 +1,8 @@
 import type { ReactNode } from "react";
 import { cn } from "@/ui/lib/utils";
-
-export type DetailField = readonly [
-  label: string,
-  value: ReactNode,
-  options?: { anchor?: string; fullWidth?: boolean },
-];
-
-export type DetailFieldGroup = { title?: string; fields: readonly DetailField[] };
+import { FieldValue } from "./field-value";
+import type { DetailField, DetailFieldGroup } from "./field-model";
+export type { DetailField, DetailFieldGroup } from "./field-model";
 
 export function DetailTitleMetadata({
   id,
@@ -35,34 +30,39 @@ export function DetailTitleMetadata({
 }
 
 export function DetailFields({ groups }: { groups: readonly DetailFieldGroup[] }) {
-  const visibleGroups = groups.filter((group) => group.fields.length > 0);
-  return visibleGroups.map((group) => (
-    <div key={group.title ?? "fields"} className="grid gap-2 border-t pt-3">
-      {group.title && <p className="text-sm font-medium text-muted-foreground">{group.title}</p>}
-      <FieldList fields={group.fields} />
-    </div>
-  ));
+  return groups.map((group) => {
+    const fields = group.fields.filter(({ value }) =>
+      Array.isArray(value) ? value.length > 0 : value != null && value !== "",
+    );
+    if (!fields.length) return null;
+    return (
+      <div key={group.title ?? "fields"} className="grid gap-2 border-t pt-3">
+        {group.title && <p className="text-sm font-medium text-muted-foreground">{group.title}</p>}
+        <FieldList fields={fields} />
+      </div>
+    );
+  });
 }
 
 function FieldList({ fields }: { fields: readonly DetailField[] }) {
   return (
     <dl className="grid gap-x-5 gap-y-2 @min-[27rem]/detail-fields:grid-cols-2">
-      {fields.map(([label, value, options], index) => {
-        const { anchor, fullWidth } = options ?? {};
+      {fields.map((field) => {
+        const { label, anchor, fullWidth } = field;
         return (
           <div
-            key={`${label}-${index}`}
+            key={anchor ?? label}
             id={anchor}
             className={cn(
-              "flex min-w-0 flex-wrap items-baseline gap-x-2.5 gap-y-1",
-              fullWidth && "col-span-full",
+              "grid min-w-0 grid-cols-[fit-content(42%)_minmax(0,1fr)] items-start gap-x-2.5",
+              (fullWidth || field.kind === "effects" || field.kind === "prices") && "col-span-full",
             )}
           >
-            <dt id={anchor && `${anchor}-heading`} className="text-xs/5 text-muted-foreground">
+            <dt id={anchor && `${anchor}-heading`} className="py-1 text-xs/6 text-muted-foreground">
               {label}
             </dt>
-            <dd className="max-w-full min-w-0 text-sm/6 wrap-anywhere whitespace-pre-line">
-              {value === "" || value == null ? "未提供" : value}
+            <dd className="min-h-8 min-w-0 text-sm/6 wrap-anywhere">
+              <FieldValue field={field} />
             </dd>
           </div>
         );

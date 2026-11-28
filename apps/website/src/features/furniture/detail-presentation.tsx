@@ -4,6 +4,7 @@ import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presen
 import { RecordImage as FurnitureImage } from "@/features/omnidex/record-image";
 import type { FurnitureDetail } from "./detail";
 import { FurnitureRecipes } from "./recipes";
+import { quantityField, textField } from "../detail-page/field-model";
 
 export function furnitureDetailPresentation(detail: FurnitureDetail): CatalogDetailPresentation {
   const { record } = detail;
@@ -15,13 +16,13 @@ export function furnitureDetailPresentation(detail: FurnitureDetail): CatalogDet
     sections.push(...members.sections);
   } else {
     fields.push(
-      [
+      textField(
         "家具类型",
         detail.record.furnitureCategory === detail.record.category
           ? null
           : detail.record.furnitureCategory,
-      ],
-      ["占地尺寸", detail.record.size],
+      ),
+      quantityField("占地尺寸", detail.record.size),
     );
     if (detail.recipes.length)
       sections.push({

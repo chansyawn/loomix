@@ -1,5 +1,4 @@
 import { Link } from "@tanstack/react-router";
-import type { ReactNode } from "react";
 import type { CollectionMemberKind } from "@loomix/schema/catalog";
 import type { DetailField, DetailSection } from "../detail-page/detail-page";
 import type { CatalogEntrySummary } from "../omnidex-view";
@@ -8,6 +7,7 @@ import { GameplayRelationItem } from "./gameplay-relation-item";
 import { RecordListCard } from "./record-list-card";
 import { RecordImage } from "./record-image";
 import { useOmnidexOrigin } from "./navigation";
+import { quantityField, type DetailEntry } from "../detail-page/field-model";
 
 export const collectionLabels = {
   furniture: { name: "家具套组", group: "套组", unit: "件家具", anchor: "related-furniture" },
@@ -16,21 +16,6 @@ export const collectionLabels = {
   plant: { name: "植物系列", group: "系列", unit: "种植物", anchor: "plant-members" },
   dish: { name: "菜肴系列", group: "系列", unit: "道菜肴", anchor: "related-dishes" },
 } satisfies Record<CollectionMemberKind, object>;
-
-export function SectionCount({ anchor, children }: { anchor: string; children: ReactNode }) {
-  return (
-    <Link
-      to="."
-      hash={anchor}
-      search={true}
-      state={true}
-      resetScroll={false}
-      className="underline underline-offset-4"
-    >
-      {children}
-    </Link>
-  );
-}
 
 function MemberCard({ item, tags }: { item: CatalogEntrySummary; tags: string | null }) {
   const origin = useOmnidexOrigin();
@@ -59,12 +44,7 @@ export function collectionMembers<Member extends CatalogEntrySummary>(
   const title = `${group}成员`;
   return {
     fields: [
-      [
-        "成员数量",
-        <SectionCount anchor={anchor}>
-          {items === null ? "尚未确认" : `${items.length} ${unit}`}
-        </SectionCount>,
-      ],
+      quantityField("成员数量", items === null ? "尚未确认" : `${items.length} ${unit}`, anchor),
     ],
     sections: [
       {
@@ -118,19 +98,22 @@ export function addRelationField(
   items: readonly RelatedEntry[],
 ) {
   if (!items.length) return;
-  fields.push([
+  fields.push({
+    kind: "entries",
     label,
-    <>
-      <CatalogRelations items={items.slice(0, 1)} />
-      {items.length > 1 && (
-        <details>
-          <summary className="cursor-pointer text-sm">
-            其他{label}（{items.length - 1}）
-          </summary>
-          <CatalogRelations items={items.slice(1)} />
-        </details>
-      )}
-    </>,
-    { anchor, fullWidth: items.length > 1 },
-  ]);
+    anchor,
+    value: items.map(catalogRelationEntry),
+    moreLabel: `其他${label}`,
+    fullWidth: items.length > 1,
+  });
+}
+
+export function catalogRelationEntry(item: RelatedEntry): DetailEntry {
+  return {
+    key: item.id,
+    name: item.name,
+    image: item.image,
+    note: item.note,
+    destination: item.browsable === false ? undefined : catalogEntryLocation(item),
+  };
 }

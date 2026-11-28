@@ -4,7 +4,7 @@ import { createGameplayTagIndex, tagLabel, type GameplayTags } from "@loomix/sch
 import type { Neighbors } from "@loomix/schema/neighbors";
 import type { Vignette, Vignettes } from "@loomix/schema/vignettes";
 import { hasCatalogItemDetail } from "../omnidex/catalog";
-import { resolveNeighborPortrait } from "../neighbors/portrait";
+import { neighborAvatar } from "../neighbors/portrait";
 import {
   createRequirementMatcher,
   resolveRequirementSize,
@@ -228,11 +228,7 @@ export function toVignetteDetail(
     }),
     neighbors: template.neighborIds.map((neighborId) => {
       const neighbor = requiredEntry(neighborById.get(neighborId), `neighbor ${neighborId}`);
-      return {
-        id: neighborId,
-        name: neighbor.name,
-        image: resolveNeighborPortrait(neighbor.images, image)?.image ?? null,
-      };
+      return neighborAvatar(neighbor, image);
     }),
   };
 }

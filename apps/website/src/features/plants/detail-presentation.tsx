@@ -1,9 +1,8 @@
-import { Link } from "@tanstack/react-router";
 import type { DetailField, DetailSection } from "@/features/detail-page/detail-page";
 import { addRelationField, collectionMembers } from "../omnidex/detail-relations";
 import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presentation";
 import { RecordImage } from "@/features/omnidex/record-image";
-import { GameplayRelationItem } from "../omnidex/gameplay-relation-item";
+import { quantityField, textField } from "../detail-page/field-model";
 import { catalogEntryLocation } from "../omnidex/entry-location";
 import type { PlantsDetail } from "./detail";
 import { PlantDropsInfo } from "./related-items";
@@ -43,11 +42,11 @@ function plantOrSeriesPresentation(detail: PlantOrSeriesDetail): CatalogDetailPr
   const fields: DetailField[] =
     detail.kind === "item"
       ? [
-          ["产区", detail.record.originGalaxy],
-          [
+          textField("产区", detail.record.originGalaxy),
+          quantityField(
             "收获茬数",
-            summary.harvestCounts.length > 0 ? `${summary.harvestCounts.join(" / ")} 茬` : null,
-          ],
+            summary.harvestCounts.length > 0 ? `${summary.harvestCounts.join("、")} 茬` : null,
+          ),
         ]
       : plantSeriesFields(detail.record);
   const sections: DetailSection[] = [];
@@ -55,11 +54,23 @@ function plantOrSeriesPresentation(detail: PlantOrSeriesDetail): CatalogDetailPr
     addRelationField(fields, "关联种子", "plant-seeds", detail.seeds);
     addRelationField(fields, "来源植株", "plant-stocks", detail.stocks);
     if (detail.matureForms.length)
-      fields.push([
-        "成熟形态",
-        <PlantMatureForms forms={detail.matureForms} />,
-        { anchor: "plant-mature", fullWidth: true },
-      ]);
+      fields.push({
+        kind: "entries",
+        label: "成熟形态",
+        anchor: "plant-mature",
+        fullWidth: true,
+        value: detail.matureForms.map(({ key, stage, seeds }) => ({
+          key,
+          name: stage.name,
+          image: stage.image,
+          destination: stage.stockId ? catalogEntryLocation({ id: stage.stockId }) : undefined,
+          links: seeds.map((seed) => ({
+            id: seed.id,
+            name: `${seed.name}的生长阶段`,
+            destination: { ...catalogEntryLocation(seed), hash: "plant-growth-heading" },
+          })),
+        })),
+      });
     addRelationField(fields, "来源树木", "plant-source-trees", detail.sourceTrees);
     if (detail.record.summary.drops.groups.length > 0)
       sections.push({
@@ -94,35 +105,4 @@ function plantOrSeriesPresentation(detail: PlantOrSeriesDetail): CatalogDetailPr
     fields,
     sections,
   };
-}
-
-function PlantMatureForms({
-  forms,
-}: {
-  forms: Extract<PlantsDetail, { kind: "item" }>["matureForms"];
-}) {
-  return (
-    <ul className="flex flex-wrap gap-x-4 gap-y-2">
-      {forms.map(({ key, stage, seeds }) => (
-        <li key={key} className="flex flex-wrap items-center gap-x-2">
-          <GameplayRelationItem
-            variant="inline"
-            name={stage.name}
-            image={stage.image}
-            destination={stage.stockId ? catalogEntryLocation({ id: stage.stockId }) : undefined}
-          />
-          {seeds.map((seed) => (
-            <Link
-              key={seed.id}
-              {...catalogEntryLocation(seed)}
-              hash="plant-growth-heading"
-              className="text-xs text-muted-foreground underline underline-offset-4"
-            >
-              {seed.name}的生长阶段
-            </Link>
-          ))}
-        </li>
-      ))}
-    </ul>
-  );
 }

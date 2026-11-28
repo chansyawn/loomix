@@ -4,7 +4,7 @@ import { formatNeighborOutfitBodyTypes } from "./presentation";
 import type { createResourceReader } from "@/infrastructure/resources";
 import type { createImageResolver } from "@loomix/schema/assets";
 import { readNeighborDocument } from "../neighbors/data";
-import { resolveNeighborPortrait } from "../neighbors/portrait";
+import { neighborAvatar } from "../neighbors/portrait";
 
 export async function readOutfitNeighbor(
   load: ReturnType<typeof createResourceReader>,
@@ -13,13 +13,7 @@ export async function readOutfitNeighbor(
 ) {
   const { neighbors } = await readNeighborDocument(load);
   const neighbor = neighbors.find((entry) => entry.id === id);
-  return neighbor
-    ? {
-        id,
-        name: neighbor.name,
-        image: resolveNeighborPortrait(neighbor.images, image)?.image ?? null,
-      }
-    : null;
+  return neighbor ? neighborAvatar(neighbor, image) : null;
 }
 
 export type NeighborOutfitDetail = {

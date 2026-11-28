@@ -4,6 +4,7 @@ import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presen
 import { RecordImage } from "../omnidex/record-image";
 import type { PlantsDetail } from "./detail";
 import { SeedGrowthStages } from "./seed-growth";
+import { quantityField } from "../detail-page/field-model";
 
 export function seedDetailPresentation(
   detail: Extract<PlantsDetail, { kind: "seed" }>,
@@ -12,14 +13,14 @@ export function seedDetailPresentation(
   const { growth } = record;
   const fields: DetailField[] = [];
   if (growth.kind === "crop" && growth.harvestCount !== null)
-    fields.push(["收获茬数", `${growth.harvestCount} 茬`]);
+    fields.push(quantityField("收获茬数", `${growth.harvestCount} 茬`));
   const sections: DetailSection[] = [
     { id: "plant-growth-heading", title: "生长阶段", content: <SeedGrowthStages seed={record} /> },
   ];
   if (detail.items.length) {
     addRelationField(fields, "关联植物", "seed-plants", detail.items);
   } else {
-    fields.push(["关联植物", "0 种植物"]);
+    fields.push(quantityField("关联植物", "0 种植物"));
   }
   return {
     image: <RecordImage image={record.image} name={record.name} eager />,

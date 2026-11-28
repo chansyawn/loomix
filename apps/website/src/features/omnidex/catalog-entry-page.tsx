@@ -3,13 +3,12 @@ import type { EntryOverview } from "./entry-overview";
 import { CatalogTitleMetadata, overviewFieldGroups } from "./overview-fields";
 import type { CatalogEntryDetail } from "./catalog-entry-detail";
 import type { ShopPurchaseQuotes } from "./purchase-quotes";
-import { PurchasePrices } from "./purchase-prices";
 import { DetailPage } from "@/features/detail-page/detail-page";
 import { findWikiScroll, wikiScrollId } from "@/infrastructure/wiki-scroll";
 import { clothingDetailPresentation } from "../clothing/detail-presentation";
 import type { HairDyeingRegion, ReadHairDyeing } from "../clothing/hair-dyeing";
 import { useDetailResource, type DetailResourceState } from "../detail-page/use-detail-resource";
-import { OutfitOwner, type ReadOutfitOwner } from "../neighbor-outfit/owner";
+import type { readOutfitNeighbor } from "../neighbor-outfit/detail";
 import { creaturesDetailPresentation } from "../creatures/detail-presentation";
 import { dishesDetailPresentation } from "../dishes/detail-presentation";
 import { furnitureDetailPresentation } from "../furniture/detail-presentation";
@@ -22,8 +21,9 @@ import type { catalogGameplayUses } from "./gameplay-uses-model";
 import type { ItemRelationReaders } from "./item-relations";
 import {
   explorationSection,
-  giftPreferenceValue,
-  relatedVignettesValue,
+  giftPreferenceFields,
+  outfitOwnerFields,
+  relatedVignetteFields,
   RelationLoadError,
 } from "./item-relation-presentation";
 import { useOmnidexOrigin } from "./navigation";
@@ -45,7 +45,7 @@ export function CatalogEntryPage({
   record: CatalogEntryRow;
   model: CatalogEntryDetail;
   overview: EntryOverview;
-  readOwner?: ReadOutfitOwner;
+  readOwner?: () => ReturnType<typeof readOutfitNeighbor>;
   quotes?: ShopPurchaseQuotes[];
   uses?: ReturnType<typeof catalogGameplayUses>;
   relations?: ItemRelationReaders;
@@ -66,6 +66,7 @@ export function CatalogEntryPage({
     if (restore.scrollY > maxScroll && element.scrollTop === maxScroll)
       pendingScroll.current = { element, from: maxScroll, to: restore.scrollY };
   }
+  const owner = useDetailResource(readOwner, beforeRelationsChange);
   const gifts = useDetailResource(relations?.gifts, beforeRelationsChange);
   const islets = useDetailResource(relations?.islets, beforeRelationsChange);
   const vignettes = useDetailResource(relations?.vignettes, beforeRelationsChange);
@@ -81,7 +82,7 @@ export function CatalogEntryPage({
     if (target) target.scrollIntoView();
     else if (scroll && scroll.element.scrollTop === scroll.from)
       scroll.element.scrollTop = scroll.to;
-  }, [hash, gifts, islets, vignettes, flowerDyeing]);
+  }, [hash, gifts, islets, vignettes, flowerDyeing, owner]);
   const useSections =
     uses &&
     gameplayUseSections(
@@ -97,19 +98,12 @@ export function CatalogEntryPage({
   const hints = explorationSection(islets);
   if (hints) detailSections.push(hints);
   const groups = overviewFieldGroups(overview, presentation, [
-    ["所属友邻", readOwner && <OutfitOwner read={readOwner} />],
-    [
-      "关联小栖地",
-      model.category === "creatures" && model.detail.kind === "item"
-        ? relatedVignettesValue(vignettes)
-        : null,
-    ],
-    [
-      "购买报价（每次）",
-      quotes?.length ? <PurchasePrices shops={quotes} /> : null,
-      { anchor: "purchase-offers", fullWidth: true },
-    ],
-    ["送礼偏好", giftPreferenceValue(gifts), { anchor: "gift-preferences" }],
+    ...outfitOwnerFields(owner),
+    ...(model.category === "creatures" && model.detail.kind === "item"
+      ? relatedVignetteFields(vignettes)
+      : []),
+    { kind: "prices", label: "购买报价（每次）", value: quotes ?? [], anchor: "purchase-offers" },
+    ...giftPreferenceFields(gifts),
   ]);
   if (useSections) detailSections.push(...useSections);
   if (
