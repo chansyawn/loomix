@@ -5,24 +5,36 @@ import { RecordImage as FurnitureImage } from "@/features/omnidex/record-image";
 import type { FurnitureDetail } from "./detail";
 import { FurnitureRecipes } from "./recipes";
 import { quantityField, textField } from "../detail-page/field-model";
+import { catalogTagField, type OverviewTag } from "../omnidex/overview-tags";
 
-export function furnitureDetailPresentation(detail: FurnitureDetail): CatalogDetailPresentation {
+export function furnitureDetailPresentation(
+  detail: FurnitureDetail,
+  tags: { furnitureType: readonly OverviewTag[]; furnitureSize: readonly OverviewTag[] },
+): CatalogDetailPresentation {
   const { record } = detail;
   const fields: DetailField[] = [];
   const sections: DetailSection[] = [];
+  let classification: string | null = null;
   if (detail.kind === "set") {
     const members = collectionMembers("furniture", detail.items, (item) => item.furnitureCategory);
     fields.push(...members.fields);
     sections.push(...members.sections);
   } else {
+    classification = tags.furnitureType.length
+      ? (detail.record.furnitureCategory ?? detail.record.category)
+      : detail.record.category;
     fields.push(
-      textField(
-        "家具类型",
-        detail.record.furnitureCategory === detail.record.category
-          ? null
-          : detail.record.furnitureCategory,
-      ),
-      quantityField("占地尺寸", detail.record.size),
+      tags.furnitureType.length
+        ? catalogTagField("家具类型", tags.furnitureType)
+        : textField(
+            "家具类型",
+            detail.record.furnitureCategory === detail.record.category
+              ? null
+              : detail.record.furnitureCategory,
+          ),
+      tags.furnitureSize.length
+        ? catalogTagField("占地尺寸", tags.furnitureSize)
+        : quantityField("占地尺寸", detail.record.size),
     );
     if (detail.recipes.length)
       sections.push({
@@ -44,7 +56,7 @@ export function furnitureDetailPresentation(detail: FurnitureDetail): CatalogDet
       />
     ),
     fields,
-    classification: detail.kind === "set" ? null : detail.record.category,
+    classification,
     navigation: detail.navigation,
     sections,
   };

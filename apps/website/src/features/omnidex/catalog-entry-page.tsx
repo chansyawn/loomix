@@ -92,7 +92,7 @@ export function CatalogEntryPage({
       ),
     );
   const hairDyeing = useDetailResource(readHairDyeing);
-  const presentation = catalogDetailPresentation(model, hairDyeing);
+  const presentation = catalogDetailPresentation(model, overview.detailTags, hairDyeing);
   const { image, classification, sections, titleActions, navigation } = presentation;
   const detailSections = [...sections];
   const hints = explorationSection(islets);
@@ -146,19 +146,20 @@ export function CatalogEntryPage({
 
 function catalogDetailPresentation(
   model: CatalogEntryDetail,
+  tags: EntryOverview["detailTags"],
   hairDyeing: DetailResourceState<HairDyeingRegion[]> | undefined,
 ): CatalogDetailPresentation {
   switch (model.category) {
     case "furniture":
-      return furnitureDetailPresentation(model.detail);
+      return furnitureDetailPresentation(model.detail, tags);
     case "clothing":
       return clothingDetailPresentation(model.detail, hairDyeing);
     case "creatures":
       return creaturesDetailPresentation(model.detail);
     case "plants":
-      return plantsDetailPresentation(model.detail);
+      return plantsDetailPresentation(model.detail, tags.origin);
     case "dishes":
-      return dishesDetailPresentation(model.detail);
+      return dishesDetailPresentation(model.detail, tags.origin);
     case "miscellaneous":
       return miscellaneousDetailPresentation(model.detail);
   }

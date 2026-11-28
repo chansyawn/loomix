@@ -102,6 +102,9 @@ export function createOmnidexTagFilter(
     ]),
   );
   return {
+    visibleOption(id: number) {
+      return visibleIds.has(id) ? optionsById.get(id) : undefined;
+    },
     options(selectedIds: readonly string[] = []): FilterOption[] {
       const unknown = selectedIds.filter((id) => !optionsById.has(Number(id)));
       return [

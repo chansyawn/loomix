@@ -2,7 +2,8 @@ import type { DetailField, DetailSection } from "@/features/detail-page/detail-p
 import { addRelationField, collectionMembers } from "../omnidex/detail-relations";
 import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presentation";
 import { RecordImage } from "@/features/omnidex/record-image";
-import { quantityField, textField } from "../detail-page/field-model";
+import { quantityField } from "../detail-page/field-model";
+import { catalogTagField, type OverviewTag } from "../omnidex/overview-tags";
 import { catalogEntryLocation } from "../omnidex/entry-location";
 import type { PlantsDetail } from "./detail";
 import { PlantDropsInfo } from "./related-items";
@@ -12,7 +13,10 @@ import { FlowerHybridization, flowerHybridizationSectionId } from "./flower-hybr
 
 type PlantOrSeriesDetail = Extract<PlantsDetail, { kind: "item" | "series" }>;
 
-export function plantsDetailPresentation(detail: PlantsDetail): CatalogDetailPresentation {
+export function plantsDetailPresentation(
+  detail: PlantsDetail,
+  origins: readonly OverviewTag[],
+): CatalogDetailPresentation {
   if (detail.kind === "harvestablePlant") {
     const { record } = detail;
     const fields: DetailField[] = [];
@@ -28,7 +32,7 @@ export function plantsDetailPresentation(detail: PlantsDetail): CatalogDetailPre
   return {
     ...(detail.kind === "seed"
       ? seedDetailPresentation(detail)
-      : plantOrSeriesPresentation(detail)),
+      : plantOrSeriesPresentation(detail, origins)),
     navigation: {
       groups: detail.navigation.groups,
       notice: detail.navigation.hasUnconfirmedMembership ? "其他系列的成员关系未确认" : undefined,
@@ -36,13 +40,16 @@ export function plantsDetailPresentation(detail: PlantsDetail): CatalogDetailPre
   };
 }
 
-function plantOrSeriesPresentation(detail: PlantOrSeriesDetail): CatalogDetailPresentation {
+function plantOrSeriesPresentation(
+  detail: PlantOrSeriesDetail,
+  origins: readonly OverviewTag[],
+): CatalogDetailPresentation {
   const { record } = detail;
   const summary = record.summary;
   const fields: DetailField[] =
     detail.kind === "item"
       ? [
-          textField("产区", detail.record.originGalaxy),
+          catalogTagField("产区", origins),
           quantityField(
             "收获茬数",
             summary.harvestCounts.length > 0 ? `${summary.harvestCounts.join("、")} 茬` : null,

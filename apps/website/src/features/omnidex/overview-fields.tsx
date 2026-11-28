@@ -1,4 +1,3 @@
-import { catalogSearchForTag } from "../catalog/search";
 import {
   DetailTitleMetadata,
   type DetailField,
@@ -8,6 +7,7 @@ import { ingredientFiltersForTag } from "../ingredients/search";
 import { categoryNames, type CatalogEntryRow } from "./catalog";
 import { catalogRelationEntry, collectionLabels } from "./detail-relations";
 import type { EntryOverview } from "./entry-overview";
+import { catalogTagField } from "./overview-tags";
 import type { CatalogDetailPresentation } from "./catalog-detail-presentation";
 import { qualityNames } from "./quality";
 
@@ -46,21 +46,7 @@ export function overviewFieldGroups(
   presentation: CatalogDetailPresentation,
   extraFields: readonly DetailField[],
 ): DetailFieldGroup[] {
-  const fields: DetailField[] = [];
-  for (const { label, tags } of overview.tagGroups)
-    fields.push({
-      kind: "tags",
-      label,
-      fullWidth: tags.length > 1,
-      value: tags.map((tag) => ({
-        key: tag.id ?? tag.name,
-        name: tag.name,
-        destination:
-          tag.filterable && tag.id !== null
-            ? { to: "/catalog", search: catalogSearchForTag(tag.id) }
-            : undefined,
-      })),
-    });
+  const fields = overview.tagGroups.map(({ label, tags }) => catalogTagField(label, tags));
   if (overview.ingredientTags.length)
     fields.push({
       kind: "tags",
@@ -90,6 +76,8 @@ export function overviewFieldGroups(
     });
   }
   fields.push(...(presentation.fields ?? []), ...extraFields);
+  if (overview.filterTags.length)
+    fields.push({ ...catalogTagField("筛选标签", overview.filterTags), fullWidth: true });
   const groups: DetailFieldGroup[] = [{ fields }];
   if (presentation.typeSpecificGroup) groups.push(presentation.typeSpecificGroup);
   return groups;

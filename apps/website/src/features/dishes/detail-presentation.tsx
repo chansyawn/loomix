@@ -6,9 +6,13 @@ import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presen
 import type { DishesDetail } from "./detail";
 import { DishRecipe } from "./recipe";
 import { hintField, textField } from "../detail-page/field-model";
+import { catalogTagField, type OverviewTag } from "../omnidex/overview-tags";
 import { dishCardAttributes, strengthText, unlockConditionLabel } from "./presentation";
 
-export function dishesDetailPresentation(detail: DishesDetail): CatalogDetailPresentation {
+export function dishesDetailPresentation(
+  detail: DishesDetail,
+  origins: readonly OverviewTag[],
+): CatalogDetailPresentation {
   if (detail.kind === "series") {
     const { record, items } = detail;
     return {
@@ -38,7 +42,7 @@ export function dishesDetailPresentation(detail: DishesDetail): CatalogDetailPre
       textField("难度", record.difficulty),
       hintField("解锁条件", unlockConditionLabel(record.unlockCondition)),
       textField("口味", record.tastes?.join("、")),
-      textField("星系风味", record.galaxyFlavor),
+      catalogTagField("星系风味", origins),
       textField("炊具", record.cookware),
     ],
     typeSpecificGroup: {

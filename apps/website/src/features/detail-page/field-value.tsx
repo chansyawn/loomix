@@ -1,5 +1,4 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowUpRightIcon } from "lucide-react";
 import { Badge } from "@/ui/components/badge";
 import { Button } from "@/ui/components/button";
 import { DishEffects } from "../dishes/effects";
@@ -73,7 +72,6 @@ export function FieldValue({ field }: { field: DetailField }) {
                 render={destination && <Link {...destination} />}
               >
                 {name}
-                {destination && <ArrowUpRightIcon aria-hidden="true" data-icon="inline-end" />}
               </Badge>
             </li>
           ))}
