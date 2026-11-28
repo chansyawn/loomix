@@ -6,6 +6,7 @@ import { emptyHairDyeing } from "@loomix/schema/hair-dyeing";
 export function clientReadRecordsFixture(datasetId = "c".repeat(64)): ClientReadRecords {
   const dataset = datasetFixture();
   return {
+    neighborImages: [],
     clientIcons: {
       effects: [],
       cookware: [],

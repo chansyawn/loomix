@@ -50,6 +50,20 @@ export function validateDataset(dataset: Dataset): ValidationIssue[] {
     if (neighbor.house) {
       unique(neighbor.house.stages, (stage) => stage.id, [...path, "house", "stages"]);
       unique(neighbor.house.stages, (stage) => stage.level, [...path, "house", "stages"]);
+      neighbor.house.stages.forEach(({ upgrade }, stageIndex) => {
+        if (!upgrade) return;
+        const upgradePath = [...path, "house", "stages", stageIndex, "upgrade"];
+        unique(upgrade.materials, (material) => material.itemId, [...upgradePath, "materials"]);
+        upgrade.materials.forEach(({ itemId }, index) => {
+          if (!items.has(itemId))
+            issue([...upgradePath, "materials", index, "itemId"], `Unknown material ${itemId}`);
+        });
+        if (!items.has(upgrade.blueprint.itemId))
+          issue(
+            [...upgradePath, "blueprint", "itemId"],
+            `Unknown blueprint ${upgrade.blueprint.itemId}`,
+          );
+      });
     }
     for (const level of GiftLevelSchema.options) {
       const gift = neighbor.gifts[level];

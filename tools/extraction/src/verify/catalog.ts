@@ -406,9 +406,15 @@ export function verifyCatalogSources(
     for (const id of islet.displayedCreatureIds ?? []) references.add(id);
     for (const id of islet.displayedSpecialtyIds ?? []) references.add(id);
   }
-  for (const neighbor of dataset.neighbors.neighbors)
+  for (const neighbor of dataset.neighbors.neighbors) {
     for (const preference of Object.values(neighbor.gifts))
       for (const id of preference.itemIds) references.add(id);
+    for (const { upgrade } of neighbor.house?.stages ?? []) {
+      if (!upgrade) continue;
+      references.add(upgrade.blueprint.itemId);
+      for (const material of upgrade.materials) references.add(material.itemId);
+    }
+  }
   // 食材引用来自原始食材标签，不能只依赖发布槽位中已经使用的候选。
   const ingredientRoot = byName.get("食材");
   if (ingredientRoot)

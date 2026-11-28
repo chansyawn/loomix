@@ -28,11 +28,12 @@ export function extractNeighborBundle(input: NeighborExtractionInput): {
   const { tables, source } = input;
   const records: NeighborEvidence[] = [];
   const exclusions: NeighborExclusion[] = [];
+  const itemIds = new Set(tables.rows(318).map((row) => tables.id(row)));
   const neighbors = readRoster(tables, records, exclusions).map((neighbor) => ({
     ...neighbor,
     ...readProfile(tables, neighbor.id, records),
     ...readAbilities(tables, neighbor.id, records),
-    house: readHouse(tables, neighbor.id, records),
+    house: readHouse(tables, neighbor.id, itemIds, records),
   }));
   const accepted = new Set(neighbors.map((n) => n.id));
   const giftPreferences = readGiftPreferences(
