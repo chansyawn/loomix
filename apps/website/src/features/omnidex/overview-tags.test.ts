@@ -3,6 +3,7 @@ import { CATALOG_TAG_FILTER_POLICY } from "../catalog/tag-filter-policy";
 import { addFixtureRecords, catalogFixture, imageIndexFixture } from "../omnidex-fixture";
 import { createOmnidexCatalog } from "./catalog";
 import { entryOverview } from "./entry-overview";
+import { giftPreferenceGroup } from "./item-relation-presentation";
 import { overviewFieldGroups } from "./overview-fields";
 
 function tag(
@@ -87,12 +88,37 @@ test("通用信息以单个字段按引用顺序平铺所有筛选链接，包�
   ]);
   expect(overview.detailTags.origin).toMatchObject([{ name: "禾夏风味", filterable: true }]);
   const effects = { title: "食用效果", fields: [] };
+  const preferences = giftPreferenceGroup({
+    status: "ready",
+    value: [
+      {
+        level: "favor",
+        name: "好感",
+        neighbors: [{ id: 1, name: "蛮蛮", avatar: null, specified: false, tags: ["含水果"] }],
+      },
+    ],
+  });
   const groups = overviewFieldGroups(
     overview,
     { image: null, sections: [], typeSpecificGroup: effects },
     [],
+    preferences,
   );
-  expect(groups.slice(1)).toEqual([effects]);
+  expect(groups.slice(1)).toMatchObject([
+    {
+      title: "送礼偏好",
+      anchor: "gift-preferences",
+      fields: [
+        {
+          kind: "neighbors",
+          label: "好感",
+          hash: "preference-favor",
+          value: [{ id: 1, caption: "含水果" }],
+        },
+      ],
+    },
+    effects,
+  ]);
   expect(groups[0].fields.at(-1)).toMatchObject({
     kind: "tags",
     label: "筛选标签",

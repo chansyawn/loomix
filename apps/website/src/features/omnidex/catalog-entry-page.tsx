@@ -21,7 +21,7 @@ import type { catalogGameplayUses } from "./gameplay-uses-model";
 import type { ItemRelationReaders } from "./item-relations";
 import {
   explorationSection,
-  giftPreferenceFields,
+  giftPreferenceGroup,
   outfitOwnerFields,
   relatedVignetteFields,
   RelationLoadError,
@@ -97,14 +97,18 @@ export function CatalogEntryPage({
   const detailSections = [...sections];
   const hints = explorationSection(islets);
   if (hints) detailSections.push(hints);
-  const groups = overviewFieldGroups(overview, presentation, [
-    ...outfitOwnerFields(owner),
-    ...(model.category === "creatures" && model.detail.kind === "item"
-      ? relatedVignetteFields(vignettes)
-      : []),
-    { kind: "prices", label: "购买报价（每次）", value: quotes ?? [], anchor: "purchase-offers" },
-    ...giftPreferenceFields(gifts),
-  ]);
+  const groups = overviewFieldGroups(
+    overview,
+    presentation,
+    [
+      ...outfitOwnerFields(owner),
+      ...(model.category === "creatures" && model.detail.kind === "item"
+        ? relatedVignetteFields(vignettes)
+        : []),
+      { kind: "prices", label: "购买报价（每次）", value: quotes ?? [], anchor: "purchase-offers" },
+    ],
+    giftPreferenceGroup(gifts),
+  );
   if (useSections) detailSections.push(...useSections);
   if (
     flowerDyeing?.status === "error" ||

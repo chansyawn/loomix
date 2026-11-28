@@ -1,4 +1,7 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { InfoIcon } from "lucide-react";
+import { Button } from "@/ui/components/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/tooltip";
 import { cn } from "@/ui/lib/utils";
 import { FieldValue } from "./field-value";
 import type { DetailField, DetailFieldGroup } from "./field-model";
@@ -29,17 +32,45 @@ export function DetailTitleMetadata({
   );
 }
 
+function TitleHint({ title, hint }: { title: string; hint: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Tooltip open={open} onOpenChange={setOpen}>
+      <TooltipTrigger
+        aria-label={`${title}说明`}
+        closeOnClick={false}
+        onClick={() => setOpen(true)}
+        render={<Button variant="ghost" size="icon-xs" />}
+      >
+        <InfoIcon aria-hidden="true" />
+      </TooltipTrigger>
+      <TooltipContent>{hint}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 export function DetailFields({ groups }: { groups: readonly DetailFieldGroup[] }) {
   return groups.map((group) => {
     const fields = group.fields.filter(({ value }) =>
       Array.isArray(value) ? value.length > 0 : value != null && value !== "",
     );
     if (!fields.length) return null;
+    const Container = group.title ? "section" : "div";
     return (
-      <div key={group.title ?? "fields"} className="grid gap-2 border-t pt-3">
-        {group.title && <p className="text-sm font-medium text-muted-foreground">{group.title}</p>}
+      <Container
+        key={group.title ?? "fields"}
+        id={group.anchor}
+        aria-label={group.title}
+        className="grid gap-2 border-t pt-3"
+      >
+        {group.title && (
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <h2 className="text-sm font-medium">{group.title}</h2>
+            {group.titleHint && <TitleHint title={group.title} hint={group.titleHint} />}
+          </div>
+        )}
         <FieldList fields={fields} />
-      </div>
+      </Container>
     );
   });
 }

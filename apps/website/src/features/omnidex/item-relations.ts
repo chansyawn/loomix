@@ -1,6 +1,6 @@
 import type { createResourceReader } from "@/infrastructure/resources";
 import { readNeighborDocument } from "../neighbors/data";
-import { namedGiftPreferences } from "../neighbors/view";
+import { itemGiftPreferences } from "../neighbors/view";
 import { readStarseaDocument } from "../starsea/data";
 import { itemExplorationHints } from "../starsea/view";
 import { readVignetteTemplates } from "../vignettes/data";
@@ -21,7 +21,8 @@ export function itemRelationReaders(
         ? async () =>
             flowerDyeingUses(await readHairDyeingData(read), item.id, data.view.ingredientItemsById)
         : undefined,
-    gifts: async () => namedGiftPreferences(await readNeighborDocument(read), item.id, data.image),
+    gifts: async () =>
+      itemGiftPreferences(await readNeighborDocument(read), item, data.tagIndex, data.image),
     islets: async () => itemExplorationHints(await readStarseaDocument(read), item.id, data.image),
     vignettes: async () => {
       const templates = await readVignetteTemplates(read);

@@ -82,8 +82,13 @@ export function FieldValue({ field }: { field: DetailField }) {
         <>
           <ul className="flex flex-wrap gap-x-1">
             {field.value.map((neighbor) => (
-              <li key={neighbor.id} className="flex items-center">
+              <li key={neighbor.id} className="flex min-w-0 items-center gap-1.5">
                 <NeighborAvatarLink neighbor={neighbor} hash={field.hash} />
+                {neighbor.caption && (
+                  <span className="mr-2 text-xs/5 wrap-anywhere text-muted-foreground">
+                    {neighbor.caption}
+                  </span>
+                )}
               </li>
             ))}
           </ul>

@@ -45,6 +45,7 @@ export function overviewFieldGroups(
   overview: EntryOverview,
   presentation: CatalogDetailPresentation,
   extraFields: readonly DetailField[],
+  giftPreferences?: DetailFieldGroup,
 ): DetailFieldGroup[] {
   const fields = overview.tagGroups.map(({ label, tags }) => catalogTagField(label, tags));
   if (overview.ingredientTags.length)
@@ -79,6 +80,7 @@ export function overviewFieldGroups(
   if (overview.filterTags.length)
     fields.push({ ...catalogTagField("筛选标签", overview.filterTags), fullWidth: true });
   const groups: DetailFieldGroup[] = [{ fields }];
+  if (giftPreferences) groups.push(giftPreferences);
   if (presentation.typeSpecificGroup) groups.push(presentation.typeSpecificGroup);
   return groups;
 }

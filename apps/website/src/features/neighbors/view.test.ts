@@ -1,19 +1,63 @@
 import { expect, test } from "vite-plus/test";
 import { createImageResolver } from "@loomix/schema/assets";
-import { namedGiftPreferences, toNeighborsView } from "./view";
+import { createGameplayTagIndex } from "@loomix/schema/gameplay-tags";
+import { itemGiftPreferences, toNeighborsView } from "./view";
 import { neighborFixture } from "./fixture";
 
 test("具体礼物按物品 ID 和偏好等级反查友邻，忽略同号标签和重复点名", () => {
-  const { database, mapping } = neighborFixture();
+  const { database, mapping, gameplayTags } = neighborFixture();
+  gameplayTags.tags.push({ id: 107, internalName: "同号标签", parentId: null, displayName: null });
   database.neighbors[1]!.gifts.favor = { itemIds: [107, 107], tagIds: [] };
   database.neighbors[3]!.gifts.love = { itemIds: [], tagIds: [107] };
   const image = createImageResolver(mapping);
-  expect(namedGiftPreferences(database, 107, image)).toMatchObject([
-    { level: "love", neighbors: [{ id: 3, avatar: null }] },
-    { level: "favor", neighbors: [{ id: 2, avatar: `assets/${"c".repeat(64)}.webp` }] },
-    { level: "dislike", neighbors: [{ id: 1, avatar: `assets/${"c".repeat(64)}.webp` }] },
+  const tagIndex = createGameplayTagIndex(gameplayTags.tags);
+  expect(itemGiftPreferences(database, { id: 107, tagIds: [] }, tagIndex, image)).toMatchObject([
+    { level: "love", neighbors: [{ id: 3, avatar: null, specified: true, tags: [] }] },
+    {
+      level: "favor",
+      neighbors: [{ id: 2, avatar: `assets/${"c".repeat(64)}.webp`, specified: true, tags: [] }],
+    },
+    {
+      level: "dislike",
+      neighbors: [{ id: 1, avatar: `assets/${"c".repeat(64)}.webp`, specified: true, tags: [] }],
+    },
   ]);
-  expect(namedGiftPreferences(database, 1, image)).toEqual([]);
+  expect(itemGiftPreferences(database, { id: 1, tagIds: [] }, tagIndex, image)).toEqual([]);
+});
+
+test("各等级独立匹配直接标签和祖先，同级合并指定物品和多条依据", () => {
+  const { database, mapping, gameplayTags } = neighborFixture();
+  gameplayTags.tags.push(
+    { id: 3, internalName: "苹果", displayName: null, parentId: 1 },
+    { id: 4, internalName: "青苹果", displayName: null, parentId: 3 },
+    { id: 5, internalName: "其他水果", displayName: "青苹果", parentId: 1 },
+  );
+  database.neighbors[0]!.gifts.love = { itemIds: [50], tagIds: [1, 4, 1] };
+  database.neighbors[0]!.gifts.dislike = { itemIds: [], tagIds: [3] };
+  database.neighbors[1]!.gifts.favor = { itemIds: [], tagIds: [4] };
+  database.neighbors[3]!.gifts.dislike = { itemIds: [], tagIds: [5] };
+  const preferences = (id: number, tagIds: number[]) =>
+    itemGiftPreferences(
+      database,
+      { id, tagIds },
+      createGameplayTagIndex(gameplayTags.tags),
+      createImageResolver(mapping),
+    );
+  expect(preferences(50, [4, 4])).toMatchObject([
+    { level: "love", neighbors: [{ id: 1, specified: true, tags: ["树生水果", "青苹果"] }] },
+    {
+      level: "favor",
+      neighbors: [
+        { id: 1, specified: false, tags: ["树生水果"] },
+        { id: 2, specified: false, tags: ["青苹果"] },
+      ],
+    },
+    { level: "dislike", neighbors: [{ id: 1, specified: false, tags: ["苹果"] }] },
+  ]);
+  expect(preferences(51, [1])).toMatchObject([
+    { level: "love", neighbors: [{ id: 1, specified: false, tags: ["树生水果"] }] },
+    { level: "favor", neighbors: [{ id: 1, specified: false, tags: ["树生水果"] }] },
+  ]);
 });
 
 function fixture() {

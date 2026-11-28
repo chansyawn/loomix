@@ -16,15 +16,29 @@ const giftLevels = [
   ["dislike", "反感"],
 ] as const;
 
-export function namedGiftPreferences(
+export function itemGiftPreferences(
   { neighbors }: Neighbors,
-  itemId: number,
+  item: { id: number; tagIds: readonly number[] },
+  tagIndex: GameplayTagIndex,
   image: ImageResolver,
 ) {
+  const itemTags = new Set(
+    item.tagIds.flatMap((id) => tagIndex.ancestors(id).map((tag) => tag.id)),
+  );
   return giftLevels.flatMap(([level, name]) => {
-    const matches = neighbors
-      .filter(({ gifts }) => gifts[level].itemIds.includes(itemId))
-      .map((neighbor) => neighborAvatar(neighbor, image));
+    const matches = neighbors.flatMap((neighbor) => {
+      const { itemIds, tagIds } = neighbor.gifts[level];
+      const specified = itemIds.includes(item.id);
+      const matchedTags = [...new Set(tagIds)].filter((id) => itemTags.has(id));
+      if (!specified && !matchedTags.length) return [];
+      return [
+        {
+          ...neighborAvatar(neighbor, image),
+          specified,
+          tags: matchedTags.map((id) => tagLabel(tagIndex.get(id))),
+        },
+      ];
+    });
     return matches.length ? [{ level, name, neighbors: matches }] : [];
   });
 }

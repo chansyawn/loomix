@@ -4,7 +4,7 @@ import type { ItemRelationReaders } from "./item-relations";
 import { Button } from "@/ui/components/button";
 import { RelationPreview } from "./relation-preview";
 import { CatalogItemCard } from "./catalog-item-card";
-import type { DetailField } from "../detail-page/field-model";
+import type { DetailField, DetailFieldGroup } from "../detail-page/field-model";
 import type { readOutfitNeighbor } from "../neighbor-outfit/detail";
 
 type RelationState<Key extends keyof ItemRelationReaders> =
@@ -39,17 +39,30 @@ export function outfitOwnerFields(
     : [{ kind: "hint", label, value: "友邻资料暂未收录" }];
 }
 
-export function giftPreferenceFields(state: RelationState<"gifts">): DetailField[] {
-  if (state?.status === "error") return [loadErrorField("送礼偏好", state.retry)];
-  if (state?.status !== "ready") return [];
-  return state.value.map(({ level, name, neighbors }) => ({
-    kind: "neighbors",
-    label: name,
-    value: neighbors,
-    fullWidth: true,
-    anchor: `gift-${level}`,
-    hash: `preference-${level}`,
-  }));
+export function giftPreferenceGroup(state: RelationState<"gifts">): DetailFieldGroup | undefined {
+  const heading = { anchor: "gift-preferences", title: "送礼偏好" };
+  if (state?.status === "error")
+    return { ...heading, fields: [loadErrorField("友邻偏好", state.retry)] };
+  if (state?.status !== "ready" || !state.value.length) return;
+  const ids = state.value.flatMap(({ neighbors }) => neighbors.map(({ id }) => id));
+  return {
+    ...heading,
+    titleHint:
+      new Set(ids).size < ids.length
+        ? "同一位友邻可能出现在多栏。比如，一件家具既有木头又有玻璃，友邻可能对木头有好感、对玻璃反感。头像旁会标出各自的原因。"
+        : undefined,
+    fields: state.value.map(({ level, name, neighbors }) => ({
+      kind: "neighbors",
+      label: name,
+      anchor: `gift-${level}`,
+      hash: `preference-${level}`,
+      fullWidth: true,
+      value: neighbors.map(({ specified, tags, ...neighbor }) => ({
+        ...neighbor,
+        caption: [...(specified ? ["指定物品"] : []), ...tags].join("、"),
+      })),
+    })),
+  };
 }
 
 export function explorationSection(state: RelationState<"islets">): DetailSection | undefined {
