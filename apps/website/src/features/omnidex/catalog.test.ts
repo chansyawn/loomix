@@ -11,6 +11,27 @@ import { entryOverview } from "./entry-overview";
 import { catalogEntryLocation } from "./entry-location";
 import { catalogEntryDetail } from "./catalog-entry-detail";
 
+test("花色复用同名颜色的筛选标签，保留独有的花色和通用颜色", () => {
+  const { catalog, gameplayTags } = catalogFixture();
+  addFixtureRecords(
+    catalog,
+    gameplayTags,
+    { id: 10, kind: "plant", name: "黄花", flowerColors: ["黄"], colors: ["黄"] },
+    { id: 11, kind: "plant", name: "双色花", flowerColors: ["紫", "黄"], colors: ["黄", "绿"] },
+    { id: 12, kind: "furniture", name: "黄椅", colors: ["黄"] },
+  );
+  const data = createOmnidexCatalog(catalog, imageIndexFixture(catalog), gameplayTags);
+  const yellowId = gameplayTags.tags.find((tag) => tag.internalName === "黄")!.id;
+  const yellow = { id: yellowId, name: "黄", filterable: true };
+  const groups = (id: number) => entryOverview(data, data.byId.get(id)!).tagGroups;
+  expect(groups(10)).toEqual([{ label: "花色", tags: [yellow] }]);
+  expect(groups(11)).toMatchObject([
+    { label: "花色", tags: [{ id: null, name: "紫", filterable: false }, yellow] },
+    { label: "颜色", tags: [{ name: "绿" }] },
+  ]);
+  expect(groups(12)).toEqual([{ label: "颜色", tags: [yellow] }]);
+});
+
 test("同一家具的配方各自关联卡集提示和掉落该卡的来源树木", () => {
   const { catalog, gameplayTags } = catalogFixture();
   const card = {

@@ -27,7 +27,6 @@ export function gameplayUseSectionId(category: GameplayUseCategory) {
 }
 
 export function catalogGameplayUses(data: OmnidexCatalog, id: number) {
-  const materialName = data.byId.get(id)?.name ?? "此材料";
   const crafting: GameplayUse[] = (data.view.furnitureUsesByMaterialId.get(id) ?? []).map(
     ({ furniture, recipes }) => ({
       id: furniture.id,
@@ -36,7 +35,7 @@ export function catalogGameplayUses(data: OmnidexCatalog, id: number) {
       destination: catalogEntryLocation(furniture),
       conditions: recipes.map(({ id: recipeId, name, quantity }) => ({
         hash: gameplayAnchor("recipe", recipeId),
-        summary: `需要${materialName} ×${quantity}`,
+        summary: `用量 ×${quantity}`,
         linkLabel: furniture.inspoCards.length === 1 ? "查看制作配方" : `查看配方 · ${name}`,
       })),
     }),

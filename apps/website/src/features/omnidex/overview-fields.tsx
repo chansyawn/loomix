@@ -29,7 +29,7 @@ export function overviewFields(
       label,
       <div className="flex flex-wrap gap-2">
         {tags.map((tag) =>
-          tag.filterable ? (
+          tag.filterable && tag.id !== null ? (
             <Badge
               key={tag.id}
               variant="secondary"
@@ -38,7 +38,7 @@ export function overviewFields(
               {tag.name}
             </Badge>
           ) : (
-            <Badge key={tag.id} variant="secondary">
+            <Badge key={tag.id ?? tag.name} variant="secondary">
               {tag.name}
             </Badge>
           ),

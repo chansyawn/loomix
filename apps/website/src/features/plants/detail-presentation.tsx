@@ -8,6 +8,7 @@ import { PlantsCard } from "./plants-card";
 import type { PlantsDetail } from "./detail";
 import { PlantDropsInfo } from "./related-items";
 import { plantSeriesFields } from "./series-fields";
+import { matureFormMatchesStock } from "./growth";
 import { seedDetailPresentation } from "./seed-detail-presentation";
 import { FlowerHybridization, flowerHybridizationSectionId } from "./flower-hybridization";
 
@@ -51,15 +52,20 @@ function plantOrSeriesPresentation(detail: PlantOrSeriesDetail): CatalogDetailPr
           ],
         ]
       : plantSeriesFields(detail.record);
-  if (detail.kind === "item" && summary.flowerColors.length)
-    fields.push(["花色", summary.flowerColors.join("、")]);
-
   const sections: DetailSection[] = [];
   if (detail.kind === "item") {
+    const sharedMatureForm = matureFormMatchesStock(detail.matureForms, detail.stocks);
     addDetailRelation(fields, sections, "关联种子", "plant-seeds", detail.seeds);
-    addDetailRelation(fields, sections, "来源植株", "plant-stocks", detail.stocks);
+    addDetailRelation(
+      fields,
+      sections,
+      "来源植株",
+      "plant-stocks",
+      detail.stocks,
+      sharedMatureForm ? "plant-mature" : undefined,
+    );
     addDetailRelation(fields, sections, "来源树木", "plant-source-trees", detail.sourceTrees);
-    if (detail.matureForms.length > 0)
+    if (detail.matureForms.length > 0 && !sharedMatureForm)
       sections.push({
         id: "plant-mature",
         title: "成熟形态",
@@ -84,7 +90,11 @@ function plantOrSeriesPresentation(detail: PlantOrSeriesDetail): CatalogDetailPr
       ),
     });
   if (detail.kind === "series") {
-    const members = collectionMembers("plant", detail.items, (item) => <PlantsCard item={item} />);
+    const [category] = summary.categories;
+    const sharedCategory = category && detail.items?.every((item) => item.category === category);
+    const members = collectionMembers("plant", detail.items, (item) => (
+      <PlantsCard item={item} showCategory={!sharedCategory} />
+    ));
     fields.unshift(...members.fields);
     sections.push(...members.sections);
   }

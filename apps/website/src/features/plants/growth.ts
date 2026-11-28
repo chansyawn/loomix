@@ -1,4 +1,4 @@
-import type { PlantGrowth, PlantSeed } from "./model";
+import type { HarvestablePlant, PlantGrowth, PlantSeed } from "./model";
 
 export function growthStageGroups(growth: PlantGrowth) {
   if (growth.kind === "staged")
@@ -22,4 +22,14 @@ export function plantMatureForms(seeds: readonly PlantSeed[], plantId: number) {
     });
     return stages.length > 0 ? [{ seed, stages }] : [];
   });
+}
+
+export function matureFormMatchesStock(
+  forms: ReturnType<typeof plantMatureForms>,
+  stocks: readonly Pick<HarvestablePlant, "id" | "name" | "image">[],
+) {
+  if (stocks.length !== 1 || forms.length !== 1 || forms[0].stages.length !== 1) return false;
+  const [stock] = stocks;
+  const [stage] = forms[0].stages;
+  return stage.stockId === stock.id && stage.name === stock.name && stage.image === stock.image;
 }

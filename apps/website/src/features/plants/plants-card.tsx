@@ -7,8 +7,16 @@ import { RecordListCard } from "@/features/omnidex/record-list-card";
 import { useOmnidexOrigin } from "@/features/omnidex/navigation";
 import { catalogEntryLocation } from "../omnidex/entry-location";
 
-export function PlantsCard({ item }: { item: PlantItem | HarvestablePlant }) {
+export function PlantsCard({
+  item,
+  showCategory = true,
+}: {
+  item: PlantItem | HarvestablePlant;
+  showCategory?: boolean;
+}) {
   const origin = useOmnidexOrigin();
+  const category =
+    "stockCategory" in item ? `${item.stockCategory} · 可收获${item.harvest.name}` : item.category;
   return (
     <RecordListCard
       name={item.name}
@@ -19,11 +27,7 @@ export function PlantsCard({ item }: { item: PlantItem | HarvestablePlant }) {
           {item.name}
         </Link>
       }
-      tags={
-        "stockCategory" in item
-          ? `${item.stockCategory} · 可收获${item.harvest.name}`
-          : item.category
-      }
+      tags={showCategory ? category : null}
     />
   );
 }

@@ -195,15 +195,15 @@ describe("miscellaneous details", () => {
     }
   });
 
-  it("describes the current material and keeps each recipe link and anchor distinct", () => {
+  it("制作用途逐条显示用量，并保留各配方的链接和锚点", () => {
     const { catalog, gameplayTags } = relatedCatalog();
     const data = createOmnidexCatalog(catalog, imageIndexFixture(catalog), gameplayTags);
     expect(catalogGameplayUses(data, 100).crafting[0]?.conditions).toEqual([
-      { hash: "recipe-17", summary: "需要家具100 ×1", linkLabel: "查看制作配方" },
+      { hash: "recipe-17", summary: "用量 ×1", linkLabel: "查看制作配方" },
     ]);
     expect(catalogGameplayUses(data, item.id).crafting[0]?.conditions).toEqual([
-      { hash: "recipe-12", summary: "需要树胶 ×3", linkLabel: "查看配方 · 创想卡 12" },
-      { hash: "recipe-13", summary: "需要树胶 ×5", linkLabel: "查看配方 · 创想卡 13" },
+      { hash: "recipe-12", summary: "用量 ×3", linkLabel: "查看配方 · 创想卡 12" },
+      { hash: "recipe-13", summary: "用量 ×5", linkLabel: "查看配方 · 创想卡 13" },
     ]);
   });
 

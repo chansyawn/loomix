@@ -92,9 +92,10 @@ export function addDetailRelation(
   label: string,
   anchor: string,
   items: readonly RelatedEntry[],
+  fieldAlias?: string,
 ) {
   if (!items.length) return;
   const content = <CatalogRelations items={items} />;
-  if (items.length === 1) fields.push([label, content, anchor]);
+  if (items.length === 1) fields.push([label, content, anchor, fieldAlias]);
   else sections.push({ id: anchor, title: label, content });
 }

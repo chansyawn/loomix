@@ -1,5 +1,5 @@
 import type { DetailField, DetailSection } from "@/features/detail-page/detail-page";
-import { SectionCount } from "../omnidex/detail-relations";
+import { addDetailRelation, SectionCount } from "../omnidex/detail-relations";
 import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presentation";
 import { RecordImage } from "../omnidex/record-image";
 import type { PlantsDetail } from "./detail";
@@ -11,23 +11,17 @@ export function seedDetailPresentation(
 ): CatalogDetailPresentation {
   const { record } = detail;
   const { growth } = record;
-  const fields: DetailField[] = [
-    ["分类", "种子"],
-    [
-      "关联植物",
-      detail.items.length ? (
-        <SectionCount anchor="seed-plants">{detail.items.length} 种植物</SectionCount>
-      ) : (
-        "0 种植物"
-      ),
-    ],
-  ];
-  if (growth.kind === "crop")
-    fields.push(["收获茬数", growth.harvestCount === null ? null : `${growth.harvestCount} 茬`]);
+  const fields: DetailField[] = [["分类", "种子"]];
   const sections: DetailSection[] = [
     { id: "plant-growth-heading", title: "生长阶段", content: <SeedGrowthStages seed={record} /> },
   ];
-  if (detail.items.length > 0)
+  if (detail.items.length === 1) {
+    addDetailRelation(fields, sections, "关联植物", "seed-plants", detail.items);
+  } else if (detail.items.length > 1) {
+    fields.push([
+      "关联植物",
+      <SectionCount anchor="seed-plants">{detail.items.length} 种植物</SectionCount>,
+    ]);
     sections.push({
       id: "seed-plants",
       title: "关联植物",
@@ -39,6 +33,11 @@ export function seedDetailPresentation(
         </div>
       ),
     });
+  } else {
+    fields.push(["关联植物", "0 种植物"]);
+  }
+  if (growth.kind === "crop")
+    fields.push(["收获茬数", growth.harvestCount === null ? null : `${growth.harvestCount} 茬`]);
   return {
     image: <RecordImage image={record.image} name={record.name} eager />,
     fields,
