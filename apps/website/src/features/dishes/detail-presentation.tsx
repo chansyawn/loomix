@@ -1,7 +1,7 @@
 import { RecordImage } from "@/features/omnidex/record-image";
 import { SeriesImage } from "../omnidex/series-image";
 import type { DetailSection } from "@/features/detail-page/detail-page";
-import { catalogRelationEntry, collectionMembers } from "../omnidex/detail-relations";
+import { collectionMembers } from "../omnidex/detail-relations";
 import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presentation";
 import type { DishesDetail } from "./detail";
 import { DishRecipe } from "./recipe";
@@ -40,7 +40,6 @@ export function dishesDetailPresentation(
   return {
     image: <RecordImage image={record.image} name={record.name} eager />,
     fields: [
-      { kind: "entries", label: "菜谱", value: record.recipeItems.map(catalogRelationEntry) },
       textField("难度", record.difficulty),
       hintField("解锁条件", unlockConditionLabel(record.unlockCondition)),
       textField("口味", record.tastes?.join("、")),
