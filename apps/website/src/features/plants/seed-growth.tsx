@@ -14,17 +14,14 @@ export function SeedGrowthStages({ seed }: { seed: PlantSeed }) {
             {group.ids.map((id, index) => {
               const stage = stages.get(id);
               if (!stage) return null;
+              const entryId = stage.stockId ?? stage.plantId;
               return (
                 <div key={id} className="w-72 max-w-full">
                   <CatalogItemCard
                     item={stage}
                     itemId={id}
                     description={`${group.label} ${index + 1}`}
-                    link={
-                      stage.plantId === null
-                        ? undefined
-                        : catalogEntryLocation({ id: stage.plantId })
-                    }
+                    link={entryId === null ? undefined : catalogEntryLocation({ id: entryId })}
                   />
                 </div>
               );

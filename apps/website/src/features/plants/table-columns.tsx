@@ -4,7 +4,7 @@ import { RecordImage } from "@/features/omnidex/record-image";
 import { CatalogItemLink } from "@/features/omnidex/item-link";
 import type { PlantItem, PlantSeries } from "../omnidex-view";
 import type { PlantsData } from "./data";
-import type { PlantSeed } from "./model";
+import type { HarvestablePlant, PlantSeed } from "./model";
 import { recordColumns, MembershipCell } from "../omnidex/table-columns";
 import { textColumn, tableLinkClassName } from "../list-page/table-columns";
 import type { ListColumn } from "../list-page/table-columns";
@@ -15,7 +15,7 @@ import type { View } from "./search";
 import { catalogEntryLocation } from "../omnidex/entry-location";
 import { PlantSeedLinks, SeedNameLink } from "./seed-info";
 
-export type PlantsRow = PlantItem | PlantSeries | PlantSeed;
+export type PlantsRow = PlantItem | PlantSeries | PlantSeed | HarvestablePlant;
 
 function isSeedRow(record: PlantsRow): record is PlantSeed {
   return "growth" in record;
@@ -140,30 +140,43 @@ export function plantsTableColumns(
   if (view === "seeds") return seedTableColumns(data);
   const groups = data?.series ?? [];
   const common = recordColumns<PlantsRow>((record) => <NameLink record={record} />);
+  if (view === "harvestablePlants")
+    return [
+      ...common,
+      textColumn("category", "分类", 112, (row) =>
+        "stockCategory" in row ? row.stockCategory : null,
+      ),
+      {
+        id: "harvest",
+        header: "可收获",
+        width: 180,
+        cell: (row) => ("harvest" in row ? <NameLink record={row.harvest} /> : null),
+      },
+    ];
   const memberships = indexMembership(groups, (group) => group.plantIds);
   const facts: ListColumn<PlantsRow>[] = [
     textColumn("flowerColors", "花色", 168, (record) =>
-      isSeedRow(record) ? null : record.summary.flowerColors.join("、") || null,
+      "summary" in record ? record.summary.flowerColors.join("、") || null : null,
     ),
     {
       id: "seeds",
       header: "种子",
       width: 192,
       cell: (record) =>
-        isSeedRow(record) ? null : <PlantSeedLinks seeds={record.summary.seeds} />,
+        "summary" in record ? <PlantSeedLinks seeds={record.summary.seeds} /> : null,
     },
   ];
   if (view === "series")
     return [
       ...common,
       textColumn("categories", "分类", 144, (record) =>
-        isSeedRow(record) ? null : record.summary.categories.join("、") || null,
+        "summary" in record ? record.summary.categories.join("、") || null : null,
       ),
       textColumn("galaxies", "原产星系", 160, (record) =>
-        isSeedRow(record) ? null : record.summary.galaxies.join("、") || null,
+        "summary" in record ? record.summary.galaxies.join("、") || null : null,
       ),
       textColumn("harvestCounts", "收获茬数", 112, (record) =>
-        !isSeedRow(record) && record.summary.harvestCounts.length
+        "summary" in record && record.summary.harvestCounts.length
           ? record.summary.harvestCounts.join(" / ")
           : null,
       ),

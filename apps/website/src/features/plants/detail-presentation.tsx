@@ -2,6 +2,7 @@ import type { DetailSection } from "@/features/detail-page/detail-page";
 import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presentation";
 import { RecordImage } from "@/features/omnidex/record-image";
 import { CatalogItemCard } from "../omnidex/catalog-item-card";
+import { catalogEntryLocation } from "../omnidex/entry-location";
 import { PlantsCard } from "./plants-card";
 import type { PlantsDetail } from "./detail";
 import { PlantDropsInfo, PlantRelatedItems } from "./related-items";
@@ -10,9 +11,30 @@ import { plantSeriesFields } from "./series-fields";
 import { seedDetailPresentation } from "./seed-detail-presentation";
 import { FlowerHybridization, flowerHybridizationSectionId } from "./flower-hybridization";
 
-type PlantOrSeriesDetail = Exclude<PlantsDetail, { kind: "seed" }>;
+type PlantOrSeriesDetail = Extract<PlantsDetail, { kind: "item" | "series" }>;
 
 export function plantsDetailPresentation(detail: PlantsDetail): CatalogDetailPresentation {
+  if (detail.kind === "harvestablePlant") {
+    const { record } = detail;
+    return {
+      image: <RecordImage image={record.image} name={record.name} eager />,
+      description: record.description && (
+        <p className="text-sm/7 whitespace-pre-line">{record.description}</p>
+      ),
+      fields: [["分类", record.stockCategory]],
+      sections: [
+        {
+          id: "plant-harvest",
+          title: "可收获",
+          content: (
+            <div className="w-40 max-w-full">
+              <PlantsCard item={record.harvest} />
+            </div>
+          ),
+        },
+      ],
+    };
+  }
   return {
     ...(detail.kind === "seed"
       ? seedDetailPresentation(detail)
@@ -122,9 +144,12 @@ function PlantMatureForms({ detail }: { detail: Extract<PlantsDetail, { kind: "i
             {stages.map((stage) => (
               <div key={stage.id} className="w-72 max-w-full">
                 <CatalogItemCard
-                  item={{ name: detail.record.name, image: stage.image }}
-                  itemId={detail.record.id}
-                  description={detail.record.description || "描述未提供"}
+                  item={stage.stockId ? stage : { name: detail.record.name, image: stage.image }}
+                  itemId={stage.stockId ?? detail.record.id}
+                  link={stage.stockId ? catalogEntryLocation({ id: stage.stockId }) : undefined}
+                  description={
+                    stage.stockId ? undefined : detail.record.description || "描述未提供"
+                  }
                   fullDescription
                 />
               </div>

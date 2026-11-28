@@ -72,6 +72,7 @@ test("独立种子保留关联植物顺序，单品通过顶部导航关联种�
     navigation: { hasUnconfirmedMembership: true },
   });
   const detail = plantsDetail({ ...data, series: [] }, "items", 1);
+  if (detail.kind !== "item") throw new Error("应为单品详情");
   expect(detail.record).toBe(first);
   expect(detail.navigation.groups[0].entries.map((entry) => entry.id)).toEqual([10, 2, 1]);
 });

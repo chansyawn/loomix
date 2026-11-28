@@ -33,8 +33,7 @@ export function PlantsPage({
   );
   const { layout } = layoutState;
   const presentation = listPresentation(search.view);
-  const viewLabel =
-    search.view === "items" ? title : search.view === "series" ? `${title}系列` : `${title}种子`;
+  const viewLabel = tabs.find((tab) => tab.value === search.view)!.label;
   const result = queryPlants(data, search.view, query);
   const groups = filterGroups(data, search.view);
   const resultKey = JSON.stringify([search.view, layout, query]);
@@ -72,7 +71,7 @@ export function PlantsPage({
         {...layoutState}
         filters={
           <FilterPanel
-            title={`筛选${title}`}
+            title={`筛选${viewLabel}`}
             groups={groups}
             query={query}
             total={result.total}
@@ -93,13 +92,14 @@ export function PlantsPage({
         rows={result.rows}
         columns={columns}
         getRowId={(row) => String(row.id)}
-        label={`${title}表格`}
+        label={`${viewLabel}表格`}
         sorting={recordTableSorting(query.sort, (sort) => update({ sort }))}
         grid={presentation.grid}
         virtual
         renderCard={(row) => {
           if ("growth" in row) return <SeedCard seed={row} />;
-          return "category" in row ? <PlantsCard item={row} /> : <PlantSeriesCard series={row} />;
+          if ("stockCategory" in row || "category" in row) return <PlantsCard item={row} />;
+          return <PlantSeriesCard series={row} />;
         }}
         empty={
           <ListEmpty title={viewLabel} onClear={data[search.view].length ? clear : undefined} />

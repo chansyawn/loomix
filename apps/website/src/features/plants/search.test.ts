@@ -8,6 +8,7 @@ describe("plant URL state", () => {
       items: emptyQuery(),
       series: emptyQuery(),
       seeds: emptyQuery(),
+      harvestablePlants: emptyQuery(),
     };
     expect(plantsSearchSchema.parse({})).toEqual(defaults);
     for (const value of [null, [], "invalid", 42, true])
@@ -17,6 +18,7 @@ describe("plant URL state", () => {
           items: value,
           series: value,
           seeds: value,
+          harvestablePlants: value,
         }),
       ).toEqual(defaults);
   });
@@ -43,9 +45,11 @@ describe("plant URL state", () => {
           series: ["95000"],
           harvestCounts: ["3", "-1", "__missing"],
         },
+        harvestablePlants: { categories: ["花株", "花", "花株"], qualities: ["3"] },
       }),
     ).toEqual({
       view: "items",
+      harvestablePlants: { ...emptyQuery(), categories: ["花株"] },
       items: {
         ...emptyQuery(),
         categories: ["作物", "未见分类"],
