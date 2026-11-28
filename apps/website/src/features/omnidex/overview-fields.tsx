@@ -79,8 +79,9 @@ export function overviewFieldGroups(
   fields.push(...(presentation.fields ?? []), ...extraFields);
   if (overview.filterTags.length)
     fields.push({ ...catalogTagField("筛选标签", overview.filterTags), fullWidth: true });
-  const groups: DetailFieldGroup[] = [{ fields }];
+  const groups: DetailFieldGroup[] = [{ title: "基本信息", fields }];
+  if (presentation.encounterConditions) groups.push(presentation.encounterConditions);
   if (giftPreferences) groups.push(giftPreferences);
-  if (presentation.typeSpecificGroup) groups.push(presentation.typeSpecificGroup);
+  if (presentation.consumptionEffects) groups.push(presentation.consumptionEffects);
   return groups;
 }

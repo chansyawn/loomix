@@ -45,7 +45,7 @@ export function dishesDetailPresentation(
       catalogTagField("星系风味", origins),
       textField("炊具", record.cookware),
     ],
-    typeSpecificGroup: {
+    consumptionEffects: {
       title: "食用效果",
       fields: [
         textField("基础效果", strengthText(record.strength)),

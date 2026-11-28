@@ -40,9 +40,9 @@ export function outfitOwnerFields(
 }
 
 export function giftPreferenceGroup(state: RelationState<"gifts">): DetailFieldGroup | undefined {
-  const heading = { anchor: "gift-preferences", title: "送礼偏好" };
+  const heading = { anchor: "gift-preferences", title: "友邻喜好" };
   if (state?.status === "error")
-    return { ...heading, fields: [loadErrorField("友邻偏好", state.retry)] };
+    return { ...heading, fields: [loadErrorField(heading.title, state.retry)] };
   if (state?.status !== "ready" || !state.value.length) return;
   const ids = state.value.flatMap(({ neighbors }) => neighbors.map(({ id }) => id));
   return {

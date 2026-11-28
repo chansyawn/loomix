@@ -1,5 +1,4 @@
 import { notFound } from "@tanstack/react-router";
-import type { CreatureItem } from "../omnidex-view";
 import type { CreaturesData } from "./data";
 import { loadOmnidexView } from "../omnidex-loader";
 import { buildIngredientsData, ingredientUsage } from "../ingredients/model";
@@ -41,22 +40,6 @@ export function creaturesDetail(
 }
 
 export type CreaturesDetail = ReturnType<typeof creaturesDetail>;
-
-type Condition = [label: string, value: string | null];
-
-function pairedCondition(first: Condition, second: Condition): Condition {
-  if (!first[1]) return second;
-  if (!second[1]) return first;
-  return [`${first[0]}与${second[0]}`, `${first[1]} · ${second[1]}`];
-}
-
-export function creatureEncounterFields(record: CreatureItem): Condition[] {
-  return [
-    pairedCondition(["地区", record.region], ["栖息地", record.habitat]),
-    pairedCondition(["季节", record.activeSeasons], ["时段", record.activeTimes]),
-    ["天气", record.activeWeather],
-  ];
-}
 
 export async function loadCreaturesDetail(view: View, value: string): Promise<CreaturesDetail> {
   const id = parseCreaturesId(value);

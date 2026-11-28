@@ -100,13 +100,14 @@ test("通用信息以单个字段按引用顺序平铺所有筛选链接，包�
   });
   const groups = overviewFieldGroups(
     overview,
-    { image: null, sections: [], typeSpecificGroup: effects },
+    { image: null, sections: [], consumptionEffects: effects },
     [],
     preferences,
   );
-  expect(groups.slice(1)).toMatchObject([
+  expect(groups).toMatchObject([
+    { title: "基本信息" },
     {
-      title: "送礼偏好",
+      title: "友邻喜好",
       anchor: "gift-preferences",
       fields: [
         {
@@ -154,6 +155,7 @@ test("食材浏览保留祖先入口，筛选标签只链接全部页可筛选�
     overviewFieldGroups(entryOverview(data, data.byId.get(id)!), { image: null, sections: [] }, []);
   expect(groups(31)).toMatchObject([
     {
+      title: "基本信息",
       fields: [
         {
           label: "食材标签",

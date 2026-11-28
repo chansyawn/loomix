@@ -26,10 +26,10 @@ export function NeighborDetailPage({ neighbor }: { neighbor: NeighborDetail }) {
   if (neighbor.preferences.some((group) => group.items.length || group.tags.length))
     sections.push({
       id: "preferences",
-      title: "送礼偏好",
+      title: "友邻喜好",
       content: <NeighborPreferences preferences={neighbor.preferences} />,
     });
-  else missing.push("送礼偏好");
+  else missing.push("友邻喜好");
   if (neighbor.abilities.length)
     sections.push({
       id: "abilities",

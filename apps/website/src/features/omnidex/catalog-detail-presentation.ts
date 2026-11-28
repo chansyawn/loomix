@@ -8,6 +8,7 @@ export type CatalogDetailPresentation = Pick<
 > & {
   classification?: string | null;
   fields?: readonly DetailField[];
-  typeSpecificGroup?: DetailFieldGroup;
+  encounterConditions?: DetailFieldGroup;
+  consumptionEffects?: DetailFieldGroup;
   navigation?: DetailNavigationModel;
 };

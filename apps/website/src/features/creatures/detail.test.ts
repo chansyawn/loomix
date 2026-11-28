@@ -1,13 +1,12 @@
 import { isNotFound } from "@tanstack/react-router";
 import { describe, expect, it, vi, afterEach } from "vite-plus/test";
-import { catalogFixture, fixtureRequest } from "../omnidex-fixture.ts";
+import { catalogFixture, fixtureRequest, imageIndexFixture } from "../omnidex-fixture.ts";
 import type { CreatureItem, CreatureSeries } from "../omnidex-view.ts";
-import {
-  creaturesDetail,
-  loadCreaturesDetail,
-  parseCreaturesId,
-  creatureEncounterFields,
-} from "./detail";
+import { createOmnidexCatalog } from "../omnidex/catalog";
+import { entryOverview } from "../omnidex/entry-overview";
+import { overviewFieldGroups } from "../omnidex/overview-fields";
+import { creaturesDetail, loadCreaturesDetail, parseCreaturesId } from "./detail";
+import { creaturesDetailPresentation } from "./detail-presentation";
 
 const first: CreatureItem = {
   id: 1,
@@ -26,20 +25,6 @@ const first: CreatureItem = {
 };
 const second: CreatureItem = { ...first, id: 2, name: "青鱼" };
 
-it("出没字段组合已知条件，保留部分资料和未配置的天气", () => {
-  expect(
-    creatureEncounterFields({
-      ...first,
-      region: "全地区",
-      habitat: "河流、湖泊",
-      activeTimes: "白天",
-    }),
-  ).toEqual([
-    ["地区与栖息地", "全地区 · 河流、湖泊"],
-    ["时段", "白天"],
-    ["天气", null],
-  ]);
-});
 const group: CreatureSeries = {
   id: 3,
   name: "河川鱼类",
@@ -54,6 +39,35 @@ const data = { items: [first, second], series: [group, { ...group, id: 4, creatu
 afterEach(() => vi.unstubAllGlobals());
 
 describe("creatures details", () => {
+  it("出没条件逐项列出地区、栖息地、季节、时段和天气，排在友邻喜好之前", () => {
+    const fish = {
+      ...first,
+      region: "全地区",
+      habitat: "河流、湖泊",
+      activeSeasons: "春、夏",
+      activeTimes: "白天",
+    };
+    const creatures = { items: [fish], series: [] };
+    const { catalog, gameplayTags } = catalogFixture({ creatures });
+    const index = createOmnidexCatalog(catalog, imageIndexFixture(catalog), gameplayTags);
+    const overview = entryOverview(index, index.byId.get(fish.id)!);
+    const detail = creaturesDetailPresentation(creaturesDetail(creatures, "items", fish.id));
+    const preferences = { title: "友邻喜好", fields: [] };
+    expect(overviewFieldGroups(overview, detail, [], preferences)).toMatchObject([
+      { title: "基本信息" },
+      {
+        title: "出没条件",
+        fields: [
+          { label: "地区", value: "全地区" },
+          { label: "栖息地", value: "河流、湖泊" },
+          { label: "季节", value: "春、夏" },
+          { label: "时段", value: "白天" },
+          { label: "天气", value: null },
+        ],
+      },
+      preferences,
+    ]);
+  });
   it("accepts positive safe integer IDs and rejects malformed addresses", () => {
     expect(parseCreaturesId("1")).toBe(1);
     for (const value of ["0", "-1", "1.5", "1e2", "01", "", "abc", "9007199254740992"]) {
