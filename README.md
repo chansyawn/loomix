@@ -14,7 +14,7 @@ vp install
 
 启动前先准备网站资源，任选一种方式：
 
-- 本地资源可提取、打包和验证后安装到 `resources/website/`。已有共享资源包时可直接安装。[客户端资源提取](tools/extraction/README.md)
+- 本地资源可提取、打包和验证后安装到 `resources/website/`。已有兼容的共享资源包及其完整上游时，可跳过提取直接安装。[客户端资源提取](tools/extraction/README.md)
 - 已发布资源通过 `VITE_RESOURCE_BASE_URL` 指定与当前契约匹配的 HTTPS 地址。生产默认使用网站资源地址配置。[resource-address.json](apps/website/resource-address.json)
 
 开发和测试默认读取本地资源，首次克隆只有占位文件，需要先完成上述资源准备。随后启动网站：
@@ -52,7 +52,7 @@ vp run dev
 ```text
 apps/website/              # 网站页面、路由、样式与网站专属文档
 packages/schema/           # 共享领域模型、资源与发布契约
-tools/extraction/          # 客户端资源提取工具及要求与维护说明
+tools/extraction/          # 客户端资源提取工具与文档
 tools/resources/  # 资源校验、发布与清理
 resources/website/         # 当前 worktree 的本地网站资源
 ```
@@ -72,7 +72,6 @@ resources/website/         # 当前 worktree 的本地网站资源
 | [标签筛选策略](apps/website/docs/tag-filter-policy.md)             | 网站开发者           | 筛选语义、可见性边界与维护指引                 |
 | [客户端资源提取](tools/extraction/README.md)                       | 提取工具使用者       | 首次配置、日常操作、排障与清理                 |
 | [提取要求与规范](tools/extraction/docs/extraction-requirements.md) | 提取工具维护者       | 解释原则、收录准入、客户端用语与流水线要求     |
-| [提取维护](tools/extraction/docs/extraction-maintenance.md)        | 提取工具维护者       | 待首次版本更新实操后补充                       |
 | [业务确认与调查](tools/extraction/docs/business-investigation.md)  | 提取工具维护者       | 业务收录依据、确认结论与待调查事项             |
 | [网站资源管理](tools/resources/README.md)                          | 资源维护者           | R2 凭证、校验、发布与清理                      |
 | [共享数据契约](packages/schema/README.md)                          | 各包开发者           | 跨包约束、身份、图片与版本边界                 |
