@@ -16,9 +16,7 @@ docs: 补充部署文档
 
 允许的类型：`feat`、`fix`、`refactor`、`perf`、`docs`、`test`、`build`、`ci`、`chore`、`revert`。通常省略 scope；需要时可用 `fix(website): 修复图片加载`。
 
-PR 标题由 CI 自动校验；分支内每条提交目前不单独校验，仍应遵循上述格式。合并时使用 `PR 标题 (#PR编号)` 作为 Squash 提交标题、PR 描述作为提交正文，使 `master` 保持整齐的线性历史。例如，PR #123 合并后的提交标题为 `feat: 添加家具筛选 (#123)`。
-
-PR 标题本身不添加编号，编号仅在合并时追加。GitHub 默认生成的 Squash 提交标题会包含编号；通过 CLI、API 或其他工具显式指定提交标题时，也必须保留该后缀，例如 `gh pr merge --subject` 或 API 的 `commit_title` 参数。已有提交保持原样，不为统一标题格式重写主分支历史。
+CI 校验 PR 标题，分支内的提交也应遵循上述格式。PR 标题不带编号，Squash 合并时以 `PR 标题 (#编号)` 为提交标题、PR 描述为正文。手工指定标题时也须保留编号，例如 `feat: 添加家具筛选 (#123)`。
 
 ## 提交 PR
 
