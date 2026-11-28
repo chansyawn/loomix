@@ -21,6 +21,18 @@ export function furnitureDetail(data: FurnitureData, view: View, id: number) {
       navigation,
       recipes: item.inspoCards.map((recipe) => ({
         ...recipe,
+        sourceTrees: (data.sourceTreesByItemId?.get(recipe.id) ?? []).map((tree) => ({
+          id: tree.id,
+          name: tree.name,
+          image: tree.image,
+          sources: [
+            ...new Set(
+              tree.treeDrops
+                ?.filter((drop) => drop.itemId === recipe.id)
+                .map((drop) => drop.source),
+            ),
+          ],
+        })),
         materials:
           recipe.materials?.map((material) => ({
             ...material,

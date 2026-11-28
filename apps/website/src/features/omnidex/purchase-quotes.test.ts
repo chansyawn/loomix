@@ -2,7 +2,7 @@ import { createImageResolver } from "@loomix/schema/assets";
 import type { PurchaseOffer } from "@loomix/schema/catalog";
 import { expect, test } from "vite-plus/test";
 import { addFixtureRecords, catalogFixture, imageIndexFixture } from "../omnidex-fixture";
-import { indexPurchaseQuotes, purchasePriceSummary } from "./purchase-quotes";
+import { indexPurchaseQuotes, purchasePriceSummary, simplePurchaseQuote } from "./purchase-quotes";
 
 test("同店同物同币种的同价只展示一次，异价、跨店和同名异币种分别保留", () => {
   const { catalog, gameplayTags } = catalogFixture();
@@ -169,4 +169,34 @@ test("次数价按明确的购买次数展示，保留重复金额、零价和�
     "0 街乐果冻",
   ]);
   expect(quotes.get(200006)).toBeUndefined();
+  expect(simplePurchaseQuote(quotes.get(1))).toBeNull();
+});
+
+test("顶部报价仅接受单条无备注的固定配置，保留零价和同名货币身份", () => {
+  const { catalog, gameplayTags } = catalogFixture();
+  addFixtureRecords(
+    catalog,
+    gameplayTags,
+    { kind: "material", id: 1, name: "木料" },
+    { kind: "reference", id: 2, name: "碎钱" },
+  );
+  catalog.shops.push({ id: "gelian", name: "格连" });
+  const offer: PurchaseOffer = {
+    id: "gelian:1",
+    shopId: "gelian",
+    deliveredItemId: 1,
+    currencyItemId: 2,
+    price: { kind: "fixed", amount: 0 },
+  };
+  catalog.purchaseOffers.push(offer);
+  const summary = () => simplePurchaseQuote(indexPurchaseQuotes(catalog, () => null).get(1));
+  expect(summary()).toBe("格连 · 0 碎钱");
+  offer.note = "任务货架";
+  expect(summary()).toBeNull();
+  delete offer.note;
+  catalog.shops[0].paymentNote = "特殊支付规则";
+  expect(summary()).toBeNull();
+  delete catalog.shops[0].paymentNote;
+  offer.price = { kind: "dailyPurchaseCount", entries: [{ purchasedToday: 0, amount: 0 }] };
+  expect(summary()).toBeNull();
 });

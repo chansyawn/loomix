@@ -13,6 +13,7 @@ export type InspoCardView = {
   id: number;
   name: string;
   inspoBoxName: string | null;
+  inspoBoxHint: string | null;
   face: InspoCardFaceData;
   materials: ItemAmount[] | null;
 };
@@ -22,7 +23,7 @@ export type InspoCardReference = { face: InspoCardFaceData; productId: number };
 export function indexInspoCards(catalog: Catalog, imageIndex: ImageIndex) {
   const images = new Map(imageIndex.images.map((entry) => [imageKey(entry), entry]));
   const items = new Map(catalog.items.filter(isListedItem).map((item) => [item.id, item]));
-  const names = new Map(catalog.inspoBoxes.map((box) => [box.id, box.name]));
+  const boxes = new Map(catalog.inspoBoxes.map((box) => [box.id, box]));
   const byId = new Map<number, InspoCardReference>();
   const byProduct = new Map<number, InspoCardView[]>();
   for (const card of catalog.items) {
@@ -30,10 +31,12 @@ export function indexInspoCards(catalog: Catalog, imageIndex: ImageIndex) {
     const product = items.get(card.recipe.productId);
     const asset = images.get(imageKey(card.front.background));
     const foreground = product?.image ?? card.image;
+    const box = card.inspoBoxId === null ? undefined : boxes.get(card.inspoBoxId);
     const entry: InspoCardView = {
       id: card.id,
       name: card.name,
-      inspoBoxName: card.inspoBoxId === null ? null : (names.get(card.inspoBoxId) ?? null),
+      inspoBoxName: box?.name ?? null,
+      inspoBoxHint: box?.acquisitionHint ?? null,
       materials: card.recipe.materials,
       face: {
         background: asset ? { file: asset.file, width: asset.width, height: asset.height } : null,

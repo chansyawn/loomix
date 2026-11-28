@@ -1,33 +1,7 @@
-import type { IngredientItem } from "../omnidex-view";
 import { CatalogItemCard } from "../omnidex/catalog-item-card";
 import { InspoCardFace } from "../omnidex/inspo-card-face";
 import { catalogEntryLocation } from "../omnidex/entry-location";
-import { useOmnidexOrigin } from "@/features/omnidex/navigation";
 import type { PlantDrop, PlantDrops } from "./model";
-
-export function PlantRelatedItems({ items }: { items: IngredientItem[] }) {
-  const origin = useOmnidexOrigin();
-  return (
-    <ul className="flex flex-wrap gap-3">
-      {items.map((item) => (
-        <li key={item.id} className="max-w-full min-w-0">
-          <CatalogItemCard
-            item={item}
-            itemId={item.id}
-            link={
-              item.browsable === false
-                ? undefined
-                : {
-                    ...catalogEntryLocation(item),
-                    state: { omnidexOrigin: origin },
-                  }
-            }
-          />
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 export function PlantDropsInfo({ drops }: { drops: PlantDrops }) {
   if (!drops.groups.length) return null;

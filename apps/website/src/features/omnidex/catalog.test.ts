@@ -6,9 +6,43 @@ import {
   plantSeriesFixture,
   plantsDataFixture,
 } from "../plants/fixture";
-import { createOmnidexCatalog, recordFields } from "./catalog";
+import { createOmnidexCatalog } from "./catalog";
+import { entryOverview } from "./entry-overview";
 import { catalogEntryLocation } from "./entry-location";
 import { catalogEntryDetail } from "./catalog-entry-detail";
+
+test("同一家具的配方各自关联卡集提示和掉落该卡的来源树木", () => {
+  const { catalog, gameplayTags } = catalogFixture();
+  const card = {
+    kind: "inspoCard",
+    recipe: { productId: 1, materials: null },
+    front: { background: { assetId: "card.webp", variant: "card-background" } },
+  };
+  addFixtureRecords(
+    catalog,
+    gameplayTags,
+    { id: 1, kind: "furniture", name: "椅子" },
+    { ...card, id: 2, name: "椅子卡甲", inspoBoxId: 10 },
+    { ...card, id: 3, name: "椅子卡乙", inspoBoxId: null },
+    { id: 4, kind: "plant", name: "银杏树", drops: [{ itemId: 2, source: "felling" }] },
+    { id: 5, kind: "plant", name: "其他树", drops: [{ itemId: 1, source: "fruit" }] },
+  );
+  catalog.inspoBoxes.push({ id: 10, name: "椅子卡集", acquisitionHint: "星屿商店", image: null });
+  const data = createOmnidexCatalog(catalog, imageIndexFixture(catalog), gameplayTags);
+  expect(catalogEntryDetail(data, 1)).toMatchObject({
+    detail: {
+      recipes: [
+        {
+          id: 2,
+          inspoBoxName: "椅子卡集",
+          inspoBoxHint: "星屿商店",
+          sourceTrees: [{ id: 4, sources: ["felling"] }],
+        },
+        { id: 3, inspoBoxName: null, inspoBoxHint: null, sourceTrees: [] },
+      ],
+    },
+  });
+});
 
 test("共享目录为植物、种子和系列保留独立详情及公共字段", () => {
   const { catalog, gameplayTags } = catalogFixture({
@@ -56,12 +90,8 @@ test("共享目录为植物、种子和系列保留独立详情及公共字段",
       detail: { kind, record: { id } },
     });
   }
-  for (const row of data.rows) {
-    expect(recordFields(row)).toEqual([
-      ["编号", String(row.id)],
-      ["类别", "植物"],
-    ]);
-  }
+  expect(entryOverview(data, data.byId.get(1)!).memberships).toMatchObject([{ id: 10 }]);
+  expect(entryOverview(data, data.byId.get(20)!).memberships).toEqual([]);
 });
 
 test("同名的玩家款和友邻款共享配对和套装导航，导航只含正式成员", () => {
@@ -86,18 +116,18 @@ test("同名的玩家款和友邻款共享配对和套装导航，导航只含�
   const data = createOmnidexCatalog(catalog, imageIndexFixture(catalog), gameplayTags);
   const counterpart = { kind: "pair", playerId: 41, neighborId: 40 };
   const navigation = { groups: [{ entries: [{ id: 43 }, { id: 41 }, { id: 42 }] }] };
-  expect(catalogEntryDetail(data, 40, "友邻甲")).toMatchObject({
+  expect(catalogEntryDetail(data, 40)).toMatchObject({
     category: "clothing",
     detail: {
       kind: "neighborOutfit",
       record: { id: 40 },
       counterpart,
       navigation: { ...navigation, highlightedId: 41 },
-      neighborName: "友邻甲",
       slotName: "帽子",
       modelSizes: "中型、大型",
     },
   });
+  expect(entryOverview(data, data.byId.get(40)!).memberships).toEqual([]);
   expect(catalogEntryDetail(data, 41)).toMatchObject({
     category: "clothing",
     detail: {

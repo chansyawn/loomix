@@ -1,5 +1,6 @@
 import { createFileRoute, notFound, useRouter } from "@tanstack/react-router";
-import { loadOmnidexCatalog } from "@/features/omnidex-loader";
+import { loadCatalogOverview } from "@/features/omnidex-loader";
+import { entryOverview } from "@/features/omnidex/entry-overview";
 import { parseCatalogEntryId, catalogEntryDetail } from "@/features/omnidex/catalog-entry-detail";
 import { CatalogEntryPage } from "@/features/omnidex/catalog-entry-page";
 import { DetailPageLoading } from "@/features/detail-page/detail-page";
@@ -7,7 +8,7 @@ import { PageNotFound } from "@/features/layout/page-not-found";
 import { ListLoadError } from "@/features/list-page/states";
 import { OmnidexReturnLink } from "@/features/omnidex/navigation";
 import { createResourceReader } from "@/infrastructure/resources";
-import { parseNeighbors } from "@loomix/schema/neighbors";
+import { readOutfitNeighbor } from "@/features/neighbor-outfit/detail";
 import { catalogGameplayUses, vignetteGameplayUses } from "@/features/omnidex/gameplay-uses-model";
 import { readVignetteTemplates } from "@/features/vignettes/data";
 import { readHairstylePalette } from "@/features/clothing/hair-dyeing";
@@ -18,23 +19,21 @@ export const Route = createFileRoute("/catalog_/$id")({
     const id = parseCatalogEntryId(params.id);
     if (id === null) throw notFound();
     const load = createResourceReader();
-    const data = await loadOmnidexCatalog(load);
+    const data = await loadCatalogOverview(load);
     const row = data.byId.get(id);
     if (!row) throw notFound();
     const { record } = row;
     const neighborId =
       "kind" in record && record.kind === "neighborOutfit" ? record.neighborId : null;
-    const neighborName =
-      neighborId !== null
-        ? (await load("neighbors", parseNeighbors)).neighbors.find(
-            (neighbor) => neighbor.id === neighborId,
-          )?.name
-        : undefined;
-    const model = catalogEntryDetail(data, id, neighborName);
-    if (!("kind" in record)) return { record: row, model };
+    const model = catalogEntryDetail(data, id);
+    const overview = entryOverview(data, row);
+    if (!("kind" in record)) return { record: row, model, overview };
     return {
       record: row,
       model,
+      overview,
+      readOwner:
+        neighborId === null ? undefined : () => readOutfitNeighbor(load, neighborId, data.image),
       quotes: data.view.purchaseQuotes.get(id),
       uses: catalogGameplayUses(data, id),
       readVignetteUses: async () =>
@@ -60,12 +59,15 @@ export const Route = createFileRoute("/catalog_/$id")({
   component: DetailRoute,
 });
 function DetailRoute() {
-  const { record, model, uses, quotes, readVignetteUses, readHairDyeing } = Route.useLoaderData();
+  const { record, model, overview, uses, quotes, readOwner, readVignetteUses, readHairDyeing } =
+    Route.useLoaderData();
   return (
     <CatalogEntryPage
       key={record.id}
       record={record}
       model={model}
+      overview={overview}
+      readOwner={readOwner}
       quotes={quotes}
       uses={uses}
       readVignetteUses={readVignetteUses}

@@ -44,6 +44,7 @@ function furnitureFixture(
       ...recipe,
       name: `创想卡 ${recipe.id}`,
       inspoBoxName: null,
+      inspoBoxHint: null,
       face: {
         background: { file: `assets/${"a".repeat(64)}.webp`, width: 390, height: 560 },
         foreground: `assets/${"b".repeat(64)}.webp`,

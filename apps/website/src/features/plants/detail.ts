@@ -40,7 +40,10 @@ export function plantsDetail(
   if (view === "harvestablePlants") {
     const record = data.harvestablePlants.find((stock) => stock.id === id);
     if (!record) throw notFound();
-    return { kind: "harvestablePlant" as const, record };
+    const seeds = data.seeds.filter((seed) =>
+      seed.growth.stages.some((stage) => stage.stockId === id),
+    );
+    return { kind: "harvestablePlant" as const, record, seeds };
   }
   const itemsById = new Map(data.items.map((item) => [item.id, item]));
   const navigation = plantDetailNavigation(data, id);
@@ -53,6 +56,8 @@ export function plantsDetail(
       record,
       navigation,
       matureForms: plantMatureForms(seeds, id),
+      seeds,
+      stocks: data.harvestablePlants.filter((stock) => stock.harvest.id === id),
       cooking: ingredients ? ingredientUsage(ingredients, id) : null,
       sourceTrees: (data.sourceTreesByItemId.get(id) ?? []).flatMap(
         (tree) => data.itemRefs.get(tree.id) ?? [],

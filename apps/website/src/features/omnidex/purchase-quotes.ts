@@ -3,6 +3,7 @@ import type { Catalog, PurchaseOffer, PurchasePrice, Shop } from "@loomix/schema
 
 interface PurchaseQuote {
   key: string;
+  simple: boolean;
   priceLabel: string;
   currencyImage: string | null;
   note: string | null;
@@ -56,6 +57,7 @@ export function indexPurchaseQuotes(
         const currency = items.get(currencyItemId)!;
         return {
           key,
+          simple: sources.length === 1 && price.kind === "fixed" && !note,
           priceLabel: formatPrice(price, currency.name),
           currencyImage: image(currency.image),
           note: note && sources.every((source) => source.note === note) ? note : null,
@@ -66,6 +68,15 @@ export function indexPurchaseQuotes(
     byItem.set(itemId, groups);
   }
   return byItem;
+}
+
+export function simplePurchaseQuote(shops: readonly ShopPurchaseQuotes[] | undefined) {
+  if (shops?.length !== 1) return null;
+  const [shop] = shops;
+  const [price] = shop.prices;
+  return !shop.paymentNote && shop.prices.length === 1 && price.simple
+    ? `${shop.name} · ${price.priceLabel}`
+    : null;
 }
 
 export function purchasePriceSummary(

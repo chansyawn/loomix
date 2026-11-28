@@ -1,29 +1,29 @@
 import { useEffect, useState } from "react";
-import type { HairDyeingRegion, ReadHairDyeing } from "./hair-dyeing";
+type Result<Value> = { status: "error" } | { status: "ready"; value: Value };
 
-export type HairDyeingState =
+export type DetailResourceState<Value> =
   | { status: "loading" }
   | { status: "error"; retry: () => void }
-  | { status: "ready"; regions: HairDyeingRegion[] };
+  | { status: "ready"; value: Value };
 
-type Result = { status: "error" } | { status: "ready"; regions: HairDyeingRegion[] };
-
-export function useHairDyeing(read: ReadHairDyeing | undefined): HairDyeingState | undefined {
+export function useDetailResource<Value>(
+  read: (() => Promise<Value>) | undefined,
+): DetailResourceState<Value> | undefined {
   const [attempt, setAttempt] = useState(0);
   const [settled, setSettled] = useState<{
-    read: ReadHairDyeing;
+    read: () => Promise<Value>;
     attempt: number;
-    result: Result;
+    result: Result<Value>;
   }>();
 
   useEffect(() => {
     if (!read) return;
     let active = true;
-    const publish = (result: Result) => {
+    const publish = (result: Result<Value>) => {
       if (active) setSettled({ read, attempt, result });
     };
     void read().then(
-      (regions) => publish({ status: "ready", regions }),
+      (value) => publish({ status: "ready", value }),
       () => publish({ status: "error" }),
     );
     return () => {

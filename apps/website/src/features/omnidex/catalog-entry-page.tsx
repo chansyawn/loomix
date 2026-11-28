@@ -1,18 +1,21 @@
-import { recordFields, type CatalogEntryRow } from "./catalog";
+import type { CatalogEntryRow } from "./catalog";
+import type { EntryOverview } from "./entry-overview";
+import { overviewFields } from "./overview-fields";
 import type { CatalogEntryDetail } from "./catalog-entry-detail";
-import type { ShopPurchaseQuotes } from "./purchase-quotes";
+import { simplePurchaseQuote, type ShopPurchaseQuotes } from "./purchase-quotes";
 import { RecordImage } from "./record-image";
 import { DetailPage } from "@/features/detail-page/detail-page";
 import { findWikiScroll, wikiScrollId } from "@/infrastructure/wiki-scroll";
 import { clothingDetailPresentation } from "../clothing/detail-presentation";
-import type { ReadHairDyeing } from "../clothing/hair-dyeing";
-import { useHairDyeing, type HairDyeingState } from "../clothing/use-hair-dyeing";
+import type { HairDyeingRegion, ReadHairDyeing } from "../clothing/hair-dyeing";
+import { useDetailResource, type DetailResourceState } from "../detail-page/use-detail-resource";
+import { OutfitOwner, type ReadOutfitOwner } from "../neighbor-outfit/owner";
 import { creaturesDetailPresentation } from "../creatures/detail-presentation";
 import { dishesDetailPresentation } from "../dishes/detail-presentation";
 import { furnitureDetailPresentation } from "../furniture/detail-presentation";
 import { miscellaneousDetailPresentation } from "../miscellaneous/detail-presentation";
 import { plantsDetailPresentation } from "../plants/detail-presentation";
-import { mergeDetailFields, type CatalogDetailPresentation } from "./catalog-detail-presentation";
+import type { CatalogDetailPresentation } from "./catalog-detail-presentation";
 import { catalogEntryNavigation } from "./detail-navigation";
 import { gameplayUsesSection, useVignetteGameplayUses } from "./gameplay-uses";
 import {
@@ -37,6 +40,8 @@ import { useLayoutEffect, useRef } from "react";
 export function CatalogEntryPage({
   record,
   model,
+  overview,
+  readOwner,
   quotes,
   uses,
   readVignetteUses,
@@ -44,6 +49,8 @@ export function CatalogEntryPage({
 }: {
   record: CatalogEntryRow;
   model: CatalogEntryDetail;
+  overview: EntryOverview;
+  readOwner?: ReadOutfitOwner;
   quotes?: ShopPurchaseQuotes[];
   uses?: ReturnType<typeof catalogGameplayUses>;
   readVignetteUses?: () => Promise<GameplayUse[]>;
@@ -78,11 +85,15 @@ export function CatalogEntryPage({
       scroll.element.scrollTop = scroll.to;
   }, [hash, vignette]);
   const usesSection = uses && gameplayUsesSection({ ...uses, vignette });
-  const hairDyeing = useHairDyeing(readHairDyeing);
-  const { image, description, fields, sections, titleActions, navigation, showEmptyExtras } =
+  const hairDyeing = useDetailResource(readHairDyeing);
+  const { image, fields, sections, titleActions, navigation, showEmptyExtras } =
     catalogDetailPresentation(model, hairDyeing);
   const detailSections = [...sections];
-  if (quotes?.length)
+  const topFields = overviewFields(record, overview, fields);
+  if (readOwner) topFields.push(["友邻", <OutfitOwner read={readOwner} />]);
+  const simpleQuote = simplePurchaseQuote(quotes);
+  if (simpleQuote) topFields.push(["配置报价（每次购买）", simpleQuote, "purchase-offers"]);
+  else if (quotes?.length)
     detailSections.push({
       id: "purchase-offers",
       title: "配置报价（每次购买）",
@@ -124,16 +135,18 @@ export function CatalogEntryPage({
         titleLeading={record.quality !== null && <QualityMarker quality={record.quality} />}
         titleActions={titleActions}
         description={
-          record.quality === null ? (
-            <>
+          <>
+            {record.quality === null && (
               <p className="text-sm text-muted-foreground">品阶：未提供</p>
-              {description}
-            </>
-          ) : (
-            description
-          )
+            )}
+            {record.description && (
+              <p className="text-sm/7 whitespace-pre-line text-muted-foreground">
+                {record.description}
+              </p>
+            )}
+          </>
         }
-        fields={mergeDetailFields(fields, recordFields(record))}
+        fields={topFields}
         sections={detailSections}
         relatedNavigation={catalogEntryNavigation(navigation, record.id, origin)}
         empty={showEmptyExtras && <CatalogDetailEmpty />}
@@ -144,7 +157,7 @@ export function CatalogEntryPage({
 
 function catalogDetailPresentation(
   model: CatalogEntryDetail,
-  hairDyeing: HairDyeingState | undefined,
+  hairDyeing: DetailResourceState<HairDyeingRegion[]> | undefined,
 ): CatalogDetailPresentation {
   switch (model.category) {
     case "furniture":

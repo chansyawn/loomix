@@ -61,7 +61,7 @@ export type DishItem = CatalogEntrySummary & {
   strength: number | null;
   effects: DishEffect[] | null;
   tastes: CookingRecipe["tastes"];
-  unlockCondition: UnlockCondition | null;
+  unlockCondition: UnlockCondition | null | undefined;
   slots: RecipeSlot[];
 };
 export type ClothingItem = CategorizedRecord & {
@@ -260,7 +260,7 @@ export function toOmnidexView(
           strength: item.strength,
           effects: item.effects,
           tastes: item.cooking?.tastes ?? null,
-          unlockCondition: item.cooking?.unlockCondition ?? null,
+          unlockCondition: item.cooking?.unlockCondition,
           slots: item.cooking?.slots ?? [],
         });
         break;

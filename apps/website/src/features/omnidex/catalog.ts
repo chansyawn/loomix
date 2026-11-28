@@ -74,18 +74,3 @@ export function createOmnidexCatalog(
 }
 export type OmnidexCatalog = ReturnType<typeof createOmnidexCatalog>;
 export type CatalogEntryRow = OmnidexCatalog["rows"][number];
-export function recordFields(row: CatalogEntryRow): [string, string | null][] {
-  return [
-    ["编号", String(row.id)],
-    ["类别", categoryNames[row.category]],
-    ...(
-      [
-        ["颜色", row.colors],
-        ["材质", row.materials],
-        ["风格", row.styles],
-      ] as const
-    )
-      .filter(([, values]) => values.length)
-      .map(([label, values]): [string, string] => [label, values.join("，")]),
-  ];
-}

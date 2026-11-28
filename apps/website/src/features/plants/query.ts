@@ -90,7 +90,7 @@ export function filterGroups(data: PlantsData, view: View = "items"): FilterGrou
     },
     {
       key: "galaxies",
-      label: "原产星系",
+      label: "产区",
       options: options(data.items.flatMap((row) => splitValues(row.originGalaxy))),
       fullWidth: true,
     },

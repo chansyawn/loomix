@@ -1,4 +1,5 @@
-import type { DetailSection } from "@/features/detail-page/detail-page";
+import type { DetailField, DetailSection } from "@/features/detail-page/detail-page";
+import { SectionCount } from "../omnidex/detail-relations";
 import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presentation";
 import { RecordImage } from "../omnidex/record-image";
 import type { PlantsDetail } from "./detail";
@@ -10,9 +11,16 @@ export function seedDetailPresentation(
 ): CatalogDetailPresentation {
   const { record } = detail;
   const { growth } = record;
-  const fields: [string, string | null][] = [
+  const fields: DetailField[] = [
     ["分类", "种子"],
-    ["关联植物", `${detail.items.length} 种植物`],
+    [
+      "关联植物",
+      detail.items.length ? (
+        <SectionCount anchor="seed-plants">{detail.items.length} 种植物</SectionCount>
+      ) : (
+        "0 种植物"
+      ),
+    ],
   ];
   if (growth.kind === "crop")
     fields.push(["收获茬数", growth.harvestCount === null ? null : `${growth.harvestCount} 茬`]);
@@ -33,11 +41,6 @@ export function seedDetailPresentation(
     });
   return {
     image: <RecordImage image={record.image} name={record.name} eager />,
-    description: (
-      <p className="text-sm/7 whitespace-pre-line text-muted-foreground">
-        {record.description || "描述未提供"}
-      </p>
-    ),
     fields,
     sections,
   };

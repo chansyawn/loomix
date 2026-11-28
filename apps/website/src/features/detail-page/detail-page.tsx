@@ -6,7 +6,7 @@ import { DetailChapter, type DetailSubsection } from "./detail-headings";
 import { DetailNavGroup, type DetailNavigation } from "./detail-nav-group";
 import { DetailToc } from "./detail-toc";
 
-export type DetailField = readonly [label: string, value: string | null];
+export type DetailField = readonly [label: string, value: ReactNode, anchor?: string];
 
 export type DetailSection = {
   id: string;
@@ -78,12 +78,15 @@ export function DetailPage({
         {description}
         {fields.length > 0 && (
           <dl className="grid gap-3 @min-[22rem]/detail-fields:grid-cols-2 @min-[24rem]/detail-fields:gap-4">
-            {fields.map(([label, value], index) => (
+            {fields.map(([label, value, anchor], index) => (
               <div
                 key={`${label}-${index}`}
+                id={anchor}
                 className="flex min-w-0 flex-col gap-1.5 rounded-xl bg-muted/40 p-3 @min-[24rem]/detail-fields:p-4"
               >
-                <dt className="text-xs text-muted-foreground">{label}</dt>
+                <dt id={anchor && `${anchor}-heading`} className="text-xs text-muted-foreground">
+                  {label}
+                </dt>
                 <dd className="text-sm/6 wrap-break-word whitespace-pre-line">
                   {value || "未提供"}
                 </dd>

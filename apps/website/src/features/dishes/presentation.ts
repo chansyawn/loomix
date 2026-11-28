@@ -21,6 +21,7 @@ export function effectSummary(item: DishItem): string | null {
 }
 
 export function unlockConditionLabel(condition: DishItem["unlockCondition"]): string {
+  if (condition === undefined) return "解锁资料未收录";
   if (condition === null) return "无额外条件";
   switch (condition.kind) {
     case "chefLevelGreaterOrEqual":

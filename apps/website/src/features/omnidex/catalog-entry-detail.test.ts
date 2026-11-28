@@ -17,6 +17,7 @@ import {
 } from "../plants/fixture";
 import { catalogEntryLocation, catalogEntryRouteId } from "./entry-location";
 import { parseCatalogEntryId } from "./catalog-entry-detail";
+import { neighborFixture } from "../neighbors/fixture";
 
 function setup(
   href: string,
@@ -66,7 +67,7 @@ function setup(
     { kind: "clothing", id: 50, name: "眠月睡袍" },
     { kind: "cropPlant", id: 1001, name: "番茄株", harvestItemId: 1 },
     { kind: "flowerPlant", id: 56000, name: "百合株", harvestItemId: 2 },
-    { kind: "neighborOutfit", id: 51, name: "眠月睡袍", playerItemId: 50 },
+    { kind: "neighborOutfit", id: 51, name: "眠月睡袍", playerItemId: 50, neighborId: 1 },
     { kind: "reference", id: 99, name: "发型" },
     { kind: "reference", id: 200002, name: "碎钱" },
     { kind: "reference", id: 200003, name: "足迹" },
@@ -115,6 +116,7 @@ function setup(
     intercept(
       fixtureRequest({
         ...resources,
+        neighbors: neighborFixture().database,
         hairDyeing: {
           ...emptyHairDyeing(),
           hairstyleConfigs: [
@@ -246,6 +248,16 @@ test.each([1, 20, 100])("非花朵或无配方详情 %s 不提供谱系", async 
   expect(detail && "hybridization" in detail ? detail.hybridization : []).toEqual([]);
 });
 
+test.each([
+  [1, { stocks: [{ id: 1001 }], seeds: [{ id: 20 }] }],
+  [1001, { seeds: [{ id: 20 }], record: { harvest: { id: 1 } } }],
+  [56000, { seeds: [], record: { harvest: { id: 2 } } }],
+])("植物反查按植株自身身份与收获物关系返回 %i 的资料", async (id, expected) => {
+  const router = setup(`/catalog/${id}`);
+  await router.load();
+  expect(detailLoaderData(router)?.model.detail).toMatchObject(expected);
+});
+
 test("发型详情独立完成加载，延迟且失败的染色请求可重试", async () => {
   let releaseResponse!: (response: Response) => void;
   const response = new Promise<Response>((resolve) => {
@@ -285,6 +297,22 @@ test("非发型外观省略染色加载，无配置的发型返回空调色盘",
   const hair = setup("/catalog/42");
   await hair.load();
   await expect(detailLoaderData(hair)?.readHairDyeing?.()).resolves.toEqual([]);
+});
+
+test("友邻款先加载基础详情，角色资料可在失败后重新读取", async () => {
+  let requests = 0;
+  const router = setup("/catalog/51", (request) => (input, init) => {
+    if (typeof input === "string" && input.endsWith("/neighbors.json") && ++requests === 1)
+      return Promise.resolve(new Response(null, { status: 503 }));
+    return request(input, init);
+  });
+  await router.load();
+  const read = detailLoaderData(router)?.readOwner;
+  if (!read) throw new Error("缺少友邻资料读取函数");
+  expect(requests).toBe(0);
+  await expect(read()).rejects.toThrow("503");
+  await expect(read()).resolves.toMatchObject({ id: 1, name: "蛮蛮" });
+  expect(requests).toBe(2);
 });
 
 test.each(["99", "999", "0", "01", "1e2", "-1", "9007199254740992"])(
