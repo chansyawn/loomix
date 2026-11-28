@@ -39,14 +39,14 @@ vp run website#release
 
 ### 资源更新流程
 
-1. 运行 `refresh`、`verify` 和 `install-resources`，得到当前工作区的网站资源。[客户端资源提取](tools/extraction/README.md#提取打包与本地安装)
-2. 运行 `vp run resources publish` 校验、上传 R2 并在远程检查通过后更新网站资源地址配置。可先加 `--dry-run` 做离线检查。若报告标签问题，调整配置并完成人工验收。[网站资源管理](tools/resources/README.md#校验与发布) · [标签筛选策略](apps/website/docs/tag-filter-policy.md#维护与检查)
-3. 将 `apps/website/resource-address.json` 与相同格式的契约和网站代码一同提交到 PR。格式切换时移除环境中指向旧版本的 `VITE_RESOURCE_BASE_URL` 覆盖。
-4. `verify-release` 校验配置选择的线上资源及网站契约。预览和正式部署前检查构建产物的 `/resource-version.json`，核对配置地址与该版本的完成标记及清单。预览验收通过后合并，由正式发布流程部署。
+切换资源格式前，记录当前生产提交及正式站 `/resource-version.json` 指向的资源版本，供回滚使用。
 
-仓库级命令在上传前后运行同一套网站检查；底层资源发布器只负责目录、字节与上传完整性。部署仍独立执行发布契约检查，操作入口与失败恢复由上述工具文档维护。
+1. 在当前工作区安装已验证的网站资源包。[客户端资源提取](tools/extraction/README.md#提取打包与本地安装)
+2. 运行 `vp run resources publish` 发布资源。公网复核通过后，命令会更新网站资源地址。[网站资源管理](tools/resources/README.md#校验与发布)
+3. 将 `apps/website/resource-address.json` 与配套的契约和网站代码一同提交到 PR。切换格式时移除仍指向旧版本的 `VITE_RESOURCE_BASE_URL` 覆盖。
+4. 预览和正式部署前，工作流会校验线上资源，并核对构建产物 `/resource-version.json` 指向的版本、完成标记和清单。在 PR 预览中确认数据和图片可加载，再合并到 `master` 触发正式部署。
 
-格式切换前记录生产提交及其 `/resource-version.json` 所指向的版本。需要回滚时一并恢复网站代码和原资源地址，通过部署流程验证网站仍能读取原数据和图片。旧格式资源退出使用后再执行清理。[网站资源管理](tools/resources/README.md#版本维护与清理)
+回滚时一并恢复记录的网站代码和资源地址，通过部署流程验证旧数据和图片仍可读取。清理旧版本前，按[网站资源管理](tools/resources/README.md#版本维护与清理)核对引用和宽限期。
 
 检查资源域名的缓存规则。`/releases/*/_complete.json` 必须绕过 CDN 缓存，`/images/*.webp` 的成功响应应保留对象上的不可变缓存头，`404` 应绕过缓存，确保回收后重新发布的同一哈希能立即访问。
 

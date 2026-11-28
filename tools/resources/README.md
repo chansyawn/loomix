@@ -19,13 +19,11 @@ vp run resources publish
 
 `verify --local` 完整校验当前 worktree 的 `resources/website/` 和网站契约。远程校验会检查完成标记、文档、CORS、代表图片和网站契约。`verify` 默认按网站生产配置选版本，包括 `VITE_RESOURCE_BASE_URL` 覆盖。复核特定发布时用 `--url`。
 
-`publish` 从当前 worktree 的 `resources/website/` 读取数据。它校验已安装的网站资源和网站契约，上传至 `loomix-assets`，通过公共域名复核后更新 `apps/website/resource-address.json`。[CI/CD 与部署](../../DEPLOYMENT.md#资源更新流程)
+`publish` 校验当前 worktree 的 `resources/website/` 和网站契约，上传至 `loomix-assets`，经公共域名复核通过后更新 `apps/website/resource-address.json`。用 `vp run resources publish --dry-run` 可离线校验，输出的候选 `releaseId` 尚未占号。
 
-每个版本独立保存网站资源清单、资料文档和图片索引。线上图片按 SHA-256 存在共享的 `images/` 前缀下。本地资源通过索引中的 `assets/` 相对路径读取图片。发布校验已存在的图片对象，只上传缺失的对象。结果中的 `uploadedImageCount` 和 `reusedImageCount` 分别计数。图片使用长期不可变缓存，完成标记必须绕过缓存，供部署前确认版本仍可用。
+每个版本独立保存清单、资料文档和图片索引。线上图片按 SHA-256 在 `images/` 下跨版本共享。发布结果中，`uploadedImageCount` 统计新上传的图片，`reusedImageCount` 统计已通过校验并复用的图片。
 
-使用 `--dry-run` 可离线校验本地资源和网站契约。输出为未占号的候选 `releaseId`，正式发布时可能不同。
-
-发布 ID 按 UTC 日期和网站资源清单自动生成，例如 `20261122-g0.95.2-f16-r001`。同一天、同游戏版本和格式版本下，通过 R2 原子预留依次占号。失败发布的号保持占用，日内序号用尽后报错。资源可用时间由完成标记确定，网站使用的版本由构建使用的资源地址决定。[命名实现](src/release-id.ts)
+正式发布按 UTC 日期、游戏版本和格式版本依次占号，失败的发布仍保留编号。完成标记表示版本可用，网站构建使用的资源地址决定实际选用的版本。[发布 ID 命名规则](src/release-id.ts)
 
 只需上传资源或需要指定输入目录、桶时使用 `upload`。
 
