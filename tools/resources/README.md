@@ -1,65 +1,43 @@
 # 网站资源管理
 
-在仓库根目录运行 `vp run resources --help` 查看命令。资源发布和部署的完整流程见[CI/CD 与部署](../../DEPLOYMENT.md#资源更新流程)，术语见[领域术语表](../../GLOSSARY.md#资源发布)。
-
-脚本可通过 `node apps/website/scripts/resources-cli.ts <子命令>` 读取 stdout 上的 JSON 结果，检查明细和进度在 stderr。`vp run` 还会输出任务信息。
+在仓库根目录运行 `vp run resources --help` 查看参数。脚本需要解析 JSON 时，直接调用 `node apps/website/scripts/resources-cli.ts <子命令>`，从 stdout 读取结果，进度和诊断在 stderr。
 
 ## 配置凭证
 
-在根目录 `.env` 中配置 `CLOUDFLARE_ACCOUNT_ID`、`R2_ACCESS_KEY_ID` 和 `R2_SECRET_ACCESS_KEY`，模板与读取规则见[根 README](../../README.md#环境配置)。`.env` 已被 Git 忽略，请勿提交凭证。
+操作 R2 桶需要 `CLOUDFLARE_ACCOUNT_ID`、`R2_ACCESS_KEY_ID` 和 `R2_SECRET_ACCESS_KEY`，放在根目录 `.env` 或进程环境中。离线预演无需凭证。[根 README](../../README.md#环境配置)
 
 ## 校验与发布
 
-```sh
-vp run resources verify --local
-vp run resources verify
-vp run resources verify --url <资源版本地址>
-vp run resources publish
-```
+| 任务                           | 命令                                           |
+| ------------------------------ | ---------------------------------------------- |
+| 校验已安装资源的文件与网站契约 | `vp run resources verify --local`              |
+| 校验生产配置指向的版本         | `vp run resources verify`                      |
+| 复核指定的线上版本             | `vp run resources verify --url <资源版本地址>` |
+| 离线预演发布                   | `vp run resources publish --dry-run`           |
+| 发布并更新网站资源地址         | `vp run resources publish`                     |
 
-`verify --local` 完整校验当前 worktree 的 `resources/website/` 和网站契约。远程校验会检查完成标记、文档、CORS、代表图片和网站契约。`verify` 默认按网站生产配置选版本，包括 `VITE_RESOURCE_BASE_URL` 覆盖。复核特定发布时用 `--url`。
+`publish` 读取当前 worktree 的 `resources/website/`，上传到 `loomix-assets`，通过公网复核后更新 [resource-address.json](../../apps/website/resource-address.json)。随后按[CI/CD 与部署](../../DEPLOYMENT.md#资源更新流程)在 PR 中切换网站版本。
 
-`publish` 校验当前 worktree 的 `resources/website/` 和网站契约，上传至 `loomix-assets`，经公共域名复核通过后更新 `apps/website/resource-address.json`。用 `vp run resources publish --dry-run` 可离线校验，输出的候选 `releaseId` 尚未占号。
-
-每个版本独立保存清单、资料文档和图片索引。线上图片按 SHA-256 在 `images/` 下跨版本共享。发布结果中，`uploadedImageCount` 统计新上传的图片，`reusedImageCount` 统计已通过校验并复用的图片。
-
-正式发布按 UTC 日期、游戏版本和格式版本依次占号，失败的发布仍保留编号。完成标记表示版本可用，网站构建使用的资源地址决定实际选用的版本。[发布 ID 命名规则](src/release-id.ts)
-
-只需上传资源或需要指定输入目录、桶时使用 `upload`。
-
-```sh
-vp run resources upload --content resources/website --dry-run
-vp run resources upload --content resources/website --bucket <桶>
-```
-
-`upload` 校验网站资源并上传。`publish` 还运行网站契约检查、公网复核和资源地址更新。`--content` 默认 `resources/website`，相对路径以仓库根目录为准。`--bucket` 默认 `loomix-assets`。
+仅上传或要指定输入目录、目标桶时，用 `vp run resources upload --content <目录> --bucket <桶>`。相对目录以仓库根目录为准。`upload` 不运行网站专属检查，也不更新网站地址。`publish` 与 `upload` 的 `--dry-run` 只返回候选发布 ID，实际上传才占号。
 
 ## 失败处理
 
-本地资源格式不匹配时，重新生成、验证并安装资源包。正式上传会先预留 ID。仅占号冲突会自动换号，网络和权限错误会停止命令。修复后重跑，工具自动选用下一个序号。保留 R2 预留标记以确保 ID 唯一。[客户端资源提取](../extraction/README.md)
-
-上传完成后若公网复核或地址更新失败，用错误输出中的 URL、清单哈希和命令复核该版本，通过后在 PR 中更新地址。若既有共享图片的完整性或元数据校验失败，检查报告对应的对象及来源，确认正确字节后修复对象，保留原有哈希地址。
-
-仓库级命令使用当前 worktree 的 `var/scratch/resources-publish.lock` 互斥。安装、发布和人工编辑资源地址配置按顺序操作。地址文件原子替换前若发现外部编辑，命令会报错。
-
-进程异常退出可能遗留锁和地址配置的临时文件。查看锁中的 PID 并确认发布进程已结束后，删除该锁及属于该次发布的临时文件，再重跑命令。
+- **本地资源格式不匹配**时，重新生成并安装资源包，见[客户端资源提取](../extraction/README.md#提取打包与本地安装)。
+- **上传中断**时，修正网络或权限问题后重跑，保留已分配的占号标记。若报共享图片校验失败，先核实对象的来源、字节和元数据，再修复原哈希地址的对象。
+- **上传成功但地址未更新**时，用报错中的 URL 运行 `verify --url`，确认该版本 `_complete.json` 中的 `manifestSha256` 与报错给出的哈希相同。通过后可直接在 PR 中更新地址。
+- **发布锁被占用**时，查看 `var/scratch/resources-publish.lock` 中的 PID。确认进程已退出后，再删除遗留锁及该次发布的临时文件。当前 worktree 的安装、发布与手工编辑地址应错开。
 
 ## 版本维护与清理
 
-运行 `vp run resources list` 查看版本及完成时间。`gc` 默认只清理过期的未完成上传和孤儿图片。清理已完成版本时，用可重复的 `--release` 指定要删除的发布 ID。两个命令均可用 `--bucket` 指定目标桶。
+用 `vp run resources list` 查看版本及完成时间。`gc` 默认预演清理最后修改距今至少 7 天的未完成上传和孤儿图片。删除已完成版本须显式传 `--release`，多个版本可重复传参。`list` 和 `gc` 均可用 `--bucket` 指定桶。
 
-指定前确认这些版本已退出生产和 PR 预览，且没有待部署或计划回滚的构建引用它们。可查看已部署网站的 `/resource-version.json` 核对实际资源地址。建议在版本退出使用后再保留 30 天，方便已打开的页面继续加载资源。`--release` 不检查这段宽限期。
-
-升级格式期间暂停同桶的 `gc --apply`。新版回收器须读懂每个保留版本的清单和图片索引来保护共享图片。待旧格式版本全部退出使用并经过宽限期，在同一回收计划中用多个 `--release` 指明退役版本，再核对预演结果。
+1. 从正式站与活跃预览的 `/resource-version.json` 核对实际引用，也要核对待部署和准备回滚的构建。版本退出使用后建议保留 30 天，让已打开的页面仍能加载图片。这段宽限期由维护者核对，`--release` 可直接指定版本。
+2. 在同一维护窗口暂停目标桶的发布、上传和相关部署、回滚，等在途任务结束。资源格式升级期间暂停 `gc --apply`，直到回收器能读懂所有保留版本的清单和图片索引。已过宽限期的旧格式版本应在同一计划中指定。
+3. 预演后核对版本、对象和字节数，再以相同参数加上返回的 `--apply <plan-id>` 执行。计划变化或删除中断时重新预演，以执行命令的退出码确认完成。
 
 ```sh
-vp run resources gc
 vp run resources gc --release <release-id>
 vp run resources gc --release <release-id> --apply <plan-id>
 ```
 
-在同一维护窗口内完成预演与执行。先暂停同桶的发布、上传和相关的部署、回滚，等待在途任务结束。执行时用相同参数加上输出的 `--apply <plan-id>`。工具会重算计划，变化后需重新预演。
-
-清理依次删除完成标记、版本文件和孤儿图片。所有未指定删除的已完成版本都会保护其引用的共享图片。自动清理仅处理最后修改距今至少 7 天的未完成上传和孤儿图片。占号标记保留，避免发布 ID 复用。`gc --apply` 先输出计划，再执行删除，以退出码判断是否成功。若批量删除中断，用相同参数重新预演后执行剩余计划。
-
-不要为 `images/` 配置按对象年龄删除的生命周期规则。R2 回收腾出源站空间，已缓存的响应仍可能在过期前可读。宽限期之后，长期未刷新的旧页面也可能无法加载先前未缓存的资源。
+各版本共用 `images/` 下按哈希存放的图片，不要为该目录配置按对象年龄删除的生命周期规则。回收释放的是源站空间，已缓存的响应可能持续到过期。
