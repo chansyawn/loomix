@@ -1,6 +1,6 @@
 import { ChevronDownIcon } from "lucide-react";
 import { TableFrame } from "@/features/list-page/table-frame";
-import { catalogEntryLocation } from "@/features/omnidex/entry-location";
+import { relatedItemLocation } from "@/features/omnidex/entry-location";
 import { gameplayAnchor, useGameplayAccordion } from "@/features/omnidex/gameplay-anchors";
 import { GameplayRelationItem } from "@/features/omnidex/gameplay-relation-item";
 import { Button } from "@/ui/components/button";
@@ -37,8 +37,9 @@ function MatchingItems({ id, label, items }: { id: string; label: string; items:
           <GameplayRelationItem
             name={item.name}
             image={item.image}
-            note={item.browsable ? undefined : "无图鉴详情"}
-            destination={item.browsable ? catalogEntryLocation(item) : undefined}
+            cardBackground={item.cardBackground}
+            note={relatedItemLocation(item) ? undefined : "无图鉴详情"}
+            destination={relatedItemLocation(item)}
           />
         </li>
       ))}
@@ -109,7 +110,8 @@ function RequirementRows({
                     image={item.image}
                     quantity={exampleQuantity}
                     variant="inline"
-                    destination={item.browsable ? catalogEntryLocation(item) : undefined}
+                    cardBackground={item.cardBackground}
+                    destination={relatedItemLocation(item)}
                   />
                 </li>
               ))}

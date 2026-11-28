@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader } from "@/ui/components/card";
 import type { NeighborDetail } from "./data";
 import { Link } from "@tanstack/react-router";
 import { catalogSearchForTag } from "../catalog/search";
-import { catalogEntryLocation } from "../omnidex/entry-location";
+import { relatedItemLocation } from "../omnidex/entry-location";
 import { GameplayRelationItem } from "../omnidex/gameplay-relation-item";
 
 export function NeighborPreferences({
@@ -39,12 +39,12 @@ export function NeighborPreferences({
                           <GameplayRelationItem
                             name={item.name}
                             image={item.image}
+                            cardBackground={item.cardBackground}
                             variant="inline"
-                            destination={
-                              item.recordId === null
-                                ? undefined
-                                : catalogEntryLocation({ id: item.recordId })
-                            }
+                            destination={relatedItemLocation({
+                              ...item,
+                              browsable: item.recordId !== null,
+                            })}
                           />
                         </li>
                       ))}

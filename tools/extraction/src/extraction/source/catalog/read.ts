@@ -19,6 +19,7 @@ import { splitTags } from "./model.ts";
 import { ingredientExpressionItemIds } from "./recipes.ts";
 import type { readCraftingRecipes } from "./crafting/read.ts";
 import { readInspoCards } from "./crafting/cards.ts";
+import { readCookingItems } from "./cooking-items.ts";
 import type { imageCollector } from "../images.ts";
 import { readCatalogMetadata } from "./metadata/read.ts";
 import type { NeighborOutfit } from "../neighbors/types.ts";
@@ -316,12 +317,13 @@ export function readCatalog({
     sets,
     proofs: cardProofs,
   } = readInspoCards(context, crafting.recipes, images, tagIds);
-  for (const card of cards) {
-    if (admitted.has(card.id)) throw new Error(`Conflicting creation card identity ${card.id}`);
+  const cookingItems = readCookingItems(context, new Set(cooking.keys()), images, tagIds);
+  for (const card of [...cards, ...cookingItems.items]) {
+    if (admitted.has(card.id)) throw new Error(`Conflicting ${card.kind} identity ${card.id}`);
     admitted.add(card.id);
     items.push(card);
   }
-  proofs.push(...cardProofs);
+  proofs.push(...cardProofs, ...cookingItems.proofs);
   const formal = new Set([...items, ...collections].map((entry) => entry.id));
   if (formal.size !== items.length + collections.length)
     throw new Error("Catalog classification conflict");
@@ -354,6 +356,7 @@ export function readCatalog({
     proofs,
     crafting: crafting.audit,
     harvestableExclusions: stocks.exclusions,
+    cookingItemExclusions: cookingItems.exclusions,
   };
 }
 

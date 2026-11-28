@@ -104,6 +104,7 @@ test("数据和证据同时篡改品阶、分类、标签或收录，独立来�
     708: [],
     563: [],
     568: [],
+    122: [],
   });
   onTestFinished(fixture.cleanup);
   const source = path.join(fixture.directory, "independent");
@@ -193,6 +194,7 @@ test("表外外观通过独立准入，能识别指向同表无关行的证据",
     708: [],
     563: [],
     568: [],
+    122: [],
   });
   onTestFinished(fixture.cleanup);
   const { tables } = fixture.input;

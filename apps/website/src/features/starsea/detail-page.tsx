@@ -2,7 +2,7 @@ import { DetailPage, type DetailSection } from "@/features/detail-page/detail-pa
 import { hintField, textField } from "../detail-page/field-model";
 import { DetailTitleMetadata, type DetailField } from "@/features/detail-page/detail-fields";
 import { CatalogItemCard } from "@/features/omnidex/catalog-item-card";
-import { catalogEntryLocation } from "@/features/omnidex/entry-location";
+import { relatedItemLocation } from "@/features/omnidex/entry-location";
 import { RecordImage } from "@/features/omnidex/record-image";
 import type { StarseaDetail } from "./view";
 
@@ -13,11 +13,7 @@ function IsletItems({ items }: { items: NonNullable<StarseaDetail["creatures"]> 
     <ul className={relatedCardGrid}>
       {items.map((item) => (
         <li key={item.id} className="min-w-0">
-          <CatalogItemCard
-            item={item}
-            itemId={item.id}
-            link={item.browsable ? catalogEntryLocation(item) : undefined}
-          />
+          <CatalogItemCard item={item} itemId={item.id} link={relatedItemLocation(item)} />
         </li>
       ))}
     </ul>

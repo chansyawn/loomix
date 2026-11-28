@@ -84,6 +84,7 @@ export function clientReadRecordsFixture(datasetId = "c".repeat(64)): ClientRead
       },
       outsideMembers: [],
       cooking: [],
+      cookingItemExclusions: [],
       crafting: [],
       neighbors: [],
     },

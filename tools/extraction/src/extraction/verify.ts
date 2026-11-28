@@ -27,6 +27,7 @@ import { verifyHairDyeing } from "../verify/hair-dyeing.ts";
 import { readDyeingInputs } from "./source/hair-dyeing/inputs.ts";
 import { verifyAcquisitionHints } from "../verify/acquisition-hints.ts";
 import type { IndexedAsset } from "./types.ts";
+import { profile } from "../profile.ts";
 
 export async function verifyCandidate(directory: string, writeReport = true): Promise<void> {
   const bundle = readCandidate(directory);
@@ -128,6 +129,20 @@ export async function verifyCandidate(directory: string, writeReport = true): Pr
     observations.imageObjects,
   );
   verifyCookingRecipes(dataset.catalog, tables);
+  const cookingItems = dataset.catalog.items.filter((item) => item.kind === "cookingRecipeItem");
+  const exclusions = observations.diagnostics.cookingItemExclusions;
+  assert.deepEqual(
+    {
+      admitted: cookingItems.length,
+      outside: exclusions.filter(({ reason }) => reason === "outside_dishes").length,
+      missing: exclusions.filter(({ reason }) => reason === "no_recipe").length,
+    },
+    profile.cookingRecipeItems.expected,
+  );
+  assert.deepEqual(
+    cookingItems.filter((item) => !item.image).map((item) => [item.id, item.productId]),
+    [[2110336, 2010336]],
+  );
   verifyClientIconSources(observations.clientIcons, dataset.catalog, tables);
   verifyCraftingRelations(dataset.catalog, tables, observations.diagnostics.crafting);
   verifyImages(directory, tables, observations, originals, imageBindings);

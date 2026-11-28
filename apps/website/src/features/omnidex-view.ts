@@ -6,6 +6,7 @@ import type {
   CollectionMemberKind,
   DishEffect,
   ItemKind,
+  Item,
   ItemOf,
   ListedItem,
   Quality,
@@ -22,6 +23,7 @@ import type { IngredientTagSource } from "./ingredients/tag-source";
 import { buildPlantsData } from "./plants/catalog";
 import type { PlantsData } from "./plants/model";
 import { indexInspoCards, type InspoCardView } from "./omnidex/inspo-card";
+import { indexCookingItems, type CookingRecipeItemView } from "./dishes/recipe-items";
 import { indexPurchaseQuotes, purchasePriceSummary } from "./omnidex/purchase-quotes";
 export type { PlantItem, PlantSeries } from "./plants/model";
 export type { DishEffect } from "@loomix/schema/catalog";
@@ -55,6 +57,7 @@ export type CreatureItem = CategorizedRecord & {
   sizeRange: string | null;
 };
 export type DishItem = CatalogEntrySummary & {
+  recipeItems: CookingRecipeItemView[];
   difficulty: string | null;
   galaxyFlavor: string | null;
   cookware: string | null;
@@ -99,8 +102,10 @@ export type CatalogCategory =
   | "miscellaneous";
 export type IngredientItem = CatalogEntrySummary & {
   catalogCategory: CatalogCategory;
-  // 仅表示通用物品关联视图中的浏览与链接资格，不代表正式收录状态。
+  // 通用物品视图的浏览资格；菜谱的关联链接另由成品 ID 定位。
   browsable?: boolean;
+  cookingProductId?: number;
+  cardBackground?: string | null;
 };
 export interface OmnidexView {
   purchaseQuotes: ReturnType<typeof indexPurchaseQuotes>;
@@ -132,6 +137,7 @@ const categoryByKind = {
   flowerPlant: "plants",
   seed: "plants",
   dish: "dishes",
+  cookingRecipeItem: "dishes",
   material: "miscellaneous",
   reference: "miscellaneous",
 } as const satisfies Record<ItemKind, CatalogCategory>;
@@ -143,6 +149,10 @@ export function catalogCategory(
 }
 export const isCollection = (entry: ListedItem | Collection): entry is Collection =>
   "memberKind" in entry;
+
+export function hasCatalogItemDetail(item: Item) {
+  return isListedItem(item) && item.kind !== "inspoCard" && item.kind !== "cookingRecipeItem";
+}
 
 export const displayValues = (values: readonly string[] | null): string | null =>
   values?.join("，") || null;
@@ -156,6 +166,7 @@ export function toOmnidexView(
 ): OmnidexView {
   const image = createImageResolver(imageIndex);
   const cards = indexInspoCards(catalog, imageIndex);
+  const cookingItems = indexCookingItems(catalog, image);
   const purchaseQuotes = indexPurchaseQuotes(catalog, image);
   const resolveTags = createRecordTagResolver(tagIndex);
   const tagsFor = (
@@ -171,7 +182,7 @@ export function toOmnidexView(
     quality: record.quality,
     image: image(record.image),
   });
-  const listed = catalog.items.filter(isListedItem).filter((item) => item.kind !== "inspoCard");
+  const listed = catalog.items.filter(hasCatalogItemDetail);
   const view: OmnidexView = {
     purchaseQuotes,
     ingredientTagSource: createIngredientTagSource(tagIndex, listed),
@@ -200,8 +211,8 @@ export function toOmnidexView(
       quality: item.kind === "reference" ? null : item.quality,
       image: image(item.image),
       catalogCategory: catalogCategory(item),
-      browsable:
-        item.kind !== "reference" && item.kind !== "neighborOutfit" && item.kind !== "inspoCard",
+      browsable: hasCatalogItemDetail(item) && item.kind !== "neighborOutfit",
+      ...cookingItems.byId.get(item.id),
     });
   }
   for (const item of listed) {
@@ -254,6 +265,7 @@ export function toOmnidexView(
       case "dish":
         view.dishes.items.push({
           ...common,
+          recipeItems: cookingItems.byProduct.get(item.id) ?? [],
           difficulty: item.cooking?.difficulty ?? null,
           galaxyFlavor: tagsFor(item, "origins"),
           cookware: item.cooking?.cookware ?? null,

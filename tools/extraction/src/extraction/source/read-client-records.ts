@@ -23,7 +23,7 @@ import { imageCollector } from "./images.ts";
 import { readCatalog } from "./catalog/read.ts";
 import { readPurchaseOffers } from "./catalog/purchases/read.ts";
 import { readCraftingRecipes } from "./catalog/crafting/read.ts";
-import { isPlaceholderIcon } from "./catalog/crafting/cards.ts";
+import { isPlaceholderIcon } from "./catalog/card-display.ts";
 import { FORMAT_VERSION } from "@loomix/schema/common";
 import { readStarsea, starseaItemIds } from "./starsea/read.ts";
 import { readVignetteHints } from "./vignettes/hints.ts";
@@ -306,6 +306,7 @@ export function readClientRecords(source: string, datasetId: string): ClientRead
       outsideMembers: context.scope.outsideMembers,
       cooking: content.cookingAudit,
       crafting: catalog.crafting,
+      cookingItemExclusions: catalog.cookingItemExclusions,
       neighbors: neighbors.audit,
     },
   };

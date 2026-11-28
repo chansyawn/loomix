@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { LinkProps } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import type { IngredientItem } from "../omnidex-view";
-import { catalogEntryLocation } from "./entry-location";
+import { relatedItemLocation } from "./entry-location";
 import { useOmnidexOrigin } from "./navigation";
 
 export function CatalogItemLink({
@@ -17,10 +17,11 @@ export function CatalogItemLink({
   className?: string;
 }) {
   const origin = useOmnidexOrigin();
-  if (item.browsable === false) return <span className={className}>{children ?? item.name}</span>;
+  const link = relatedItemLocation(item);
+  if (!link) return <span className={className}>{children ?? item.name}</span>;
   return (
     <Link
-      {...catalogEntryLocation(item)}
+      {...link}
       state={state ?? { omnidexOrigin: origin }}
       className={
         className ??

@@ -13,6 +13,7 @@ import {
   collection,
   context,
   datasetFixture,
+  dish,
   material,
   neighbor,
   plant,
@@ -24,6 +25,33 @@ import {
 
 const messages = (dataset: ReturnType<typeof datasetFixture>) =>
   validateDataset(dataset).map((issue) => issue.message);
+
+test("菜谱物品关联有烹饪配置的菜肴，卡面可引用成品图", () => {
+  const dataset = datasetFixture();
+  const product = dish(2);
+  product.image = { assetId: "dish", variant: "icon" };
+  const card: ItemOf<"cookingRecipeItem"> = {
+    ...material(1),
+    kind: "cookingRecipeItem",
+    productId: 2,
+    front: { background: { assetId: "recipe-bg", variant: "card-background" } },
+  };
+  dataset.catalog.items = [card, product];
+  expect(messages(dataset)).toContain("Expected dish with cooking recipe 2");
+  product.cooking = {
+    slots: [],
+    tastes: null,
+    difficulty: null,
+    cookware: null,
+    unlockCondition: null,
+  };
+  expect(messages(dataset)).toEqual([]);
+  expect(referencedImages(dataset)).toContainEqual(card.front.background);
+  product.image = null;
+  expect(messages(dataset)).toContain("Missing usable foreground for cooking recipe item 1");
+  card.productId = 1;
+  expect(messages(dataset)).toContain("Expected dish with cooking recipe 1");
+});
 
 test("房屋建材和订单图纸须引用目录物品，且同阶段的建材唯一", () => {
   const dataset = datasetFixture();

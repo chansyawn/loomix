@@ -8,8 +8,55 @@ import {
 } from "../plants/fixture";
 import { createOmnidexCatalog } from "./catalog";
 import { entryOverview } from "./entry-overview";
-import { catalogEntryLocation } from "./entry-location";
+import { catalogEntryLocation, relatedItemLocation } from "./entry-location";
 import { catalogEntryDetail } from "./catalog-entry-detail";
+
+test("菜谱与秘方只从关联入口跳到产物配方，缺图时使用成品前景", () => {
+  const { catalog, gameplayTags } = catalogFixture();
+  const dish = {
+    kind: "dish",
+    image: { assetId: "dish.webp", variant: "icon" },
+    cooking: { slots: [], cookware: null, difficulty: null, tastes: null, unlockCondition: null },
+  };
+  const card = {
+    kind: "cookingRecipeItem",
+    front: { background: { assetId: "recipe.webp", variant: "card-background" } },
+  };
+  addFixtureRecords(
+    catalog,
+    gameplayTags,
+    { ...dish, id: 2010065, name: "菌菇汤" },
+    { ...dish, id: 2010056, name: "竹香苹果冰" },
+    {
+      ...card,
+      id: 2110065,
+      name: "菜谱：菌菇汤",
+      productId: 2010065,
+      image: { assetId: "card.webp", variant: "icon" },
+    },
+    { ...card, id: 2110056, name: "秘方：竹香苹果冰", productId: 2010056 },
+  );
+  const data = createOmnidexCatalog(catalog, imageIndexFixture(catalog), gameplayTags);
+  expect(data.rows.map(({ id }) => id)).toEqual([2010056, 2010065]);
+  expect(
+    data.view.dishes.items.map(({ recipeItems }) => recipeItems.map(({ image }) => image)),
+  ).toEqual([["card.webp"], ["dish.webp"]]);
+  for (const { id, recipeItems } of data.view.dishes.items) {
+    const [recipe] = recipeItems;
+    const target = {
+      to: "/catalog/$id",
+      params: { id: String(id) },
+      search: {},
+      hash: "dish-recipe",
+    };
+    expect(recipe.cardBackground).toBe("recipe.webp");
+    expect(relatedItemLocation(recipe)).toEqual(target);
+    expect(relatedItemLocation(data.view.ingredientItemsById.get(recipe.id)!)).toEqual(target);
+    expect(data.view.ingredientItemsById.get(recipe.id)?.browsable).toBe(false);
+    expect(catalogEntryLocation({ id })).not.toHaveProperty("hash");
+    expect(() => catalogEntryDetail(data, recipe.id)).toThrow();
+  }
+});
 
 test("花色复用同名颜色的筛选标签，保留独有的花色和通用颜色", () => {
   const { catalog, gameplayTags } = catalogFixture();

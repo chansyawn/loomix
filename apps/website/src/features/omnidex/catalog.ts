@@ -1,15 +1,14 @@
 import { createImageResolver, type ImageIndex } from "@loomix/schema/assets";
 import {
   createRecordTagResolver,
-  isListedItem,
   type Catalog,
   type Collection,
-  type Item,
   type ListedItem,
 } from "@loomix/schema/catalog";
 import { createGameplayTagIndex, tagLabel } from "@loomix/schema/gameplay-tags";
 import type { GameplayTags } from "@loomix/schema/gameplay-tags";
-import { catalogCategory, toOmnidexView } from "../omnidex-view";
+import { catalogCategory, hasCatalogItemDetail, toOmnidexView } from "../omnidex-view";
+export { hasCatalogItemDetail };
 import { createOmnidexTagFilter, type TagTreePolicy } from "./tags";
 import { buildIngredientsData, type IngredientsData } from "../ingredients/model";
 
@@ -23,13 +22,9 @@ export const categoryNames = {
   miscellaneous: "杂物",
 };
 
-export type ListedEntry = Exclude<ListedItem, { kind: "inspoCard" }> | Collection;
-
-export function hasCatalogItemDetail(
-  item: Item,
-): item is Exclude<ListedItem, { kind: "inspoCard" }> {
-  return isListedItem(item) && item.kind !== "inspoCard";
-}
+export type ListedEntry =
+  | Exclude<ListedItem, { kind: "inspoCard" | "cookingRecipeItem" }>
+  | Collection;
 
 export function createOmnidexCatalog(
   catalog: Catalog,

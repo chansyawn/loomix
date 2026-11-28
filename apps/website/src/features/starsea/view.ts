@@ -4,6 +4,7 @@ import type { Neighbors } from "@loomix/schema/neighbors";
 import type { Starsea } from "@loomix/schema/starsea";
 import { neighborAvatar } from "../neighbors/portrait";
 import { hasCatalogItemDetail } from "../omnidex/catalog";
+import { cookingItemView } from "../dishes/recipe-items";
 
 type Islet = Starsea["islets"][number];
 type Region = Starsea["regions"][number];
@@ -179,6 +180,7 @@ export function toStarseaDetail(
           name: item.name,
           image: isListedItem(item) ? image(item.image) : null,
           browsable: hasCatalogItemDetail(item),
+          ...cookingItemView(item, items, image),
         };
       }) ?? null
     );

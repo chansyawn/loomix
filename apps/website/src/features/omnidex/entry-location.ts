@@ -3,6 +3,7 @@ import { catalogItem, omnidexNavigation } from "../layout/navigation";
 
 export const catalogEntryPath = "/catalog/$id";
 export const catalogEntryRouteId = "/catalog_/$id";
+export const dishRecipeAnchor = "dish-recipe";
 
 export type OmnidexOrigin = { href: string; index: number };
 declare module "@tanstack/react-router" {
@@ -47,4 +48,14 @@ export function catalogEntryLocation(entry: { id: number }) {
     params: { id: String(entry.id) },
     search: {},
   };
+}
+
+export function relatedItemLocation(item: {
+  id: number;
+  browsable?: boolean;
+  cookingProductId?: number;
+}) {
+  if (item.cookingProductId !== undefined)
+    return { ...catalogEntryLocation({ id: item.cookingProductId }), hash: dishRecipeAnchor };
+  return item.browsable === false ? undefined : catalogEntryLocation(item);
 }

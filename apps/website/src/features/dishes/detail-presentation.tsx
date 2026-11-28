@@ -5,6 +5,7 @@ import { collectionMembers } from "../omnidex/detail-relations";
 import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presentation";
 import type { DishesDetail } from "./detail";
 import { DishRecipe } from "./recipe";
+import { dishRecipeAnchor } from "../omnidex/entry-location";
 import { hintField, textField } from "../detail-page/field-model";
 import { catalogTagField, type OverviewTag } from "../omnidex/overview-tags";
 import { dishCardAttributes, strengthText, unlockConditionLabel } from "./presentation";
@@ -30,9 +31,9 @@ export function dishesDetailPresentation(
   }
   const { record } = detail;
   const sections: DetailSection[] = [];
-  if (record.slots.length)
+  if (record.slots.length || record.recipeItems.length)
     sections.push({
-      id: "dish-recipe",
+      id: dishRecipeAnchor,
       title: "烹饪配方",
       content: <DishRecipe detail={detail} />,
     });

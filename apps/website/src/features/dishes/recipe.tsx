@@ -1,4 +1,5 @@
-import { catalogEntryLocation } from "../omnidex/entry-location";
+import { CatalogItemCard } from "../omnidex/catalog-item-card";
+import { catalogEntryLocation, relatedItemLocation } from "../omnidex/entry-location";
 import { gameplayAnchor, useGameplayAccordion } from "../omnidex/gameplay-anchors";
 import { GameplayRelationItem } from "../omnidex/gameplay-relation-item";
 import {
@@ -70,17 +71,12 @@ function CandidateItems({ slot, index }: { slot: DishRecipeSlotView; index: numb
   );
 }
 
-export function DishRecipe({ detail }: { detail: Extract<DishesDetail, { kind: "item" }> }) {
-  const slots = buildDishRecipeSlots(
-    detail.record.slots,
-    detail.ingredientTagSource.byId,
-    detail.ingredientItemsById,
-  );
+function DishRecipeSlots({ slots }: { slots: DishRecipeSlotView[] }) {
   const expansion = useGameplayAccordion(
     "slot",
     slots.map((_, index) => index + 1),
   );
-  if (slots.length === 0) return null;
+  if (slots.length === 0) return <p className="text-sm text-muted-foreground">食材条件尚未确认</p>;
 
   return (
     <Accordion multiple {...expansion}>
@@ -104,5 +100,27 @@ export function DishRecipe({ detail }: { detail: Extract<DishesDetail, { kind: "
         );
       })}
     </Accordion>
+  );
+}
+
+export function DishRecipe({ detail }: { detail: Extract<DishesDetail, { kind: "item" }> }) {
+  const { record, ingredientTagSource, ingredientItemsById } = detail;
+  const slots = buildDishRecipeSlots(record.slots, ingredientTagSource.byId, ingredientItemsById);
+  return (
+    <div className="grid gap-4">
+      {record.recipeItems.length > 0 && (
+        <ul
+          aria-label="菜谱物品"
+          className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,13rem),1fr))] gap-3"
+        >
+          {record.recipeItems.map((item) => (
+            <li key={item.id} className="min-w-0">
+              <CatalogItemCard item={item} itemId={item.id} link={relatedItemLocation(item)} />
+            </li>
+          ))}
+        </ul>
+      )}
+      <DishRecipeSlots slots={slots} />
+    </div>
   );
 }

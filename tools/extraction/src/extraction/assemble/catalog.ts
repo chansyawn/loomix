@@ -11,7 +11,7 @@ export function assembleCatalog(
 ): Catalog {
   const items: Item[] = observed.items.map((item): Item => {
     if (item.kind === "reference" && !item.image) return { ...item, image: null };
-    if (item.kind === "inspoCard") {
+    if (item.kind === "inspoCard" || item.kind === "cookingRecipeItem") {
       const background = image(
         item.front.background.use,
         "catalog.items",
@@ -19,7 +19,7 @@ export function assembleCatalog(
         "front.background",
       );
       if (background?.variant !== "card-background")
-        throw new Error(`Missing creation card background ${item.id}`);
+        throw new Error(`Missing ${item.kind} background ${item.id}`);
       return {
         ...item,
         front: { background: { ...background, variant: background.variant } },
