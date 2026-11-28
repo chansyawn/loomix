@@ -20,6 +20,5 @@ export function miscellaneousDetailPresentation(
     image: <RecordImage image={detail.record.image} name={detail.record.name} eager />,
     relatedFields,
     sections,
-    showEmptyExtras: true,
   };
 }

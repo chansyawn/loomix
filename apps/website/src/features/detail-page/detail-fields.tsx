@@ -38,7 +38,9 @@ export function DetailFields({ groups }: { groups: readonly DetailFieldGroup[] }
   const visibleGroups = groups.filter((group) => group.fields.length > 0);
   return visibleGroups.map((group) => (
     <div key={group.title} className="grid gap-2 border-t pt-3">
-      {visibleGroups.length > 1 && <h2 className="text-sm font-semibold">{group.title}</h2>}
+      {visibleGroups.length > 1 && (
+        <p className="text-sm font-medium text-muted-foreground">{group.title}</p>
+      )}
       <FieldList fields={group.fields} />
     </div>
   ));

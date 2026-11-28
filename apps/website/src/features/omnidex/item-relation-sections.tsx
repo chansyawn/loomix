@@ -1,10 +1,8 @@
-import type { DetailSubsection } from "../detail-page/detail-headings";
 import type { DetailSection } from "../detail-page/detail-page";
 import type { DetailResourceState } from "../detail-page/use-detail-resource";
 import type { ItemRelationReaders } from "./item-relations";
-import { Badge } from "@/ui/components/badge";
 import { Button } from "@/ui/components/button";
-import { CollapsibleContent } from "@/ui/components/collapsible";
+import { RelationPreview } from "./relation-preview";
 import { CatalogItemCard } from "./catalog-item-card";
 import { GameplayRelationItem } from "./gameplay-relation-item";
 
@@ -23,8 +21,8 @@ export function RelationLoadError({ label, retry }: { label: string; retry: () =
   );
 }
 
-export function giftSubsection(state: RelationState<"gifts">): DetailSubsection | undefined {
-  const heading = { id: "gameplay-uses-gifts", title: "送礼" };
+export function giftSection(state: RelationState<"gifts">): DetailSection | undefined {
+  const heading = { id: "gameplay-uses-gifts", title: "送给谁" };
   if (state?.status === "error")
     return { ...heading, content: <RelationLoadError label="送礼偏好" retry={state.retry} /> };
   if (state?.status !== "ready" || !state.value.length) return;
@@ -75,52 +73,42 @@ export function explorationSection(state: RelationState<"islets">): DetailSectio
   return {
     ...heading,
     content: (
-      <p className="text-sm text-muted-foreground">
-        这些星屿的探索提示列出了此物品，实际产出受探索条件影响。
-      </p>
+      <div className="grid gap-4">
+        <p className="text-sm text-muted-foreground">
+          这些星屿的探索提示列出了此物品，实际产出受探索条件影响。
+        </p>
+        {kinds.map(([kind, title, hash]) => {
+          const matches = hints.filter((islet) => islet[kind]);
+          if (!matches.length) return null;
+          return (
+            <div key={kind} className="grid gap-2">
+              <h3 className="text-sm font-medium">
+                {title} · {matches.length}
+              </h3>
+              <RelationPreview
+                entries={matches}
+                label={`${title}提示`}
+                renderEntry={(islet) => (
+                  <CatalogItemCard
+                    itemId={islet.id}
+                    item={islet}
+                    description={islet.regions
+                      .map(({ name, exploration, encounter }) =>
+                        [name, exploration && "常规探索", encounter && "邂逅候选"]
+                          .filter(Boolean)
+                          .join(" · "),
+                      )
+                      .join("\n")}
+                    fullDescription
+                    link={{ to: "/starsea/islets/$id", params: { id: String(islet.id) }, hash }}
+                  />
+                )}
+              />
+            </div>
+          );
+        })}
+      </div>
     ),
-    subsections: kinds.flatMap(([kind, title, hash]) => {
-      const matches = hints.filter((islet) => islet[kind]);
-      if (!matches.length) return [];
-      const cards = matches.map((islet) => (
-        <li key={islet.id} className="min-w-0">
-          <CatalogItemCard
-            itemId={islet.id}
-            item={islet}
-            description={islet.regions
-              .map(({ name, exploration, encounter }) =>
-                [name, exploration && "常规探索", encounter && "邂逅候选"]
-                  .filter(Boolean)
-                  .join(" · "),
-              )
-              .join("\n")}
-            fullDescription
-            link={{ to: "/starsea/islets/$id", params: { id: String(islet.id) }, hash }}
-          />
-        </li>
-      ));
-      const previewCount = 4;
-      return [
-        {
-          id: `${heading.id}-${hash}`,
-          title,
-          headingTrailing: <Badge variant="secondary">{matches.length}</Badge>,
-          disclosure: cards.length > previewCount ? { total: cards.length } : undefined,
-          content: (
-            <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,19rem),1fr))] gap-3">
-              {cards.slice(0, previewCount)}
-              {cards.length > previewCount && (
-                <CollapsibleContent render={<li />} className="col-span-full">
-                  <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,19rem),1fr))] gap-3">
-                    {cards.slice(previewCount)}
-                  </ul>
-                </CollapsibleContent>
-              )}
-            </ul>
-          ),
-        },
-      ];
-    }),
   };
 }
 

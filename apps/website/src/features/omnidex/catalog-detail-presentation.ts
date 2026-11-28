@@ -9,5 +9,4 @@ export type CatalogDetailPresentation = Pick<
   fields?: readonly DetailField[];
   relatedFields?: readonly DetailField[];
   navigation?: DetailNavigationModel;
-  showEmptyExtras?: boolean;
 };

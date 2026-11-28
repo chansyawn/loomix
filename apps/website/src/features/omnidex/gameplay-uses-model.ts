@@ -18,7 +18,11 @@ export type GameplayUse = {
   conditions: { hash: string; summary: string; linkLabel: string }[];
 };
 
-export const gameplayUseLabels = { crafting: "制作", cooking: "烹饪", vignette: "小栖地" };
+export const gameplayUseLabels = {
+  crafting: "用于制作",
+  cooking: "用于烹饪",
+  vignette: "小栖地用途",
+};
 export type GameplayUseCategory = keyof typeof gameplayUseLabels;
 export const gameplayUsesSectionId = "gameplay-uses";
 

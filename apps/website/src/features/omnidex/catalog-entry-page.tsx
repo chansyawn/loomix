@@ -17,26 +17,18 @@ import { miscellaneousDetailPresentation } from "../miscellaneous/detail-present
 import { plantsDetailPresentation } from "../plants/detail-presentation";
 import type { CatalogDetailPresentation } from "./catalog-detail-presentation";
 import { catalogEntryNavigation } from "./detail-navigation";
-import { gameplayUsesSection } from "./gameplay-uses";
+import { gameplayUseSections } from "./gameplay-uses";
 import type { catalogGameplayUses } from "./gameplay-uses-model";
 import type { ItemRelationReaders } from "./item-relations";
 import {
   explorationSection,
-  giftSubsection,
+  giftSection,
   relatedVignettesSection,
   RelationLoadError,
 } from "./item-relation-sections";
 import { useOmnidexOrigin } from "./navigation";
 import { QualityMarker } from "./quality";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/ui/components/empty";
 import { useElementScrollRestoration, useRouterState } from "@tanstack/react-router";
-import { InfoIcon } from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
 
 export function CatalogEntryPage({
@@ -88,19 +80,18 @@ export function CatalogEntryPage({
     else if (scroll && scroll.element.scrollTop === scroll.from)
       scroll.element.scrollTop = scroll.to;
   }, [hash, gifts, islets, vignettes]);
-  const usesSection =
+  const useSections =
     uses &&
-    gameplayUsesSection(
+    gameplayUseSections(
       { ...uses, vignette: vignettes?.status === "ready" ? vignettes.value.placements : [] },
-      giftSubsection(gifts),
+      giftSection(gifts),
       vignettes?.status === "error" && (
         <RelationLoadError label="小栖地布景用途" retry={vignettes.retry} />
       ),
     );
   const hairDyeing = useDetailResource(readHairDyeing);
   const presentation = catalogDetailPresentation(model, hairDyeing);
-  const { image, classification, sections, titleActions, navigation, showEmptyExtras } =
-    presentation;
+  const { image, classification, sections, titleActions, navigation } = presentation;
   const detailSections = [...sections];
   const hints = explorationSection(islets);
   if (hints) detailSections.push(hints);
@@ -116,9 +107,13 @@ export function CatalogEntryPage({
   if (!simpleQuote && quotes?.length)
     detailSections.push({
       id: "purchase-offers",
-      title: "配置报价（每次购买）",
+      title: "购买报价",
       content: (
         <dl className="grid gap-3">
+          <div className="text-sm text-muted-foreground">
+            <dt>配置报价</dt>
+            <dd>以下为每次购买的金额。</dd>
+          </div>
           {quotes.map(({ id, name, paymentNote, prices }) => (
             <div key={id} className="grid gap-1">
               <dt className="font-medium">{name}</dt>
@@ -146,7 +141,7 @@ export function CatalogEntryPage({
         </dl>
       ),
     });
-  if (usesSection) detailSections.push(usesSection);
+  if (useSections) detailSections.push(...useSections);
   return (
     <div ref={content}>
       <DetailPage
@@ -165,7 +160,6 @@ export function CatalogEntryPage({
         fieldGroups={groups}
         sections={detailSections}
         relatedNavigation={catalogEntryNavigation(navigation, record.id, origin)}
-        empty={showEmptyExtras && <CatalogDetailEmpty />}
       />
     </div>
   );
@@ -189,18 +183,4 @@ function catalogDetailPresentation(
     case "miscellaneous":
       return miscellaneousDetailPresentation(model.detail);
   }
-}
-
-function CatalogDetailEmpty() {
-  return (
-    <Empty className="min-h-44">
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <InfoIcon />
-        </EmptyMedia>
-        <EmptyTitle>暂时没有更多的信息</EmptyTitle>
-        <EmptyDescription>更多资料收录后会在这里展示</EmptyDescription>
-      </EmptyHeader>
-    </Empty>
-  );
 }

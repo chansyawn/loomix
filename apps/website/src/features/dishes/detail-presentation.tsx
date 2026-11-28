@@ -50,6 +50,5 @@ export function dishesDetailPresentation(detail: DishesDetail): CatalogDetailPre
       ["基础效果", strengthText(record.strength)],
     ],
     sections,
-    showEmptyExtras: true,
   };
 }

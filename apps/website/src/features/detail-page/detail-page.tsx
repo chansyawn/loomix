@@ -2,20 +2,14 @@ import { useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
 import { findWikiScroll } from "@/infrastructure/wiki-scroll";
 import { Skeleton } from "@/ui/components/skeleton";
 import { cn } from "@/ui/lib/utils";
-import { DetailChapter, type DetailSubsection } from "./detail-headings";
+import { DetailChapter, type DetailSection } from "./detail-headings";
 import { DetailNavGroup, type DetailNavigation } from "./detail-nav-group";
 import { DetailToc } from "./detail-toc";
 import { DetailFields, type DetailFieldGroup } from "./detail-fields";
 
 export type { DetailField } from "./detail-fields";
 
-export type DetailSection = {
-  id: string;
-  title: string;
-  content?: ReactNode;
-  headingId?: string;
-  subsections?: readonly DetailSubsection[];
-};
+export type { DetailSection } from "./detail-headings";
 
 export type DetailPageProps = {
   image: ReactNode;
@@ -29,7 +23,6 @@ export type DetailPageProps = {
   overviewId?: string;
   sections: readonly DetailSection[];
   relatedNavigation?: DetailNavigation;
-  empty?: ReactNode;
 };
 
 export function DetailPage({
@@ -44,7 +37,6 @@ export function DetailPage({
   overviewId = "detail-overview",
   sections,
   relatedNavigation,
-  empty,
 }: DetailPageProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const navigationRef = useRef<HTMLDivElement>(null);
@@ -57,7 +49,9 @@ export function DetailPage({
       navigationRef={navigationRef}
       navigation={
         <>
-          <DetailToc targets={targets} contentRef={contentRef} navigationRef={navigationRef} />
+          {sections.length > 0 && (
+            <DetailToc targets={targets} contentRef={contentRef} navigationRef={navigationRef} />
+          )}
           {relatedNavigation && <DetailNavGroup {...relatedNavigation} />}
         </>
       }
@@ -84,22 +78,9 @@ export function DetailPage({
         {description}
         <DetailFields groups={fieldGroups} />
       </section>
-      {sections.map(({ id, headingId = `${id}-heading`, title, content, subsections }) => (
-        <DetailChapter
-          key={id}
-          id={id}
-          labelledBy={headingId}
-          subsections={subsections}
-          heading={
-            <h2 id={headingId} className="text-lg font-semibold wrap-anywhere">
-              {title}
-            </h2>
-          }
-        >
-          {content}
-        </DetailChapter>
+      {sections.map((section) => (
+        <DetailChapter key={section.id} {...section} />
       ))}
-      {sections.length === 0 && empty}
     </DetailFrame>
   );
 }
@@ -149,7 +130,7 @@ function DetailFrame({
         <div className="contents @min-[48rem]/detail-page:flex @min-[48rem]/detail-page:flex-col @min-[48rem]/detail-page:self-stretch">
           <div
             ref={navigationRef}
-            className="sticky top-0 z-20 flex min-w-0 items-center justify-between gap-1 border-b bg-background py-1 @min-[48rem]/detail-page:top-4 @min-[48rem]/detail-page:max-h-[calc(var(--detail-scrollport-height,100svh)-2rem)] @min-[48rem]/detail-page:shrink-0 @min-[48rem]/detail-page:flex-col @min-[48rem]/detail-page:items-stretch @min-[48rem]/detail-page:gap-2 @min-[48rem]/detail-page:overflow-y-auto @min-[48rem]/detail-page:rounded-2xl @min-[48rem]/detail-page:border @min-[48rem]/detail-page:p-2.5"
+            className="sticky top-0 z-20 flex min-w-0 items-center justify-between gap-1 border-b bg-background py-1 empty:hidden @min-[48rem]/detail-page:top-4 @min-[48rem]/detail-page:max-h-[calc(var(--detail-scrollport-height,100svh)-2rem)] @min-[48rem]/detail-page:shrink-0 @min-[48rem]/detail-page:flex-col @min-[48rem]/detail-page:items-stretch @min-[48rem]/detail-page:gap-2 @min-[48rem]/detail-page:overflow-y-auto @min-[48rem]/detail-page:rounded-2xl @min-[48rem]/detail-page:border @min-[48rem]/detail-page:p-2.5"
           >
             {navigation}
           </div>
