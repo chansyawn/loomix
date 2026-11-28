@@ -55,22 +55,19 @@ export function DetailFields({ groups }: { groups: readonly DetailFieldGroup[] }
       Array.isArray(value) ? value.length > 0 : value != null && value !== "",
     );
     if (!fields.length) return null;
-    const Container = group.title ? "section" : "div";
     return (
-      <Container
-        key={group.title ?? "fields"}
+      <section
+        key={group.title}
         id={group.anchor}
         aria-label={group.title}
         className="grid gap-2 border-t pt-3"
       >
-        {group.title && (
-          <div className="flex items-center gap-1 text-muted-foreground">
-            <h2 className="text-sm font-medium">{group.title}</h2>
-            {group.titleHint && <TitleHint title={group.title} hint={group.titleHint} />}
-          </div>
-        )}
+        <div className="flex items-center gap-1 text-muted-foreground">
+          <h2 className="text-sm font-medium">{group.title}</h2>
+          {group.titleHint && <TitleHint title={group.title} hint={group.titleHint} />}
+        </div>
         <FieldList fields={fields} />
-      </Container>
+      </section>
     );
   });
 }

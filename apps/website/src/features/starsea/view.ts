@@ -2,7 +2,8 @@ import { createImageResolver, type ImageIndex } from "@loomix/schema/assets";
 import { createCatalogIndex, isListedItem, type Catalog } from "@loomix/schema/catalog";
 import type { Neighbors } from "@loomix/schema/neighbors";
 import type { Starsea } from "@loomix/schema/starsea";
-import { neighborAvatar, resolveNeighborPortrait } from "../neighbors/portrait";
+import { neighborAvatar } from "../neighbors/portrait";
+import { hasCatalogItemDetail } from "../omnidex/catalog";
 
 type Islet = Starsea["islets"][number];
 type Region = Starsea["regions"][number];
@@ -13,6 +14,11 @@ type RegionMembership = {
   exploration: boolean;
   neighborIds: Set<number>;
 };
+
+function encounterAnchor(memberships: RegionMembership[], region: StarseaRegion) {
+  const first = memberships.find(({ neighborIds }) => neighborIds.size);
+  return first?.region.id === region.id ? "encounters" : `encounters-${region.id}`;
+}
 
 function requireEntry<Entry>(index: ReadonlyMap<number, Entry>, id: number, kind: string): Entry {
   const entry = index.get(id);
@@ -86,6 +92,40 @@ export function toStarseaList(starsea: Starsea, imageIndex: ImageIndex) {
 export type StarseaList = ReturnType<typeof toStarseaList>;
 export type StarseaIslet = StarseaList["islets"][number];
 
+export function neighborEncounterIslets(
+  starsea: Starsea,
+  neighborId: number,
+  image: ReturnType<typeof createImageResolver>,
+) {
+  const { membershipsByIslet, isletById, summarize } = indexStarsea(starsea, image);
+  const islets = Array.from(membershipsByIslet).flatMap(([id, memberships]) => {
+    const candidates = memberships.filter(({ neighborIds }) => neighborIds.has(neighborId));
+    if (!candidates.length) return [];
+    const {
+      name,
+      image: thumbnail,
+      regions,
+    } = summarize(requireEntry(isletById, id, "islet"), candidates);
+    return [
+      {
+        id,
+        name,
+        image: thumbnail,
+        anchor: encounterAnchor(memberships, regions[0]!),
+        regions: regions.map((region) => region.name),
+      },
+    ];
+  });
+  const unconfirmedRegions = starsea.regions
+    .filter(({ encounters }) =>
+      encounters.some(
+        (entry) => entry.neighborId === neighborId && entry.candidateIsletIds === null,
+      ),
+    )
+    .map(({ name }) => name);
+  return { islets, unconfirmedRegions };
+}
+
 export function itemExplorationHints(
   starsea: Starsea,
   itemId: number,
@@ -129,14 +169,17 @@ export function toStarseaDetail(
   const islet = requireEntry(isletById, isletId, "islet");
   const { items } = createCatalogIndex(catalog);
   const neighborById = new Map(neighbors.neighbors.map((neighbor) => [neighbor.id, neighbor]));
-  const neighborIds = new Set(memberships.flatMap((membership) => [...membership.neighborIds]));
 
   function displayItems(ids: number[] | null) {
     return (
       ids?.map((id) => {
         const item = requireEntry(items, id, "item");
-        const browsable = isListedItem(item);
-        return { id, name: item.name, image: browsable ? image(item.image) : null, browsable };
+        return {
+          id,
+          name: item.name,
+          image: isListedItem(item) ? image(item.image) : null,
+          browsable: hasCatalogItemDetail(item),
+        };
       }) ?? null
     );
   }
@@ -145,13 +188,14 @@ export function toStarseaDetail(
     ...summarize(islet, memberships),
     creatures: displayItems(islet.displayedCreatureIds),
     specialties: displayItems(islet.displayedSpecialtyIds),
-    encounterNeighbors: Array.from(neighborIds, (id) => {
-      const neighbor = requireEntry(neighborById, id, "neighbor");
-      return {
-        ...neighborAvatar(neighbor, image),
-        image: resolveNeighborPortrait(neighbor.images, image)?.image ?? null,
-      };
-    }),
+    regions: memberships.map(({ region, exploration, neighborIds }) => ({
+      ...region,
+      exploration,
+      encounterAnchor: encounterAnchor(memberships, region),
+      neighbors: Array.from(neighborIds, (id) =>
+        neighborAvatar(requireEntry(neighborById, id, "neighbor"), image),
+      ),
+    })),
   };
 }
 

@@ -1,11 +1,12 @@
 import { expect, test } from "vite-plus/test";
+import { createImageResolver } from "@loomix/schema/assets";
 import { neighborFixture } from "./fixture";
 import { queryNeighbors } from "./query";
 import { toNeighborsView } from "./view";
 
 function view() {
   const { database, mapping, catalog, gameplayTags } = neighborFixture();
-  return toNeighborsView(database, mapping, catalog, gameplayTags);
+  return toNeighborsView(database, createImageResolver(mapping), catalog, gameplayTags);
 }
 
 test("只匹配友邻显示名称及其拼音", () => {

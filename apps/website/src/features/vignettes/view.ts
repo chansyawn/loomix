@@ -103,6 +103,16 @@ export function creatureVignettes(
     .map(({ id, name, illustration }) => ({ id, name: name.zh, image: image(illustration) }));
 }
 
+export function neighborVignettes(
+  { templates }: Vignettes,
+  neighborId: number,
+  image: ImageResolver,
+) {
+  return templates
+    .filter((template) => template.neighborIds.includes(neighborId))
+    .map(({ id, name, illustration }) => ({ id, name: name.zh, image: image(illustration) }));
+}
+
 export function toVignetteDetail(
   id: number,
   {

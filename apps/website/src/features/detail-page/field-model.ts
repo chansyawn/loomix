@@ -32,7 +32,7 @@ export type DetailField = { label: string; anchor?: string; fullWidth?: boolean 
 );
 
 export type DetailFieldGroup = {
-  title?: string;
+  title: string;
   anchor?: string;
   titleHint?: string;
   fields: readonly DetailField[];

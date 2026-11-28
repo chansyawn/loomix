@@ -1,11 +1,13 @@
-import { createImageResolver } from "@loomix/schema/assets";
-import type { ImageIndex } from "@loomix/schema/assets";
-import { createCatalogIndex, type Catalog } from "@loomix/schema/catalog";
+import type { createImageResolver } from "@loomix/schema/assets";
+import { createCatalogIndex, isListedItem, type Catalog } from "@loomix/schema/catalog";
 import type { CatalogIndex } from "@loomix/schema/catalog";
 import { createGameplayTagIndex, tagLabel } from "@loomix/schema/gameplay-tags";
 import type { GameplayTagIndex, GameplayTags } from "@loomix/schema/gameplay-tags";
 import type { Neighbor, Neighbors } from "@loomix/schema/neighbors";
 import { neighborAvatar, resolveNeighborPortrait } from "./portrait";
+import { hasCatalogItemDetail } from "../omnidex/catalog";
+import { visibleTagIds } from "../omnidex/tags";
+import { CATALOG_TAG_FILTER_POLICY } from "../catalog/tag-filter-policy";
 
 type ImageResolver = ReturnType<typeof createImageResolver>;
 
@@ -47,35 +49,46 @@ function preferencesOf(
   neighbor: Neighbor,
   index: CatalogIndex,
   tags: GameplayTagIndex,
+  filterableTags: ReadonlySet<number>,
   image: ImageResolver,
 ) {
-  return giftLevels.map(([level, name]) => ({
-    level,
-    name,
-    items: neighbor.gifts[level].itemIds.map((id) => {
-      const item = index.items.get(id);
-      // 仅供引用的物品没有详情页，也没有图片。
-      const listed = item && item.kind !== "reference" ? item : null;
-      return {
+  return giftLevels
+    .filter(
+      ([level]) => neighbor.gifts[level].itemIds.length || neighbor.gifts[level].tagIds.length,
+    )
+    .map(([level, name]) => ({
+      level,
+      name,
+      items: neighbor.gifts[level].itemIds.map((id) => {
+        const item = index.items.get(id);
+        return {
+          id,
+          name: item?.name ?? `未收录物品（${id}）`,
+          recordId: item && hasCatalogItemDetail(item) ? id : null,
+          image: item && isListedItem(item) ? image(item.image) : null,
+        };
+      }),
+      tags: neighbor.gifts[level].tagIds.map((id) => ({
         id,
-        name: item?.name ?? `未收录物品（${id}）`,
-        recordId: listed?.id ?? null,
-        image: image(listed?.image ?? null),
-      };
-    }),
-    tags: neighbor.gifts[level].tagIds.map((id) => ({ id, name: tagLabel(tags.get(id)) })),
-  }));
+        name: tagLabel(tags.get(id)),
+        filterable: filterableTags.has(id),
+      })),
+    }));
 }
 
 export function toNeighborsView(
   database: Neighbors,
-  imageIndex: ImageIndex,
+  image: ImageResolver,
   catalog: Catalog,
   gameplayTags: GameplayTags,
 ) {
-  const image = createImageResolver(imageIndex);
   const index = createCatalogIndex(catalog);
   const tags = createGameplayTagIndex(gameplayTags.tags);
+  const filterableTags = visibleTagIds(
+    tags,
+    catalog.items.filter(hasCatalogItemDetail),
+    CATALOG_TAG_FILTER_POLICY,
+  );
   const neighbors = database.neighbors.map((neighbor) => {
     const stars = neighbor.stars.map(({ name, galaxy }) => ({ name, galaxy }));
     const galaxies = [...new Set(stars.flatMap((star) => (star.galaxy ? [star.galaxy] : [])))];
@@ -100,7 +113,7 @@ export function toNeighborsView(
       house: neighbor.house && {
         stages: neighbor.house.stages.map((stage) => ({ ...stage, image: image(stage.image) })),
       },
-      preferences: preferencesOf(neighbor, index, tags, image),
+      preferences: preferencesOf(neighbor, index, tags, filterableTags, image),
       stories: [...neighbor.stories]
         .sort((a, b) => a.chapter - b.chapter)
         .map((story) => ({

@@ -10,7 +10,7 @@ import {
   vignette,
 } from "../../../../../packages/schema/tests/fixture";
 import { findVignetteUses } from "./requirement-matching";
-import { creatureVignettes, toVignetteDetail, toVignetteList } from "./view";
+import { creatureVignettes, neighborVignettes, toVignetteDetail, toVignetteList } from "./view";
 import { neighborFixture } from "../neighbors/fixture";
 
 const entry = vignette();
@@ -40,6 +40,8 @@ test("关联小栖地只查询生物名单，摆放物、示例和同号友邻�
     { id: 1002, name: "微风花丛地", image: assets.images[0]!.file },
   ]);
   expect(creatureVignettes(data, 2, image)).toEqual([]);
+  expect(neighborVignettes(data, 44103, image).map(({ id }) => id)).toEqual([2000]);
+  expect(neighborVignettes(data, 2, image)).toEqual([]);
 });
 
 test("关联友邻取头部小像，缺图时保留友邻身份", () => {

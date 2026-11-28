@@ -1,56 +1,46 @@
-import {
-  DetailPage,
-  type DetailField,
-  type DetailSection,
-} from "@/features/detail-page/detail-page";
+import { DetailPage, type DetailSection } from "@/features/detail-page/detail-page";
 import { DetailTitleMetadata } from "@/features/detail-page/detail-fields";
-import { textField, hintField } from "../detail-page/field-model";
-import type { NeighborDetail } from "./data";
+import { useDetailResource } from "../detail-page/use-detail-resource";
+import type { loadNeighborDetail } from "./detail";
+import { neighborPlaceFields, neighborProfileFields } from "./overview-fields";
 import { NeighborImage } from "./image";
 import { NeighborPreferences } from "./preferences";
 import { NeighborStories } from "./reading";
 import { NeighborAbilitiesSection } from "./abilities-section";
 import { NeighborHouseSection } from "./house-section";
 
-export function NeighborDetailPage({ neighbor }: { neighbor: NeighborDetail }) {
-  const homeFields: DetailField[] = [
-    textField(
-      "所属星球与星系",
-      neighbor.stars
-        .map((star) => `${star.name} · ${star.galaxy ? `${star.galaxy}星系` : "星系暂未收录"}`)
-        .join("\n") || "暂未收录",
-    ),
-  ];
+export function NeighborDetailPage({
+  neighbor,
+  readIslets,
+  readVignettes,
+}: Awaited<ReturnType<typeof loadNeighborDetail>>) {
+  const islets = useDetailResource(readIslets);
+  const vignettes = useDetailResource(readVignettes);
   const sections: DetailSection[] = [];
-  const missing: string[] = [];
-  if (neighbor.preferences.some((group) => group.items.length || group.tags.length))
+  if (neighbor.preferences.length)
     sections.push({
       id: "preferences",
       title: "友邻喜好",
       content: <NeighborPreferences preferences={neighbor.preferences} />,
     });
-  else missing.push("友邻喜好");
   if (neighbor.abilities.length)
     sections.push({
       id: "abilities",
       title: "能力与亲密度",
       content: <NeighborAbilitiesSection abilities={neighbor.abilities} />,
     });
-  else missing.push("能力");
-  if (neighbor.house?.stages.length) {
+  if (neighbor.house?.stages.length)
     sections.push({
       id: "house",
       title: "房屋",
       content: <NeighborHouseSection stages={neighbor.house.stages} />,
     });
-  } else missing.push("房屋");
   if (neighbor.stories.length)
     sections.push({
       id: "stories",
       title: "友邻故事",
       content: <NeighborStories neighbor={neighbor} />,
     });
-  else missing.push("故事");
   return (
     <DetailPage
       overviewId="overview"
@@ -71,15 +61,9 @@ export function NeighborDetailPage({ neighbor }: { neighbor: NeighborDetail }) {
       }
       fieldGroups={[
         {
-          title: "友邻资料",
-          fields: [
-            textField("昵称", neighbor.profile.nickname ?? "资料暂未收录"),
-            textField("英文名", neighbor.profile.englishName ?? "资料暂未收录"),
-            textField("生日", neighbor.profile.birthday ?? "资料暂未收录"),
-            hintField("暂未收录", missing.join("、")),
-          ],
+          title: "基本信息",
+          fields: [...neighborProfileFields(neighbor), ...neighborPlaceFields(islets, vignettes)],
         },
-        { title: "星球归属", fields: homeFields },
       ]}
       sections={sections}
     />
