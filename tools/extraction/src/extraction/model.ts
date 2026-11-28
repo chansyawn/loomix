@@ -1,5 +1,6 @@
 import type { Catalog } from "@loomix/schema/catalog";
 import type { ClientIconRecords } from "./client-icons/model.ts";
+import type { NeighborImageRecords } from "./neighbor-images/model.ts";
 import type { Dataset } from "@loomix/schema/dataset";
 import type { ImageRef } from "@loomix/schema/assets";
 import type { FieldEvidence } from "./evidence/domain-schema.ts";
@@ -38,6 +39,7 @@ export interface SourceProof extends Omit<FieldEvidence, "entity" | "fieldPath">
 
 export interface ClientReadRecords {
   clientIcons: ClientIconRecords;
+  neighborImages: NeighborImageRecords;
   vignettes: ReturnType<typeof readVignettes>;
   hairDyeing: DyeingObservation;
   context: Dataset["context"];

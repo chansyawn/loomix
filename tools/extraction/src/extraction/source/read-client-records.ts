@@ -1,5 +1,6 @@
 import path from "node:path";
 import { readClientIcons } from "../client-icons/read.ts";
+import { readNeighborImages } from "../neighbor-images/read.ts";
 import { clientIconResolver } from "../client-icons/resolve.ts";
 import { createContentContext } from "./catalog/context.ts";
 import { readContent } from "./catalog/content.ts";
@@ -258,6 +259,12 @@ export function readClientRecords(source: string, datasetId: string): ClientRead
       context.tables,
       context.recipesByProduct,
       clientIconResolver(index, images.locate),
+    ),
+    neighborImages: readNeighborImages(
+      context.tables,
+      neighbors.database.neighbors,
+      index,
+      images.locate,
     ),
     hairDyeing,
     vignettes: readVignettes(

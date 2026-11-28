@@ -139,6 +139,12 @@ test("读取封存时拒绝被改写的图标索引，并为缺少索引的旧�
   const flower = freezeFlowerFixture(directory, observations.source);
   const assembly = assemble(observations, [], flower);
   writeAssembly(directory, assembly);
+  const neighbors = path.join(directory, "neighbor-images.json");
+  writeJson(neighbors, { ...assembly.neighborImages, datasetId: "a".repeat(64) });
+  expect(() => readCandidate(directory)).toThrow("Neighbor image index");
+  fs.unlinkSync(neighbors);
+  expect(() => readCandidate(directory)).toThrow("缺少友邻图像索引");
+  writeAssembly(directory, assembly);
   const index = path.join(directory, "client-icons.json");
   writeJson(index, { ...assembly.clientIcons, version: 2 });
   expect(() => readCandidate(directory)).toThrow("Client icon index");

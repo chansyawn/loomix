@@ -53,6 +53,8 @@ vp run @loomix/extraction#refresh -- --help
 
 需要单独取得客户端图标时，运行 `vp run @loomix/extraction#init`，再将环境 ID 传给 `vp run @loomix/extraction#extract --environment <环境ID>`。提取目录的 `client-icons.json` 按业务 ID 收录食物效果、厨具小图、烹饪难度、生物习性、送礼偏好、图鉴页签、家具分类和服饰部位。查菜肴时先用 `dishes[].id` 找到其效果、厨具或难度 ID；查图鉴页签时同时使用 `groupId` 和 `id`。用图片槽位的 `image.object` 在同目录 `originals.json` 匹配 `object`，再按 `file` 打开 PNG。多个槽位可以引用同一张图，`image: null` 表示客户端未配置该图片。这份索引仅随提取产物封存；旧提取目录缺少该文件时需重新提取。
 
+同一提取目录的 `neighbor-images.json` 按 `neighbors[].neighborId` 收录友邻原图。`socialAvatar` 是社交圆头像，`interior` 是房屋室内图，`blueprints[]` 按 `stageId` 和图纸 `itemId` 保留 `small`、`large` 两个槽位，`diary[]` 按 `kind` 和 `sequence` 区分交换日记素材。用槽位的 `object` 查同目录的 `originals.json`，按 `file` 打开 PNG。`ownership` 记录友邻归属依据，`configuration` 记录直接引用图片的配置行。原图和索引随提取结果封存；重新提取可为旧版本产物生成新索引。[业务确认与调查](docs/business-investigation.md#友邻与服饰)
+
 ## 故障恢复与清理
 
 失败后先查看命令错误及日志：工具准备日志在 `cache/anime-studio/logs/`，提取诊断在 `cache/failures/`，批次诊断在 `cache/decode/failures/` 和 `cache/originals/failures/`。修复原因后重跑；已完成且通过复验的昂贵批次可复用，不必先清空缓存。工具版本或下载失效时检查 [AnimeStudio 配置](src/client/anime-studio/config.ts)，显式更新固定版本与摘要，不自动跟随最新构建。

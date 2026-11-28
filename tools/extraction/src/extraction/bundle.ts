@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import { clientIconRecordsSchema } from "./client-icons/model.ts";
+import { neighborImageRecordsSchema } from "./neighbor-images/model.ts";
 import crypto from "node:crypto";
 import { withLock } from "../workflow/lock.ts";
 import assert from "node:assert/strict";
@@ -10,7 +11,12 @@ import { FieldEvidenceReportSchema } from "./evidence/domain-schema.ts";
 import type { ClientReadRecords } from "./model.ts";
 import { acquisitionHintsSchema } from "./source/catalog/acquisition-hints.ts";
 import { dyeingDiagnosticsSchema } from "./source/hair-dyeing/read.ts";
-import { CLIENT_READ_RECORDS_FILE, DATASET_FILE, FIELD_EVIDENCE_FILE } from "./files.ts";
+import {
+  CLIENT_READ_RECORDS_FILE,
+  DATASET_FILE,
+  FIELD_EVIDENCE_FILE,
+  NEIGHBOR_IMAGES_FILE,
+} from "./files.ts";
 import {
   originalImageSchema,
   imageNeedSchema,
@@ -41,6 +47,7 @@ import { vignetteHintsFile } from "./source/vignettes/profile.ts";
 
 export function writeAssembly(directory: string, assembly: Assembly): void {
   writeJson(path.join(directory, "client-icons.json"), assembly.clientIcons);
+  writeJson(path.join(directory, NEIGHBOR_IMAGES_FILE), assembly.neighborImages);
   writeJson(path.join(directory, DATASET_FILE), assembly.dataset);
   writeJson(path.join(directory, FIELD_EVIDENCE_FILE), assembly.fieldEvidence);
   writeJson(path.join(directory, "image-bindings.json"), assembly.imageBindings);
@@ -56,6 +63,14 @@ export function readCandidate(directory: string) {
   if (!clientReadRecords.clientIcons || !fs.existsSync(path.join(directory, "client-icons.json")))
     throw new Error("封存结果缺少客户端图标索引，请重新提取。");
   clientReadRecords.clientIcons = clientIconRecordsSchema.parse(clientReadRecords.clientIcons);
+  if (
+    !clientReadRecords.neighborImages ||
+    !fs.existsSync(path.join(directory, NEIGHBOR_IMAGES_FILE))
+  )
+    throw new Error("封存结果缺少友邻图像索引，请重新提取。");
+  clientReadRecords.neighborImages = neighborImageRecordsSchema.parse(
+    clientReadRecords.neighborImages,
+  );
   if (!clientReadRecords.vignettes) throw new Error("Missing vignette client read records");
   if (!clientReadRecords.hairDyeing) throw new Error("Missing hair dyeing client read records");
   dyeingDiagnosticsSchema.parse(clientReadRecords.hairDyeing.diagnostics);
@@ -75,6 +90,11 @@ export function readCandidate(directory: string) {
     clientReadRecords.source,
   );
   const rebuilt = assemble(clientReadRecords, originals, flowerHybridization);
+  assert.deepEqual(
+    readJson(path.join(directory, NEIGHBOR_IMAGES_FILE)),
+    rebuilt.neighborImages,
+    "Neighbor image index matches frozen records",
+  );
   assert.deepEqual(
     readJson(path.join(directory, "client-icons.json")),
     rebuilt.clientIcons,

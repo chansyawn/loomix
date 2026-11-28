@@ -1,5 +1,6 @@
 import type { ImageRef } from "@loomix/schema/assets";
 import { assembleClientIcons } from "../client-icons/model.ts";
+import { assembleNeighborImages } from "../neighbor-images/model.ts";
 import { imageKey } from "@loomix/schema/assets";
 import { referencedImages } from "@loomix/schema/dataset/images";
 import { parseDataset } from "@loomix/schema/dataset";
@@ -218,6 +219,11 @@ export function assemble(
     fieldEvidence,
     imageBindings: bound.bindings,
     imageJobs: jobs,
+    neighborImages: assembleNeighborImages(
+      dataset.context.datasetId,
+      observations.neighborImages,
+      originals,
+    ),
     clientIcons: assembleClientIcons(
       dataset.context.datasetId,
       observations.clientIcons,

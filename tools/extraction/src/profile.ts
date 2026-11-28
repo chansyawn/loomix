@@ -158,6 +158,15 @@ export const profile = {
     stages: 24,
     houseDescriptions: 9,
   },
+  expectedNeighborImages: {
+    slots: 149,
+    resourceNames: 146,
+    blueprintResources: 21,
+    assetOnlyAvatars: [1005, 1015],
+    assetOnlyInteriors: [1005],
+    noDiary: [1005],
+    diaryText: [1009, 1010],
+  },
   expectedHouseUpgrades: {
     stages: 24,
     upgraded: 12,
