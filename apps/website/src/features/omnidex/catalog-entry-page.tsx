@@ -14,8 +14,13 @@ import { miscellaneousDetailPresentation } from "../miscellaneous/detail-present
 import { plantsDetailPresentation } from "../plants/detail-presentation";
 import { mergeDetailFields, type CatalogDetailPresentation } from "./catalog-detail-presentation";
 import { catalogEntryNavigation } from "./detail-navigation";
-import { GameplayUses, useVignetteGameplayUses } from "./gameplay-uses";
-import type { catalogGameplayUses, GameplayUse } from "./gameplay-uses-model";
+import { gameplayUsesSection, useVignetteGameplayUses } from "./gameplay-uses";
+import {
+  gameplayUsesSectionId,
+  gameplayUseSectionId,
+  type catalogGameplayUses,
+  type GameplayUse,
+} from "./gameplay-uses-model";
 import { useOmnidexOrigin } from "./navigation";
 import { QualityMarker } from "./quality";
 import {
@@ -28,8 +33,6 @@ import {
 import { useElementScrollRestoration, useRouterState } from "@tanstack/react-router";
 import { InfoIcon } from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
-
-const usesSectionId = "gameplay-uses";
 
 export function CatalogEntryPage({
   record,
@@ -51,10 +54,13 @@ export function CatalogEntryPage({
   const origin = useOmnidexOrigin();
   const hash = useRouterState({ select: (state) => state.location.hash });
   const pendingScroll = useRef<{ element: HTMLElement; from: number; to: number } | null>(null);
-  const pendingUsesAnchor = useRef(false);
+  const pendingUsesAnchor = useRef<string | undefined>(undefined);
   const vignette = useVignetteGameplayUses(readVignetteUses, () => {
     pendingUsesAnchor.current =
-      hash === usesSectionId && !content.current?.querySelector(`#${usesSectionId}`);
+      (hash === gameplayUsesSectionId || hash === gameplayUseSectionId("vignette")) &&
+      !content.current?.querySelector(`#${hash}`)
+        ? hash
+        : undefined;
     const element = findWikiScroll(content.current);
     if (!element || !restore) return;
     const maxScroll = Math.max(0, element.scrollHeight - element.clientHeight);
@@ -62,23 +68,16 @@ export function CatalogEntryPage({
       pendingScroll.current = { element, from: maxScroll, to: restore.scrollY };
   });
   useLayoutEffect(() => {
-    const scrollToUses = pendingUsesAnchor.current;
-    pendingUsesAnchor.current = false;
+    const usesAnchor = pendingUsesAnchor.current;
+    pendingUsesAnchor.current = undefined;
     const scroll = pendingScroll.current;
     pendingScroll.current = null;
-    if (scrollToUses && hash === usesSectionId)
-      content.current?.querySelector(`#${usesSectionId}`)?.scrollIntoView();
+    if (usesAnchor && usesAnchor === hash)
+      content.current?.querySelector(`#${usesAnchor}`)?.scrollIntoView();
     else if (scroll && scroll.element.scrollTop === scroll.from)
       scroll.element.scrollTop = scroll.to;
   }, [hash, vignette]);
-  const usesSection =
-    uses && (uses.crafting.length || uses.cooking.length || vignette.length)
-      ? {
-          id: usesSectionId,
-          title: "用途",
-          content: <GameplayUses itemId={record.id} uses={{ ...uses, vignette }} />,
-        }
-      : undefined;
+  const usesSection = uses && gameplayUsesSection({ ...uses, vignette });
   const hairDyeing = useHairDyeing(readHairDyeing);
   const { image, description, fields, sections, titleActions, navigation, showEmptyExtras } =
     catalogDetailPresentation(model, hairDyeing);

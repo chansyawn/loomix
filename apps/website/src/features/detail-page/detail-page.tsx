@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
 import { findWikiScroll } from "@/infrastructure/wiki-scroll";
 import { Skeleton } from "@/ui/components/skeleton";
 import { cn } from "@/ui/lib/utils";
+import { DetailChapter, type DetailSubsection } from "./detail-headings";
 import { DetailNavGroup, type DetailNavigation } from "./detail-nav-group";
 import { DetailToc } from "./detail-toc";
 
@@ -10,8 +11,9 @@ export type DetailField = readonly [label: string, value: string | null];
 export type DetailSection = {
   id: string;
   title: string;
-  content: ReactNode;
+  content?: ReactNode;
   headingId?: string;
+  subsections?: readonly DetailSubsection[];
 };
 
 export type DetailPageProps = {
@@ -57,18 +59,19 @@ export function DetailPage({
         </>
       }
     >
-      <div
+      <section
         id={overviewId}
         data-detail-section={overviewId}
+        aria-labelledby={titleId}
         className="@container/detail-fields flex min-w-0 flex-col gap-4"
       >
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <h1
             id={titleId}
-            className="flex min-w-0 items-center gap-3 text-3xl/tight font-semibold tracking-tight wrap-break-word sm:text-4xl"
+            className="flex min-w-0 items-center gap-3 text-3xl/tight font-semibold tracking-tight sm:text-4xl"
           >
             {titleLeading}
-            <span className="min-w-0">{title}</span>
+            <span className="min-w-0 wrap-anywhere">{title}</span>
           </h1>
           {titleActions}
         </div>
@@ -88,20 +91,21 @@ export function DetailPage({
             ))}
           </dl>
         )}
-      </div>
-      {sections.map(({ id, headingId, title, content }) => (
-        <section
+      </section>
+      {sections.map(({ id, headingId = `${id}-heading`, title, content, subsections }) => (
+        <DetailChapter
           key={id}
-          id={headingId ? id : undefined}
-          data-detail-section={id}
-          aria-labelledby={headingId ?? id}
-          className="flex min-w-0 flex-col gap-4"
+          id={id}
+          labelledBy={headingId}
+          subsections={subsections}
+          heading={
+            <h2 id={headingId} className="text-lg font-semibold wrap-anywhere">
+              {title}
+            </h2>
+          }
         >
-          <h2 id={headingId ?? id} className="text-lg font-semibold">
-            {title}
-          </h2>
           {content}
-        </section>
+        </DetailChapter>
       ))}
       {sections.length === 0 && empty}
     </DetailFrame>
@@ -163,7 +167,7 @@ function DetailFrame({
         </div>
         <div
           ref={contentRef}
-          className="@container/detail-content mx-auto flex w-full max-w-3xl min-w-0 flex-col gap-7 [--detail-anchor-offset:calc(var(--detail-nav-height,0px)+1rem)] sm:gap-8 @min-[48rem]/detail-page:[--detail-anchor-offset:1rem] **:[[id]]:scroll-mt-(--detail-anchor-offset)"
+          className="@container/detail-content mx-auto flex w-full max-w-3xl min-w-0 flex-col gap-7 [--detail-anchor-offset:var(--detail-sticky-top)] [--detail-sticky-top:var(--detail-nav-height,0px)] sm:gap-8 @min-[48rem]/detail-page:[--detail-sticky-top:0px] **:[[id]]:scroll-mt-(--detail-anchor-offset)"
         >
           {children}
         </div>

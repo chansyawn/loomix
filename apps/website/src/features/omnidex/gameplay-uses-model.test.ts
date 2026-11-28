@@ -5,8 +5,8 @@ import { catalogFixture, imageIndexFixture } from "../omnidex-fixture";
 import { createOmnidexCatalog } from "./catalog";
 import { catalogEntryLocation } from "./entry-location";
 import {
-  activeGameplayUseCategory,
   catalogGameplayUses,
+  gameplayUseSectionId,
   vignetteGameplayUses,
   visibleGameplayUseCategories,
   type GameplayUse,
@@ -75,9 +75,8 @@ test("仅返回当前物品有命中的用途分类", () => {
   ]);
 });
 
-test("初次选第一项，回退或异步新增分类时保留可见的已选项", () => {
-  expect(activeGameplayUseCategory([], "cooking")).toBeUndefined();
-  expect(activeGameplayUseCategory(["crafting", "cooking"], undefined)).toBe("crafting");
-  expect(activeGameplayUseCategory(["crafting", "cooking", "vignette"], "cooking")).toBe("cooking");
-  expect(activeGameplayUseCategory(["cooking", "vignette"], "crafting")).toBe("cooking");
+test("用途分类使用固定的子锚点", () => {
+  expect(gameplayUseSectionId("crafting")).toBe("gameplay-uses-crafting");
+  expect(gameplayUseSectionId("cooking")).toBe("gameplay-uses-cooking");
+  expect(gameplayUseSectionId("vignette")).toBe("gameplay-uses-vignette");
 });

@@ -4,6 +4,9 @@ import { useState, type ComponentProps, type MouseEvent, type RefObject } from "
 import { DetailNavGroup } from "./detail-nav-group";
 import { useReadingSection } from "./use-reading-section";
 
+type DetailTocEntry = { id: string; title: string };
+type DetailTocTarget = DetailTocEntry & { subsections?: readonly DetailTocEntry[] };
+
 const SectionLink = createLink(function SectionAnchor({
   currentSection,
   ...props
@@ -22,7 +25,7 @@ export function DetailToc({
   contentRef,
   navigationRef,
 }: {
-  targets: readonly { id: string; title: string }[];
+  targets: readonly DetailTocTarget[];
   contentRef: RefObject<HTMLDivElement | null>;
   navigationRef: RefObject<HTMLDivElement | null>;
 }) {
@@ -31,7 +34,11 @@ export function DetailToc({
     structuralSharing: true,
   });
   const [revisit, setRevisit] = useState(0);
-  const sectionsKey = targets.map(({ id }) => id).join(" ");
+  const targetIds = targets.flatMap(({ id, subsections = [] }) => [
+    id,
+    ...subsections.map((subsection) => subsection.id),
+  ]);
+  const sectionsKey = targetIds.join(" ");
   const readingSection = useReadingSection({
     contentRef,
     navigationRef,
@@ -41,8 +48,8 @@ export function DetailToc({
     revisit,
   });
   const current =
-    (targets.some(({ id }) => id === readingSection) ? readingSection : undefined) ??
-    (targets.some(({ id }) => id === hash) ? hash : targets[0]?.id);
+    (readingSection && targetIds.includes(readingSection) ? readingSection : undefined) ??
+    (targetIds.includes(hash) ? hash : targetIds[0]);
   function revisitSection(event: MouseEvent<HTMLAnchorElement>, id: string) {
     if (
       id !== hash ||
@@ -57,23 +64,29 @@ export function DetailToc({
     contentRef.current?.querySelector(`#${CSS.escape(id)}`)?.scrollIntoView();
     setRevisit((previous) => previous + 1);
   }
-  const items = targets.map(({ id, title }) => ({
-    key: id,
-    label: title,
-    link: (
-      <SectionLink
-        to="."
-        hash={id}
-        search={true}
-        state={true}
-        resetScroll={false}
-        preload={false}
-        onClick={(event) => revisitSection(event, id)}
-        currentSection={id === current}
-      >
-        {title}
-      </SectionLink>
-    ),
+  function sectionLink({ id, title }: DetailTocEntry) {
+    return {
+      key: id,
+      label: title,
+      link: (
+        <SectionLink
+          to="."
+          hash={id}
+          search={true}
+          state={true}
+          resetScroll={false}
+          preload={false}
+          onClick={(event) => revisitSection(event, id)}
+          currentSection={id === current}
+        >
+          {title}
+        </SectionLink>
+      ),
+    };
+  }
+  const items = targets.map((target) => ({
+    ...sectionLink(target),
+    children: target.subsections?.map(sectionLink),
   }));
 
   return (
