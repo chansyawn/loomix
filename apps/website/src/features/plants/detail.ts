@@ -5,6 +5,7 @@ import { buildIngredientsData, ingredientUsage } from "../ingredients/model";
 import type { IngredientsData } from "../ingredients/model";
 import { plantDetailNavigation } from "./detail-navigation-model";
 import { plantMatureForms } from "./growth";
+import { sourceTreesForItem } from "./model";
 import type { View } from "./search";
 import type { FlowerHybridizationSeries, PlantItem, PlantSeries } from "./model";
 
@@ -40,7 +41,10 @@ export function plantsDetail(
   if (view === "harvestablePlants") {
     const record = data.harvestablePlants.find((stock) => stock.id === id);
     if (!record) throw notFound();
-    return { kind: "harvestablePlant" as const, record };
+    const seeds = data.seeds.filter((seed) =>
+      seed.growth.stages.some((stage) => stage.stockId === id),
+    );
+    return { kind: "harvestablePlant" as const, record, seeds };
   }
   const itemsById = new Map(data.items.map((item) => [item.id, item]));
   const navigation = plantDetailNavigation(data, id);
@@ -48,15 +52,16 @@ export function plantsDetail(
     const record = itemsById.get(id);
     if (!record) throw notFound();
     const seeds = data.seeds.filter((seed) => seed.plantIds.includes(id));
+    const stocks = data.harvestablePlants.filter((stock) => stock.harvest.id === id);
     return {
       kind: "item" as const,
       record,
       navigation,
-      matureForms: plantMatureForms(seeds, id),
+      matureForms: plantMatureForms(seeds, id, stocks),
+      seeds,
+      stocks,
       cooking: ingredients ? ingredientUsage(ingredients, id) : null,
-      sourceTrees: (data.sourceTreesByItemId.get(id) ?? []).flatMap(
-        (tree) => data.itemRefs.get(tree.id) ?? [],
-      ),
+      sourceTrees: sourceTreesForItem(data, id),
       hybridization:
         record.category === "花"
           ? data.series

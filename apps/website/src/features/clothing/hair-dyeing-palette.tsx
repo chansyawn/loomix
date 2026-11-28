@@ -7,7 +7,9 @@ import { Skeleton } from "@/ui/components/skeleton";
 import { Table, TableBody, TableCell, TableHead } from "@/ui/components/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/components/tabs";
 import type { HairDyeingRegion, HairDyeingSwatch } from "./hair-dyeing";
-import type { HairDyeingState } from "./use-hair-dyeing";
+import type { DetailResourceState } from "../detail-page/use-detail-resource";
+import { GameplayRelationItem } from "../omnidex/gameplay-relation-item";
+import { catalogEntryLocation } from "../omnidex/entry-location";
 
 export const hairDyeingSectionId = "hair-dyeing";
 
@@ -24,7 +26,7 @@ const swatchPaths = {
     "M 13 12 C 23 10 32 6 44 6 C 55 6 63 10 66 17 C 69 22 74 19 80 20 C 90 22 96 30 96 40 C 96 49 90 53 89 57 C 87 62 91 66 90 73 C 89 83 80 90 68 94 C 56 98 43 96 36 89 C 32 85 32 80 29 78 C 25 75 19 77 13 72 C 3 65 3 51 8 40 C 13 31 22 26 18 21 C 15 17 10 14 13 12 Z",
 };
 
-export function HairDyeingPalette({ state }: { state: HairDyeingState }) {
+export function HairDyeingPalette({ state }: { state: DetailResourceState<HairDyeingRegion[]> }) {
   if (state.status === "loading")
     return (
       <div role="status" className="grid gap-3">
@@ -43,7 +45,7 @@ export function HairDyeingPalette({ state }: { state: HairDyeingState }) {
         </Button>
       </div>
     );
-  return <HairDyeingRegions regions={state.regions} />;
+  return <HairDyeingRegions regions={state.value} />;
 }
 
 function HairDyeingRegions({ regions }: { regions: HairDyeingRegion[] }) {
@@ -64,7 +66,21 @@ function HairDyeingRegions({ regions }: { regions: HairDyeingRegion[] }) {
       </TabsList>
       {regions.map((region) => (
         <TabsContent key={region.id} value={region.id} className="min-w-0">
-          <HairDyeingRegionTable region={region} />
+          {region.defaultSwatch && (
+            <div className="mb-3 flex items-center gap-2 text-sm">
+              默认色
+              <SwatchFace
+                shape="color"
+                color={region.defaultSwatch.color}
+                image={region.defaultSwatch.image}
+                material={region.defaultSwatch.kind !== "tint"}
+              />
+              <span className="text-muted-foreground">
+                {swatchDescription(region.defaultSwatch)}
+              </span>
+            </div>
+          )}
+          {region.groups.length > 0 && <HairDyeingRegionTable region={region} />}
         </TabsContent>
       ))}
     </Tabs>
@@ -81,6 +97,8 @@ function HairDyeingRegionTable({ region }: { region: HairDyeingRegion }) {
             <span className="pl-1">色系</span>
           </TableHead>
           <TableHead colSpan={columns}>颜色</TableHead>
+          <TableHead>解锁费用</TableHead>
+          <TableHead>染发费用</TableHead>
         </tr>
       </thead>
       <TableBody>
@@ -107,6 +125,19 @@ function HairDyeingRegionTable({ region }: { region: HairDyeingRegion }) {
             ))}
             {Array.from({ length: columns - group.swatches.length }, (_, index) => (
               <TableCell key={`empty-${index}`} />
+            ))}
+            {[group.unlockCost, group.dyeCost].map((cost, index) => (
+              <TableCell key={index}>
+                {cost ? (
+                  <GameplayRelationItem
+                    {...cost}
+                    variant="inline"
+                    destination={cost.browsable === false ? undefined : catalogEntryLocation(cost)}
+                  />
+                ) : (
+                  "未配置"
+                )}
+              </TableCell>
             ))}
           </tr>
         ))}

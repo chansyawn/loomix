@@ -4,7 +4,7 @@ import { createGameplayTagIndex, tagLabel, type GameplayTags } from "@loomix/sch
 import type { Neighbors } from "@loomix/schema/neighbors";
 import type { Vignette, Vignettes } from "@loomix/schema/vignettes";
 import { hasCatalogItemDetail } from "../omnidex/catalog";
-import { resolveNeighborPortrait } from "../neighbors/portrait";
+import { neighborAvatar } from "../neighbors/portrait";
 import {
   createRequirementMatcher,
   resolveRequirementSize,
@@ -93,6 +93,26 @@ export function toVignetteList({ templates }: Vignettes, imageIndex: ImageIndex)
 
 export type VignetteSummary = ReturnType<typeof summarize>;
 
+export function creatureVignettes(
+  { templates }: Vignettes,
+  creatureId: number,
+  image: ImageResolver,
+) {
+  return templates
+    .filter(({ creatureItemIds }) => creatureItemIds.includes(creatureId))
+    .map(({ id, name, illustration }) => ({ id, name: name.zh, image: image(illustration) }));
+}
+
+export function neighborVignettes(
+  { templates }: Vignettes,
+  neighborId: number,
+  image: ImageResolver,
+) {
+  return templates
+    .filter((template) => template.neighborIds.includes(neighborId))
+    .map(({ id, name, illustration }) => ({ id, name: name.zh, image: image(illustration) }));
+}
+
 export function toVignetteDetail(
   id: number,
   {
@@ -178,6 +198,12 @@ export function toVignetteDetail(
 
   return {
     ...summarize(template, image),
+    acquisitionHints: template.hints
+      .filter((hint) => hint.kind === "acquisition")
+      .map((hint) => hint.text.zh),
+    taskPlacementHints: template.hints
+      .filter((hint) => hint.kind === "task-placement")
+      .map((hint) => hint.text.zh),
     requirements: template.requirements.map(
       ({ label, target, support, area, quantity, examples }, index) => {
         const size = resolveRequirementSize(area, tagIndex);
@@ -212,11 +238,7 @@ export function toVignetteDetail(
     }),
     neighbors: template.neighborIds.map((neighborId) => {
       const neighbor = requiredEntry(neighborById.get(neighborId), `neighbor ${neighborId}`);
-      return {
-        id: neighborId,
-        name: neighbor.name,
-        image: resolveNeighborPortrait(neighbor.images, image)?.image ?? null,
-      };
+      return neighborAvatar(neighbor, image);
     }),
   };
 }

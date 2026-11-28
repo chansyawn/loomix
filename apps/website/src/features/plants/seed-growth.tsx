@@ -20,7 +20,9 @@ export function SeedGrowthStages({ seed }: { seed: PlantSeed }) {
                   <CatalogItemCard
                     item={stage}
                     itemId={id}
-                    description={`${group.label} ${index + 1}`}
+                    description={
+                      group.label === "成熟形态" ? undefined : `${group.label} ${index + 1}`
+                    }
                     link={entryId === null ? undefined : catalogEntryLocation({ id: entryId })}
                   />
                 </div>

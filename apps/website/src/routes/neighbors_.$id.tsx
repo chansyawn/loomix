@@ -16,6 +16,6 @@ export const Route = createFileRoute("/neighbors_/$id")({
   component: NeighborRoute,
 });
 function NeighborRoute() {
-  const neighbor = Route.useLoaderData();
-  return <NeighborDetailPage key={neighbor.id} neighbor={neighbor} />;
+  const detail = Route.useLoaderData();
+  return <NeighborDetailPage key={detail.neighbor.id} {...detail} />;
 }

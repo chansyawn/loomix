@@ -1,15 +1,16 @@
 import type { PlantSeries } from "./model";
+import { quantityField, textField, type DetailField } from "../detail-page/field-model";
 
-export function plantSeriesFields(record: PlantSeries): [string, string | null][] {
+export function plantSeriesFields(record: PlantSeries): DetailField[] {
   const { summary } = record;
-  const fields: [string, string | null][] = [
-    ["系列", record.seriesName],
-    ["成员数量", record.plantIds === null ? null : `${record.plantIds.length} 种植物`],
-    ["分类", summary.categories.join("、") || null],
-    ["原产星系", summary.galaxies.join("、") || null],
-  ];
+  const fields: DetailField[] = [textField("产区", summary.galaxies.join("、"))];
   if (summary.harvestCounts.length)
-    fields.push(["收获茬数", `${summary.harvestCounts.join(" / ")} 茬`]);
-  if (summary.flowerColors.length) fields.push(["花色", summary.flowerColors.join("、")]);
+    fields.push(quantityField("收获茬数", `${summary.harvestCounts.join("、")} 茬`));
+  if (summary.flowerColors.length)
+    fields.push({
+      kind: "tags",
+      label: "花色",
+      value: summary.flowerColors.map((name) => ({ key: name, name })),
+    });
   return fields;
 }

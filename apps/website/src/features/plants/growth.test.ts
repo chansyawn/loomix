@@ -29,7 +29,7 @@ test("按明确阶段角色分组，成熟形态使用角色顺序而非阶段�
     { label: "枯萎形态", ids: [14] },
   ]);
   const seed = plantSeedFixture({ id: 10, growth });
-  expect(plantMatureForms([seed], 1)[0].stages.map((stage) => stage.image)).toEqual([
+  expect(plantMatureForms([seed], 1, []).map(({ stage }) => stage.image)).toEqual([
     "second",
     "first",
   ]);
@@ -54,10 +54,25 @@ test("保留全部种子来源，过滤其他产物、非成熟阶段和缺失�
       stages: growth.stages.map((stage) => (stage.id === 12 ? { ...stage, plantId: 2 } : stage)),
     },
   });
-  const forms = plantMatureForms([first, second], 1);
-  expect(forms.map(({ seed }) => seed.id)).toEqual([10, 20]);
-  expect(forms.map(({ stages }) => stages.map((stage) => stage.id))).toEqual([[13, 12], [13]]);
-  expect(plantMatureForms([first], 2)).toEqual([]);
+  const forms = plantMatureForms([first, second], 1, []);
+  expect(forms.map(({ stage, seeds }) => [stage.id, seeds.map((seed) => seed.id)])).toEqual([
+    [13, [10, 20]],
+    [12, [10]],
+  ]);
+  expect(plantMatureForms([first], 2, [])).toEqual([]);
+});
+
+test("仅省略与来源植株编号、名称和图片均相同的形态，保留同编号的变体", () => {
+  const stock = { id: 12, name: "番茄株", image: "tomato" };
+  const stage = { ...stock, stockId: stock.id, plantId: 1 };
+  const variants = [stage, { ...stage, name: "变种" }, { ...stage, image: "other" }];
+  const seeds = variants.map((variant, index) =>
+    plantSeedFixture({
+      id: 20 + index,
+      growth: { ...growth, stages: [variant] },
+    }),
+  );
+  expect(plantMatureForms(seeds, 1, [stock]).map((form) => form.stage)).toEqual(variants.slice(1));
 });
 
 test("普通阶段仅保留既有顺序，不推测成熟状态；缺失生长角色不创建空组", () => {
@@ -65,7 +80,7 @@ test("普通阶段仅保留既有顺序，不推测成熟状态；缺失生长�
   expect(growthStageGroups(seed.growth)).toEqual([
     { label: "阶段", ids: seed.growth.stages.map((stage) => stage.id) },
   ]);
-  expect(plantMatureForms([seed], 1)).toEqual([]);
+  expect(plantMatureForms([seed], 1, [])).toEqual([]);
   expect(
     growthStageGroups({ ...growth, regrowthStageIds: [], witheredStageId: null }).map(
       (group) => group.label,

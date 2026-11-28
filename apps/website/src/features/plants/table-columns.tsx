@@ -172,7 +172,7 @@ export function plantsTableColumns(
       textColumn("categories", "分类", 144, (record) =>
         "summary" in record ? record.summary.categories.join("、") || null : null,
       ),
-      textColumn("galaxies", "原产星系", 160, (record) =>
+      textColumn("galaxies", "产区", 160, (record) =>
         "summary" in record ? record.summary.galaxies.join("、") || null : null,
       ),
       textColumn("harvestCounts", "收获茬数", 112, (record) =>
@@ -194,7 +194,7 @@ export function plantsTableColumns(
     textColumn("category", "分类", 112, (record) =>
       "category" in record ? record.category : null,
     ),
-    textColumn("originGalaxy", "原产星系", 160, (record) =>
+    textColumn("originGalaxy", "产区", 160, (record) =>
       "category" in record ? record.originGalaxy : null,
     ),
     textColumn("harvestCount", "收获茬数", 112, (record) =>

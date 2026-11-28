@@ -1,4 +1,5 @@
 import type { ItemOf } from "@loomix/schema/catalog";
+import { createImageResolver } from "@loomix/schema/assets";
 import { createGameplayTagIndex } from "@loomix/schema/gameplay-tags";
 import { expect, test } from "vite-plus/test";
 import {
@@ -9,7 +10,7 @@ import {
   vignette,
 } from "../../../../../packages/schema/tests/fixture";
 import { findVignetteUses } from "./requirement-matching";
-import { toVignetteDetail, toVignetteList } from "./view";
+import { creatureVignettes, neighborVignettes, toVignetteDetail, toVignetteList } from "./view";
 import { neighborFixture } from "../neighbors/fixture";
 
 const entry = vignette();
@@ -26,7 +27,24 @@ const assets = {
   ],
 };
 
-test("关联友邻和友邻详情优先使用同一张好感插画", () => {
+test("关联小栖地只查询生物名单，摆放物、示例和同号友邻各自独立", () => {
+  const related = vignette(1002);
+  related.creatureItemIds = [44103];
+  const placement = vignette(2000);
+  placement.requirements[0]!.target = { itemId: 44103 };
+  placement.requirements[0]!.examples = [{ itemId: 44103, quantity: 1 }];
+  placement.neighborIds = [44103];
+  const data = { templates: [related, placement], fallbackItems: [] };
+  const image = createImageResolver(assets);
+  expect(creatureVignettes(data, 44103, image)).toEqual([
+    { id: 1002, name: "微风花丛地", image: assets.images[0]!.file },
+  ]);
+  expect(creatureVignettes(data, 2, image)).toEqual([]);
+  expect(neighborVignettes(data, 44103, image).map(({ id }) => id)).toEqual([2000]);
+  expect(neighborVignettes(data, 2, image)).toEqual([]);
+});
+
+test("关联友邻取头部小像，缺图时保留友邻身份", () => {
   const dataset = datasetFixture();
   const { database, mapping } = neighborFixture();
   const template = vignette();
@@ -38,8 +56,8 @@ test("关联友邻和友邻详情优先使用同一张好感插画", () => {
     neighbors: database,
     imageIndex: { images: [...assets.images, ...mapping.images] },
   });
-  expect(detail?.neighbors.map(({ image }) => image)).toEqual([
-    `assets/${"b".repeat(64)}.webp`,
+  expect(detail?.neighbors.map(({ avatar }) => avatar)).toEqual([
+    `assets/${"c".repeat(64)}.webp`,
     `assets/${"c".repeat(64)}.webp`,
     null,
   ]);

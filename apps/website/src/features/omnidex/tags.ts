@@ -45,6 +45,21 @@ export function resolveTagFilterLabel(tag: GameplayTag, policy?: TagLabelPolicy)
   return prefix ? base.slice(prefix.length) : base;
 }
 
+export function visibleTagIds(
+  index: GameplayTagIndex,
+  records: readonly { tagIds: readonly number[] }[],
+  policy?: TagTreePolicy,
+) {
+  if (!policy) return new Set(index.tags.map((tag) => tag.id));
+  const allowedRoots = new Set(policy.rootNames);
+  const visible = new Set<number>();
+  for (const id of new Set(records.flatMap((record) => record.tagIds))) {
+    const path = index.ancestors(id);
+    if (allowedRoots.has(path.at(-1)!.internalName)) for (const tag of path) visible.add(tag.id);
+  }
+  return visible;
+}
+
 export function createOmnidexTagFilter(
   tags: GameplayTags["tags"],
   index: GameplayTagIndex,
@@ -52,7 +67,6 @@ export function createOmnidexTagFilter(
   policy?: TagTreePolicy,
 ) {
   const label = (tag: GameplayTag) => resolveTagFilterLabel(tag, policy);
-  const tagsById = new Map(tags.map((tag) => [tag.id, tag]));
   const optionsById = new Map<number, FilterOption>();
   for (const tag of tags) {
     const path = index.ancestors(tag.id).reverse().map(label);
@@ -63,30 +77,7 @@ export function createOmnidexTagFilter(
       children: [],
     });
   }
-  const childrenByParent = new Map<number, number[]>();
-  for (const tag of tags) {
-    if (tag.parentId === null) continue;
-    const children = childrenByParent.get(tag.parentId) ?? [];
-    children.push(tag.id);
-    childrenByParent.set(tag.parentId, children);
-  }
-  const visibleIds = new Set<number>();
-  if (policy) {
-    const allowedRoots = new Set(policy.rootNames);
-    const referenced = new Set(records.flatMap((record) => record.tagIds));
-    const visit = (tag: GameplayTag): boolean => {
-      let childVisible = false;
-      for (const childId of childrenByParent.get(tag.id) ?? [])
-        if (visit(tagsById.get(childId)!)) childVisible = true;
-      const visible = referenced.has(tag.id) || childVisible;
-      if (visible) visibleIds.add(tag.id);
-      return visible;
-    };
-    for (const tag of tags)
-      if (tag.parentId === null && allowedRoots.has(tag.internalName)) visit(tag);
-  } else {
-    for (const tag of tags) visibleIds.add(tag.id);
-  }
+  const visibleIds = visibleTagIds(index, records, policy);
   const roots: FilterOption[] = [];
   for (const tag of tags) {
     if (!visibleIds.has(tag.id)) continue;
@@ -102,6 +93,9 @@ export function createOmnidexTagFilter(
     ]),
   );
   return {
+    visibleOption(id: number) {
+      return visibleIds.has(id) ? optionsById.get(id) : undefined;
+    },
     options(selectedIds: readonly string[] = []): FilterOption[] {
       const unknown = selectedIds.filter((id) => !optionsById.has(Number(id)));
       return [

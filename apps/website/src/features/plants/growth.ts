@@ -1,4 +1,4 @@
-import type { PlantGrowth, PlantSeed } from "./model";
+import type { HarvestablePlant, PlantGrowth, PlantSeed } from "./model";
 
 export function growthStageGroups(growth: PlantGrowth) {
   if (growth.kind === "staged")
@@ -11,15 +11,32 @@ export function growthStageGroups(growth: PlantGrowth) {
   ].filter((group) => group.ids.length > 0);
 }
 
-export function plantMatureForms(seeds: readonly PlantSeed[], plantId: number) {
-  return seeds.flatMap((seed) => {
+export function plantMatureForms(
+  seeds: readonly PlantSeed[],
+  plantId: number,
+  stocks: readonly Pick<HarvestablePlant, "id" | "name" | "image">[],
+) {
+  type Stage = PlantGrowth["stages"][number];
+  const forms = new Map<string, { key: string; stage: Stage; seeds: PlantSeed[] }>();
+  for (const seed of seeds) {
     const { growth } = seed;
-    if (growth.kind !== "crop") return [];
+    if (growth.kind !== "crop") continue;
     const stagesById = new Map(growth.stages.map((stage) => [stage.id, stage]));
-    const stages = [...new Set(growth.matureStages.map((stage) => stage.stageId))].flatMap((id) => {
+    for (const id of new Set(growth.matureStages.map((stage) => stage.stageId))) {
       const stage = stagesById.get(id);
-      return stage?.plantId === plantId ? [stage] : [];
-    });
-    return stages.length > 0 ? [{ seed, stages }] : [];
-  });
+      if (stage?.plantId !== plantId) continue;
+      if (
+        stocks.some(
+          (stock) =>
+            stock.id === stage.stockId && stock.name === stage.name && stock.image === stage.image,
+        )
+      )
+        continue;
+      const key = JSON.stringify([stage.id, stage.name, stage.image]);
+      const form = forms.get(key);
+      if (form) form.seeds.push(seed);
+      else forms.set(key, { key, stage, seeds: [seed] });
+    }
+  }
+  return [...forms.values()];
 }

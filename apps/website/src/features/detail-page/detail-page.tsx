@@ -2,19 +2,14 @@ import { useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
 import { findWikiScroll } from "@/infrastructure/wiki-scroll";
 import { Skeleton } from "@/ui/components/skeleton";
 import { cn } from "@/ui/lib/utils";
-import { DetailChapter, type DetailSubsection } from "./detail-headings";
+import { DetailChapter, type DetailSection } from "./detail-headings";
 import { DetailNavGroup, type DetailNavigation } from "./detail-nav-group";
 import { DetailToc } from "./detail-toc";
+import { DetailFields, type DetailFieldGroup } from "./detail-fields";
 
-export type DetailField = readonly [label: string, value: string | null];
+export type { DetailField } from "./detail-fields";
 
-export type DetailSection = {
-  id: string;
-  title: string;
-  content?: ReactNode;
-  headingId?: string;
-  subsections?: readonly DetailSubsection[];
-};
+export type { DetailSection } from "./detail-headings";
 
 export type DetailPageProps = {
   image: ReactNode;
@@ -22,12 +17,12 @@ export type DetailPageProps = {
   titleId?: string;
   titleLeading?: ReactNode;
   titleActions?: ReactNode;
+  titleMetadata?: ReactNode;
   description?: ReactNode;
-  fields: readonly DetailField[];
+  fieldGroups: readonly DetailFieldGroup[];
   overviewId?: string;
   sections: readonly DetailSection[];
   relatedNavigation?: DetailNavigation;
-  empty?: ReactNode;
 };
 
 export function DetailPage({
@@ -36,12 +31,12 @@ export function DetailPage({
   titleId,
   titleLeading,
   titleActions,
+  titleMetadata,
   description,
-  fields,
+  fieldGroups,
   overviewId = "detail-overview",
   sections,
   relatedNavigation,
-  empty,
 }: DetailPageProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const navigationRef = useRef<HTMLDivElement>(null);
@@ -54,7 +49,9 @@ export function DetailPage({
       navigationRef={navigationRef}
       navigation={
         <>
-          <DetailToc targets={targets} contentRef={contentRef} navigationRef={navigationRef} />
+          {sections.length > 0 && (
+            <DetailToc targets={targets} contentRef={contentRef} navigationRef={navigationRef} />
+          )}
           {relatedNavigation && <DetailNavGroup {...relatedNavigation} />}
         </>
       }
@@ -65,49 +62,25 @@ export function DetailPage({
         aria-labelledby={titleId}
         className="@container/detail-fields flex min-w-0 flex-col gap-4"
       >
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <h1
-            id={titleId}
-            className="flex min-w-0 items-center gap-3 text-3xl/tight font-semibold tracking-tight sm:text-4xl"
-          >
-            {titleLeading}
-            <span className="min-w-0 wrap-anywhere">{title}</span>
-          </h1>
-          {titleActions}
+        <div className="grid gap-1.5">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <h1
+              id={titleId}
+              className="flex min-w-0 items-center gap-3 text-3xl/tight font-semibold tracking-tight sm:text-4xl"
+            >
+              {titleLeading}
+              <span className="min-w-0 wrap-anywhere">{title}</span>
+            </h1>
+            {titleActions}
+          </div>
+          {titleMetadata}
         </div>
         {description}
-        {fields.length > 0 && (
-          <dl className="grid gap-3 @min-[22rem]/detail-fields:grid-cols-2 @min-[24rem]/detail-fields:gap-4">
-            {fields.map(([label, value], index) => (
-              <div
-                key={`${label}-${index}`}
-                className="flex min-w-0 flex-col gap-1.5 rounded-xl bg-muted/40 p-3 @min-[24rem]/detail-fields:p-4"
-              >
-                <dt className="text-xs text-muted-foreground">{label}</dt>
-                <dd className="text-sm/6 wrap-break-word whitespace-pre-line">
-                  {value || "未提供"}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        )}
+        <DetailFields groups={fieldGroups} />
       </section>
-      {sections.map(({ id, headingId = `${id}-heading`, title, content, subsections }) => (
-        <DetailChapter
-          key={id}
-          id={id}
-          labelledBy={headingId}
-          subsections={subsections}
-          heading={
-            <h2 id={headingId} className="text-lg font-semibold wrap-anywhere">
-              {title}
-            </h2>
-          }
-        >
-          {content}
-        </DetailChapter>
+      {sections.map((section) => (
+        <DetailChapter key={section.id} {...section} />
       ))}
-      {sections.length === 0 && empty}
     </DetailFrame>
   );
 }
@@ -157,7 +130,7 @@ function DetailFrame({
         <div className="contents @min-[48rem]/detail-page:flex @min-[48rem]/detail-page:flex-col @min-[48rem]/detail-page:self-stretch">
           <div
             ref={navigationRef}
-            className="sticky top-0 z-20 flex min-w-0 items-center justify-between gap-1 border-b bg-background py-1 @min-[48rem]/detail-page:top-4 @min-[48rem]/detail-page:max-h-[calc(var(--detail-scrollport-height,100svh)-2rem)] @min-[48rem]/detail-page:shrink-0 @min-[48rem]/detail-page:flex-col @min-[48rem]/detail-page:items-stretch @min-[48rem]/detail-page:gap-2 @min-[48rem]/detail-page:overflow-y-auto @min-[48rem]/detail-page:rounded-2xl @min-[48rem]/detail-page:border @min-[48rem]/detail-page:p-2.5"
+            className="sticky top-0 z-20 flex min-w-0 items-center justify-between gap-1 border-b bg-background py-1 empty:hidden @min-[48rem]/detail-page:top-4 @min-[48rem]/detail-page:max-h-[calc(var(--detail-scrollport-height,100svh)-2rem)] @min-[48rem]/detail-page:shrink-0 @min-[48rem]/detail-page:flex-col @min-[48rem]/detail-page:items-stretch @min-[48rem]/detail-page:gap-2 @min-[48rem]/detail-page:overflow-y-auto @min-[48rem]/detail-page:rounded-2xl @min-[48rem]/detail-page:border @min-[48rem]/detail-page:p-2.5"
           >
             {navigation}
           </div>
@@ -173,14 +146,6 @@ function DetailFrame({
         </div>
       </div>
     </article>
-  );
-}
-
-export function DetailRelatedGrid({ children }: { children: ReactNode }) {
-  return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))] gap-4">
-      {children}
-    </div>
   );
 }
 

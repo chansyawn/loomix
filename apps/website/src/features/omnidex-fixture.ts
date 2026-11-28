@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { FORMAT_VERSION } from "@loomix/schema/common";
 import type { GameplayTags } from "@loomix/schema/gameplay-tags";
+import type { Neighbors } from "@loomix/schema/neighbors";
 import {
   CatalogSchema,
   type Catalog,
@@ -156,13 +157,16 @@ export function catalogFixture(
       origins: values(record.galaxyFlavor),
       strength: record.strength,
       effects: record.effects,
-      cooking: {
-        difficulty: record.difficulty,
-        unlockCondition: record.unlockCondition,
-        cookware: record.cookware,
-        tastes: record.tastes,
-        slots: record.slots,
-      },
+      cooking:
+        record.unlockCondition === undefined
+          ? null
+          : {
+              difficulty: record.difficulty,
+              unlockCondition: record.unlockCondition,
+              cookware: record.cookware,
+              tastes: record.tastes,
+              slots: record.slots,
+            },
     });
   for (const record of view.dishes?.series ?? []) group(record, "dish", record.dishIds);
   for (const record of view.clothing?.items ?? [])
@@ -209,15 +213,17 @@ export function fixtureRequest({
   catalog,
   gameplayTags,
   hairDyeing = emptyHairDyeing(),
+  neighbors = { neighbors: [] },
 }: {
   catalog: Catalog;
   gameplayTags: GameplayTags;
   hairDyeing?: HairDyeing;
+  neighbors?: Neighbors;
 }): typeof fetch {
   const documents = {
     "gameplay-tags": gameplayTags,
     catalog,
-    neighbors: { neighbors: [] },
+    neighbors,
     starsea: { regions: [], islets: [], iconStyles: [] },
     vignettes: { templates: [], fallbackItems: [] },
     "hair-dyeing": hairDyeing,

@@ -37,6 +37,7 @@ describe("dish presentation", () => {
   });
 
   it("formats known and absent unlock conditions", () => {
+    expect(unlockConditionLabel(undefined)).toBe("解锁资料未收录");
     expect(unlockConditionLabel(null)).toBe("无额外条件");
     expect(unlockConditionLabel({ kind: "chefLevelGreaterOrEqual", level: 5 })).toBe(
       "厨师等级 ≥ 5",

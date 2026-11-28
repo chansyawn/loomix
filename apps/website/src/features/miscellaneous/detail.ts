@@ -1,4 +1,5 @@
 import { notFound } from "@tanstack/react-router";
+import { sourceTreesForItem } from "../plants/model";
 import type { MiscellaneousData } from "./data";
 import { loadOmnidexView } from "../omnidex-loader";
 import type { OmnidexView } from "../omnidex-view";
@@ -26,9 +27,7 @@ export function buildMiscellaneousDetail(
   if (!record) throw notFound();
   return {
     record,
-    sourceTrees: (collection.plants.sourceTreesByItemId.get(id) ?? []).flatMap(
-      (tree) => collection.plants.itemRefs.get(tree.id) ?? [],
-    ),
+    sourceTrees: sourceTreesForItem(collection.plants, id),
     cooking: ingredientUsage(ingredients, id),
     furnitureUses: collection.furnitureUsesByMaterialId.get(id) ?? [],
   };

@@ -9,6 +9,8 @@ import { catalogEntryLocation } from "../omnidex/entry-location";
 
 export function PlantsCard({ item }: { item: PlantItem | HarvestablePlant }) {
   const origin = useOmnidexOrigin();
+  const category =
+    "stockCategory" in item ? `${item.stockCategory} · 可收获${item.harvest.name}` : item.category;
   return (
     <RecordListCard
       name={item.name}
@@ -19,11 +21,7 @@ export function PlantsCard({ item }: { item: PlantItem | HarvestablePlant }) {
           {item.name}
         </Link>
       }
-      tags={
-        "stockCategory" in item
-          ? `${item.stockCategory} · 可收获${item.harvest.name}`
-          : item.category
-      }
+      tags={category}
     />
   );
 }

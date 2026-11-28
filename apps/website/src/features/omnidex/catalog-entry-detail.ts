@@ -2,6 +2,7 @@ import { notFound } from "@tanstack/react-router";
 import type { ItemOf } from "@loomix/schema/catalog";
 import type { OmnidexCatalog, CatalogEntryRow } from "./catalog";
 import { furnitureDetail } from "../furniture/detail";
+import { furnitureDetailData } from "../furniture/data";
 import { clothingDetail } from "../clothing/detail";
 import { clothingCounterpart } from "../clothing/counterpart";
 import { creaturesDetail } from "../creatures/detail";
@@ -25,7 +26,7 @@ function detailKind(row: CatalogEntryRow) {
     : ({ kind: record.kind, collection: false } as const);
 }
 
-export function catalogEntryDetail(data: OmnidexCatalog, id: number, neighborName?: string) {
+export function catalogEntryDetail(data: OmnidexCatalog, id: number) {
   const row = data.byId.get(id);
   if (!row) throw notFound();
   const view = data.view;
@@ -34,11 +35,7 @@ export function catalogEntryDetail(data: OmnidexCatalog, id: number, neighborNam
     case "furniture":
       return {
         category: "furniture" as const,
-        detail: furnitureDetail(
-          { ...view.furniture, ingredientItemsById: view.ingredientItemsById },
-          collection ? "sets" : "items",
-          id,
-        ),
+        detail: furnitureDetail(furnitureDetailData(view), collection ? "sets" : "items", id),
       };
     case "clothing":
     case "appearance":
@@ -66,10 +63,7 @@ export function catalogEntryDetail(data: OmnidexCatalog, id: number, neighborNam
       return {
         category: "clothing" as const,
         detail: {
-          ...neighborOutfitDetail(
-            row as CatalogEntryRow & { record: ItemOf<"neighborOutfit"> },
-            neighborName,
-          ),
+          ...neighborOutfitDetail(row as CatalogEntryRow & { record: ItemOf<"neighborOutfit"> }),
           counterpart,
           navigation:
             counterpart && navigation?.groups.length

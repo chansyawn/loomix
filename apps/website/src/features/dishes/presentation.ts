@@ -4,6 +4,10 @@ export function formatTastes(tastes: DishItem["tastes"]): string | null {
   return tastes?.join(" / ") ?? null;
 }
 
+export function dishCardAttributes(item: DishItem) {
+  return [formatTastes(item.tastes), item.difficulty, item.cookware].filter(Boolean).join(" · ");
+}
+
 export function strengthText(strength: DishItem["strength"]): string | null {
   return strength === null ? null : `增加 ${strength} 力气`;
 }
@@ -21,6 +25,7 @@ export function effectSummary(item: DishItem): string | null {
 }
 
 export function unlockConditionLabel(condition: DishItem["unlockCondition"]): string {
+  if (condition === undefined) return "解锁资料未收录";
   if (condition === null) return "无额外条件";
   switch (condition.kind) {
     case "chefLevelGreaterOrEqual":

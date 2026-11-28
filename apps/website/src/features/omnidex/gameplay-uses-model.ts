@@ -18,7 +18,11 @@ export type GameplayUse = {
   conditions: { hash: string; summary: string; linkLabel: string }[];
 };
 
-export const gameplayUseLabels = { crafting: "制作", cooking: "烹饪", vignette: "小栖地" };
+export const gameplayUseLabels = {
+  crafting: "用于制作",
+  cooking: "用于烹饪",
+  vignette: "小栖地用途",
+};
 export type GameplayUseCategory = keyof typeof gameplayUseLabels;
 export const gameplayUsesSectionId = "gameplay-uses";
 
@@ -27,7 +31,6 @@ export function gameplayUseSectionId(category: GameplayUseCategory) {
 }
 
 export function catalogGameplayUses(data: OmnidexCatalog, id: number) {
-  const materialName = data.byId.get(id)?.name ?? "此材料";
   const crafting: GameplayUse[] = (data.view.furnitureUsesByMaterialId.get(id) ?? []).map(
     ({ furniture, recipes }) => ({
       id: furniture.id,
@@ -36,7 +39,7 @@ export function catalogGameplayUses(data: OmnidexCatalog, id: number) {
       destination: catalogEntryLocation(furniture),
       conditions: recipes.map(({ id: recipeId, name, quantity }) => ({
         hash: gameplayAnchor("recipe", recipeId),
-        summary: `需要${materialName} ×${quantity}`,
+        summary: `用量 ×${quantity}`,
         linkLabel: furniture.inspoCards.length === 1 ? "查看制作配方" : `查看配方 · ${name}`,
       })),
     }),

@@ -18,7 +18,7 @@ export function GameplayRelationItem({
   quantity?: number;
   note?: string;
   destination?: LinkComponentProps<"a">;
-  variant?: "default" | "inline";
+  variant?: "default" | "inline" | "overview";
 }) {
   const origin = useOmnidexOrigin();
   const link = destination ? { ...destination, state: { omnidexOrigin: origin } } : undefined;
@@ -35,9 +35,11 @@ export function GameplayRelationItem({
     </span>
   );
 
-  if (variant === "inline") {
-    const layoutClass =
-      "inline-flex max-w-full min-w-0 items-center gap-1.5 text-sm/5 whitespace-nowrap";
+  if (variant !== "default") {
+    const layoutClass = cn(
+      "inline-flex max-w-full min-w-0 items-center gap-1.5 whitespace-nowrap",
+      variant === "overview" ? "min-h-8 text-sm/6" : "text-sm/5",
+    );
     const content = (
       <>
         <RecordImage
@@ -46,7 +48,7 @@ export function GameplayRelationItem({
           inset="none"
           background="none"
           fallback="icon"
-          className="size-7 shrink-0 rounded-md"
+          className={cn("shrink-0 rounded-md", variant === "overview" ? "size-6" : "size-7")}
         />
         {label}
         {quantityLabel && (

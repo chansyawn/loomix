@@ -1,23 +1,34 @@
 import type { ItemOf } from "@loomix/schema/catalog";
 import type { CatalogEntryRow } from "../omnidex/catalog";
 import { formatNeighborOutfitBodyTypes } from "./presentation";
+import type { createResourceReader } from "@/infrastructure/resources";
+import type { createImageResolver } from "@loomix/schema/assets";
+import { readNeighborDocument } from "../neighbors/data";
+import { neighborAvatar } from "../neighbors/portrait";
+
+export async function readOutfitNeighbor(
+  load: ReturnType<typeof createResourceReader>,
+  id: number,
+  image: ReturnType<typeof createImageResolver>,
+) {
+  const { neighbors } = await readNeighborDocument(load);
+  const neighbor = neighbors.find((entry) => entry.id === id);
+  return neighbor ? neighborAvatar(neighbor, image) : null;
+}
 
 export type NeighborOutfitDetail = {
   kind: "neighborOutfit";
   record: CatalogEntryRow & { record: ItemOf<"neighborOutfit"> };
-  neighborName: string | null;
   slotName: string | null;
   modelSizes: string;
 };
 
 export function neighborOutfitDetail(
   row: CatalogEntryRow & { record: ItemOf<"neighborOutfit"> },
-  neighborName?: string,
 ): NeighborOutfitDetail {
   return {
     kind: "neighborOutfit",
     record: row,
-    neighborName: neighborName ?? null,
     slotName: row.record.category,
     modelSizes: formatNeighborOutfitBodyTypes(row.record.bodyTypes),
   };

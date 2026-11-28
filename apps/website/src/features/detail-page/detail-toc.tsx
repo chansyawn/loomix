@@ -5,7 +5,6 @@ import { DetailNavGroup } from "./detail-nav-group";
 import { useReadingSection } from "./use-reading-section";
 
 type DetailTocEntry = { id: string; title: string };
-type DetailTocTarget = DetailTocEntry & { subsections?: readonly DetailTocEntry[] };
 
 const SectionLink = createLink(function SectionAnchor({
   currentSection,
@@ -25,7 +24,7 @@ export function DetailToc({
   contentRef,
   navigationRef,
 }: {
-  targets: readonly DetailTocTarget[];
+  targets: readonly DetailTocEntry[];
   contentRef: RefObject<HTMLDivElement | null>;
   navigationRef: RefObject<HTMLDivElement | null>;
 }) {
@@ -34,10 +33,7 @@ export function DetailToc({
     structuralSharing: true,
   });
   const [revisit, setRevisit] = useState(0);
-  const targetIds = targets.flatMap(({ id, subsections = [] }) => [
-    id,
-    ...subsections.map((subsection) => subsection.id),
-  ]);
+  const targetIds = targets.map(({ id }) => id);
   const sectionsKey = targetIds.join(" ");
   const readingSection = useReadingSection({
     contentRef,
@@ -84,10 +80,7 @@ export function DetailToc({
       ),
     };
   }
-  const items = targets.map((target) => ({
-    ...sectionLink(target),
-    children: target.subsections?.map(sectionLink),
-  }));
+  const items = targets.map(sectionLink);
 
   return (
     <DetailNavGroup

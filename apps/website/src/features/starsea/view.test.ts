@@ -1,10 +1,15 @@
-import type { ImageIndex } from "@loomix/schema/assets";
+import { createImageResolver, type ImageIndex } from "@loomix/schema/assets";
 import type { Starsea } from "@loomix/schema/starsea";
 import { expect, test } from "vite-plus/test";
 import { addFixtureRecords, catalogFixture } from "../omnidex-fixture";
 import { neighborFixture } from "../neighbors/fixture";
 import { filterIslets } from "./query";
-import { toStarseaDetail, toStarseaList } from "./view";
+import {
+  itemExplorationHints,
+  neighborEncounterIslets,
+  toStarseaDetail,
+  toStarseaList,
+} from "./view";
 
 const illustration = { assetId: "islet", variant: "illustration" } as const;
 const icon = { assetId: "radar", variant: "icon" } as const;
@@ -56,6 +61,36 @@ function starseaFixture(): Starsea {
   };
 }
 
+test("探索提示反查保留各区域探索方式、生物和特产角色，并排除无区域归属的星屿", () => {
+  const starsea = starseaFixture();
+  for (const islet of starsea.islets) {
+    if ([125, 79, 999].includes(islet.id)) islet.displayedSpecialtyIds = [12];
+  }
+  starsea.regions[1]!.encounters[0]!.candidateIsletIds!.push(125);
+  const image = createImageResolver(imageIndex);
+  expect(itemExplorationHints(starsea, 12, image)).toMatchObject([
+    {
+      id: 125,
+      creature: true,
+      specialty: true,
+      regions: [
+        { name: "禾夏H83区", exploration: true, encounter: true },
+        { name: "沐雪季·禾夏H84区", exploration: false, encounter: true },
+      ],
+    },
+    {
+      id: 79,
+      creature: false,
+      specialty: true,
+      regions: [
+        { exploration: false, encounter: true },
+        { exploration: false, encounter: true },
+      ],
+    },
+  ]);
+  expect(itemExplorationHints(starsea, 99, image)).toEqual([]);
+});
+
 test("星屿图片依次使用插画、雷达图标和占位", () => {
   const starsea = starseaFixture();
   expect(toStarseaList(starsea, imageIndex).islets[0]).toMatchObject({
@@ -67,6 +102,22 @@ test("星屿图片依次使用插画、雷达图标和占位", () => {
     illustrated: false,
   });
   expect(toStarseaList(starsea, { images: [] }).islets[0].image).toBeNull();
+});
+
+test("友邻回链合并明确的候选星屿，保留各自区域并区分未知与空候选", () => {
+  const starsea = starseaFixture();
+  const related = (id: number) =>
+    neighborEncounterIslets(starsea, id, createImageResolver(imageIndex));
+  expect(related(1).islets).toMatchObject([
+    { id: 125, regions: ["禾夏H83区"] },
+    { id: 79, regions: ["禾夏H83区", "沐雪季·禾夏H84区"] },
+  ]);
+  expect(related(3)).toEqual({ islets: [], unconfirmedRegions: ["禾夏H83区"] });
+  expect(related(4)).toEqual({ islets: [], unconfirmedRegions: [] });
+  starsea.regions[1]!.encounters.push({ neighborId: 4, candidateIsletIds: [79] });
+  expect(related(4).islets).toMatchObject([
+    { id: 79, regions: ["沐雪季·禾夏H84区"], anchor: "encounters-2" },
+  ]);
 });
 
 test("星屿按区域与探索顺序排列，候选去重并保留可筛选的区域归属", () => {
@@ -101,28 +152,42 @@ test("详情按星屿关联物资与友邻，区分空配置和空条目", () =>
     gameplayTags,
     { id: 11, name: "同名鱼", kind: "creature", image: { assetId: "item", variant: "icon" } },
     { id: 12, name: "同名鱼", kind: "reference" },
+    { id: 13, name: "创想卡", kind: "inspoCard" },
+    { id: 14, name: "友邻服饰", kind: "neighborOutfit" },
   );
+  starsea.islets.find(({ id }) => id === 125)!.displayedCreatureIds!.push(13, 14);
   const detail = toStarseaDetail(125, starsea, relatedImages, catalog, database);
   expect(detail?.creatures).toEqual([
     { id: 12, name: "同名鱼", image: null, browsable: false },
     { id: 11, name: "同名鱼", image: `assets/${"5".repeat(64)}.webp`, browsable: true },
+    { id: 13, name: "创想卡", image: null, browsable: false },
+    { id: 14, name: "友邻服饰", image: null, browsable: true },
   ]);
   expect(detail?.specialties).toEqual([]);
-  expect(detail?.encounterNeighbors).toEqual([
-    { id: 1, name: "蛮蛮", image: `assets/${"b".repeat(64)}.webp` },
+  expect(detail?.regions).toMatchObject([
+    {
+      exploration: true,
+      neighbors: [{ id: 1, name: "蛮蛮", avatar: `assets/${"c".repeat(64)}.webp` }],
+    },
   ]);
   const missingRole = { images: relatedImages.images.filter((image) => image.assetId !== "role") };
   const candidate = toStarseaDetail(79, starsea, missingRole, catalog, database);
-  expect(candidate?.encounterNeighbors.map(({ id }) => id)).toEqual([1, 2]);
-  expect(candidate?.encounterNeighbors.map(({ image }) => image)).toEqual([
-    `assets/${"b".repeat(64)}.webp`,
-    null,
+  expect(candidate?.regions).toMatchObject([
+    {
+      id: 1,
+      exploration: false,
+      neighbors: [
+        { id: 1, avatar: null },
+        { id: 2, avatar: null },
+      ],
+    },
+    { id: 2, exploration: false, neighbors: [{ id: 1, avatar: null }] },
   ]);
-  expect(candidate?.regions.map(({ id }) => id)).toEqual([1, 2]);
   expect(candidate?.specialties).toBeNull();
-  expect(toStarseaDetail(24, starsea, imageIndex, catalog, database)?.encounterNeighbors).toEqual(
-    [],
-  );
+  expect(toStarseaDetail(24, starsea, imageIndex, catalog, database)?.regions).toMatchObject([
+    { exploration: true, neighbors: [] },
+    { exploration: true, neighbors: [] },
+  ]);
   expect(toStarseaDetail(999, starsea, imageIndex, catalog, database)).toBeNull();
 });
 

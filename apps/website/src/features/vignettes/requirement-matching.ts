@@ -1,6 +1,7 @@
 import { isListedItem, type Item } from "@loomix/schema/catalog";
 import type { GameplayTagIndex } from "@loomix/schema/gameplay-tags";
 import type { Vignette } from "@loomix/schema/vignettes";
+import { furnitureSizeTagName } from "../furniture/size";
 
 type Requirement = Vignette["requirements"][number];
 export type RequirementTarget = Requirement["target"];
@@ -13,7 +14,7 @@ export function resolveRequirementSize(
   if (!area) return;
   const width = area.width / 2;
   const height = area.height / 2;
-  const tagName = `尺寸_${width}_${height}`.replaceAll(".", "a");
+  const tagName = furnitureSizeTagName(width, height);
   return { label: `${width} × ${height}`, tagId: tagIndex.findByName(tagName)?.id };
 }
 

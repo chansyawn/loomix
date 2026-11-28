@@ -1,52 +1,54 @@
-import { recordFields, type CatalogEntryRow } from "./catalog";
+import type { CatalogEntryRow } from "./catalog";
+import type { EntryOverview } from "./entry-overview";
+import { CatalogTitleMetadata, overviewFieldGroups } from "./overview-fields";
 import type { CatalogEntryDetail } from "./catalog-entry-detail";
 import type { ShopPurchaseQuotes } from "./purchase-quotes";
-import { RecordImage } from "./record-image";
 import { DetailPage } from "@/features/detail-page/detail-page";
 import { findWikiScroll, wikiScrollId } from "@/infrastructure/wiki-scroll";
 import { clothingDetailPresentation } from "../clothing/detail-presentation";
-import type { ReadHairDyeing } from "../clothing/hair-dyeing";
-import { useHairDyeing, type HairDyeingState } from "../clothing/use-hair-dyeing";
+import type { HairDyeingRegion, ReadHairDyeing } from "../clothing/hair-dyeing";
+import { useDetailResource, type DetailResourceState } from "../detail-page/use-detail-resource";
+import type { readOutfitNeighbor } from "../neighbor-outfit/detail";
 import { creaturesDetailPresentation } from "../creatures/detail-presentation";
 import { dishesDetailPresentation } from "../dishes/detail-presentation";
 import { furnitureDetailPresentation } from "../furniture/detail-presentation";
 import { miscellaneousDetailPresentation } from "../miscellaneous/detail-presentation";
 import { plantsDetailPresentation } from "../plants/detail-presentation";
-import { mergeDetailFields, type CatalogDetailPresentation } from "./catalog-detail-presentation";
+import type { CatalogDetailPresentation } from "./catalog-detail-presentation";
 import { catalogEntryNavigation } from "./detail-navigation";
-import { gameplayUsesSection, useVignetteGameplayUses } from "./gameplay-uses";
+import { gameplayUseSections } from "./gameplay-uses";
+import type { catalogGameplayUses } from "./gameplay-uses-model";
+import type { ItemRelationReaders } from "./item-relations";
 import {
-  gameplayUsesSectionId,
-  gameplayUseSectionId,
-  type catalogGameplayUses,
-  type GameplayUse,
-} from "./gameplay-uses-model";
+  explorationSection,
+  giftPreferenceGroup,
+  outfitOwnerFields,
+  relatedVignetteFields,
+  RelationLoadError,
+} from "./item-relation-presentation";
 import { useOmnidexOrigin } from "./navigation";
 import { QualityMarker } from "./quality";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/ui/components/empty";
+import { FlowerDyeingUses } from "../clothing/flower-dyeing-uses";
 import { useElementScrollRestoration, useRouterState } from "@tanstack/react-router";
-import { InfoIcon } from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
 
 export function CatalogEntryPage({
   record,
   model,
+  overview,
+  readOwner,
   quotes,
   uses,
-  readVignetteUses,
+  relations,
   readHairDyeing,
 }: {
   record: CatalogEntryRow;
   model: CatalogEntryDetail;
+  overview: EntryOverview;
+  readOwner?: () => ReturnType<typeof readOutfitNeighbor>;
   quotes?: ShopPurchaseQuotes[];
   uses?: ReturnType<typeof catalogGameplayUses>;
-  readVignetteUses?: () => Promise<GameplayUse[]>;
+  relations?: ItemRelationReaders;
   readHairDyeing?: ReadHairDyeing;
 }) {
   const content = useRef<HTMLDivElement>(null);
@@ -54,68 +56,75 @@ export function CatalogEntryPage({
   const origin = useOmnidexOrigin();
   const hash = useRouterState({ select: (state) => state.location.hash });
   const pendingScroll = useRef<{ element: HTMLElement; from: number; to: number } | null>(null);
-  const pendingUsesAnchor = useRef<string | undefined>(undefined);
-  const vignette = useVignetteGameplayUses(readVignetteUses, () => {
-    pendingUsesAnchor.current =
-      (hash === gameplayUsesSectionId || hash === gameplayUseSectionId("vignette")) &&
-      !content.current?.querySelector(`#${hash}`)
-        ? hash
-        : undefined;
+  const pendingAnchor = useRef<string | undefined>(undefined);
+  function beforeRelationsChange() {
+    if (hash && !content.current?.querySelector(`#${CSS.escape(hash)}`))
+      pendingAnchor.current = hash;
     const element = findWikiScroll(content.current);
     if (!element || !restore) return;
     const maxScroll = Math.max(0, element.scrollHeight - element.clientHeight);
     if (restore.scrollY > maxScroll && element.scrollTop === maxScroll)
       pendingScroll.current = { element, from: maxScroll, to: restore.scrollY };
-  });
+  }
+  const owner = useDetailResource(readOwner, beforeRelationsChange);
+  const gifts = useDetailResource(relations?.gifts, beforeRelationsChange);
+  const islets = useDetailResource(relations?.islets, beforeRelationsChange);
+  const vignettes = useDetailResource(relations?.vignettes, beforeRelationsChange);
+  const flowerDyeing = useDetailResource(relations?.flowerDyeing, beforeRelationsChange);
   useLayoutEffect(() => {
-    const usesAnchor = pendingUsesAnchor.current;
-    pendingUsesAnchor.current = undefined;
+    const target =
+      hash && pendingAnchor.current === hash
+        ? content.current?.querySelector(`#${CSS.escape(hash)}`)
+        : null;
+    pendingAnchor.current = undefined;
     const scroll = pendingScroll.current;
     pendingScroll.current = null;
-    if (usesAnchor && usesAnchor === hash)
-      content.current?.querySelector(`#${usesAnchor}`)?.scrollIntoView();
+    if (target) target.scrollIntoView();
     else if (scroll && scroll.element.scrollTop === scroll.from)
       scroll.element.scrollTop = scroll.to;
-  }, [hash, vignette]);
-  const usesSection = uses && gameplayUsesSection({ ...uses, vignette });
-  const hairDyeing = useHairDyeing(readHairDyeing);
-  const { image, description, fields, sections, titleActions, navigation, showEmptyExtras } =
-    catalogDetailPresentation(model, hairDyeing);
-  const detailSections = [...sections];
-  if (quotes?.length)
-    detailSections.push({
-      id: "purchase-offers",
-      title: "配置报价（每次购买）",
-      content: (
-        <dl className="grid gap-3">
-          {quotes.map(({ id, name, paymentNote, prices }) => (
-            <div key={id} className="grid gap-1">
-              <dt className="font-medium">{name}</dt>
-              {prices.map(({ key, priceLabel, currencyImage, note }) => (
-                <dd key={key} className="flex items-start gap-1.5">
-                  {currencyImage && (
-                    <RecordImage
-                      image={currencyImage}
-                      name=""
-                      inset="none"
-                      background="none"
-                      fallback="icon"
-                      className="mt-0.5 size-5 shrink-0"
-                    />
-                  )}
-                  <span>
-                    {priceLabel}
-                    {note && <span className="text-muted-foreground">（{note}）</span>}
-                  </span>
-                </dd>
-              ))}
-              {paymentNote && <dd className="text-sm text-muted-foreground">{paymentNote}</dd>}
-            </div>
-          ))}
-        </dl>
+  }, [hash, gifts, islets, vignettes, flowerDyeing, owner]);
+  const useSections =
+    uses &&
+    gameplayUseSections(
+      { ...uses, vignette: vignettes?.status === "ready" ? vignettes.value.placements : [] },
+      vignettes?.status === "error" && (
+        <RelationLoadError label="小栖地布景用途" retry={vignettes.retry} />
       ),
+    );
+  const hairDyeing = useDetailResource(readHairDyeing);
+  const presentation = catalogDetailPresentation(model, overview.detailTags, hairDyeing);
+  const { image, classification, sections, titleActions, navigation } = presentation;
+  const detailSections = [...sections];
+  const hints = explorationSection(islets);
+  if (hints) detailSections.push(hints);
+  const groups = overviewFieldGroups(
+    overview,
+    presentation,
+    [
+      ...outfitOwnerFields(owner),
+      ...(model.category === "creatures" && model.detail.kind === "item"
+        ? relatedVignetteFields(vignettes)
+        : []),
+      { kind: "prices", label: "购买报价（每次）", value: quotes ?? [], anchor: "purchase-offers" },
+    ],
+    giftPreferenceGroup(gifts),
+  );
+  if (useSections) detailSections.push(...useSections);
+  if (
+    flowerDyeing?.status === "error" ||
+    (flowerDyeing?.status === "ready" && flowerDyeing.value.length)
+  ) {
+    detailSections.push({
+      id: "flower-dyeing",
+      title: "用于染发",
+      content:
+        flowerDyeing.status === "error" ? (
+          <RelationLoadError label="花朵染发用途" retry={flowerDyeing.retry} />
+        ) : (
+          <FlowerDyeingUses groups={flowerDyeing.value} />
+        ),
     });
-  if (usesSection) detailSections.push(usesSection);
+  }
   return (
     <div ref={content}>
       <DetailPage
@@ -123,20 +132,17 @@ export function CatalogEntryPage({
         title={record.name}
         titleLeading={record.quality !== null && <QualityMarker quality={record.quality} />}
         titleActions={titleActions}
+        titleMetadata={<CatalogTitleMetadata row={record} classification={classification} />}
         description={
-          record.quality === null ? (
-            <>
-              <p className="text-sm text-muted-foreground">品阶：未提供</p>
-              {description}
-            </>
-          ) : (
-            description
+          record.description && (
+            <p className="text-sm/7 whitespace-pre-line text-muted-foreground">
+              {record.description}
+            </p>
           )
         }
-        fields={mergeDetailFields(fields, recordFields(record))}
+        fieldGroups={groups}
         sections={detailSections}
         relatedNavigation={catalogEntryNavigation(navigation, record.id, origin)}
-        empty={showEmptyExtras && <CatalogDetailEmpty />}
       />
     </div>
   );
@@ -144,34 +150,21 @@ export function CatalogEntryPage({
 
 function catalogDetailPresentation(
   model: CatalogEntryDetail,
-  hairDyeing: HairDyeingState | undefined,
+  tags: EntryOverview["detailTags"],
+  hairDyeing: DetailResourceState<HairDyeingRegion[]> | undefined,
 ): CatalogDetailPresentation {
   switch (model.category) {
     case "furniture":
-      return furnitureDetailPresentation(model.detail);
+      return furnitureDetailPresentation(model.detail, tags);
     case "clothing":
       return clothingDetailPresentation(model.detail, hairDyeing);
     case "creatures":
       return creaturesDetailPresentation(model.detail);
     case "plants":
-      return plantsDetailPresentation(model.detail);
+      return plantsDetailPresentation(model.detail, tags.origin);
     case "dishes":
-      return dishesDetailPresentation(model.detail);
+      return dishesDetailPresentation(model.detail, tags.origin);
     case "miscellaneous":
       return miscellaneousDetailPresentation(model.detail);
   }
-}
-
-function CatalogDetailEmpty() {
-  return (
-    <Empty className="min-h-44">
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <InfoIcon />
-        </EmptyMedia>
-        <EmptyTitle>暂时没有更多的信息</EmptyTitle>
-        <EmptyDescription>更多资料收录后会在这里展示</EmptyDescription>
-      </EmptyHeader>
-    </Empty>
-  );
 }
