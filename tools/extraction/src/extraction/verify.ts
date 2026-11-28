@@ -18,6 +18,7 @@ import { verifyPlantings } from "../verify/plants.ts";
 import { verifyImages } from "../verify/images.ts";
 import { verifyEvidence } from "../verify/evidence.ts";
 import { verifyNeighborDetails } from "./source/neighbors/verify-details.ts";
+import { verifyHouseUpgrades } from "../verify/house-upgrades.ts";
 import { verifyStarseaSources } from "../verify/starsea.ts";
 import { verifyVignettes } from "../verify/vignettes.ts";
 import { verifyFlowerHybridization } from "../verify/flower-hybridization.ts";
@@ -117,6 +118,7 @@ export async function verifyCandidate(directory: string, writeReport = true): Pr
     }
   }
   verifyNeighborDetails(observations.neighbors, tables);
+  verifyHouseUpgrades(tables, observations.neighbors, dataset.neighbors, fieldEvidence.fields);
   verifyCookingRecipes(dataset.catalog, tables);
   verifyClientIconSources(observations.clientIcons, dataset.catalog, tables);
   verifyCraftingRelations(dataset.catalog, tables, observations.diagnostics.crafting);

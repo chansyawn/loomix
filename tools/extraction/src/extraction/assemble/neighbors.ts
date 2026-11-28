@@ -50,6 +50,7 @@ export function buildNeighbors(
             level: stage.level,
             name: stage.name,
             description: stage.description,
+            upgrade: stage.upgrade,
             image: image(stage.image, neighbor.id, `house.stages.${index}.image`),
           })),
         }
@@ -85,10 +86,4 @@ export function buildNeighbors(
     ) as Neighbor["gifts"],
   }));
   return parseNeighbors({ neighbors });
-}
-
-export function neighborReferencedItemIds(database: NeighborDatabase): number[] {
-  return [...new Set(database.giftPreferences.flatMap((preference) => preference.itemIds))].sort(
-    (a, b) => a - b,
-  );
 }

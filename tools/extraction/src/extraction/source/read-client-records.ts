@@ -7,6 +7,7 @@ import { extendCollection } from "./catalog/collection/observe.ts";
 import { detailInvestigation } from "./catalog/collection/details/investigation.ts";
 import { readAcquisitionHints } from "./catalog/acquisition-hints.ts";
 import { extractNeighborBundle } from "./neighbors/extract.ts";
+import { neighborReferencedItemIds } from "./neighbors/references.ts";
 import { collectNeighborOutfitImage } from "./neighbors/outfit-image.ts";
 import {
   selectAdditionalNeighborImages,
@@ -212,7 +213,7 @@ export function readClientRecords(source: string, datasetId: string): ClientRead
     crafting,
     images,
     referencedItemIds: [
-      ...neighbors.database.giftPreferences.flatMap((entry) => entry.itemIds),
+      ...neighborReferencedItemIds(neighbors.database),
       ...starseaItemIds(starsea.data.islets),
       ...dyeMaterialIds(hairDyeing.data),
     ],

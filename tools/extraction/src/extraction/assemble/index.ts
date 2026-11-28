@@ -9,6 +9,7 @@ import { bindImages } from "../images/bind.ts";
 import type { OriginalImage } from "../images/model.ts";
 import type { ClientReadRecords } from "../model.ts";
 import { buildNeighbors } from "./neighbors.ts";
+import { neighborReferencedItemIds } from "../source/neighbors/references.ts";
 import { buildDomainEvidence } from "./evidence.ts";
 import { validateDomainEvidence } from "./validate-evidence.ts";
 import { assembleCatalog } from "./catalog.ts";
@@ -86,7 +87,7 @@ export function assemble(
     image,
     observations.ingredientItemIds,
     [
-      ...observations.neighbors.giftPreferences.flatMap((entry) => entry.itemIds),
+      ...neighborReferencedItemIds(observations.neighbors),
       ...starseaItemIds(observations.starsea.data.islets),
       ...dyeMaterialIds(observations.hairDyeing.data),
     ],

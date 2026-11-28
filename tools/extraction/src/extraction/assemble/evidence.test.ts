@@ -101,7 +101,9 @@ test("友邻字段保留精确路径和未确认原因，图片交给统一组�
   const dataset = datasetFixture();
   const owner = neighbor(1010);
   owner.abilities = [{ unlockLevel: 5, name: "作物浇水", description: null }];
-  owner.house = { stages: [{ id: 1, level: 1, name: "房屋", description: null, image: null }] };
+  owner.house = {
+    stages: [{ id: 1, level: 1, name: "房屋", description: null, image: null, upgrade: null }],
+  };
   dataset.neighbors.neighbors.push(owner);
   const table = { kind: "table" as const, ...source, table: 222 };
   const result = buildDomainEvidence(

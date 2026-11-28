@@ -158,6 +158,13 @@ export const profile = {
     stages: 24,
     houseDescriptions: 9,
   },
+  expectedHouseUpgrades: {
+    stages: 24,
+    upgraded: 12,
+    materials: 35,
+    materialIds: 14,
+    blueprintIds: 12,
+  },
   expectedStoryLayouts: {
     text: 132,
     image: 33,

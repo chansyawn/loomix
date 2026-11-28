@@ -2,6 +2,7 @@ import { z } from "zod";
 import { IdSchema, NullableTextSchema } from "../common/identity.ts";
 import { ImageRefSchema } from "../assets/index.ts";
 import { BodyTypeSchema } from "../catalog/items.ts";
+import { ItemAmountSchema } from "../catalog/recipes.ts";
 
 export const StoryLayoutSchema = z.enum([
   "text",
@@ -33,6 +34,11 @@ export const StoryParagraphSchema = z
 
 export const GiftLevelSchema = z.enum(["love", "favor", "dislike"]);
 const gift = z.strictObject({ itemIds: IdSchema.array(), tagIds: IdSchema.array() });
+
+export const HouseUpgradeSchema = z.strictObject({
+  materials: ItemAmountSchema.array().min(1),
+  blueprint: ItemAmountSchema,
+});
 
 export const NeighborSchema = z.strictObject({
   id: IdSchema,
@@ -75,6 +81,7 @@ export const NeighborSchema = z.strictObject({
           name: z.string().min(1),
           description: NullableTextSchema,
           image: ImageRefSchema.nullable(),
+          upgrade: HouseUpgradeSchema.nullable(),
         })
         .array()
         .min(1),
