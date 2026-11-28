@@ -7,7 +7,7 @@ import { CatalogItemCard } from "./catalog-item-card";
 import { GameplayRelationItem } from "./gameplay-relation-item";
 
 type RelationState<Key extends keyof ItemRelationReaders> =
-  | DetailResourceState<Awaited<ReturnType<ItemRelationReaders[Key]>>>
+  | DetailResourceState<Awaited<ReturnType<NonNullable<ItemRelationReaders[Key]>>>>
   | undefined;
 
 export function RelationLoadError({ label, retry }: { label: string; retry: () => void }) {

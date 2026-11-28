@@ -37,6 +37,12 @@ export function VignetteDetailPage({ entry }: { entry: VignetteDetail }) {
       title: "布景要求",
       content: (
         <>
+          {entry.taskPlacementHints.map((hint) => (
+            <p key={hint} className="mb-3 text-sm whitespace-pre-line">
+              <span className="font-medium">任务指定地点 · </span>
+              {hint}
+            </p>
+          ))}
           <VignettePlacementRules rules={entry.placementRules} />
           <VignetteRequirements requirements={entry.requirements} />
         </>
@@ -64,7 +70,14 @@ export function VignetteDetailPage({ entry }: { entry: VignetteDetail }) {
       fieldGroups={[
         {
           title: "布景属性",
-          fields: [["尺寸", entry.size], ["地形", entry.terrain], ...relations],
+          fields: [
+            ["尺寸", entry.size],
+            ["地形", entry.terrain],
+            ...relations,
+            ...(entry.acquisitionHints.length
+              ? [["获取提示", entry.acquisitionHints.join("\n"), { fullWidth: true }] as const]
+              : []),
+          ],
         },
       ]}
       sections={sections}

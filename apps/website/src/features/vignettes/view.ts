@@ -188,6 +188,12 @@ export function toVignetteDetail(
 
   return {
     ...summarize(template, image),
+    acquisitionHints: template.hints
+      .filter((hint) => hint.kind === "acquisition")
+      .map((hint) => hint.text.zh),
+    taskPlacementHints: template.hints
+      .filter((hint) => hint.kind === "task-placement")
+      .map((hint) => hint.text.zh),
     requirements: template.requirements.map(
       ({ label, target, support, area, quantity, examples }, index) => {
         const size = resolveRequirementSize(area, tagIndex);

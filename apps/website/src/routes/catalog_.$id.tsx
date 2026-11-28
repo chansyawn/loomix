@@ -11,7 +11,7 @@ import { createResourceReader } from "@/infrastructure/resources";
 import { readOutfitNeighbor } from "@/features/neighbor-outfit/detail";
 import { catalogGameplayUses } from "@/features/omnidex/gameplay-uses-model";
 import { itemRelationReaders } from "@/features/omnidex/item-relations";
-import { readHairstylePalette } from "@/features/clothing/hair-dyeing";
+import { hairstylePalette, readHairDyeingData } from "@/features/clothing/hair-dyeing";
 import { Button } from "@/ui/components/button";
 export const Route = createFileRoute("/catalog_/$id")({
   ssr: false,
@@ -39,7 +39,13 @@ export const Route = createFileRoute("/catalog_/$id")({
       relations: itemRelationReaders(load, data, record),
       readHairDyeing:
         record.kind === "appearance" && record.category === "发型"
-          ? () => readHairstylePalette(load, id, data.image)
+          ? async () =>
+              hairstylePalette(
+                await readHairDyeingData(load),
+                id,
+                data.image,
+                data.view.ingredientItemsById,
+              )
           : undefined,
     };
   },

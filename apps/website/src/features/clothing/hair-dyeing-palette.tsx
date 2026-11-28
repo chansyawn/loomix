@@ -8,6 +8,8 @@ import { Table, TableBody, TableCell, TableHead } from "@/ui/components/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/components/tabs";
 import type { HairDyeingRegion, HairDyeingSwatch } from "./hair-dyeing";
 import type { DetailResourceState } from "../detail-page/use-detail-resource";
+import { GameplayRelationItem } from "../omnidex/gameplay-relation-item";
+import { catalogEntryLocation } from "../omnidex/entry-location";
 
 export const hairDyeingSectionId = "hair-dyeing";
 
@@ -64,7 +66,21 @@ function HairDyeingRegions({ regions }: { regions: HairDyeingRegion[] }) {
       </TabsList>
       {regions.map((region) => (
         <TabsContent key={region.id} value={region.id} className="min-w-0">
-          <HairDyeingRegionTable region={region} />
+          {region.defaultSwatch && (
+            <div className="mb-3 flex items-center gap-2 text-sm">
+              默认色
+              <SwatchFace
+                shape="color"
+                color={region.defaultSwatch.color}
+                image={region.defaultSwatch.image}
+                material={region.defaultSwatch.kind !== "tint"}
+              />
+              <span className="text-muted-foreground">
+                {swatchDescription(region.defaultSwatch)}
+              </span>
+            </div>
+          )}
+          {region.groups.length > 0 && <HairDyeingRegionTable region={region} />}
         </TabsContent>
       ))}
     </Tabs>
@@ -81,6 +97,8 @@ function HairDyeingRegionTable({ region }: { region: HairDyeingRegion }) {
             <span className="pl-1">色系</span>
           </TableHead>
           <TableHead colSpan={columns}>颜色</TableHead>
+          <TableHead>解锁费用</TableHead>
+          <TableHead>染发费用</TableHead>
         </tr>
       </thead>
       <TableBody>
@@ -107,6 +125,19 @@ function HairDyeingRegionTable({ region }: { region: HairDyeingRegion }) {
             ))}
             {Array.from({ length: columns - group.swatches.length }, (_, index) => (
               <TableCell key={`empty-${index}`} />
+            ))}
+            {[group.unlockCost, group.dyeCost].map((cost, index) => (
+              <TableCell key={index}>
+                {cost ? (
+                  <GameplayRelationItem
+                    {...cost}
+                    variant="inline"
+                    destination={cost.browsable === false ? undefined : catalogEntryLocation(cost)}
+                  />
+                ) : (
+                  "未配置"
+                )}
+              </TableCell>
             ))}
           </tr>
         ))}

@@ -7,6 +7,8 @@ import { readVignetteTemplates } from "../vignettes/data";
 import { creatureVignettes } from "../vignettes/view";
 import type { CatalogEntryRow, OmnidexCatalog } from "./catalog";
 import { vignetteGameplayUses } from "./gameplay-uses-model";
+import { readHairDyeingData } from "../clothing/hair-dyeing";
+import { flowerDyeingUses } from "../clothing/flower-dyeing";
 
 export function itemRelationReaders(
   read: ReturnType<typeof createResourceReader>,
@@ -14,6 +16,11 @@ export function itemRelationReaders(
   item: Extract<CatalogEntryRow["record"], { kind: string }>,
 ) {
   return {
+    flowerDyeing:
+      item.kind === "plant" && item.category === "花"
+        ? async () =>
+            flowerDyeingUses(await readHairDyeingData(read), item.id, data.view.ingredientItemsById)
+        : undefined,
     gifts: async () => namedGiftPreferences(await readNeighborDocument(read), item.id, data.image),
     islets: async () => itemExplorationHints(await readStarseaDocument(read), item.id, data.image),
     vignettes: async () => {

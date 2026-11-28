@@ -28,6 +28,7 @@ import {
 } from "./item-relation-sections";
 import { useOmnidexOrigin } from "./navigation";
 import { QualityMarker } from "./quality";
+import { FlowerDyeingUses } from "../clothing/flower-dyeing-uses";
 import { useElementScrollRestoration, useRouterState } from "@tanstack/react-router";
 import { useLayoutEffect, useRef } from "react";
 
@@ -68,6 +69,7 @@ export function CatalogEntryPage({
   const gifts = useDetailResource(relations?.gifts, beforeRelationsChange);
   const islets = useDetailResource(relations?.islets, beforeRelationsChange);
   const vignettes = useDetailResource(relations?.vignettes, beforeRelationsChange);
+  const flowerDyeing = useDetailResource(relations?.flowerDyeing, beforeRelationsChange);
   useLayoutEffect(() => {
     const target =
       hash && pendingAnchor.current === hash
@@ -79,7 +81,7 @@ export function CatalogEntryPage({
     if (target) target.scrollIntoView();
     else if (scroll && scroll.element.scrollTop === scroll.from)
       scroll.element.scrollTop = scroll.to;
-  }, [hash, gifts, islets, vignettes]);
+  }, [hash, gifts, islets, vignettes, flowerDyeing]);
   const useSections =
     uses &&
     gameplayUseSections(
@@ -142,6 +144,21 @@ export function CatalogEntryPage({
       ),
     });
   if (useSections) detailSections.push(...useSections);
+  if (
+    flowerDyeing?.status === "error" ||
+    (flowerDyeing?.status === "ready" && flowerDyeing.value.length)
+  ) {
+    detailSections.push({
+      id: "flower-dyeing",
+      title: "用于染发",
+      content:
+        flowerDyeing.status === "error" ? (
+          <RelationLoadError label="花朵染发用途" retry={flowerDyeing.retry} />
+        ) : (
+          <FlowerDyeingUses groups={flowerDyeing.value} />
+        ),
+    });
+  }
   return (
     <div ref={content}>
       <DetailPage
