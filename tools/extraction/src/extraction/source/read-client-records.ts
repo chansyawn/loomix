@@ -281,7 +281,7 @@ export function readClientRecords(source: string, datasetId: string): ClientRead
       purchases: purchases.diagnostics,
       collection: collection.catalog,
       admissions: context.scope.admissionEvidence,
-      exclusions: collection.plants.exclusions,
+      exclusions: [...collection.plants.exclusions, ...catalog.harvestableExclusions],
       investigation: {
         appearances: context.scope.appearances.investigation,
         plants: collection.plants.investigation,

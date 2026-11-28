@@ -64,6 +64,8 @@ function setup(
     catalog,
     gameplayTags,
     { kind: "clothing", id: 50, name: "眠月睡袍" },
+    { kind: "cropPlant", id: 1001, name: "番茄株", harvestItemId: 1 },
+    { kind: "flowerPlant", id: 56000, name: "百合株", harvestItemId: 2 },
     { kind: "neighborOutfit", id: 51, name: "眠月睡袍", playerItemId: 50 },
     { kind: "reference", id: 99, name: "发型" },
     { kind: "reference", id: 200002, name: "碎钱" },
@@ -200,6 +202,8 @@ test.each([40, 100])("外观和集合 %i 的详情不继承其他物品的报价
 test.each([
   ["/catalog/1", 1, "item"],
   ["/catalog/20", 20, "seed"],
+  ["/catalog/1001", 1001, "harvestablePlant"],
+  ["/catalog/56000", 56000, "harvestablePlant"],
   ["/catalog/100", 100, "series"],
   ["/catalog/100?focus=1", 100, "series"],
   ["/catalog/100?focus=999", 100, "series"],

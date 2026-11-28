@@ -1,6 +1,7 @@
 import type { ContentContext } from "../context.ts";
 import type { SelectedImage, IconMatch } from "../../../types.ts";
 import type { readPlantings } from "./read.ts";
+import type { TableRow } from "../../../types.ts";
 
 export interface PlantImageAudit {
   kind: "seed" | "stage";
@@ -8,6 +9,34 @@ export interface PlantImageAudit {
   rowOffset: number | null;
   references: { field: number; reference: string | null; match: IconMatch | null }[];
   reason: "missing_display_row" | "image_not_configured" | "no_exact_indexed_image_match" | null;
+}
+
+export function plantIcons(
+  context: Pick<ContentContext, "tables" | "resolveIcon">,
+  id: number,
+  row: TableRow | undefined,
+) {
+  const references = [5, 4].map((field) => {
+    const reference = context.tables.string(row, field);
+    return { field, reference, match: reference ? context.resolveIcon(reference) : null };
+  });
+  const matches = references.flatMap(({ reference, match: asset }): SelectedImage[] =>
+    asset?.matched && asset.source && asset.container && asset.pathId && asset.resourceName
+      ? [
+          {
+            id,
+            group: "plants.item",
+            reference: reference!,
+            source: asset.source,
+            container: asset.container,
+            pathId: asset.pathId,
+            resourceName: asset.resourceName,
+            assetType: asset.assetType,
+          },
+        ]
+      : [],
+  );
+  return { references, matches };
 }
 
 export function plantingImageCandidates(
@@ -27,26 +56,7 @@ export function plantingImageCandidates(
   const candidates = (items: Iterable<number>, kind: PlantImageAudit["kind"]): SelectedImage[] =>
     [...items].flatMap((id) => {
       const row = rows.get(id);
-      const references = [5, 4].map((field) => {
-        const reference = context.tables.string(row, field);
-        return { field, reference, match: reference ? context.resolveIcon(reference) : null };
-      });
-      const matches = references.flatMap(({ reference, match: asset }) =>
-        asset?.matched && asset.source && asset.container && asset.pathId && asset.resourceName
-          ? [
-              {
-                id,
-                group: "plants.item" as const,
-                reference: reference!,
-                source: asset.source,
-                container: asset.container,
-                pathId: asset.pathId,
-                resourceName: asset.resourceName,
-                assetType: asset.assetType,
-              },
-            ]
-          : [],
-      );
+      const { references, matches } = plantIcons(context, id, row);
       audit.push({
         kind,
         id,

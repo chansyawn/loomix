@@ -89,6 +89,26 @@ describe("compact plant URLs", () => {
     });
   });
 
+  it("切换植株与种子时保留各自查询，共用表格布局", () => {
+    const router = setup();
+    const initial = plantsSearchSchema.parse({
+      view: "harvestablePlants",
+      layout: "table",
+      harvestablePlants: { categories: ["花株"], sort: "quality-desc" },
+      seeds: { q: "番茄" },
+    });
+    const href = (search: typeof initial) => router.buildLocation({ to: "/plants", search });
+    const seeds = plantsSearchSchema.parse(
+      defaultParseSearch(href({ ...initial, view: "seeds" }).searchStr),
+    );
+    expect(seeds.layout).toBe("table");
+    expect(seeds.seeds.q).toBe("番茄");
+    expect(href({ ...seeds, view: "harvestablePlants" }).href).toBe(href(initial).href);
+    expect(href(plantsSearchSchema.parse({ view: "harvestablePlants" })).href).toBe(
+      "/plants?view=harvestablePlants",
+    );
+  });
+
   it("preserves parent parameters and removes unsupported nested values", async () => {
     const router = setup(
       `/plants${defaultStringifySearch({

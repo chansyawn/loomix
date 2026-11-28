@@ -84,6 +84,7 @@ export function plantsDataFixture(
 ): PlantsData {
   return {
     ...fields,
+    harvestablePlants: [],
     seeds: fields.seeds ?? [],
     itemRefs: new Map(
       fields.items.map((item) => [

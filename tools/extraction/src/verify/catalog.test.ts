@@ -1,17 +1,95 @@
 import fs from "node:fs";
 import path from "node:path";
 import { test, expect } from "vite-plus/test";
-import { datasetFixture, material } from "../../../../packages/schema/tests/fixture.ts";
+import { datasetFixture, material, plant } from "../../../../packages/schema/tests/fixture.ts";
 import { createFixture } from "../extraction/source/neighbors/fixtures/tables.ts";
 import { clientReadRecordsFixture } from "../extraction/fixtures/client-read-records.ts";
 import { writeJson } from "../workflow/json.ts";
 import { verifyCatalogSources } from "./catalog.ts";
 import type { FieldEvidence } from "../extraction/evidence/domain-schema.ts";
+import { verifyHarvestablePlants } from "./harvestable-plants.ts";
+
+test("花株的收获物及字段依据均与冻结行核对", ({ onTestFinished }) => {
+  const fixture = createFixture({
+    318: [
+      [20, { text: "白花株" }],
+      [21, { text: "红花株" }],
+    ],
+    137: [],
+    144: [],
+    325: [],
+    241: [
+      [20, 10, 10],
+      [21, 11, 11],
+      [22, 99, 99],
+    ],
+  });
+  onTestFinished(fixture.cleanup);
+  const { tables } = fixture.input;
+  const { catalog } = datasetFixture();
+  const stock = {
+    ...material(20),
+    kind: "flowerPlant" as const,
+    name: "白花株",
+    harvestItemId: 10,
+  };
+  catalog.items = [
+    { ...plant(10), category: "花" },
+    { ...plant(11), category: "花" },
+    stock,
+    { ...stock, id: 21, name: "红花株", harvestItemId: 11 },
+  ];
+  const [white, red, other] = tables.rows(241);
+  const proofs: FieldEvidence[] = [white, red].flatMap((row) =>
+    ["kind", "harvestItemId"].map((fieldPath) => ({
+      entity: { collection: "catalog.items", id: tables.id(row) },
+      fieldPath,
+      status: "confirmed" as const,
+      reasonCode: null,
+      ruleId: "test",
+      sources: [
+        {
+          kind: "table" as const,
+          file: "source/prepared/ed.obb",
+          table: 241,
+          rowOffset: row.rowOffset,
+          fields: [0, 1, 2],
+        },
+      ],
+    })),
+  );
+  const excluded = {
+    id: 22,
+    reason: "no_listed_flower" as const,
+    sources: [
+      {
+        file: "prepared/ed.obb" as const,
+        table: 241,
+        row: 22,
+        rowOffset: other.rowOffset,
+        fields: [0, 1, 2],
+      },
+    ],
+  };
+  const verify = () =>
+    verifyHarvestablePlants(tables, catalog, new Set([10, 11]), proofs, [excluded]);
+  expect(verify()).toEqual(new Set([20, 21]));
+  expect(() => verifyHarvestablePlants(tables, catalog, new Set([10, 11]), proofs, [])).toThrow(
+    /Independent plant exclusions/,
+  );
+  proofs[1]!.sources = proofs[3]!.sources;
+  expect(verify).toThrow(/Independent field evidence sources/);
+  stock.harvestItemId = 11;
+  expect(verify).toThrow(/Independent harvest 20/);
+});
 
 // 验收直接读取真实字节 fixture，不调用生产分类或事实 reader 生成 expected。
 test("数据和证据同时篡改品阶、分类、标签或收录，独立来源仍拒绝", ({ onTestFinished }) => {
   const fixture = createFixture({
     318: [[1, { text: "物品" }, 1]],
+    144: [],
+    137: [],
+    241: [],
     325: [],
     716: [[1]],
     93: [],
@@ -95,6 +173,9 @@ test("数据和证据同时篡改品阶、分类、标签或收录，独立来�
 test("表外外观通过独立准入，能识别指向同表无关行的证据", ({ onTestFinished }) => {
   const fixture = createFixture({
     318: [[601, { text: "短发" }, 1, null, null, null, "发型"]],
+    144: [],
+    137: [],
+    241: [],
     716: [[1]],
     325: [],
     93: [],

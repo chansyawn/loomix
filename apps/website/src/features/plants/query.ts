@@ -3,7 +3,7 @@ import type { PlantItem, PlantSeries } from "../omnidex-view.ts";
 import type { PlantsData } from "./data";
 import { seedSeries } from "./model";
 import { missing, ungrouped } from "./search";
-import type { FilterKey, View, ViewQuery } from "./search";
+import type { FilterKey, Sort, View, ViewQuery } from "./search";
 import type { FilterGroup as ListFilterGroup } from "@/features/omnidex/filter-panel";
 import { qualityNames } from "@/features/omnidex/quality";
 import { createNameMatcher } from "@/infrastructure/name-search";
@@ -31,6 +31,14 @@ function options(values: (string | null)[]): Option[] {
 }
 
 export function filterGroups(data: PlantsData, view: View = "items"): FilterGroup[] {
+  if (view === "harvestablePlants")
+    return [
+      {
+        key: "categories",
+        label: "分类",
+        options: options(data.harvestablePlants.map((stock) => stock.stockCategory)),
+      },
+    ];
   if (view === "seeds") {
     const series = seedSeriesIndex(data);
     const usedSeriesIds = new Set(
@@ -116,9 +124,26 @@ function matches(selected: string[], values: string[]): boolean {
   return selected.length === 0 || selected.some((value) => values.includes(value));
 }
 
+function sortRecords<T extends { name: string; quality: number | null }>(rows: T[], sort: Sort) {
+  if (sort === "original") return rows;
+  const direction = sort.endsWith("desc") ? -1 : 1;
+  return rows.sort((left, right) => {
+    if (sort.startsWith("name")) return direction * left.name.localeCompare(right.name, "zh-CN");
+    if (left.quality === null) return right.quality === null ? 0 : 1;
+    if (right.quality === null) return -1;
+    return direction * (left.quality - right.quality);
+  });
+}
+
 export function queryPlants(data: PlantsData, view: View, query: ViewQuery) {
   const matchesName = createNameMatcher(query.q);
   const memberships = indexMembership(data.series, (group) => group.plantIds);
+  if (view === "harvestablePlants") {
+    const rows = data.harvestablePlants.filter(
+      (stock) => matchesName(stock.name) && matches(query.categories, [stock.stockCategory]),
+    );
+    return { rows: sortRecords(rows, query.sort), total: rows.length, memberships };
+  }
   if (view === "seeds") {
     const series = seedSeriesIndex(data);
     const seriesComplete = data.series.every((group) => group.plantIds !== null);
@@ -141,12 +166,7 @@ export function queryPlants(data: PlantsData, view: View, query: ViewQuery) {
         )
       );
     });
-    if (query.sort !== "original")
-      filtered.sort((a, b) => {
-        const direction = query.sort.endsWith("desc") ? -1 : 1;
-        return direction * a.name.localeCompare(b.name, "zh-CN");
-      });
-    return { rows: filtered, total: filtered.length, memberships };
+    return { rows: sortRecords(filtered, query.sort), total: filtered.length, memberships };
   }
   const membershipDataComplete = data.series.every((group) => group.plantIds !== null);
   const rows: (PlantItem | PlantSeries)[] = view === "items" ? data.items : data.series;
@@ -172,13 +192,5 @@ export function queryPlants(data: PlantsData, view: View, query: ViewQuery) {
       matches(query.harvestCounts, [row.harvestCount === null ? missing : String(row.harvestCount)])
     );
   });
-  if (query.sort !== "original")
-    filtered.sort((a, b) => {
-      const direction = query.sort.endsWith("desc") ? -1 : 1;
-      if (query.sort.startsWith("name")) return direction * a.name.localeCompare(b.name, "zh-CN");
-      if (a.quality === null) return b.quality === null ? 0 : 1;
-      if (b.quality === null) return -1;
-      return direction * (a.quality - b.quality);
-    });
-  return { rows: filtered, total: filtered.length, memberships };
+  return { rows: sortRecords(filtered, query.sort), total: filtered.length, memberships };
 }

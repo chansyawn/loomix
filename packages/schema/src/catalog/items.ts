@@ -75,6 +75,8 @@ export const ItemSchema = z.discriminatedUnion("kind", [
     drops: DropSchema.array().min(1).nullable(),
   }),
   item.extend({ kind: z.literal("seed"), growth: GrowthSchema }),
+  item.extend({ kind: z.literal("cropPlant"), harvestItemId: IdSchema }),
+  item.extend({ kind: z.literal("flowerPlant"), harvestItemId: IdSchema }),
   item.extend({
     kind: z.literal("dish"),
     strength: z.number().int().positive().nullable(),

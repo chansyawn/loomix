@@ -2,12 +2,56 @@ import { createGameplayTagIndex } from "@loomix/schema/gameplay-tags";
 import { expect, test } from "vite-plus/test";
 import { addFixtureRecords, imageIndexFixture, catalogFixture } from "../omnidex-fixture";
 import { toOmnidexView } from "../omnidex-view";
+import { queryPlants } from "./query";
+import { emptyQuery } from "./search";
 import {
   plantItemFixture,
   plantSeedFixture,
   plantSeriesFixture,
   plantsDataFixture,
 } from "./fixture";
+
+test("按植株自身身份检索种子链内作物和链外花株", () => {
+  const { catalog, gameplayTags } = catalogFixture({
+    plants: plantsDataFixture({
+      items: [
+        plantItemFixture({ id: 1, name: "番茄", category: "作物" }),
+        plantItemFixture({ id: 2, name: "灿黄百合", category: "花" }),
+      ],
+      seeds: [plantSeedFixture({ plantIds: [1] })],
+      series: [],
+    }),
+  });
+  addFixtureRecords(
+    catalog,
+    gameplayTags,
+    { id: 1001, kind: "cropPlant", name: "番茄株", harvestItemId: 1, quality: 0 },
+    { id: 56000, kind: "flowerPlant", name: "灿黄百合株", harvestItemId: 2, quality: 3 },
+  );
+  const { plants } = toOmnidexView(
+    catalog,
+    imageIndexFixture(catalog),
+    createGameplayTagIndex(gameplayTags.tags),
+  );
+  expect(plants.seeds[0].growth.stages).toMatchObject([{ id: 1001, plantId: 1, stockId: 1001 }]);
+  expect(plants.items.map((item) => item.id)).toEqual([1, 2]);
+  expect(plants.harvestablePlants.map((stock) => [stock.id, stock.harvest.id])).toEqual([
+    [1001, 1],
+    [56000, 2],
+  ]);
+  const rows = (patch: Partial<ReturnType<typeof emptyQuery>>) =>
+    queryPlants(plants, "harvestablePlants", { ...emptyQuery(), ...patch }).rows.map(
+      (row) => row.id,
+    );
+  expect(rows({})).toEqual([1001, 56000]);
+  expect(rows({ categories: ["作物株"] })).toEqual([1001]);
+  expect(rows({ categories: ["花株"] })).toEqual([56000]);
+  for (const q of ["百合株", "canhuangbaihezhu"]) expect(rows({ q })).toEqual([56000]);
+  expect(rows({ q: "灿黄", categories: ["作物株"] })).toEqual([]);
+  expect(rows({ sort: "quality-asc" })).toEqual([1001, 56000]);
+  expect(rows({ sort: "quality-desc" })).toEqual([56000, 1001]);
+  expect(rows({ sort: "name-asc" })).toEqual([56000, 1001]);
+});
 
 test("植物视图保留种子和单品关联，共享食材使用物品自身身份", () => {
   const { catalog, gameplayTags } = catalogFixture({

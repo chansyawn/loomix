@@ -128,6 +128,8 @@ const categoryByKind = {
   neighborOutfit: "neighborOutfit",
   creature: "creatures",
   plant: "plants",
+  cropPlant: "plants",
+  flowerPlant: "plants",
   seed: "plants",
   dish: "dishes",
   material: "miscellaneous",
@@ -178,6 +180,7 @@ export function toOmnidexView(
     furnitureUsesByMaterialId: new Map(),
     creatures: { series: [], items: [] },
     plants: {
+      harvestablePlants: [],
       series: [],
       items: [],
       seeds: [],
