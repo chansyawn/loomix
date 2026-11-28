@@ -16,6 +16,23 @@ const giftLevels = [
   ["dislike", "反感"],
 ] as const;
 
+export function namedGiftPreferences(
+  { neighbors }: Neighbors,
+  itemId: number,
+  image: ImageResolver,
+) {
+  return giftLevels.flatMap(([level, name]) => {
+    const matches = neighbors
+      .filter(({ gifts }) => gifts[level].itemIds.includes(itemId))
+      .map((neighbor) => ({
+        id: neighbor.id,
+        name: neighbor.name,
+        image: resolveNeighborPortrait(neighbor.images, image)?.image ?? null,
+      }));
+    return matches.length ? [{ level, name, neighbors: matches }] : [];
+  });
+}
+
 function preferencesOf(
   neighbor: Neighbor,
   index: CatalogIndex,

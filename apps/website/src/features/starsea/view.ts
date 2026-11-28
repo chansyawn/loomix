@@ -86,6 +86,35 @@ export function toStarseaList(starsea: Starsea, imageIndex: ImageIndex) {
 export type StarseaList = ReturnType<typeof toStarseaList>;
 export type StarseaIslet = StarseaList["islets"][number];
 
+export function itemExplorationHints(
+  starsea: Starsea,
+  itemId: number,
+  image: ReturnType<typeof createImageResolver>,
+) {
+  const { membershipsByIslet, isletById, summarize } = indexStarsea(starsea, image);
+  return Array.from(membershipsByIslet).flatMap(([id, memberships]) => {
+    const islet = requireEntry(isletById, id, "islet");
+    const creature = islet.displayedCreatureIds?.includes(itemId);
+    const specialty = islet.displayedSpecialtyIds?.includes(itemId);
+    if (!creature && !specialty) return [];
+    const summary = summarize(islet, memberships);
+    return [
+      {
+        id,
+        name: summary.name,
+        image: summary.image,
+        creature: Boolean(creature),
+        specialty: Boolean(specialty),
+        regions: memberships.map(({ region, exploration, neighborIds }) => ({
+          name: region.name,
+          exploration,
+          encounter: neighborIds.size > 0,
+        })),
+      },
+    ];
+  });
+}
+
 export function toStarseaDetail(
   isletId: number,
   starsea: Starsea,

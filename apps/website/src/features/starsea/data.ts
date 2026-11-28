@@ -2,9 +2,15 @@ import { notFound } from "@tanstack/react-router";
 import { parseImageIndex } from "@loomix/schema/assets";
 import { parseCatalog } from "@loomix/schema/catalog";
 import { parseNeighbors } from "@loomix/schema/neighbors";
-import { parseStarsea } from "@loomix/schema/starsea";
+import { parseStarsea, type Starsea } from "@loomix/schema/starsea";
 import { createResourceReader } from "@/infrastructure/resources";
 import { toStarseaDetail, toStarseaList } from "./view";
+
+const starseaDocuments = new Map<string, Promise<Starsea>>();
+
+export function readStarseaDocument(read: ReturnType<typeof createResourceReader>) {
+  return read("starsea", parseStarsea, starseaDocuments);
+}
 
 export async function loadStarseaList(request: typeof fetch = fetch) {
   const read = createResourceReader(request);

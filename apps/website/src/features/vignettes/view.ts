@@ -93,6 +93,16 @@ export function toVignetteList({ templates }: Vignettes, imageIndex: ImageIndex)
 
 export type VignetteSummary = ReturnType<typeof summarize>;
 
+export function creatureVignettes(
+  { templates }: Vignettes,
+  creatureId: number,
+  image: ImageResolver,
+) {
+  return templates
+    .filter(({ creatureItemIds }) => creatureItemIds.includes(creatureId))
+    .map(({ id, name, illustration }) => ({ id, name: name.zh, image: image(illustration) }));
+}
+
 export function toVignetteDetail(
   id: number,
   {

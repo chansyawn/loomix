@@ -9,8 +9,8 @@ import { ListLoadError } from "@/features/list-page/states";
 import { OmnidexReturnLink } from "@/features/omnidex/navigation";
 import { createResourceReader } from "@/infrastructure/resources";
 import { readOutfitNeighbor } from "@/features/neighbor-outfit/detail";
-import { catalogGameplayUses, vignetteGameplayUses } from "@/features/omnidex/gameplay-uses-model";
-import { readVignetteTemplates } from "@/features/vignettes/data";
+import { catalogGameplayUses } from "@/features/omnidex/gameplay-uses-model";
+import { itemRelationReaders } from "@/features/omnidex/item-relations";
 import { readHairstylePalette } from "@/features/clothing/hair-dyeing";
 import { Button } from "@/ui/components/button";
 export const Route = createFileRoute("/catalog_/$id")({
@@ -36,8 +36,7 @@ export const Route = createFileRoute("/catalog_/$id")({
         neighborId === null ? undefined : () => readOutfitNeighbor(load, neighborId, data.image),
       quotes: data.view.purchaseQuotes.get(id),
       uses: catalogGameplayUses(data, id),
-      readVignetteUses: async () =>
-        vignetteGameplayUses(data, record, await readVignetteTemplates(load)),
+      relations: itemRelationReaders(load, data, record),
       readHairDyeing:
         record.kind === "appearance" && record.category === "发型"
           ? () => readHairstylePalette(load, id, data.image)
@@ -59,7 +58,7 @@ export const Route = createFileRoute("/catalog_/$id")({
   component: DetailRoute,
 });
 function DetailRoute() {
-  const { record, model, overview, uses, quotes, readOwner, readVignetteUses, readHairDyeing } =
+  const { record, model, overview, uses, quotes, readOwner, relations, readHairDyeing } =
     Route.useLoaderData();
   return (
     <CatalogEntryPage
@@ -70,7 +69,7 @@ function DetailRoute() {
       readOwner={readOwner}
       quotes={quotes}
       uses={uses}
-      readVignetteUses={readVignetteUses}
+      relations={relations}
       readHairDyeing={readHairDyeing}
     />
   );

@@ -3,17 +3,15 @@ import type { CatalogEntryRow } from "../omnidex/catalog";
 import { formatNeighborOutfitBodyTypes } from "./presentation";
 import type { createResourceReader } from "@/infrastructure/resources";
 import type { createImageResolver } from "@loomix/schema/assets";
-import { parseNeighbors, type Neighbors } from "@loomix/schema/neighbors";
+import { readNeighborDocument } from "../neighbors/data";
 import { resolveNeighborPortrait } from "../neighbors/portrait";
-
-const neighborDocuments = new Map<string, Promise<Neighbors>>();
 
 export async function readOutfitNeighbor(
   load: ReturnType<typeof createResourceReader>,
   id: number,
   image: ReturnType<typeof createImageResolver>,
 ) {
-  const { neighbors } = await load("neighbors", parseNeighbors, neighborDocuments);
+  const { neighbors } = await readNeighborDocument(load);
   const neighbor = neighbors.find((entry) => entry.id === id);
   return neighbor
     ? {

@@ -17,13 +17,15 @@ import { miscellaneousDetailPresentation } from "../miscellaneous/detail-present
 import { plantsDetailPresentation } from "../plants/detail-presentation";
 import type { CatalogDetailPresentation } from "./catalog-detail-presentation";
 import { catalogEntryNavigation } from "./detail-navigation";
-import { gameplayUsesSection, useVignetteGameplayUses } from "./gameplay-uses";
+import { gameplayUsesSection } from "./gameplay-uses";
+import type { catalogGameplayUses } from "./gameplay-uses-model";
+import type { ItemRelationReaders } from "./item-relations";
 import {
-  gameplayUsesSectionId,
-  gameplayUseSectionId,
-  type catalogGameplayUses,
-  type GameplayUse,
-} from "./gameplay-uses-model";
+  explorationSection,
+  giftSubsection,
+  relatedVignettesSection,
+  RelationLoadError,
+} from "./item-relation-sections";
 import { useOmnidexOrigin } from "./navigation";
 import { QualityMarker } from "./quality";
 import {
@@ -44,7 +46,7 @@ export function CatalogEntryPage({
   readOwner,
   quotes,
   uses,
-  readVignetteUses,
+  relations,
   readHairDyeing,
 }: {
   record: CatalogEntryRow;
@@ -53,7 +55,7 @@ export function CatalogEntryPage({
   readOwner?: ReadOutfitOwner;
   quotes?: ShopPurchaseQuotes[];
   uses?: ReturnType<typeof catalogGameplayUses>;
-  readVignetteUses?: () => Promise<GameplayUse[]>;
+  relations?: ItemRelationReaders;
   readHairDyeing?: ReadHairDyeing;
 }) {
   const content = useRef<HTMLDivElement>(null);
@@ -61,34 +63,48 @@ export function CatalogEntryPage({
   const origin = useOmnidexOrigin();
   const hash = useRouterState({ select: (state) => state.location.hash });
   const pendingScroll = useRef<{ element: HTMLElement; from: number; to: number } | null>(null);
-  const pendingUsesAnchor = useRef<string | undefined>(undefined);
-  const vignette = useVignetteGameplayUses(readVignetteUses, () => {
-    pendingUsesAnchor.current =
-      (hash === gameplayUsesSectionId || hash === gameplayUseSectionId("vignette")) &&
-      !content.current?.querySelector(`#${hash}`)
-        ? hash
-        : undefined;
+  const pendingAnchor = useRef<string | undefined>(undefined);
+  function beforeRelationsChange() {
+    if (hash && !content.current?.querySelector(`#${CSS.escape(hash)}`))
+      pendingAnchor.current = hash;
     const element = findWikiScroll(content.current);
     if (!element || !restore) return;
     const maxScroll = Math.max(0, element.scrollHeight - element.clientHeight);
     if (restore.scrollY > maxScroll && element.scrollTop === maxScroll)
       pendingScroll.current = { element, from: maxScroll, to: restore.scrollY };
-  });
+  }
+  const gifts = useDetailResource(relations?.gifts, beforeRelationsChange);
+  const islets = useDetailResource(relations?.islets, beforeRelationsChange);
+  const vignettes = useDetailResource(relations?.vignettes, beforeRelationsChange);
   useLayoutEffect(() => {
-    const usesAnchor = pendingUsesAnchor.current;
-    pendingUsesAnchor.current = undefined;
+    const target =
+      hash && pendingAnchor.current === hash
+        ? content.current?.querySelector(`#${CSS.escape(hash)}`)
+        : null;
+    pendingAnchor.current = undefined;
     const scroll = pendingScroll.current;
     pendingScroll.current = null;
-    if (usesAnchor && usesAnchor === hash)
-      content.current?.querySelector(`#${usesAnchor}`)?.scrollIntoView();
+    if (target) target.scrollIntoView();
     else if (scroll && scroll.element.scrollTop === scroll.from)
       scroll.element.scrollTop = scroll.to;
-  }, [hash, vignette]);
-  const usesSection = uses && gameplayUsesSection({ ...uses, vignette });
+  }, [hash, gifts, islets, vignettes]);
+  const usesSection =
+    uses &&
+    gameplayUsesSection(
+      { ...uses, vignette: vignettes?.status === "ready" ? vignettes.value.placements : [] },
+      giftSubsection(gifts),
+      vignettes?.status === "error" && (
+        <RelationLoadError label="小栖地布景用途" retry={vignettes.retry} />
+      ),
+    );
   const hairDyeing = useDetailResource(readHairDyeing);
   const { image, fields, sections, titleActions, navigation, showEmptyExtras } =
     catalogDetailPresentation(model, hairDyeing);
   const detailSections = [...sections];
+  const hints = explorationSection(islets);
+  if (hints) detailSections.push(hints);
+  const habitats = model.category === "creatures" && relatedVignettesSection(vignettes);
+  if (habitats) detailSections.push(habitats);
   const topFields = overviewFields(record, overview, fields);
   if (readOwner) topFields.push(["友邻", <OutfitOwner read={readOwner} />]);
   const simpleQuote = simplePurchaseQuote(quotes);

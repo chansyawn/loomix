@@ -1,6 +1,20 @@
 import { expect, test } from "vite-plus/test";
-import { toNeighborsView } from "./view";
+import { createImageResolver } from "@loomix/schema/assets";
+import { namedGiftPreferences, toNeighborsView } from "./view";
 import { neighborFixture } from "./fixture";
+
+test("具体礼物按物品 ID 和偏好等级反查友邻，忽略同号标签和重复点名", () => {
+  const { database, mapping } = neighborFixture();
+  database.neighbors[1]!.gifts.favor = { itemIds: [107, 107], tagIds: [] };
+  database.neighbors[3]!.gifts.love = { itemIds: [], tagIds: [107] };
+  const image = createImageResolver(mapping);
+  expect(namedGiftPreferences(database, 107, image)).toMatchObject([
+    { level: "love", neighbors: [{ id: 3 }] },
+    { level: "favor", neighbors: [{ id: 2 }] },
+    { level: "dislike", neighbors: [{ id: 1 }] },
+  ]);
+  expect(namedGiftPreferences(database, 1, image)).toEqual([]);
+});
 
 function fixture() {
   const value = neighborFixture();

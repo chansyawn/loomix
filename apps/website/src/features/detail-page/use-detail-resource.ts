@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 type Result<Value> = { status: "error" } | { status: "ready"; value: Value };
 
 export type DetailResourceState<Value> =
@@ -8,6 +8,7 @@ export type DetailResourceState<Value> =
 
 export function useDetailResource<Value>(
   read: (() => Promise<Value>) | undefined,
+  beforePublish?: () => void,
 ): DetailResourceState<Value> | undefined {
   const [attempt, setAttempt] = useState(0);
   const [settled, setSettled] = useState<{
@@ -16,11 +17,15 @@ export function useDetailResource<Value>(
     result: Result<Value>;
   }>();
 
+  const willPublish = useEffectEvent(() => beforePublish?.());
   useEffect(() => {
     if (!read) return;
     let active = true;
     const publish = (result: Result<Value>) => {
-      if (active) setSettled({ read, attempt, result });
+      if (active) {
+        willPublish();
+        setSettled({ read, attempt, result });
+      }
     };
     void read().then(
       (value) => publish({ status: "ready", value }),

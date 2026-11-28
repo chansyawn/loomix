@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRightIcon } from "lucide-react";
-import { useEffect, useEffectEvent, useState } from "react";
+import type { ReactNode } from "react";
+import type { DetailSubsection } from "@/features/detail-page/detail-headings";
 import type { DetailSection } from "@/features/detail-page/detail-page";
 import { Badge } from "@/ui/components/badge";
 import { Card, CardContent, CardHeader } from "@/ui/components/card";
@@ -19,57 +20,32 @@ import { useOmnidexOrigin } from "./navigation";
 
 const gameplayUsePreviewCount = 4;
 
-export function useVignetteGameplayUses(
-  readUses: (() => Promise<GameplayUse[]>) | undefined,
-  beforeShowingUses: () => void,
-) {
-  const [uses, setUses] = useState<GameplayUse[]>([]);
-  const publishUses = useEffectEvent((results: GameplayUse[]) => {
-    if (results.length) beforeShowingUses();
-    setUses(results);
-  });
-  useEffect(() => {
-    if (!readUses) return;
-    const read = readUses;
-    let current = true;
-    async function loadUses() {
-      try {
-        const results = await read();
-        if (current) publishUses(results);
-      } catch {
-        if (current) setUses([]);
-      }
-    }
-    void loadUses();
-    return () => {
-      current = false;
-    };
-  }, [readUses]);
-  return uses;
-}
-
 export function gameplayUsesSection(
   uses: Record<GameplayUseCategory, GameplayUse[]>,
+  gifts: DetailSubsection | undefined,
+  vignetteError: ReactNode,
 ): DetailSection | undefined {
   const categories = visibleGameplayUseCategories(uses);
-  if (!categories.length) return undefined;
-
-  return {
-    id: gameplayUsesSectionId,
-    title: "用途",
-    subsections: categories.map((category) => {
-      const entries = uses[category];
-      const preview = entries.slice(0, gameplayUsePreviewCount);
-      const remaining = entries.slice(gameplayUsePreviewCount);
-      return {
-        id: gameplayUseSectionId(category),
-        title: gameplayUseLabels[category],
-        headingTrailing: <Badge variant="secondary">{entries.length}</Badge>,
-        content: <GameplayUseGrid preview={preview} remaining={remaining} />,
-        disclosure: remaining.length ? { total: entries.length } : undefined,
-      };
-    }),
-  };
+  const subsections: DetailSubsection[] = categories.map((category) => {
+    const entries = uses[category];
+    const preview = entries.slice(0, gameplayUsePreviewCount);
+    const remaining = entries.slice(gameplayUsePreviewCount);
+    return {
+      id: gameplayUseSectionId(category),
+      title: gameplayUseLabels[category],
+      headingTrailing: <Badge variant="secondary">{entries.length}</Badge>,
+      content: <GameplayUseGrid preview={preview} remaining={remaining} />,
+      disclosure: remaining.length ? { total: entries.length } : undefined,
+    };
+  });
+  if (vignetteError)
+    subsections.push({
+      id: gameplayUseSectionId("vignette"),
+      title: gameplayUseLabels.vignette,
+      content: vignetteError,
+    });
+  if (gifts) subsections.push(gifts);
+  if (subsections.length) return { id: gameplayUsesSectionId, title: "用途", subsections };
 }
 
 function GameplayUseGrid({

@@ -1,10 +1,10 @@
-import type { ImageIndex } from "@loomix/schema/assets";
+import { createImageResolver, type ImageIndex } from "@loomix/schema/assets";
 import type { Starsea } from "@loomix/schema/starsea";
 import { expect, test } from "vite-plus/test";
 import { addFixtureRecords, catalogFixture } from "../omnidex-fixture";
 import { neighborFixture } from "../neighbors/fixture";
 import { filterIslets } from "./query";
-import { toStarseaDetail, toStarseaList } from "./view";
+import { itemExplorationHints, toStarseaDetail, toStarseaList } from "./view";
 
 const illustration = { assetId: "islet", variant: "illustration" } as const;
 const icon = { assetId: "radar", variant: "icon" } as const;
@@ -55,6 +55,36 @@ function starseaFixture(): Starsea {
     iconStyles: [{ id: 1, name: "水域", icon }],
   };
 }
+
+test("探索提示反查保留各区域探索方式、生物和特产角色，并排除无区域归属的星屿", () => {
+  const starsea = starseaFixture();
+  for (const islet of starsea.islets) {
+    if ([125, 79, 999].includes(islet.id)) islet.displayedSpecialtyIds = [12];
+  }
+  starsea.regions[1]!.encounters[0]!.candidateIsletIds!.push(125);
+  const image = createImageResolver(imageIndex);
+  expect(itemExplorationHints(starsea, 12, image)).toMatchObject([
+    {
+      id: 125,
+      creature: true,
+      specialty: true,
+      regions: [
+        { name: "禾夏H83区", exploration: true, encounter: true },
+        { name: "沐雪季·禾夏H84区", exploration: false, encounter: true },
+      ],
+    },
+    {
+      id: 79,
+      creature: false,
+      specialty: true,
+      regions: [
+        { exploration: false, encounter: true },
+        { exploration: false, encounter: true },
+      ],
+    },
+  ]);
+  expect(itemExplorationHints(starsea, 99, image)).toEqual([]);
+});
 
 test("星屿图片依次使用插画、雷达图标和占位", () => {
   const starsea = starseaFixture();
