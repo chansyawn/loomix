@@ -11,14 +11,14 @@ export function seedDetailPresentation(
 ): CatalogDetailPresentation {
   const { record } = detail;
   const { growth } = record;
-  const fields: DetailField[] = [["分类", "种子"]];
+  const relatedFields: DetailField[] = [];
   const sections: DetailSection[] = [
     { id: "plant-growth-heading", title: "生长阶段", content: <SeedGrowthStages seed={record} /> },
   ];
   if (detail.items.length === 1) {
-    addDetailRelation(fields, sections, "关联植物", "seed-plants", detail.items);
+    addDetailRelation(relatedFields, sections, "关联植物", "seed-plants", detail.items);
   } else if (detail.items.length > 1) {
-    fields.push([
+    relatedFields.push([
       "关联植物",
       <SectionCount anchor="seed-plants">{detail.items.length} 种植物</SectionCount>,
     ]);
@@ -34,13 +34,16 @@ export function seedDetailPresentation(
       ),
     });
   } else {
-    fields.push(["关联植物", "0 种植物"]);
+    relatedFields.push(["关联植物", "0 种植物"]);
   }
-  if (growth.kind === "crop")
-    fields.push(["收获茬数", growth.harvestCount === null ? null : `${growth.harvestCount} 茬`]);
   return {
     image: <RecordImage image={record.image} name={record.name} eager />,
-    fields,
+    classification: "种子",
+    fields:
+      growth.kind === "crop" && growth.harvestCount !== null
+        ? [["收获茬数", `${growth.harvestCount} 茬`]]
+        : [],
+    relatedFields,
     sections,
   };
 }

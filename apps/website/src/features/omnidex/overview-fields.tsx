@@ -1,31 +1,62 @@
 import { Link } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 import { Badge } from "@/ui/components/badge";
 import { catalogSearchForTag } from "../catalog/search";
-import type { DetailField } from "../detail-page/detail-page";
+import type { DetailFieldGroup } from "../detail-page/detail-fields";
 import { ItemIngredientTags } from "../ingredients/item-usage";
 import { categoryNames, type CatalogEntryRow } from "./catalog";
 import { CatalogRelations, collectionLabels } from "./detail-relations";
 import type { EntryOverview } from "./entry-overview";
+import type { CatalogDetailPresentation } from "./catalog-detail-presentation";
+import { qualityNames } from "./quality";
 
-export function overviewFields(
-  row: CatalogEntryRow,
-  overview: EntryOverview,
-  specific: readonly DetailField[],
-): DetailField[] {
+export function CatalogTitleMetadata({
+  row,
+  classification,
+}: {
+  row: CatalogEntryRow;
+  classification?: string | null;
+}) {
   const category =
     "memberKind" in row.record
       ? collectionLabels[row.record.memberKind].name
       : categoryNames[row.category];
-  const fields: DetailField[] = [
-    ["编号", String(row.id)],
-    ["图鉴类别", category],
-    ...specific.filter(
-      ([label, value]) =>
-        value != null && value !== "" && !(label === "分类" && value === category),
-    ),
-  ];
+  return (
+    <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm text-muted-foreground">
+      <span className="font-medium text-foreground">
+        {row.quality === null ? (
+          "品阶未提供"
+        ) : (
+          <>
+            <span className="sr-only">品阶：</span>
+            {qualityNames[row.quality]}
+          </>
+        )}
+      </span>
+      <span aria-hidden="true">·</span>
+      <span className="min-w-0 wrap-anywhere">
+        <span className="sr-only">图鉴类别：</span>
+        {category}
+        {classification && classification !== category && <> / {classification}</>}
+      </span>
+      <span aria-hidden="true">·</span>
+      <span className="tabular-nums">
+        <span className="sr-only">编号：</span>#{row.id}
+      </span>
+    </p>
+  );
+}
+
+export function overviewFieldGroups(
+  overview: EntryOverview,
+  { fields = [], relatedFields = [] }: CatalogDetailPresentation,
+  owner: ReactNode,
+  quote: string | null,
+): DetailFieldGroup[] {
+  const attributes = fields.filter(([, value]) => value != null && value !== "");
+  const relations = [...relatedFields];
   for (const { label, tags } of overview.tagGroups)
-    fields.push([
+    attributes.push([
       label,
       <div className="flex flex-wrap gap-2">
         {tags.map((tag) =>
@@ -44,18 +75,19 @@ export function overviewFields(
           ),
         )}
       </div>,
+      { fullWidth: tags.length > 1 },
     ]);
   if (overview.ingredientTags.length)
-    fields.push([
+    attributes.push([
       "食材标签",
       <ItemIngredientTags tags={overview.ingredientTags} />,
-      "item-ingredient-tags",
+      { anchor: "item-ingredient-tags", fullWidth: true },
     ]);
   const first = overview.memberships[0];
   if (first) {
     const { group, anchor } = collectionLabels[first.kind];
     const [primary, ...others] = overview.memberships;
-    fields.push([
+    relations.push([
       `所属${group}`,
       <>
         <CatalogRelations items={[primary]} />
@@ -71,8 +103,18 @@ export function overviewFields(
           <span className="text-xs text-muted-foreground">其他{group}的成员关系未确认</span>
         )}
       </>,
-      anchor,
+      { anchor, fullWidth: others.length > 0 || overview.hasUnconfirmedMembership },
     ]);
   }
-  return fields;
+  if (owner) relations.push(["友邻", owner]);
+  return [
+    { title: "物品属性", fields: attributes },
+    { title: "关联条目", fields: relations },
+    {
+      title: "获取",
+      fields: quote
+        ? [["配置报价（每次购买）", quote, { anchor: "purchase-offers", fullWidth: true }]]
+        : [],
+    },
+  ];
 }

@@ -33,11 +33,11 @@ export function collectionMembers<Member extends { id: number }>(
   kind: CollectionMemberKind,
   items: Member[] | null,
   renderItem: (item: Member) => ReactNode,
-): { fields: DetailField[]; sections: DetailSection[] } {
+): { relatedFields: DetailField[]; sections: DetailSection[] } {
   const { group, anchor, unit } = collectionLabels[kind];
   const title = `${group}成员`;
   return {
-    fields: [
+    relatedFields: [
       [
         "成员数量",
         <SectionCount anchor={anchor}>
@@ -96,6 +96,6 @@ export function addDetailRelation(
 ) {
   if (!items.length) return;
   const content = <CatalogRelations items={items} />;
-  if (items.length === 1) fields.push([label, content, anchor, fieldAlias]);
+  if (items.length === 1) fields.push([label, content, { anchor, alias: fieldAlias }]);
   else sections.push({ id: anchor, title: label, content });
 }

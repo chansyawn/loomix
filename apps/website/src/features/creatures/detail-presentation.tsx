@@ -33,8 +33,8 @@ export function creaturesDetailPresentation(detail: CreaturesDetail): CatalogDet
   const known = conditions.filter(([, value]) => value);
   return {
     image: <RecordImage image={record.image} name={record.name} eager />,
+    classification: record.category,
     fields: [
-      ["分类", record.category],
       ["学名", record.scientificName],
       ["尺寸范围", record.sizeRange],
     ],

@@ -14,21 +14,17 @@ export function clothingDetailPresentation(
   hairDyeing?: DetailResourceState<HairDyeingRegion[]>,
 ): CatalogDetailPresentation {
   const { record, navigation, counterpart } = detail;
-  let fields: DetailField[];
+  const fields: DetailField[] = [];
+  const relatedFields: DetailField[] = [];
   const sections: DetailSection[] = [];
   if (detail.kind === "set") {
     const members = collectionMembers("clothing", detail.items, (item) => (
       <ClothingCard record={item} />
     ));
-    fields = members.fields;
+    relatedFields.push(...members.relatedFields);
     sections.push(...members.sections);
   } else if (detail.kind === "neighborOutfit") {
-    fields = [
-      ["部位", detail.slotName],
-      ["可用体型", detail.modelSizes],
-    ];
-  } else {
-    fields = [["分类", detail.record.category]];
+    fields.push(["部位", detail.slotName], ["可用体型", detail.modelSizes]);
   }
   if (hairDyeing && (hairDyeing.status !== "ready" || hairDyeing.value.length > 0))
     sections.push({
@@ -43,6 +39,9 @@ export function clothingDetailPresentation(
     ),
     navigation: navigation ?? undefined,
     fields,
+    relatedFields,
+    classification:
+      detail.kind === "item" || detail.kind === "appearance" ? detail.record.category : null,
     sections,
   };
 }

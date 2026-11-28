@@ -5,13 +5,9 @@ import { cn } from "@/ui/lib/utils";
 import { DetailChapter, type DetailSubsection } from "./detail-headings";
 import { DetailNavGroup, type DetailNavigation } from "./detail-nav-group";
 import { DetailToc } from "./detail-toc";
+import { DetailFields, type DetailField, type DetailFieldGroup } from "./detail-fields";
 
-export type DetailField = readonly [
-  label: string,
-  value: ReactNode,
-  anchor?: string,
-  alias?: string,
-];
+export type { DetailField } from "./detail-fields";
 
 export type DetailSection = {
   id: string;
@@ -27,8 +23,9 @@ export type DetailPageProps = {
   titleId?: string;
   titleLeading?: ReactNode;
   titleActions?: ReactNode;
+  titleMetadata?: ReactNode;
   description?: ReactNode;
-  fields: readonly DetailField[];
+  fields: readonly DetailField[] | { groups: readonly DetailFieldGroup[] };
   overviewId?: string;
   sections: readonly DetailSection[];
   relatedNavigation?: DetailNavigation;
@@ -41,6 +38,7 @@ export function DetailPage({
   titleId,
   titleLeading,
   titleActions,
+  titleMetadata,
   description,
   fields,
   overviewId = "detail-overview",
@@ -70,41 +68,21 @@ export function DetailPage({
         aria-labelledby={titleId}
         className="@container/detail-fields flex min-w-0 flex-col gap-4"
       >
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <h1
-            id={titleId}
-            className="flex min-w-0 items-center gap-3 text-3xl/tight font-semibold tracking-tight sm:text-4xl"
-          >
-            {titleLeading}
-            <span className="min-w-0 wrap-anywhere">{title}</span>
-          </h1>
-          {titleActions}
+        <div className="grid gap-1.5">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <h1
+              id={titleId}
+              className="flex min-w-0 items-center gap-3 text-3xl/tight font-semibold tracking-tight sm:text-4xl"
+            >
+              {titleLeading}
+              <span className="min-w-0 wrap-anywhere">{title}</span>
+            </h1>
+            {titleActions}
+          </div>
+          {titleMetadata}
         </div>
         {description}
-        {fields.length > 0 && (
-          <dl className="grid gap-3 @min-[22rem]/detail-fields:grid-cols-2 @min-[24rem]/detail-fields:gap-4">
-            {fields.map(([label, value, anchor, alias], index) => (
-              <div
-                key={`${label}-${index}`}
-                id={anchor}
-                className="flex min-w-0 flex-col gap-1.5 rounded-xl bg-muted/40 p-3 @min-[24rem]/detail-fields:p-4"
-              >
-                <dt id={anchor && `${anchor}-heading`} className="text-xs text-muted-foreground">
-                  {alias ? (
-                    <span id={alias}>
-                      <span id={`${alias}-heading`}>{label}</span>
-                    </span>
-                  ) : (
-                    label
-                  )}
-                </dt>
-                <dd className="text-sm/6 wrap-break-word whitespace-pre-line">
-                  {value || "未提供"}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        )}
+        <DetailFields fields={fields} />
       </section>
       {sections.map(({ id, headingId = `${id}-heading`, title, content, subsections }) => (
         <DetailChapter

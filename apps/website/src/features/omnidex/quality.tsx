@@ -20,15 +20,7 @@ export function QualityMarker({ quality }: { quality: number }) {
   const Marker = qualityMarkers[quality];
   if (!Marker) return null;
 
-  return (
-    <Marker
-      role="img"
-      aria-label={`品阶：${qualityNames[quality]}`}
-      width={32}
-      height={48}
-      className="h-9 w-auto shrink-0"
-    />
-  );
+  return <Marker aria-hidden="true" width={32} height={48} className="h-9 w-auto shrink-0" />;
 }
 
 export function QualityBadge({ quality }: { quality: number | null }) {

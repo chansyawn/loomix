@@ -1,6 +1,6 @@
 import type { CatalogEntryRow } from "./catalog";
 import type { EntryOverview } from "./entry-overview";
-import { overviewFields } from "./overview-fields";
+import { CatalogTitleMetadata, overviewFieldGroups } from "./overview-fields";
 import type { CatalogEntryDetail } from "./catalog-entry-detail";
 import { simplePurchaseQuote, type ShopPurchaseQuotes } from "./purchase-quotes";
 import { RecordImage } from "./record-image";
@@ -98,18 +98,22 @@ export function CatalogEntryPage({
       ),
     );
   const hairDyeing = useDetailResource(readHairDyeing);
-  const { image, fields, sections, titleActions, navigation, showEmptyExtras } =
-    catalogDetailPresentation(model, hairDyeing);
+  const presentation = catalogDetailPresentation(model, hairDyeing);
+  const { image, classification, sections, titleActions, navigation, showEmptyExtras } =
+    presentation;
   const detailSections = [...sections];
   const hints = explorationSection(islets);
   if (hints) detailSections.push(hints);
   const habitats = model.category === "creatures" && relatedVignettesSection(vignettes);
   if (habitats) detailSections.push(habitats);
-  const topFields = overviewFields(record, overview, fields);
-  if (readOwner) topFields.push(["友邻", <OutfitOwner read={readOwner} />]);
   const simpleQuote = simplePurchaseQuote(quotes);
-  if (simpleQuote) topFields.push(["配置报价（每次购买）", simpleQuote, "purchase-offers"]);
-  else if (quotes?.length)
+  const groups = overviewFieldGroups(
+    overview,
+    presentation,
+    readOwner && <OutfitOwner read={readOwner} />,
+    simpleQuote,
+  );
+  if (!simpleQuote && quotes?.length)
     detailSections.push({
       id: "purchase-offers",
       title: "配置报价（每次购买）",
@@ -150,19 +154,15 @@ export function CatalogEntryPage({
         title={record.name}
         titleLeading={record.quality !== null && <QualityMarker quality={record.quality} />}
         titleActions={titleActions}
+        titleMetadata={<CatalogTitleMetadata row={record} classification={classification} />}
         description={
-          <>
-            {record.quality === null && (
-              <p className="text-sm text-muted-foreground">品阶：未提供</p>
-            )}
-            {record.description && (
-              <p className="text-sm/7 whitespace-pre-line text-muted-foreground">
-                {record.description}
-              </p>
-            )}
-          </>
+          record.description && (
+            <p className="text-sm/7 whitespace-pre-line text-muted-foreground">
+              {record.description}
+            </p>
+          )
         }
-        fields={topFields}
+        fields={{ groups }}
         sections={detailSections}
         relatedNavigation={catalogEntryNavigation(navigation, record.id, origin)}
         empty={showEmptyExtras && <CatalogDetailEmpty />}

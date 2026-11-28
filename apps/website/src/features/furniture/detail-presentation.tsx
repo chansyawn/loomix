@@ -9,16 +9,16 @@ import { FurnitureRecipes } from "./recipes";
 export function furnitureDetailPresentation(detail: FurnitureDetail): CatalogDetailPresentation {
   const { record } = detail;
   const fields: DetailField[] = [];
+  const relatedFields: DetailField[] = [];
   const sections: DetailSection[] = [];
   if (detail.kind === "set") {
     const members = collectionMembers("furniture", detail.items, (item) => (
       <FurnitureCard item={item} />
     ));
-    fields.push(...members.fields);
+    relatedFields.push(...members.relatedFields);
     sections.push(...members.sections);
   } else {
     fields.push(
-      ["分类", detail.record.category],
       [
         "家具类型",
         detail.record.furnitureCategory === detail.record.category
@@ -47,6 +47,8 @@ export function furnitureDetailPresentation(detail: FurnitureDetail): CatalogDet
       />
     ),
     fields,
+    relatedFields,
+    classification: detail.kind === "set" ? null : detail.record.category,
     navigation: detail.navigation,
     sections,
   };
