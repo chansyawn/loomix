@@ -28,7 +28,7 @@
 
 每条购买报价属于一家商店，按直接交付物 ID 反查，保留一次购买的固定价或每日次数价。零金额需要明确配置。支付货币引用目录物品，名称、说明和图标均从该物品读取。友邻服饰的价格也从报价派生。
 
-同店、同物、同币种出现异价时，已核实来自任务或限时货架的报价统一写 `"note": "任务/限时货架"`，其余报价省略 `note`。无短注的报价也可能随店铺状态变化。衣橱的补足方式写在店铺支付说明中。[带注释的完整目录样例](examples/catalog-purchase-offers.jsonc) · [业务确认与调查](../../tools/extraction/docs/business-investigation.md#物品价格与交易)
+同店、同物、同币种出现异价时，已核实来自任务或限时货架的报价统一写 `"note": "任务/限时货架"`，其余报价省略 `note`。无短注的报价也可能随店铺状态变化。衣橱的补足方式写在店铺支付说明中。[带注释的完整目录样例](examples/catalog-purchase-offers.jsonc) · [业务确认与调查](../../tools/extraction/docs/business-investigation.md#购买报价)
 
 星海区域保留探索星屿顺序和区域邂逅关系。星屿展示物资引用物品目录，同名物品按 ID 区分。消费方可按物品或友邻 ID 反查区域和星屿。物资展示与邂逅候选的业务范围见[业务确认与调查](../../tools/extraction/docs/business-investigation.md#星海与星屿)。
 
