@@ -1,77 +1,49 @@
 # 络米星集 loomix.fun
 
-络米星集是非官方的星布谷地游戏工具与资料站，提供家具、服饰、生物、植物、烹饪和友邻等图鉴与资料查询。
-
-网站：[loomix.fun](https://loomix.fun)。
+[络米星集](https://loomix.fun)是《星布谷地》的非官方工具与资料站，提供家具、服饰、生物、植物、烹饪和友邻等图鉴与资料查询。
 
 ## 本地开发
 
-以下命令均在仓库根目录执行。本地与 CI 使用根 `package.json` 的 `devEngines` 选择 Node 和包管理器，Vite+ 版本由工作区依赖与锁文件固定：
+在仓库根目录运行 `vp install` 安装依赖。Node 与包管理器版本由 [package.json](package.json) 指定。
 
-```bash
-vp install
-```
+首次克隆只有资源占位文件。启动网站前可选择本地或已发布的资源。
 
-启动前先准备网站资源，任选一种方式：
+- 使用**本地资源**时，将兼容的资源包安装到 `resources/website/`。首次提取从[客户端资源提取](tools/extraction/README.md#首次配置)开始。
+- 使用**已发布资源**时，在根目录 `.env.development.local` 中将 `VITE_RESOURCE_BASE_URL` 设为兼容的 HTTPS 发布地址。资源域名的 CORS 须允许当前开发站点访问。
 
-- 本地资源可提取、打包和验证后安装到 `resources/website/`。已有兼容的共享资源包及其完整上游时，可跳过提取直接安装。[客户端资源提取](tools/extraction/README.md)
-- 已发布资源通过 `VITE_RESOURCE_BASE_URL` 指定与当前契约匹配的 HTTPS 地址。生产默认使用网站资源地址配置。[resource-address.json](apps/website/resource-address.json)
-
-开发和测试默认读取本地资源，首次克隆只有占位文件，需要先完成上述资源准备。随后启动网站：
-
-```bash
-vp run dev
-```
-
-日常使用 `vp run test` 运行全仓测试，`vp run build` 构建所有提供构建任务的包；只操作一个包时使用 `vp run <包名>#<任务>`。测试默认执行一次，持续监听可运行 `vp run website#test watch`。提交前检查与 PR 流程见[贡献指南](CONTRIBUTING.md)。
-
-安装本地资源后，使用 `vp run resources publish` 校验、上传并更新网站资源地址配置，随后通过 PR 预览与部署。[网站资源管理](tools/resources/README.md) · [CI/CD 与部署](DEPLOYMENT.md#资源更新流程)
+运行 `vp run dev`，打开终端输出的网址。`vp run test` 运行全仓测试，`vp run build` 构建所有提供构建任务的包。单包任务使用 `vp run <包名>#<任务>`。
 
 ### 环境配置
 
-配置文件统一放在仓库根目录，模板见 [.env.example](.env.example)。尚未创建 `.env` 时复制模板，再填写所需变量；各 worktree 独立提供配置。子目录环境文件不加载，进程环境变量优先于文件配置。
+环境文件放在当前 worktree 的仓库根目录，进程环境变量优先。需要 `.env` 时从 [.env.example](.env.example) 复制并填写。凭证应避开会暴露给客户端的 `VITE_` 前缀。
 
-| 使用方             | 读取的根目录文件                                         | 文件间优先级            |
-| ------------------ | -------------------------------------------------------- | ----------------------- |
-| 网站               | `.env`、`.env.local`、`.env.[mode]`、`.env.[mode].local` | 从左到右依次提高        |
-| Wrangler 部署      | `.env`、可选的 `.env.local`                              | `.env.local` 优先       |
-| 提取器、资源发布器 | `.env`                                                   | 不读取 local 或模式文件 |
+| 使用方          | 读取的文件（从低到高优先级）                             |
+| --------------- | -------------------------------------------------------- |
+| 网站            | `.env`、`.env.local`、`.env.[mode]`、`.env.[mode].local` |
+| Wrangler 部署   | `.env`、`.env.local`                                     |
+| 提取器、R2 凭证 | `.env`                                                   |
 
-`VITE_RESOURCE_BASE_URL` 默认无需配置。开发和测试使用 `resources/website/`，生产读取 `apps/website/resource-address.json`。只有 `VITE_` 前缀变量可暴露给客户端，请勿为凭证使用该前缀。
+未设置 `VITE_RESOURCE_BASE_URL` 时，开发和测试使用本地资源，生产构建读取 [resource-address.json](apps/website/resource-address.json)。
 
 ### T3 Worktree
 
-在 T3 的 **Settings → Projects → Actions** 导入 [t3.json](t3.json) 中的动作。在主 checkout 根目录创建 `.env`，配置本机的 `LOOMIX_DATA_ROOT`。需要从 worktree 发布资源时，也在该文件中配置发布凭证。
+在 T3 的 **Settings → Projects → Actions** 导入 [t3.json](t3.json)。在主 checkout 的 `.env` 中设置 `LOOMIX_DATA_ROOT`，需要发布资源时也在这里配置发布凭证。新 worktree 缺少 `.env` 时，「初始化 Worktree」会整份复制该文件。
 
-创建 worktree 时，T3 在后台运行「初始化 Worktree」，线程可以立即开始工作。初始化在 worktree 缺少 `.env` 时整份复制主 checkout 的 `.env`，然后安装依赖并准备网站资源。资源优先使用已通过校验的本地副本，必要时复用或生成共享资源包后安装。
-
-依赖安装完成后，可通过「启动网站」直接启动开发服务器，访问地址以终端输出为准。资源仍在准备时，页面可能暂时缺少数据。初始化结束后仍缺少资源或校验失败时，重跑「初始化 Worktree」。若初始化提示客户端快照缺失或选择歧义，按[客户端资源提取](tools/extraction/README.md#首次配置)处理后重试。
-
-## 目录结构
-
-```text
-apps/website/              # 网站页面、路由、样式与网站专属文档
-packages/schema/           # 共享领域模型、资源与发布契约
-tools/extraction/          # 客户端资源提取工具与文档
-tools/resources/  # 资源校验、发布与清理
-resources/website/         # 当前 worktree 的本地网站资源
-```
-
-`LOOMIX_DATA_ROOT` 指定本机共享数据目录，保存按版本命名的只读客户端快照、工具缓存和验证产物。导入时显式指定客户端来源。`var/scratch/` 用于当前 worktree 的临时调查。`resources/` 与 `var/` 下的本地数据由根目录 `.gitignore` 忽略。目录用途与产物查询见[客户端资源提取](tools/extraction/README.md#输入缓存与产物)。
+初始化在后台安装依赖、准备并校验本地资源。依赖就绪后即可运行「启动网站」，资料要等资源就绪才可用。如果没有匹配的快照，导入所需版本后重跑初始化。如果有多个匹配，指定快照生成并安装资源包，再重跑初始化。[客户端资源提取](tools/extraction/README.md#首次配置)
 
 ## 文档
 
-| 文档                                                               | 读者                 | 内容                                           |
-| ------------------------------------------------------------------ | -------------------- | ---------------------------------------------- |
-| [贡献指南](CONTRIBUTING.md)                                        | 贡献者               | 提交规范、PR 流程与合并限制                    |
-| [Agent 协作约定](AGENTS.md)                                        | AI Agent、维护者     | 注释语言、lint、文档、领域术语、测试与 UI 约定 |
-| [领域术语表](GLOSSARY.md)                                          | 各包开发者、AI Agent | 收录、图鉴、游戏关系、提取与资源发布的统一定义 |
-| [CI/CD 与部署](DEPLOYMENT.md)                                      | 维护者               | 预览、正式发布、资源与 CORS 配置               |
-| [网站应用](apps/website/README.md)                                 | 网站开发者           | 开发入口、代码结构、数据加载与常用检查         |
-| [发布契约检查](apps/website/docs/release-checks.md)                | 网站开发者           | 职责边界、扩展指引与失败处理                   |
-| [标签筛选策略](apps/website/docs/tag-filter-policy.md)             | 网站开发者           | 筛选语义、可见性边界与维护指引                 |
-| [客户端资源提取](tools/extraction/README.md)                       | 提取工具使用者       | 首次配置、日常操作、排障与清理                 |
-| [提取要求与规范](tools/extraction/docs/extraction-requirements.md) | 提取工具维护者       | 解释原则、收录准入、客户端用语与流水线要求     |
-| [业务确认与调查](tools/extraction/docs/business-investigation.md)  | 提取工具维护者       | 业务收录依据、确认结论与待调查事项             |
-| [网站资源管理](tools/resources/README.md)                          | 资源维护者           | R2 凭证、校验、发布与清理                      |
-| [共享数据契约](packages/schema/README.md)                          | 各包开发者           | 跨包约束、身份、图片与版本边界                 |
+| 文档                                                               | 何时阅读                               |
+| ------------------------------------------------------------------ | -------------------------------------- |
+| [贡献指南](CONTRIBUTING.md)                                        | 提交变更、验收预览或合并 PR            |
+| [Agent 协作约定](AGENTS.md)                                        | 确认代码、文档、UI 与测试约定          |
+| [领域术语表](GLOSSARY.md)                                          | 区分收录范围、游戏关系与资源产物       |
+| [CI/CD 与部署](DEPLOYMENT.md)                                      | 部署网站、切换或回滚线上资源           |
+| [网站应用](apps/website/README.md)                                 | 接入页面、读取数据或排查网站问题       |
+| [发布契约检查](apps/website/docs/release-checks.md)                | 运行、扩展或排查网站对资源的检查       |
+| [标签筛选策略](apps/website/docs/tag-filter-policy.md)             | 调整标签的可见范围、分组或名称         |
+| [客户端资源提取](tools/extraction/README.md)                       | 导入快照、提取资料、安装或恢复本地资源 |
+| [提取要求与规范](tools/extraction/docs/extraction-requirements.md) | 修改提取规则或验收逻辑                 |
+| [业务确认与调查](tools/extraction/docs/business-investigation.md)  | 复核准入依据、版本证据与待确认事项     |
+| [网站资源管理](tools/resources/README.md)                          | 校验、发布或清理 R2 资源               |
+| [共享数据契约](packages/schema/README.md)                          | 修改跨包数据结构或校验规则             |
