@@ -1,5 +1,6 @@
 import type { ImageRef } from "@loomix/schema/assets";
 import { assembleClientIcons } from "../client-icons/model.ts";
+import { assembleNeighborImages } from "../neighbor-images/model.ts";
 import { imageKey } from "@loomix/schema/assets";
 import { referencedImages } from "@loomix/schema/dataset/images";
 import { parseDataset } from "@loomix/schema/dataset";
@@ -9,6 +10,7 @@ import { bindImages } from "../images/bind.ts";
 import type { OriginalImage } from "../images/model.ts";
 import type { ClientReadRecords } from "../model.ts";
 import { buildNeighbors } from "./neighbors.ts";
+import { neighborReferencedItemIds } from "../source/neighbors/references.ts";
 import { buildDomainEvidence } from "./evidence.ts";
 import { validateDomainEvidence } from "./validate-evidence.ts";
 import { assembleCatalog } from "./catalog.ts";
@@ -86,7 +88,7 @@ export function assemble(
     image,
     observations.ingredientItemIds,
     [
-      ...observations.neighbors.giftPreferences.flatMap((entry) => entry.itemIds),
+      ...neighborReferencedItemIds(observations.neighbors),
       ...starseaItemIds(observations.starsea.data.islets),
       ...dyeMaterialIds(observations.hairDyeing.data),
     ],
@@ -217,6 +219,11 @@ export function assemble(
     fieldEvidence,
     imageBindings: bound.bindings,
     imageJobs: jobs,
+    neighborImages: assembleNeighborImages(
+      dataset.context.datasetId,
+      observations.neighborImages,
+      originals,
+    ),
     clientIcons: assembleClientIcons(
       dataset.context.datasetId,
       observations.clientIcons,

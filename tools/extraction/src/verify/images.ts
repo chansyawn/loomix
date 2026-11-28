@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { clientIconSlots } from "../extraction/client-icons/model.ts";
 import { clientIconAtlas } from "../extraction/client-icons/resolve.ts";
+import { neighborImageSlots } from "../extraction/neighbor-images/model.ts";
 import fs from "node:fs";
 import path from "node:path";
 import { PNG } from "pngjs";
@@ -246,7 +247,9 @@ export function verifyImages(
     return sprite ?? (allowAtlasName ? preferred(bySpriteFolderAndName.get(key) ?? []) : undefined);
   };
   const expectedBindings: ImageBinding[] = [];
-  const candidateKeys = new Set<string>();
+  const candidateKeys = new Set(
+    neighborImageSlots(observations.neighborImages).map((slot) => slot.object),
+  );
   for (const { image } of clientIconSlots(observations.clientIcons)) {
     if (!image) continue;
     const key = normalize(`assets/moleres/rel/sres/${image.reference}`);

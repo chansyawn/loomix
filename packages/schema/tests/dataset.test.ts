@@ -25,6 +25,24 @@ import {
 const messages = (dataset: ReturnType<typeof datasetFixture>) =>
   validateDataset(dataset).map((issue) => issue.message);
 
+test("房屋建材和订单图纸须引用目录物品，且同阶段的建材唯一", () => {
+  const dataset = datasetFixture();
+  const owner = neighbor(11);
+  const upgrade = {
+    materials: [{ itemId: 10, quantity: 15 }],
+    blueprint: { itemId: 20, quantity: 1 },
+  };
+  owner.house = {
+    stages: [{ id: 1012, level: 2, name: "特色小屋", description: null, image: null, upgrade }],
+  };
+  dataset.neighbors.neighbors.push(owner);
+  expect(messages(dataset)).toEqual(["Unknown material 10", "Unknown blueprint 20"]);
+  dataset.catalog.items.push(material(10), reference(20));
+  expect(parseDataset(dataset)).toEqual(dataset);
+  upgrade.materials.push({ itemId: 10, quantity: 5 });
+  expect(messages(dataset)).toContain("Duplicate identity 10");
+});
+
 test("物品和集合的正式契约拒绝旧获取字段", () => {
   const item = plant(1);
   const group = collection(10, "plant", [1]);

@@ -1,5 +1,6 @@
 import path from "node:path";
 import { readClientIcons } from "../client-icons/read.ts";
+import { readNeighborImages } from "../neighbor-images/read.ts";
 import { clientIconResolver } from "../client-icons/resolve.ts";
 import { createContentContext } from "./catalog/context.ts";
 import { readContent } from "./catalog/content.ts";
@@ -7,6 +8,7 @@ import { extendCollection } from "./catalog/collection/observe.ts";
 import { detailInvestigation } from "./catalog/collection/details/investigation.ts";
 import { readAcquisitionHints } from "./catalog/acquisition-hints.ts";
 import { extractNeighborBundle } from "./neighbors/extract.ts";
+import { neighborReferencedItemIds } from "./neighbors/references.ts";
 import { collectNeighborOutfitImage } from "./neighbors/outfit-image.ts";
 import {
   selectAdditionalNeighborImages,
@@ -212,7 +214,7 @@ export function readClientRecords(source: string, datasetId: string): ClientRead
     crafting,
     images,
     referencedItemIds: [
-      ...neighbors.database.giftPreferences.flatMap((entry) => entry.itemIds),
+      ...neighborReferencedItemIds(neighbors.database),
       ...starseaItemIds(starsea.data.islets),
       ...dyeMaterialIds(hairDyeing.data),
     ],
@@ -257,6 +259,12 @@ export function readClientRecords(source: string, datasetId: string): ClientRead
       context.tables,
       context.recipesByProduct,
       clientIconResolver(index, images.locate),
+    ),
+    neighborImages: readNeighborImages(
+      context.tables,
+      neighbors.database.neighbors,
+      index,
+      images.locate,
     ),
     hairDyeing,
     vignettes: readVignettes(

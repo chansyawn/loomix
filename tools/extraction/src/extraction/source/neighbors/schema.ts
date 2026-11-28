@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { BodyTypeSchema } from "@loomix/schema/catalog";
-import { StoryLayoutSchema } from "@loomix/schema/neighbors";
+import { HouseUpgradeSchema, StoryLayoutSchema } from "@loomix/schema/neighbors";
 
 const source = z.strictObject({
   gameVersion: z.string().min(1),
@@ -45,6 +45,7 @@ const record = z.strictObject({
           name: z.string().min(1),
           description: text,
           image: path.nullable(),
+          upgrade: HouseUpgradeSchema.nullable(),
         })
         .array(),
     })
