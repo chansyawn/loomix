@@ -99,6 +99,12 @@ export function catalogEntryDetail(data: OmnidexCatalog, id: number, neighborNam
           kind === "plant" && !collection ? data.ingredients : null,
         ),
       };
+    case "cropPlant":
+    case "flowerPlant":
+      return {
+        category: "plants" as const,
+        detail: plantsDetail(view.plants, "harvestablePlants", id),
+      };
     case "dish":
       return {
         category: "dishes" as const,

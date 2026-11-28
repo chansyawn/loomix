@@ -12,7 +12,12 @@ import type { CollectionSource } from "../collection/evidence.ts";
 
 export interface PlantExclusion {
   id: number;
-  reason: "missing_use_configuration" | "random_planting_outside_scope" | "no_formal_plant";
+  reason:
+    | "missing_use_configuration"
+    | "random_planting_outside_scope"
+    | "no_formal_plant"
+    | "outside_admitted_crop_growth"
+    | "no_listed_flower";
   sources: CollectionSource[];
 }
 

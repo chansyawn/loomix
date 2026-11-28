@@ -1,13 +1,13 @@
 import { SeedNameLink } from "./seed-info";
 import { Link } from "@tanstack/react-router";
 import type { PlantItem, PlantSeries } from "../omnidex-view.ts";
-import type { PlantSeed } from "./model";
+import type { HarvestablePlant, PlantSeed } from "./model";
 import { RecordImage } from "@/features/omnidex/record-image";
 import { RecordListCard } from "@/features/omnidex/record-list-card";
 import { useOmnidexOrigin } from "@/features/omnidex/navigation";
 import { catalogEntryLocation } from "../omnidex/entry-location";
 
-export function PlantsCard({ item }: { item: PlantItem }) {
+export function PlantsCard({ item }: { item: PlantItem | HarvestablePlant }) {
   const origin = useOmnidexOrigin();
   return (
     <RecordListCard
@@ -19,7 +19,11 @@ export function PlantsCard({ item }: { item: PlantItem }) {
           {item.name}
         </Link>
       }
-      tags={item.category}
+      tags={
+        "stockCategory" in item
+          ? `${item.stockCategory} · 可收获${item.harvest.name}`
+          : item.category
+      }
     />
   );
 }

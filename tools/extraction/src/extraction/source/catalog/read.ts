@@ -12,7 +12,7 @@ import type {
   ItemOf,
   RecipeSlot,
 } from "@loomix/schema/catalog";
-import { catalogAdmissionIds } from "./catalog-admissions.ts";
+import { readHarvestablePlants } from "./plants/harvestable-plants.ts";
 import type { CollectionObservations } from "../../schema.ts";
 import type { ContentContext } from "./context.ts";
 import { splitTags } from "./model.ts";
@@ -154,10 +154,15 @@ export function readCatalog({
   for (const entry of categories.values())
     entry.itemIds = [...new Set(entry.itemIds)].sort((a, b) => a - b);
   const cooking = new Map(observations.cookingRecipes.map((recipe) => [recipe.productId, recipe]));
-  const admitted = catalogAdmissionIds(
-    context,
-    neighborOutfits.map((outfit) => outfit.id),
-  );
+  const stocks = readHarvestablePlants(context, observations.growths, images, tagIds);
+  const admitted = new Set([
+    ...context.scope.ids,
+    ...observations.seeds.map((seed) => seed.id),
+    ...stocks.items.map((stock) => stock.id),
+    ...neighborOutfits.map((outfit) => outfit.id),
+  ]);
+  items.push(...stocks.items);
+  proofs.push(...stocks.proofs);
   const display = (id: number, field: number, name: string): string[] | null => {
     const values = splitTags(tables.string(context.ui.get(id), field)).map((key) =>
       context.vocabulary.renderDisplay(key),
@@ -348,6 +353,7 @@ export function readCatalog({
     catalog: { items, collections, inspoBoxes: sets, ...purchases } satisfies CatalogObservation,
     proofs,
     crafting: crafting.audit,
+    harvestableExclusions: stocks.exclusions,
   };
 }
 

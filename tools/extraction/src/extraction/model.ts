@@ -6,6 +6,7 @@ import type { ImageNeed, ImageObject } from "./images/model.ts";
 import type { NeighborDatabase } from "./source/neighbors/schema.ts";
 import type { EvidenceRecord } from "./types.ts";
 import type { CollectionEvidence } from "./source/catalog/collection/evidence.ts";
+import type { PlantExclusion } from "./source/catalog/plants/read.ts";
 import type { NeighborEvidence } from "./source/neighbors/types.ts";
 import type { CollectionObservations } from "./schema.ts";
 import type { readStarsea } from "./source/starsea/read.ts";
@@ -57,7 +58,7 @@ export interface ClientReadRecords {
     purchases: ReturnType<typeof readPurchaseOffers>["diagnostics"];
     collection: CollectionObservations;
     admissions: import("./source/catalog/admissions.ts").RecordEvidence[];
-    exclusions: unknown;
+    exclusions: PlantExclusion[];
     investigation: {
       appearances: import("./source/catalog/admissions.ts").AppearanceInvestigation[];
       plants: unknown;

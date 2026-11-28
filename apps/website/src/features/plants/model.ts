@@ -4,7 +4,7 @@ import type { InspoCardFaceData } from "../omnidex/inspo-card";
 
 type ResolvedGrowth<G extends Growth = Growth> = G extends Growth
   ? Omit<G, "stages"> & {
-      stages: (Omit<G["stages"][number], "image"> & { image: string | null })[];
+      stages: (Omit<G["stages"][number], "image"> & { image: string | null; stockId?: number })[];
     }
   : never;
 export type PlantGrowth = ResolvedGrowth;
@@ -47,6 +47,10 @@ export type PlantItem = CatalogEntrySummary & {
   treeDrops: PlantRecord["drops"];
   summary: PlantSummary;
 };
+export type HarvestablePlant = CatalogEntrySummary & {
+  stockCategory: "作物株" | "花株";
+  harvest: PlantItem;
+};
 export type PlantSeries = CatalogEntrySummary & {
   seriesName: string | null;
   plantIds: number[] | null;
@@ -60,6 +64,7 @@ export type FlowerHybridizationSeries = {
   recipes: FlowerHybridizationRecipe[];
 };
 export interface PlantsData {
+  harvestablePlants: HarvestablePlant[];
   items: PlantItem[];
   series: PlantSeries[];
   seeds: PlantSeed[];

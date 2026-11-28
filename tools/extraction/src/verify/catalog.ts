@@ -10,6 +10,7 @@ import { parseTagBinData } from "../extraction/source/decode/bindata.ts";
 import { readJson } from "../workflow/json.ts";
 import type { SupplementalAdmissions } from "../extraction/source/catalog/admissions.ts";
 import { verifyAppearanceAdmissions } from "./appearance.ts";
+import { verifyHarvestablePlants } from "./harvestable-plants.ts";
 
 const text = (value: string | null) =>
   value
@@ -252,6 +253,13 @@ export function verifyCatalogSources(
   });
   const expectedFormal = new Set([
     ...expectedBase,
+    ...verifyHarvestablePlants(
+      tables,
+      dataset.catalog,
+      expectedBase,
+      fieldEvidence,
+      observations.diagnostics.exclusions,
+    ),
     ...seedIds,
     ...cardIds,
     ...outfits.map((row) => tables.id(row)),

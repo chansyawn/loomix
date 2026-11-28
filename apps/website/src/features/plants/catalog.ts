@@ -6,7 +6,14 @@ import { createImageResolver } from "@loomix/schema/assets";
 import type { ImageIndex } from "@loomix/schema/assets";
 import type { IngredientItem } from "../omnidex-view";
 import type { InspoCardReference } from "../omnidex/inspo-card";
-import type { PlantItem, PlantSeed, PlantSummary, PlantsData, PlantGrowth } from "./model";
+import type {
+  HarvestablePlant,
+  PlantItem,
+  PlantSeed,
+  PlantSummary,
+  PlantsData,
+  PlantGrowth,
+} from "./model";
 
 export function splitPlantValues(value: string | null): string[] {
   return value
@@ -51,6 +58,10 @@ export function buildPlantsData(
 ): PlantsData {
   const image = createImageResolver(imageIndex);
   const tagsFor = createRecordTagResolver(tagIndex);
+  const stocks = catalog.items.filter(
+    (item) => item.kind === "cropPlant" || item.kind === "flowerPlant",
+  );
+  const stockIds = new Set(stocks.map((item) => item.id));
   const seeds: PlantSeed[] = catalog.items
     .filter((item): item is ItemOf<"seed"> => item.kind === "seed")
     .map(({ kind: _kind, tagIds: _tagIds, growth, ...seed }) => ({
@@ -59,7 +70,11 @@ export function buildPlantsData(
       plantIds: growthPlantIds(growth),
       growth: {
         ...growth,
-        stages: growth.stages.map((stage) => ({ ...stage, image: image(stage.image) })),
+        stages: growth.stages.map((stage) => ({
+          ...stage,
+          image: image(stage.image),
+          ...(stockIds.has(stage.id) ? { stockId: stage.id } : {}),
+        })),
       } as PlantGrowth,
     }));
   const seedsByPlant = new Map<number, PlantSeed[]>();
@@ -149,6 +164,19 @@ export function buildPlantsData(
     return { ...item, summary: summarize([item]) };
   });
   const itemsById = new Map(items.map((item) => [item.id, item]));
+  const harvestablePlants = stocks.map((stock): HarvestablePlant => {
+    const harvest = itemsById.get(stock.harvestItemId);
+    if (!harvest) throw new Error(`Missing harvest ${stock.harvestItemId} for ${stock.id}`);
+    return {
+      id: stock.id,
+      name: stock.name,
+      description: stock.description,
+      image: image(stock.image),
+      quality: stock.quality,
+      stockCategory: stock.kind === "cropPlant" ? "作物株" : "花株",
+      harvest,
+    };
+  });
   const series = catalog.collections
     .filter((group) => group.memberKind === "plant")
     .map((group) => {
@@ -169,5 +197,5 @@ export function buildPlantsData(
   for (const tree of items)
     for (const id of unique(tree.treeDrops?.map((drop) => drop.itemId) ?? []))
       sourceTreesByItemId.set(id, [...(sourceTreesByItemId.get(id) ?? []), tree]);
-  return { items, series, seeds, itemRefs, sourceTreesByItemId };
+  return { items, series, seeds, harvestablePlants, itemRefs, sourceTreesByItemId };
 }

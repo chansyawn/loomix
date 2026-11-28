@@ -72,9 +72,25 @@ export function validateCatalog(catalog: Catalog): ValidationIssue[] {
         unique(item.drops ?? [], (drop) => `${drop.source}:${drop.itemId}`, [...path, "drops"]);
         for (const drop of item.drops ?? []) checkItems([drop.itemId], [...path, "drops"]);
         break;
+      case "cropPlant":
+      case "flowerPlant": {
+        const harvest = items.get(item.harvestItemId);
+        const category = item.kind === "cropPlant" ? "作物" : "花";
+        if (harvest?.kind !== "plant" || harvest.category !== category)
+          issue([...path, "harvestItemId"], `Expected ${category} harvest ${item.harvestItemId}`);
+        break;
+      }
       case "seed":
         for (const message of validateGrowth(item.growth)) issue([...path, "growth"], message);
         checkItems(growthPlantIds(item.growth), [...path, "growth", "stages"], ["plant"]);
+        for (const [stageIndex, stage] of item.growth.stages.entries()) {
+          const stock = items.get(stage.id);
+          if (
+            (stock?.kind === "cropPlant" || stock?.kind === "flowerPlant") &&
+            stock.harvestItemId !== stage.plantId
+          )
+            issue([...path, "growth", "stages", stageIndex, "plantId"], "Stage harvest mismatch");
+        }
         break;
       case "dish":
         item.cooking?.slots.forEach((slot, slotIndex) =>

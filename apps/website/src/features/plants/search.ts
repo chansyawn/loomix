@@ -59,13 +59,15 @@ export type ViewQuery = z.output<typeof viewQuerySchema>;
 export type Sort = ViewQuery["sort"];
 export type SeedSort = "original" | "name-asc" | "name-desc";
 export type SeedQuery = ViewQuery & { sort: SeedSort };
-export type View = "items" | "series" | "seeds";
+const views = ["items", "series", "seeds", "harvestablePlants"] as const;
+export type View = (typeof views)[number];
 export type PlantsSearch = {
   view: View;
   layout?: "grid" | "table";
   items: ViewQuery;
   series: ViewQuery;
   seeds: SeedQuery;
+  harvestablePlants: ViewQuery;
 };
 export type PlantsSearchInput = z.input<typeof plantsSearchSchema>;
 
@@ -80,6 +82,13 @@ function emptySeedQuery(): SeedQuery {
 const seriesQuerySchema = viewQuerySchema
   .pick({ q: true, sort: true, qualities: true, flowerColors: true })
   .transform((query): ViewQuery => ({ ...emptyQuery(), ...query }));
+const harvestableQuerySchema = viewQuerySchema
+  .pick({ q: true, sort: true, categories: true })
+  .transform((query): ViewQuery => ({
+    ...emptyQuery(),
+    ...query,
+    categories: query.categories.filter((category) => category === "作物株" || category === "花株"),
+  }));
 const seedQuerySchema = z
   .object({
     q: z.string().catch("").default(""),
@@ -95,10 +104,11 @@ const seedQuerySchema = z
 
 export const plantsSearchSchema = z.object({
   layout: listLayoutSchema,
-  view: z.enum(["items", "series", "seeds"]).catch("items").default("items"),
+  view: z.enum(views).catch("items").default("items"),
   items: viewQuerySchema.prefault({}).catch(emptyQuery),
   series: seriesQuerySchema.prefault({}).catch(emptyQuery),
   seeds: seedQuerySchema.prefault({}).catch(emptySeedQuery),
+  harvestablePlants: harvestableQuerySchema.prefault({}).catch(emptyQuery),
 });
 
 export function updateViewQuery(search: PlantsSearch, patch: Partial<ViewQuery>): PlantsSearch {
@@ -118,12 +128,14 @@ export function compactPlantsSearch(input: PlantsSearchInput | PlantsSearch): Pl
   const items = compactQuery(search.items);
   const series = compactQuery(search.series);
   const seeds = compactQuery(search.seeds);
+  const harvestablePlants = compactQuery(search.harvestablePlants);
   return {
     ...(search.layout ? { layout: search.layout } : {}),
     ...(search.view !== "items" ? { view: search.view } : {}),
     ...(Object.keys(items).length > 0 ? { items } : {}),
     ...(Object.keys(series).length > 0 ? { series } : {}),
     ...(Object.keys(seeds).length > 0 ? { seeds } : {}),
+    ...(Object.keys(harvestablePlants).length ? { harvestablePlants } : {}),
   } as PlantsSearch;
 }
 
@@ -135,6 +147,7 @@ export const compactPlantsSearchMiddleware: SearchMiddleware<PlantsSearch> = ({ 
     items: _items,
     series: _series,
     seeds: _seeds,
+    harvestablePlants: _harvestablePlants,
     ...other
   } = result;
   return { ...other, ...compactPlantsSearch(result) } as PlantsSearch;

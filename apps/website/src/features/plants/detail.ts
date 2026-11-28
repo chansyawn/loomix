@@ -37,6 +37,11 @@ export function plantsDetail(
   id: number,
   ingredients: IngredientsData | null = null,
 ) {
+  if (view === "harvestablePlants") {
+    const record = data.harvestablePlants.find((stock) => stock.id === id);
+    if (!record) throw notFound();
+    return { kind: "harvestablePlant" as const, record };
+  }
   const itemsById = new Map(data.items.map((item) => [item.id, item]));
   const navigation = plantDetailNavigation(data, id);
   if (view === "items") {
