@@ -6,7 +6,10 @@ import { CreaturesCard } from "./creatures-card";
 import { SeriesImage } from "../omnidex/series-image";
 import type { CreaturesDetail } from "./detail";
 
-export function creaturesDetailPresentation(detail: CreaturesDetail): CatalogDetailPresentation {
+export function creaturesDetailPresentation(
+  detail: CreaturesDetail,
+  encounterSummary: string | null,
+): CatalogDetailPresentation {
   if (detail.kind === "series") {
     const { record, items } = detail;
     return {
@@ -37,24 +40,26 @@ export function creaturesDetailPresentation(detail: CreaturesDetail): CatalogDet
     fields: [
       ["学名", record.scientificName],
       ["尺寸范围", record.sizeRange],
+      ["出没条件", encounterSummary],
     ],
-    sections: known.length
-      ? [
-          {
-            id: "creature-conditions",
-            title: "出没条件",
-            content: (
-              <dl className="grid gap-3 sm:grid-cols-2">
-                {known.map(([label, value]) => (
-                  <div key={label}>
-                    <dt className="text-xs text-muted-foreground">{label}</dt>
-                    <dd>{value}</dd>
-                  </div>
-                ))}
-              </dl>
-            ),
-          },
-        ]
-      : [],
+    sections:
+      known.length && !encounterSummary
+        ? [
+            {
+              id: "creature-conditions",
+              title: "出没条件",
+              content: (
+                <dl className="grid gap-3 sm:grid-cols-2">
+                  {known.map(([label, value]) => (
+                    <div key={label}>
+                      <dt className="text-xs text-muted-foreground">{label}</dt>
+                      <dd>{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              ),
+            },
+          ]
+        : [],
   };
 }

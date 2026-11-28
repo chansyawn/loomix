@@ -1,5 +1,5 @@
 import { Badge } from "@/ui/components/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/ui/components/card";
+import { Card, CardContent, CardHeader } from "@/ui/components/card";
 import { Empty, EmptyDescription, EmptyHeader } from "@/ui/components/empty";
 import type { NeighborDetail } from "./data";
 
@@ -13,9 +13,7 @@ export function NeighborAbilitiesSection({
       {abilities.map((ability) => (
         <Card key={ability.unlockLevel} role="article" size="sm" className="min-w-0">
           <CardHeader>
-            <CardTitle>
-              <h3 className="wrap-anywhere">{ability.name}</h3>
-            </CardTitle>
+            <h3 className="text-sm font-medium wrap-anywhere">{ability.name}</h3>
             <Badge variant="outline">亲密度 {ability.unlockLevel} 级解锁</Badge>
           </CardHeader>
           {ability.description && (

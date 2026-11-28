@@ -5,7 +5,7 @@ import { furnitureDetail } from "../furniture/detail";
 import { furnitureDetailData } from "../furniture/data";
 import { clothingDetail } from "../clothing/detail";
 import { clothingCounterpart } from "../clothing/counterpart";
-import { creaturesDetail } from "../creatures/detail";
+import { creaturesDetail, simpleEncounterSummary } from "../creatures/detail";
 import { plantsDetail } from "../plants/detail";
 import { dishesDetail } from "../dishes/detail";
 import { buildMiscellaneousDetail } from "../miscellaneous/detail";
@@ -75,6 +75,10 @@ export function catalogEntryDetail(data: OmnidexCatalog, id: number) {
     case "creature":
       return {
         category: "creatures" as const,
+        encounterSummary:
+          "kind" in row.record && row.record.kind === "creature"
+            ? simpleEncounterSummary(row.record)
+            : null,
         detail: creaturesDetail(
           view.creatures,
           collection ? "series" : "items",

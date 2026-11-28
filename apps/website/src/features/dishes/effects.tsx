@@ -18,7 +18,7 @@ export function DishEffects({ effects }: { effects: DishItem["effects"] }) {
         return (
           <li key={`${effect.effectId}-${index}`} className="flex flex-col gap-3">
             <div className="flex flex-col gap-2">
-              <h3 className="text-base font-medium wrap-anywhere">{effect.name || "未命名效果"}</h3>
+              <h3 className="text-sm font-medium wrap-anywhere">{effect.name || "未命名效果"}</h3>
               {metadata.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {metadata.map((value) => (

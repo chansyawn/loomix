@@ -1,6 +1,6 @@
 import { catalogItem } from "@/features/layout/navigation";
 import { Badge } from "@/ui/components/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/ui/components/card";
+import { Card, CardContent, CardHeader } from "@/ui/components/card";
 import type { NeighborDetail } from "./data";
 import { Link } from "@tanstack/react-router";
 import { catalogSearchForTag } from "../catalog/search";
@@ -23,9 +23,9 @@ export function NeighborPreferences({
           className="min-w-0"
         >
           <CardHeader>
-            <CardTitle>
-              <h3 id={`preference-${group.level}`}>{group.name}</h3>
-            </CardTitle>
+            <h3 id={`preference-${group.level}`} className="text-sm font-medium">
+              {group.name}
+            </h3>
           </CardHeader>
           <CardContent>
             {group.items.length || group.tags.length ? (

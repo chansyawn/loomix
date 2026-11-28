@@ -12,45 +12,44 @@ import { NeighborAbilitiesSection } from "./abilities-section";
 import { NeighborHouseSection } from "./house-section";
 
 export function NeighborDetailPage({ neighbor }: { neighbor: NeighborDetail }) {
-  const homeFields: DetailField[] = [];
-  if (neighbor.stars.length) {
-    for (const star of neighbor.stars) {
-      homeFields.push(
-        ["所属星球", star.name],
-        ["所属星系", star.galaxy ? `${star.galaxy}星系` : "星系资料暂未收录"],
-      );
-    }
-  } else {
-    homeFields.push(["所属星球与星系", "星球与星系资料暂未收录"]);
-  }
-  const sections: DetailSection[] = [
-    {
+  const homeFields: DetailField[] = [
+    [
+      "所属星球与星系",
+      neighbor.stars
+        .map((star) => `${star.name} · ${star.galaxy ? `${star.galaxy}星系` : "星系暂未收录"}`)
+        .join("\n") || "暂未收录",
+    ],
+  ];
+  const sections: DetailSection[] = [];
+  const missing: string[] = [];
+  if (neighbor.preferences.some((group) => group.items.length || group.tags.length))
+    sections.push({
       id: "preferences",
-      headingId: "preferences-heading",
-      title: "喜好信息",
+      title: "送礼偏好",
       content: <NeighborPreferences preferences={neighbor.preferences} />,
-    },
-    {
+    });
+  else missing.push("送礼偏好");
+  if (neighbor.abilities.length)
+    sections.push({
       id: "abilities",
-      headingId: "abilities-heading",
       title: "能力与亲密度",
       content: <NeighborAbilitiesSection abilities={neighbor.abilities} />,
-    },
-  ];
-  if (neighbor.house) {
+    });
+  else missing.push("能力");
+  if (neighbor.house?.stages.length) {
     sections.push({
       id: "house",
-      headingId: "house-heading",
       title: "房屋",
       content: <NeighborHouseSection stages={neighbor.house.stages} />,
     });
-  }
-  sections.push({
-    id: "stories",
-    headingId: "stories-heading",
-    title: "友邻故事",
-    content: <NeighborStories neighbor={neighbor} />,
-  });
+  } else missing.push("房屋");
+  if (neighbor.stories.length)
+    sections.push({
+      id: "stories",
+      title: "友邻故事",
+      content: <NeighborStories neighbor={neighbor} />,
+    });
+  else missing.push("故事");
   return (
     <DetailPage
       overviewId="overview"
@@ -76,6 +75,7 @@ export function NeighborDetailPage({ neighbor }: { neighbor: NeighborDetail }) {
             ["昵称", neighbor.profile.nickname ?? "资料暂未收录"],
             ["英文名", neighbor.profile.englishName ?? "资料暂未收录"],
             ["生日", neighbor.profile.birthday ?? "资料暂未收录"],
+            ...(missing.length ? [["暂未收录", missing.join("、")] as const] : []),
           ],
         },
         { title: "星球归属", fields: homeFields },

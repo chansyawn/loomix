@@ -1,40 +1,36 @@
-import type { LinkProps } from "@tanstack/react-router";
-import { DetailTitleMetadata } from "@/features/detail-page/detail-fields";
-import {
-  DetailPage,
-  DetailRelatedGrid,
-  type DetailSection,
-} from "@/features/detail-page/detail-page";
-import { CatalogItemCard } from "@/features/omnidex/catalog-item-card";
-import { catalogEntryLocation } from "@/features/omnidex/entry-location";
+import { DetailTitleMetadata, type DetailField } from "@/features/detail-page/detail-fields";
+import { DetailPage, type DetailSection } from "@/features/detail-page/detail-page";
+import { CatalogRelations } from "../omnidex/detail-relations";
+import { GameplayRelationItem } from "../omnidex/gameplay-relation-item";
 import { RecordImage } from "@/features/omnidex/record-image";
 import { VignetteRequirements } from "./requirements";
 import { VignettePlacementRules } from "./placement-reference";
 import type { VignetteDetail } from "./view";
 
-type RelatedEntry = VignetteDetail["neighbors"][number];
-
-function RelatedEntries({
-  title,
-  entries,
-  itemLink,
-}: {
-  title: string;
-  entries: RelatedEntry[];
-  itemLink: (entry: RelatedEntry) => LinkProps;
-}) {
-  return entries.length ? (
-    <DetailRelatedGrid>
-      {entries.map((entry) => (
-        <CatalogItemCard key={entry.id} item={entry} itemId={entry.id} link={itemLink(entry)} />
-      ))}
-    </DetailRelatedGrid>
-  ) : (
-    <p className="text-sm text-muted-foreground">暂无关联{title}</p>
-  );
-}
-
 export function VignetteDetailPage({ entry }: { entry: VignetteDetail }) {
+  const relations: DetailField[] = [];
+  if (entry.neighbors.length)
+    relations.push([
+      "关联友邻",
+      <ul className="flex flex-wrap gap-2">
+        {entry.neighbors.map((neighbor) => (
+          <li key={neighbor.id}>
+            <GameplayRelationItem
+              {...neighbor}
+              variant="inline"
+              destination={{ to: "/neighbors/$id", params: { id: String(neighbor.id) } }}
+            />
+          </li>
+        ))}
+      </ul>,
+    ]);
+  if (entry.creatures.length)
+    relations.push([
+      "关联生物",
+      <CatalogRelations items={entry.creatures} />,
+      { anchor: "related-creatures" },
+    ]);
+  if (!relations.length) relations.push(["关联条目", "暂无已确认的关联友邻或生物"]);
   const sections: DetailSection[] = [
     {
       id: "vignette-requirements",
@@ -44,24 +40,6 @@ export function VignetteDetailPage({ entry }: { entry: VignetteDetail }) {
           <VignettePlacementRules rules={entry.placementRules} />
           <VignetteRequirements requirements={entry.requirements} />
         </>
-      ),
-    },
-    {
-      id: "related-neighbors",
-      title: "关联友邻",
-      content: (
-        <RelatedEntries
-          title="友邻"
-          entries={entry.neighbors}
-          itemLink={({ id }) => ({ to: "/neighbors/$id", params: { id: String(id) } })}
-        />
-      ),
-    },
-    {
-      id: "related-creatures",
-      title: "关联生物",
-      content: (
-        <RelatedEntries title="生物" entries={entry.creatures} itemLink={catalogEntryLocation} />
       ),
     },
   ];
@@ -86,10 +64,7 @@ export function VignetteDetailPage({ entry }: { entry: VignetteDetail }) {
       fieldGroups={[
         {
           title: "布景属性",
-          fields: [
-            ["尺寸", entry.size],
-            ["地形", entry.terrain],
-          ],
+          fields: [["尺寸", entry.size], ["地形", entry.terrain], ...relations],
         },
       ]}
       sections={sections}

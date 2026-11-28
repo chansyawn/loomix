@@ -5,6 +5,7 @@ import { buildIngredientsData, ingredientUsage } from "../ingredients/model";
 import type { IngredientsData } from "../ingredients/model";
 import { plantDetailNavigation } from "./detail-navigation-model";
 import { plantMatureForms } from "./growth";
+import { sourceTreesForItem } from "./model";
 import type { View } from "./search";
 import type { FlowerHybridizationSeries, PlantItem, PlantSeries } from "./model";
 
@@ -59,9 +60,7 @@ export function plantsDetail(
       seeds,
       stocks: data.harvestablePlants.filter((stock) => stock.harvest.id === id),
       cooking: ingredients ? ingredientUsage(ingredients, id) : null,
-      sourceTrees: (data.sourceTreesByItemId.get(id) ?? []).flatMap(
-        (tree) => data.itemRefs.get(tree.id) ?? [],
-      ),
+      sourceTrees: sourceTreesForItem(data, id),
       hybridization:
         record.category === "花"
           ? data.series

@@ -67,7 +67,10 @@ export function collectionMembers<Member extends { id: number }>(
   };
 }
 
-type RelatedEntry = Pick<CatalogEntrySummary, "id" | "name" | "image"> & { browsable?: boolean };
+type RelatedEntry = Pick<CatalogEntrySummary, "id" | "name" | "image"> & {
+  browsable?: boolean;
+  note?: string;
+};
 
 export function CatalogRelations({ items }: { items: readonly RelatedEntry[] }) {
   return (
@@ -78,6 +81,7 @@ export function CatalogRelations({ items }: { items: readonly RelatedEntry[] }) 
             variant="inline"
             name={item.name}
             image={item.image}
+            note={item.note}
             destination={item.browsable === false ? undefined : catalogEntryLocation(item)}
           />
         </li>
@@ -86,16 +90,26 @@ export function CatalogRelations({ items }: { items: readonly RelatedEntry[] }) 
   );
 }
 
-export function addDetailRelation(
+export function addRelationField(
   fields: DetailField[],
-  sections: DetailSection[],
   label: string,
   anchor: string,
   items: readonly RelatedEntry[],
-  fieldAlias?: string,
 ) {
   if (!items.length) return;
-  const content = <CatalogRelations items={items} />;
-  if (items.length === 1) fields.push([label, content, { anchor, alias: fieldAlias }]);
-  else sections.push({ id: anchor, title: label, content });
+  fields.push([
+    label,
+    <>
+      <CatalogRelations items={items.slice(0, 1)} />
+      {items.length > 1 && (
+        <details>
+          <summary className="cursor-pointer text-sm">
+            其他{label}（{items.length - 1}）
+          </summary>
+          <CatalogRelations items={items.slice(1)} />
+        </details>
+      )}
+    </>,
+    { anchor, fullWidth: items.length > 1 },
+  ]);
 }

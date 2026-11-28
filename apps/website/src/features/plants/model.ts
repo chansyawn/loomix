@@ -76,3 +76,13 @@ export function seedSeries(seed: PlantSeed, groups: PlantSeries[]): PlantSeries[
   const plantIds = new Set(seed.plantIds);
   return groups.filter((group) => group.plantIds?.some((id) => plantIds.has(id)));
 }
+
+export function sourceTreesForItem(data: PlantsData, itemId: number) {
+  return (data.sourceTreesByItemId.get(itemId) ?? []).flatMap((tree) => {
+    const item = data.itemRefs.get(tree.id);
+    const methods = tree.treeDrops
+      ?.filter((drop) => drop.itemId === itemId)
+      .map((drop) => (drop.source === "fruit" ? "果实产物" : "砍树掉落"));
+    return item ? [{ ...item, note: [...new Set(methods)].join("、") }] : [];
+  });
+}

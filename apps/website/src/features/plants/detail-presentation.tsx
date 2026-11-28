@@ -1,5 +1,5 @@
 import type { DetailField, DetailSection } from "@/features/detail-page/detail-page";
-import { addDetailRelation, collectionMembers } from "../omnidex/detail-relations";
+import { addRelationField, collectionMembers } from "../omnidex/detail-relations";
 import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presentation";
 import { RecordImage } from "@/features/omnidex/record-image";
 import { CatalogItemCard } from "../omnidex/catalog-item-card";
@@ -18,14 +18,13 @@ export function plantsDetailPresentation(detail: PlantsDetail): CatalogDetailPre
   if (detail.kind === "harvestablePlant") {
     const { record } = detail;
     const relatedFields: DetailField[] = [];
-    const sections: DetailSection[] = [];
-    addDetailRelation(relatedFields, sections, "可收获", "plant-harvest", [record.harvest]);
-    addDetailRelation(relatedFields, sections, "关联种子", "plant-seeds", detail.seeds);
+    addRelationField(relatedFields, "可收获", "plant-harvest", [record.harvest]);
+    addRelationField(relatedFields, "关联种子", "plant-seeds", detail.seeds);
     return {
       image: <RecordImage image={record.image} name={record.name} eager />,
       classification: record.stockCategory,
       relatedFields,
-      sections,
+      sections: [],
     };
   }
   return {
@@ -56,22 +55,9 @@ function plantOrSeriesPresentation(detail: PlantOrSeriesDetail): CatalogDetailPr
   const relatedFields: DetailField[] = [];
   if (detail.kind === "item") {
     const sharedMatureForm = matureFormMatchesStock(detail.matureForms, detail.stocks);
-    addDetailRelation(relatedFields, sections, "关联种子", "plant-seeds", detail.seeds);
-    addDetailRelation(
-      relatedFields,
-      sections,
-      "来源植株",
-      "plant-stocks",
-      detail.stocks,
-      sharedMatureForm ? "plant-mature" : undefined,
-    );
-    addDetailRelation(
-      relatedFields,
-      sections,
-      "来源树木",
-      "plant-source-trees",
-      detail.sourceTrees,
-    );
+    addRelationField(relatedFields, "关联种子", "plant-seeds", detail.seeds);
+    addRelationField(relatedFields, "来源植株", "plant-stocks", detail.stocks);
+    addRelationField(relatedFields, "来源树木", "plant-source-trees", detail.sourceTrees);
     if (detail.matureForms.length > 0 && !sharedMatureForm)
       sections.push({
         id: "plant-mature",
@@ -103,7 +89,7 @@ function plantOrSeriesPresentation(detail: PlantOrSeriesDetail): CatalogDetailPr
       <PlantsCard item={item} showCategory={!sharedCategory} />
     ));
     relatedFields.push(...members.relatedFields);
-    sections.push(...members.sections);
+    sections.unshift(...members.sections);
   }
   return {
     image: <RecordImage image={record.image} name={record.name} eager />,

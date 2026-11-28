@@ -19,7 +19,7 @@ type DisplayItem = Extract<Requirement["target"], { kind: "tags" }>["matches"][n
 
 const columns = [
   { label: "物品", className: "w-1/3" },
-  { label: "数量", className: "w-12 text-center" },
+  { label: "显示数量", className: "w-20 text-center" },
   { label: "示例", className: "w-44" },
   { label: "摆放规则" },
 ];

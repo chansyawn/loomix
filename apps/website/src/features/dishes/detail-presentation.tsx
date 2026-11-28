@@ -34,7 +34,7 @@ export function dishesDetailPresentation(detail: DishesDetail): CatalogDetailPre
       content: <DishEffects effects={record.effects} />,
     });
   if (record.slots.length)
-    sections.push({
+    sections.unshift({
       id: "dish-recipe",
       title: "烹饪配方",
       content: <DishRecipe detail={detail} />,

@@ -175,7 +175,7 @@ function catalogDetailPresentation(
     case "clothing":
       return clothingDetailPresentation(model.detail, hairDyeing);
     case "creatures":
-      return creaturesDetailPresentation(model.detail);
+      return creaturesDetailPresentation(model.detail, model.encounterSummary);
     case "plants":
       return plantsDetailPresentation(model.detail);
     case "dishes":

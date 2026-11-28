@@ -1,4 +1,5 @@
 import { notFound } from "@tanstack/react-router";
+import type { ItemOf } from "@loomix/schema/catalog";
 import type { CreaturesData } from "./data";
 import { loadOmnidexView } from "../omnidex-loader";
 import { buildIngredientsData, ingredientUsage } from "../ingredients/model";
@@ -40,6 +41,32 @@ export function creaturesDetail(
 }
 
 export type CreaturesDetail = ReturnType<typeof creaturesDetail>;
+
+export function simpleEncounterSummary({
+  region,
+  habitat,
+  activeSeasons,
+  activeTimes,
+  activeWeather,
+}: Pick<
+  ItemOf<"creature">,
+  "region" | "habitat" | "activeSeasons" | "activeTimes" | "activeWeather"
+>) {
+  if (
+    habitat?.length === 1 &&
+    region?.length === 1 &&
+    region[0] === "全地区" &&
+    activeSeasons?.length === 1 &&
+    activeSeasons[0] === "全年" &&
+    activeTimes?.length === 1 &&
+    activeTimes[0] === "全天" &&
+    activeWeather?.length === 1 &&
+    activeWeather[0] === "任意天气"
+  ) {
+    return `全地区的${habitat[0]}，全年全天，任意天气`;
+  }
+  return null;
+}
 
 export async function loadCreaturesDetail(view: View, value: string): Promise<CreaturesDetail> {
   const id = parseCreaturesId(value);

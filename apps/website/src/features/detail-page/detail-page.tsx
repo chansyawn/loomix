@@ -149,14 +149,6 @@ function DetailFrame({
   );
 }
 
-export function DetailRelatedGrid({ children }: { children: ReactNode }) {
-  return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))] gap-4">
-      {children}
-    </div>
-  );
-}
-
 export function DetailPageLoading({
   label,
   imageAspect = "aspect-square",

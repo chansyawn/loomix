@@ -4,7 +4,7 @@ import { cn } from "@/ui/lib/utils";
 export type DetailField = readonly [
   label: string,
   value: ReactNode,
-  options?: { anchor?: string; alias?: string; fullWidth?: boolean },
+  options?: { anchor?: string; fullWidth?: boolean },
 ];
 
 export type DetailFieldGroup = { title: string; fields: readonly DetailField[] };
@@ -50,7 +50,7 @@ function FieldList({ fields }: { fields: readonly DetailField[] }) {
   return (
     <dl className="grid gap-x-5 gap-y-2 @min-[27rem]/detail-fields:grid-cols-2">
       {fields.map(([label, value, options], index) => {
-        const { anchor, alias, fullWidth } = options ?? {};
+        const { anchor, fullWidth } = options ?? {};
         return (
           <div
             key={`${label}-${index}`}
@@ -61,13 +61,7 @@ function FieldList({ fields }: { fields: readonly DetailField[] }) {
             )}
           >
             <dt id={anchor && `${anchor}-heading`} className="text-xs/5 text-muted-foreground">
-              {alias ? (
-                <span id={alias}>
-                  <span id={`${alias}-heading`}>{label}</span>
-                </span>
-              ) : (
-                label
-              )}
+              {label}
             </dt>
             <dd className="max-w-full min-w-0 text-sm/6 wrap-anywhere whitespace-pre-line">
               {value === "" || value == null ? "未提供" : value}

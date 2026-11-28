@@ -1,4 +1,5 @@
-import { DetailPage } from "@/features/detail-page/detail-page";
+import { DetailPage, type DetailSection } from "@/features/detail-page/detail-page";
+import { GameplayRelationItem } from "../omnidex/gameplay-relation-item";
 import { DetailTitleMetadata, type DetailField } from "@/features/detail-page/detail-fields";
 import { CatalogItemCard } from "@/features/omnidex/catalog-item-card";
 import { catalogEntryLocation } from "@/features/omnidex/entry-location";
@@ -7,8 +8,8 @@ import type { StarseaDetail } from "./view";
 
 const relatedCardGrid = "grid grid-cols-[repeat(auto-fill,minmax(min(100%,13rem),1fr))] gap-3";
 
-function IsletItems({ items }: { items: StarseaDetail["creatures"] }) {
-  return items?.length ? (
+function IsletItems({ items }: { items: NonNullable<StarseaDetail["creatures"]> }) {
+  return (
     <ul className={relatedCardGrid}>
       {items.map((item) => (
         <li key={item.id} className="min-w-0">
@@ -20,15 +21,11 @@ function IsletItems({ items }: { items: StarseaDetail["creatures"] }) {
         </li>
       ))}
     </ul>
-  ) : (
-    <p className="text-sm text-muted-foreground">
-      {items === null ? "未配置探索提示" : "没有展示条目"}
-    </p>
   );
 }
 
 function EncounterSection({ neighbors }: { neighbors: StarseaDetail["encounterNeighbors"] }) {
-  return neighbors.length > 0 ? (
+  return (
     <>
       <p className="text-sm text-muted-foreground">实际出场受探索和季遇状态影响。</p>
       <ul className={relatedCardGrid}>
@@ -43,18 +40,57 @@ function EncounterSection({ neighbors }: { neighbors: StarseaDetail["encounterNe
         ))}
       </ul>
     </>
-  ) : (
-    <p className="text-sm text-muted-foreground">暂无已确认的邂逅友邻</p>
   );
 }
 
 export function StarseaDetailPage({ islet }: { islet: StarseaDetail }) {
   const galaxies = [...new Set(islet.regions.map(({ galaxyName }) => galaxyName))];
-  const unlockTips = [...new Set(islet.regions.flatMap(({ unlockTip }) => unlockTip ?? []))];
+  const unlockTips = islet.regions.flatMap(({ name, unlockTip }) =>
+    unlockTip ? [islet.regions.length > 1 ? `${name} · ${unlockTip}` : unlockTip] : [],
+  );
   const explorationFields: DetailField[] = [];
-  if (islet.encounterOnly) explorationFields.push(["探索方式", "邂逅候选"]);
+  const sections: DetailSection[] = [];
+  const status: string[] = [];
+  explorationFields.push([
+    "探索方式",
+    islet.encounterOnly
+      ? "邂逅候选"
+      : islet.encounterNeighbors.length
+        ? "常规探索、邂逅候选"
+        : "常规探索",
+  ]);
   if (unlockTips.length)
     explorationFields.push(["区域解锁提示", unlockTips.join("\n"), { fullWidth: true }]);
+  for (const [id, label, items] of [
+    ["creatures", "生物", islet.creatures],
+    ["specialties", "特产", islet.specialties],
+  ] as const) {
+    if (items?.length)
+      sections.push({ id, title: `探索${label}`, content: <IsletItems items={items} /> });
+    else status.push(`${label}${items === null ? "未配置探索提示" : "没有展示条目"}`);
+  }
+  const hasExplorationItems = sections.length > 0;
+  const [neighbor] = islet.encounterNeighbors;
+  if (!hasExplorationItems && islet.encounterNeighbors.length === 1) {
+    explorationFields.push([
+      "候选友邻",
+      <div className="grid gap-1">
+        <GameplayRelationItem
+          {...neighbor}
+          variant="inline"
+          destination={{ to: "/neighbors/$id", params: { id: String(neighbor.id) } }}
+        />
+        <span className="text-muted-foreground">实际出场受探索和季遇状态影响。</span>
+      </div>,
+    ]);
+  } else if (neighbor) {
+    sections.push({
+      id: "encounters",
+      title: "邂逅友邻",
+      content: <EncounterSection neighbors={islet.encounterNeighbors} />,
+    });
+  } else status.push("暂无已确认的邂逅友邻");
+  if (status.length) explorationFields.push(["资料状态", status.join("，"), { fullWidth: true }]);
   return (
     <DetailPage
       image={
@@ -77,9 +113,11 @@ export function StarseaDetailPage({ islet }: { islet: StarseaDetail }) {
         </DetailTitleMetadata>
       }
       description={
-        <p className="text-sm text-muted-foreground">
-          生物与特产为探索提示，实际产出受探索条件影响。
-        </p>
+        hasExplorationItems && (
+          <p className="text-sm text-muted-foreground">
+            生物与特产为探索提示，实际产出受探索条件影响。
+          </p>
+        )
       }
       fieldGroups={[
         {
@@ -88,15 +126,7 @@ export function StarseaDetailPage({ islet }: { islet: StarseaDetail }) {
         },
         { title: "探索条件", fields: explorationFields },
       ]}
-      sections={[
-        { id: "creatures", title: "生物", content: <IsletItems items={islet.creatures} /> },
-        { id: "specialties", title: "特产", content: <IsletItems items={islet.specialties} /> },
-        {
-          id: "encounters",
-          title: "邂逅友邻",
-          content: <EncounterSection neighbors={islet.encounterNeighbors} />,
-        },
-      ]}
+      sections={sections}
     />
   );
 }

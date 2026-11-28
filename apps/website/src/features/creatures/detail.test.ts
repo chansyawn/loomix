@@ -2,7 +2,26 @@ import { isNotFound } from "@tanstack/react-router";
 import { describe, expect, it, vi, afterEach } from "vite-plus/test";
 import { catalogFixture, fixtureRequest } from "../omnidex-fixture.ts";
 import type { CreatureItem, CreatureSeries } from "../omnidex-view.ts";
-import { creaturesDetail, loadCreaturesDetail, parseCreaturesId } from "./detail";
+import {
+  creaturesDetail,
+  loadCreaturesDetail,
+  parseCreaturesId,
+  simpleEncounterSummary,
+} from "./detail";
+
+it("只有其他出没条件均明确不限时才合并单一栖息地", () => {
+  const conditions = {
+    region: ["全地区"],
+    habitat: ["草地"],
+    activeSeasons: ["全年"],
+    activeTimes: ["全天"],
+    activeWeather: ["任意天气"],
+  };
+  expect(simpleEncounterSummary(conditions)).toBe("全地区的草地，全年全天，任意天气");
+  expect(simpleEncounterSummary({ ...conditions, activeWeather: null })).toBeNull();
+  expect(simpleEncounterSummary({ ...conditions, activeTimes: ["白天"] })).toBeNull();
+  expect(simpleEncounterSummary({ ...conditions, habitat: ["草地", "河流"] })).toBeNull();
+});
 
 const first: CreatureItem = {
   id: 1,
