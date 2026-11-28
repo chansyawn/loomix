@@ -4,7 +4,6 @@ import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presen
 import { RecordImage } from "@/features/omnidex/record-image";
 import { CatalogItemCard } from "../omnidex/catalog-item-card";
 import { catalogEntryLocation } from "../omnidex/entry-location";
-import { PlantsCard } from "./plants-card";
 import type { PlantsDetail } from "./detail";
 import { PlantDropsInfo } from "./related-items";
 import { plantSeriesFields } from "./series-fields";
@@ -85,9 +84,9 @@ function plantOrSeriesPresentation(detail: PlantOrSeriesDetail): CatalogDetailPr
   if (detail.kind === "series") {
     const [category] = summary.categories;
     const sharedCategory = category && detail.items?.every((item) => item.category === category);
-    const members = collectionMembers("plant", detail.items, (item) => (
-      <PlantsCard item={item} showCategory={!sharedCategory} />
-    ));
+    const members = collectionMembers("plant", detail.items, (item) =>
+      sharedCategory ? null : item.category,
+    );
     relatedFields.push(...members.relatedFields);
     sections.unshift(...members.sections);
   }

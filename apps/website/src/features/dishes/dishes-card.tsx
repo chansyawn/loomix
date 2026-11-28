@@ -5,13 +5,10 @@ import { RecordImage } from "@/features/omnidex/record-image";
 import { RecordListCard } from "@/features/omnidex/record-list-card";
 import { SeriesImage } from "../omnidex/series-image";
 import { useOmnidexOrigin } from "@/features/omnidex/navigation";
-import { formatTastes } from "./presentation";
+import { dishCardAttributes } from "./presentation";
 
 export function DishesCard({ item }: { item: DishItem }) {
   const origin = useOmnidexOrigin();
-  const attributes = [formatTastes(item.tastes), item.difficulty, item.cookware]
-    .filter(Boolean)
-    .join(" · ");
   return (
     <RecordListCard
       name={item.name}
@@ -22,7 +19,7 @@ export function DishesCard({ item }: { item: DishItem }) {
           {item.name}
         </Link>
       }
-      tags={attributes}
+      tags={dishCardAttributes(item)}
     />
   );
 }

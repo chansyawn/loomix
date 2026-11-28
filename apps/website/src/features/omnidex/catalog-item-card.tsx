@@ -36,7 +36,7 @@ export function CatalogItemCard({
         )}
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className={cn("text-base font-semibold", link && "group-hover/card:underline")}>
+        <span className={cn("text-sm font-medium", link && "group-hover/card:underline")}>
           {name}
         </span>
         {quantity !== undefined && (

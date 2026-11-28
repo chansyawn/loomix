@@ -5,6 +5,9 @@ import type { DetailField, DetailSection } from "../detail-page/detail-page";
 import type { CatalogEntrySummary } from "../omnidex-view";
 import { catalogEntryLocation } from "./entry-location";
 import { GameplayRelationItem } from "./gameplay-relation-item";
+import { RecordListCard } from "./record-list-card";
+import { RecordImage } from "./record-image";
+import { useOmnidexOrigin } from "./navigation";
 
 export const collectionLabels = {
   furniture: { name: "家具套组", group: "套组", unit: "件家具", anchor: "related-furniture" },
@@ -29,10 +32,28 @@ export function SectionCount({ anchor, children }: { anchor: string; children: R
   );
 }
 
-export function collectionMembers<Member extends { id: number }>(
+function MemberCard({ item, tags }: { item: CatalogEntrySummary; tags: string | null }) {
+  const origin = useOmnidexOrigin();
+  return (
+    <RecordListCard
+      titleAs="p"
+      name={item.name}
+      quality={item.quality}
+      tags={tags}
+      image={<RecordImage image={item.image} name={item.name} />}
+      titleLink={
+        <Link {...catalogEntryLocation(item)} state={{ omnidexOrigin: origin }}>
+          {item.name}
+        </Link>
+      }
+    />
+  );
+}
+
+export function collectionMembers<Member extends CatalogEntrySummary>(
   kind: CollectionMemberKind,
   items: Member[] | null,
-  renderItem: (item: Member) => ReactNode,
+  memberTags: (item: Member) => string | null,
 ): { relatedFields: DetailField[]; sections: DetailSection[] } {
   const { group, anchor, unit } = collectionLabels[kind];
   const title = `${group}成员`;
@@ -53,7 +74,7 @@ export function collectionMembers<Member extends { id: number }>(
           <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-3">
             {items.map((item) => (
               <li className="min-w-0" key={item.id}>
-                {renderItem(item)}
+                <MemberCard item={item} tags={memberTags(item)} />
               </li>
             ))}
           </ul>

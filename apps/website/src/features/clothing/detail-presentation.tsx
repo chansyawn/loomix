@@ -1,4 +1,3 @@
-import { ClothingCard } from "./clothing-card";
 import { ClothingCounterpartSwitch } from "./counterpart-switch";
 import type { DetailField, DetailSection } from "@/features/detail-page/detail-page";
 import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presentation";
@@ -18,9 +17,7 @@ export function clothingDetailPresentation(
   const relatedFields: DetailField[] = [];
   const sections: DetailSection[] = [];
   if (detail.kind === "set") {
-    const members = collectionMembers("clothing", detail.items, (item) => (
-      <ClothingCard record={item} />
-    ));
+    const members = collectionMembers("clothing", detail.items, (item) => item.category);
     relatedFields.push(...members.relatedFields);
     sections.push(...members.sections);
   } else if (detail.kind === "neighborOutfit") {

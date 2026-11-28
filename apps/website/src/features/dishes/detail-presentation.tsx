@@ -3,11 +3,15 @@ import { SeriesImage } from "../omnidex/series-image";
 import type { DetailSection } from "@/features/detail-page/detail-page";
 import { collectionMembers } from "../omnidex/detail-relations";
 import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presentation";
-import { DishesCard } from "./dishes-card";
 import type { DishesDetail } from "./detail";
 import { DishRecipe } from "./recipe";
 import { DishEffects } from "./effects";
-import { formatTastes, strengthText, unlockConditionLabel } from "./presentation";
+import {
+  dishCardAttributes,
+  formatTastes,
+  strengthText,
+  unlockConditionLabel,
+} from "./presentation";
 
 export function dishesDetailPresentation(detail: DishesDetail): CatalogDetailPresentation {
   if (detail.kind === "series") {
@@ -22,7 +26,7 @@ export function dishesDetailPresentation(detail: DishesDetail): CatalogDetailPre
           eager
         />
       ),
-      ...collectionMembers("dish", items, (item) => <DishesCard item={item} />),
+      ...collectionMembers("dish", items, dishCardAttributes),
     };
   }
   const { record } = detail;

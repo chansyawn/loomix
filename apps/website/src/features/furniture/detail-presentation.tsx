@@ -1,4 +1,3 @@
-import { FurnitureCard } from "./furniture-card";
 import type { DetailField, DetailSection } from "@/features/detail-page/detail-page";
 import { collectionMembers } from "../omnidex/detail-relations";
 import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presentation";
@@ -12,9 +11,7 @@ export function furnitureDetailPresentation(detail: FurnitureDetail): CatalogDet
   const relatedFields: DetailField[] = [];
   const sections: DetailSection[] = [];
   if (detail.kind === "set") {
-    const members = collectionMembers("furniture", detail.items, (item) => (
-      <FurnitureCard item={item} />
-    ));
+    const members = collectionMembers("furniture", detail.items, (item) => item.furnitureCategory);
     relatedFields.push(...members.relatedFields);
     sections.push(...members.sections);
   } else {

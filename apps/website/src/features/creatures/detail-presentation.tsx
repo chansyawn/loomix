@@ -2,7 +2,6 @@ import { RecordImage } from "../omnidex/record-image";
 import type { DetailField } from "../detail-page/detail-page";
 import type { CatalogDetailPresentation } from "../omnidex/catalog-detail-presentation";
 import { collectionMembers } from "../omnidex/detail-relations";
-import { CreaturesCard } from "./creatures-card";
 import { SeriesImage } from "../omnidex/series-image";
 import type { CreaturesDetail } from "./detail";
 
@@ -22,7 +21,7 @@ export function creaturesDetailPresentation(
           eager
         />
       ),
-      ...collectionMembers("creature", items, (item) => <CreaturesCard item={item} />),
+      ...collectionMembers("creature", items, (item) => item.category),
     };
   }
   const { record } = detail;
