@@ -1,15 +1,15 @@
-import { Link, useRouter, useRouterState } from "@tanstack/react-router";
-import { cn } from "cn";
+import { Link } from "@tanstack/react-router";
 import { ArrowRightIcon } from "lucide-react";
 import { useEffect, useEffectEvent, useState } from "react";
+import type { DetailSection } from "@/features/detail-page/detail-page";
 import { Badge } from "@/ui/components/badge";
 import { Card, CardContent, CardHeader } from "@/ui/components/card";
+import { CollapsibleContent } from "@/ui/components/collapsible";
 import { Item, ItemActions, ItemContent } from "@/ui/components/item";
-import { Separator } from "@/ui/components/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/components/tabs";
 import { GameplayRelationItem } from "./gameplay-relation-item";
 import {
-  activeGameplayUseCategory,
+  gameplayUsesSectionId,
+  gameplayUseSectionId,
   gameplayUseLabels,
   visibleGameplayUseCategories,
   type GameplayUse,
@@ -17,11 +17,7 @@ import {
 } from "./gameplay-uses-model";
 import { useOmnidexOrigin } from "./navigation";
 
-declare module "@tanstack/react-router" {
-  interface HistoryState {
-    gameplayUseCategory?: GameplayUseCategory;
-  }
-}
+const gameplayUsePreviewCount = 4;
 
 export function useVignetteGameplayUses(
   readUses: (() => Promise<GameplayUse[]>) | undefined,
@@ -52,72 +48,52 @@ export function useVignetteGameplayUses(
   return uses;
 }
 
-export function GameplayUses({
-  itemId,
-  uses,
-}: {
-  itemId: number;
-  uses: Record<GameplayUseCategory, GameplayUse[]>;
-}) {
-  const router = useRouter();
-  const savedCategory = useRouterState({
-    select: (state) => state.location.state.gameplayUseCategory,
-  });
+export function gameplayUsesSection(
+  uses: Record<GameplayUseCategory, GameplayUse[]>,
+): DetailSection | undefined {
   const categories = visibleGameplayUseCategories(uses);
-  const activeCategory = activeGameplayUseCategory(categories, savedCategory);
-  if (!activeCategory) return null;
+  if (!categories.length) return undefined;
 
+  return {
+    id: gameplayUsesSectionId,
+    title: "用途",
+    subsections: categories.map((category) => {
+      const entries = uses[category];
+      const preview = entries.slice(0, gameplayUsePreviewCount);
+      const remaining = entries.slice(gameplayUsePreviewCount);
+      return {
+        id: gameplayUseSectionId(category),
+        title: gameplayUseLabels[category],
+        headingTrailing: <Badge variant="secondary">{entries.length}</Badge>,
+        content: <GameplayUseGrid preview={preview} remaining={remaining} />,
+        disclosure: remaining.length ? { total: entries.length } : undefined,
+      };
+    }),
+  };
+}
+
+function GameplayUseGrid({
+  preview,
+  remaining,
+}: {
+  preview: readonly GameplayUse[];
+  remaining: readonly GameplayUse[];
+}) {
   return (
-    <div className="overflow-hidden rounded-xl border">
-      <Tabs
-        value={activeCategory}
-        onValueChange={(category: GameplayUseCategory) => {
-          void router.navigate({
-            to: "/catalog/$id",
-            params: { id: String(itemId) },
-            search: true,
-            hash: true,
-            resetScroll: false,
-            hashScrollIntoView: false,
-            replace: true,
-            state: (previous) => ({ ...previous, gameplayUseCategory: category }),
-          });
-        }}
-        className="grid"
-      >
-        <div className="min-w-0">
-          <div className="p-3">
-            <TabsList
-              aria-label="用途分类"
-              className="max-w-full flex-wrap justify-start group-data-horizontal/tabs:h-auto"
-            >
-              {categories.map((category) => (
-                <TabsTrigger key={category} value={category}>
-                  {gameplayUseLabels[category]}
-                  <Badge variant="secondary">{uses[category].length}</Badge>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </div>
-          <Separator />
-        </div>
-        {categories.map((category) => (
-          <TabsContent
-            key={category}
-            value={category}
-            className={cn(
-              "max-h-[min(60svh,32rem)] min-w-0 overflow-y-auto",
-              categories.length > 1 && "h-112 scrollbar-gutter-stable",
-            )}
-          >
-            <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,19rem),1fr))] gap-3 p-3 pt-1">
-              {uses[category].map((use) => (
-                <GameplayUseCard key={use.id} use={use} />
-              ))}
-            </ul>
-          </TabsContent>
-        ))}
-      </Tabs>
+    <div
+      role="list"
+      className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,19rem),1fr))] gap-3"
+    >
+      {preview.map((use) => (
+        <GameplayUseCard key={use.id} use={use} />
+      ))}
+      {remaining.length > 0 && (
+        <CollapsibleContent className="contents data-closed:hidden">
+          {remaining.map((use) => (
+            <GameplayUseCard key={use.id} use={use} />
+          ))}
+        </CollapsibleContent>
+      )}
     </div>
   );
 }
@@ -125,7 +101,7 @@ export function GameplayUses({
 function GameplayUseCard({ use }: { use: GameplayUse }) {
   const origin = useOmnidexOrigin();
   return (
-    <li className="min-w-0">
+    <div role="listitem" className="min-w-0">
       <Card size="sm" className="h-full">
         <CardHeader>
           <GameplayRelationItem name={use.name} image={use.image} destination={use.destination} />
@@ -157,6 +133,6 @@ function GameplayUseCard({ use }: { use: GameplayUse }) {
           </ul>
         </CardContent>
       </Card>
-    </li>
+    </div>
   );
 }

@@ -20,6 +20,11 @@ export type GameplayUse = {
 
 export const gameplayUseLabels = { crafting: "制作", cooking: "烹饪", vignette: "小栖地" };
 export type GameplayUseCategory = keyof typeof gameplayUseLabels;
+export const gameplayUsesSectionId = "gameplay-uses";
+
+export function gameplayUseSectionId(category: GameplayUseCategory) {
+  return `${gameplayUsesSectionId}-${category}`;
+}
 
 export function catalogGameplayUses(data: OmnidexCatalog, id: number) {
   const materialName = data.byId.get(id)?.name ?? "此材料";
@@ -84,11 +89,4 @@ export function visibleGameplayUseCategories(
 ) {
   const order: GameplayUseCategory[] = ["crafting", "cooking", "vignette"];
   return order.filter((category) => uses[category].length > 0);
-}
-
-export function activeGameplayUseCategory(
-  categories: readonly GameplayUseCategory[],
-  saved: GameplayUseCategory | undefined,
-) {
-  return saved && categories.includes(saved) ? saved : categories[0];
 }
