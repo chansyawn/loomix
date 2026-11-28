@@ -1,5 +1,7 @@
 # 网站应用
 
+> **维护范围** 开发入口、页面接入方式或数据解释规则变化时，更新本文。仅调整布局、按钮位置或图片展示顺序时，无需更新。
+
 络米星集的网站应用，提供图鉴浏览、筛选、详情及友邻资料查询。使用 React、TanStack Start / Router、Tailwind CSS 与 shadcn/ui，通过 Vite+ 开发和构建，部署到 Cloudflare Workers。依赖版本以 [package.json](package.json) 和[工作区配置](../../pnpm-workspace.yaml)为准。
 
 ## 安装网页应用
