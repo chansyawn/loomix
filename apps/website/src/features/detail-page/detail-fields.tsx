@@ -9,31 +9,44 @@ export type DetailField = readonly [
 
 export type DetailFieldGroup = { title: string; fields: readonly DetailField[] };
 
-export function DetailFields({
-  fields,
+export function DetailTitleMetadata({
+  id,
+  category,
+  children,
 }: {
-  fields: readonly DetailField[] | { groups: readonly DetailFieldGroup[] };
+  id: number;
+  category: string;
+  children: ReactNode;
 }) {
-  if (!("groups" in fields)) return fields.length > 0 && <FieldList fields={fields} />;
-  const groups = fields.groups.filter((group) => group.fields.length > 0);
-  return groups.map((group) => (
+  return (
+    <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm text-muted-foreground">
+      <span className="min-w-0 font-medium wrap-anywhere text-foreground">{children}</span>
+      <span aria-hidden="true">·</span>
+      <span className="min-w-0 wrap-anywhere">
+        <span className="sr-only">类别：</span>
+        {category}
+      </span>
+      <span aria-hidden="true">·</span>
+      <span className="tabular-nums">
+        <span className="sr-only">编号：</span>#{id}
+      </span>
+    </p>
+  );
+}
+
+export function DetailFields({ groups }: { groups: readonly DetailFieldGroup[] }) {
+  const visibleGroups = groups.filter((group) => group.fields.length > 0);
+  return visibleGroups.map((group) => (
     <div key={group.title} className="grid gap-2 border-t pt-3">
-      {groups.length > 1 && <h2 className="text-sm font-semibold">{group.title}</h2>}
-      <FieldList fields={group.fields} compact />
+      {visibleGroups.length > 1 && <h2 className="text-sm font-semibold">{group.title}</h2>}
+      <FieldList fields={group.fields} />
     </div>
   ));
 }
 
-function FieldList({ fields, compact }: { fields: readonly DetailField[]; compact?: boolean }) {
+function FieldList({ fields }: { fields: readonly DetailField[] }) {
   return (
-    <dl
-      className={cn(
-        "grid",
-        compact
-          ? "gap-x-5 gap-y-2 @min-[27rem]/detail-fields:grid-cols-2"
-          : "gap-3 @min-[22rem]/detail-fields:grid-cols-2 @min-[24rem]/detail-fields:gap-4",
-      )}
-    >
+    <dl className="grid gap-x-5 gap-y-2 @min-[27rem]/detail-fields:grid-cols-2">
       {fields.map(([label, value, options], index) => {
         const { anchor, alias, fullWidth } = options ?? {};
         return (
@@ -41,10 +54,7 @@ function FieldList({ fields, compact }: { fields: readonly DetailField[]; compac
             key={`${label}-${index}`}
             id={anchor}
             className={cn(
-              "flex min-w-0",
-              compact
-                ? "flex-wrap items-baseline gap-x-2.5 gap-y-1"
-                : "flex-col gap-1.5 rounded-xl bg-muted/40 p-3 @min-[24rem]/detail-fields:p-4",
+              "flex min-w-0 flex-wrap items-baseline gap-x-2.5 gap-y-1",
               fullWidth && "col-span-full",
             )}
           >

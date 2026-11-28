@@ -162,7 +162,7 @@ export function CatalogEntryPage({
             </p>
           )
         }
-        fields={{ groups }}
+        fieldGroups={groups}
         sections={detailSections}
         relatedNavigation={catalogEntryNavigation(navigation, record.id, origin)}
         empty={showEmptyExtras && <CatalogDetailEmpty />}

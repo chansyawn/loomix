@@ -1,4 +1,5 @@
 import { DetailPage } from "@/features/detail-page/detail-page";
+import { DetailTitleMetadata, type DetailField } from "@/features/detail-page/detail-fields";
 import { CatalogItemCard } from "@/features/omnidex/catalog-item-card";
 import { catalogEntryLocation } from "@/features/omnidex/entry-location";
 import { RecordImage } from "@/features/omnidex/record-image";
@@ -50,6 +51,10 @@ function EncounterSection({ neighbors }: { neighbors: StarseaDetail["encounterNe
 export function StarseaDetailPage({ islet }: { islet: StarseaDetail }) {
   const galaxies = [...new Set(islet.regions.map(({ galaxyName }) => galaxyName))];
   const unlockTips = [...new Set(islet.regions.flatMap(({ unlockTip }) => unlockTip ?? []))];
+  const explorationFields: DetailField[] = [];
+  if (islet.encounterOnly) explorationFields.push(["探索方式", "邂逅候选"]);
+  if (unlockTips.length)
+    explorationFields.push(["区域解锁提示", unlockTips.join("\n"), { fullWidth: true }]);
   return (
     <DetailPage
       image={
@@ -64,16 +69,24 @@ export function StarseaDetailPage({ islet }: { islet: StarseaDetail }) {
         />
       }
       title={islet.name}
+      titleMetadata={
+        <DetailTitleMetadata id={islet.id} category="星屿">
+          {galaxies.length
+            ? galaxies.map((galaxy) => `${galaxy}星系`).join("、")
+            : "所属星系未提供"}
+        </DetailTitleMetadata>
+      }
       description={
         <p className="text-sm text-muted-foreground">
           生物与特产为探索提示，实际产出受探索条件影响。
         </p>
       }
-      fields={[
-        ["所属星海", islet.regions.map(({ name }) => name).join("、")],
-        ["所属星系", galaxies.join("、")],
-        ...(islet.encounterOnly ? [["探索方式", "邂逅候选"] as const] : []),
-        ...(unlockTips.length ? [["区域解锁提示", unlockTips.join("\n")] as const] : []),
+      fieldGroups={[
+        {
+          title: "地理归属",
+          fields: [["所属星海", islet.regions.map(({ name }) => name).join("、")]],
+        },
+        { title: "探索条件", fields: explorationFields },
       ]}
       sections={[
         { id: "creatures", title: "生物", content: <IsletItems items={islet.creatures} /> },

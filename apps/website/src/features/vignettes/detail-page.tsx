@@ -1,4 +1,5 @@
 import type { LinkProps } from "@tanstack/react-router";
+import { DetailTitleMetadata } from "@/features/detail-page/detail-fields";
 import {
   DetailPage,
   DetailRelatedGrid,
@@ -77,10 +78,19 @@ export function VignetteDetailPage({ entry }: { entry: VignetteDetail }) {
         />
       }
       title={entry.name}
-      fields={[
-        ["尺寸", entry.size],
-        ["星级", entry.stars],
-        ["地形", entry.terrain],
+      titleMetadata={
+        <DetailTitleMetadata id={entry.id} category="小栖地">
+          {entry.stars}
+        </DetailTitleMetadata>
+      }
+      fieldGroups={[
+        {
+          title: "布景属性",
+          fields: [
+            ["尺寸", entry.size],
+            ["地形", entry.terrain],
+          ],
+        },
       ]}
       sections={sections}
     />

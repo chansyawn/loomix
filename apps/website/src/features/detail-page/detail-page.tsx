@@ -5,7 +5,7 @@ import { cn } from "@/ui/lib/utils";
 import { DetailChapter, type DetailSubsection } from "./detail-headings";
 import { DetailNavGroup, type DetailNavigation } from "./detail-nav-group";
 import { DetailToc } from "./detail-toc";
-import { DetailFields, type DetailField, type DetailFieldGroup } from "./detail-fields";
+import { DetailFields, type DetailFieldGroup } from "./detail-fields";
 
 export type { DetailField } from "./detail-fields";
 
@@ -25,7 +25,7 @@ export type DetailPageProps = {
   titleActions?: ReactNode;
   titleMetadata?: ReactNode;
   description?: ReactNode;
-  fields: readonly DetailField[] | { groups: readonly DetailFieldGroup[] };
+  fieldGroups: readonly DetailFieldGroup[];
   overviewId?: string;
   sections: readonly DetailSection[];
   relatedNavigation?: DetailNavigation;
@@ -40,7 +40,7 @@ export function DetailPage({
   titleActions,
   titleMetadata,
   description,
-  fields,
+  fieldGroups,
   overviewId = "detail-overview",
   sections,
   relatedNavigation,
@@ -82,7 +82,7 @@ export function DetailPage({
           {titleMetadata}
         </div>
         {description}
-        <DetailFields fields={fields} />
+        <DetailFields groups={fieldGroups} />
       </section>
       {sections.map(({ id, headingId = `${id}-heading`, title, content, subsections }) => (
         <DetailChapter

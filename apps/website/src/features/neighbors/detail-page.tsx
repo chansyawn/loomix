@@ -3,6 +3,7 @@ import {
   type DetailField,
   type DetailSection,
 } from "@/features/detail-page/detail-page";
+import { DetailTitleMetadata } from "@/features/detail-page/detail-fields";
 import type { NeighborDetail } from "./data";
 import { NeighborImage } from "./image";
 import { NeighborPreferences } from "./preferences";
@@ -11,21 +12,16 @@ import { NeighborAbilitiesSection } from "./abilities-section";
 import { NeighborHouseSection } from "./house-section";
 
 export function NeighborDetailPage({ neighbor }: { neighbor: NeighborDetail }) {
-  const fields: DetailField[] = [
-    ["昵称", neighbor.profile.nickname ?? "资料暂未收录"],
-    ["英文名", neighbor.profile.englishName ?? "资料暂未收录"],
-    ["生日", neighbor.profile.birthday ?? "资料暂未收录"],
-    ["体型", neighbor.bodyType ? `${neighbor.bodyType}体型` : "体型资料暂未收录"],
-  ];
+  const homeFields: DetailField[] = [];
   if (neighbor.stars.length) {
     for (const star of neighbor.stars) {
-      fields.push(
+      homeFields.push(
         ["所属星球", star.name],
         ["所属星系", star.galaxy ? `${star.galaxy}星系` : "星系资料暂未收录"],
       );
     }
   } else {
-    fields.push(["所属星球与星系", "星球与星系资料暂未收录"]);
+    homeFields.push(["所属星球与星系", "星球与星系资料暂未收录"]);
   }
   const sections: DetailSection[] = [
     {
@@ -60,6 +56,11 @@ export function NeighborDetailPage({ neighbor }: { neighbor: NeighborDetail }) {
       overviewId="overview"
       titleId="neighbor-heading"
       title={neighbor.name}
+      titleMetadata={
+        <DetailTitleMetadata id={neighbor.id} category="友邻">
+          {neighbor.bodyType ? `${neighbor.bodyType}体型` : "体型资料暂未收录"}
+        </DetailTitleMetadata>
+      }
       image={
         <NeighborImage
           image={neighbor.portrait?.image ?? null}
@@ -68,7 +69,17 @@ export function NeighborDetailPage({ neighbor }: { neighbor: NeighborDetail }) {
           className="aspect-square p-4 sm:p-6"
         />
       }
-      fields={fields}
+      fieldGroups={[
+        {
+          title: "友邻资料",
+          fields: [
+            ["昵称", neighbor.profile.nickname ?? "资料暂未收录"],
+            ["英文名", neighbor.profile.englishName ?? "资料暂未收录"],
+            ["生日", neighbor.profile.birthday ?? "资料暂未收录"],
+          ],
+        },
+        { title: "星球归属", fields: homeFields },
+      ]}
       sections={sections}
     />
   );

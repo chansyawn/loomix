@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { Badge } from "@/ui/components/badge";
 import { catalogSearchForTag } from "../catalog/search";
-import type { DetailFieldGroup } from "../detail-page/detail-fields";
+import { DetailTitleMetadata, type DetailFieldGroup } from "../detail-page/detail-fields";
 import { ItemIngredientTags } from "../ingredients/item-usage";
 import { categoryNames, type CatalogEntryRow } from "./catalog";
 import { CatalogRelations, collectionLabels } from "./detail-relations";
@@ -22,28 +22,21 @@ export function CatalogTitleMetadata({
       ? collectionLabels[row.record.memberKind].name
       : categoryNames[row.category];
   return (
-    <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm text-muted-foreground">
-      <span className="font-medium text-foreground">
-        {row.quality === null ? (
-          "品阶未提供"
-        ) : (
-          <>
-            <span className="sr-only">品阶：</span>
-            {qualityNames[row.quality]}
-          </>
-        )}
-      </span>
-      <span aria-hidden="true">·</span>
-      <span className="min-w-0 wrap-anywhere">
-        <span className="sr-only">图鉴类别：</span>
-        {category}
-        {classification && classification !== category && <> / {classification}</>}
-      </span>
-      <span aria-hidden="true">·</span>
-      <span className="tabular-nums">
-        <span className="sr-only">编号：</span>#{row.id}
-      </span>
-    </p>
+    <DetailTitleMetadata
+      id={row.id}
+      category={
+        classification && classification !== category ? `${category} / ${classification}` : category
+      }
+    >
+      {row.quality === null ? (
+        "品阶未提供"
+      ) : (
+        <>
+          <span className="sr-only">品阶：</span>
+          {qualityNames[row.quality]}
+        </>
+      )}
+    </DetailTitleMetadata>
   );
 }
 
