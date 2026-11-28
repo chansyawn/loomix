@@ -10,23 +10,21 @@ export function seedDetailPresentation(
 ): CatalogDetailPresentation {
   const { record } = detail;
   const { growth } = record;
-  const relatedFields: DetailField[] = [];
+  const fields: DetailField[] = [];
+  if (growth.kind === "crop" && growth.harvestCount !== null)
+    fields.push(["收获茬数", `${growth.harvestCount} 茬`]);
   const sections: DetailSection[] = [
     { id: "plant-growth-heading", title: "生长阶段", content: <SeedGrowthStages seed={record} /> },
   ];
   if (detail.items.length) {
-    addRelationField(relatedFields, "关联植物", "seed-plants", detail.items);
+    addRelationField(fields, "关联植物", "seed-plants", detail.items);
   } else {
-    relatedFields.push(["关联植物", "0 种植物"]);
+    fields.push(["关联植物", "0 种植物"]);
   }
   return {
     image: <RecordImage image={record.image} name={record.name} eager />,
     classification: "种子",
-    fields:
-      growth.kind === "crop" && growth.harvestCount !== null
-        ? [["收获茬数", `${growth.harvestCount} 茬`]]
-        : [],
-    relatedFields,
+    fields,
     sections,
   };
 }

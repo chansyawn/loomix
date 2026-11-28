@@ -21,43 +21,29 @@ export function RelationLoadError({ label, retry }: { label: string; retry: () =
   );
 }
 
-export function giftSection(state: RelationState<"gifts">): DetailSection | undefined {
-  const heading = { id: "gameplay-uses-gifts", title: "送给谁" };
-  if (state?.status === "error")
-    return { ...heading, content: <RelationLoadError label="送礼偏好" retry={state.retry} /> };
-  if (state?.status !== "ready" || !state.value.length) return;
-  return {
-    ...heading,
-    content: (
-      <div className="grid gap-3">
-        <p className="text-sm text-muted-foreground">以下友邻的送礼偏好明确列出了此物品。</p>
-        <dl className="grid gap-3">
-          {state.value.map(({ level, name, neighbors }) => (
-            <div key={level} className="grid gap-1">
-              <dt className="text-sm font-medium">{name}</dt>
-              <dd>
-                <ul className="flex flex-wrap gap-x-4 gap-y-2">
-                  {neighbors.map((neighbor) => (
-                    <li key={neighbor.id}>
-                      <GameplayRelationItem
-                        {...neighbor}
-                        variant="inline"
-                        destination={{
-                          to: "/neighbors/$id",
-                          params: { id: String(neighbor.id) },
-                          hash: `preference-${level}`,
-                        }}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-    ),
-  };
+export function giftPreferenceValue(state: RelationState<"gifts">) {
+  if (state?.status === "error") return <RelationLoadError label="送礼偏好" retry={state.retry} />;
+  if (state?.status !== "ready" || !state.value.length) return null;
+  return (
+    <ul className="flex flex-wrap gap-x-4 gap-y-1">
+      {state.value.flatMap(({ level, name, neighbors }) =>
+        neighbors.map((neighbor) => (
+          <li key={`${level}-${neighbor.id}`}>
+            <GameplayRelationItem
+              {...neighbor}
+              variant="inline"
+              note={name}
+              destination={{
+                to: "/neighbors/$id",
+                params: { id: String(neighbor.id) },
+                hash: `preference-${level}`,
+              }}
+            />
+          </li>
+        )),
+      )}
+    </ul>
+  );
 }
 
 export function explorationSection(state: RelationState<"islets">): DetailSection | undefined {
@@ -112,30 +98,25 @@ export function explorationSection(state: RelationState<"islets">): DetailSectio
   };
 }
 
-export function relatedVignettesSection(
-  state: RelationState<"vignettes">,
-): DetailSection | undefined {
-  const heading = { id: "related-vignettes", title: "关联小栖地" };
+export function relatedVignettesValue(state: RelationState<"vignettes">) {
   if (state?.status === "error")
-    return { ...heading, content: <RelationLoadError label={heading.title} retry={state.retry} /> };
-  if (state?.status !== "ready" || !state.value.related.length) return;
-  return {
-    ...heading,
-    content: (
-      <ul className="grid gap-2 sm:grid-cols-2">
-        {state.value.related.map((template) => (
-          <li key={template.id}>
-            <GameplayRelationItem
-              {...template}
-              destination={{
-                to: "/vignettes/$id",
-                params: { id: String(template.id) },
-                hash: "related-creatures",
-              }}
-            />
-          </li>
-        ))}
-      </ul>
-    ),
-  };
+    return <RelationLoadError label="关联小栖地" retry={state.retry} />;
+  if (state?.status !== "ready" || !state.value.related.length) return null;
+  return (
+    <ul className="flex flex-wrap gap-x-4 gap-y-1">
+      {state.value.related.map((template) => (
+        <li key={template.id}>
+          <GameplayRelationItem
+            {...template}
+            variant="inline"
+            destination={{
+              to: "/vignettes/$id",
+              params: { id: String(template.id) },
+              hash: "related-creatures",
+            }}
+          />
+        </li>
+      ))}
+    </ul>
+  );
 }

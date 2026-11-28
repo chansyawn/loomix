@@ -52,13 +52,14 @@ export function plantsDetail(
     const record = itemsById.get(id);
     if (!record) throw notFound();
     const seeds = data.seeds.filter((seed) => seed.plantIds.includes(id));
+    const stocks = data.harvestablePlants.filter((stock) => stock.harvest.id === id);
     return {
       kind: "item" as const,
       record,
       navigation,
-      matureForms: plantMatureForms(seeds, id),
+      matureForms: plantMatureForms(seeds, id, stocks),
       seeds,
-      stocks: data.harvestablePlants.filter((stock) => stock.harvest.id === id),
+      stocks,
       cooking: ingredients ? ingredientUsage(ingredients, id) : null,
       sourceTrees: sourceTreesForItem(data, id),
       hybridization:

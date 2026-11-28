@@ -54,11 +54,11 @@ export function collectionMembers<Member extends CatalogEntrySummary>(
   kind: CollectionMemberKind,
   items: Member[] | null,
   memberTags: (item: Member) => string | null,
-): { relatedFields: DetailField[]; sections: DetailSection[] } {
+): { fields: DetailField[]; sections: DetailSection[] } {
   const { group, anchor, unit } = collectionLabels[kind];
   const title = `${group}成员`;
   return {
-    relatedFields: [
+    fields: [
       [
         "成员数量",
         <SectionCount anchor={anchor}>

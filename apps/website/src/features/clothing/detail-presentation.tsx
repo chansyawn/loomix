@@ -14,11 +14,10 @@ export function clothingDetailPresentation(
 ): CatalogDetailPresentation {
   const { record, navigation, counterpart } = detail;
   const fields: DetailField[] = [];
-  const relatedFields: DetailField[] = [];
   const sections: DetailSection[] = [];
   if (detail.kind === "set") {
     const members = collectionMembers("clothing", detail.items, (item) => item.category);
-    relatedFields.push(...members.relatedFields);
+    fields.push(...members.fields);
     sections.push(...members.sections);
   } else if (detail.kind === "neighborOutfit") {
     fields.push(["部位", detail.slotName], ["可用体型", detail.modelSizes]);
@@ -36,7 +35,6 @@ export function clothingDetailPresentation(
     ),
     navigation: navigation ?? undefined,
     fields,
-    relatedFields,
     classification:
       detail.kind === "item" || detail.kind === "appearance" ? detail.record.category : null,
     sections,

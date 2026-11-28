@@ -17,7 +17,6 @@ import { useOmnidexOrigin } from "./navigation";
 
 export function gameplayUseSections(
   uses: Record<GameplayUseCategory, GameplayUse[]>,
-  gifts: DetailSection | undefined,
   vignetteError: ReactNode,
 ): DetailSection[] {
   const categories = visibleGameplayUseCategories(uses);
@@ -42,7 +41,6 @@ export function gameplayUseSections(
       title: gameplayUseLabels.vignette,
       content: vignetteError,
     });
-  if (gifts) sections.push(gifts);
   return sections;
 }
 

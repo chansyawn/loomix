@@ -69,7 +69,6 @@ export function VignetteDetailPage({ entry }: { entry: VignetteDetail }) {
       }
       fieldGroups={[
         {
-          title: "布景属性",
           fields: [
             ["尺寸", entry.size],
             ["地形", entry.terrain],

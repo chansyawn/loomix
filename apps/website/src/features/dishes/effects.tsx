@@ -16,18 +16,14 @@ export function DishEffects({ effects }: { effects: DishItem["effects"] }) {
       {effects.map((effect, index) => {
         const metadata = effectMetadata(effect);
         return (
-          <li key={`${effect.effectId}-${index}`} className="flex flex-col gap-3">
-            <div className="flex flex-col gap-2">
-              <h3 className="text-sm font-medium wrap-anywhere">{effect.name || "未命名效果"}</h3>
-              {metadata.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {metadata.map((value) => (
-                    <Badge key={value} variant="outline">
-                      {value}
-                    </Badge>
-                  ))}
-                </div>
-              )}
+          <li key={`${effect.effectId}-${index}`} className="grid gap-1">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="font-medium">{effect.name || "未命名效果"}</span>
+              {metadata.map((value) => (
+                <Badge key={value} variant="outline">
+                  {value}
+                </Badge>
+              ))}
             </div>
             <p className="text-sm/6 whitespace-pre-line text-muted-foreground">
               {effect.description || "效果说明未提供"}

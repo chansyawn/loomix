@@ -7,11 +7,11 @@ import type { MiscellaneousDetail } from "./detail";
 export function miscellaneousDetailPresentation(
   detail: MiscellaneousDetail,
 ): CatalogDetailPresentation {
-  const relatedFields: DetailField[] = [];
-  addRelationField(relatedFields, "来源树木", "miscellaneous-source-trees", detail.sourceTrees);
+  const fields: DetailField[] = [];
+  addRelationField(fields, "来源树木", "miscellaneous-source-trees", detail.sourceTrees);
   return {
     image: <RecordImage image={detail.record.image} name={detail.record.name} eager />,
-    relatedFields,
+    fields,
     sections: [],
   };
 }

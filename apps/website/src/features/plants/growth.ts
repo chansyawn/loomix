@@ -11,25 +11,32 @@ export function growthStageGroups(growth: PlantGrowth) {
   ].filter((group) => group.ids.length > 0);
 }
 
-export function plantMatureForms(seeds: readonly PlantSeed[], plantId: number) {
-  return seeds.flatMap((seed) => {
-    const { growth } = seed;
-    if (growth.kind !== "crop") return [];
-    const stagesById = new Map(growth.stages.map((stage) => [stage.id, stage]));
-    const stages = [...new Set(growth.matureStages.map((stage) => stage.stageId))].flatMap((id) => {
-      const stage = stagesById.get(id);
-      return stage?.plantId === plantId ? [stage] : [];
-    });
-    return stages.length > 0 ? [{ seed, stages }] : [];
-  });
-}
-
-export function matureFormMatchesStock(
-  forms: ReturnType<typeof plantMatureForms>,
+export function plantMatureForms(
+  seeds: readonly PlantSeed[],
+  plantId: number,
   stocks: readonly Pick<HarvestablePlant, "id" | "name" | "image">[],
 ) {
-  if (stocks.length !== 1 || forms.length !== 1 || forms[0].stages.length !== 1) return false;
-  const [stock] = stocks;
-  const [stage] = forms[0].stages;
-  return stage.stockId === stock.id && stage.name === stock.name && stage.image === stock.image;
+  type Stage = PlantGrowth["stages"][number];
+  const forms = new Map<string, { key: string; stage: Stage; seeds: PlantSeed[] }>();
+  for (const seed of seeds) {
+    const { growth } = seed;
+    if (growth.kind !== "crop") continue;
+    const stagesById = new Map(growth.stages.map((stage) => [stage.id, stage]));
+    for (const id of new Set(growth.matureStages.map((stage) => stage.stageId))) {
+      const stage = stagesById.get(id);
+      if (stage?.plantId !== plantId) continue;
+      if (
+        stocks.some(
+          (stock) =>
+            stock.id === stage.stockId && stock.name === stage.name && stock.image === stage.image,
+        )
+      )
+        continue;
+      const key = JSON.stringify([stage.id, stage.name, stage.image]);
+      const form = forms.get(key);
+      if (form) form.seeds.push(seed);
+      else forms.set(key, { key, stage, seeds: [seed] });
+    }
+  }
+  return [...forms.values()];
 }

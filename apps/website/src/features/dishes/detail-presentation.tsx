@@ -31,14 +31,8 @@ export function dishesDetailPresentation(detail: DishesDetail): CatalogDetailPre
   }
   const { record } = detail;
   const sections: DetailSection[] = [];
-  if (record.effects?.length)
-    sections.push({
-      id: "dish-effects",
-      title: "特殊效果",
-      content: <DishEffects effects={record.effects} />,
-    });
   if (record.slots.length)
-    sections.unshift({
+    sections.push({
       id: "dish-recipe",
       title: "烹饪配方",
       content: <DishRecipe detail={detail} />,
@@ -51,8 +45,18 @@ export function dishesDetailPresentation(detail: DishesDetail): CatalogDetailPre
       ["口味", formatTastes(record.tastes)],
       ["星系风味", record.galaxyFlavor],
       ["炊具", record.cookware],
-      ["基础效果", strengthText(record.strength)],
     ],
+    typeSpecificGroup: {
+      title: "食用效果",
+      fields: [
+        ["基础效果", strengthText(record.strength)],
+        [
+          "特殊效果",
+          record.effects?.length ? <DishEffects effects={record.effects} /> : null,
+          { fullWidth: true },
+        ],
+      ],
+    },
     sections,
   };
 }

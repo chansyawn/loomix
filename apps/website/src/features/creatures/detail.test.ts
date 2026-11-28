@@ -6,22 +6,8 @@ import {
   creaturesDetail,
   loadCreaturesDetail,
   parseCreaturesId,
-  simpleEncounterSummary,
+  creatureEncounterFields,
 } from "./detail";
-
-it("只有其他出没条件均明确不限时才合并单一栖息地", () => {
-  const conditions = {
-    region: ["全地区"],
-    habitat: ["草地"],
-    activeSeasons: ["全年"],
-    activeTimes: ["全天"],
-    activeWeather: ["任意天气"],
-  };
-  expect(simpleEncounterSummary(conditions)).toBe("全地区的草地，全年全天，任意天气");
-  expect(simpleEncounterSummary({ ...conditions, activeWeather: null })).toBeNull();
-  expect(simpleEncounterSummary({ ...conditions, activeTimes: ["白天"] })).toBeNull();
-  expect(simpleEncounterSummary({ ...conditions, habitat: ["草地", "河流"] })).toBeNull();
-});
 
 const first: CreatureItem = {
   id: 1,
@@ -39,6 +25,21 @@ const first: CreatureItem = {
   sizeRange: null,
 };
 const second: CreatureItem = { ...first, id: 2, name: "青鱼" };
+
+it("出没字段组合已知条件，保留部分资料和未配置的天气", () => {
+  expect(
+    creatureEncounterFields({
+      ...first,
+      region: "全地区",
+      habitat: "河流、湖泊",
+      activeTimes: "白天",
+    }),
+  ).toEqual([
+    ["地区与栖息地", "全地区 · 河流、湖泊"],
+    ["时段", "白天"],
+    ["天气", null],
+  ]);
+});
 const group: CreatureSeries = {
   id: 3,
   name: "河川鱼类",

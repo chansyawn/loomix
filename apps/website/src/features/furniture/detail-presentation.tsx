@@ -8,11 +8,10 @@ import { FurnitureRecipes } from "./recipes";
 export function furnitureDetailPresentation(detail: FurnitureDetail): CatalogDetailPresentation {
   const { record } = detail;
   const fields: DetailField[] = [];
-  const relatedFields: DetailField[] = [];
   const sections: DetailSection[] = [];
   if (detail.kind === "set") {
     const members = collectionMembers("furniture", detail.items, (item) => item.furnitureCategory);
-    relatedFields.push(...members.relatedFields);
+    fields.push(...members.fields);
     sections.push(...members.sections);
   } else {
     fields.push(
@@ -44,7 +43,6 @@ export function furnitureDetailPresentation(detail: FurnitureDetail): CatalogDet
       />
     ),
     fields,
-    relatedFields,
     classification: detail.kind === "set" ? null : detail.record.category,
     navigation: detail.navigation,
     sections,

@@ -1,4 +1,5 @@
 import type { DetailField, DetailPageProps } from "@/features/detail-page/detail-page";
+import type { DetailFieldGroup } from "../detail-page/detail-fields";
 import type { DetailNavigationModel } from "./detail-navigation-model";
 
 export type CatalogDetailPresentation = Pick<
@@ -7,6 +8,6 @@ export type CatalogDetailPresentation = Pick<
 > & {
   classification?: string | null;
   fields?: readonly DetailField[];
-  relatedFields?: readonly DetailField[];
+  typeSpecificGroup?: DetailFieldGroup;
   navigation?: DetailNavigationModel;
 };

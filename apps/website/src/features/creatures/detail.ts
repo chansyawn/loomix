@@ -1,5 +1,5 @@
 import { notFound } from "@tanstack/react-router";
-import type { ItemOf } from "@loomix/schema/catalog";
+import type { CreatureItem } from "../omnidex-view";
 import type { CreaturesData } from "./data";
 import { loadOmnidexView } from "../omnidex-loader";
 import { buildIngredientsData, ingredientUsage } from "../ingredients/model";
@@ -42,30 +42,20 @@ export function creaturesDetail(
 
 export type CreaturesDetail = ReturnType<typeof creaturesDetail>;
 
-export function simpleEncounterSummary({
-  region,
-  habitat,
-  activeSeasons,
-  activeTimes,
-  activeWeather,
-}: Pick<
-  ItemOf<"creature">,
-  "region" | "habitat" | "activeSeasons" | "activeTimes" | "activeWeather"
->) {
-  if (
-    habitat?.length === 1 &&
-    region?.length === 1 &&
-    region[0] === "全地区" &&
-    activeSeasons?.length === 1 &&
-    activeSeasons[0] === "全年" &&
-    activeTimes?.length === 1 &&
-    activeTimes[0] === "全天" &&
-    activeWeather?.length === 1 &&
-    activeWeather[0] === "任意天气"
-  ) {
-    return `全地区的${habitat[0]}，全年全天，任意天气`;
-  }
-  return null;
+type Condition = [label: string, value: string | null];
+
+function pairedCondition(first: Condition, second: Condition): Condition {
+  if (!first[1]) return second;
+  if (!second[1]) return first;
+  return [`${first[0]}与${second[0]}`, `${first[1]} · ${second[1]}`];
+}
+
+export function creatureEncounterFields(record: CreatureItem): Condition[] {
+  return [
+    pairedCondition(["地区", record.region], ["栖息地", record.habitat]),
+    pairedCondition(["季节", record.activeSeasons], ["时段", record.activeTimes]),
+    ["天气", record.activeWeather],
+  ];
 }
 
 export async function loadCreaturesDetail(view: View, value: string): Promise<CreaturesDetail> {

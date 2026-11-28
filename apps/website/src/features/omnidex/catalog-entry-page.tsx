@@ -2,8 +2,8 @@ import type { CatalogEntryRow } from "./catalog";
 import type { EntryOverview } from "./entry-overview";
 import { CatalogTitleMetadata, overviewFieldGroups } from "./overview-fields";
 import type { CatalogEntryDetail } from "./catalog-entry-detail";
-import { simplePurchaseQuote, type ShopPurchaseQuotes } from "./purchase-quotes";
-import { RecordImage } from "./record-image";
+import type { ShopPurchaseQuotes } from "./purchase-quotes";
+import { PurchasePrices } from "./purchase-prices";
 import { DetailPage } from "@/features/detail-page/detail-page";
 import { findWikiScroll, wikiScrollId } from "@/infrastructure/wiki-scroll";
 import { clothingDetailPresentation } from "../clothing/detail-presentation";
@@ -22,10 +22,10 @@ import type { catalogGameplayUses } from "./gameplay-uses-model";
 import type { ItemRelationReaders } from "./item-relations";
 import {
   explorationSection,
-  giftSection,
-  relatedVignettesSection,
+  giftPreferenceValue,
+  relatedVignettesValue,
   RelationLoadError,
-} from "./item-relation-sections";
+} from "./item-relation-presentation";
 import { useOmnidexOrigin } from "./navigation";
 import { QualityMarker } from "./quality";
 import { FlowerDyeingUses } from "../clothing/flower-dyeing-uses";
@@ -86,7 +86,6 @@ export function CatalogEntryPage({
     uses &&
     gameplayUseSections(
       { ...uses, vignette: vignettes?.status === "ready" ? vignettes.value.placements : [] },
-      giftSection(gifts),
       vignettes?.status === "error" && (
         <RelationLoadError label="小栖地布景用途" retry={vignettes.retry} />
       ),
@@ -97,52 +96,21 @@ export function CatalogEntryPage({
   const detailSections = [...sections];
   const hints = explorationSection(islets);
   if (hints) detailSections.push(hints);
-  const habitats = model.category === "creatures" && relatedVignettesSection(vignettes);
-  if (habitats) detailSections.push(habitats);
-  const simpleQuote = simplePurchaseQuote(quotes);
-  const groups = overviewFieldGroups(
-    overview,
-    presentation,
-    readOwner && <OutfitOwner read={readOwner} />,
-    simpleQuote,
-  );
-  if (!simpleQuote && quotes?.length)
-    detailSections.push({
-      id: "purchase-offers",
-      title: "购买报价",
-      content: (
-        <dl className="grid gap-3">
-          <div className="text-sm text-muted-foreground">
-            <dt>配置报价</dt>
-            <dd>以下为每次购买的金额。</dd>
-          </div>
-          {quotes.map(({ id, name, paymentNote, prices }) => (
-            <div key={id} className="grid gap-1">
-              <dt className="font-medium">{name}</dt>
-              {prices.map(({ key, priceLabel, currencyImage, note }) => (
-                <dd key={key} className="flex items-start gap-1.5">
-                  {currencyImage && (
-                    <RecordImage
-                      image={currencyImage}
-                      name=""
-                      inset="none"
-                      background="none"
-                      fallback="icon"
-                      className="mt-0.5 size-5 shrink-0"
-                    />
-                  )}
-                  <span>
-                    {priceLabel}
-                    {note && <span className="text-muted-foreground">（{note}）</span>}
-                  </span>
-                </dd>
-              ))}
-              {paymentNote && <dd className="text-sm text-muted-foreground">{paymentNote}</dd>}
-            </div>
-          ))}
-        </dl>
-      ),
-    });
+  const groups = overviewFieldGroups(overview, presentation, [
+    ["所属友邻", readOwner && <OutfitOwner read={readOwner} />],
+    [
+      "关联小栖地",
+      model.category === "creatures" && model.detail.kind === "item"
+        ? relatedVignettesValue(vignettes)
+        : null,
+    ],
+    [
+      "购买报价（每次）",
+      quotes?.length ? <PurchasePrices shops={quotes} /> : null,
+      { anchor: "purchase-offers", fullWidth: true },
+    ],
+    ["送礼偏好", giftPreferenceValue(gifts), { anchor: "gift-preferences" }],
+  ]);
   if (useSections) detailSections.push(...useSections);
   if (
     flowerDyeing?.status === "error" ||
@@ -192,7 +160,7 @@ function catalogDetailPresentation(
     case "clothing":
       return clothingDetailPresentation(model.detail, hairDyeing);
     case "creatures":
-      return creaturesDetailPresentation(model.detail, model.encounterSummary);
+      return creaturesDetailPresentation(model.detail);
     case "plants":
       return plantsDetailPresentation(model.detail);
     case "dishes":
