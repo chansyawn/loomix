@@ -24,7 +24,7 @@
 
 从属数据内嵌在所属实体中，关系只保存一个方向。例如种子的生长阶段通过 `plantId` 引用植物，消费方据此反查植物对应的种子。
 
-作物株和花株以自身 ID 收录，`harvestItemId` 引用其收获物。若生长阶段的 `id` 对应植株，该阶段的 `plantId` 必须与植株的 `harvestItemId` 相同。花株可独立于种子生长链存在。
+作物株和花株以自身 ID 收录，`harvestItemId` 引用其收获物。若生长阶段的 `id` 对应植株，该阶段的 `plantId` 必须与植株的 `harvestItemId` 相同。小栖地布景按植株自身的物品 ID 或玩法标签匹配。
 
 每条购买报价表示一家商店一次购买的花费，按直接交付物 ID 反查，支付货币引用目录物品。零金额须有明确配置，友邻服饰的价格也从报价派生。同店同币种的异价可附短注说明已核实的货架来源，缺少短注不能推断商品常驻。[购买报价样例](examples/catalog-purchase-offers.jsonc) · [业务确认与调查](../../tools/extraction/docs/business-investigation.md#购买报价)
 
